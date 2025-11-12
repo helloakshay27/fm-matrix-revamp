@@ -9,19 +9,26 @@ const fmt = (d: Date) => {
 
 export type ChecklistProgressDetailRow = {
   site_name: string;
-  current: {
-    open: number;
-    in_progress: number;
-    overdue: number;
-    partially_closed: number;
-    closed: number;
+  current_period?: {
+    Open?: number;
+    "Work In Progress"?: number;
+    Overdue?: number;
+    "Partially Closed"?: number;
+    Closed?: number;
   };
-  difference: {
-    open: number;
-    in_progress: number;
-    overdue: number;
-    partially_closed: number;
-    closed: number;
+  previous_period?: {
+    Open?: number;
+    "Work In Progress"?: number;
+    Overdue?: number;
+    "Partially Closed"?: number;
+    Closed?: number;
+  };
+  difference?: {
+    Open?: number;
+    "Work In Progress"?: number;
+    Overdue?: number;
+    "Partially Closed"?: number;
+    Closed?: number;
   };
 };
 
@@ -45,63 +52,16 @@ const checklistManagementAnalyticsAPI = {
   async getChecklistProgressRows(fromDate: Date, toDate: Date): Promise<ChecklistProgressDetailRow[]> {
     const data = await this.getSiteWiseChecklist(fromDate, toDate);
     const root = data?.data ?? data ?? {};
-    // Support multiple possible shapes from API
-    const rows: any[] = Array.isArray(root?.site_wise_breakdown)
-      ? root.site_wise_breakdown
-      : Array.isArray(root?.checklist_progress)
-        ? root.checklist_progress
+    
+    // The API now returns checklist_progress array directly with current_period, previous_period, and difference
+    const rows: ChecklistProgressDetailRow[] = Array.isArray(root?.checklist_progress)
+      ? root.checklist_progress
+      : Array.isArray(root?.site_wise_breakdown)
+        ? root.site_wise_breakdown
         : [];
 
-    if (!rows.length) return [];
-
-    const num = (v: any) => Number(v ?? 0) || 0;
-
-    return rows.map((row: any) => {
-      const site = row?.site_name ?? row?.center_name ?? row?.site ?? '-';
-      // Some payloads use current_quarter/last_quarter; others use current/last_quarter
-      const currentRaw = row?.current_quarter ?? row?.current ?? {};
-      const lastRaw = row?.last_quarter ?? {};
-
-      const cur = {
-        open: num(currentRaw?.not_completed ?? currentRaw?.open),
-        in_progress: num(currentRaw?.in_progress),
-        overdue: num(currentRaw?.delayed ?? currentRaw?.overdue),
-        partially_closed: num(currentRaw?.partial ?? currentRaw?.partially_closed),
-        closed: num(currentRaw?.completed ?? currentRaw?.closed),
-      };
-
-      const prev = {
-        open: num(lastRaw?.not_completed ?? lastRaw?.open),
-        in_progress: num(lastRaw?.in_progress),
-        overdue: num(lastRaw?.delayed ?? lastRaw?.overdue),
-        partially_closed: num(lastRaw?.partial ?? lastRaw?.partially_closed),
-        closed: num(lastRaw?.completed ?? lastRaw?.closed),
-      };
-
-      // Prefer API-provided difference if available, else compute
-      const diffRaw = row?.difference;
-      const difference = diffRaw && typeof diffRaw === 'object'
-        ? {
-            open: num(diffRaw.open),
-            in_progress: num(diffRaw.in_progress),
-            overdue: num(diffRaw.overdue),
-            partially_closed: num(diffRaw.partially_closed),
-            closed: num(diffRaw.closed),
-          }
-        : {
-            open: cur.open - prev.open,
-            in_progress: cur.in_progress - prev.in_progress,
-            overdue: cur.overdue - prev.overdue,
-            partially_closed: cur.partially_closed - prev.partially_closed,
-            closed: cur.closed - prev.closed,
-          };
-
-      return {
-        site_name: site,
-        current: cur,
-        difference,
-      };
-    });
+    // Return the rows as-is - the component will handle the data structure
+    return rows;
   },
 
   async getTopOverdueChecklistMatrix(fromDate: Date, toDate: Date): Promise<TopOverdueChecklistMatrix> {
