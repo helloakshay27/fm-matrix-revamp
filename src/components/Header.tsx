@@ -379,10 +379,7 @@ export const Header = () => {
             {isViSite && (
               <button
                 onClick={() =>
-                  window.open(
-                    "https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d",
-                    "_blank"
-                  )
+                  navigate("/msafe-dashboard")
                 }
                 className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
               >
