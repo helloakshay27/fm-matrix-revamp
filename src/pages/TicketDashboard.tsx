@@ -1269,14 +1269,13 @@ export const TicketDashboard = () => {
     }
 
     const truncated = text.substring(0, maxCharacters);
-    return <div className="w-32 max-w-[150px] group relative">
-      <span className="block truncate">
-        {`${truncated}...`}
-      </span>
-      <div className="absolute left-0 top-0 w-max max-w-sm bg-black text-white text-xs p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 pointer-events-none break-words">
-        {text}
+    return (
+      <div className="w-32 max-w-[150px]" title={text}>
+        <span className="block truncate">
+          {`${truncated}...`}
+        </span>
       </div>
-    </div>;
+    );
   };
   const renderCell = (item, columnKey) => {
     if (columnKey === 'actions') {
