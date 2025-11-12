@@ -566,6 +566,9 @@ export const TicketDetailsPage = () => {
   const resolutionSeqIndexRef = useRef<number>(-1);
   const [resolutionSequenceIndex, setResolutionSequenceIndex] = useState<number>(-1);
   
+  // Refs to track if escalation timers have been initialized (to prevent reinitialization on status changes)
+  const escalationInitRef = useRef<boolean>(false);
+  
   const [communicationTemplates, setCommunicationTemplates] = useState<Array<{
     id: number;
     identifier: string;
@@ -3392,98 +3395,60 @@ export const TicketDetailsPage = () => {
   //   }
   // }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time, ticketData, isTicketClosed, isTicketOnHold, refreshTicketData, responseTatTimings, resolutionTatTimings]);
 
-
+console.log("status logic:", isTicketOnHold, isTicketClosed)
    useEffect(() => {
-    if (ticketData?.created_at && !isTicketClosed) {
+    if (ticketData?.created_at) {
       // Calculate ageing in seconds from created_at to now
       const createdTime = new Date(ticketData.created_at).getTime();
       const now = Date.now();
       const initialAgeingSeconds = Math.max(0, Math.floor((now - createdTime) / 1000));
       setCurrentAgeing(initialAgeingSeconds);
 
-      // Initialize escalation timers (unless on hold)
+      // Initialize escalation timers ONCE when ticket first loads
+      // After that, preserve values through status changes (freeze/resume)
       const updateEscalationTimers = () => {
+        // Only initialize if not already initialized
+        if (escalationInitRef.current) {
+          console.log('⏭️ Skipping escalation timer initialization - already initialized');
+          return;
+        }
+
         const now = Date.now();
-console.log("Updating escalation timers ", responseTatTimings)
-        // Response Escalation
-        if (!isTicketOnHold) {
-          try {
-            // If the dedicated endpoint returned a sequence (array), prefer the current step
-            if (Array.isArray(responseTatTimings) && responseTatTimings.length > 0) {
-              const idx = responseSeqIndexRef.current || 0;
-              const step = responseTatTimings[idx] || responseTatTimings[0];
-              const mins = step?.scheduled_minutes ?? step?.minutes ?? 0;
-              console.log("res minnnn:", mins)
-              setResponseEscalationSeconds(Math.floor((mins || 0) * 60));
-            } 
-            // else if (responseTatTimings?.escalation_time) {
-            //   // If API returned an absolute escalation_time, compute seconds (allow negative for exceeded)
-            //   const escalationDate = new Date(responseTatTimings.escalation_time).getTime();
-            //   const diffMs = escalationDate - now;
-            //   setResponseEscalationSeconds(Math.floor(diffMs / 1000));
-            // } 
-            // else if (responseTatTimings?.minutes != null) {
-            //   // Use minutes directly as requested (minutes -> seconds)
-            //   setResponseEscalationSeconds(Math.floor(responseTatTimings.minutes * 60));
-            // } 
-            // else if (ticketData.next_response_escalation?.escalation_time) {
-            //   // Fallback to ticketData escalation_time
-            //   const escalationDate = new Date(ticketData.next_response_escalation.escalation_time).getTime();
-            //   const diffMs = escalationDate - now;
-            //   setResponseEscalationSeconds(Math.floor(diffMs / 1000));
-            // } 
-            // else if (ticketData.next_response_escalation?.minutes != null) {
-            //   setResponseEscalationSeconds(Math.floor(ticketData.next_response_escalation.minutes * 60));
-            // } 
-            else {
-              setResponseEscalationSeconds(0);
-            }
-          } catch (e) {
-            console.error('Error initializing response escalation seconds', e);
+        console.log("Updating escalation timers ", responseTatTimings)
+        
+        // Response Escalation - initialize once from sequence
+        try {
+          if (Array.isArray(responseTatTimings) && responseTatTimings.length > 0) {
+            const idx = responseSeqIndexRef.current || 0;
+            const step = responseTatTimings[idx] || responseTatTimings[0];
+            const mins = step?.scheduled_minutes ?? step?.minutes ?? 0;
+            console.log("res minnnn:", mins)
+            setResponseEscalationSeconds(Math.floor((mins || 0) * 60));
+          } else {
             setResponseEscalationSeconds(0);
           }
-        } else {
+        } catch (e) {
+          console.error('Error initializing response escalation seconds', e);
           setResponseEscalationSeconds(0);
         }
 
-        // Resolution Escalation
-        if (!isTicketOnHold) {
-          try {
-            if (Array.isArray(resolutionTatTimings) && resolutionTatTimings.length > 0) {
-              const idx = resolutionSeqIndexRef.current || 0;
-              const step = resolutionTatTimings[idx] || resolutionTatTimings[0];
-              const mins = step?.scheduled_minutes ?? step?.minutes ?? 0;
-              setResolutionEscalationSeconds(Math.floor((mins || 0) * 60));
-            } 
-            // else if (resolutionTatTimings?.escalation_time) {
-            //   const escalationDate = new Date(resolutionTatTimings.escalation_time).getTime();
-            //   const diffMs = escalationDate - now;
-            //   setResolutionEscalationSeconds(Math.floor(diffMs / 1000));
-            // } 
-            // else if (resolutionTatTimings?.minutes != null) {
-            //   setResolutionEscalationSeconds(Math.floor(resolutionTatTimings.minutes * 60));
-            // } 
-            // else if (ticketData.next_resolution_escalation?.escalation_time) {
-            //   const escalationDate = new Date(ticketData.next_resolution_escalation.escalation_time).getTime();
-            //   const diffMs = escalationDate - now;
-            //   setResolutionEscalationSeconds(Math.floor(diffMs / 1000));
-            // } 
-            // else if (ticketData.next_resolution_escalation?.minutes != null) {
-            //   setResolutionEscalationSeconds(Math.floor(ticketData.next_resolution_escalation.minutes * 60));
-            // } 
-            else {
-              setResolutionEscalationSeconds(0);
-            }
-          } catch (e) {
-            console.error('Error initializing resolution escalation seconds', e);
+        // Resolution Escalation - initialize once from sequence
+        try {
+          if (Array.isArray(resolutionTatTimings) && resolutionTatTimings.length > 0) {
+            const idx = resolutionSeqIndexRef.current || 0;
+            const step = resolutionTatTimings[idx] || resolutionTatTimings[0];
+            const mins = step?.scheduled_minutes ?? step?.minutes ?? 0;
+            setResolutionEscalationSeconds(Math.floor((mins || 0) * 60));
+          } else {
             setResolutionEscalationSeconds(0);
           }
-        } else {
+        } catch (e) {
+          console.error('Error initializing resolution escalation seconds', e);
           setResolutionEscalationSeconds(0);
         }
 
         // Golden Ticket Escalation
-        if (ticketData.next_executive_escalation?.escalation_time && !isTicketOnHold) {
+        if (ticketData.next_executive_escalation?.escalation_time) {
           try {
             const escalationDate = new Date(ticketData.next_executive_escalation.escalation_time).getTime();
             const diffMs = escalationDate - now;
@@ -3494,18 +3459,22 @@ console.log("Updating escalation timers ", responseTatTimings)
         } else {
           setGoldenTicketEscalationSeconds(0);
         }
+
+        // Mark as initialized
+        escalationInitRef.current = true;
+        console.log('✅ Escalation timers initialized once');
       };
 
-      // Initial calculation
+      // Initial calculation (only runs once)
       updateEscalationTimers();
 
-      // Tick every second. Instead of polling every 30s, refresh only when a timer completes
+      // Tick every second - ageing always runs, Balance TAT only when active
       const interval = setInterval(() => {
-        // Ageing timer continues even when on hold, but stops when closed
+        // Ageing timer ALWAYS continues (even when on hold or closed)
         setCurrentAgeing(prev => prev + 1);
 
-        // Escalation timers stop when on hold or closed
-        if (!isTicketOnHold) {
+        // Balance TAT timers ONLY decrement when NOT on hold and NOT closed
+        if (!isTicketOnHold && !isTicketClosed) {
           // Flag to indicate if we should refresh ticket data this tick
           let refreshNeeded = false;
 
@@ -3553,7 +3522,7 @@ console.log("Updating escalation timers ", responseTatTimings)
             return next;
           });
 
-          // Golden ticket remains unchanged (single deadline)
+          // Golden ticket decrement
           setGoldenTicketEscalationSeconds(prev => {
             const next = prev - 1;
             if (prev > 0 && next <= 0) {
@@ -3568,38 +3537,10 @@ console.log("Updating escalation timers ", responseTatTimings)
             refreshTicketData();
           }
         }
+        // Note: When on hold or closed, Balance TAT timers remain frozen (no setState calls)
       }, 1000);
 
       return () => clearInterval(interval);
-    } else if ((isTicketClosed || isTicketOnHold) && ticketData) {
-      // For closed or on hold tickets, set static values from API data
-      if (ticketData.ticket_ageing_minutes) {
-        const staticAgeingSeconds = ticketData.ticket_ageing_minutes * 60;
-        setCurrentAgeing(staticAgeingSeconds);
-      } else if (ticketData.ticket_ageing) {
-        // Parse "43 hour 7 min" format
-        const ageingString = ticketData.ticket_ageing;
-        const hourMatch = ageingString.match(/(\d+)\s*hour/i);
-        const minMatch = ageingString.match(/(\d+)\s*min/i);
-        
-        if (hourMatch || minMatch) {
-          const hours = hourMatch ? parseInt(hourMatch[1]) : 0;
-          const mins = minMatch ? parseInt(minMatch[1]) : 0;
-          const totalSeconds = (hours * 60 + mins) * 60;
-          setCurrentAgeing(totalSeconds);
-        }
-      }
-      
-      // Set static escalation values for closed/on hold tickets
-      if (ticketData.next_response_escalation?.minutes) {
-        setResponseEscalationSeconds(ticketData.next_response_escalation.minutes * 60);
-      }
-      if (ticketData.next_resolution_escalation?.minutes) {
-        setResolutionEscalationSeconds(ticketData.next_resolution_escalation.minutes * 60);
-      }
-      if (ticketData.next_executive_escalation?.minutes) {
-        setGoldenTicketEscalationSeconds(ticketData.next_executive_escalation.minutes * 60);
-      }
     }
   }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time, ticketData, isTicketClosed, isTicketOnHold, refreshTicketData, responseTatTimings, resolutionTatTimings]);
 
@@ -3654,9 +3595,7 @@ console.log("Updating escalation timers ", responseTatTimings)
       },
       {
         label: 'Balance TAT',
-        value: (isTicketClosed || isTicketOnHold)
-          ? '00:00:00:00'
-          : formatSecondsToDDHHMMSS(responseEscalationSeconds),
+        value: formatSecondsToDDHHMMSS(responseEscalationSeconds),
         isExceeded: !(isTicketClosed || isTicketOnHold) && responseEscalationSeconds <= 0,
         exceededBy: !(isTicketClosed || isTicketOnHold) && responseEscalationSeconds <= 0
           ? formatSecondsToDDHHMMSS(Math.abs(responseEscalationSeconds))
@@ -3708,9 +3647,7 @@ console.log("Updating escalation timers ", responseTatTimings)
       },
       {
         label: 'Balance TAT',
-        value: (isTicketClosed || isTicketOnHold)
-          ? '00:00:00:00'
-          : formatSecondsToDDHHMMSS(resolutionEscalationSeconds),
+        value: formatSecondsToDDHHMMSS(resolutionEscalationSeconds),
         isExceeded: !(isTicketClosed || isTicketOnHold) && resolutionEscalationSeconds <= 0,
         exceededBy: !(isTicketClosed || isTicketOnHold) && resolutionEscalationSeconds <= 0
           ? formatSecondsToDDHHMMSS(Math.abs(resolutionEscalationSeconds))
@@ -3747,6 +3684,7 @@ console.log("Updating escalation timers ", responseTatTimings)
     ],
   ];
 
+  console.log("tatGridRows:-", tatGridRows)
   // Helper function to find the matched responsible person
   const getResponsiblePersonValue = () => {
     if (!ticketData?.responsible_person) return '';
@@ -4744,16 +4682,7 @@ console.log("Updating escalation timers ", responseTatTimings)
                                   <path d="M0 0H24V24H0V0Z" fill="#434343" />
                                 </g>
                               </svg>
-                              <span style={{ fontSize: '16px', fontWeight: 600 }} className="text-black ml-1">
-                                {
-                                  ticketData.issue_status.toLowerCase() === "complete" ||
-                                    ticketData.issue_status.toLowerCase() === "close" ||
-                                    ticketData.issue_status.toLowerCase() === "closed" ||
-                                    ticketData.issue_status.toLowerCase() === "on hold"
-                                    ? (ticketData.ticket_ageing_minutes ? formatMinutesToDDHHMM(ticketData.ticket_ageing_minutes) + ':00' : '00:00:00:00')
-                                    : formatTicketAgeing(currentAgeing)
-                                }
-                              </span>
+                              <span style={{ fontSize: '16px', fontWeight: 600 }} className="text-black ml-1">{formatTicketAgeing(currentAgeing)}</span>
                             </div>
                             <div className="flex justify-center items-center gap-2 mb-2">
                               {ticketData.is_executive_ecalation === true && (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 16 18" fill="none">
@@ -7846,16 +7775,7 @@ console.log("Updating escalation timers ", responseTatTimings)
                                   <path d="M0 0H24V24H0V0Z" fill="#434343" />
                                 </g>
                               </svg>
-                              <span style={{ fontSize: '16px', fontWeight: 600 }} className="text-black ml-1">
-                                {
-                                  ticketData.issue_status.toLowerCase() === "complete" ||
-                                    ticketData.issue_status.toLowerCase() === "close" ||
-                                    ticketData.issue_status.toLowerCase() === "closed" ||
-                                    ticketData.issue_status.toLowerCase() === "on hold"
-                                    ? (ticketData.ticket_ageing_minutes ? formatMinutesToDDHHMM(ticketData.ticket_ageing_minutes) + ':00' : '00:00:00:00')
-                                    : formatTicketAgeing(currentAgeing)
-                                }
-                              </span>
+                              <span style={{ fontSize: '16px', fontWeight: 600 }} className="text-black ml-1">{formatTicketAgeing(currentAgeing)}</span>
                             </div>
                             <div className="flex justify-center items-center gap-2 mb-2">
                               {ticketData.is_executive_ecalation === true && (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 16 18" fill="none">
