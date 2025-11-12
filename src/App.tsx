@@ -776,6 +776,7 @@ import MsafeCirlce from "./pages/MsafeCirlce";
 import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
 import Sitemap from "./pages/Sitemap";
 import BookingList from "./pages/BookingList";
+import IframeDashboardMsafe from "./pages/IframeDashboardMsafe";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -988,6 +989,15 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/msafe-dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <IframeDashboardMsafe />
                     </ProtectedRoute>
                   }
                 />
