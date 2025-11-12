@@ -163,7 +163,7 @@ export const BroadcastDashboard = () => {
       case 'attachments':
         return item.attachments.length > 0 ? (
           <img
-            style={{ width: "100%", height: "50px" }}
+            style={{ width: "100px", height: "50px", objectFit: "contain" }}
             src={item.attachments[0].document_url}
           />
         ) : (
