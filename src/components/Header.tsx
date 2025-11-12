@@ -379,7 +379,7 @@ export const Header = () => {
             {isViSite && (
               <button
                 onClick={() =>
-                  navigate("/msafe-dashboard")
+                  navigate("/msafedashboard")
                 }
                 className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
               >
