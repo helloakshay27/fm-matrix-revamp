@@ -3468,10 +3468,12 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
       // Initial calculation (only runs once)
       updateEscalationTimers();
 
-      // Tick every second - ageing always runs, Balance TAT only when active
+      // Tick every second
       const interval = setInterval(() => {
-        // Ageing timer ALWAYS continues (even when on hold or closed)
-        setCurrentAgeing(prev => prev + 1);
+        // Ageing timer: continues when on hold, freezes when closed
+        if (!isTicketClosed) {
+          setCurrentAgeing(prev => prev + 1);
+        }
 
         // Balance TAT timers ONLY decrement when NOT on hold and NOT closed
         if (!isTicketOnHold && !isTicketClosed) {
