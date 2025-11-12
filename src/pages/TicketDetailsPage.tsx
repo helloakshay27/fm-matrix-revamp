@@ -3468,12 +3468,10 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
       // Initial calculation (only runs once)
       updateEscalationTimers();
 
-      // Tick every second
+      // Tick every second - ageing always runs, Balance TAT only when active
       const interval = setInterval(() => {
-        // Ageing timer: continues when on hold, freezes when closed
-        if (!isTicketClosed) {
-          setCurrentAgeing(prev => prev + 1);
-        }
+        // Ageing timer ALWAYS continues (even when on hold or closed)
+        setCurrentAgeing(prev => prev + 1);
 
         // Balance TAT timers ONLY decrement when NOT on hold and NOT closed
         if (!isTicketOnHold && !isTicketClosed) {
@@ -4345,6 +4343,44 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
 
                           <div className="text-[12px] text-[#9CA3AF] mt-1 leading-tight whitespace-pre-line" style={{ textAlign: 'left' }}>
                             {(() => {
+                              // Use responseSequence with responseSequenceIndex for accurate escalation data
+                              const seq = responseSequence;
+                              if (seq && seq.length > 0 && responseSequenceIndex >= 0) {
+                                const step = seq[responseSequenceIndex];
+                                const escName = step?.escalation_name || '';
+                                const usersArr = Array.isArray(step?.escalate_to_user) ? step.escalate_to_user : (Array.isArray(step?.users) ? step.users : []);
+                                const users = usersArr.filter(u => !!u);
+                                
+                                if (!escName && (!users || users.length === 0)) return '';
+                                
+                                if (users.length > 1) {
+                                  // Show first user with hover for remaining users
+                                  const firstUser = users[0];
+                                  const remainingUsers = users.slice(1);
+                                  return (
+                                    <div>
+                                      {escName && <div>{escName} -</div>}
+                                      <div className="relative inline-block group">
+                                        <span className="cursor-pointer hover:underline">
+                                          {firstUser}
+                                        </span>
+                                        <div className="invisible group-hover:visible absolute z-50 left-0 top-full mt-1 bg-white text-gray-800 text-xs py-2 px-3 rounded-xl shadow-lg whitespace-pre-line min-w-[150px] border-0">
+                                          {remainingUsers.join('\n')}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                } else if (escName && users.length === 1) {
+                                  return `${escName} -\n${users[0]}`;
+                                } else if (escName) {
+                                  return escName;
+                                } else if (users.length === 1) {
+                                  return users[0];
+                                }
+                                return '';
+                              }
+                              
+                              // Fallback to ticketData if sequence is not available
                               const escName = ticketData.next_response_escalation?.escalation_name || '';
                               const users = Array.isArray(ticketData.next_response_escalation?.users)
                                 ? ticketData.next_response_escalation.users.filter(u => !!u)
@@ -4353,7 +4389,6 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                               if (!escName && (!users || users.length === 0)) return '';
                               
                               if (users.length > 1) {
-                                // Show first user with hover for remaining users
                                 const firstUser = users[0];
                                 const remainingUsers = users.slice(1);
                                 return (
@@ -4427,6 +4462,44 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                           </span>
                           <div className="text-[12px] text-[#9CA3AF] mt-1 leading-tight whitespace-pre-line" style={{ textAlign: 'left' }}>
                             {(() => {
+                              // Use resolutionSequence with resolutionSequenceIndex for accurate escalation data
+                              const seq = resolutionSequence;
+                              if (seq && seq.length > 0 && resolutionSequenceIndex >= 0) {
+                                const step = seq[resolutionSequenceIndex];
+                                const escName = step?.escalation_name || '';
+                                const usersArr = Array.isArray(step?.escalate_to_user) ? step.escalate_to_user : (Array.isArray(step?.users) ? step.users : []);
+                                const users = usersArr.filter(u => !!u);
+                                
+                                if (!escName && (!users || users.length === 0)) return '';
+                                
+                                if (users.length > 1) {
+                                  // Show first user with hover for remaining users
+                                  const firstUser = users[0];
+                                  const remainingUsers = users.slice(1);
+                                  return (
+                                    <div>
+                                      {escName && <div>{escName} -</div>}
+                                      <div className="relative inline-block group">
+                                        <span className="cursor-pointer hover:underline">
+                                          {firstUser}
+                                        </span>
+                                        <div className="invisible group-hover:visible absolute z-50 left-0 top-full mt-1 bg-white text-gray-800 text-xs py-2 px-3 rounded-xl shadow-lg whitespace-pre-line min-w-[150px] border-0">
+                                          {remainingUsers.join('\n')}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                } else if (escName && users.length === 1) {
+                                  return `${escName} -\n${users[0]}`;
+                                } else if (escName) {
+                                  return escName;
+                                } else if (users.length === 1) {
+                                  return users[0];
+                                }
+                                return '';
+                              }
+                              
+                              // Fallback to ticketData if sequence is not available
                               const escName = ticketData.next_resolution_escalation?.escalation_name || '';
                               const users = Array.isArray(ticketData.next_resolution_escalation?.users)
                                 ? ticketData.next_resolution_escalation.users.filter(u => !!u)
