@@ -2,7 +2,7 @@ import { set } from 'lodash';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, Typography } from "@mui/material";
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelList, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 // Clean final version
 type StatCardProps = { value: number | string; label: string; percent?: string; subLabel?: string };
@@ -57,6 +57,10 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
             } catch { }
         };
     }, []);
+    const RADIAN = Math.PI / 180;
+    const outerRadiusValue = isPrinting ? 140 : 130;
+    const innerRadiusValue = 0;
+    const formatPercent = (p: number) => `${p.toFixed(2)}%`;
     return (
         <div className="w-full no-break tat-pie-card">
             <h3 className="text-black font-semibold text-base sm:text-lg mb-1 print:mb-1">{title}</h3>
@@ -64,16 +68,57 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
                 <div className="w-full h-[260px] sm:h-[320px] print:h-[300px] tat-pie-container">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart margin={isPrinting ? { top: 0, right: 0, bottom: 0, left: 0 } : { top: 0, right: 0, bottom: 0, left: 0 }}>
-                            <Pie data={data} dataKey="value" nameKey="name" innerRadius={0} outerRadius={isPrinting ? '98%' : '92%'} stroke="#FFFFFF" paddingAngle={0} cx="50%" cy="50%">
+                            <Pie
+                                data={data}
+                                dataKey="value"
+                                nameKey="name"
+                                innerRadius={innerRadiusValue}
+                                outerRadius={outerRadiusValue}
+                                stroke="#FFFFFF"
+                                paddingAngle={0}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                label={({ cx, cy, midAngle, percent, index }) => {
+                                    const radius = outerRadiusValue + 24;
+                                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                    const alignRight = x > cx;
+                                    const item = data[index];
+                                    return (
+                                        <text
+                                            x={x}
+                                            y={y}
+                                            fill="#374151"
+                                            textAnchor={alignRight ? 'start' : 'end'}
+                                            dominantBaseline="middle"
+                                            fontSize={12}
+                                            fontWeight={600}
+                                        >
+                                            {`${item.name} ${item.value.toLocaleString()} (${formatPercent(percent * 100)})`}
+                                        </text>
+                                    );
+                                }}
+                            >
                                 {data.map((d, i) => <Cell key={i} fill={d.color} />)}
+                                <LabelList
+                                    position="inside"
+                                    fill="black"
+                                    fontSize={10}
+                                    fontWeight={200}
+                                    formatter={(value: number) => {
+                                        const pct = total ? (value / total) * 100 : 0;
+                                        return `${pct.toFixed(0)}%`;
+                                    }}
+                                />
                             </Pie>
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
 
-                <div className="mt-2 print:mt-1 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm sm:text-base print:text-[12px]">
-                    <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: '#D9D3C4' }} /> <span className="text-black font-medium">Achieved:</span> <span className="text-black/80">{achieved.toLocaleString()} ({achPct.toFixed(2)}%)</span></div>
-                    <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: '#C4B89D' }} /> <span className="text-black font-medium">Breached:</span> <span className="text-black/80">{breached.toLocaleString()} ({brcPct.toFixed(2)}%)</span></div>
+                <div className="mt-2 print:mt-1 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm sm:text-base print:text-[12px]">
+                    <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: '#DBC2A9' }} /> <span className="text-black font-medium">Achieved:</span> <span className="text-black/80">{achieved.toLocaleString()} ({achPct.toFixed(2)}%)</span></div>
+                    <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: '#8B7355' }} /> <span className="text-black font-medium">Breached:</span> <span className="text-black/80">{breached.toLocaleString()} ({brcPct.toFixed(2)}%)</span></div>
                 </div>
             </div>
         </div>
@@ -109,7 +154,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         return `${fmt(start)} - ${fmt(end)}`;
     }, [startDate, endDate]);
 
-    // Date range label for cover page (format: From: Mon - YYYY TO Mon - YYYY) - same as AllContent
+    // Date range label for cover page (format: From: DD Mon YYYY to DD Mon YYYY) - full date range
     const dateRangeLabel = React.useMemo(() => {
         let end: Date;
         let start: Date;
@@ -125,17 +170,20 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         
         try {
             const fmt = (d: Date) => {
+                const day = d.getDate();
                 const month = d.toLocaleString('en-US', { month: 'short' });
                 const year = d.getFullYear();
-                return `${month} - ${year}`;
+                return `${day} ${month} ${year}`;
             };
-            return `From: ${fmt(start)} TO ${fmt(end)}`;
+            return `From: ${fmt(start)} to ${fmt(end)}`;
         } catch {
+            const dayStart = start.getDate();
             const monthStart = start.toLocaleString('en-US', { month: 'short' });
             const yearStart = start.getFullYear();
+            const dayEnd = end.getDate();
             const monthEnd = end.toLocaleString('en-US', { month: 'short' });
             const yearEnd = end.getFullYear();
-            return `From: ${monthStart} - ${yearStart} TO ${monthEnd} - ${yearEnd}`;
+            return `From: ${dayStart} ${monthStart} ${yearStart} to ${dayEnd} ${monthEnd} ${yearEnd}`;
         }
     }, [startDate, endDate]);
 
@@ -1073,13 +1121,13 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
           }
 
           .date-range-text > span:first-of-type {
-              left: 235px !important;
+              left: 239px !important;
               max-width: none !important;
               overflow: visible !important;
           }
 
           .date-range-text > span:last-of-type {
-              left: 277px !important;
+              left: 281px !important;
               max-width: none !important;
               overflow: visible !important;
           }
@@ -1092,24 +1140,49 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
           /* Fix WEEKLY text overflow in print */
           .weekly-text {
               white-space: nowrap !important;
-              overflow: visible !important;
+               overflow: visible !important;
               width: 100% !important;
               max-width: 100% !important;
           }
 
           .weekly-text > span:first-of-type {
-              left: 80px !important;
+              left: 70px !important;
               max-width: none !important;
               overflow: visible !important;
           }
 
           .weekly-text > span:last-of-type {
-              left: 125px !important;
+              left: 120px !important;
               max-width: none !important;
               overflow: visible !important;
           }
 
           .weekly-text span span {
+              white-space: nowrap !important;
+              display: inline-block !important;
+          }
+
+          /* Fix REPORT text overflow in print */
+          .report-text {
+              white-space: nowrap !important;
+              overflow: visible !important;
+              width: 100% !important;
+              max-width: 100% !important;
+          }
+
+          .report-text > span:first-of-type {
+              left: 140px !important;
+              max-width: none !important;
+              overflow: visible !important;
+          }
+
+          .report-text > span:last-of-type {
+              left: 181px !important;
+              max-width: none !important;
+              overflow: visible !important;
+          }
+
+          .report-text span span {
               white-space: nowrap !important;
               display: inline-block !important;
           }
@@ -1408,9 +1481,9 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         }}
       >
         {/* Header Image */}
-        <div className="relative h-[700px] w-full print:h-[600px] print:overflow-hidden">
+        <div className="relative h-[750px] w-full print:h-[600px] print:overflow-hidden">
             <img
-                src="https://images.pexels.com/photos/1181396/pexels-photo-1181396.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                src="/weekly_report png.png"
                 alt="Meeting Room"
                 className="w-full h-full object-cover print:h-[600px] print:object-cover"
             />
@@ -1430,15 +1503,15 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
               py: 0.5,
             }}
           >
-            {/* <Typography
-              variant="h6"
-              sx={{ fontWeight: 700, color: "#bf0c0c", mr: 0.5 }}
-            >
-              go
-            </Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "#000" }}>
-              Phygital.work
-            </Typography> */}
+            <img
+              src="/gophygital-logo-min.jpg"
+              alt="GoPhygital Logo"
+              style={{
+                height: "auto",
+                maxHeight: "40px",
+                width: "auto",
+              }}
+            />
           </Box>
 
           {/* Site Label */}
@@ -1446,13 +1519,21 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             sx={{
               position: "absolute",
               bottom: 16,
-              right: 24,
+              right: 0,
               color: "white",
-              fontWeight: 500,
-              fontSize: 14,
+              fontWeight: 700,
+              fontSize: 18,
+              minWidth: 250,
+              textAlign: "right",
+              paddingRight: 3,
+              '@media print': {
+                right: 0,
+                paddingRight: 2,
+                fontSize: 16,
+              },
             }}
           >
-            <span style={{ fontWeight: 600 }}>SITE</span>: {siteLabel || 'N/A'}
+            <span style={{ fontWeight: 700 }}>Site</span> : <span style={{ fontWeight: 700 }}>{siteLabel || 'N/A'}</span>
           </Typography>
         </div>
 
@@ -1555,6 +1636,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
 
             {/* REPORT - Single word, split by color - BELOW */}
             <div
+              className="report-text"
               style={{
                 marginTop: "20px",
                 paddingLeft: "40px",

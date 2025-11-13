@@ -80,9 +80,15 @@ export const OTPVerificationPage = () => {
       });
       const response = await verifyOTP(otp);
 
+      // Check if OTP verification failed
+      if (response.verified === false) {
+        toast.error("Invalid OTP");
+        throw new Error("Invalid OTP");
+      }
+
       // If we reach here, verification was successful
       // Check if response has required data
-      if (response.verified == true  && response.access_token) {
+      if (response.verified === true && response.access_token) {
         const baseUrl = getBaseUrl();
 
         saveUser({
@@ -104,6 +110,10 @@ export const OTPVerificationPage = () => {
         }
 
         localStorage.setItem("userId", response.id.toString());
+        
+        // Clear temporary data after successful login
+        localStorage.removeItem("temp_email");
+        localStorage.removeItem("temp_token");
 
         toast.success(`Welcome back, ${response.firstname || "User"}!`);
 
@@ -113,13 +123,9 @@ export const OTPVerificationPage = () => {
 
         // Redirect to appropriate dashboard
         setTimeout(() => {
-          navigate(
-            isViSite ? "/safety/m-safe/internal" : "/maintenance/asset"
-          );
+          navigate(isViSite ? "/safety/m-safe/internal" : "/maintenance/asset");
         }, 1000);
-      }
-
-      // Get base URL before using it
+      } 
     } catch (error) {
       const newAttemptCount = attemptCount + 1;
       setAttemptCount(newAttemptCount);
@@ -149,7 +155,8 @@ export const OTPVerificationPage = () => {
           }, 1500);
         } else {
           toast.error(
-            `Invalid OTP. ${remainingAttempts} attempt${remainingAttempts > 1 ? "s" : ""
+            `Invalid OTP. ${remainingAttempts} attempt${
+              remainingAttempts > 1 ? "s" : ""
             } remaining.`
           );
         }
@@ -395,13 +402,15 @@ export const OTPVerificationPage = () => {
         {attemptCount > 0 && (
           <div className="mb-4 text-center">
             <p
-              className={`text-sm font-medium ${attemptCount >= 3 ? "text-red-600 font-bold" : "text-orange-600"
-                }`}
+              className={`text-sm font-medium ${
+                attemptCount >= 3 ? "text-red-600 font-bold" : "text-orange-600"
+              }`}
             >
               {attemptCount >= 3
                 ? "Maximum attempts reached - Please login again"
-                : `${attemptCount} incorrect attempt${attemptCount > 1 ? "s" : ""
-                } • ${3 - attemptCount} remaining`}
+                : `${attemptCount} incorrect attempt${
+                    attemptCount > 1 ? "s" : ""
+                  } • ${3 - attemptCount} remaining`}
             </p>
           </div>
         )}
