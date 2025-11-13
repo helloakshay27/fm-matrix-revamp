@@ -436,7 +436,7 @@ export const OTPVerificationPage = () => {
         </Button>
 
         {/* Resend OTP */}
-        <div className="text-center mt-6">
+        {/* <div className="text-center mt-6">
           <p className="text-gray-600 text-sm mb-2">
             Didn't receive the code?{" "}
             {canResend ? (
@@ -453,7 +453,7 @@ export const OTPVerificationPage = () => {
               </span>
             )}
           </p>
-        </div>
+        </div> */}
 
         {/* Error Message */}
         <div className="text-center mt-4">
