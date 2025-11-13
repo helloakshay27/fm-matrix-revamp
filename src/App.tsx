@@ -1000,7 +1000,6 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/msafedashboard" element={<MsafeDashboardVI />} />
 
                 <Route
                   path="/dashboard-executive"
@@ -1458,6 +1457,12 @@ function App() {
                     path="/crm/wallet-list/:id"
                     element={<CRMWalletDetails />}
                   />
+
+                  <Route
+                    path="/msafedashboard"
+                    element={<MsafeDashboardVI />}
+                  />
+
                   <Route
                     path="/crm/point-expiry"
                     element={<CRMWalletPointExpiry />}
