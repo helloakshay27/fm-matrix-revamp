@@ -189,6 +189,7 @@ export const FMUserMasterDashboard = () => {
   });
 
   const [fmUsersData, setFmUsersData] = useState<TransformedFMUser[]>([]);
+  const [fmForClone, setFmForClone] = useState([])
   const [filteredFMUsersData, setFilteredFMUsersData] = useState<TransformedFMUser[]>([]);
   const [cloneLoading, setCloneLoading] = useState<boolean>(false);
   const [pagination, setPagination] = useState<PaginationState>({
@@ -216,9 +217,24 @@ export const FMUserMasterDashboard = () => {
     }
   };
 
+  const getShortFmUsers = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+
+      setFmForClone(response.data.users)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   useEffect(() => {
     if (baseUrl && token) {
       fetchUsers(1);
+      getShortFmUsers()
     }
   }, [baseUrl, token]);
 
@@ -986,10 +1002,10 @@ export const FMUserMasterDashboard = () => {
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                   >
-                    {fmUsersData.length > 0 ? (
-                      fmUsersData.map((user) => (
+                    {fmForClone.length > 0 ? (
+                      fmForClone.map((user) => (
                         <MenuItem key={user.id} value={user.id}>
-                          {user.userName}
+                          {user.full_name}
                         </MenuItem>
                       ))
                     ) : (
@@ -1010,10 +1026,10 @@ export const FMUserMasterDashboard = () => {
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                   >
-                    {fmUsersData.length > 0 ? (
-                      fmUsersData.map((user) => (
+                    {fmForClone.length > 0 ? (
+                      fmForClone.map((user) => (
                         <MenuItem key={user.id} value={user.id}>
-                          {user.userName}
+                          {user.full_name}
                         </MenuItem>
                       ))
                     ) : (
@@ -1036,10 +1052,10 @@ export const FMUserMasterDashboard = () => {
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                   >
-                    {fmUsersData.length > 0 ? (
-                      fmUsersData.map((user) => (
+                    {fmForClone.length > 0 ? (
+                      fmForClone.map((user) => (
                         <MenuItem key={user.id} value={user.id}>
-                          {user.userName}
+                          {user.full_name}
                         </MenuItem>
                       ))
                     ) : (
@@ -1060,10 +1076,10 @@ export const FMUserMasterDashboard = () => {
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                   >
-                    {fmUsersData.length > 0 ? (
-                      fmUsersData.map((user) => (
+                    {fmForClone.length > 0 ? (
+                      fmForClone.map((user) => (
                         <MenuItem key={user.id} value={user.id}>
-                          {user.userName}
+                          {user.full_name}
                         </MenuItem>
                       ))
                     ) : (

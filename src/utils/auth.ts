@@ -182,7 +182,7 @@ export const getOrganizationsByEmail = async (
 
   // Default fallback for other sites
   const response = await fetch(
-      `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+    `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
   );
 
   if (!response.ok) {
@@ -222,7 +222,7 @@ export const loginUser = async (
     // Try to get error details from response
     let errorMessage = "Login failed";
     let errorData = null;
-    
+
     try {
       errorData = await response.json();
       if (errorData?.error) {
@@ -232,7 +232,7 @@ export const loginUser = async (
       // If response is not JSON, use status text
       errorMessage = response.statusText || "Login failed";
     }
-    
+
     const error = new Error(errorMessage) as any;
     error.status = response.status;
     error.data = errorData;
@@ -493,7 +493,7 @@ export const getOrganizationsByEmailAndAutoSelect = async (
     hostname.includes("fm.gophygital.work");
 
   let apiUrl = "";
-  
+
   if (isOmanSite || isFmSite) {
     apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
   } else if (isViSite) {
@@ -511,7 +511,7 @@ export const getOrganizationsByEmailAndAutoSelect = async (
 
   const data = await response.json();
   const organizations = data.organizations || [];
-  
+
   // Auto-select organization if orgId is provided
   let selectedOrg: Organization | null = null;
   if (orgId) {
