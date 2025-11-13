@@ -243,6 +243,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         toast.error(
           "Web access is disabled for your account. Please contact your administrator."
         );
+        return;
       }
 
       // Check if number is verified first
