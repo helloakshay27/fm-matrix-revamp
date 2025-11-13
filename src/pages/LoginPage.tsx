@@ -69,16 +69,17 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const isOmanSite = hostname.includes("oig.gophygital.work");
   // Check if it's VI site
   const isViSite = hostname.includes("vi-web.gophygital.work");
+  const isWebSite = hostname.includes("web.gophygital.work");
 
   // Check URL for email and orgId parameters on component mount
   React.useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const emailParam = searchParams.get('email');
-    const orgIdParam = searchParams.get('orgId');
+    const emailParam = searchParams.get("email");
+    const orgIdParam = searchParams.get("orgId");
 
     if (emailParam) {
       setEmail(emailParam);
-      
+
       // Auto-fetch and select organization if orgId is provided
       if (orgIdParam) {
         handleAutoSelectOrganization(emailParam, orgIdParam);
@@ -86,7 +87,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     }
   }, [location.search]);
 
-  const handleAutoSelectOrganization = async (emailAddress: string, orgId: string) => {
+  const handleAutoSelectOrganization = async (
+    emailAddress: string,
+    orgId: string
+  ) => {
     if (!validateEmail(emailAddress)) {
       toast.error("Invalid email address in URL.");
       return;
@@ -94,20 +98,23 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
     setIsLoading(true);
     try {
-      const { organizations: orgs, selectedOrg } = await getOrganizationsByEmailAndAutoSelect(emailAddress, orgId);
-      
+      const { organizations: orgs, selectedOrg } =
+        await getOrganizationsByEmailAndAutoSelect(emailAddress, orgId);
+
       setOrganizations(orgs);
-      
+
       if (selectedOrg) {
         // Auto-select the organization and move to password step
         handleOrganizationSelect(selectedOrg);
-        toast.success(`Organization "${selectedOrg.name}" automatically selected.`);
+        toast.success(
+          `Organization "${selectedOrg.name}" automatically selected.`
+        );
       } else {
         // If orgId doesn't match, show organization selection step
         setCurrentStep(2);
         toast.info("Please select your organization.");
       }
-      
+
       if (orgs.length === 0) {
         toast.error("No organizations found for this email address.");
       }
@@ -266,6 +273,42 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         return; // Exit early, don't save user data yet
       }
 
+      if (response.company_id === 145 && response.web_enabled === true && isViSite && isWebSite) {
+        // Store email temporarily for OTP verification
+        localStorage.setItem("temp_email", email);
+        localStorage.setItem("temp_token", response.access_token);
+
+        saveUser({
+          id: response.id,
+          email: response.email,
+          firstname: response.firstname,
+          lastname: response.lastname,
+          mobile: response.mobile,
+          latitude: response.latitude,
+          longitude: response.longitude,
+          country_code: response.country_code,
+          // spree_api_key: response.spree_api_key,
+          lock_role: response.lock_role,
+        });
+
+        saveBaseUrl(baseUrl);
+        localStorage.setItem("userId", response.id.toString());
+        localStorage.setItem("userType", response.user_type.toString());
+        // Session Storage
+        sessionStorage.setItem("userId", response.id.toString());
+        sessionStorage.setItem("userType", response.user_type.toString());
+
+        toast.success(
+          "OTP sent successfully! Please verify your phone number to continue."
+        );
+
+        // Redirect to OTP verification page
+        setTimeout(() => {
+          navigate("/otp-verification");
+        }, 500);
+        return; // Exit early, don't save user data yet
+      }
+
       // Save user data and token to localStorage (only for verified users)
       saveUser({
         id: response.id,
@@ -297,8 +340,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
       // Add a slight delay for better UX, then redirect to dashboard
       setTimeout(() => {
-
-         isViSite
+        isViSite
           ? navigate("/safety/m-safe/internal")
           : navigate(from, { replace: true });
         // Special routing for user ID 189005
@@ -316,10 +358,12 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       // Handle specific error messages from API
       if (error?.status === 401) {
         // Check for specific error messages
-        const errorMessage = error?.message?.toLowerCase() || '';
-        
-        if (errorMessage.includes('locked') || errorMessage.includes('lock')) {
-          toast.error("Your account has been locked. Please contact your administrator.");
+        const errorMessage = error?.message?.toLowerCase() || "";
+
+        if (errorMessage.includes("locked") || errorMessage.includes("lock")) {
+          toast.error(
+            "Your account has been locked. Please contact your administrator."
+          );
         } else {
           toast.error("Invalid email or password. Please try again.");
         }
