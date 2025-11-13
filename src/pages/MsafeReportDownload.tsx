@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText, Loader2 } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 const MsafeReportDownload = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [status, setStatus] = useState<'idle' | 'processing' | 'completed' | 'error'>('idle');
   const [message, setMessage] = useState<string>('');
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [documentId, setDocumentId] = useState(null)
   const pollTimerRef = useRef<number | null>(null);
   const pollCountRef = useRef(0);
 
@@ -65,12 +68,13 @@ const MsafeReportDownload = () => {
       const data = await fetchStatusOnce();
       const state = (data?.state || data?.status || '').toString().toLowerCase();
       const dl = data?.url || data?.download_url;
+      const di = (data as any)?.document_id;
 
       if (state === 'completed') {
         clearPoll();
         setStatus('completed');
         setMessage('Report is ready to download.');
-        if (dl) setDownloadUrl((dl as string).startsWith('http') ? (dl as string) : `${baseUrl}${dl}`);
+        if (di) setDownloadUrl(di);
       } else if (state === 'error' || state === 'failed') {
         clearPoll();
         setStatus('error');
@@ -94,6 +98,32 @@ const MsafeReportDownload = () => {
     }, 300000);
   };
 
+  const handleDownload = async () => {
+    const baseUrl = getBaseUrl();
+    try {
+      const res = await axios.get(`${baseUrl}/attachfiles/${documentId}?show_file=true`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        responseType: 'blob',
+      })
+
+      const contentType = res.headers['content-type'] || 'application/octet-stream';
+      const blob = new Blob([res.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = "MSafe Users Report.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('File downloaded successfully');
+    } catch (error) {
+
+    }
+  }
+
   // On first load, try to show any existing export status/download from the status endpoint
   useEffect(() => {
     (async () => {
@@ -102,6 +132,7 @@ const MsafeReportDownload = () => {
       const baseUrl = getBaseUrl();
       const state = (data?.state || data?.status || '').toString().toLowerCase();
       const dl = (data as any)?.url || (data as any)?.download_url;
+      setDocumentId((data as any)?.document_id);
 
       if (state === 'completed') {
         setStatus('completed');
@@ -202,7 +233,7 @@ const MsafeReportDownload = () => {
     <div className="relative p-6 sm:p-8">
       <div className="max-w-4xl">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-         Msafe User Report Download
+          Msafe User Report Download
         </h1>
         <p className="text-gray-600 mb-6">
           Generate and download the latest Msafe User report for your records.
@@ -221,14 +252,13 @@ const MsafeReportDownload = () => {
               )}
             </div>
             {downloadUrl && (
-              <a
-                href={downloadUrl}
-                target="_blank"
+              <Button
+                onClick={handleDownload}
                 rel="noopener noreferrer"
                 className="inline-flex items-center rounded-md bg-[#F2EEE9] px-3 py-2 text-sm font-medium text-[#BF213E]"
               >
                 Click to Download
-              </a>
+              </Button>
             )}
           </div>
         </div>
