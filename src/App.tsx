@@ -771,7 +771,7 @@ import { DirectPDFDownloadPage } from "./pages/DirectPDFDownloadPage";
 import { DeletedPRs } from "./pages/DeletedPRs";
 import MsafeDashboardVI from "./pages/MsafeDashboardVI";
 import { DashboardMobile } from "./pages/DashboardMobile";
-import SafetyCheckAudit from './pages/SafetyCheckAudit';
+import SafetyCheckAudit from "./pages/SafetyCheckAudit";
 import MsafeCirlce from "./pages/MsafeCirlce";
 import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
 import Sitemap from "./pages/Sitemap";
@@ -946,7 +946,6 @@ function App() {
                 <Route path="/thepdf" element={<AllContent />} />
                 <Route path="/dailypdf" element={<DailyReport />} />
                 <Route path="/weeklypdf" element={<WeeklyReport />} />
-                <Route path="/msafedashboard" element={<MsafeDashboardVI />} />
 
                 <Route
                   path="/login"
@@ -1001,6 +1000,8 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/msafedashboard" element={<MsafeDashboardVI />} />
+
                 <Route
                   path="/dashboard-executive"
                   element={
@@ -1648,7 +1649,10 @@ function App() {
                     path="/safety/permit/details/:id"
                     element={<PermitDetails />}
                   />
-                  <Route path="/safety-check-audit" element={<SafetyCheckAudit />} />
+                  <Route
+                    path="/safety-check-audit"
+                    element={<SafetyCheckAudit />}
+                  />
 
                   <Route
                     path="/safety/permit/edit/:id"
@@ -2877,10 +2881,7 @@ function App() {
                   />
 
                   {/* VAS Booking Routes */}
-                  <Route
-                    path="/vas/booking/list"
-                    element={<BookingList />}
-                  />
+                  <Route path="/vas/booking/list" element={<BookingList />} />
                   <Route
                     path="/vas/booking/add"
                     element={<AddFacilityBookingPage />}
@@ -3083,7 +3084,6 @@ function App() {
                     path="/master/inventory-sub-type/edit/:id"
                     element={<EditInventorySubTypePage />}
                   />
-
 
                   <Route
                     path="/maintenance/waste/generation/add"
