@@ -1,5 +1,7 @@
 import { set } from 'lodash';
 import React from 'react';
+import { useLocation } from 'react-router-dom';
+import { Box, Typography } from "@mui/material";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 // Clean final version
@@ -81,14 +83,71 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
 type WeeklyReportProps = { title?: string };
 const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) => {
     const sectionBox = 'bg-white border border-gray-300 w-[95%] mx-auto p-5 mb-10 print:w-[95%] print:mx-auto print:p-2 print:mb-4 no-break';
-
+    
+    const location = useLocation();
+    const params = React.useMemo(() => new URLSearchParams(location.search), [location.search]);
+    
+    // Get dates from URL params or use default (last 7 days)
+    const startDate = params.get('start_date') || '';
+    const endDate = params.get('end_date') || '';
+    
     // Dynamic 7-day window label (start = today - 6 days, end = today)
     const weekRangeLabel = React.useMemo(() => {
-        const end = new Date();
-        const start = new Date(end);
-        start.setDate(end.getDate() - 6);
+        let end: Date;
+        let start: Date;
+        
+        if (startDate && endDate) {
+            start = new Date(startDate);
+            end = new Date(endDate);
+        } else {
+            end = new Date();
+            start = new Date(end);
+            start.setDate(end.getDate() - 6);
+        }
+        
         const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         return `${fmt(start)} - ${fmt(end)}`;
+    }, [startDate, endDate]);
+
+    // Date range label for cover page (format: From: Mon - YYYY TO Mon - YYYY) - same as AllContent
+    const dateRangeLabel = React.useMemo(() => {
+        let end: Date;
+        let start: Date;
+        
+        if (startDate && endDate) {
+            start = new Date(startDate);
+            end = new Date(endDate);
+        } else {
+            end = new Date();
+            start = new Date(end);
+            start.setDate(end.getDate() - 6);
+        }
+        
+        try {
+            const fmt = (d: Date) => {
+                const month = d.toLocaleString('en-US', { month: 'short' });
+                const year = d.getFullYear();
+                return `${month} - ${year}`;
+            };
+            return `From: ${fmt(start)} TO ${fmt(end)}`;
+        } catch {
+            const monthStart = start.toLocaleString('en-US', { month: 'short' });
+            const yearStart = start.getFullYear();
+            const monthEnd = end.toLocaleString('en-US', { month: 'short' });
+            const yearEnd = end.getFullYear();
+            return `From: ${monthStart} - ${yearStart} TO ${monthEnd} - ${yearEnd}`;
+        }
+    }, [startDate, endDate]);
+
+    // Site label from localStorage - same as AllContent
+    const siteLabel = React.useMemo(() => {
+        if (typeof window === 'undefined') return '';
+        return (
+            localStorage.getItem('selectedSiteName') ||
+            localStorage.getItem('selectedSite') ||
+            localStorage.getItem('site_name') ||
+            ''
+        );
     }, []);
 
     // === State: Category Wise Ticket (Top-5) dynamic data ===
@@ -448,16 +507,25 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         const rawBase = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         const siteId = localStorage.getItem('selectedSiteId') || '';
-        // Dynamic date range: start = today - 6 days, end = today (7 day window)
+        // Dynamic date range: use URL params or default to last 7 days
         const formatDate = (d: Date) => {
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`; // YYYY-MM-DD
         };
-        const endDateObj = new Date();
-        const startDateObj = new Date(endDateObj); // clone
-        startDateObj.setDate(endDateObj.getDate() - 6); // last 7 calendar days inclusive
+        let endDateObj: Date;
+        let startDateObj: Date;
+        
+        if (startDate && endDate) {
+            startDateObj = new Date(startDate);
+            endDateObj = new Date(endDate);
+        } else {
+            endDateObj = new Date();
+            startDateObj = new Date(endDateObj); // clone
+            startDateObj.setDate(endDateObj.getDate() - 6); // last 7 calendar days inclusive
+        }
+        
         const fromDate = formatDate(startDateObj);
         const toDate = formatDate(endDateObj);
         const url = `https://${rawBase}/pms/admin/complaints/ticket_ageing_matrix.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${token}`;
@@ -509,7 +577,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             })
             .finally(() => setAgeingLoading(false));
         return () => controller.abort();
-    }, []);
+    }, [startDate, endDate]);
 
     // Fetch Asset Management Analysis (log response only first as requested)
     React.useEffect(() => {
@@ -873,10 +941,722 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         <div className="w-full print-exact">
             {/* readiness marker so external logic (or tests) can detect when page content mounted */}
             <div data-component="weekly-report" data-loading={overallLoading ? 'true' : 'false'} style={{ display: 'none' }} />
-            <style>{`@media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .no-break { break-inside: avoid !important; page-break-inside: avoid !important; } .first-page-group { break-inside: avoid !important; page-break-inside: avoid !important; page-break-before: auto; page-break-after: always; } a[href]::after { content: "" !important; } .tat-pie-container .recharts-wrapper { height: 100% !important; width: 100% !important; } .tat-pie-card { page-break-inside: avoid !important; } }`}</style>
+              <style>{`
+        @media print {
+          @page {
+              size: A4;
+              margin: 0;
+          }
+
+          html,
+          body {
+              font-size: 18px;
+              margin: 0;
+              padding: 0;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+          }
+
+          .print-page {
+              page-break-before: always;
+              break-before: page;
+          }
+
+          .page-break {
+              break-before: page;
+          }
+
+          .print-small li {
+              font-size: 0.75rem;
+              line-height: 1.25rem;
+          }
+
+          .print-removespace {
+              padding-top: 12px !important;
+          }
+
+          .print-footer-bar {
+              break-inside: avoid;
+              page-break-inside: avoid;
+          }
+
+          h3 {
+              font-size: 0.85rem;
+              line-height: 1rem;
+          }
+
+          .print-avoid-break {
+              break-inside: avoid;
+              page-break-inside: avoid;
+          }
+
+          .print-avoid-break * {
+              break-inside: avoid;
+              page-break-inside: avoid;
+          }
+
+          .clip-triangle-tr {
+              clip-path: polygon(0 0, 100% 0, 100% 100%);
+          }
+
+          .clip-triangle-bl {
+              clip-path: polygon(0 100%, 0 0, 100% 100%);
+          }
+
+          img {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+          }
+
+          .print-bg-force {
+              background-color: #bf0c0c !important;
+              color: white !important;
+          }
+
+          .rotate-header-print {
+              writing-mode: vertical-rl;
+              transform: rotate(180deg);
+              white-space: nowrap;
+              text-align: center;
+          }
+
+          .print-th-vertical {
+              width: 28px !important;
+              min-width: 28px !important;
+              max-width: 28px !important;
+              padding: 2px !important;
+          }
+
+          .print-th-site {
+              width: 90px !important;
+              min-width: 90px !important;
+              max-width: 120px !important;
+          }
+
+          .print-td-narrow {
+              width: 28px !important;
+              min-width: 28px !important;
+              max-width: 28px !important;
+              padding: 2px !important;
+              font-size: 9px !important;
+          }
+
+          .print-keep-together {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .print-avoid-before {
+              break-before: avoid !important;
+              page-break-before: avoid !important;
+          }
+
+          .print-avoid-after {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .print-tight {
+              margin-top: 0 !important;
+              margin-bottom: 8px !important;
+              padding-top: 8px !important;
+              padding-bottom: 8px !important;
+          }
+
+          /* Fix date range overflow in print */
+          .date-range-text {
+              white-space: nowrap !important;
+              overflow: visible !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              font-size: 0.85rem !important;
+          }
+
+          .date-range-text > span:first-of-type {
+              left: 235px !important;
+              max-width: none !important;
+              overflow: visible !important;
+          }
+
+          .date-range-text > span:last-of-type {
+              left: 277px !important;
+              max-width: none !important;
+              overflow: visible !important;
+          }
+
+          .date-range-text span span {
+              white-space: nowrap !important;
+              display: inline-block !important;
+          }
+
+          /* Fix WEEKLY text overflow in print */
+          .weekly-text {
+              white-space: nowrap !important;
+              overflow: visible !important;
+              width: 100% !important;
+              max-width: 100% !important;
+          }
+
+          .weekly-text > span:first-of-type {
+              left: 80px !important;
+              max-width: none !important;
+              overflow: visible !important;
+          }
+
+          .weekly-text > span:last-of-type {
+              left: 125px !important;
+              max-width: none !important;
+              overflow: visible !important;
+          }
+
+          .weekly-text span span {
+              white-space: nowrap !important;
+              display: inline-block !important;
+          }
+
+          /* Keep Tickets Ageing Matrix header and table together on same page */
+          .ageing-matrix-section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .ageing-matrix-container {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .ageing-matrix-header {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .ageing-matrix-border {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .ageing-matrix-table-wrapper {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .ageing-matrix-table {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .ageing-matrix-table thead {
+              display: table-header-group !important;
+          }
+
+          .ageing-matrix-table tbody {
+              display: table-row-group !important;
+          }
+
+          .ageing-matrix-table tr {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* Keep TAT Achievement section together on same page */
+          .tat-achievement-section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-achievement-container {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-achievement-header {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .tat-achievement-border {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .tat-achievement-pie-cards {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .resolution-tat-pie-card-wrapper {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-pie-card {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* Keep Task Status section together on same page */
+          .task-status-section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .task-status-container {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .task-status-header {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .task-status-border {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .task-status-table-wrapper {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .task-status-table {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .task-status-table thead {
+              display: table-header-group !important;
+          }
+
+          .task-status-table tbody {
+              display: table-row-group !important;
+          }
+
+          .task-status-table tr {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* Keep TAT Achievement Category-Wise section together on same page */
+          .tat-category-wise-section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-category-wise-container {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-category-wise-header {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .tat-category-wise-border {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .tat-category-wise-table-wrapper {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-category-wise-table {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-category-wise-table thead {
+              display: table-header-group !important;
+          }
+
+          .tat-category-wise-table tbody {
+              display: table-row-group !important;
+          }
+
+          .tat-category-wise-table tr {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* Keep Category-Wise Overdue Status section together on same page */
+          .overdue-status-section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .overdue-status-container {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .overdue-status-header {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .overdue-status-border {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .overdue-status-table-wrapper {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .overdue-status-table {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .overdue-status-table thead {
+              display: table-header-group !important;
+          }
+
+          .overdue-status-table tbody {
+              display: table-row-group !important;
+          }
+
+          .overdue-status-table tr {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* General rules to keep all sections together in print */
+          section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* Keep all table sections together */
+          section table {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          section table thead {
+              display: table-header-group !important;
+          }
+
+          section table tbody {
+              display: table-row-group !important;
+          }
+
+          section h2 {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          /* Ensure all section containers stay together */
+          section > div {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* Specific rules for remaining sections */
+          .help-desk-section,
+          .priority-wise-section,
+          .category-wise-section,
+          .asset-management-section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .help-desk-header,
+          .priority-wise-header,
+          .category-wise-header,
+          .asset-management-header {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .help-desk-border,
+          .priority-wise-border,
+          .category-wise-border,
+          .asset-management-border {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .priority-wise-table,
+          .category-wise-table,
+          .asset-management-table {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .priority-wise-table-wrapper,
+          .category-wise-table-wrapper,
+          .asset-management-table-wrapper {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+        }
+      `}</style>
+
+      {/* ✅ Main Layout */}
+      <Box
+        sx={{
+          fontFamily: "sans-serif",
+          bgcolor: "white",
+          minHeight: "100vh",
+          position: "relative",
+        }}
+      >
+        {/* Header Image */}
+        <div className="relative h-[700px] w-full print:h-[600px] print:overflow-hidden">
+            <img
+                src="https://images.pexels.com/photos/1181396/pexels-photo-1181396.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                alt="Meeting Room"
+                className="w-full h-full object-cover print:h-[600px] print:object-cover"
+            />
+
+
+          {/* Logo top-right */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: 16,
+              right: 24,
+              backgroundColor: "white",
+              borderRadius: "6px",
+              display: "flex",
+              alignItems: "center",
+              px: 1.5,
+              py: 0.5,
+            }}
+          >
+            {/* <Typography
+              variant="h6"
+              sx={{ fontWeight: 700, color: "#bf0c0c", mr: 0.5 }}
+            >
+              go
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "#000" }}>
+              Phygital.work
+            </Typography> */}
+          </Box>
+
+          {/* Site Label */}
+          <Typography
+            sx={{
+              position: "absolute",
+              bottom: 16,
+              right: 24,
+              color: "white",
+              fontWeight: 500,
+              fontSize: 14,
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>SITE</span>: {siteLabel || 'N/A'}
+          </Typography>
+        </div>
+
+        {/* Main Content Section */}
+        <Box
+          sx={{
+            position: "relative",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            py: { xs: 6, md: 10 },
+            px: { xs: 2, md: 6 },
+          }}
+        >
+          {/* Red Box */}
+          <Box
+            sx={{
+              position: "absolute",
+              left: { xs: "10%", md: "25%" },
+              top: { xs: "-30px", md: "-100px" },
+              width: { xs: "40%", md: "320px" },
+              height: { xs: "400px", md: "450px" },
+              bgcolor: "#bf0c0c",
+              zIndex: 2,
+            }}
+          />
+
+          {/* White Box */}
+          <Box
+            sx={{
+              position: "relative",
+              border: "1px solid #bf0c0c",
+              bgcolor: "white",
+              zIndex: 1,
+              width: { xs: "70%", md: "50%" },
+              height: { xs: "380px", md: "400px" },
+            }}
+          />
+
+          {/* WEEKLY REPORT Text - Single div with complete words, split at box boundary */}
+          <Box
+            sx={{
+              position: "absolute",
+              left: { xs: "10%", md: "25%" },
+              top: { xs: "80px", md: "100px" },
+              width: { xs: "80%", md: "calc(320px + 50%)" },
+              zIndex: 10,
+            }}
+          >
+            {/* WEEKLY - Single word, split by color - TOP */}
+            <div
+              className="weekly-text"
+              style={{
+                marginTop: "20px",
+                paddingLeft: "40px",
+                lineHeight: "1.2",
+                whiteSpace: "nowrap",
+                fontWeight: 700,
+                letterSpacing: "2px",
+                fontSize: "3rem",
+                fontFamily: "sans-serif",
+                position: "relative",
+                display: "block",
+              }}
+            >
+              {/* White text (shows on red box) - shows WEEKL part */}
+              <span
+                style={{
+                  color: "white",
+                  position: "relative",
+                  display: "inline-block",
+                  zIndex: 11,
+                  left: "103px",
+                }}
+              >
+                <span
+                  style={{
+                    clipPath: "polygon(0 0, 83% 0, 83% 100%, 0 100%)",
+                    WebkitClipPath: "polygon(0 0, 83% 0, 83% 100%, 0 100%)",
+                  }}
+                >
+                  WEEKLY
+                </span>
+              </span>
+              {/* Red text overlay (shows on white box) - shows Y part */}
+              <span
+                style={{
+                  color: "#bf0c0c",
+                  position: "absolute",
+                  left: "140px",
+                  top: 0,
+                  zIndex: 12,
+                  clipPath: "polygon(83% 0, 100% 0, 100% 100%, 83% 100%)",
+                  WebkitClipPath: "polygon(83% 0, 100% 0, 100% 100%, 83% 100%)",
+                }}
+              >
+                WEEKLY
+              </span>
+            </div>
+
+            {/* REPORT - Single word, split by color - BELOW */}
+            <div
+              style={{
+                marginTop: "20px",
+                paddingLeft: "40px",
+                lineHeight: "1.2",
+                whiteSpace: "nowrap",
+                fontWeight: 600,
+                letterSpacing: "2px",
+                fontSize: "3.75rem",
+                fontFamily: "sans-serif",
+                position: "relative",
+                display: "block",
+              }}
+            >
+              {/* White text (shows on red box) - shows REP part */}
+              <span
+                style={{
+                  color: "white",
+                  position: "relative",
+                  display: "inline-block",
+                  left: "150px",
+                  zIndex: 12,
+                }}
+              >
+                <span
+                  style={{
+                    clipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
+                    WebkitClipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
+                  }}
+                >
+                  REPORT
+                </span>
+              </span>
+              {/* Red text overlay (shows on white box) - shows ORT part */}
+              <span
+                style={{
+                  color: "#bf0c0c",
+                  position: "absolute",
+                  left: "190px",
+                  top: 0,
+                  zIndex: 12,
+                  clipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
+                  WebkitClipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
+                }}
+              >
+                REPORT
+              </span>
+            </div>
+
+            {/* Date Range - Split by color like WEEKLY and REPORT */}
+            <div
+              className="date-range-text"
+              style={{
+                marginTop: "20px",
+                paddingLeft: "40px",
+                lineHeight: "1.2",
+                whiteSpace: "nowrap",
+                fontWeight: 300,
+                fontSize: "1rem",
+                position: "relative",
+                display: "block",
+              }}
+            >
+              {/* White text (shows on red box) - left part */}
+              <span
+                style={{
+                  color: "black",
+                  position: "relative",
+                  display: "inline-block",
+                  left: "150px",
+                  zIndex: 12,
+                }}
+              >
+                <span
+                  style={{
+                    clipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
+                    WebkitClipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
+                  }}
+                >
+                  {dateRangeLabel}
+                </span>
+              </span>
+              {/* Red text overlay (shows on white box) - right part */}
+              <span
+                style={{
+                  color: "black",
+                  position: "absolute",
+                  left: "190px",
+                  top: 0,
+                  zIndex: 12,
+                  clipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
+                  WebkitClipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
+                }}
+              >
+                {dateRangeLabel}
+              </span>
+            </div>
+          </Box>
+        </Box>
+      </Box>
             {/* Wrap sections 1–3 together to keep them on a single page in PDF */}
             <div className="no-break first-page-group">
-                <header className="w-full bg-[#F6F4EE] flex flex-col items-center justify-center text-center py-6 sm:py-8 mb-6 
+                {/* <header className="w-full bg-[#F6F4EE] flex flex-col items-center justify-center text-center py-6 sm:py-8 mb-6 
     print:flex print:flex-col print:items-center print:justify-center print:text-center 
     print:pt-0 print:mt-0 print:pb-4 print:mb-4">
                     <h1 className="text-center text-black font-extrabold text-3xl sm:text-4xl print:text-2xl">
@@ -885,13 +1665,19 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                     <p className="mt-2 text-center text-black font-medium text-base sm:text-lg print:text-sm">
                         {weekRangeLabel}
                     </p>
-                </header>
+                </header> */}
+            
+   
+
+
+
+
 
                 {/* 1. Help Desk Management */}
-                <section className={sectionBox}>
-                    <div className="px-1 sm:px-2">
-                        <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">1. Help Desk Management</h2>
-                        <div className="border-t border-dashed border-gray-300 my-3" />
+                <section className={`${sectionBox} help-desk-section`}>
+                    <div className="px-1 sm:px-2 help-desk-container">
+                        <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg help-desk-header">1. Help Desk Management</h2>
+                        <div className="border-t border-dashed border-gray-300 my-3 help-desk-border" />
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             {(() => {
                                 const loading = weeklySummaryLoading;
@@ -950,12 +1736,12 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                 </section>
 
                 {/* 2. Priority Wise Tickets */}
-                <section className={sectionBox}>
-                    <div className="px-1 sm:px-2">
-                        <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">2. Priority Wise Tickets</h2>
-                        <div className="border-t border-dashed border-gray-300 my-3" />
-                        <div className="overflow-x-auto">
-                            <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+                <section className={`${sectionBox} priority-wise-section`}>
+                    <div className="px-1 sm:px-2 priority-wise-container">
+                        <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg priority-wise-header">2. Priority Wise Tickets</h2>
+                        <div className="border-t border-dashed border-gray-300 my-3 priority-wise-border" />
+                        <div className="overflow-x-auto priority-wise-table-wrapper">
+                            <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 priority-wise-table">
                                 <thead>
                                     <tr>
                                         <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/2">Priority</th>
@@ -983,12 +1769,12 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                 </section>
 
                 {/* 3. Category Wise Ticket (Top-5) */}
-                <section className={sectionBox}>
-                    <div className="px-1 sm:px-2">
-                        <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">3. Category Wise Ticket (Top-5)</h2>
-                        <div className="border-t border-dashed border-gray-300 my-3" />
-                        <div className="overflow-x-auto">
-                            <table className="w-full table-fixed border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+                <section className={`${sectionBox} category-wise-section`}>
+                    <div className="px-1 sm:px-2 category-wise-container">
+                        <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg category-wise-header">3. Category Wise Ticket (Top-5)</h2>
+                        <div className="border-t border-dashed border-gray-300 my-3 category-wise-border" />
+                        <div className="overflow-x-auto category-wise-table-wrapper">
+                            <table className="w-full table-fixed border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 category-wise-table">
                                 <thead>
                                     <tr>
                                         <th rowSpan={2} className="align-middle bg-[#ECE6DE] w-1/4 text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left">Category</th>
@@ -1035,12 +1821,12 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             </div>
 
             {/* Tickets Ageing Matrix */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">Tickets Ageing Matrix</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
-                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+            <section className={`${sectionBox} ageing-matrix-section`}>
+                <div className="px-1 sm:px-2 ageing-matrix-container">
+                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg ageing-matrix-header">Tickets Ageing Matrix</h2>
+                    <div className="border-t border-dashed border-gray-300 my-3 ageing-matrix-border" />
+                    <div className="overflow-x-auto ageing-matrix-table-wrapper">
+                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 ageing-matrix-table">
                             <thead>
                                 <tr>
                                     <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/6">Priority</th>
@@ -1097,10 +1883,10 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
 
 
             {/* TAT Achievement (Response & Resolution) */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">TAT Achievement (Response & Resolution)</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
+            <section className={`${sectionBox} tat-achievement-section`}>
+                <div className="px-1 sm:px-2 tat-achievement-container">
+                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg tat-achievement-header">TAT Achievement (Response & Resolution)</h2>
+                    <div className="border-t border-dashed border-gray-300 my-3 tat-achievement-border" />
                     {tatLoading && (
                         <div className="grid grid-cols-1 gap-8">
                             <TATPieCard title="Response TAT Overall" achieved={0} breached={0} achievedPctOverride={0} breachedPctOverride={0} />
@@ -1111,7 +1897,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                         <div className="text-center text-red-600 text-sm">{tatError}</div>
                     )}
                     {!tatLoading && !tatError && (
-                        <div className="grid grid-cols-1 gap-8 print:gap-4">
+                        <div className="grid grid-cols-1 gap-8 print:gap-4 tat-achievement-pie-cards">
                             <TATPieCard
                                 title={tatResponse?.title || 'Response TAT Overall'}
                                 achieved={tatResponse?.achieved ?? 0}
@@ -1119,25 +1905,27 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                                 achievedPctOverride={tatResponse?.achievedPct}
                                 breachedPctOverride={tatResponse?.breachedPct}
                             />
-                            <TATPieCard
-                                title={tatResolution?.title || 'Resolution TAT Overall'}
-                                achieved={tatResolution?.achieved ?? 0}
-                                breached={tatResolution?.breached ?? 0}
-                                achievedPctOverride={tatResolution?.achievedPct}
-                                breachedPctOverride={tatResolution?.breachedPct}
-                            />
+                            <div className="resolution-tat-pie-card-wrapper">
+                                <TATPieCard
+                                    title={tatResolution?.title || 'Resolution TAT Overall'}
+                                    achieved={tatResolution?.achieved ?? 0}
+                                    breached={tatResolution?.breached ?? 0}
+                                    achievedPctOverride={tatResolution?.achievedPct}
+                                    breachedPctOverride={tatResolution?.breachedPct}
+                                />
+                            </div>
                         </div>
                     )}
                 </div>
             </section>
 
             {/* TAT Achievement Category-Wise */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">TAT Achievement Category-Wise (Top 5 Categories)</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
-                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+            <section className={`${sectionBox} tat-category-wise-section`}>
+                <div className="px-1 sm:px-2 tat-category-wise-container">
+                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg tat-category-wise-header">TAT Achievement Category-Wise (Top 5 Categories)</h2>
+                    <div className="border-t border-dashed border-gray-300 my-3 tat-category-wise-border" />
+                    <div className="overflow-x-auto tat-category-wise-table-wrapper">
+                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 tat-category-wise-table">
                             <thead>
                                 <tr>
                                     <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-[28%]">Category</th>
@@ -1181,11 +1969,11 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             {/* Customer Experience Feedback and Customer Feedback sections removed */}
 
             {/* 4. Asset Management */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">4. Asset Management</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
+            <section className={`${sectionBox} asset-management-section`}>
+                <div className="px-1 sm:px-2 asset-management-container">
+                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg asset-management-header">4. Asset Management</h2>
+                    <div className="border-t border-dashed border-gray-300 my-3 asset-management-border" />
+                    <div className="overflow-x-auto asset-management-table-wrapper">
                         {assetMgmtLoading && (
                             <div className="p-6 text-center text-gray-500 text-sm">Loading asset management data...</div>
                         )}
@@ -1196,7 +1984,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                             <div className="p-6 text-center text-gray-500 text-sm">No data</div>
                         )}
                         {!assetMgmtLoading && !assetMgmtError && assetMgmtData && (
-                            <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+                            <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 asset-management-table">
                                 <thead>
                                     <tr>
                                         <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w>[16%]">Metric</th>
@@ -1253,12 +2041,12 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             </section>
 
             {/* 5. Task Status (dynamic) */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">5. Task Status</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
-                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+            <section className={`${sectionBox} task-status-section`}>
+                <div className="px-1 sm:px-2 task-status-container">
+                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg task-status-header">5. Task Status</h2>
+                    <div className="border-t border-dashed border-gray-300 my-3 task-status-border" />
+                    <div className="overflow-x-auto task-status-table-wrapper">
+                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 task-status-table">
                             <thead>
                                 <tr>
                                     <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/3">Task Status</th>
@@ -1312,12 +2100,12 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             </section>
 
             {/* Category-Wise Overdue Status (Top 5) - dynamic */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">Category-Wise Overdue Status (Top 5)</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
-                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+            <section className={`${sectionBox} overdue-status-section`}>
+                <div className="px-1 sm:px-2 overdue-status-container">
+                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg overdue-status-header">Category-Wise Overdue Status (Top 5)</h2>
+                    <div className="border-t border-dashed border-gray-300 my-3 overdue-status-border" />
+                    <div className="overflow-x-auto overdue-status-table-wrapper">
+                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 overdue-status-table">
                             <thead>
                                 <tr>
                                     <th className="bg-[#ECE6DE] font-bold p-4 sm:p-5 print:p-2 border-b border-gray-300 text-left w-3/4">Category Of Checklist (PPM)</th>

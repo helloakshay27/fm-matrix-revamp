@@ -57,8 +57,9 @@ const CheckHierarchy: React.FC = () => {
   // Validation helpers
   const isValidEmail = useCallback((val: string) => {
     const email = val.trim();
-    // Basic email regex: something@something.tld
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    // Strict email regex: valid email format with proper domain
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
   }, []);
 
   const isValidMobile = useCallback((val: string) => {
@@ -70,8 +71,9 @@ const CheckHierarchy: React.FC = () => {
   const identifierType: "email" | "mobile" | "empty" = useMemo(() => {
     const raw = (treeIdentifier || "").trim();
     if (!raw) return "empty";
+    // If contains @, treat as email
     if (raw.includes("@")) return "email";
-    // Consider as mobile only when input consists of digits and common separators, and has at least 1 digit
+    // If contains only digits and common mobile separators (spaces, dashes, parentheses, +), treat as mobile
     const mobileLike = /^[\d\s()+-]+$/.test(raw) && /\d/.test(raw);
     return mobileLike ? "mobile" : "email";
   }, [treeIdentifier]);
@@ -80,13 +82,53 @@ const CheckHierarchy: React.FC = () => {
     const raw = (treeIdentifier || "").trim();
     if (!raw) return "";
     if (identifierType === "email") {
-      return isValidEmail(raw) ? "" : "Please enter a valid email address.";
+      if (!isValidEmail(raw)) {
+        return "Please enter a valid email address (e.g., user@example.com).";
+      }
+      return "";
     }
     // mobile
-    return isValidMobile(raw)
-      ? ""
-      : "Please enter a valid 10-digit mobile number.";
+    if (!isValidMobile(raw)) {
+      const digits = raw.replace(/\D/g, "");
+      if (digits.length === 0) {
+        return "Please enter a valid 10-digit mobile number.";
+      }
+      return `Mobile number must be exactly 10 digits. Currently: ${digits.length} digit${digits.length !== 1 ? 's' : ''}.`;
+    }
+    return "";
   }, [treeIdentifier, identifierType, isValidEmail, isValidMobile]);
+
+  // Handle input change with validation
+  const handleIdentifierChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow email characters or mobile number characters
+    // For email: allow letters, numbers, @, ., _, %, +, -
+    // For mobile: allow digits, spaces, dashes, parentheses, +
+    const emailPattern = /^[a-zA-Z0-9@._%+\-]*$/;
+    const mobilePattern = /^[\d\s()+\-]*$/;
+    
+    // If value contains @, treat as email and only allow email characters
+    if (value.includes("@")) {
+      if (emailPattern.test(value)) {
+        setTreeIdentifier(value);
+        if (!value.trim()) setTreeData(null);
+      }
+    } else {
+      // Check if it looks like mobile (only digits and separators)
+      const looksLikeMobile = /^[\d\s()+\-]*$/.test(value);
+      if (looksLikeMobile) {
+        // For mobile, only allow digits and common separators
+        setTreeIdentifier(value);
+        if (!value.trim()) setTreeData(null);
+      } else {
+        // If it doesn't match mobile pattern but also doesn't have @, allow it (might be typing email)
+        if (emailPattern.test(value)) {
+          setTreeIdentifier(value);
+          if (!value.trim()) setTreeData(null);
+        }
+      }
+    }
+  }, []);
 
   const fetchHierarchy = useCallback(async () => {
     const raw = (treeIdentifier || "").trim();
@@ -276,23 +318,21 @@ const CheckHierarchy: React.FC = () => {
               label="Email or Mobile Number"
               placeholder="Enter Email or Mobile Number"
               value={treeIdentifier}
-              onChange={(e) => {
-                setTreeIdentifier(e.target.value);
-                if (!e.target.value?.trim()) setTreeData(null);
-              }}
+              onChange={handleIdentifierChange}
               fullWidth
               variant="outlined"
               autoComplete="off"
               slotProps={{ inputLabel: { shrink: true } as any }}
               InputProps={{ sx: fieldStyles }}
               error={Boolean(treeIdentifier.trim() && identifierError)}
-              helperText={treeIdentifier.trim() ? identifierError || " " : " "}
+              helperText={treeIdentifier.trim() ? identifierError || " " : "Enter a valid email address or 10-digit mobile number"}
               inputProps={{
                 autoComplete: "off",
                 name: "tree-identifier",
                 autoCorrect: "off",
                 autoCapitalize: "none",
                 spellCheck: "false",
+                pattern: identifierType === "email" ? "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}" : "[0-9\\s()+-]{10,}",
               }}
             />
             <div className="flex gap-3 items-start">
