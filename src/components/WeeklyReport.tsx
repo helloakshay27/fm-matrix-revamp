@@ -3,6 +3,9 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, Typography } from "@mui/material";
 import { PieChart, Pie, Cell, ResponsiveContainer, LabelList, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { DEFAULT_LOGO_CODE } from "@/assets/default-logo-code";
+import { OIG_LOGO_CODE } from "@/assets/pdf/oig-logo-code";
+import { VI_LOGO_CODE } from "@/assets/vi-logo-code";
 
 // Clean final version
 type StatCardProps = { value: number | string; label: string; percent?: string; subLabel?: string };
@@ -196,6 +199,24 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             localStorage.getItem('site_name') ||
             ''
         );
+    }, []);
+
+    const logoElement = React.useMemo(() => {
+        if (typeof window === 'undefined') {
+            return <DEFAULT_LOGO_CODE />;
+        }
+
+        const hostname = window.location.hostname.toLowerCase();
+
+        if (hostname.includes('oig.gophygital.work')) {
+            return <OIG_LOGO_CODE />;
+        }
+
+        if (hostname.includes('vi-web.gophygital.work')) {
+            return <VI_LOGO_CODE />;
+        }
+
+        return <DEFAULT_LOGO_CODE />;
     }, []);
 
     // === State: Category Wise Ticket (Top-5) dynamic data ===
@@ -1499,19 +1520,22 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
               borderRadius: "6px",
               display: "flex",
               alignItems: "center",
+              justifyContent: "center",
               px: 1.5,
               py: 0.5,
+              "& svg": {
+                height: "40px",
+                width: "auto",
+                display: "block",
+              },
+              "@media print": {
+                "& svg": {
+                  height: "32px",
+                },
+              },
             }}
           >
-            <img
-              src="/gophygital-logo-min.jpg"
-              alt="GoPhygital Logo"
-              style={{
-                height: "auto",
-                maxHeight: "40px",
-                width: "auto",
-              }}
-            />
+            {logoElement}
           </Box>
 
           {/* Site Label */}
