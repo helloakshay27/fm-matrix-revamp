@@ -251,7 +251,7 @@ const MsafeReportDownload = () => {
                 <p className="mt-1 text-sm text-gray-600">{message}</p>
               )}
             </div>
-            {downloadUrl && (
+            {documentId && (
               <Button
                 onClick={handleDownload}
                 rel="noopener noreferrer"
