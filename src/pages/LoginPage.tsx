@@ -273,7 +273,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         return; // Exit early, don't save user data yet
       }
 
-      if (response.company_id === 145 && response.web_enabled === true && isViSite && isWebSite) {
+      if (response.company_id === 145 && response.web_enabled === true && (isViSite || isWebSite)) {
         // Store email temporarily for OTP verification
         localStorage.setItem("temp_email", email);
         localStorage.setItem("temp_token", response.access_token);
