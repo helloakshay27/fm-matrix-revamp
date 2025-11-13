@@ -82,7 +82,7 @@ export const OTPVerificationPage = () => {
 
       // If we reach here, verification was successful
       // Check if response has required data
-      if (response.verified == true) {
+      if (response.verified == true  && response.access_token) {
         const baseUrl = getBaseUrl();
 
         saveUser({
