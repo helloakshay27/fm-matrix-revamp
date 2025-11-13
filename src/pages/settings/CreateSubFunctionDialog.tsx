@@ -152,7 +152,7 @@ export const CreateSubFunctionDialog = ({
 
           {/* Sub Function Name (Display Name) */}
           <div className="space-y-2">
-            <Label htmlFor="sub_function_name">Sub-Function Name *</Label>
+            <Label htmlFor="sub_function_name">Sub-Function Names *</Label>
             <Input
               id="sub_function_name"
               value={formData.sub_function_name}
