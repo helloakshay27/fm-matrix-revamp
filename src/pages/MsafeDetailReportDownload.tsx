@@ -51,7 +51,7 @@ const MsafeDetailReportDownload: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const { status, message, download_url: downloadUrl } = response?.data || {};
+      const { status, message, document_id: documentId } = response?.data || {};
 
       // Prefer showing backend-provided message when present
       if (message) {
@@ -61,9 +61,23 @@ const MsafeDetailReportDownload: React.FC = () => {
       }
 
       if (status === 'completed') {
-        if (downloadUrl) {
-          window.open(downloadUrl, '_blank');
-          if (!message) toast.success('Report download started successfully.');
+        if (documentId) {
+          const res = await axios.get(`${baseUrl}/attachfiles/${documentId}?show_file=true`, {
+            headers: { Authorization: `Bearer ${token}` },
+            responseType: 'blob',
+          })
+
+          const contentType = res.headers['content-type'] || 'application/octet-stream';
+          const blob = new Blob([res.data], { type: contentType });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = "MSafe Detail Report.xlsx";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          toast.success('File downloaded successfully');
         } else {
           toast.error('Download URL not found in the response.');
         }
