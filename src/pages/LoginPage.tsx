@@ -297,6 +297,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
       // Add a slight delay for better UX, then redirect to dashboard
       setTimeout(() => {
+
+         isViSite
+          ? navigate("/safety/m-safe/internal")
+          : navigate(from, { replace: true });
         // Special routing for user ID 189005
         if (response.id === 189005) {
           navigate("/dashboard");

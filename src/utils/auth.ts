@@ -37,6 +37,7 @@ export interface LoginResponse {
   firstname: string;
   lastname: string;
   access_token: string;
+  verified?: boolean; // OTP verification status
   mobile?: string;
   latitude?: number;
   longitude?: number;
@@ -181,7 +182,7 @@ export const getOrganizationsByEmail = async (
 
   // Default fallback for other sites
   const response = await fetch(
-    `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+      `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
   );
 
   if (!response.ok) {
