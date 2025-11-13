@@ -236,7 +236,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         throw new Error("Invalid response received from server");
       }
       if (
-        response.web_enabled === false &&
+        (!response.web_enabled ||
+          response.web_enabled == null ||
+          response.web_enabled === false) &&
         response.company_id === 145 &&
         (isViSite || isWebSite)
       ) {
