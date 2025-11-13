@@ -235,6 +235,15 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");
       }
+      if (
+        response.web_enabled === false &&
+        response.company_id === 145 &&
+        (isViSite || isWebSite)
+      ) {
+        toast.error(
+          "Web access is disabled for your account. Please contact your administrator."
+        );
+      }
 
       // Check if number is verified first
       if (response.number_verified === 0 && isViSite) {
@@ -273,7 +282,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         return; // Exit early, don't save user data yet
       }
 
-      if (response.company_id === 145 && response.web_enabled === true && isViSite) {
+      if (
+        response.company_id === 145 &&
+        response.web_enabled === true &&
+        isViSite
+      ) {
         // Store email temporarily for OTP verification
         localStorage.setItem("temp_email", email);
         localStorage.setItem("temp_token", response.access_token);
@@ -307,11 +320,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           navigate("/otp-verification");
         }, 500);
         return; // Exit early, don't save user data yet
-      }
-
-      if (response.web_enabled === false && response.company_id === 145 && (isViSite || isWebSite)) {
-
-        toast.error("Web access is disabled for your account. Please contact your administrator.");
       }
 
       // Save user data and token to localStorage (only for verified users)
