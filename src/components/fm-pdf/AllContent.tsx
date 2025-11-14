@@ -64,6 +64,19 @@ const AllContent = () => {
     const [loadingSiteAdoption, setLoadingSiteAdoption] = useState<boolean>(true);
     const [helpdeskSnapshotData, setHelpdeskSnapshotData] = useState<any>(null);
     const [loadingHelpdeskSnapshot, setLoadingHelpdeskSnapshot] = useState<boolean>(true);
+
+    // Determine if sections should be hidden for OIG organization
+    const isOigOrganization = useMemo(() => {
+        const baseUrl = (localStorage.getItem('baseUrl') || '').toLowerCase();
+        const selectedCompany = (localStorage.getItem('selectedCompany') || '').toLowerCase();
+        const host = (window?.location?.host || '').toLowerCase();
+        return (
+            baseUrl.includes('oig') ||
+            selectedCompany.includes('oig') ||
+            host.includes('oig')
+        );
+    }, []);
+
     // Separate effect to fetch helpdesk management snapshot
     useEffect(() => {
         const fetchHelpdeskSnapshot = async () => {
@@ -1887,19 +1900,16 @@ const AllContent = () => {
                     <div className="mb-2 text-sm">
                         <h2 className="text-red-600 font-semibold text-lg">Annexure I</h2>
                         <div className="mt-1 ml-4">
-                            <h3 className="font-semibold">1- Meeting Room / Day Pass Management</h3>
-                            <ul className="list-disc list-inside pl-6 print-small">
-                                <li>Revenue Generation Overview</li>
-                                <li>Center Wise - Meeting Room / Day Pass Performance Overview</li>
-                                <li>Center Wise - Meeting Room Utilization</li>
-                            </ul>
-
-                            {/* <h3 className="font-semibold mt-2">2- Wallet Management</h3>
-                            <ul className="list-disc list-inside pl-6 print-small">
-                                <li>Overview Summary</li>
-                                <li>Site-wise Wallet Summary</li>
-                                <li>Top 10 Customers by Wallet Usage</li>
-                            </ul> */}
+                            {!isOigOrganization && (
+                                <>
+                                    <h3 className="font-semibold">1- Meeting Room / Day Pass Management</h3>
+                                    <ul className="list-disc list-inside pl-6 print-small">
+                                        <li>Revenue Generation Overview</li>
+                                        <li>Center Wise - Meeting Room / Day Pass Performance Overview</li>
+                                        <li>Center Wise - Meeting Room Utilization</li>
+                                    </ul>
+                                </>
+                            )}
 
                             <h3 className="font-semibold mt-2">2- Community Programs Dashboard</h3>
                             <ul className="list-disc list-inside pl-6 print-small">
@@ -1918,8 +1928,12 @@ const AllContent = () => {
                                 <li>Snapshot</li>
                                 <li>Ticket Ageing, Closure Efficiency & Feedback Overview by Center</li>
                                 <li>Ticket Performance Metrics by Category – Volume, Closure Rate & Ageing</li>
-                                <li>Customer Experience Feedback</li>
-                                <li>Site Performance: Customer Rating Overview</li>
+                                {!isOigOrganization && (
+                                    <>
+                                        <li>Customer Experience Feedback</li>
+                                        <li>Site Performance: Customer Rating Overview</li>
+                                    </>
+                                )}
                                 <li>Response TAT Performance by Center – {periodUnit}ly Comparison</li>
                             </ul>
 
@@ -1939,23 +1953,31 @@ const AllContent = () => {
                                 <li>Top 10 Overdue Checklists – Center-wise Contribution Comparison</li>
                             </ul>
 
-                            <h3 className="font-semibold mt-2">4- Inventory Management</h3>
-                            <ul className="list-disc list-inside pl-6 print-small">
-                                <li>Overview Summary</li>
-                                <li>Overstock Analysis – Top 10 Items</li>
-                                <li>Top Consumables – Centre-wise Overview</li>
-                                <li>Consumable Inventory Value – {periodUnit}ly Comparison</li>
-                            </ul>
+                            {!isOigOrganization && (
+                                <>
+                                    <h3 className="font-semibold mt-2">4- Inventory Management</h3>
+                                    <ul className="list-disc list-inside pl-6 print-small">
+                                        <li>Overview Summary</li>
+                                        <li>Overstock Analysis – Top 10 Items</li>
+                                        <li>Top Consumables – Centre-wise Overview</li>
+                                        <li>Consumable Inventory Value – {periodUnit}ly Comparison</li>
+                                    </ul>
+                                </>
+                            )}
 
-                            <h3 className="font-semibold mt-2">5- Parking Management</h3>
-                            <ul className="list-disc list-inside pl-6 print-small">
-                                <li>Parking Allocation Overview – Paid, Free & Vacant</li>
-                            </ul>
+                            {!isOigOrganization && (
+                                <>
+                                    <h3 className="font-semibold mt-2">5- Parking Management</h3>
+                                    <ul className="list-disc list-inside pl-6 print-small">
+                                        <li>Parking Allocation Overview – Paid, Free & Vacant</li>
+                                    </ul>
 
-                            <h3 className="font-semibold mt-2">6- Visitor Management</h3>
-                            <ul className="list-disc list-inside pl-6 print-small">
-                                <li>Visitor Trend Analysis</li>
-                            </ul>
+                                    <h3 className="font-semibold mt-2">6- Visitor Management</h3>
+                                    <ul className="list-disc list-inside pl-6 print-small">
+                                        <li>Visitor Trend Analysis</li>
+                                    </ul>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -1974,7 +1996,8 @@ const AllContent = () => {
 
 
             {/* First Section: Meeting Room / Hot Desk Performance Overview */}
-
+            {!isOigOrganization && (
+            <>
             <div className="print-only-enhanced print-page break-before-page revenue-section">
                 <h1 className="report-title text-2xl font-bold text-center mb-6 py-4 bg-[#C4B89D33]">
                     Meeting Room
@@ -2154,6 +2177,8 @@ const AllContent = () => {
                     </div>
                 </div>
             </div>
+            </>
+            )}
 
             {/* Third Section: Wallet Management */}
             {/* <div className="print-page break-before-page"> */}
@@ -2762,6 +2787,7 @@ const AllContent = () => {
             </div>
 
             {/* Customer Experience Feedback and Site Performance on New Page */}
+            {!isOigOrganization && (
             <div className="print-page break-before-page   print:m-auto">
                 {/* Customer Experience Feedback */}
                 <div className="border print:w-[95%] w-[95%] m-auto print:mt-10 border-gray-300 p-6 mb-10 no-break print:p-2 print:mb-2">
@@ -2842,6 +2868,7 @@ const AllContent = () => {
 
 
             </div>
+            )}
 
 
             <div className="print-page break-before-page">
@@ -3700,6 +3727,8 @@ const AllContent = () => {
             </div>
 
             {/* Inventory Management */}
+            {!isOigOrganization && (
+            <>
             <div className="print-page break-before-page">
                 <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-0">
                     Inventory Management
@@ -4006,8 +4035,12 @@ const AllContent = () => {
 
                 </div>
             </div>
+            </>
+            )}
 
-            {/* Parking and vistor Management */}
+            {/* Parking and visitor Management */}
+            {!isOigOrganization && (
+            <>
             <div className="print-page break-before-page">
                 <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
                     Parking Management
@@ -4220,6 +4253,8 @@ const AllContent = () => {
                     </p>
                 </div>
             </div>
+            </>
+            )}
         </>
     );
 };
