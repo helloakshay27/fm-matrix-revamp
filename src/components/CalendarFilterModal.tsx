@@ -293,6 +293,9 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   };
 
   const handleApply = async () => {
+    // Prevent multiple rapid clicks
+    if (isLoading) return;
+    
     // Validate dates before applying
     const dateValidationError = validateDates(filters.dateFrom, filters.dateTo);
     if (dateValidationError) {
@@ -317,12 +320,17 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
       console.log('Date From (API format):', apiFilters.dateFrom);
       console.log('Date To (API format):', apiFilters.dateTo);
 
-      onApplyFilters(apiFilters);
+      // Close modal first to prevent stuck screen
       onClose();
-      toast.success('Filters applied successfully');
+      
+      // Apply filters after a small delay to ensure modal is closed
+      setTimeout(() => {
+        onApplyFilters(apiFilters);
+        toast.success('Filters applied successfully');
+        setIsLoading(false);
+      }, 100);
     } catch (error) {
       toast.error('Failed to apply filters');
-    } finally {
       setIsLoading(false);
     }
   };
