@@ -32,6 +32,7 @@ interface OwnershipCost {
   warranty_in_month: number | null;
   warranty_type?: string | null;
   payment_status?: string | null;
+  asset_name?: string | null;
 }
 
 // Mobile Owner Cost API Service
@@ -437,6 +438,12 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
                       <p className="text-gray-500 text-xs mb-1">Payment</p>
                       <p className="font-semibold text-gray-900 text-xs">
                         {(item.payment_status || "N/A").replace(/_/g, ' ').toUpperCase()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 text-xs mb-1">Asset Name</p>
+                      <p className="font-semibold text-gray-900 text-xs">
+                        {item.asset_name || asset?.name || 'N/A'}
                       </p>
                     </div>
                   </div>
