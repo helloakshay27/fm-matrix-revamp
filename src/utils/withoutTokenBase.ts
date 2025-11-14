@@ -84,7 +84,7 @@ baseClient.interceptors.request.use(
     } catch (error) {
       console.error("Error fetching organizations:", error);
       // Fallback URL in case of error
-      config.baseURL = "https://oig-api.gophygital.work/";
+      config.baseURL = "https://fm-uat-api.lockated.com/";
     }
 
     return config;
