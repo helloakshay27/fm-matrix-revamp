@@ -290,6 +290,11 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
     // Update calendar date to match filter start date
     setDate(filterStartDate);
     
+    // If we're in year view, show loading state during filter application
+    if (view === 'year') {
+      setIsYearLoading(true);
+    }
+    
     // Apply the filter's date range for ALL views, including 52 Week view
     // This ensures that custom date ranges (like Jan 2026 - Dec 2026) are respected
     setActiveFilters({ ...filters });
@@ -302,6 +307,12 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       if (calendarApi) {
         calendarApi.gotoDate(filterStartDate);
       }
+    } else {
+      // For year view, reset loading state after data fetch completes
+      // The loading will be managed by the parent component's isLoading prop
+      setTimeout(() => {
+        setIsYearLoading(false);
+      }, 500);
     }
   };
 
@@ -703,13 +714,13 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   );
 };
 
-// ✅ Custom 52-Week View Component
+// ✅ Custom 52-Week View Component (Memoized for performance)
 const YearlyView: React.FC<{
   events: any[];
   onSelectEvent: (event: any) => void;
   startDate: Date;
   endDate: Date;
-}> = ({ events, onSelectEvent, startDate, endDate }) => {
+}> = React.memo(({ events, onSelectEvent, startDate, endDate }) => {
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
@@ -1131,4 +1142,13 @@ const YearlyView: React.FC<{
       )}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for memo
+  // Only re-render if events, startDate, or endDate actually change
+  return (
+    prevProps.events.length === nextProps.events.length &&
+    prevProps.startDate.getTime() === nextProps.startDate.getTime() &&
+    prevProps.endDate.getTime() === nextProps.endDate.getTime() &&
+    JSON.stringify(prevProps.events) === JSON.stringify(nextProps.events)
+  );
+});
