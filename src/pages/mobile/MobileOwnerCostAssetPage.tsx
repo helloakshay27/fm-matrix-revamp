@@ -75,13 +75,31 @@ const mobileOwnerCostAssetService = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data: Asset = await response.json();
-      console.log("📦 OWNER COST ASSET API Response:", data);
-      console.log("📊 Ownership Costs:", data.ownership_costs);
-      console.log("📊 Ownership Costs Length:", data.ownership_costs?.length);
-      console.log("📊 Is Array?", Array.isArray(data.ownership_costs));
+      const rawData = await response.json();
+      console.log("📦 OWNER COST ASSET API Response:", rawData);
 
-      return data;
+      // Normalize asset shape across different API responses
+      let assetData: any =
+        rawData?.pms_asset ??
+        rawData?.asset ??
+        rawData?.data ??
+        rawData;
+
+      // In some payloads ownership_costs might be at the root level
+      if (!assetData?.ownership_costs && rawData?.ownership_costs) {
+        assetData = { ...assetData, ownership_costs: rawData.ownership_costs };
+      }
+
+      // Ensure ownership_costs is always an array
+      if (assetData?.ownership_costs && !Array.isArray(assetData.ownership_costs)) {
+        assetData.ownership_costs = Object.values(assetData.ownership_costs);
+      }
+
+      console.log("📊 Normalized Ownership Costs:", assetData?.ownership_costs);
+      console.log("📊 Ownership Costs Length:", assetData?.ownership_costs?.length);
+      console.log("📊 Is Array?", Array.isArray(assetData?.ownership_costs));
+
+      return assetData;
     } catch (error) {
       console.error("❌ Error fetching owner cost asset:", error);
       throw error;
