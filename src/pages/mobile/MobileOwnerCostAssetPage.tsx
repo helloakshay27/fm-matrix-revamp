@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { MobileOwnerCostDetails } from "@/components/mobile/MobileOwnerCostDetails";
 import { useToast } from "@/hooks/use-toast";
-import { baseClient } from "@/utils/withoutTokenBase";
+import { saveToken, saveBaseUrl, getOrganizationsByEmailAndAutoSelect, getBaseUrl, getToken } from '@/utils/auth';
+
 
 interface Asset {
   id: number;
@@ -22,24 +23,59 @@ interface OwnershipCost {
   payment_status?: string | null;
 }
 
+/**
+ * MobileOwnerCostAssetPage Component
+ * 
+ * Mobile page for viewing and managing asset ownership costs
+ * 
+ * URL Parameters:
+ * - assetId: The asset ID to view
+ * - action: The action to perform (e.g., "details")
+ * - token: (Optional) Authentication token
+ * - email: (Optional) User email for auto-organization selection
+ * - orgId: (Optional) Organization ID to auto-select
+ * - baseUrl: (Optional) Base API URL
+ * 
+ * Example URL:
+ * https://localhost:5174/mobile/owner-cost-asset/204367/details?email=abhishek.sharma@lockated.com&orgId=13&token=xxx
+ * 
+ * Note: Use "?" before query parameters, not "/"
+ */
+
 // Mobile Owner Cost Asset Service
 const mobileOwnerCostAssetService = {
   async getAssetById(token: string, assetId: string): Promise<Asset> {
     try {
-      const url = `/pms/assets/${assetId}.json`;
+      // Get the base URL from auth utils (same as DirectPDFDownloadPage)
+      const baseUrl = getBaseUrl();
+      
+      if (!baseUrl) {
+        throw new Error('Base URL not configured. Please provide baseUrl parameter or select an organization.');
+      }
+      
+      const url = `${baseUrl}/pms/assets/${assetId}.json`;
 
       console.log("🔍 FETCHING OWNER COST ASSET:");
-      console.log("  - URL:", url);
+      console.log("  - Base URL:", baseUrl);
+      console.log("  - Full URL:", url);
       console.log("  - Asset ID:", assetId);
       console.log("  - Token:", token?.substring(0, 20) + "...");
 
-      const response = await baseClient.get(url, {
+      const response = await fetch(url, {
+        method: 'GET',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
 
-      const data: Asset = response.data;
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: Asset = await response.json();
       console.log("📦 OWNER COST ASSET API Response:", data);
       console.log("📊 Ownership Costs:", data.ownership_costs);
       console.log("📊 Ownership Costs Length:", data.ownership_costs?.length);
@@ -64,13 +100,86 @@ export const MobileOwnerCostAssetPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Get token from URL params
+  // Get URL parameters
   const token = searchParams.get("token");
+  const email = searchParams.get("email");
+  const orgId = searchParams.get("orgId");
+  const baseUrl = searchParams.get("baseUrl");
 
   useEffect(() => {
-    fetchAsset();
+    initializeAndFetchAsset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assetId, token]);
+  }, [assetId, token, email, orgId, baseUrl]);
+
+  const initializeAndFetchAsset = async () => {
+    if (!assetId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Handle email and organization auto-selection
+      if (email && orgId) {
+        console.log('📧 Processing email and organization:', { email, orgId });
+        
+        try {
+          const { organizations, selectedOrg } = await getOrganizationsByEmailAndAutoSelect(email, orgId);
+          
+          if (selectedOrg) {
+            console.log('✅ Organization auto-selected:', selectedOrg.name);
+            
+            // Set baseUrl from organization's domain
+            if (selectedOrg.domain || selectedOrg.sub_domain) {
+              const orgBaseUrl = `https://${selectedOrg.sub_domain}.${selectedOrg.domain}`;
+              saveBaseUrl(orgBaseUrl);
+              console.log('✅ Base URL set from organization:', orgBaseUrl);
+            }
+          } else {
+            console.warn('⚠️ Organization not found with ID:', orgId);
+          }
+        } catch (orgError) {
+          console.error('❌ Error fetching organizations:', orgError);
+        }
+      }
+
+      // Set base URL if provided in URL (overrides organization baseUrl)
+      if (baseUrl) {
+        saveBaseUrl(baseUrl);
+        console.log('✅ Base URL set from URL parameter:', baseUrl);
+      }
+
+      // Set token if provided in URL
+      if (token) {
+        saveToken(token);
+        sessionStorage.setItem("mobile_token", token);
+        console.log('✅ Token set from URL parameter');
+      }
+
+      // Use token from URL or from auth utils
+      const tokenToUse = token || getToken() || sessionStorage.getItem("mobile_token");
+      
+      if (!tokenToUse) {
+        throw new Error("No authentication token available");
+      }
+
+      console.log("📱 Fetching owner cost asset with ID:", assetId);
+      console.log("📱 Using base URL:", getBaseUrl());
+      const assetData = await mobileOwnerCostAssetService.getAssetById(tokenToUse, assetId);
+      setAsset(assetData);
+      console.log("✅ Owner cost asset fetched successfully");
+    } catch (error) {
+      console.error("❌ ERROR FETCHING ASSET:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load asset. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchAsset = async () => {
     if (!assetId) {
@@ -81,8 +190,8 @@ export const MobileOwnerCostAssetPage: React.FC = () => {
     try {
       setLoading(true);
 
-      // Use token from URL or sessionStorage
-      const tokenToUse = token || sessionStorage.getItem("mobile_token");
+      // Use token from URL or from auth utils
+      const tokenToUse = token || getToken() || sessionStorage.getItem("mobile_token");
       
       if (tokenToUse) {
         sessionStorage.setItem("mobile_token", tokenToUse);
