@@ -740,15 +740,31 @@ const AllContent = () => {
     };
 
     // Format numeric values to "k" (e.g., 932813.75 -> 93.2k), trimming trailing .0
+    // const formatToK = (n: any) => {
+    //     const val = Number(n || 0);
+    //     // Divide by 10,000 to match the provided example mapping
+    //     const scaled = val / 10000;
+    //     if (!Number.isFinite(scaled)) return '0k';
+    //     // Keep one decimal only when needed
+    //     const s = scaled.toFixed(1).replace(/\.0$/, '');
+    //     return `${s}k`;
+    // };
+
     const formatToK = (n: any) => {
         const val = Number(n || 0);
-        // Divide by 10,000 to match the provided example mapping
-        const scaled = val / 10000;
-        if (!Number.isFinite(scaled)) return '0k';
+
+        // If number is less than 1000 → return normally
+        if (val < 1000) return String(val);
+
+        // Numbers 1000 and above → convert to K format
+        const scaled = val / 1000;
+
         // Keep one decimal only when needed
         const s = scaled.toFixed(1).replace(/\.0$/, '');
+
         return `${s}k`;
     };
+
 
     // Helpers for Overstock Top 10 mapping (new API shape)
     const normalizeSiteKey = (name: string) => {
@@ -985,7 +1001,7 @@ const AllContent = () => {
                 .trim();
             return s === 'expiring soon';
         });
-
+        console.log(filtered)
         // Normalize to the fields our table expects
         return filtered.map((row: any) => ({
             site_name: row?.site_name || row?.center_name || row?.site || '-',
@@ -994,7 +1010,7 @@ const AllContent = () => {
             contract_end_date: row?.contract_end_date || row?.end_date || '',
             renewal_reminder: row?.renewal_reminder || row?.renewal_alert || row?.renewal_status || '',
             projected_renewal_cost: Number(row?.projected_renewal_cost ?? row?.contract_value ?? row?.projected_value ?? 0),
-            vendor_contact: row?.vendor_contact || row?.vendor_name || row?.vendor_email || row?.vendor_details || '',
+            vendor_contact: row?.vendor_name || '',
             status: row?.status || row?.contract_status || '',
         }));
     }, [amcContractSummaryData]);
@@ -1026,7 +1042,7 @@ const AllContent = () => {
             contract_end_date: row?.contract_end_date || row?.end_date || '',
             renewal_reminder: row?.renewal_reminder || row?.renewal_alert || row?.renewal_status || '',
             projected_renewal_cost: Number(row?.projected_renewal_cost ?? row?.contract_value ?? row?.projected_value ?? 0),
-            vendor_contact: row?.vendor_contact || row?.vendor_name || row?.vendor_email || row?.vendor_details || '',
+            vendor_contact: row?.vendor_name || '',
             status: row?.status || row?.contract_status || 'Expired',
         }));
     }, [amcContractSummaryData]);
@@ -1997,187 +2013,187 @@ const AllContent = () => {
 
             {/* First Section: Meeting Room / Hot Desk Performance Overview */}
             {!isOigOrganization && (
-            <>
-            <div className="print-only-enhanced print-page break-before-page revenue-section">
-                <h1 className="report-title text-2xl font-bold text-center mb-6 py-4 bg-[#C4B89D33]">
-                    Meeting Room
-                </h1>
-
-                {/* Unified section container */}
-                <div className={sectionBox}>
-                    <div className="border p-6 bg-white text-black shadow print:text-black print:bg-white print:p-6 print:border print:shadow-none">
-                        <h2 className="text-lg font-bold mb-4 print:text-[15px] print:font-bold">
-                            Revenue Generation Overview
-                        </h2>
-
-                        <hr className="mb-6 border-gray-400 print:border-gray-400" />
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-1 print:gap-4">
-                            <div className="bg-[#dfd9ce] p-6 print:bg-[#dfd9ce]">
-                                <p className="italic text-lg mb-1 print:italic print:text-lg">
-                                    Total Revenue from
-                                </p>
-                                <div className="flex justify-between items-center print:flex print:justify-between">
-                                    <p className="text-xl font-bold print:text-1xl print:font-bold">
-                                        {localStorage.getItem('selectedCompany')}
-                                    </p>
-                                    <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
-                                        {meetingRoomData?.data?.revenue_generation_overview?.total_revenue ?? '-'}
-                                    </p>
-                                </div>
-                            </div>
-                            {/* Optional second card removed for now */}
-                        </div>
-                    </div>
-
-                    {/* Center-wise Meeting Room Performance */}
-                    <div className="bg-white p-4 mt-4 avoid-break">
-                        <h2 className="text-lg md:text-lg font-bold tracking-wide text-black mb-4 print:text-[15px] print:font-bold">
-                            Center Wise - Meeting Room Performance Overview
-                        </h2>
-                        <div className="overflow-x-auto print:overflow-visible">
-                            <table className="min-w-full border text-sm text-center print:text-xs print:w-full print:table-fixed">
-                                <thead className="bg-[#ded9cd] text-[#b62527] font-extrabold uppercase tracking-wide text-[13px] md:text-sm print:text-[10px]">
-                                    <tr>
-                                        <th className="border border-black p-3 text-left align-middle text-[13px] md:text-sm print:text-[10px]" rowSpan={2}>
-                                            Site Name
-                                        </th>
-                                        <th className="border border-black p-3 text-center text-[13px] md:text-sm print:text-[10px]" colSpan={3}>
-                                            Meeting Room
-                                        </th>
-                                    </tr>
-                                    <tr>
-                                        <th className="border border-black p-2 text-center text-[13px] md:text-sm print:text-[10px]">Utilization<br />Rate (in %)</th>
-                                        <th className="border border-black p-2 text-center text-[13px] md:text-sm print:text-[10px]">Cancellation<br />Rate (in %)</th>
-                                        <th className="border border-black p-2 text-center text-[13px] md:text-sm print:text-[10px]">Revenue<br />(in ₹)</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {centerRows.map((row: any, idx: number) => {
-                                        const meeting = row.meeting_room || row.meeting || {};
-                                        const utilTrend = meeting.utilization_trend || meeting.utilization_trend === undefined ? meeting.utilization_trend : null;
-                                        const cancelTrend = meeting.cancellation_trend || null;
-                                        const revenueTrend = meeting.revenue_trend || null;
-
-                                        return (
-                                            <tr key={idx} className="border-t">
-                                                <td className="p-2 border font-medium text-left print:p-1">{row.site_name || row.site || '-'}</td>
-                                                <td className="p-2 border print:p-1">
-                                                    {meeting.utilization_rate ?? '-'}{' '}
-                                                    <Arrow up={utilTrend === '↑'} />
-                                                </td>
-                                                <td className="p-2 border print:p-1">
-                                                    {meeting.cancellation_rate ?? '-'}{' '}
-                                                    <Arrow up={cancelTrend === '↑'} />
-                                                </td>
-                                                <td className="p-2 border print:p-1">
-                                                    {meeting.revenue ?? '-'}{' '}
-                                                    <Arrow up={revenueTrend === '↑'} />
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                            <p className="text-xs text-gray-500 mt-2 print:text-[10px]">
-                                <strong>Note:</strong> This table illustrates meeting room utilization, cancellations, and revenue generation,
-                                along with directional arrows indicating growth, decline or neutral trend compared to the previous period.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Second Section: Center Wise - Meeting Room Utilization */}
-            <div className="print-page break-before-page">
-                <div className={sectionBox}>
-                    <div className="border border-gray-400 p-4 w-full print:max-w-none print:mx-auto">
-                        {/* Title */}
-                        <h1 className="text-lg text-left font-bold mb-6 print:text-[14px]">
-                            Center Wise - Meeting Room Utilization
+                <>
+                    <div className="print-only-enhanced print-page break-before-page revenue-section">
+                        <h1 className="report-title text-2xl font-bold text-center mb-6 py-4 bg-[#C4B89D33]">
+                            Meeting Room
                         </h1>
 
-                        <div className="border border-gray-100 mb-3"></div>
+                        {/* Unified section container */}
+                        <div className={sectionBox}>
+                            <div className="border p-6 bg-white text-black shadow print:text-black print:bg-white print:p-6 print:border print:shadow-none">
+                                <h2 className="text-lg font-bold mb-4 print:text-[15px] print:font-bold">
+                                    Revenue Generation Overview
+                                </h2>
 
-                        {/* Legend */}
-                        <div className="flex justify-end items-center gap-6 mb-6 print:gap-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 bg-red-100 border border-gray-400 rounded-full"></div>
-                                <span className="text-base print:text-sm">0-39%</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 bg-yellow-100 border border-gray-400 rounded-full"></div>
-                                <span className="text-base print:text-sm">40-69%</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 bg-green-100 border border-gray-400 rounded-full"></div>
-                                <span className="text-base print:text-sm">70-100%</span>
-                            </div>
-                        </div>
+                                <hr className="mb-6 border-gray-400 print:border-gray-400" />
 
-                        {/* Chart Grid */}
-                        <div className="border border-gray-400 no-break">
-                            {/* Data Grid (driven by API when available) */}
-                            {centerList.map((center: any, siteIndex: number) => (
-                                <div key={siteIndex} className="grid grid-cols-9 print:grid-cols-10 border-b border-gray-400">
-                                    {/* Site Label (NO left border) */}
-                                    <div className="p-3 font-medium text-base text-right border-b border-gray-400 print:p-2 print:text-[10px] print:leading-tight print:whitespace-normal print:break-words print:text-left print:col-span-2">
-                                        {center.center_name || center.site_name || center.name || `Center ${siteIndex + 1}`}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-1 print:gap-4">
+                                    <div className="bg-[#dfd9ce] p-6 print:bg-[#dfd9ce]">
+                                        <p className="italic text-lg mb-1 print:italic print:text-lg">
+                                            Total Revenue from
+                                        </p>
+                                        <div className="flex justify-between items-center print:flex print:justify-between">
+                                            <p className="text-xl font-bold print:text-1xl print:font-bold">
+                                                {localStorage.getItem('selectedCompany')}
+                                            </p>
+                                            <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
+                                                {meetingRoomData?.data?.revenue_generation_overview?.total_revenue ?? '-'}
+                                            </p>
+                                        </div>
                                     </div>
-
-                                    {/* Utilization Range Cells */}
-                                    {rangeList.slice(0, 8).map((range: any, rangeIndex: number) => {
-                                        const roomName = getRoomsForRange(center, range);
-                                        const cellColor = getCellColor(range);
-                                        return (
-                                            <div
-                                                key={rangeIndex}
-                                                className={`border-l border-t border-gray-400 p-2 text-sm font-semibold text-center ${cellColor} min-h-[120px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[80px] print:col-span-1`}
-                                            >
-                                                {roomName ? (
-                                                    <div className="leading-tight print:whitespace-normal print:break-words print:leading-tight print:text-[10px]">
-                                                        {roomName.includes(",")
-                                                            ? roomName.split(",").map((name: string, i: number) => <div key={i}>{name.trim()}</div>)
-                                                            : roomName}
-                                                    </div>
-                                                ) : null}
-                                            </div>
-                                        );
-                                    })}
+                                    {/* Optional second card removed for now */}
                                 </div>
-                            ))}
-
-                            {/* Bottom Header Row: Utilization Rate */}
-                            <div className="grid grid-cols-9 print:grid-cols-10">
-                                <div className="p-3 font-semibold text-center print:p-2 print:text-sm text-base print:col-span-2 border-t border-gray-400"></div>
-                                {rangeList.slice(0, 8).map((range, index) => (
-                                    <div
-                                        key={index}
-                                        className="border-t border-l border-gray-400 p-2 text-sm font-semibold text-center min-h-[60px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[40px] print:col-span-1"
-                                    >
-                                        {range}
-                                    </div>
-                                ))}
                             </div>
-                        </div>
 
+                            {/* Center-wise Meeting Room Performance */}
+                            <div className="bg-white p-4 mt-4 avoid-break">
+                                <h2 className="text-lg md:text-lg font-bold tracking-wide text-black mb-4 print:text-[15px] print:font-bold">
+                                    Center Wise - Meeting Room Performance Overview
+                                </h2>
+                                <div className="overflow-x-auto print:overflow-visible">
+                                    <table className="min-w-full border text-sm text-center print:text-xs print:w-full print:table-fixed">
+                                        <thead className="bg-[#ded9cd] text-[#b62527] font-extrabold uppercase tracking-wide text-[13px] md:text-sm print:text-[10px]">
+                                            <tr>
+                                                <th className="border border-black p-3 text-left align-middle text-[13px] md:text-sm print:text-[10px]" rowSpan={2}>
+                                                    Site Name
+                                                </th>
+                                                <th className="border border-black p-3 text-center text-[13px] md:text-sm print:text-[10px]" colSpan={3}>
+                                                    Meeting Room
+                                                </th>
+                                            </tr>
+                                            <tr>
+                                                <th className="border border-black p-2 text-center text-[13px] md:text-sm print:text-[10px]">Utilization<br />Rate (in %)</th>
+                                                <th className="border border-black p-2 text-center text-[13px] md:text-sm print:text-[10px]">Cancellation<br />Rate (in %)</th>
+                                                <th className="border border-black p-2 text-center text-[13px] md:text-sm print:text-[10px]">Revenue<br />(in ₹)</th>
+                                            </tr>
+                                        </thead>
 
-                        {/* Bottom Label */}
-                        <div className="mt-4 font-semibold w-full text-center centerone text-base print:text-sm">
-                            Utilization Rate
-                        </div>
+                                        <tbody>
+                                            {centerRows.map((row: any, idx: number) => {
+                                                const meeting = row.meeting_room || row.meeting || {};
+                                                const utilTrend = meeting.utilization_trend || meeting.utilization_trend === undefined ? meeting.utilization_trend : null;
+                                                const cancelTrend = meeting.cancellation_trend || null;
+                                                const revenueTrend = meeting.revenue_trend || null;
 
-                        {/* Note */}
-                        <div className="mt-6 text-base print:text-sm">
-                            <span className="font-semibold">Note :</span> This table presents meeting room-wise utilization along with
-                            corresponding utilization percentages, providing a center-wise comparison to identify performance variations
-                            across locations.
+                                                return (
+                                                    <tr key={idx} className="border-t">
+                                                        <td className="p-2 border font-medium text-left print:p-1">{row.site_name || row.site || '-'}</td>
+                                                        <td className="p-2 border print:p-1">
+                                                            {meeting.utilization_rate ?? '-'}{' '}
+                                                            <Arrow up={utilTrend === '↑'} />
+                                                        </td>
+                                                        <td className="p-2 border print:p-1">
+                                                            {meeting.cancellation_rate ?? '-'}{' '}
+                                                            <Arrow up={cancelTrend === '↑'} />
+                                                        </td>
+                                                        <td className="p-2 border print:p-1">
+                                                            {meeting.revenue ?? '-'}{' '}
+                                                            <Arrow up={revenueTrend === '↑'} />
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                    <p className="text-xs text-gray-500 mt-2 print:text-[10px]">
+                                        <strong>Note:</strong> This table illustrates meeting room utilization, cancellations, and revenue generation,
+                                        along with directional arrows indicating growth, decline or neutral trend compared to the previous period.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            </>
+
+                    {/* Second Section: Center Wise - Meeting Room Utilization */}
+                    <div className="print-page break-before-page">
+                        <div className={sectionBox}>
+                            <div className="border border-gray-400 p-4 w-full print:max-w-none print:mx-auto">
+                                {/* Title */}
+                                <h1 className="text-lg text-left font-bold mb-6 print:text-[14px]">
+                                    Center Wise - Meeting Room Utilization
+                                </h1>
+
+                                <div className="border border-gray-100 mb-3"></div>
+
+                                {/* Legend */}
+                                <div className="flex justify-end items-center gap-6 mb-6 print:gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 bg-red-100 border border-gray-400 rounded-full"></div>
+                                        <span className="text-base print:text-sm">0-39%</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 bg-yellow-100 border border-gray-400 rounded-full"></div>
+                                        <span className="text-base print:text-sm">40-69%</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 bg-green-100 border border-gray-400 rounded-full"></div>
+                                        <span className="text-base print:text-sm">70-100%</span>
+                                    </div>
+                                </div>
+
+                                {/* Chart Grid */}
+                                <div className="border border-gray-400 no-break">
+                                    {/* Data Grid (driven by API when available) */}
+                                    {centerList.map((center: any, siteIndex: number) => (
+                                        <div key={siteIndex} className="grid grid-cols-9 print:grid-cols-10 border-b border-gray-400">
+                                            {/* Site Label (NO left border) */}
+                                            <div className="p-3 font-medium text-base text-right border-b border-gray-400 print:p-2 print:text-[10px] print:leading-tight print:whitespace-normal print:break-words print:text-left print:col-span-2">
+                                                {center.center_name || center.site_name || center.name || `Center ${siteIndex + 1}`}
+                                            </div>
+
+                                            {/* Utilization Range Cells */}
+                                            {rangeList.slice(0, 8).map((range: any, rangeIndex: number) => {
+                                                const roomName = getRoomsForRange(center, range);
+                                                const cellColor = getCellColor(range);
+                                                return (
+                                                    <div
+                                                        key={rangeIndex}
+                                                        className={`border-l border-t border-gray-400 p-2 text-sm font-semibold text-center ${cellColor} min-h-[120px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[80px] print:col-span-1`}
+                                                    >
+                                                        {roomName ? (
+                                                            <div className="leading-tight print:whitespace-normal print:break-words print:leading-tight print:text-[10px]">
+                                                                {roomName.includes(",")
+                                                                    ? roomName.split(",").map((name: string, i: number) => <div key={i}>{name.trim()}</div>)
+                                                                    : roomName}
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ))}
+
+                                    {/* Bottom Header Row: Utilization Rate */}
+                                    <div className="grid grid-cols-9 print:grid-cols-10">
+                                        <div className="p-3 font-semibold text-center print:p-2 print:text-sm text-base print:col-span-2 border-t border-gray-400"></div>
+                                        {rangeList.slice(0, 8).map((range, index) => (
+                                            <div
+                                                key={index}
+                                                className="border-t border-l border-gray-400 p-2 text-sm font-semibold text-center min-h-[60px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[40px] print:col-span-1"
+                                            >
+                                                {range}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+
+                                {/* Bottom Label */}
+                                <div className="mt-4 font-semibold w-full text-center centerone text-base print:text-sm">
+                                    Utilization Rate
+                                </div>
+
+                                {/* Note */}
+                                <div className="mt-6 text-base print:text-sm">
+                                    <span className="font-semibold">Note :</span> This table presents meeting room-wise utilization along with
+                                    corresponding utilization percentages, providing a center-wise comparison to identify performance variations
+                                    across locations.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
             )}
 
             {/* Third Section: Wallet Management */}
@@ -2788,86 +2804,86 @@ const AllContent = () => {
 
             {/* Customer Experience Feedback and Site Performance on New Page */}
             {!isOigOrganization && (
-            <div className="print-page break-before-page   print:m-auto">
-                {/* Customer Experience Feedback */}
-                <div className="border print:w-[95%] w-[95%] m-auto print:mt-10 border-gray-300 p-6 mb-10 no-break print:p-2 print:mb-2">
-                    <h2 className="text-lg md:text-lg font-bold mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-1 print:pb-1">Customer Experience Feedback</h2>
-                    <div className="grid grid-cols-5 print:gap-1">
-                        {displayCustomerExperienceData.map((item, idx) => (
-                            <div
-                                key={idx}
-                                className="flex flex-col items-center justify-center h-[140px] print:h-[100px] border-r last:border-r-0"
-                                style={{ backgroundColor: item.bg, color: item.text || "#000" }}
-                            >
-                                <div className="text-3xl font-bold print:text-xl">{item.value}</div>
-                                <div className="text-sm font-medium print:text-[10px]">{item.percent}</div>
-                                <div className="text-base font-semibold mt-1 print:text-[10px] print:mt-0">{item.label}</div>
-                            </div>
-                        ))}
+                <div className="print-page break-before-page   print:m-auto">
+                    {/* Customer Experience Feedback */}
+                    <div className="border print:w-[95%] w-[95%] m-auto print:mt-10 border-gray-300 p-6 mb-10 no-break print:p-2 print:mb-2">
+                        <h2 className="text-lg md:text-lg font-bold mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-1 print:pb-1">Customer Experience Feedback</h2>
+                        <div className="grid grid-cols-5 print:gap-1">
+                            {displayCustomerExperienceData.map((item, idx) => (
+                                <div
+                                    key={idx}
+                                    className="flex flex-col items-center justify-center h-[140px] print:h-[100px] border-r last:border-r-0"
+                                    style={{ backgroundColor: item.bg, color: item.text || "#000" }}
+                                >
+                                    <div className="text-3xl font-bold print:text-xl">{item.value}</div>
+                                    <div className="text-sm font-medium print:text-[10px]">{item.percent}</div>
+                                    <div className="text-base font-semibold mt-1 print:text-[10px] print:mt-0">{item.label}</div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                {/* Site Performance Table 2 */}
-                <div className="site-performance print:w-[95%] w-[95%] m-auto bg-white border border-gray-300 p-6 overflow-auto no-break print:p-2">
-                    <h2 className="text-lg md:text-lg font-bold mb-4 print:text-[14px] print:mb-2">
-                        Site Performance: Customer Rating Overview
-                    </h2>
-                    <table className="min-w-full text-base text-center border print:table-fixed print:w-full print:text-[10px] print:leading-tight">
-                        <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030]">
-                            <tr>
-                                <th className="border border-gray-200 px-3 py-6 print:px-2 print:py-2 print:min-h-[32px] print:text-[9px] print:whitespace-normal print:break-words print:align-top">
-                                    Site Name
-                                </th>
-
-                                {customerExperienceSiteNames.map((name, index) => (
-                                    <th
-                                        key={index}
-                                        className="border border-gray-200 px-3 py-6 print:px-1 print:py-2 print:min-h-[32px] print:text-[9px] print:whitespace-normal print:break-words print:align-top"
-                                    >
-                                        {name}
+                    {/* Site Performance Table 2 */}
+                    <div className="site-performance print:w-[95%] w-[95%] m-auto bg-white border border-gray-300 p-6 overflow-auto no-break print:p-2">
+                        <h2 className="text-lg md:text-lg font-bold mb-4 print:text-[14px] print:mb-2">
+                            Site Performance: Customer Rating Overview
+                        </h2>
+                        <table className="min-w-full text-base text-center border print:table-fixed print:w-full print:text-[10px] print:leading-tight">
+                            <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030]">
+                                <tr>
+                                    <th className="border border-gray-200 px-3 py-6 print:px-2 print:py-2 print:min-h-[32px] print:text-[9px] print:whitespace-normal print:break-words print:align-top">
+                                        Site Name
                                     </th>
-                                ))}
-                            </tr>
-                        </thead>
 
-                        <tbody>
-                            {customerRatingData.rows.map((row, idx) => {
-                                const isTotal = row.label === "Total Responses";
-                                return (
-                                    <tr
-                                        key={idx}
-                                        className={isTotal ? "font-semibold bg-[#DAD6C9]" : ""}
-                                    >
-                                        <td
-                                            className={`px-3 py-6 print:px-2 print:py-2 print:min-h-[32px] print:text-[9px] print:leading-snug print:whitespace-normal print:break-words print:align-top font-medium ${isTotal
-                                                ? "border border-gray-300"
-                                                : "border-l border-r border-gray-200 bg-[#F3F1EB80] print:bg-[#F3F1EB80]"
-                                                }`}
+                                    {customerExperienceSiteNames.map((name, index) => (
+                                        <th
+                                            key={index}
+                                            className="border border-gray-200 px-3 py-6 print:px-1 print:py-2 print:min-h-[32px] print:text-[9px] print:whitespace-normal print:break-words print:align-top"
                                         >
-                                            {row.label}
-                                        </td>
-                                        {row.values.map((val, vIdx) => (
+                                            {name}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {customerRatingData.rows.map((row, idx) => {
+                                    const isTotal = row.label === "Total Responses";
+                                    return (
+                                        <tr
+                                            key={idx}
+                                            className={isTotal ? "font-semibold bg-[#DAD6C9]" : ""}
+                                        >
                                             <td
-                                                key={vIdx}
-                                                className={`px-3 py-6 print:px-1 print:py-2 print:min-h-[32px] print:text-[9px] print:leading-snug print:whitespace-normal print:break-words print:align-top ${isTotal ? "border border-gray-300" : "border-l border-r border-gray-200"}
-                                                    `}
+                                                className={`px-3 py-6 print:px-2 print:py-2 print:min-h-[32px] print:text-[9px] print:leading-snug print:whitespace-normal print:break-words print:align-top font-medium ${isTotal
+                                                    ? "border border-gray-300"
+                                                    : "border-l border-r border-gray-200 bg-[#F3F1EB80] print:bg-[#F3F1EB80]"
+                                                    }`}
                                             >
-                                                {val}
+                                                {row.label}
                                             </td>
-                                        ))}
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                                            {row.values.map((val, vIdx) => (
+                                                <td
+                                                    key={vIdx}
+                                                    className={`px-3 py-6 print:px-1 print:py-2 print:min-h-[32px] print:text-[9px] print:leading-snug print:whitespace-normal print:break-words print:align-top ${isTotal ? "border border-gray-300" : "border-l border-r border-gray-200"}
+                                                    `}
+                                                >
+                                                    {val}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
 
-                    <p className="text-sm mt-3 text-gray-600 print:text-[9px] print:mt-2">
-                        <strong>Note</strong>: This table displays customer rating percentages categorized from Excellent to Bad, with a site-level comparison to evaluate performance and satisfaction trends across locations.
-                    </p>
+                        <p className="text-sm mt-3 text-gray-600 print:text-[9px] print:mt-2">
+                            <strong>Note</strong>: This table displays customer rating percentages categorized from Excellent to Bad, with a site-level comparison to evaluate performance and satisfaction trends across locations.
+                        </p>
+                    </div>
+
+
                 </div>
-
-
-            </div>
             )}
 
 
@@ -3405,6 +3421,7 @@ const AllContent = () => {
                                     <tr><td colSpan={7} className="border border-black px-4 py-2 text-center print:px-1 print:py-2">No data available</td></tr>
                                 ) : (
                                     amcExpiringContracts.map((row: any, i: number) => {
+                                        console.log(row)
                                         // Determine if the contract is expiring within 1 month (<=31 days) or the reminder text mentions 1 month
                                         const daysUntil = (() => {
                                             const d = row.contract_end_date ? new Date(row.contract_end_date) : null;
@@ -3728,41 +3745,41 @@ const AllContent = () => {
 
             {/* Inventory Management */}
             {!isOigOrganization && (
-            <>
-            <div className="print-page break-before-page">
-                <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-0">
-                    Inventory Management
-                </h1>
-                <div className={sectionBox}>
+                <>
+                    <div className="print-page break-before-page">
+                        <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-0">
+                            Inventory Management
+                        </h1>
+                        <div className={sectionBox}>
 
-                    <div className="border border-gray-300 p-3">
-                        <h2 className="text-lg font-bold md:text-lg mb-4 print:text-[14px] print:mb-1 print:py-0">
-                            Overview Summary
-                        </h2>
-                        <hr className="border-t border-gray-300 mb-6 print:mb-2" />
+                            <div className="border border-gray-300 p-3">
+                                <h2 className="text-lg font-bold md:text-lg mb-4 print:text-[14px] print:mb-1 print:py-0">
+                                    Overview Summary
+                                </h2>
+                                <hr className="border-t border-gray-300 mb-6 print:mb-2" />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-6 print:gap-3 print:w-[92%] print:mx-auto">
-                            {loadingInventoryOverstockReport ? (
-                                <div className="col-span-2 text-center text-gray-500 print:text-[10px]">Loading overview...</div>
-                            ) : !overstockSummary ? (
-                                <div className="col-span-2 text-center text-gray-500 print:text-[10px]">No overview data available</div>
-                            ) : (
-                                inventoryOverviewCards.map((item, index) => (
-                                    <div
-                                        key={index}
-                                        className="bg-[#f2eee9] p-6 text-center shadow-sm print:bg-[#f2eee9] print:p-3 print:shadow-none print:text-[10px] print:leading-relaxed"
-                                    >
-                                        <div className="text-xl font-extrabold mb-1 print:text-[12px] print:mb-2">{item.value}</div>
-                                        <div className="text-gray-700 text-sm print:text-[10px]">{item.label}</div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-6 print:gap-3 print:w-[92%] print:mx-auto">
+                                    {loadingInventoryOverstockReport ? (
+                                        <div className="col-span-2 text-center text-gray-500 print:text-[10px]">Loading overview...</div>
+                                    ) : !overstockSummary ? (
+                                        <div className="col-span-2 text-center text-gray-500 print:text-[10px]">No overview data available</div>
+                                    ) : (
+                                        inventoryOverviewCards.map((item, index) => (
+                                            <div
+                                                key={index}
+                                                className="bg-[#f2eee9] p-6 text-center shadow-sm print:bg-[#f2eee9] print:p-3 print:shadow-none print:text-[10px] print:leading-relaxed"
+                                            >
+                                                <div className="text-xl font-extrabold mb-1 print:text-[12px] print:mb-2">{item.value}</div>
+                                                <div className="text-gray-700 text-sm print:text-[10px]">{item.label}</div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
 
-                    {/* OverstockGridExact Component */}
-                    <div className=" mt-3 print:p-0  border border-gray-300 p-2">
-                        <style>{`
+                            {/* OverstockGridExact Component */}
+                            <div className=" mt-3 print:p-0  border border-gray-300 p-2">
+                                <style>{`
                 /* Screen view styles only, scoped to overstock-table class */
                 .overstock-table {
                   border-collapse: separate !important;
@@ -3785,309 +3802,345 @@ const AllContent = () => {
                     margin-right: 4px;
                 }
             `}</style>
-                        <div className="mb-4 print:mb-1 print:mt-4 ">
-                            <h1 className="text-lg font-bold md:text-lg mb-4 print:text-[14px] print:mb-1 print:py-0 print:ml-4">
-                                Overstock Analysis – Top 10 Items
-                            </h1>
-                            <hr className="my-2 border-gray-300 print:border-gray-300" />
-                            <div className="flex justify-end items-center space-x-5 mr-2">
-                                {/* Capital Book */}
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-5 h-5 print:w-4 print:h-4 rounded-full bg-[#c8bda3] border border-black"></div>
-                                    <span className="text-md print:text-[10px] font-medium">Capital Block</span>
-                                </div>
+                                <div className="mb-4 print:mb-1 print:mt-4 ">
+                                    <h1 className="text-lg font-bold md:text-lg mb-4 print:text-[14px] print:mb-1 print:py-0 print:ml-4">
+                                        Overstock Analysis – Top 10 Items
+                                    </h1>
+                                    <hr className="my-2 border-gray-300 print:border-gray-300" />
+                                    <div className="flex justify-end items-center space-x-5 mr-2">
+                                        {/* Capital Book */}
+                                        <div className="flex items-center space-x-2">
+                                            <div className="w-5 h-5 print:w-4 print:h-4 rounded-full bg-[#c8bda3] border border-black"></div>
+                                            <span className="text-md print:text-[10px] font-medium">Capital Block</span>
+                                        </div>
 
-                                {/* Current Stock */}
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-5 h-5 print:w-4 print:h-4 rounded-full bg-[#dedace] border border-[#a5a39f]"></div>
-                                    <span className="text-md print:text-[10px] font-medium">Current Stock</span>
+                                        {/* Current Stock */}
+                                        <div className="flex items-center space-x-2">
+                                            <div className="w-5 h-5 print:w-4 print:h-4 rounded-full bg-[#dedace] border border-[#a5a39f]"></div>
+                                            <span className="text-md print:text-[10px] font-medium">Current Stock</span>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div className="overflow-x-auto print:overflow-x-visible">
+                                    {loadingInventoryOverstockReport ? (
+                                        <div className="text-center text-gray-500 text-sm print:text-[10px]">Loading overstock items...</div>
+                                    ) : (!itemss?.length || !sitesk?.length) ? (
+                                        <div className="text-center text-gray-500 text-sm print:text-[10px]">No overstock analysis data available</div>
+                                    ) : (
+                                        <div>
+                                            <div className='flex items-center'>
+                                                <div className='-rotate-90 print:text-[10px]'>Inventories</div>
+                                                <table className="overstock-table print:border-separate">
+                                                    <tbody>
+                                                        {itemss.map((item, rowIdx) => (
+                                                            <tr key={rowIdx}>
+                                                                <td
+                                                                    className="p-2 text-xs text-center item-center font-semibold bg-white w-[180px] align-center whitespace-normal break-words leading-tight mx-0 my-0 
+                                    print:text-[9px] print:font-semibold print:bg-white print:w-[160px] print:text-left print:mx-0 print:my-1 print:whitespace-normal print:break-words print:leading-tight"
+                                                                >
+                                                                    {item.name}
+                                                                </td>
+                                                                {item.capital.map((cap, colIdx) => (
+                                                                    <Block
+                                                                        key={colIdx}
+                                                                        capital={cap}
+                                                                        capitalText={item.capitalText ? item.capitalText[colIdx] : undefined}
+                                                                        stock={item.stock[colIdx]}
+                                                                    />
+                                                                ))}
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                    <tfoot>
+                                                        <tr>
+                                                            <th
+                                                                className="w-[180px] bg-white mx-0 my-0 
+                                print:w-[160px] print:bg-white print:mx-0 print:my-1"
+                                                            ></th>
+                                                            {sitesk.map((site, idx) => (
+                                                                <th
+                                                                    key={idx}
+                                                                    className="p-2 text-[10px] font-medium text-center bg-white w-28 mx-0 my-0 whitespace-normal break-words leading-tight 
+                                    print:text-[8px] print:font-semibold print:text-center print:bg-white print:w-24 print:mx-0 print:my-1 print:whitespace-normal print:break-words print:leading-tight"
+                                                                >
+                                                                    {site}
+                                                                </th>
+                                                            ))}
+                                                        </tr>
+                                                        <tr>
+                                                            <th
+                                                                className="w-[180px] bg-white mx-0 my-0 
+                                print:w-[160px] print:bg-white print:mx-0 print:my-1"
+                                                            ></th>
+                                                            <th
+                                                                colSpan={sitesk.length}
+                                                                className="text-center bg-white px-2 py-1 text-sm font-semibold tracking-wide mx-0 my-0 
+                                print:text-[9px] print:font-semibold print:bg-white print:mx-0 print:my-1"
+                                                            >
+                                                                Sites
+                                                            </th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                            <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
+                                                <strong>Note :</strong> This table shows the top 10 overstock items with their capital block (Upper section) and current stock (Lower section), highlighting excess inventory tied up in high-value items.
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
+
                         </div>
-                        <div className="overflow-x-auto print:overflow-x-visible">
-                            {loadingInventoryOverstockReport ? (
-                                <div className="text-center text-gray-500 text-sm print:text-[10px]">Loading overstock items...</div>
-                            ) : (!itemss?.length || !sitesk?.length) ? (
-                                <div className="text-center text-gray-500 text-sm print:text-[10px]">No overstock analysis data available</div>
-                            ) : (
-                                <>
-                                    <table className="overstock-table print:border-separate">
-                                        <tbody>
-                                            {itemss.map((item, rowIdx) => (
-                                                <tr key={rowIdx}>
-                                                    <td
-                                                        className="p-2 text-xs text-center item-center font-semibold bg-white w-[180px] align-center whitespace-normal break-words leading-tight mx-0 my-0 
-                                    print:text-[9px] print:font-semibold print:bg-white print:w-[160px] print:text-left print:mx-0 print:my-1 print:whitespace-normal print:break-words print:leading-tight"
-                                                    >
-                                                        {item.name}
-                                                    </td>
-                                                    {item.capital.map((cap, colIdx) => (
-                                                        <Block
-                                                            key={colIdx}
-                                                            capital={cap}
-                                                            capitalText={item.capitalText ? item.capitalText[colIdx] : undefined}
-                                                            stock={item.stock[colIdx]}
-                                                        />
+                    </div>
+
+                    {/*Consumables Overview */}
+                    <div className="print-page break-before-page">
+                        <h1 className="report-title text-2xl font-bold mb-0 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-2">
+                            Consumables Overview
+                        </h1>
+                        <div className={sectionBox}>
+
+
+                            {/* Top Consumables – Centre-wise Overview */}
+                            <div className="border border-gray-300 comment p-4 mt-0 print:border-gray-300 print:p-4 print:mt-0">
+                                <h2 className="text-lg md:text-lg font-bold tracking-wide mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-2 print:pb-1">
+                                    Top Consumables – Centre-wise Overview
+                                </h2>
+                                <div className="overflow-auto print:overflow-visible">
+                                    {loadingCenterWiseConsumables ? (
+                                        <div className="p-4 text-sm text-gray-600">Loading center-wise consumables…</div>
+                                    ) : topConsumableHeaders.length === 0 ? (
+                                        <div className="p-4 text-sm text-gray-600">No consumables data available.</div>
+                                    ) : (
+                                        <table className="min-w-full border border-black text-sm align-middle print:table-fixed print:w-full print:text-[10px] print:leading-relaxed">
+                                            <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030]">
+                                                <tr className="uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[9px]">
+                                                    <th scope="col" className="border border-black py-1 px-4 text-left bg-[#F6F4EE] print:py-1 print:px-2 print:w-[22%] print:whitespace-normal print:break-words print:align-top">Sites</th>
+                                                    {topConsumableHeaders.map((header, index) => (
+                                                        <th
+                                                            key={index}
+                                                            scope="col"
+                                                            className="border border-black py-1 px-2 text-center print:text-center print:py-1 print:px-1 whitespace-nowrap print:whitespace-normal print:break-words print:align-top print:text-[9px]"
+                                                        >
+                                                            {header}
+                                                        </th>
                                                     ))}
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                        <tfoot>
-                                            <tr>
-                                                <th
-                                                    className="w-[180px] bg-white mx-0 my-0 
-                                print:w-[160px] print:bg-white print:mx-0 print:my-1"
-                                                ></th>
-                                                {sitesk.map((site, idx) => (
-                                                    <th
-                                                        key={idx}
-                                                        className="p-2 text-[10px] font-medium text-center bg-white w-28 mx-0 my-0 whitespace-normal break-words leading-tight 
-                                    print:text-[8px] print:font-semibold print:text-center print:bg-white print:w-24 print:mx-0 print:my-1 print:whitespace-normal print:break-words print:leading-tight"
-                                                    >
-                                                        {site}
-                                                    </th>
+                                            </thead>
+                                            <tbody>
+                                                {consumablesTableData.map((row, i) => (
+                                                    <tr key={i} className={i % 2 === 0 ? "bg-gray-50 print:bg-gray-50" : "bg-white print:bg-white"}>
+                                                        <td className="border border-black py-1 px-4 bg-[#F6F4EE] font-semibold text-left print:py-1 print:px-2 print:bg-[#F6F4EE] print:whitespace-normal print:break-words print:align-top">
+                                                            {row.inventory}
+                                                        </td>
+                                                        {row.values.map((value, j) => (
+                                                            <td
+                                                                key={j}
+                                                                className="border border-black py-1 px-2 text-right tabular-nums print:py-1 print:px-1 print:whitespace-normal print:break-words print:align-top print:text-[9px]"
+                                                            >
+                                                                {Number(value).toLocaleString()}
+                                                            </td>
+                                                        ))}
+                                                    </tr>
                                                 ))}
-                                            </tr>
-                                            {/* X-axis label spanning all site columns */}
-                                            <tr>
-                                                <th
-                                                    className="w-[180px] bg-white mx-0 my-0 
-                                print:w-[160px] print:bg-white print:mx-0 print:my-1"
-                                                ></th>
-                                                <th
-                                                    colSpan={sitesk.length}
-                                                    className="text-center bg-white px-2 py-1 text-sm font-semibold tracking-wide mx-0 my-0 
-                                print:text-[9px] print:font-semibold print:bg-white print:mx-0 print:my-1"
+                                            </tbody>
+                                        </table>
+                                    )}
+                                </div>
+
+
+                                <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[11px] print:mt-0 print:px-3 print:py-2 print:text-black">
+                                    <strong>Note :</strong> This table highlights the top 10 consumables (highest overall usage) across each centre. Numeric values are right-aligned with tabular spacing for easier comparison. <br />
+                                    <span className="not-italic font-medium">Formula:</span> Total consumable × ( Average Sqft (1000) / Site Sqft )
+                                </div>
+                            </div>
+
+                            {/* Consumable Inventory Value – {periodUnit}ly Comparison */}
+                            {/* Consumable Inventory Value – Quarterly Comparison */}
+                            <div className="p-8 bg-white border border-gray-300   print-page-break print:p-3 print:border-gray-300   print:mt-2">
+                                <h2 className="text-lg md:text-lg font-bold mb-4 text-gray-900 border-b pb-2 print:text-[14px] print:mb-1 print:pb-1 print:border-gray-300">
+                                    Consumable Inventory Value – {periodUnit}ly Comparison
+                                </h2>
+                                <div className="h-[500px] print:h-[300px]">
+                                    {loadingConsumableInventoryComparison ? (
+                                        <div className="p-4 text-sm text-gray-600">Loading consumable comparison…</div>
+                                    ) : consumableComparisonRows.length === 0 ? (
+                                        <div className="p-4 text-sm text-gray-600">No consumable comparison data available.</div>
+                                    ) : (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart
+                                                data={consumableComparisonRows}
+                                                margin={{ top: 20, right: 20, left: 70, bottom: 80 }}
+                                                barCategoryGap={20}
+                                            >
+                                                <CartesianGrid stroke="#ddd" strokeDasharray="3 3" />
+                                                <XAxis
+                                                    dataKey="site"
+                                                    angle={-45}
+                                                    textAnchor="end"
+                                                    interval={0}
+                                                    height={100}
+                                                    tick={{ fontSize: 18, fontWeight: '600' }}
+                                                    label={{
+                                                        value: "Sites",
+                                                        position: "bottom",
+                                                        offset: 30,
+                                                        fontSize: 16,
+                                                        fontStyle: "italic",
+                                                        fontWeight: "500",
+                                                        fill: "#1A1A1A",
+                                                    }}
+                                                />
+                                                <YAxis
+                                                    width={80}
+                                                    domain={[0, consumableMaxRaw || 0]}
+                                                    ticks={consumableTicks}
+                                                    tickFormatter={(v) => formatToK(v)}
+                                                    label={{
+                                                        value: "Total Value of Consumption",
+                                                        angle: -90,
+                                                        position: "insideLeft",
+                                                        dy: 90,
+                                                        dx: -50,
+                                                        fontSize: 16,
+                                                        fontStyle: "italic",
+                                                        fontWeight: "500",
+                                                        offset: 20,
+                                                        fill: "#1A1A1A"
+                                                    }}
                                                 >
-                                                    Sites
-                                                </th>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                    <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
-                                        <strong>Note :</strong> This table shows the top 10 overstock items with their capital block (Upper section) and current stock (Lower section), highlighting excess inventory tied up in high-value items.
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-
-
-                </div>
-            </div>
-
-            {/*Consumables Overview */}
-            <div className="print-page break-before-page">
-                <h1 className="report-title text-2xl font-bold mb-0 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-2">
-                    Consumables Overview
-                </h1>
-                <div className={sectionBox}>
-
-
-                    {/* Top Consumables – Centre-wise Overview */}
-                    <div className="border border-gray-300 comment p-4 mt-0 print:border-gray-300 print:p-4 print:mt-0">
-                        <h2 className="text-lg md:text-lg font-bold tracking-wide mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-2 print:pb-1">
-                            Top Consumables – Centre-wise Overview
-                        </h2>
-                        <div className="overflow-auto print:overflow-visible">
-                            {loadingCenterWiseConsumables ? (
-                                <div className="p-4 text-sm text-gray-600">Loading center-wise consumables…</div>
-                            ) : topConsumableHeaders.length === 0 ? (
-                                <div className="p-4 text-sm text-gray-600">No consumables data available.</div>
-                            ) : (
-                                <table className="min-w-full border border-black text-sm align-middle print:table-fixed print:w-full print:text-[10px] print:leading-relaxed">
-                                    <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030]">
-                                        <tr className="uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[9px]">
-                                            <th scope="col" className="border border-black py-1 px-4 text-left bg-[#F6F4EE] print:py-1 print:px-2 print:w-[22%] print:whitespace-normal print:break-words print:align-top">Sites</th>
-                                            {topConsumableHeaders.map((header, index) => (
-                                                <th
-                                                    key={index}
-                                                    scope="col"
-                                                    className="border border-black py-1 px-2 text-center print:text-center print:py-1 print:px-1 whitespace-nowrap print:whitespace-normal print:break-words print:align-top print:text-[9px]"
-                                                >
-                                                    {header}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {consumablesTableData.map((row, i) => (
-                                            <tr key={i} className={i % 2 === 0 ? "bg-gray-50 print:bg-gray-50" : "bg-white print:bg-white"}>
-                                                <td className="border border-black py-1 px-4 bg-[#F6F4EE] font-semibold text-left print:py-1 print:px-2 print:bg-[#F6F4EE] print:whitespace-normal print:break-words print:align-top">
-                                                    {row.inventory}
-                                                </td>
-                                                {row.values.map((value, j) => (
-                                                    <td
-                                                        key={j}
-                                                        className="border border-black py-1 px-2 text-right tabular-nums print:py-1 print:px-1 print:whitespace-normal print:break-words print:align-top print:text-[9px]"
-                                                    >
-                                                        {Number(value).toLocaleString()}
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
-                        </div>
-
-
-                        <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[11px] print:mt-0 print:px-3 print:py-2 print:text-black">
-                            <strong>Note :</strong> This table highlights the top 10 consumables (highest overall usage) across each centre. Numeric values are right-aligned with tabular spacing for easier comparison. <br />
-                            <span className="not-italic font-medium">Formula:</span> Total consumable × ( Average Sqft (1000) / Site Sqft )
-                        </div>
-                    </div>
-
-                    {/* Consumable Inventory Value – {periodUnit}ly Comparison */}
-                    {/* Consumable Inventory Value – Quarterly Comparison */}
-                    <div className="p-8 bg-white border border-gray-300   print-page-break print:p-3 print:border-gray-300   print:mt-2">
-                        <h2 className="text-lg md:text-lg font-bold mb-4 text-gray-900 border-b pb-2 print:text-[14px] print:mb-1 print:pb-1 print:border-gray-300">
-                            Consumable Inventory Value – {periodUnit}ly Comparison
-                        </h2>
-                        <div className="h-[500px] print:h-[300px]">
-                            {loadingConsumableInventoryComparison ? (
-                                <div className="p-4 text-sm text-gray-600">Loading consumable comparison…</div>
-                            ) : consumableComparisonRows.length === 0 ? (
-                                <div className="p-4 text-sm text-gray-600">No consumable comparison data available.</div>
-                            ) : (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart
-                                        data={consumableComparisonRows}
-                                        margin={{ top: 20, right: 20, left: 70, bottom: 80 }}
-                                        barCategoryGap={20}
-                                    >
-                                        <CartesianGrid stroke="#ddd" strokeDasharray="3 3" />
-                                        <XAxis
-                                            dataKey="site"
-                                            angle={-45}
-                                            textAnchor="end"
-                                            interval={0}
-                                            height={100}
-                                            tick={{ fontSize: 18, fontWeight: '600' }}
-                                            label={{
-                                                value: "Sites",
-                                                position: "bottom",
-                                                offset: 30,
-                                                fontSize: 16,
-                                                fontStyle: "italic",
-                                                fontWeight: "500",
-                                                fill: "#1A1A1A",
-                                            }}
-                                        />
-                                        <YAxis
-                                            width={80}
-                                            domain={[0, consumableMaxRaw || 0]}
-                                            ticks={consumableTicks}
-                                            tickFormatter={(v) => formatToK(v)}
-                                            label={{
-                                                value: "Total Value of Consumption",
-                                                angle: -90,
-                                                position: "insideLeft",
-                                                dy: 90,
-                                                dx: -50,
-                                                fontSize: 16,
-                                                fontStyle: "italic",
-                                                fontWeight: "500",
-                                                offset: 20,
-                                                fill: "#1A1A1A"
-                                            }}
-                                        >
-                                            {/* <Label
+                                                    {/* <Label
                                                 value="Total Value of Consumption"
                                                 angle={-90}
                                                 position="insideLeft"
                                                 className="text-sm"
                                             /> */}
-                                        </YAxis>
-                                        <Tooltip
-                                            formatter={(val: any) => formatToK(val)}
-                                            cursor={{ fill: "rgba(0, 0, 0, 0.05)" }}
-                                        />
-                                        <Legend
-                                            iconType="circle"
-                                            wrapperStyle={{ fontSize: "14px" }}
-                                            verticalAlign="top"
-                                            align="right"
-                                        />
-                                        <Bar
-                                            dataKey="lastQuarter"
-                                            fill="#D6BBAF"
-                                            name={lastLabel}
-                                            barSize={40}
-                                            label={{ position: "top", formatter: (val: any) => formatToK(val), fill: "#444" }}
-                                        />
-                                        <Bar
-                                            dataKey="currentQuarter"
-                                            fill="#D3D6D4"
-                                            name={currentLabel}
-                                            barSize={40}
-                                            label={{ position: "top", formatter: (val: any) => formatToK(val), fill: "#444" }}
-                                        />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            )}
-                        </div>
-                        <p className="text-sm text-gray-700 mt-6 border-t pt-4 print:text-[11px] print:mt-1 print:pt-1 print:border-gray-300">
-                            <strong>Note:</strong> This graph illustrates total consumable inventory usage with a comparison to the previous quarter, highlighting trends in consumption.
-                        </p>
-                    </div>
+                                                </YAxis>
+                                                <Tooltip
+                                                    formatter={(val: any) => formatToK(val)}
+                                                    cursor={{ fill: "rgba(0, 0, 0, 0.05)" }}
+                                                />
+                                                <Legend
+                                                    iconType="circle"
+                                                    wrapperStyle={{ fontSize: "14px" }}
+                                                    verticalAlign="top"
+                                                    align="right"
+                                                />
+                                                <Bar
+                                                    dataKey="lastQuarter"
+                                                    fill="#D6BBAF"
+                                                    name={lastLabel}
+                                                    barSize={40}
+                                                    label={{ position: "top", formatter: (val: any) => formatToK(val), fill: "#444" }}
+                                                />
+                                                <Bar
+                                                    dataKey="currentQuarter"
+                                                    fill="#D3D6D4"
+                                                    name={currentLabel}
+                                                    barSize={40}
+                                                    label={{ position: "top", formatter: (val: any) => formatToK(val), fill: "#444" }}
+                                                />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    )}
+                                </div>
+                                <p className="text-sm text-gray-700 mt-6 border-t pt-4 print:text-[11px] print:mt-1 print:pt-1 print:border-gray-300">
+                                    <strong>Note:</strong> This graph illustrates total consumable inventory usage with a comparison to the previous quarter, highlighting trends in consumption.
+                                </p>
+                            </div>
 
-                </div>
-            </div>
-            </>
+                        </div>
+                    </div>
+                </>
             )}
 
             {/* Parking and visitor Management */}
             {!isOigOrganization && (
-            <>
-            <div className="print-page break-before-page">
-                <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
-                    Parking Management
-                </h1>
-                <div className={sectionBox}>
-                    <div className="flex flex-col print:p-4 mb-8">
-                        <h2 className="text-lg md:text-xl p-4 print:text-[14px] font-bold mb-2">Parking Allocation Overview – Paid, Free & Vacant</h2>
-                        <div className="border-b border-gray-300 w-full" />
-                    </div>
+                <>
+                    <div className="print-page break-before-page">
+                        <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
+                            Parking Management
+                        </h1>
+                        <div className={sectionBox}>
+                            <div className="flex flex-col print:p-4 mb-8">
+                                <h2 className="text-lg md:text-xl p-4 print:text-[14px] font-bold mb-2">Parking Allocation Overview – Paid, Free & Vacant</h2>
+                                <div className="border-b border-gray-300 w-full" />
+                            </div>
 
-                    {/* Print-only mini legend for Parking section */}
-                    <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
-                        <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 rounded-full bg-[#a0b5c1]" />
-                            <span>Free</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 rounded-full bg-[#c5ae94]" />
-                            <span>Paid</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 rounded-full bg-[#dad8cf]" />
-                            <span>Vacant</span>
-                        </div>
-                    </div>
+                            {/* Print-only mini legend for Parking section */}
+                            <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
+                                <div className="flex items-center gap-1">
+                                    <div className="w-3 h-3 rounded-full bg-[#a0b5c1]" />
+                                    <span>Free</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <div className="w-3 h-3 rounded-full bg-[#c5ae94]" />
+                                    <span>Paid</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <div className="w-3 h-3 rounded-full bg-[#dad8cf]" />
+                                    <span>Vacant</span>
+                                </div>
+                            </div>
 
-                    {/* Chart: Desktop responsive + Print/Mobile fixed */}
-                    <div className="w-full">
-                        {loadingParkingDateSiteWise ? (
-                            <div className="text-center py-6 text-gray-600">Loading parking data…</div>
-                        ) : parkingChartData.length === 0 ? (
-                            <div className="text-center py-6 text-gray-600">No parking data available.</div>
-                        ) : (
-                            <>
-                                {/* Desktop-only full graph (hidden in print) */}
-                                <div className="hidden md:block print:hidden">
-                                    <div
-                                        style={{
-                                            width: '100%',
-                                            height: `${Math.max(360, Math.min(900, ((parkingChartData?.length || 1) * 48) + 160))}px`,
-                                        }}
-                                    >
-                                        <ResponsiveContainer width="100%" height="100%">
+                            {/* Chart: Desktop responsive + Print/Mobile fixed */}
+                            <div className="w-full">
+                                {loadingParkingDateSiteWise ? (
+                                    <div className="text-center py-6 text-gray-600">Loading parking data…</div>
+                                ) : parkingChartData.length === 0 ? (
+                                    <div className="text-center py-6 text-gray-600">No parking data available.</div>
+                                ) : (
+                                    <>
+                                        {/* Desktop-only full graph (hidden in print) */}
+                                        <div className="hidden md:block print:hidden">
+                                            <div
+                                                style={{
+                                                    width: '100%',
+                                                    height: `${Math.max(360, Math.min(900, ((parkingChartData?.length || 1) * 48) + 160))}px`,
+                                                }}
+                                            >
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart
+                                                        data={parkingChartData}
+                                                        layout="vertical"
+                                                        margin={{ top: 20, right: 70, bottom: 20 }}
+                                                        barCategoryGap="10%"
+                                                        barGap={3}
+                                                    >
+                                                        <CartesianGrid strokeDasharray="3 3" />
+                                                        <XAxis
+                                                            type="number"
+                                                            label={{ value: "Count of Parking Slots", position: "insideBottom", offset: -5 }}
+                                                            tick={{ fontSize: 12 }}
+                                                        />
+                                                        <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={220} />
+                                                        <Tooltip />
+                                                        <Legend verticalAlign="top" align="right" />
+                                                        <Bar dataKey="Free" fill="#a0b5c1" name="Free" barSize={28}>
+                                                            <LabelList dataKey="Free" position="right" style={{ fontSize: 10 }} />
+                                                        </Bar>
+                                                        <Bar dataKey="Paid" fill="#c5ae94" name="Paid" barSize={28}>
+                                                            <LabelList dataKey="Paid" position="right" style={{ fontSize: 10 }} />
+                                                        </Bar>
+                                                        <Bar dataKey="Vacant" fill="#dad8cf" name="Vacant" barSize={28}>
+                                                            <LabelList dataKey="Vacant" position="right" style={{ fontSize: 10 }} />
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </div>
+
+                                        {/* Print/PDF and mobile fixed-size chart */}
+                                        <div className="overflow-x-auto block print:block md:hidden">
                                             <BarChart
+                                                width={800}
+                                                height={Math.max(300, parkingChartData.length * 50)}
                                                 data={parkingChartData}
                                                 layout="vertical"
-                                                margin={{ top: 20, right: 70, bottom: 20 }}
+                                                margin={{ top: 20, right: 60, left: 10, bottom: 20 }}
                                                 barCategoryGap="10%"
                                                 barGap={3}
                                             >
@@ -4097,9 +4150,8 @@ const AllContent = () => {
                                                     label={{ value: "Count of Parking Slots", position: "insideBottom", offset: -5 }}
                                                     tick={{ fontSize: 12 }}
                                                 />
-                                                <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={220} />
+                                                <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={200} />
                                                 <Tooltip />
-                                                <Legend verticalAlign="top" align="right" />
                                                 <Bar dataKey="Free" fill="#a0b5c1" name="Free" barSize={28}>
                                                     <LabelList dataKey="Free" position="right" style={{ fontSize: 10 }} />
                                                 </Bar>
@@ -4110,92 +4162,86 @@ const AllContent = () => {
                                                     <LabelList dataKey="Vacant" position="right" style={{ fontSize: 10 }} />
                                                 </Bar>
                                             </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
 
-                                {/* Print/PDF and mobile fixed-size chart */}
-                                <div className="overflow-x-auto block print:block md:hidden">
-                                    <BarChart
-                                        width={800}
-                                        height={Math.max(300, parkingChartData.length * 50)}
-                                        data={parkingChartData}
-                                        layout="vertical"
-                                        margin={{ top: 20, right: 60, left: 10, bottom: 20 }}
-                                        barCategoryGap="10%"
-                                        barGap={3}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis
-                                            type="number"
-                                            label={{ value: "Count of Parking Slots", position: "insideBottom", offset: -5 }}
-                                            tick={{ fontSize: 12 }}
-                                        />
-                                        <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={200} />
-                                        <Tooltip />
-                                        <Bar dataKey="Free" fill="#a0b5c1" name="Free" barSize={28}>
-                                            <LabelList dataKey="Free" position="right" style={{ fontSize: 10 }} />
-                                        </Bar>
-                                        <Bar dataKey="Paid" fill="#c5ae94" name="Paid" barSize={28}>
-                                            <LabelList dataKey="Paid" position="right" style={{ fontSize: 10 }} />
-                                        </Bar>
-                                        <Bar dataKey="Vacant" fill="#dad8cf" name="Vacant" barSize={28}>
-                                            <LabelList dataKey="Vacant" position="right" style={{ fontSize: 10 }} />
-                                        </Bar>
-                                    </BarChart>
-                                </div>
-                            </>
-                        )}
-                    </div>
-
-                    {/* Bottom note */}
-                    <p className="text-sm text-gray-500 p-4 mt-4 print:mt-4">
-                        <strong>Note:</strong> This graph presents the current status of parking allocation, showing the distribution between paid, free, and vacant slots.
-                    </p>
-                </div>
-            </div>
-            <div className='print-page break-before-page'>
-                {/* Visitor Management */}
-                <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
-                    Visitor Management
-                </h1>
-                <div className={sectionBox}>
-                    {/* Header and legend */}
-                    <div className="flex p-4 flex-col print:p-4 mb-8">
-                        <h2 className="text-lg md:text-lg print:text-[14px] font-bold mb-2">Visitor Trend Analysis</h2>
-                        <div className="border-b border-gray-300 w-full" />
-                    </div>
-
-                    {/* Print-only mini legend for Visitor section */}
-                    <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
-                        <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 rounded-full bg-[#dad8cf]" />
-                            <span>{lastLabel}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 rounded-full bg-[#c5ae94]" />
-                            <span>{currentLabel}</span>
+                            {/* Bottom note */}
+                            <p className="text-sm text-gray-500 p-4 mt-4 print:mt-4">
+                                <strong>Note:</strong> This graph presents the current status of parking allocation, showing the distribution between paid, free, and vacant slots.
+                            </p>
                         </div>
                     </div>
+                    <div className='print-page break-before-page'>
+                        {/* Visitor Management */}
+                        <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-0 print:py-2">
+                            Visitor Management
+                        </h1>
+                        <div className={sectionBox}>
+                            {/* Header and legend */}
+                            <div className="flex p-4 flex-col print:p-4 mb-8">
+                                <h2 className="text-lg md:text-lg print:text-[14px] font-bold mb-2">Visitor Trend Analysis</h2>
+                                <div className="border-b border-gray-300 w-full" />
+                            </div>
 
-                    {/* Chart: Desktop responsive + Print/Mobile fixed */}
-                    <div className="w-full">
-                        {loadingVisitorTrendAnalysis ? (
-                            <div className="p-4 text-sm text-gray-600">Loading visitor trends…</div>
-                        ) : visitorTrendRows.length === 0 ? (
-                            <div className="p-4 text-sm text-gray-600">No visitor trend data available.</div>
-                        ) : (
-                            <>
-                                {/* Desktop-only full graph (hidden in print) */}
-                                <div className="hidden md:block print:hidden">
-                                    <div
-                                        style={{
-                                            width: '100%',
-                                            height: `${Math.max(360, Math.min(900, ((visitorTrendRows?.length || 1) * 48) + 160))}px`,
-                                        }}
-                                    >
-                                        <ResponsiveContainer width="100%" height="100%">
+                            {/* Print-only mini legend for Visitor section */}
+                            <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
+                                <div className="flex items-center gap-1">
+                                    <div className="w-3 h-3 rounded-full bg-[#dad8cf]" />
+                                    <span>{lastLabel}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <div className="w-3 h-3 rounded-full bg-[#c5ae94]" />
+                                    <span>{currentLabel}</span>
+                                </div>
+                            </div>
+
+                            {/* Chart: Desktop responsive + Print/Mobile fixed */}
+                            <div className="w-full">
+                                {loadingVisitorTrendAnalysis ? (
+                                    <div className="p-4 text-sm text-gray-600">Loading visitor trends…</div>
+                                ) : visitorTrendRows.length === 0 ? (
+                                    <div className="p-4 text-sm text-gray-600">No visitor trend data available.</div>
+                                ) : (
+                                    <>
+                                        {/* Desktop-only full graph (hidden in print) */}
+                                        <div className="hidden md:block print:hidden">
+                                            <div
+                                                style={{
+                                                    width: '100%',
+                                                    height: `${Math.max(360, Math.min(900, ((visitorTrendRows?.length || 1) * 48) + 160))}px`,
+                                                }}
+                                            >
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart
+                                                        data={visitorTrendRows}
+                                                        layout="vertical"
+                                                        barCategoryGap="10%"
+                                                        barGap={3}
+                                                        margin={{ top: 5, right: 100, left: 0, bottom: 5 }}
+                                                    >
+                                                        <CartesianGrid strokeDasharray="3 3" />
+                                                        <XAxis type="number" label={{ value: "Counts", position: "insideBottom", offset: -5 }} fontSize={15} />
+                                                        <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={200} fontSize={15} />
+                                                        <Tooltip />
+                                                        <Legend verticalAlign="top" align="right" style={{ fontSize: 10 }} />
+                                                        <Bar dataKey="last" fill="#dad8cf" name={lastLabel} barSize={28}>
+                                                            <LabelList dataKey="last" position="right" style={{ fontSize: 10 }} />
+                                                        </Bar>
+                                                        <Bar dataKey="current" fill="#c5ae94" name={currentLabel} barSize={28}>
+                                                            <LabelList dataKey="current" position="right" style={{ fontSize: 10 }} />
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </div>
+
+                                        {/* Print/PDF and mobile fixed-size chart */}
+                                        <div className="overflow-x-auto block print:block md:hidden">
                                             <BarChart
+                                                width={800}
+                                                height={visitorChartHeight}
                                                 data={visitorTrendRows}
                                                 layout="vertical"
                                                 barCategoryGap="10%"
@@ -4204,9 +4250,9 @@ const AllContent = () => {
                                             >
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis type="number" label={{ value: "Counts", position: "insideBottom", offset: -5 }} fontSize={15} />
-                                                <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={200} fontSize={15} />
+                                                <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={180} fontSize={15} />
                                                 <Tooltip />
-                                                <Legend verticalAlign="top" align="right" style={{ fontSize: 10 }} />
+                                                {/* Legend removed for print/mobile to avoid overlap; see print-only legend above */}
                                                 <Bar dataKey="last" fill="#dad8cf" name={lastLabel} barSize={28}>
                                                     <LabelList dataKey="last" position="right" style={{ fontSize: 10 }} />
                                                 </Bar>
@@ -4214,46 +4260,19 @@ const AllContent = () => {
                                                     <LabelList dataKey="current" position="right" style={{ fontSize: 10 }} />
                                                 </Bar>
                                             </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
 
-                                {/* Print/PDF and mobile fixed-size chart */}
-                                <div className="overflow-x-auto block print:block md:hidden">
-                                    <BarChart
-                                        width={800}
-                                        height={visitorChartHeight}
-                                        data={visitorTrendRows}
-                                        layout="vertical"
-                                        barCategoryGap="10%"
-                                        barGap={3}
-                                        margin={{ top: 5, right: 100, left: 0, bottom: 5 }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis type="number" label={{ value: "Counts", position: "insideBottom", offset: -5 }} fontSize={15} />
-                                        <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={180} fontSize={15} />
-                                        <Tooltip />
-                                        {/* Legend removed for print/mobile to avoid overlap; see print-only legend above */}
-                                        <Bar dataKey="last" fill="#dad8cf" name={lastLabel} barSize={28}>
-                                            <LabelList dataKey="last" position="right" style={{ fontSize: 10 }} />
-                                        </Bar>
-                                        <Bar dataKey="current" fill="#c5ae94" name={currentLabel} barSize={28}>
-                                            <LabelList dataKey="current" position="right" style={{ fontSize: 10 }} />
-                                        </Bar>
-                                    </BarChart>
-                                </div>
-                            </>
-                        )}
+                            {/* Note */}
+                            <p className="text-sm text-gray-500 p-4 mt-4 print:mt-4">
+                                <strong>Note:</strong> This graph shows the total visitor count compared to the previous period,
+                                providing a clear view of trends and changes in footfall over time for performance comparison.
+                            </p>
+                        </div>
                     </div>
-
-                    {/* Note */}
-                    <p className="text-sm text-gray-500 p-4 mt-4 print:mt-4">
-                        <strong>Note:</strong> This graph shows the total visitor count compared to the previous period,
-                        providing a clear view of trends and changes in footfall over time for performance comparison.
-                    </p>
-                </div>
-            </div>
-            </>
+                </>
             )}
         </>
     );
