@@ -329,6 +329,18 @@ interface ServiceOption {
   service_code: string;
 }
 
+// Helper function to format asset status (handles underscores and capitalizes)
+const formatAssetStatus = (status: string | null | undefined): string => {
+  if (!status || typeof status !== 'string') return '-';
+  // Replace underscores with spaces, then capitalize each word
+  return status
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 // Helper function to render association-specific data
 const renderAssociationSpecificData = (ticketData: any) => {
   const associationType = ticketData?.asset_service || ticketData?.service_or_asset || 'Asset';
@@ -405,7 +417,7 @@ const renderAssociationSpecificData = (ticketData: any) => {
         return [
           { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
           { label: 'Group', value: ticketData.asset_group || '-' },
-          { label: 'Asset Status', value: ticketData.asset_status || ticketData.amc?.asset_status || '-' },
+          { label: 'Asset Status', value: formatAssetStatus(ticketData.asset_status || ticketData.amc?.asset_status) },
           { label: 'Criticality', value: ticketData.asset_criticality === null || ticketData.asset_criticality === "" ? '-' : (ticketData.asset_criticality ? 'Critical' : 'Non Critical') },
           { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
           { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
@@ -11532,10 +11544,10 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {log.log_by || "System"}
+                          {log.log_by || "-"}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {log.priority || "-"}
+                          {getPriorityLabel(log.priority)}
                         </TableCell>
                         <TableCell className="text-sm">
                           {log.log_comment && log.log_comment.length > 5 ? (

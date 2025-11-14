@@ -622,6 +622,7 @@ import { MobileTicketsPage } from "./pages/mobile/MobileTicketsPage";
 import { TicketListPage } from "./pages/TicketListPage";
 import { MobileRestaurantPage } from "./pages/mobile/MobileRestaurantPage";
 import { MobileAssetPage } from "./pages/mobile/MobileAssetPage";
+import { MobileOwnerCostAssetPage } from "./pages/mobile/MobileOwnerCostAssetPage";
 import { MobileOrdersPage } from "./components/mobile/MobileOrdersPage";
 import { QRTestPage } from "./pages/QRTestPage";
 
@@ -1548,7 +1549,7 @@ function App() {
                     element={<UpdateTicketsPage />}
                   />
                   <Route
-                    path="/maintenance/ticket/details/:id"
+                    path="/maintenance/ticket/debls/:id"
                     element={<TicketDetailsPage />}
                   />
                   <Route
@@ -3428,6 +3429,15 @@ function App() {
                 <Route
                   path="/mobile/assets/:assetId/breakdown"
                   element={<MobileAssetPage />}
+                />
+                {/* Mobile Owner Cost Routes */}
+                <Route
+                  path="/mobile/owner-cost/:assetId"
+                  element={<MobileOwnerCostAssetPage />}
+                />
+                <Route
+                  path="/mo/:assetId"
+                  element={<MobileOwnerCostAssetPage />}
                 />
                 {/* QR Test Route */}
                 <Route path="/qr-test" element={<QRTestPage />} />
