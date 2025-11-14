@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { 
@@ -43,11 +43,13 @@ interface CalendarFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyFilters: (filters: CalendarFilters) => void;
+  currentFilters?: CalendarFilters; // Pass current active filters to the modal
+  onClearFilters?: () => void; // Callback when filters are cleared
 }
 
 export interface CalendarFilters {
-  dateFrom: string;
-  dateTo: string;
+  dateFrom: string; // DD/MM/YYYY format
+  dateTo: string; // DD/MM/YYYY format
   's[task_custom_form_schedule_type_eq]': string;
   's[task_task_of_eq]': string;
   's[custom_form_form_name_eq]'?: string;
@@ -79,8 +81,30 @@ const selectMenuProps = {
 export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   isOpen,
   onClose,
-  onApplyFilters
+  onApplyFilters,
+  currentFilters,
+  onClearFilters
 }) => {
+  // Helper function to convert DD/MM/YYYY to YYYY-MM-DD for date inputs
+  const convertToDateInputFormat = (dateStr: string): string => {
+    if (!dateStr) return '';
+    const [day, month, year] = dateStr.split('/');
+    if (day && month && year) {
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    return '';
+  };
+
+  // Helper function to convert YYYY-MM-DD to DD/MM/YYYY for API
+  const convertToAPIFormat = (dateStr: string): string => {
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split('-');
+    if (year && month && day) {
+      return `${day}/${month}/${year}`;
+    }
+    return '';
+  };
+
   // Helper function to get default date range (today to one week ago)
   const getDefaultDateRange = () => {
     const today = new Date();
@@ -100,7 +124,19 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     };
   };
 
+  // Initialize filters from currentFilters prop or use defaults
   const [filters, setFilters] = useState<CalendarFilters>(() => {
+    if (currentFilters) {
+      // Convert current filters from DD/MM/YYYY to YYYY-MM-DD for the inputs
+      return {
+        dateFrom: convertToDateInputFormat(currentFilters.dateFrom),
+        dateTo: convertToDateInputFormat(currentFilters.dateTo),
+        's[task_custom_form_schedule_type_eq]': currentFilters['s[task_custom_form_schedule_type_eq]'] || '',
+        's[task_task_of_eq]': currentFilters['s[task_task_of_eq]'] || '',
+        's[custom_form_form_name_eq]': currentFilters['s[custom_form_form_name_eq]'] || ''
+      };
+    }
+    
     const defaultRange = getDefaultDateRange();
     return {
       dateFrom: defaultRange.dateFrom,
@@ -112,9 +148,27 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [dateError, setDateError] = useState<string>('');
-  const [checklist, setChecklist] = useState('');
+  const [checklist, setChecklist] = useState(() => {
+    // Initialize checklist from currentFilters if available
+    return currentFilters?.['s[custom_form_form_name_eq]'] || '';
+  });
   const [customForms, setCustomForms] = useState<CustomForm[]>([]);
   const [isLoadingCustomForms, setIsLoadingCustomForms] = useState(false);
+
+  // Update filters when currentFilters prop changes (when modal opens)
+  useEffect(() => {
+    if (isOpen && currentFilters) {
+      setFilters({
+        dateFrom: convertToDateInputFormat(currentFilters.dateFrom),
+        dateTo: convertToDateInputFormat(currentFilters.dateTo),
+        's[task_custom_form_schedule_type_eq]': currentFilters['s[task_custom_form_schedule_type_eq]'] || '',
+        's[task_task_of_eq]': currentFilters['s[task_task_of_eq]'] || '',
+        's[custom_form_form_name_eq]': currentFilters['s[custom_form_form_name_eq]'] || ''
+      });
+      setChecklist(currentFilters['s[custom_form_form_name_eq]'] || '');
+      setDateError('');
+    }
+  }, [isOpen, currentFilters]);
 
   // Date validation function
   const validateDates = (fromDate: string, toDate: string): string => {
@@ -250,15 +304,9 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     setIsLoading(true);
     try {
       // Convert YYYY-MM-DD to DD/MM/YYYY for API
-      const formatForAPI = (dateStr: string) => {
-        if (!dateStr) return '';
-        const [year, month, day] = dateStr.split('-');
-        return `${day}/${month}/${year}`;
-      };
-
       const apiFilters: CalendarFilters = {
-        dateFrom: formatForAPI(filters.dateFrom),
-        dateTo: formatForAPI(filters.dateTo),
+        dateFrom: convertToAPIFormat(filters.dateFrom),
+        dateTo: convertToAPIFormat(filters.dateTo),
         's[task_custom_form_schedule_type_eq]': filters['s[task_custom_form_schedule_type_eq]'],
         's[task_task_of_eq]': filters['s[task_task_of_eq]'],
         's[custom_form_form_name_eq]': filters['s[custom_form_form_name_eq]'] || ''
@@ -266,6 +314,8 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
 
       console.log('📤 Applying Calendar Filters:', apiFilters);
       console.log('Checklist value:', filters['s[custom_form_form_name_eq]']);
+      console.log('Date From (API format):', apiFilters.dateFrom);
+      console.log('Date To (API format):', apiFilters.dateTo);
 
       onApplyFilters(apiFilters);
       onClose();
@@ -278,33 +328,35 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   };
   const handleClear = () => {
     const defaultRange = getDefaultDateRange();
-    const clearedFilters: CalendarFilters = {
+    const clearedFilters = {
       dateFrom: defaultRange.dateFrom,
       dateTo: defaultRange.dateTo,
       's[task_custom_form_schedule_type_eq]': '',
       's[task_task_of_eq]': '',
       's[custom_form_form_name_eq]': ''
     };
+    
     setFilters(clearedFilters);
     setChecklist(''); // Clear checklist input
     setCustomForms([]); // Clear custom form suggestions
     setDateError(''); // Clear date error
     
     // Convert to DD/MM/YYYY for API
-    const formatForAPI = (dateStr: string) => {
-      if (!dateStr) return '';
-      const [year, month, day] = dateStr.split('-');
-      return `${day}/${month}/${year}`;
-    };
-
     const apiFilters: CalendarFilters = {
-      dateFrom: formatForAPI(clearedFilters.dateFrom),
-      dateTo: formatForAPI(clearedFilters.dateTo),
+      dateFrom: convertToAPIFormat(clearedFilters.dateFrom),
+      dateTo: convertToAPIFormat(clearedFilters.dateTo),
       's[task_custom_form_schedule_type_eq]': '',
       's[task_task_of_eq]': '',
       's[custom_form_form_name_eq]': ''
     };
 
+    console.log('🔄 Clearing filters to defaults:', apiFilters);
+    
+    // Notify parent component that filters are being cleared
+    if (onClearFilters) {
+      onClearFilters();
+    }
+    
     onApplyFilters(apiFilters);
     toast.success('Filters cleared successfully');
   };
