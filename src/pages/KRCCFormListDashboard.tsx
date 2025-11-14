@@ -276,7 +276,7 @@ export const KRCCFormListDashboard = () => {
             >
               <Eye className="h-4 w-4" />
             </Button>
-            <Button
+            {/* <Button
               variant="ghost"
               size="sm"
               onClick={() => handleDownload(form)}
@@ -289,7 +289,7 @@ export const KRCCFormListDashboard = () => {
               ) : (
                 <Download className="h-4 w-4" />
               )}
-            </Button>
+            </Button> */}
           </div>
         );
       case 'user':
