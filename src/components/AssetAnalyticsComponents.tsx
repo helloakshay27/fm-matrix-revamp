@@ -59,14 +59,37 @@ interface AssetStatistics {
     total_assets?: {
         assets_total_count: number;
         assets_total_count_info: string;
-    } | number; // Support both new object structure and legacy number
+    };
+    assets_in_use?: {
+        assets_in_use_total: number;
+        assets_in_use_info: string;
+    };
+    assets_in_breakdown?: {
+        assets_in_breakdown_total: number;
+        assets_in_breakdown_info: string;
+    };
+    critical_assets_breakdown?: {
+        critical_assets_breakdown_total: number;
+        critical_assets_breakdown_info: string;
+    };
+    ppm_overdue_assets?: {
+        ppm_conduct_assets_count: number;
+        ppm_conduct_assets_info: string;
+    };
+    ppm_conduct_assets_count?: {
+        ppm_conduct_assets_count: number;
+        ppm_conduct_assets_info: string;
+    };
+    // Legacy support for old flat structure
+    total_assets_count?: {
+        info: string;
+        total_assets_count: number;
+    };
     total_value?: string;
     it_assets?: number;
     non_it_assets?: number;
     critical_assets?: number;
     ppm_assets?: number;
-    assets_in_use?: number;
-    assets_in_breakdown?: number;
     average_rating?: number;
 }
 
@@ -152,6 +175,7 @@ interface AssetAnalyticsProps {
         toDate: Date;
     };
     selectedAnalyticsTypes?: string[];
+    selectedEndpoint?: string; // For rendering a single specific card
     onAnalyticsChange?: (data: any) => void;
     showFilter?: boolean;
     showSelector?: boolean;
@@ -218,6 +242,7 @@ const SortableChartItem = ({
 export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
     defaultDateRange,
     selectedAnalyticsTypes = ['assetStatistics', 'groupWise', 'categoryWise', 'statusDistribution', 'assetDistributions'],
+    selectedEndpoint, // New prop for rendering single card
     onAnalyticsChange,
     showFilter = true,
     showSelector = true,
@@ -225,6 +250,13 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
     layout = 'grid',
     className = '',
 }) => {
+    console.log('AssetAnalyticsComponents - Rendering with props:', {
+        defaultDateRange,
+        selectedEndpoint,
+        showFilter,
+        showSelector,
+        layout
+    });
     // Default date range (today to last year)
     const getDefaultDateRange = () => {
         const today = new Date();
@@ -234,7 +266,10 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
     };
 
     // Format date for display (DD/MM/YYYY)
-    const formatDateForDisplay = (date: Date) => {
+    const formatDateForDisplay = (date: Date | undefined) => {
+        if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+            return 'Invalid Date';
+        }
         const day = date.getDate().toString().padStart(2, '0');
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const year = date.getFullYear();
@@ -243,13 +278,21 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
 
     // Get formatted date range for display
     const getFormattedDateRange = () => {
+        if (!analyticsDateRange.fromDate || !analyticsDateRange.toDate) {
+            return 'Select Date Range';
+        }
         return `${formatDateForDisplay(analyticsDateRange.fromDate)} - ${formatDateForDisplay(analyticsDateRange.toDate)}`;
     };
 
     // State management
-    const [analyticsDateRange, setAnalyticsDateRange] = useState(
-        defaultDateRange || getDefaultDateRange()
-    );
+    const [analyticsDateRange, setAnalyticsDateRange] = useState(() => {
+        const range = defaultDateRange || getDefaultDateRange();
+        // Ensure we have valid Date objects
+        return {
+            fromDate: range.fromDate instanceof Date ? range.fromDate : new Date(range.fromDate),
+            toDate: range.toDate instanceof Date ? range.toDate : new Date(range.toDate)
+        };
+    });
     const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
     const [currentSelectedTypes, setCurrentSelectedTypes] = useState<string[]>(selectedAnalyticsTypes);
     
@@ -341,14 +384,33 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 analyticsDateRange.toDate
             );
             
-            const transformedData = {
-                total_assets: data.total_assets as any, // Handle both object and number types
-                assets_in_use: data.assets_in_use?.assets_in_use_total || 0,
-                assets_in_breakdown: data.assets_in_breakdown?.assets_in_breakdown_total || 0,
-                critical_assets: data.critical_assets_breakdown?.critical_assets_breakdown_total || 0,
-                ppm_assets: data.ppm_overdue_assets?.ppm_conduct_assets_count || 0,
-                // average_rating: data.average_customer_rating?.avg_rating || 0,
+            console.log('AssetAnalyticsComponents - Asset statistics data received:', data);
+            
+            // Transform the API response to match the interface - same as AssetStatisticsSelector
+            const transformedData: AssetStatistics = {
+                ...data,
+                // Keep the original structures for new API
+                total_assets: data.total_assets,
+                assets_in_use: data.assets_in_use,
+                assets_in_breakdown: data.assets_in_breakdown,
+                critical_assets_breakdown: data.critical_assets_breakdown,
+                ppm_overdue_assets: data.ppm_overdue_assets,
+                // Transform ppm_conduct_assets_count to match our interface
+                ppm_conduct_assets_count: data.ppm_conduct_assets_count ? {
+                    ppm_conduct_assets_count: (data.ppm_conduct_assets_count as { total?: number })?.total || 0,
+                    ppm_conduct_assets_info: (data.ppm_conduct_assets_count as { info?: string })?.info || ''
+                } : undefined,
+                // Also map to old structure for compatibility
+                total_assets_count: data.total_assets ? {
+                    info: data.total_assets.assets_total_count_info || '',
+                    total_assets_count: data.total_assets.assets_total_count || 0
+                } : data.total_assets_count,
+                // Add backward compatible flat properties
+                ppm_assets: data.ppm_overdue_assets?.ppm_conduct_assets_count || 
+                           (data.ppm_conduct_assets_count as { total?: number })?.total || 0,
             };
+            
+            console.log('AssetAnalyticsComponents - Transformed asset statistics:', transformedData);
             
             setAssetStatistics(transformedData);
             setCache(cacheKey, transformedData, false);
@@ -364,15 +426,19 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
     const fetchAssetStatus = async () => {
         const cacheKey = getCacheKey('assetStatus');
         
+        console.log('AssetAnalyticsComponents - fetchAssetStatus called, cacheKey:', cacheKey);
+        
         // Check if we have valid cached data
         if (isCacheValid(cacheKey)) {
             const cachedData = apiCache[cacheKey].data;
+            console.log('AssetAnalyticsComponents - Using cached assetStatus data');
             setAssetStatus(cachedData);
             return;
         }
         
         // Check if already loading
         if (apiCache[cacheKey]?.loading) {
+            console.log('AssetAnalyticsComponents - assetStatus already loading');
             return;
         }
         
@@ -381,10 +447,17 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
         setCache(cacheKey, null, true);
         
         try {
+            console.log('AssetAnalyticsComponents - Fetching asset status with dates:', {
+                fromDate: analyticsDateRange.fromDate,
+                toDate: analyticsDateRange.toDate
+            });
+            
             const data = await assetAnalyticsAPI.getAssetStatus(
                 analyticsDateRange.fromDate,
                 analyticsDateRange.toDate
             );
+            
+            console.log('AssetAnalyticsComponents - Asset status data received:', data);
             setAssetStatus(data);
             setCache(cacheKey, data, false);
         } catch (error) {
@@ -456,6 +529,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 analyticsDateRange.fromDate,
                 analyticsDateRange.toDate
             );
+            console.log('Group-wise assets data received:', data);
             setGroupWiseAssets(data);
             setCache(cacheKey, data, false);
         } catch (error) {
@@ -492,6 +566,9 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 analyticsDateRange.toDate
             );
             
+            console.log('AssetAnalyticsComponents - Category-wise assets RAW API response:', data);
+            console.log('AssetAnalyticsComponents - asset_categorywise:', data.assets_statistics?.asset_categorywise);
+            
             // Support both new and legacy data structures
             let transformedData: CategoryWiseAssets = {
                 info: { description: 'Category-wise asset distribution' },
@@ -503,6 +580,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                     ...data,
                     info: { description: 'Category-wise asset distribution' }
                 };
+                console.log('AssetAnalyticsComponents - Using NEW structure for category-wise assets');
             } else if (data.categories) {
                 // Legacy structure with categories array
                 transformedData = {
@@ -513,13 +591,17 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 data.categories.forEach(category => {
                     transformedData.asset_type_category_counts![category.category_name] = category.asset_count;
                 });
+                console.log('AssetAnalyticsComponents - Using LEGACY categories array structure');
             } else if (data.asset_type_category_counts) {
                 // Legacy structure with asset_type_category_counts
                 transformedData = {
                     ...data,
                     info: { description: 'Category-wise asset distribution' }
                 };
+                console.log('AssetAnalyticsComponents - Using LEGACY asset_type_category_counts structure');
             }
+            
+            console.log('AssetAnalyticsComponents - Transformed category-wise data:', transformedData);
             
             setCategoryWiseAssets(transformedData);
             setCache(cacheKey, transformedData, false);
@@ -602,12 +684,14 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
         const chartStatusData = [
             {
                 name: 'In Use',
-                value: assetStatus?.assets_in_use_total || assetStatistics.assets_in_use || 0,
+                value: assetStatus?.assets_in_use_total || 
+                       assetStatistics?.assets_in_use?.assets_in_use_total || 0,
                 color: CHART_COLORS.primary,
             },
             {
                 name: 'Breakdown',
-                value: assetStatus?.assets_in_breakdown_total || assetStatistics.assets_in_breakdown || 0,
+                value: assetStatus?.assets_in_breakdown_total || 
+                       assetStatistics?.assets_in_breakdown?.assets_in_breakdown_total || 0,
                 color: CHART_COLORS.secondary,
             },
             {
@@ -662,50 +746,91 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
             : chartTypeData;
 
         // Category data - support both new and legacy structures
-        let categoryData = [{ name: 'No Data', value: 0 }];
+        let categoryData: Array<{ name: string; value: number }> = [];
+        
+        console.log('AssetAnalyticsComponents - Processing categoryData from categoryWiseAssets:', categoryWiseAssets);
         
         if (categoryWiseAssets?.assets_statistics?.asset_categorywise) {
             // New structure
-            categoryData = categoryWiseAssets.assets_statistics.asset_categorywise.map((item) => ({
-                name: item.category,
-                value: item.count,
-            }));
+            console.log('AssetAnalyticsComponents - Found asset_categorywise array:', categoryWiseAssets.assets_statistics.asset_categorywise);
+            categoryData = categoryWiseAssets.assets_statistics.asset_categorywise
+                .filter((item) => {
+                    console.log(`AssetAnalyticsComponents - Filtering category item:`, item, `count > 0:`, item.count > 0);
+                    return item.count > 0;
+                })
+                .map((item) => {
+                    const mapped = {
+                        name: item.category,
+                        value: item.count,
+                    };
+                    console.log(`AssetAnalyticsComponents - Mapped category item:`, mapped);
+                    return mapped;
+                });
         } else if (categoryWiseAssets?.categories) {
             // Legacy structure with categories array
-            categoryData = categoryWiseAssets.categories.map((item) => ({
-                name: item.category_name,
-                value: item.asset_count,
-            }));
+            console.log('AssetAnalyticsComponents - Using categories array (legacy)');
+            categoryData = categoryWiseAssets.categories
+                .filter((item) => item.asset_count > 0)
+                .map((item) => ({
+                    name: item.category_name,
+                    value: item.asset_count,
+                }));
         } else if (categoryWiseAssets?.asset_type_category_counts) {
             // Legacy structure with asset_type_category_counts
-            categoryData = Object.entries(categoryWiseAssets.asset_type_category_counts).map(([name, value]) => ({
-                name,
-                value,
-            }));
+            console.log('AssetAnalyticsComponents - Using asset_type_category_counts (legacy)');
+            categoryData = Object.entries(categoryWiseAssets.asset_type_category_counts)
+                .filter(([, value]) => (value as number) > 0)
+                .map(([name, value]) => ({
+                    name,
+                    value: value as number,
+                }));
         }
 
+        console.log('AssetAnalyticsComponents - Final categoryData:', categoryData);
+        console.log('AssetAnalyticsComponents - categoryData length:', categoryData.length);
+
         // Group data - support both new and legacy structures
-        let groupData = [{ name: 'No Data', value: 0 }];
+        let groupData: Array<{ name: string; value: number }> = [];
+        
+        console.log('AssetAnalyticsComponents - Processing groupData from groupWiseAssets:', groupWiseAssets);
         
         if (groupWiseAssets?.assets_statistics?.assets_group_count_by_name) {
             // New structure
-            groupData = groupWiseAssets.assets_statistics.assets_group_count_by_name.map((item) => ({
-                name: item.group_name,
-                value: item.count,
-            }));
+            console.log('AssetAnalyticsComponents - Found assets_group_count_by_name array:', groupWiseAssets.assets_statistics.assets_group_count_by_name);
+            groupData = groupWiseAssets.assets_statistics.assets_group_count_by_name
+                .filter((item) => {
+                    console.log(`AssetAnalyticsComponents - Filtering group item:`, item, `count > 0:`, item.count > 0);
+                    return item.count > 0;
+                })
+                .map((item) => {
+                    const mapped = {
+                        name: item.group_name,
+                        value: item.count,
+                    };
+                    console.log(`AssetAnalyticsComponents - Mapped group item:`, mapped);
+                    return mapped;
+                });
         } else if (groupWiseAssets?.group_wise_assets) {
             // Legacy structure
-            groupData = groupWiseAssets.group_wise_assets.map((item) => ({
-                name: item.group_name,
-                value: item.asset_count,
-            }));
+            console.log('AssetAnalyticsComponents - Using group_wise_assets (legacy)');
+            groupData = groupWiseAssets.group_wise_assets
+                .filter((item) => item.asset_count > 0)
+                .map((item) => ({
+                    name: item.group_name,
+                    value: item.asset_count,
+                }));
         }
+
+        console.log('AssetAnalyticsComponents - Final groupData:', groupData);
+        console.log('AssetAnalyticsComponents - groupData length:', groupData.length);
 
         // PPM Conduct Assets data - create a simple bar chart data
         const ppmConductData = [
             {
                 name: 'PPM Conduct Assets',
-                value: assetStatistics.ppm_assets || 0,
+                value: assetStatistics?.ppm_overdue_assets?.ppm_conduct_assets_count || 
+                       assetStatistics?.ppm_conduct_assets_count?.ppm_conduct_assets_count ||
+                       assetStatistics?.ppm_assets || 0,
             }
         ];
 
@@ -717,13 +842,39 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
     // Effect hooks - only fetch data when date range changes
     useEffect(() => {
         if (analyticsDateRange.fromDate && analyticsDateRange.toDate) {
-            fetchAssetStatistics();
-            fetchAssetStatus();
-            fetchAssetDistributions();
-            fetchGroupWiseAssets();
-            fetchCategoryWiseAssets();
+            // If selectedEndpoint is provided (single card mode), only fetch needed data
+            if (selectedEndpoint) {
+                console.log('AssetAnalyticsComponents - Single endpoint mode, fetching:', selectedEndpoint);
+                switch (selectedEndpoint) {
+                    case 'asset_statistics':
+                        fetchAssetStatistics();
+                        break;
+                    case 'asset_status':
+                        fetchAssetStatus();
+                        break;
+                    case 'asset_distribution':
+                        fetchAssetDistributions();
+                        break;
+                    case 'group_wise':
+                        fetchGroupWiseAssets();
+                        break;
+                    case 'category_wise':
+                        fetchCategoryWiseAssets();
+                        break;
+                    default:
+                        fetchAssetStatistics();
+                }
+            } else {
+                // Multi-card mode - fetch all data
+                console.log('AssetAnalyticsComponents - Multi-card mode, fetching all data');
+                fetchAssetStatistics();
+                fetchAssetStatus();
+                fetchAssetDistributions();
+                fetchGroupWiseAssets();
+                fetchCategoryWiseAssets();
+            }
         }
-    }, [analyticsDateRange.fromDate, analyticsDateRange.toDate]);
+    }, [analyticsDateRange.fromDate, analyticsDateRange.toDate, selectedEndpoint]);
 
     // Watch for prop changes to defaultDateRange
     useEffect(() => {
@@ -810,85 +961,161 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
 
     // Render layout based on layout prop
     const renderLayout = () => {
-        const charts = [
-            currentSelectedTypes.includes('assetStatistics') && (
-                <SortableChartItem key="assetStatistics" id="assetStatistics">
-                    <div className="mb-6">
-                        <AssetStatisticsSelector
-                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            onDownload={handleAnalyticsDownload}
-                            layout="grid"
-                        />
+        // If selectedEndpoint is provided, render only that specific card
+        if (selectedEndpoint) {
+            const endpointToTypeMap: Record<string, string> = {
+                'asset_statistics': 'assetStatistics',
+                'asset_status': 'statusDistribution',
+                'group_wise': 'groupWise',
+                'category_wise': 'categoryWise',
+                'asset_distribution': 'assetDistributions',
+            };
 
-                    </div>
-                </SortableChartItem>
-            ),
-            currentSelectedTypes.includes('statusDistribution') && (
-                <SortableChartItem key="statusDistribution" id="statusDistribution">
-                    <SectionLoader loading={statusLoading}>
-                        <AssetAnalyticsCard
-                            title="Asset Status"
-                            type="statusDistribution"
-                            data={chartStatusData}
-                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            onDownload={() => handleAnalyticsDownload('assetsInUse')}
-                            info={assetStatus?.info || "Overall Distribution between in-use, breakdown, in-store, in-disposed assets"}
-                        />
-                    </SectionLoader>
-                </SortableChartItem>
-            ),
-            currentSelectedTypes.includes('assetDistributions') && (
-                <SortableChartItem key="assetDistributions" id="assetDistributions">
-                    <SectionLoader loading={distributionsLoading}>
-                        <AssetAnalyticsCard
-                            title="Asset Type Distribution"
-                            type="assetDistributions"
-                            data={chartTypeData}
-                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            onDownload={() => handleAnalyticsDownload('assetDistribution')}
-                            info={assetDistributions?.assets_statistics?.filters ? 
-                                `Distribution between IT and Non-IT assets for ${assetDistributions.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
-                                "Distribution between IT and Non-IT assets"
-                            }
-                        />
-                    </SectionLoader>
-                </SortableChartItem>
-            ),
-            currentSelectedTypes.includes('categoryWise') && (
-                <SortableChartItem key="categoryWise" id="categoryWise">
-                    <SectionLoader loading={categoryWiseLoading}>
-                        <AssetAnalyticsCard
-                            title="Category-wise Assets"
-                            type="categoryWise"
-                            data={categoryData}
-                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            onDownload={() => handleAnalyticsDownload('categoryWise')}
-                            info={categoryWiseAssets?.assets_statistics?.filters ? 
-                                `Showing Assets Category-wise based on Site and date range for ${categoryWiseAssets.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
-                                "Showing Assets Category-wise based on Site and date range"
-                            }
-                        />
-                    </SectionLoader>
-                </SortableChartItem>
-            ),
-            currentSelectedTypes.includes('groupWise') && (
-                <SortableChartItem key="groupWise" id="groupWise">
-                    <SectionLoader loading={groupWiseLoading}>
-                        <AssetAnalyticsCard
-                            title="Group-wise Assets"
-                            type="groupWise"
-                            data={groupData}
-                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            onDownload={() => handleAnalyticsDownload('groupWise')}
-                            info={groupWiseAssets?.assets_statistics?.filters ? 
-                                `Showing Assets Group-wise based on site and date range for ${groupWiseAssets.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
-                                "Showing Assets Group-wise based on site and date range"
-                            }
-                        />
-                    </SectionLoader>
-                </SortableChartItem>
-            ),
-            currentSelectedTypes.includes('ppmConductAssets') && (
+            const cardType = endpointToTypeMap[selectedEndpoint] || 'assetStatistics';
+
+            // Render only the requested card type
+            switch (cardType) {
+                case 'assetStatistics':
+                    return (
+                        <div className="mb-6">
+                            <AssetStatisticsSelector
+                                dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                                onDownload={handleAnalyticsDownload}
+                                layout="grid"
+                            />
+                        </div>
+                    );
+                case 'statusDistribution':
+                    return (
+                        <SectionLoader loading={statusLoading}>
+                            <AssetAnalyticsCard
+                                title="Asset Status"
+                                type="statusDistribution"
+                                data={chartStatusData}
+                                dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                                onDownload={() => handleAnalyticsDownload('assetsInUse')}
+                                info={assetStatus?.info || "Overall Distribution between in-use, breakdown, in-store, in-disposed assets"}
+                            />
+                        </SectionLoader>
+                    );
+                case 'categoryWise':
+                    return (
+                        <SectionLoader loading={categoryWiseLoading}>
+                            <AssetAnalyticsCard
+                                title="Category-wise Assets"
+                                type="categoryWise"
+                                data={categoryData}
+                                dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                                onDownload={() => handleAnalyticsDownload('categoryWise')}
+                                info={categoryWiseAssets?.assets_statistics?.filters ? 
+                                    `Showing Assets Category-wise based on Site and date range for ${categoryWiseAssets.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
+                                    "Showing Assets Category-wise based on Site and date range"
+                                }
+                            />
+                        </SectionLoader>
+                    );
+                case 'groupWise':
+                    return (
+                        <SectionLoader loading={groupWiseLoading}>
+                            <AssetAnalyticsCard
+                                title="Group-wise Assets"
+                                type="groupWise"
+                                data={groupData}
+                                dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                                onDownload={() => handleAnalyticsDownload('groupWise')}
+                                info={groupWiseAssets?.assets_statistics?.filters ? 
+                                    `Showing Assets Group-wise based on site and date range for ${groupWiseAssets.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
+                                    "Showing Assets Group-wise based on site and date range"
+                                }
+                            />
+                        </SectionLoader>
+                    );
+                case 'assetDistributions':
+                    return (
+                        <SectionLoader loading={distributionsLoading}>
+                            <AssetAnalyticsCard
+                                title="Asset Type Distribution"
+                                type="assetDistributions"
+                                data={chartTypeData}
+                                dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                                onDownload={() => handleAnalyticsDownload('assetDistribution')}
+                                info={assetDistributions?.assets_statistics?.filters ? 
+                                    `Distribution between IT and Non-IT assets for ${assetDistributions.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
+                                    "Distribution between IT and Non-IT assets"
+                                }
+                            />
+                        </SectionLoader>
+                    );
+                default:
+                    return null;
+            }
+        }
+
+        // Otherwise, render all cards as before (for cases where AssetAnalyticsComponents is used directly)
+        // Always render each analytics card as a separate SortableChartItem
+        const charts = [];
+
+        charts.push(
+            <SortableChartItem key="assetStatistics" id="assetStatistics">
+                <div className="mb-6">
+                    <AssetStatisticsSelector
+                        dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                        onDownload={handleAnalyticsDownload}
+                        layout="grid"
+                    />
+                </div>
+            </SortableChartItem>
+        );
+        charts.push(
+            <SortableChartItem key="statusDistribution" id="statusDistribution">
+                <SectionLoader loading={statusLoading}>
+                    <AssetAnalyticsCard
+                        title="Asset Status"
+                        type="statusDistribution"
+                        data={chartStatusData}
+                        dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                        onDownload={() => handleAnalyticsDownload('assetsInUse')}
+                        info={assetStatus?.info || "Overall Distribution between in-use, breakdown, in-store, in-disposed assets"}
+                    />
+                </SectionLoader>
+            </SortableChartItem>
+        );
+        charts.push(
+            <SortableChartItem key="categoryWise" id="categoryWise">
+                <SectionLoader loading={categoryWiseLoading}>
+                    <AssetAnalyticsCard
+                        title="Category-wise Assets"
+                        type="categoryWise"
+                        data={categoryData}
+                        dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                        onDownload={() => handleAnalyticsDownload('categoryWise')}
+                        info={categoryWiseAssets?.assets_statistics?.filters ? 
+                            `Showing Assets Category-wise based on Site and date range for ${categoryWiseAssets.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
+                            "Showing Assets Category-wise based on Site and date range"
+                        }
+                    />
+                </SectionLoader>
+            </SortableChartItem>
+        );
+        charts.push(
+            <SortableChartItem key="groupWise" id="groupWise">
+                <SectionLoader loading={groupWiseLoading}>
+                    <AssetAnalyticsCard
+                        title="Group-wise Assets"
+                        type="groupWise"
+                        data={groupData}
+                        dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                        onDownload={() => handleAnalyticsDownload('groupWise')}
+                        info={groupWiseAssets?.assets_statistics?.filters ? 
+                            `Showing Assets Group-wise based on site and date range for ${groupWiseAssets.assets_statistics.filters.site_names?.join(', ') || 'selected sites'}` : 
+                            "Showing Assets Group-wise based on site and date range"
+                        }
+                    />
+                </SectionLoader>
+            </SortableChartItem>
+        );
+        if (currentSelectedTypes.includes('ppmConductAssets')) {
+            charts.push(
                 <SortableChartItem key="ppmConductAssets" id="ppmConductAssets">
                     <AssetAnalyticsCard
                         title="PPM Conduct Assets"
@@ -898,8 +1125,8 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                         onDownload={() => handleAnalyticsDownload('ppmConductAssets')}
                     />
                 </SortableChartItem>
-            ),
-        ].filter(Boolean);
+            );
+        }
 
         if (layout === 'vertical') {
             return <div className="space-y-2">{charts}</div>;
@@ -919,81 +1146,54 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
 
     return (
         <div>
+            {/* Only show filter/selector if NOT rendering a single endpoint */}
+            {!selectedEndpoint && (
+                <div className='mb-4'>
+                    {(showFilter || showSelector) && (
+                        <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
+                            {showFilter && (
+                                <Button
+                                    onClick={() => setIsAnalyticsFilterOpen(true)}
+                                    variant="outline"
+                                    className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+                                >
+                                    <CalendarIcon className="w-4 h-4 text-gray-600" />
+                                    <span className="text-sm font-medium text-gray-700">
+                                        {getFormattedDateRange()}
+                                    </span>
+                                    <Filter className="w-4 h-4 text-gray-600" />
+                                </Button>
+                            )}
 
-            <div className='mb-4'>
-                {(showFilter || showSelector) && (
-                    <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
-                        {showFilter && (
-                            <Button
-                                onClick={() => setIsAnalyticsFilterOpen(true)}
-                                variant="outline"
-                                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
-                            >
-                                <CalendarIcon className="w-4 h-4 text-gray-600" />
-                                <span className="text-sm font-medium text-gray-700">
-                                    {getFormattedDateRange()}
-                                </span>
-                                <Filter className="w-4 h-4 text-gray-600" />
-                            </Button>
-                        )}
-
-                        {showSelector && (
-                            <AssetAnalyticsSelector
-                                onSelectionChange={handleAnalyticsSelectionChange}
-                                dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                                selectedOptions={currentSelectedTypes}
-                            />
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {showRecentAssets ? (
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 min-h-[calc(100vh-200px)]">
-                    <div className="lg:col-span-8">
-                        <div className={`space-y-6 ${className}`}>
-                            {renderErrorMessages()}
-
-                            {/* Analytics Charts */}
-                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                                <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-                                    {renderLayout()}
-                                </SortableContext>
-                            </DndContext>
-
-                            {/* Analytics Filter Dialog */}
-                            <AssetAnalyticsFilterDialog
-                                isOpen={isAnalyticsFilterOpen}
-                                onClose={() => setIsAnalyticsFilterOpen(false)}
-                                onApplyFilters={handleAnalyticsFilterApply}
-                            />
+                            {showSelector && (
+                                <AssetAnalyticsSelector
+                                    onSelectionChange={handleAnalyticsSelectionChange}
+                                    dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                                    selectedOptions={currentSelectedTypes}
+                                />
+                            )}
                         </div>
-                    </div>
-
-                    {/* Right Sidebar - Recent Assets (1 column) */}
-                    <div className="lg:col-span-4">
-                        <RecentAssetsSidebar />
-                    </div>
+                    )}
                 </div>
-            ) : (
-                <div className={`space-y-6 ${className}`}>
-                    {renderErrorMessages()}
+            )}
 
-                    {/* Analytics Charts */}
+            {/* Render single card or all cards based on selectedEndpoint */}
+            <div className={`${selectedEndpoint ? '' : 'space-y-6'} ${className}`}>
+                {renderErrorMessages()}
+
+                {/* Analytics Charts */}
+                {selectedEndpoint ? (
+                    // Single card mode - no drag and drop
+                    renderLayout()
+                ) : (
+                    // Multiple cards mode - with drag and drop
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                         <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
                             {renderLayout()}
                         </SortableContext>
                     </DndContext>
-
-                    {/* Analytics Filter Dialog */}
-                    <AssetAnalyticsFilterDialog
-                        isOpen={isAnalyticsFilterOpen}
-                        onClose={() => setIsAnalyticsFilterOpen(false)}
-                        onApplyFilters={handleAnalyticsFilterApply}
-                    />
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };

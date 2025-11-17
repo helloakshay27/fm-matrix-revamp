@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -164,16 +164,26 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
   const [currentSelectedMetrics, setCurrentSelectedMetrics] = useState<string[]>(selectedMetrics);
 
   // Fetch asset statistics
-  const fetchStatistics = async () => {
+  const fetchStatistics = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
+      // Defensive: ensure dateRange.startDate and endDate are valid Dates
+      let fromDate = dateRange?.startDate instanceof Date && !isNaN(dateRange.startDate.getTime())
+        ? dateRange.startDate
+        : new Date();
+      let toDate = dateRange?.endDate instanceof Date && !isNaN(dateRange.endDate.getTime())
+        ? dateRange.endDate
+        : new Date();
+
       const data = await assetAnalyticsAPI.getAssetStatistics(
-        dateRange.startDate,
-        dateRange.endDate
+        fromDate,
+        toDate
       );
-      
+
+      console.log('AssetStatisticsSelector - Raw API response:', data);
+
       // Transform the API response to our interface if needed
       // Handle new API structure where each field contains both count and info
       const transformedData: AssetStatistics = {
@@ -195,6 +205,9 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
           total_assets_count: data.total_assets.assets_total_count || 0
         } : data.total_assets_count
       };
+      
+      console.log('AssetStatisticsSelector - Transformed data:', transformedData);
+      
       setStatistics(transformedData);
     } catch (err) {
       console.error('Error fetching asset statistics:', err);
@@ -202,7 +215,7 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange?.startDate, dateRange?.endDate]);
 
   // Handle metric selection
   const handleMetricToggle = (metricId: string) => {
@@ -257,6 +270,8 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
 
   // Format values
   const formatValue = (key: string, value: number | string | object | undefined) => {
+    console.log(`formatValue called for ${key}:`, value);
+    
     if (value === undefined || value === null) return 'N/A';
     
     // Handle new API structure
@@ -264,18 +279,28 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
       switch (key) {
         case 'total_assets_count':
           // Check for new structure first, then fallback to old structure
-          return (value as any).assets_total_count?.toLocaleString() || 
+          const totalAssets = (value as any).assets_total_count?.toLocaleString() || 
                  (value as any).total_assets_count?.toLocaleString() || 'N/A';
+          console.log(`Total assets formatted:`, totalAssets);
+          return totalAssets;
         case 'assets_in_use':
-          return (value as any).assets_in_use_total?.toLocaleString() || 'N/A';
+          const inUse = (value as any).assets_in_use_total?.toLocaleString() || 'N/A';
+          console.log(`Assets in use formatted:`, inUse);
+          return inUse;
         case 'assets_in_breakdown':
-          return (value as any).assets_in_breakdown_total?.toLocaleString() || 'N/A';
+          const inBreakdown = (value as any).assets_in_breakdown_total?.toLocaleString() || 'N/A';
+          console.log(`Assets in breakdown formatted:`, inBreakdown);
+          return inBreakdown;
         case 'critical_assets_in_breakdown':
-          return (value as any).critical_assets_breakdown_total?.toLocaleString() || 'N/A';
+          const critical = (value as any).critical_assets_breakdown_total?.toLocaleString() || 'N/A';
+          console.log(`Critical assets formatted:`, critical);
+          return critical;
         case 'ppm_conduct_assets_count':
           // Check for new structure first, then fallback to old structure
-          return (value as any).ppm_conduct_assets_count?.toLocaleString() || 
+          const ppm = (value as any).ppm_conduct_assets_count?.toLocaleString() || 
                  (value as any).total?.toLocaleString() || 'N/A';
+          console.log(`PPM assets formatted:`, ppm);
+          return ppm;
         case 'amc_assets':
           // Special handling for AMC assets - return the object itself
           return value;
@@ -298,28 +323,40 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
 
   // Extract metric value from statistics
   const getMetricValue = (metricId: string) => {
+    console.log(`getMetricValue called for ${metricId}, statistics:`, statistics);
+    
+    let value;
     switch (metricId) {
       case 'total_assets_count':
-        return statistics.total_assets || statistics.total_assets_count;
+        value = statistics.total_assets || statistics.total_assets_count;
+        break;
       case 'assets_in_use':
-        return statistics.assets_in_use;
+        value = statistics.assets_in_use;
+        break;
       case 'assets_in_breakdown':
-        return statistics.assets_in_breakdown;
+        value = statistics.assets_in_breakdown;
+        break;
       case 'critical_assets_in_breakdown':
-        return statistics.critical_assets_breakdown;
+        value = statistics.critical_assets_breakdown;
+        break;
       case 'ppm_conduct_assets_count':
-        return statistics.ppm_overdue_assets || statistics.ppm_conduct_assets_count;
+        value = statistics.ppm_overdue_assets || statistics.ppm_conduct_assets_count;
+        break;
       case 'amc_assets':
-        return statistics.amc_assets;
+        value = statistics.amc_assets;
+        break;
       default:
-        return statistics[metricId as keyof AssetStatistics];
+        value = statistics[metricId as keyof AssetStatistics];
     }
+    
+    console.log(`getMetricValue result for ${metricId}:`, value);
+    return value;
   };
 
   // Effects
   useEffect(() => {
     fetchStatistics();
-  }, [dateRange]);
+  }, [fetchStatistics]);
 
   // Render loading state
   if (loading) {

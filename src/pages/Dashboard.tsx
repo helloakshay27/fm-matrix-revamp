@@ -1,6 +1,6 @@
 // new comment //
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { DateRange } from "react-day-picker";
 import {
   DndContext,
@@ -27,6 +27,7 @@ import {
   Settings,
   Home,
   AlertCircle,
+  GripVertical,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -103,6 +104,7 @@ import { TicketAgingClosureFeedbackCard } from "@/components/helpdesk/TicketAgin
 import { TicketPerformanceMetricsCard } from "@/components/helpdesk/TicketPerformanceMetricsCard";
 import { CustomerExperienceFeedbackCard } from "@/components/helpdesk/CustomerExperienceFeedbackCard";
 import { CustomerRatingOverviewCard } from "@/components/helpdesk/CustomerRatingOverviewCard";
+import { HelpdeskAnalyticsCard } from "@/components/dashboard/HelpdeskAnalyticsCard";
 import MeetingRoomUtilizationCard from "@/components/meeting-room/MeetingRoomUtilizationCard";
 import { RevenueGenerationOverviewCard } from "@/components/meeting-room/RevenueGenerationOverviewCard";
 import { CenterPerformanceOverviewCard } from "@/components/meeting-room/CenterPerformanceOverviewCard";
@@ -116,6 +118,12 @@ import checklistManagementAnalyticsAPI from "@/services/checklistManagementAnaly
 import { ChecklistProgressQuarterlyCard } from "@/components/checklist-management/ChecklistProgressQuarterlyCard";
 import { TopOverdueChecklistsCenterwiseCard } from "@/components/checklist-management/TopOverdueChecklistsCenterwiseCard";
 import { RecentUpdatedSidebar } from "@/components/RecentUpdatedSidebar";
+import GridLayout from "react-grid-layout";
+import { Responsive, WidthProvider } from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
+
+const ResponsiveGridLayout = WidthProvider(Responsive);
 
 interface SelectedAnalytic {
   id: string;
@@ -260,6 +268,12 @@ const SectionLoader: React.FC<{
 
 export const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Determine if this is an executive dashboard to use separate storage
+  const isExecutiveDashboard = location.pathname.includes('/dashboard-executive');
+  const storagePrefix = isExecutiveDashboard ? 'executive' : 'regular';
+  
   const [selectedAnalytics, setSelectedAnalytics] = useState<
     SelectedAnalytic[]
   >([]);
@@ -285,6 +299,8 @@ export const Dashboard = () => {
   >({});
   const [loading, setLoading] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([]);
+  const [layouts, setLayouts] = useState<GridLayout.Layout[]>([]);
+  const isInitialMount = React.useRef(true);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -302,9 +318,115 @@ export const Dashboard = () => {
     return `${day}/${month}/${year}`;
   };
 
-  // Update chart order when selected analytics change
+  // Load saved layout and selected analytics from localStorage on mount
   useEffect(() => {
+    const savedLayout = localStorage.getItem(`${storagePrefix}DashboardGridLayout`);
+    const savedAnalytics = localStorage.getItem(`${storagePrefix}DashboardSelectedAnalytics`);
+    
+    console.log(`🔍 Loading ${storagePrefix} dashboard from localStorage:`, { savedLayout, savedAnalytics });
+    
+    if (savedLayout) {
+      try {
+        const parsedLayout = JSON.parse(savedLayout);
+        console.log("✅ Parsed saved layout:", parsedLayout);
+        setLayouts(parsedLayout);
+      } catch (e) {
+        console.error("❌ Failed to parse saved layout", e);
+      }
+    }
+    
+    if (savedAnalytics) {
+      try {
+        const parsedAnalytics = JSON.parse(savedAnalytics);
+        console.log("✅ Parsed saved analytics:", parsedAnalytics);
+        setSelectedAnalytics(parsedAnalytics);
+      } catch (e) {
+        console.error("❌ Failed to parse saved analytics", e);
+      }
+    }
+    // If site_id or access_token are present in the URL, persist them to localStorage
+    // so the asset analytics service will use the same payload when fetching dashboard cards.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const siteIdParam = params.get('site_id');
+      const accessTokenParam = params.get('access_token');
+      if (siteIdParam) {
+        console.log(`Setting selectedSiteId from URL param: ${siteIdParam}`);
+        localStorage.setItem('selectedSiteId', siteIdParam);
+      }
+      if (accessTokenParam) {
+        console.log(`Setting access_token from URL param: [REDACTED]`);
+        localStorage.setItem('access_token', accessTokenParam);
+      }
+    } catch (e) {
+      console.warn('Unable to persist URL site_id/access_token to localStorage', e);
+    }
+    
+    // Mark initial mount as complete
+    isInitialMount.current = false;
+  }, [storagePrefix]);
+
+  // Update chart order and generate layout only for new cards when selected analytics change
+  useEffect(() => {
+    console.log("🔄 selectedAnalytics changed:", selectedAnalytics.length, "isInitialMount:", isInitialMount.current);
+    
+    // Skip layout generation on initial mount - layouts are loaded from localStorage
+    if (isInitialMount.current) {
+      console.log("⏭️ Skipping layout generation on initial mount");
+      setChartOrder(selectedAnalytics.map((analytic) => analytic.id));
+      return;
+    }
+    
     setChartOrder(selectedAnalytics.map((analytic) => analytic.id));
+    
+    console.log("📐 Current layouts:", layouts);
+    
+    // Only generate layouts for new cards that don't have existing layouts
+    const newLayouts = selectedAnalytics.map((analytic, index) => {
+      const existingLayout = layouts.find((l) => l.i === analytic.id);
+      if (existingLayout) {
+        console.log("✅ Using existing layout for:", analytic.id, existingLayout);
+        return existingLayout;
+      }
+      
+      console.log("🆕 Generating new layout for:", analytic.id);
+      
+      // Cards that should use compact height (simple stat cards only)
+      const compactCards = [
+        'customer_experience_feedback',
+        'customer_rating_overview',
+        'helpdesk_snapshot',
+        'amc_contract_summary',
+        'engagement_metrics',
+      ];
+      
+      const isCompactCard = compactCards.includes(analytic.endpoint);
+      
+      // Find the maximum y position to place new cards below existing ones
+      const maxY = layouts.length > 0 
+        ? Math.max(...layouts.map(l => l.y + l.h))
+        : 0;
+      
+      // 2-column layout for analytics cards: full 12 columns (Recent Updates is outside grid)
+      const col = index % 2; // 2 columns for analytics cards
+      const row = Math.floor(index / 2);
+      
+      return {
+        i: analytic.id,
+        x: col * 6,
+        y: maxY + row * (isCompactCard ? 4 : 6),
+        w: 6,
+        h: isCompactCard ? 4 : 6,
+        minW: 4,
+        minH: isCompactCard ? 3 : 5,
+      };
+    });
+    
+    // Remove layouts for cards that are no longer selected
+    const selectedIds = selectedAnalytics.map(a => a.id);
+    const filteredLayouts = newLayouts.filter(layout => selectedIds.includes(layout.i));
+    
+    setLayouts(filteredLayouts);
   }, [selectedAnalytics]);
 
   // Fetch analytics data based on selections and date range
@@ -1027,6 +1149,22 @@ export const Dashboard = () => {
                     )
                   );
                   break;
+                case "response_tat_performance_quarterly":
+                  promises.push(
+                    helpdeskAnalyticsAPI.getResponseTATQuarterly(
+                      dateRange.from!,
+                      dateRange.to!
+                    )
+                  );
+                  break;
+                case "resolution_tat_performance_quarterly":
+                  promises.push(
+                    helpdeskAnalyticsAPI.getResolutionTATQuarterly(
+                      dateRange.from!,
+                      dateRange.to!
+                    )
+                  );
+                  break;
               }
             }
             break;
@@ -1403,6 +1541,8 @@ export const Dashboard = () => {
 
   const handleAnalyticsSelectionChange = (analytics: SelectedAnalytic[]) => {
     setSelectedAnalytics(analytics);
+    // Persist selected analytics to localStorage with dashboard-specific key
+    localStorage.setItem(`${storagePrefix}DashboardSelectedAnalytics`, JSON.stringify(analytics));
   };
 
   const handleDateRangeChange = (range: DateRange | undefined) => {
@@ -1419,6 +1559,26 @@ export const Dashboard = () => {
         return arrayMove(items, oldIndex, newIndex);
       });
     }
+  };
+
+  // Handle grid layout changes and persist both layout and selected analytics
+  const handleLayoutChange = (newLayout: GridLayout.Layout[]) => {
+    console.log("📏 handleLayoutChange called, isInitialMount:", isInitialMount.current, "newLayout:", newLayout);
+    
+    // Always update the state for UI responsiveness
+    setLayouts(newLayout);
+    
+    // Skip saving to localStorage during initial mount to prevent overwriting saved layouts
+    if (isInitialMount.current) {
+      console.log("⏭️ Skipping localStorage save during initial mount");
+      return;
+    }
+    
+    // Save to localStorage only after initial mount (when user actually resizes/repositions)
+    console.log(`💾 Saving ${storagePrefix} dashboard layout to localStorage:`, newLayout);
+    localStorage.setItem(`${storagePrefix}DashboardGridLayout`, JSON.stringify(newLayout));
+    // Also save selected analytics to keep them in sync with layouts
+    localStorage.setItem(`${storagePrefix}DashboardSelectedAnalytics`, JSON.stringify(selectedAnalytics));
   };
 
   // Calculate summary stats
@@ -1492,21 +1652,19 @@ export const Dashboard = () => {
     const errorMessage = errorFor(analytic);
     if (errorMessage) {
       return (
-        <SortableChartItem key={analytic.id} id={analytic.id}>
-          <Card className="border border-red-200 bg-red-50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2 text-red-700">
-                <AlertCircle className="w-4 h-4" />
-                {analytic.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-red-700">
-                Failed to load this analytic. {errorMessage}
-              </div>
-            </CardContent>
-          </Card>
-        </SortableChartItem>
+        <Card className="border border-red-200 bg-red-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-red-700">
+              <AlertCircle className="w-4 h-4" />
+              {analytic.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-red-700">
+              Failed to load this analytic. {errorMessage}
+            </div>
+          </CardContent>
+        </Card>
       );
     }
 
@@ -1617,12 +1775,10 @@ export const Dashboard = () => {
                 : { open: 0, closed: 0, wip: 0 };
 
             return (
-              <SortableChartItem key={analytic.id} id={analytic.id}>
-                <TicketStatusOverviewCard
-                  openTickets={statusData.open || 0}
-                  closedTickets={statusData.closed || 0}
-                />
-              </SortableChartItem>
+              <TicketStatusOverviewCard
+                openTickets={statusData.open || 0}
+                closedTickets={statusData.closed || 0}
+              />
             );
 
           case "tickets_proactive_reactive":
@@ -1652,20 +1808,18 @@ export const Dashboard = () => {
             });
 
             return (
-              <SortableChartItem key={analytic.id} id={analytic.id}>
-                <ProactiveReactiveCard
-                  proactiveOpenTickets={
-                    proactiveReactiveData.proactiveOpen || 0
-                  }
-                  proactiveClosedTickets={
-                    proactiveReactiveData.proactiveClosed || 0
-                  }
-                  reactiveOpenTickets={proactiveReactiveData.reactiveOpen || 0}
-                  reactiveClosedTickets={
-                    proactiveReactiveData.reactiveClosed || 0
-                  }
-                />
-              </SortableChartItem>
+              <ProactiveReactiveCard
+                proactiveOpenTickets={
+                  proactiveReactiveData.proactiveOpen || 0
+                }
+                proactiveClosedTickets={
+                  proactiveReactiveData.proactiveClosed || 0
+                }
+                reactiveOpenTickets={proactiveReactiveData.reactiveOpen || 0}
+                reactiveClosedTickets={
+                  proactiveReactiveData.reactiveClosed || 0
+                }
+              />
             );
 
           case "tickets_categorywise":
@@ -1673,15 +1827,13 @@ export const Dashboard = () => {
             const categoryData = Array.isArray(data) ? data : [];
 
             return (
-              <SortableChartItem key={analytic.id} id={analytic.id}>
-                <CategoryWiseProactiveReactiveCard
-                  data={categoryData}
-                  dateRange={{
-                    startDate: dateRange?.from || new Date(),
-                    endDate: dateRange?.to || new Date(),
-                  }}
-                />
-              </SortableChartItem>
+              <CategoryWiseProactiveReactiveCard
+                data={categoryData}
+                dateRange={{
+                  startDate: dateRange?.from || new Date(),
+                  endDate: dateRange?.to || new Date(),
+                }}
+              />
             );
 
           case "tickets_unit_categorywise":
@@ -1691,15 +1843,13 @@ export const Dashboard = () => {
               data && typeof data === "object" ? data : null;
 
             return (
-              <SortableChartItem key={analytic.id} id={analytic.id}>
-                <UnitCategoryWiseCard
-                  data={unitCategoryData}
-                  dateRange={{
-                    startDate: dateRange?.from || new Date(),
-                    endDate: dateRange?.to || new Date(),
-                  }}
-                />
-              </SortableChartItem>
+              <UnitCategoryWiseCard
+                data={unitCategoryData}
+                dateRange={{
+                  startDate: dateRange?.from || new Date(),
+                  endDate: dateRange?.to || new Date(),
+                }}
+              />
             );
 
           case "ticket_aging_matrix":
@@ -1747,66 +1897,58 @@ export const Dashboard = () => {
                 ];
 
             return (
-              <SortableChartItem key={analytic.id} id={analytic.id}>
-                <TicketAgingMatrixCard
-                  data={
-                    agingRawData || {
-                      success: 1,
-                      message: "Success",
-                      response: { matrix: {} },
-                      average_days: 0,
-                      info: "Aging matrix data",
-                    }
+              <TicketAgingMatrixCard
+                data={
+                  agingRawData || {
+                    success: 1,
+                    message: "Success",
+                    response: { matrix: {} },
+                    average_days: 0,
+                    info: "Aging matrix data",
                   }
-                  agingMatrixData={agingMatrixData}
-                  dateRange={{
-                    startDate: dateRange?.from || new Date(),
-                    endDate: dateRange?.to || new Date(),
-                  }}
-                />
-              </SortableChartItem>
+                }
+                agingMatrixData={agingMatrixData}
+                dateRange={{
+                  startDate: dateRange?.from || new Date(),
+                  endDate: dateRange?.to || new Date(),
+                }}
+              />
             );
 
           case "tickets_response_tat":
           case "response_tat":
             // Response TAT
             return (
-              <SortableChartItem key={analytic.id} id={analytic.id}>
-                <ResponseTATCard
-                  data={data}
-                  dateRange={{
-                    startDate: dateRange?.from || new Date(),
-                    endDate: dateRange?.to || new Date(),
-                  }}
-                />
-              </SortableChartItem>
+              <ResponseTATCard
+                data={data}
+                dateRange={{
+                  startDate: dateRange?.from || new Date(),
+                  endDate: dateRange?.to || new Date(),
+                }}
+              />
             );
 
           case "tickets_resolution_tat":
           case "resolution_tat":
             // Resolution TAT
             return (
-              <SortableChartItem key={analytic.id} id={analytic.id}>
-                <ResolutionTATCard
-                  data={data}
-                  dateRange={{
-                    startDate: dateRange?.from || new Date(),
-                    endDate: dateRange?.to || new Date(),
-                  }}
-                />
-              </SortableChartItem>
+              <ResolutionTATCard
+                data={data}
+                dateRange={{
+                  startDate: dateRange?.from || new Date(),
+                  endDate: dateRange?.to || new Date(),
+                }}
+              />
             );
 
           default:
             // Fallback to simplified TicketAnalyticsCard for other endpoints
             return (
-              <SortableChartItem key={analytic.id} id={analytic.id}>
-                <TicketAnalyticsCard
-                  title={analytic.title}
-                  data={data}
-                  type={analytic.endpoint as any}
-                />
-              </SortableChartItem>
+              <TicketAnalyticsCard
+                title={analytic.title}
+                data={data}
+                type={analytic.endpoint as any}
+              />
             );
         }
       case "tasks":
@@ -1827,21 +1969,19 @@ export const Dashboard = () => {
         };
 
         return (
-          <SortableChartItem key={analytic.id} id={analytic.id}>
-            <TaskAnalyticsCard
-              title={analytic.title}
-              data={data}
-              type={getTaskAnalyticsType(analytic.endpoint)}
-              dateRange={
-                dateRange
-                  ? {
-                      startDate: dateRange.from!,
-                      endDate: dateRange.to!,
-                    }
-                  : undefined
-              }
-            />
-          </SortableChartItem>
+          <TaskAnalyticsCard
+            title={analytic.title}
+            data={data}
+            type={getTaskAnalyticsType(analytic.endpoint)}
+            dateRange={
+              dateRange
+                ? {
+                    startDate: dateRange.from!,
+                    endDate: dateRange.to!,
+                  }
+                : undefined
+            }
+          />
         );
       case "amc":
         // Handle individual AMC analytics components
@@ -2008,31 +2148,35 @@ export const Dashboard = () => {
         };
 
         return (
-          <SortableChartItem key={analytic.id} id={analytic.id}>
-            <InventoryAnalyticsCard
-              title={analytic.title}
-              data={data}
-              type={getInventoryAnalyticsType(analytic.endpoint)}
-              dateRange={
-                dateRange
-                  ? {
-                      startDate: dateRange.from!,
-                      endDate: dateRange.to!,
-                    }
-                  : undefined
-              }
-            />
-          </SortableChartItem>
+          <InventoryAnalyticsCard
+            title={analytic.title}
+            data={data}
+            type={getInventoryAnalyticsType(analytic.endpoint)}
+            dateRange={
+              dateRange
+                ? {
+                    startDate: dateRange.from!,
+                    endDate: dateRange.to!,
+                  }
+                : undefined
+            }
+          />
         );
       case "schedule":
         return (
-          <SortableChartItem key={analytic.id} id={analytic.id}>
-            <ScheduleAnalyticsCard
-              title={analytic.title}
-              data={data}
-              type={analytic.endpoint as any}
-            />
-          </SortableChartItem>
+          <ScheduleAnalyticsCard
+            title={analytic.title}
+            data={data}
+            type={analytic.endpoint as any}
+            dateRange={
+              dateRange
+                ? {
+                    startDate: dateRange.from!,
+                    endDate: dateRange.to!,
+                  }
+                : undefined
+            }
+          />
         );
       case "assets":
         // Map endpoint to AssetAnalyticsComponents type
@@ -2056,23 +2200,17 @@ export const Dashboard = () => {
         // Use the comprehensive AssetAnalyticsComponents for individual asset analytics
         // This provides better integration and handles asset-related charts consistently
         return (
-          <SortableChartItem key={analytic.id} id={analytic.id}>
-            <AssetAnalyticsComponents
-              defaultDateRange={
-                dateRange?.from && dateRange?.to
-                  ? {
-                      fromDate: dateRange.from,
-                      toDate: dateRange.to,
-                    }
-                  : undefined
-              }
-              selectedAnalyticsTypes={getAssetAnalyticsType(analytic.endpoint)}
-              showFilter={false}
-              showSelector={false}
-              showRecentAssets={false}
-              layout="grid"
-            />
-          </SortableChartItem>
+          <AssetAnalyticsComponents
+            defaultDateRange={
+              dateRange?.from && dateRange?.to
+                ? {
+                    fromDate: dateRange.from,
+                    toDate: dateRange.to,
+                  }
+                : undefined
+            }
+            selectedEndpoint={analytic.endpoint}
+          />
         );
       case "meeting_room":
         switch (analytic.endpoint) {
@@ -2352,6 +2490,44 @@ export const Dashboard = () => {
               </SortableChartItem>
             );
           }
+          case "response_tat_performance_quarterly": {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <HelpdeskAnalyticsCard
+                  title={analytic.title}
+                  data={rawData}
+                  type="response_tat_quarterly"
+                  dateRange={
+                    dateRange
+                      ? {
+                          startDate: dateRange.from!,
+                          endDate: dateRange.to!,
+                        }
+                      : undefined
+                  }
+                />
+              </SortableChartItem>
+            );
+          }
+          case "resolution_tat_performance_quarterly": {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <HelpdeskAnalyticsCard
+                  title={analytic.title}
+                  data={rawData}
+                  type="resolution_tat_quarterly"
+                  dateRange={
+                    dateRange
+                      ? {
+                          startDate: dateRange.from!,
+                          endDate: dateRange.to!,
+                        }
+                      : undefined
+                  }
+                />
+              </SortableChartItem>
+            );
+          }
           default:
             return null;
         }
@@ -2602,6 +2778,24 @@ export const Dashboard = () => {
                 color: #000000 !important;
             }
 
+            /* Grid Layout Item Styles */
+            .react-grid-item {
+              overflow: hidden;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+              border-radius: 8px;
+              background: white;
+              transition: box-shadow 0.3s ease;
+            }
+            
+            .react-grid-item:hover {
+              box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            }
+            
+            .react-grid-item > div {
+              height: 100%;
+              overflow: hidden;
+            }
+
         `}
       </style>
       <div className="flex min-h-screen bg-analytics-background">
@@ -2667,51 +2861,11 @@ export const Dashboard = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 xl:grid-cols-10 gap-2 min-h-[calc(100vh-200px)] overflow-scroll">
-              {/* Analytics Grid */}
-              <div
-                className="xl:col-span-7 space-y-4 sm:space-y-6"
-                style={{ minWidth: "75%" }}
-              >
-                {selectedAnalytics.length > 0 ? (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={chartOrder}
-                      strategy={rectSortingStrategy}
-                    >
-                      {/* Unified 2-Column Grid for All Analytics */}
-                      {chartOrder.map((chartId) => {
-                        const analytic = selectedAnalytics.find(
-                          (a) => a.id === chartId
-                        );
-                        if (!analytic) return null;
-                        const card = renderAnalyticsCard(analytic);
-                        const perCardLoading =
-                          !!loadingMap?.[analytic.module]?.[analytic.endpoint];
-                        const spanClass =
-                          analytic.module === "consumables_overview" &&
-                          analytic.endpoint ===
-                            "consumable_inventory_value_quarterly"
-                            ? "lg:col-span-2"
-                            : "";
-                        return card ? (
-                          <SectionLoader
-                            key={chartId}
-                            loading={perCardLoading}
-                            className={spanClass}
-                          >
-                            {card}
-                          </SectionLoader>
-                        ) : null;
-                      })}
-                    </SortableContext>
-                  </DndContext>
-                ) : (
-                  <Card className="p-8 text-center height-90vh">
+            <div className="flex gap-6">
+              {/* Main Content Area */}
+              <div className="flex-1">
+                {selectedAnalytics.length === 0 ? (
+                  <Card className="p-8 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <BarChart3 className="w-16 h-16 text-analytics-muted" />
                       <div>
@@ -2719,8 +2873,8 @@ export const Dashboard = () => {
                           No Analytics Selected
                         </h3>
                         <p className="text-analytics-muted mb-4">
-                          Select analytics from different modules to start
-                          viewing your dashboard
+                          Select analytics from different modules to start viewing
+                          your dashboard
                         </p>
                         <Button
                           onClick={() => {
@@ -2736,13 +2890,58 @@ export const Dashboard = () => {
                       </div>
                     </div>
                   </Card>
+                ) : (
+                  <div className="relative w-full">
+                    <ResponsiveGridLayout
+                      className="layout"
+                      layouts={{ lg: layouts }}
+                      onLayoutChange={(layout) => handleLayoutChange(layout)}
+                      breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                      cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
+                      rowHeight={60}
+                      margin={[20, 20]}
+                      resizeHandles={["se"]}
+                      containerPadding={[0, 0]}
+                      compactType="vertical"
+                    >
+                      {/* Analytics Cards */}
+                      {chartOrder.map((chartId) => {
+                        const analytic = selectedAnalytics.find(
+                          (a) => a.id === chartId
+                        );
+                        if (!analytic) return null;
+
+                        const perCardLoading =
+                          !!loadingMap?.[analytic.module]?.[analytic.endpoint];
+
+                        // Cards that should use auto height (simple stat cards only)
+                        const compactCards = [
+                          'customer_experience_feedback',
+                          'customer_rating_overview',
+                          'helpdesk_snapshot',
+                        ];
+                        
+                        const isCompactCard = compactCards.includes(analytic.endpoint);
+
+                        return (
+                          <div key={analytic.id} className="cursor-move">
+                            <SectionLoader loading={perCardLoading}>
+                              <div className={isCompactCard ? "h-auto" : "h-full flex flex-col"}>
+                                <div className={isCompactCard ? "" : "flex-1 overflow-auto"}>
+                                  {renderAnalyticsCard(analytic)}
+                                </div>
+                              </div>
+                            </SectionLoader>
+                          </div>
+                        );
+                      })}
+                    </ResponsiveGridLayout>
+                  </div>
                 )}
               </div>
-
-              <div
-                className="xl:col-span-3 order-first xl:order-last"
-                style={{ minWidth: "25%" }}
-              >
+              
+              {/* Recent Updates Sidebar - Always Visible */}
+              <div className="w-[350px] flex-shrink-0">
                 <RecentUpdatedSidebar />
               </div>
             </div>

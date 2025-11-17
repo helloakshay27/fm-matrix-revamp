@@ -29,20 +29,31 @@ const AmcContractSummaryCard: React.FC<Props> = ({ data }) => {
       };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-md">
-      <div className="bg-[#DAD6C9] text-[#C72030] px-4 py-3 font-semibold">AMC Contract Summary</div>
-      <div className="grid grid-cols-3 text-center bg-[#f2f0eb]">
-        <div className="py-4 border-r">
-          <div className="text-xs text-gray-600">Active AMC Contracts</div>
-          <div className="text-2xl font-bold text-[#C72030]">{summary.active.toLocaleString()}</div>
+    <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
+     <h3
+        className="mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3"
+        style={{
+          fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+          fontWeight: 600,
+          fontSize: '16px',
+          lineHeight: '100%',
+          letterSpacing: '0%'
+        }}
+      >
+        AMC Contract Summary
+      </h3>
+      <div className="grid grid-cols-3 gap-6">
+        <div className="bg-[#f2f0eb] border border-gray-300 py-6 px-4 text-center">
+          <div className="text-xl text-black font-semibold mb-4">Active AMC Contracts</div>
+          <div className="text-4xl font-bold text-[#C72030]">{summary.active.toLocaleString()}</div>
         </div>
-        <div className="py-4 border-r">
-          <div className="text-xs text-gray-600">Contract Expiry in 90 Days</div>
-          <div className="text-2xl font-bold text-[#C72030]">{summary.expiry90.toLocaleString()}</div>
+        <div className="bg-[#f2f0eb] border border-gray-300 py-6 px-4 text-center">
+          <div className="text-xl text-black font-semibold mb-4">Contract Expiry in 90 Days</div>
+          <div className="text-4xl font-bold text-[#C72030]">{summary.expiry90.toLocaleString()}</div>
         </div>
-        <div className="py-4">
-          <div className="text-xs text-gray-600">Contract Expired</div>
-          <div className="text-2xl font-bold text-[#C72030]">{summary.expired.toLocaleString()}</div>
+        <div className="bg-[#f2f0eb] border border-gray-300 py-6 px-4 text-center">
+          <div className="text-xl text-black font-semibold mb-4">Contract Expired</div>
+          <div className="text-4xl font-bold text-[#C72030]">{summary.expired.toLocaleString()}</div>
         </div>
       </div>
     </div>
