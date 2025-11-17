@@ -6,6 +6,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, LabelList, BarChart, Bar, XAx
 import { DEFAULT_LOGO_CODE } from "@/assets/default-logo-code";
 import { OIG_LOGO_CODE } from "@/assets/pdf/oig-logo-code";
 import { VI_LOGO_CODE } from "@/assets/vi-logo-code";
+import GoPhygital from "@/assets/pdf/Gophygital.svg";
 
 // Clean final version
 type StatCardProps = { value: number | string; label: string; percent?: string; subLabel?: string };
@@ -61,14 +62,14 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
         };
     }, []);
     const RADIAN = Math.PI / 180;
-    const outerRadiusValue = isPrinting ? 140 : 130;
+    const outerRadiusValue = isPrinting ? 225 : 160;
     const innerRadiusValue = 0;
     const formatPercent = (p: number) => `${p.toFixed(2)}%`;
     return (
         <div className="w-full no-break tat-pie-card">
             <h3 className="text-black font-semibold text-base sm:text-lg mb-1 print:mb-1">{title}</h3>
             <div className="bg-[#F6F4EE] rounded-sm px-6 sm:px-8 py-4 sm:py-5 print:px-5 print:py-3">
-                <div className="w-full h-[260px] sm:h-[320px] print:h-[300px] tat-pie-container">
+                <div className="w-full h-[260px] sm:h-[320px] print:h-[320px] tat-pie-container" style={{ overflow: 'visible' }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart margin={isPrinting ? { top: 0, right: 0, bottom: 0, left: 0 } : { top: 0, right: 0, bottom: 0, left: 0 }}>
                             <Pie
@@ -1451,6 +1452,15 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
               page-break-inside: avoid !important;
           }
 
+          .tat-pie-container .recharts-wrapper {
+              overflow: visible !important;
+          }
+
+          .tat-pie-container svg {
+              transform: scale(1.25);
+              transform-origin: center center;
+          }
+
           /* Specific rules for remaining sections */
           .help-desk-section,
           .priority-wise-section,
@@ -1759,7 +1769,17 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             </div>
           </Box>
         </Box>
+        <div className="w-full flex items-center justify-center py-6 print:py-3 first-page-logo">
+        <img
+          src={GoPhygital}
+          alt="GoPhygital"
+          className="h-10 print:h-5"
+        />
+      </div>
       </Box>
+
+      {/* GoPhygital logo footer under the cover layout (both view & print) */}
+   
             {/* Wrap sections 1–3 together to keep them on a single page in PDF */}
             <div className="no-break first-page-group">
                 {/* <header className="w-full bg-[#F6F4EE] flex flex-col items-center justify-center text-center py-6 sm:py-8 mb-6 

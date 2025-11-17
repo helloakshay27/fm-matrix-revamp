@@ -18,6 +18,9 @@ import {
 import { ArrowRightLeft } from "lucide-react";
 
 import logo from "../../assets/pdf/urbon.svg";
+import { DEFAULT_LOGO_CODE } from "@/assets/default-logo-code";
+import { OIG_LOGO_CODE } from "@/assets/pdf/oig-logo-code";
+import { VI_LOGO_CODE } from "@/assets/vi-logo-code";
 
 // @ts-ignore
 import { getPeriodLabels } from '../../lib/periodLabel';
@@ -75,6 +78,24 @@ const AllContent = () => {
             selectedCompany.includes('oig') ||
             host.includes('oig')
         );
+    }, []);
+
+    const logoElement = useMemo(() => {
+        if (typeof window === 'undefined') {
+            return <DEFAULT_LOGO_CODE />;
+        }
+
+        const hostname = window.location.hostname.toLowerCase();
+
+        if (hostname.includes('oig.gophygital.work')) {
+            return <OIG_LOGO_CODE />;
+        }
+
+        if (hostname.includes('vi-web.gophygital.work')) {
+            return <VI_LOGO_CODE />;
+        }
+
+        return <DEFAULT_LOGO_CODE />;
     }, []);
 
     // Separate effect to fetch helpdesk management snapshot
@@ -1676,7 +1697,15 @@ const AllContent = () => {
             {/* readiness marker for external polling */}
             <div data-component="all-content" data-loading="false" style={{ display: 'none' }} />
 
-            <style>{`@media print {
+            <style>{`
+.allcontent-cover .first-page-logo {
+    margin-top: 1.5rem;
+}
+
+@media print {
+.allcontent-cover .first-page-logo {
+    margin-top: 11rem !important;
+}
     @page {
         size: A4;
         margin: 0;
@@ -1792,7 +1821,7 @@ const AllContent = () => {
 `}</style>
 
             {/* main page */}
-            <div className="font-sans bg-white min-h-screen print:h-screen print:scale-95">
+            <div className="font-sans bg-white min-h-screen print:h-screen print:scale-95 allcontent-cover">
                 <div className="relative h-[700px] w-full print:h-[600px] print:overflow-hidden">
                     {/* Background Image */}
                     <img
@@ -1803,6 +1832,13 @@ const AllContent = () => {
 
                     {/* Black Overlay */}
                     <div className="absolute inset-0 bg-black opacity-50 print:opacity-40" />
+
+                    {/* Logo top-right */}
+                    <div className="absolute top-4 right-6 bg-white rounded-md flex items-center justify-center px-2 py-1 shadow-sm print:top-2 print:right-4">
+                        <div className="flex items-center justify-center [&>svg]:h-10 [&>svg]:w-auto print:[&>svg]:h-8">
+                            {logoElement}
+                        </div>
+                    </div>
 
                     {/* Overlay Text */}
                     <div className="absolute bottom-6 right-10 text-white text-sm leading-relaxed print:text-white print:bottom-4 print:right-8">
@@ -1837,23 +1873,18 @@ const AllContent = () => {
                                 {dateRangeLabel}
                             </p>
                         </div>
+                        
                     </div>
+                    <div className="w-full flex justify-center items-center py-6 print:py-3 first-page-logo">
+                        <img
+                            src={GoPhygital}
+                            alt="GoPhygital"
+                            className="h-8 print:h-6"
+                        />
+                    </div>
+                    
                 </div>
-
-                <div className="flex-grow" />
-                <div className="flex justify-center items-end print:mb-1 print:pt-[140px] pb-8 text-center">
-                    <img
-                        src={GoPhygital} // update this path to the actual path of your image
-                        alt="goPhygital"
-                        className="h-6 print:h-5" // adjust height as needed
-                    />
-                </div>
-
             </div>
-
-
-
-
             {/* Disclaimer Page */}
             {/* <div className="flex flex-col min-h-screen font-sans bg-white px-6 py-10 relative">
                 <div className="flex justify-center w-full">
@@ -1927,7 +1958,7 @@ const AllContent = () => {
                                 </>
                             )}
 
-                            <h3 className="font-semibold mt-2">2- Community Programs Dashboard</h3>
+                            <h3 className="font-semibold mt-2">{!isOigOrganization ? '2- Community Programs Dashboard' : '1- Community Programs Dashboard'}</h3>
                             <ul className="list-disc list-inside pl-6 print-small">
                                 {/* <li>Community Health and Engagement Summary</li> */}
                                 <li>Site Wise Adoption Rate</li>
@@ -1942,7 +1973,7 @@ const AllContent = () => {
                             <h3 className="font-semibold">1- Helpdesk Management</h3>
                             <ul className="list-disc list-inside pl-6 print-small">
                                 <li>Snapshot</li>
-                                <li>Ticket Ageing, Closure Efficiency & Feedback Overview by Center</li>
+                                <li>Ticket Ageing, Closure Efficiency & Feedback Overview by Site</li>
                                 <li>Ticket Performance Metrics by Category – Volume, Closure Rate & Ageing</li>
                                 {!isOigOrganization && (
                                     <>
@@ -1950,26 +1981,31 @@ const AllContent = () => {
                                         <li>Site Performance: Customer Rating Overview</li>
                                     </>
                                 )}
-                                <li>Response TAT Performance by Center – {periodUnit}ly Comparison</li>
+                                <li>Response TAT Performance by Site  
+                                    {/* {periodUnit}ly Comparison */}
+                                    </li>
                             </ul>
 
                             <h3 className="font-semibold mt-2">2- Asset Management</h3>
                             <ul className="list-disc list-inside pl-6 print-small">
                                 <li>Company-Wise Asset Overview</li>
-                                <li>Center Wise - Assets and Downtime Metrics</li>
+                                <li>Site Wise - Assets and Downtime Metrics</li>
                                 <li>Assets with Highest Maintenance Spend</li>
                                 <li>AMC Contract Summary</li>
-                                <li>AMC Contract Summary – Expiry in 90 Days</li>
+                                <li>AMC Contract Summary – Expiry in 30 Days</li>
                                 <li>AMC Contract Summary – Expired</li>
                             </ul>
 
                             <h3 className="font-semibold mt-2">3- Checklist Management</h3>
                             <ul className="list-disc list-inside pl-6 print-small">
-                                <li>Checklist Progress Status – Center-wise {periodUnit}ly Comparison</li>
-                                <li>Top 10 Overdue Checklists – Center-wise Contribution Comparison</li>
+                                <li>Checklist Progress Status – Site-wise </li>
+                                     {/* {periodUnit}ly */}
+                                     {/* Comparison</li> */}
+                                <li>Top 10 Overdue Checklists – Site-wise Contribution Comparison</li>
                             </ul>
 
                             {!isOigOrganization && (
+
                                 <>
                                     <h3 className="font-semibold mt-2">4- Inventory Management</h3>
                                     <ul className="list-disc list-inside pl-6 print-small">
@@ -3380,7 +3416,7 @@ const AllContent = () => {
                             </span>
                         </div>
                         <div className="px-4 py-6 flex flex-col items-center justify-center gap-1 print:py-2 print:px-2 print:text-[12px]">
-                            <span className="uppercase tracking-wide text-[13px] font-bold print:text-[12px] text-center">Contract Expiry in 90 Days</span>
+                            <span className="uppercase tracking-wide text-[13px] font-bold print:text-[12px] text-center">Contract Expiry in 30 Days</span>
                             <span className="text-4xl leading-tight text-[#C72030] font-extrabold tabular-nums print:text-xl">
                                 {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.expiry90.toLocaleString() : '-')}
                             </span>
@@ -3397,13 +3433,13 @@ const AllContent = () => {
                 {/* AMC Contract Summary – Expiry in 90 Days - standardized section box */}
                 <div className={sectionBox}>
                     <h2 className="text-lg md:text-lg font-bold tracking-wide mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-2 print:pb-1">
-                        AMC Contract Summary – Expiry in 90 Days
+                        AMC Contract Summary – Expiry in 30 Days
                     </h2>
                     <div className="overflow-x-auto">
                         <table className="min-w-full border border-black text-sm text-center align-middle print:text-[9px] print:leading-relaxed print:table-fixed print:w-full">
                             <thead className="bg-[#DAD6C9] text-[#c72030]">
                                 <tr className="uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[10px]">
-                                    {['Site Name', 'AMC Name', 'Contract Start Date', 'Contract End Date', 'Renewal Reminder', 'Contract Cost (₹)', 'Vendor Contact'].map(h => (
+                                    {['Site Name', 'AMC Name', 'Contract Start Date', 'Contract End Date', 'Renewal Reminder', 'Contract Cost (₹)', 'Vendor Name'].map(h => (
                                         <th
                                             key={h}
                                             scope="col"
@@ -3467,7 +3503,7 @@ const AllContent = () => {
                             <table className="min-w-full border border-black text-sm text-center align-middle print:table-fixed print:w-full print:text-[9px] print:leading-relaxed">
                                 <thead className="bg-[#DAD6C9] text-[#c72030]">
                                     <tr className="uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[10px]">
-                                        {['Site Name', 'AMC Name', 'Contract Start Date', 'Contract End Date', 'Status', 'Contract Cost (₹)', 'Vendor Contact'].map(h => (
+                                        {['Site Name', 'AMC Name', 'Contract Start Date', 'Contract End Date', 'Status', 'Contract Cost (₹)', 'Vendor Name'].map(h => (
                                             <th
                                                 key={h}
                                                 scope="col"
@@ -3569,27 +3605,27 @@ const AllContent = () => {
                                     Checklist Progress Status – Center-Wise {periodUnit}ly Comparison
                                 </div>
                                 <div className="print:flex-1">
-                                    <table className="w-full border-t border-b border-black print:table-fixed print:w-full print:text-[10px] print:h-full">
+                                    <table className="w-full border border-black border-collapse print:table-fixed print:w-full print:text-[10px] print:h-full">
                                         <thead>
-                                            <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red border-b border-black">
-                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Site Name</th>
-                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Open</th>
-                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">In Progress</th>
-                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Overdue</th>
-                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Partially Closed</th>
-                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Closed</th>
+                                            <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red border-b border-black uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[10px]">
+                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%] border border-black">Site Name</th>
+                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%] border border-black">Open</th>
+                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%] border border-black">In Progress</th>
+                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%] border border-black">Overdue</th>
+                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%] border border-black">Partially Closed</th>
+                                                <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%] border border-black">Closed</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {loadingSiteWiseChecklist ? (
                                                 <tr>
-                                                    <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2 border-b border-black">
+                                                    <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2 border border-black">
                                                         Loading checklist progress...
                                                     </td>
                                                 </tr>
                                             ) : checklistProgress.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2 border-b border-black">
+                                                    <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2 border border-black">
                                                         No checklist progress data available
                                                     </td>
                                                 </tr>
@@ -3650,19 +3686,23 @@ const AllContent = () => {
 
                                                     return (
                                                         <tr key={i} className={`${i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''} border-b border-gray-300 last:border-b-0`}>
-                                                            <td className="py-5 px-4 bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{site}</td>
-                                                            <td className="py-5 px-4 print:py-2 print:px-2">{fmt(curOpen)}</td>
-                                                            <td className="py-5 px-4 print:py-2 print:px-2">{fmt(curInProg)}</td>
-                                                            <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
-                                                                {fmt(curOver)} <span className="text-xs print:!text-[8px] text-gray-600">({fmtDiff(diffOver)})</span>
-                                                                {overdueArrowUp && <span className="text-red-600 arrow-print">▲</span>}
-                                                                {overdueArrowDown && <span className="text-green-600 arrow-print">▼</span>}
+                                                            <td className="py-5 px-4 bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE] border border-black">{site}</td>
+                                                            <td className="py-5 px-4 print:py-2 print:px-2 border border-black">{fmt(curOpen)}</td>
+                                                            <td className="py-5 px-4 print:py-2 print:px-2 border border-black">{fmt(curInProg)}</td>
+                                                            <td className="py-5 px-4 print:py-2 print:px-2 border border-black">
+                                                                <div className="flex items-center gap-1 justify-center">
+                                                                    {fmt(curOver)} <span className="text-xs print:!text-[8px] text-gray-600">({fmtDiff(diffOver)})</span>
+                                                                    {overdueArrowUp && <span className="text-red-600 arrow-print">▲</span>}
+                                                                    {overdueArrowDown && <span className="text-green-600 arrow-print">▼</span>}
+                                                                </div>
                                                             </td>
-                                                            <td className="py-5 px-4 print:py-2 print:px-2">{fmt(curPart)}</td>
-                                                            <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
-                                                                {fmt(curClosed)} <span className="text-xs print:!text-[8px] text-gray-600">({fmtDiff(diffClosed)})</span>
-                                                                {closedArrowUp && <span className="text-green-600 arrow-print">▲</span>}
-                                                                {closedArrowDown && <span className="text-red-600 arrow-print">▼</span>}
+                                                            <td className="py-5 px-4 print:py-2 print:px-2 border border-black">{fmt(curPart)}</td>
+                                                            <td className="py-5 px-4 print:py-2 print:px-2 border border-black">
+                                                                <div className="flex items-center gap-1 justify-center">
+                                                                    {fmt(curClosed)} <span className="text-xs print:!text-[8px] text-gray-600">({fmtDiff(diffClosed)})</span>
+                                                                    {closedArrowUp && <span className="text-green-600 arrow-print">▲</span>}
+                                                                    {closedArrowDown && <span className="text-red-600 arrow-print">▼</span>}
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     );
@@ -3682,12 +3722,12 @@ const AllContent = () => {
                                     Top 10 Overdue Checklists – Center-wise Contribution Comparison
                                 </div>
                                 <div className="print:flex-1">
-                                    <table className="w-full border-t border-b border-black text-sm print:table-fixed print:w-full print:text-[10px] print:h-full ">
+                                    <table className="w-full border border-black border-collapse text-sm print:table-fixed print:w-full print:text-[10px] print:h-full ">
                                         <thead>
                                             <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red border-b border-black">
-                                                <th className="py-4 px-4 site-col print:py-2 print:px-2 print:w-[18%]">Site Name</th>
+                                                <th className="py-4 px-4 site-col print:py-2 print:px-2 print:w-[18%] border border-black">Site Name</th>
                                                 {top10Overdue.categories.map((cat, idx) => (
-                                                    <th key={idx} className="py-4 px-2 text-center print:py-2 print:px-1">
+                                                    <th key={idx} className="py-4 px-2 text-center print:py-2 print:px-1 border border-black">
                                                         {cat}
                                                     </th>
                                                 ))}
@@ -3696,13 +3736,13 @@ const AllContent = () => {
                                         <tbody>
                                             {loadingSiteWiseChecklist ? (
                                                 <tr>
-                                                    <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2 border-b border-gray-300">
+                                                    <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2 border border-black">
                                                         Loading top overdue checklists...
                                                     </td>
                                                 </tr>
                                             ) : !top10Overdue.categories.length || !top10Overdue.siteRows.length ? (
                                                 <tr>
-                                                    <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2 border-b border-gray-300">
+                                                    <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2 border border-black">
                                                         No overdue checklist data available
                                                     </td>
                                                 </tr>
@@ -3719,9 +3759,9 @@ const AllContent = () => {
                                                     const fmt = (n: number) => `${Number(n || 0).toFixed(0)}%`;
                                                     return (
                                                         <tr key={i} className={`${i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''} border-b border-gray-300 last:border-b-0`}>
-                                                            <td className="py-5 px-4 site-col bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{site.site_name ?? '-'}</td>
+                                                            <td className="py-5 px-4 site-col bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE] border border-black">{site.site_name ?? '-'}</td>
                                                             {top10Overdue.categories.map((cat, j) => (
-                                                                <td key={j} className="py-5 px-2 text-center print:py-2 print:px-1">
+                                                                <td key={j} className="py-5 px-2 text-center print:py-2 print:px-1 border border-black">
                                                                     {fmt(byCat.get(cat) ?? 0)}
                                                                 </td>
                                                             ))}
