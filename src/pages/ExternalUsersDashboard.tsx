@@ -245,7 +245,7 @@ export const ExternalUsersDashboard = () => {
     { key: 'mobile', label: 'Mobile', sortable: true, hideable: true },
     { key: 'gender', label: 'Gender', sortable: true, hideable: true },
     { key: 'active', label: 'Active', sortable: false, hideable: true },
-  // Birth Date removed per request
+    // Birth Date removed per request
     { key: 'joining_date', label: 'Joining Date', sortable: true, hideable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true },
     { key: 'cluster_name', label: 'Cluster', sortable: true, hideable: true },
@@ -305,9 +305,9 @@ export const ExternalUsersDashboard = () => {
           </div>
         );
       }
-  // removed Birth Date from UI
+      // removed Birth Date from UI
       case 'joining_date':
-  return formatDateDMY((user as any).lock_user_permission?.joining_date || (user as any).joining_date);
+        return formatDateDMY((user as any).lock_user_permission?.joining_date || (user as any).joining_date);
       case 'status': {
         const statusVal = (user as any).lock_user_permission?.status || (user as any).status || (user as any).lock_user_permission_status;
         return statusVal ? getStatusBadge(statusVal) : '-';
@@ -321,7 +321,7 @@ export const ExternalUsersDashboard = () => {
       case 'work_location':
         return (user as any).work_location || '-';
       case 'company_name':
-  return (user as any).ext_company_name || '-';
+        return (user as any).ext_company_name || '-';
       case 'role_name':
         return (user as any).lock_user_permission?.role_name || (user as any).role_name || (user as any).lock_role?.name || (user as any).lock_role?.display_name || '-';
       case 'employee_type':
@@ -331,12 +331,12 @@ export const ExternalUsersDashboard = () => {
         if (!created) return '-';
         try {
           const d = new Date(created);
-            const day = String(d.getDate()).padStart(2,'0');
-            const month = String(d.getMonth()+1).padStart(2,'0');
-            const year = d.getFullYear();
-            const hours = String(d.getHours()).padStart(2,'0');
-            const minutes = String(d.getMinutes()).padStart(2,'0');
-            return `${day}/${month}/${year} ${hours}:${minutes}`;
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const year = d.getFullYear();
+          const hours = String(d.getHours()).padStart(2, '0');
+          const minutes = String(d.getMinutes()).padStart(2, '0');
+          return `${day}/${month}/${year} ${hours}:${minutes}`;
         } catch { return created; }
       }
       case 'line_manager_name':
@@ -452,7 +452,9 @@ export const ExternalUsersDashboard = () => {
   }
 
   const handleToggleActive = async (user: ExternalUser) => {
-    const permission = user.lock_user_permission;     
+    const hostname = window.location.hostname;
+    const isViSite = hostname.includes("vi-web.gophygital.work");
+    const permission = user.lock_user_permission;
     const previousStatus = permission?.status;
     const activeVal: any = permission?.active;
     const current = activeVal === true || activeVal === 1 || activeVal === '1';
@@ -469,7 +471,7 @@ export const ExternalUsersDashboard = () => {
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
       if (!baseUrl || !token) throw new Error('Missing base URL or token');
-      const url = `https://${baseUrl}/pms/users/${user.id}/update_vi_user`;
+      const url = isViSite ? `${baseUrl}/pms/users/${user.id}/update_vi_user` : `https://${baseUrl}/pms/users/${user.id}/update_vi_user`;
       const payload = {
         user: {
           lock_user_permissions_attributes: [
@@ -489,7 +491,7 @@ export const ExternalUsersDashboard = () => {
       };
       await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(`User ${newValue ? 'activated (approved)' : 'deactivated (rejected)'} successfully`);
-    } catch (e:any) {
+    } catch (e: any) {
       // revert on error
       setExternalUsers(prev => prev.map(u => u.id === user.id ? { ...u, lock_user_permission: { ...u.lock_user_permission, active: current, status: previousStatus }, status: previousStatus } : u));
       toast.error('Failed to update active status');
@@ -518,7 +520,7 @@ export const ExternalUsersDashboard = () => {
         total_count: Math.max(0, prev.total_count - 1)
       }));
       toast.success('User deleted successfully');
-    } catch (e:any) {
+    } catch (e: any) {
       console.error('Delete user error', e);
       toast.error('Failed to delete user');
     } finally {
@@ -625,7 +627,7 @@ export const ExternalUsersDashboard = () => {
                   className="text-white bg-red-500 hover:bg-red-600"
                 >
                   <Trash2 className="w-4 h-4" />
-                   User Deletion
+                  User Deletion
                 </Button>
               </div>
             }
