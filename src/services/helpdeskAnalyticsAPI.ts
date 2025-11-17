@@ -47,6 +47,22 @@ export const helpdeskAnalyticsAPI = {
       this.getCustomerExperienceFeedback(fromDate, toDate),
     ]);
     return { agingClosure, feedback };
+  },
+
+  async getResponseTATQuarterly(fromDate: Date, toDate: Date): Promise<any> {
+    const start = formatDate(fromDate);
+    const end = formatDate(toDate);
+    const url = `/api/pms/reports/response_tat_performance_quarterly?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resp = await apiClient.get(url);
+    return resp.data;
+  },
+
+  async getResolutionTATQuarterly(fromDate: Date, toDate: Date): Promise<any> {
+    const start = formatDate(fromDate);
+    const end = formatDate(toDate);
+    const url = `/api/pms/reports/resolution_tat_performance_quarterly?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resp = await apiClient.get(url);
+    return resp.data;
   }
 };
 

@@ -66,9 +66,9 @@ export const TopOverdueChecklistsCenterwiseCard: React.FC<TopOverdueChecklistsCe
                   }
                   return (
                     <tr key={site.site_name + i} className={i % 2 === 0 ? 'bg-gray-50' : ''}>
-                      <td className="py-4 px-4 bg-[#F6F4EE]">{site.site_name ?? '-'}</td>
+                      <td className="py-4 px-4 bg-[#F6F4EE] text-sm">{site.site_name ?? '-'}</td>
                       {categories.map((cat, j) => (
-                        <td key={j} className="py-4 px-2 text-center">{fmtPct(byCat.get(cat) ?? 0)}</td>
+                        <td key={j} className="py-4 px-2 text-center text-sm">{fmtPct(byCat.get(cat) ?? 0)}</td>
                       ))}
                     </tr>
                   );
@@ -76,6 +76,11 @@ export const TopOverdueChecklistsCenterwiseCard: React.FC<TopOverdueChecklistsCe
               )}
             </tbody>
           </table>
+        </div>
+        <div className="p-3 rounded-md">
+          <p className="text-xs text-gray-700">
+            <span className="font-semibold">Note:</span> The table displays the top 10 most overdue checklists, with a center-wise breakdown of their contribution to the overall overdue count, helping identify key areas of concern.
+          </p>
         </div>
       </CardContent>
     </Card>

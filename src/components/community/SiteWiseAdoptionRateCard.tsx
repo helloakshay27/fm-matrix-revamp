@@ -19,9 +19,10 @@ export const SiteWiseAdoptionRateCard: React.FC<Props> = ({ data }) => {
   }, [data]);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
+    <div className="bg-white border border-gray-200 rounded-md p-4 h-full flex flex-col">
       <h3 className="font-semibold text-base mb-4">Site Wise Adoption Rate</h3>
-      <table className="min-w-full border text-sm text-center">
+      <div className="flex-1 overflow-auto">
+        <table className="min-w-full border text-sm text-center">
         <thead className="bg-[#ded9cd] text-[#b62527] font-semibold">
           <tr>
             {['Site Name', 'Helpdesk', 'Assets', 'Checklist Tech', 'Checklist Non-Tech', 'Inventory', 'Meeting Room'].map((h) => (
@@ -61,6 +62,7 @@ export const SiteWiseAdoptionRateCard: React.FC<Props> = ({ data }) => {
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 };
