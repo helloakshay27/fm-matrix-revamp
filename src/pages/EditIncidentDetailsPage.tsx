@@ -448,8 +448,8 @@
 //       secondarySubSubCategory: getValidOptionValue(incident.inc_sec_sub_sub_category_id, secondarySubSubCategories),
 //       secondarySubSubSubCategory: getValidOptionValue(incident.inc_sec_sub_sub_sub_category_id, secondarySubSubSubCategories) ||
 //         getIdByName(incident.sec_sub_sub_sub_category_name || '', secondarySubSubSubCategories),
-//       severity: severityOptions.length > 0 ? getValidOptionValue(incident.severity, severityOptions) : incident.severity || '',
-//       probability: probabilityOptions.length > 0 ? getValidOptionValue(incident.probability, probabilityOptions) : incident.probability?.toString() || '',
+//       severity: incident.severity?.toString() || '',
+//       probability: incident.probability?.toString() || '',
 //       incidentLevel: getValidOptionValue(incident.inc_level_id, incidentLevels),
 //       description: incident.description || '',
 //       propertyDamageHappened: incident.property_damage === 'true' || String(incident.property_damage) === 'true' ? 'true' :
@@ -1017,21 +1017,11 @@
 //                   sx={fieldStyles}
 //                 >
 //                   <MenuItem value=""><em>Select Probability</em></MenuItem>
-//                   {probabilityOptions.length > 0 ? (
-//                     probabilityOptions.map((probability) => (
-//                       <MenuItem key={probability.id} value={probability.id.toString()}>
-//                         {probability.name}
-//                       </MenuItem>
-//                     ))
-//                   ) : (
-//                     <>
-//                       <MenuItem value="1">Rare</MenuItem>
-//                       <MenuItem value="2">Possible</MenuItem>
-//                       <MenuItem value="3">Likely</MenuItem>
-//                       <MenuItem value="4">Often</MenuItem>
-//                       <MenuItem value="5">Frequent/ Almost certain</MenuItem>
-//                     </>
-//                   )}
+//                   <MenuItem value="1">Rare</MenuItem>
+//                   <MenuItem value="2">Possible</MenuItem>
+//                   <MenuItem value="3">Likely</MenuItem>
+//                   <MenuItem value="4">Often</MenuItem>
+//                   <MenuItem value="5">Frequent/ Almost certain</MenuItem>
 //                 </MuiSelect>
 //               </FormControl>
 
@@ -2661,8 +2651,8 @@ export const EditIncidentDetailsPage = () => {
       secondarySubSubCategory: getValidOptionValue(incident.inc_sec_sub_sub_category_id, secondarySubSubCategories),
       secondarySubSubSubCategory: getValidOptionValue(incident.inc_sec_sub_sub_sub_category_id, secondarySubSubSubCategories) ||
         getIdByName(incident.sec_sub_sub_sub_category_name || '', secondarySubSubSubCategories),
-      severity: severityOptions.length > 0 ? getValidOptionValue(incident.severity, severityOptions) : incident.severity || '',
-      probability: probabilityOptions.length > 0 ? getValidOptionValue(incident.probability, probabilityOptions) : incident.probability?.toString() || '',
+      severity: incident.severity?.toString() || '',
+      probability: incident.probability?.toString() || '',
       incidentLevel: getValidOptionValue(incident.inc_level_id, incidentLevels),
       description: incident.description || '',
       propertyDamageHappened: incident.property_damage === 'true' || String(incident.property_damage) === 'true' ? 'true' :
@@ -2893,18 +2883,23 @@ export const EditIncidentDetailsPage = () => {
       toast.error('Please select Severity');
       return false;
     }
-    // if (!formData.probability) {
-    //   toast.error('Please select Probability');
-    //   return false;
-    // }
+    if (!formData.probability) {
+      toast.error('Please select Probability');
+      return false;
+    }
     if (!formData.incidentLevel) {
       toast.error('Incident Level could not be determined. Please select it manually.');
       return false;
     }
-    if (!formData.description || formData.description.trim().length < 10) {
-      toast.error('Please provide a detailed Description (at least 10 characters)');
+    // if (!formData.description || formData.description.trim().length < 10) {
+    //   toast.error('Please provide a detailed Description (at least 10 characters)');
+    //   return false;
+    // }
+    if (!formData.description || formData.description.trim() === "") {
+      toast.error("Please provide a Description");
       return false;
     }
+
     if (!formData.rca) {
       toast.error('Please provide Root Cause Analysis (RCA)');
       return false;
@@ -3316,21 +3311,11 @@ export const EditIncidentDetailsPage = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select Probability</em></MenuItem>
-                  {probabilityOptions.length > 0 ? (
-                    probabilityOptions.map((probability) => (
-                      <MenuItem key={probability.id} value={probability.id.toString()}>
-                        {probability.name}
-                      </MenuItem>
-                    ))
-                  ) : (
-                    <>
-                      <MenuItem value="1">Rare</MenuItem>
-                      <MenuItem value="2">Possible</MenuItem>
-                      <MenuItem value="3">Likely</MenuItem>
-                      <MenuItem value="4">Often</MenuItem>
-                      <MenuItem value="5">Frequent/ Almost certain</MenuItem>
-                    </>
-                  )}
+                  <MenuItem value="1">Rare</MenuItem>
+                  <MenuItem value="2">Possible</MenuItem>
+                  <MenuItem value="3">Likely</MenuItem>
+                  <MenuItem value="4">Often</MenuItem>
+                  <MenuItem value="5">Frequent/ Almost certain</MenuItem>
                 </MuiSelect>
               </FormControl>
 
@@ -4310,7 +4295,7 @@ export const EditIncidentDetailsPage = () => {
                   </div>
                 )}
 
-                <div className="mt-4">
+                {/* <div className="mt-4">
                   <Button
                     style={{
                       backgroundColor: '#C72030'
@@ -4320,13 +4305,10 @@ export const EditIncidentDetailsPage = () => {
                   >
                     Choose Files...
                   </Button>
-                </div>
+                </div> */}
               </div>
 
-              {/* No attachments message */}
-              {existingAttachments.length === 0 && newAttachments.length === 0 && (
-                <p className="text-gray-600">No attachments available.</p>
-              )}
+
             </div>
           </CardContent>
         </Card>

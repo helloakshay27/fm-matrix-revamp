@@ -84,6 +84,14 @@ export const IncidentDetailsPage = () => {
     "5": "Catastrophic"
   };
 
+  const probabilityMap = {
+    "1": "Rare",
+    "2": "Possible",
+    "3": "Likely",
+    "4": "Often",
+    "5": "Frequent/ Almost certain"
+  };
+
 
   useEffect(() => {
     if (id) {
@@ -640,6 +648,9 @@ export const IncidentDetailsPage = () => {
           )}
           {incident.severity && (
             <Field label="Severity" value={severityMap[incident.severity]} />
+          )}
+          {incident.probability && (
+            <Field label="Probability" value={probabilityMap[incident.probability]} />
           )}
           {incident.severity_brief && (
             <Field label="Severity Brief" value={incident.severity_brief} />
