@@ -13,6 +13,8 @@ import ViDynamicHeader from "./ViDynamicHeader";
 import { StaticDynamicHeader } from "./StaticDynamicHeader";
 import { StacticSidebar } from "./StacticSidebar";
 import ViSidebarWithToken from "./ViSidebarWithToken";
+import { ZxSidebar } from "./ZxSidebar";
+import { ZxDynamicHeader } from "./ZxDynamicHeader";
 import { saveToken, saveUser, saveBaseUrl } from "../utils/auth";
 
 interface LayoutProps {
@@ -37,7 +39,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   );
 
   // Layout behavior:
-  // - Company ID 111 (Lockated HO): Default layout (Sidebar + DynamicHeader)
+  // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
   // - Company ID 199 (Customer Support): Default layout (Sidebar + DynamicHeader)
   // - Other companies (193, 204): Static layout (Sidebar + StaticDynamicHeader)
   // - No company selected: Static layout (fallback)
@@ -64,6 +66,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ViSidebar />;
     }
 
+    // Company-specific logic
+    if (selectedCompany?.id === 189) {
+      return <ZxSidebar />;
+    }
+
     // Use company ID-based layout
     switch (layoutConfig.sidebarComponent) {
       case "oman":
@@ -86,6 +93,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
     if (isViSite) {
       return <ViDynamicHeader />;
+    }
+
+    // Company-specific logic
+    if (selectedCompany?.id === 189) {
+      return <ZxDynamicHeader />;
     }
 
     // Use company ID-based layout
