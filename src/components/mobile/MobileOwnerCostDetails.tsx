@@ -336,17 +336,25 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
     }
   };
 
+  const formatWarrantyType = (value?: string | null) => {
+    if (!value) return 'N/A';
+    return value
+      .split('_')
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div className="flex items-center justify-between p-4">
-          <button
+          {/* <button
             onClick={() => navigate(-1)}
             className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition"
           >
             <ChevronLeft className="w-6 h-6 text-gray-700" />
-          </button>
+          </button> */}
           <h1 className="text-lg font-semibold text-gray-900 flex-1 text-center">
             Owner Cost
           </h1>
@@ -424,14 +432,14 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
                       <p className="text-gray-500 text-xs mb-1">Warranty</p>
                       <p className="font-semibold text-gray-900">
                         {item.warranty_in_month !== null && item.warranty_in_month !== undefined 
-                          ? `${item.warranty_in_month} mo`
+                          ? `${item.warranty_in_month} Months`
                           : 'N/A'}
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-500 text-xs mb-1">Type</p>
                       <p className="font-semibold text-gray-900 text-xs">
-                        {(item.warranty_type || "N/A").toUpperCase()}
+                        {formatWarrantyType(item.warranty_type)}
                       </p>
                     </div>
                     <div>

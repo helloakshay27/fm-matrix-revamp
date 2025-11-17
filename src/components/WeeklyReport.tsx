@@ -1015,12 +1015,13 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         @media print {
           @page {
               size: A4;
-              margin: 0;
+              margin: 4mm 0 1mm 0;
           }
 
           html,
           body {
               font-size: 18px;
+              
               margin: 0;
               padding: 0;
               -webkit-print-color-adjust: exact;
