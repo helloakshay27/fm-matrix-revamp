@@ -1708,7 +1708,7 @@ const AllContent = () => {
 }
     @page {
         size: A4;
-        margin: 0;
+        margin: 4mm 0 1mm 0;
     }
 
     html,
