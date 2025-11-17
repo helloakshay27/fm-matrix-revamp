@@ -7,6 +7,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+bun.lock
+bun.lockb
 node_modules
 dist
 dist-ssr
