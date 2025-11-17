@@ -18,6 +18,9 @@ import {
 import { ArrowRightLeft } from "lucide-react";
 
 import logo from "../../assets/pdf/urbon.svg";
+import { DEFAULT_LOGO_CODE } from "@/assets/default-logo-code";
+import { OIG_LOGO_CODE } from "@/assets/pdf/oig-logo-code";
+import { VI_LOGO_CODE } from "@/assets/vi-logo-code";
 
 // @ts-ignore
 import { getPeriodLabels } from '../../lib/periodLabel';
@@ -75,6 +78,24 @@ const AllContent = () => {
             selectedCompany.includes('oig') ||
             host.includes('oig')
         );
+    }, []);
+
+    const logoElement = useMemo(() => {
+        if (typeof window === 'undefined') {
+            return <DEFAULT_LOGO_CODE />;
+        }
+
+        const hostname = window.location.hostname.toLowerCase();
+
+        if (hostname.includes('oig.gophygital.work')) {
+            return <OIG_LOGO_CODE />;
+        }
+
+        if (hostname.includes('vi-web.gophygital.work')) {
+            return <VI_LOGO_CODE />;
+        }
+
+        return <DEFAULT_LOGO_CODE />;
     }, []);
 
     // Separate effect to fetch helpdesk management snapshot
@@ -1676,7 +1697,15 @@ const AllContent = () => {
             {/* readiness marker for external polling */}
             <div data-component="all-content" data-loading="false" style={{ display: 'none' }} />
 
-            <style>{`@media print {
+            <style>{`
+.allcontent-cover .first-page-logo {
+    margin-top: 1.5rem;
+}
+
+@media print {
+.allcontent-cover .first-page-logo {
+    margin-top: 11rem !important;
+}
     @page {
         size: A4;
         margin: 0;
@@ -1792,7 +1821,7 @@ const AllContent = () => {
 `}</style>
 
             {/* main page */}
-            <div className="font-sans bg-white min-h-screen print:h-screen print:scale-95">
+            <div className="font-sans bg-white min-h-screen print:h-screen print:scale-95 allcontent-cover">
                 <div className="relative h-[700px] w-full print:h-[600px] print:overflow-hidden">
                     {/* Background Image */}
                     <img
@@ -1803,6 +1832,13 @@ const AllContent = () => {
 
                     {/* Black Overlay */}
                     <div className="absolute inset-0 bg-black opacity-50 print:opacity-40" />
+
+                    {/* Logo top-right */}
+                    <div className="absolute top-4 right-6 bg-white rounded-md flex items-center justify-center px-2 py-1 shadow-sm print:top-2 print:right-4">
+                        <div className="flex items-center justify-center [&>svg]:h-10 [&>svg]:w-auto print:[&>svg]:h-8">
+                            {logoElement}
+                        </div>
+                    </div>
 
                     {/* Overlay Text */}
                     <div className="absolute bottom-6 right-10 text-white text-sm leading-relaxed print:text-white print:bottom-4 print:right-8">
@@ -1837,23 +1873,18 @@ const AllContent = () => {
                                 {dateRangeLabel}
                             </p>
                         </div>
+                        
                     </div>
+                    <div className="w-full flex justify-center items-center py-6 print:py-3 first-page-logo">
+                        <img
+                            src={GoPhygital}
+                            alt="GoPhygital"
+                            className="h-8 print:h-6"
+                        />
+                    </div>
+                    
                 </div>
-
-                <div className="flex-grow" />
-                <div className="flex justify-center items-end print:mb-1 print:pt-[300px] pb-6 text-center">
-                    <img
-                        src={GoPhygital} // update this path to the actual path of your image
-                        alt="goPhygital"
-                        className="h-6 print:h-5" // adjust height as needed
-                    />
-                </div>
-
             </div>
-
-
-
-
             {/* Disclaimer Page */}
             {/* <div className="flex flex-col min-h-screen font-sans bg-white px-6 py-10 relative">
                 <div className="flex justify-center w-full">
@@ -1961,7 +1992,7 @@ const AllContent = () => {
                                 <li>Site Wise - Assets and Downtime Metrics</li>
                                 <li>Assets with Highest Maintenance Spend</li>
                                 <li>AMC Contract Summary</li>
-                                <li>AMC Contract Summary – Expiry in 90 Days</li>
+                                <li>AMC Contract Summary – Expiry in 30 Days</li>
                                 <li>AMC Contract Summary – Expired</li>
                             </ul>
 
@@ -3385,7 +3416,7 @@ const AllContent = () => {
                             </span>
                         </div>
                         <div className="px-4 py-6 flex flex-col items-center justify-center gap-1 print:py-2 print:px-2 print:text-[12px]">
-                            <span className="uppercase tracking-wide text-[13px] font-bold print:text-[12px] text-center">Contract Expiry in 90 Days</span>
+                            <span className="uppercase tracking-wide text-[13px] font-bold print:text-[12px] text-center">Contract Expiry in 30 Days</span>
                             <span className="text-4xl leading-tight text-[#C72030] font-extrabold tabular-nums print:text-xl">
                                 {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.expiry90.toLocaleString() : '-')}
                             </span>
@@ -3402,7 +3433,7 @@ const AllContent = () => {
                 {/* AMC Contract Summary – Expiry in 90 Days - standardized section box */}
                 <div className={sectionBox}>
                     <h2 className="text-lg md:text-lg font-bold tracking-wide mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-2 print:pb-1">
-                        AMC Contract Summary – Expiry in 90 Days
+                        AMC Contract Summary – Expiry in 30 Days
                     </h2>
                     <div className="overflow-x-auto">
                         <table className="min-w-full border border-black text-sm text-center align-middle print:text-[9px] print:leading-relaxed print:table-fixed print:w-full">
@@ -3574,7 +3605,7 @@ const AllContent = () => {
                                     Checklist Progress Status – Center-Wise {periodUnit}ly Comparison
                                 </div>
                                 <div className="print:flex-1">
-                                    <table className="w-full border border-black print:table-fixed print:w-full print:text-[10px] print:h-full">
+                                    <table className="w-full border border-black border-collapse print:table-fixed print:w-full print:text-[10px] print:h-full">
                                         <thead>
                                             <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red border-b border-black uppercase font-extrabold tracking-wide text-[13px] md:text-sm print:text-[10px]">
                                                 <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%] border border-black">Site Name</th>
@@ -3658,16 +3689,20 @@ const AllContent = () => {
                                                             <td className="py-5 px-4 bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE] border border-black">{site}</td>
                                                             <td className="py-5 px-4 print:py-2 print:px-2 border border-black">{fmt(curOpen)}</td>
                                                             <td className="py-5 px-4 print:py-2 print:px-2 border border-black">{fmt(curInProg)}</td>
-                                                            <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2 border border-black">
-                                                                {fmt(curOver)} <span className="text-xs print:!text-[8px] text-gray-600">({fmtDiff(diffOver)})</span>
-                                                                {overdueArrowUp && <span className="text-red-600 arrow-print">▲</span>}
-                                                                {overdueArrowDown && <span className="text-green-600 arrow-print">▼</span>}
+                                                            <td className="py-5 px-4 print:py-2 print:px-2 border border-black">
+                                                                <div className="flex items-center gap-1 justify-center">
+                                                                    {fmt(curOver)} <span className="text-xs print:!text-[8px] text-gray-600">({fmtDiff(diffOver)})</span>
+                                                                    {overdueArrowUp && <span className="text-red-600 arrow-print">▲</span>}
+                                                                    {overdueArrowDown && <span className="text-green-600 arrow-print">▼</span>}
+                                                                </div>
                                                             </td>
                                                             <td className="py-5 px-4 print:py-2 print:px-2 border border-black">{fmt(curPart)}</td>
-                                                            <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2 border border-black">
-                                                                {fmt(curClosed)} <span className="text-xs print:!text-[8px] text-gray-600">({fmtDiff(diffClosed)})</span>
-                                                                {closedArrowUp && <span className="text-green-600 arrow-print">▲</span>}
-                                                                {closedArrowDown && <span className="text-red-600 arrow-print">▼</span>}
+                                                            <td className="py-5 px-4 print:py-2 print:px-2 border border-black">
+                                                                <div className="flex items-center gap-1 justify-center">
+                                                                    {fmt(curClosed)} <span className="text-xs print:!text-[8px] text-gray-600">({fmtDiff(diffClosed)})</span>
+                                                                    {closedArrowUp && <span className="text-green-600 arrow-print">▲</span>}
+                                                                    {closedArrowDown && <span className="text-red-600 arrow-print">▼</span>}
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     );
@@ -3687,7 +3722,7 @@ const AllContent = () => {
                                     Top 10 Overdue Checklists – Center-wise Contribution Comparison
                                 </div>
                                 <div className="print:flex-1">
-                                    <table className="w-full border border-black text-sm print:table-fixed print:w-full print:text-[10px] print:h-full ">
+                                    <table className="w-full border border-black border-collapse text-sm print:table-fixed print:w-full print:text-[10px] print:h-full ">
                                         <thead>
                                             <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red border-b border-black">
                                                 <th className="py-4 px-4 site-col print:py-2 print:px-2 print:w-[18%] border border-black">Site Name</th>
