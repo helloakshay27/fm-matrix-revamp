@@ -739,22 +739,45 @@ export const ViewSchedulePage = () => {
                 {/* Parse cron expression and show as MUI Table */}
                 {(() => {
                   const cron = (assetTask && ((assetTask as any).cron_expression || (assetTask as any).cron || (assetTask as any).schedule_cron)) || '';
-                  let minutes: string[] = [], hours: string[] = [], months: string[] = [], weekdays: string[] = [];
+                  let minutes: string[] = [], hours: string[] = [], dayOfMonth: string[] = [], months: string[] = [], weekdays: string[] = [];
+                  let isDayOfMonth = false;
                   if (cron) {
                     const parts = cron.split(' ');
                     if (parts.length >= 5) {
                       minutes = parts[0].split(',');
                       hours = parts[1].split(',');
+                      dayOfMonth = parts[2] === '*' ? [] : parts[2].split(',');
                       months = parts[3] === '*' ? ['All'] : parts[3].split(',');
-                      weekdays = parts[4] === '*' ? ['All'] : parts[4].split(',');
+                      weekdays = parts[4] === '*' ? [] : parts[4].split(',');
+                      
+                      // Check if we have specific days of month (dates like 14, 20)
+                      isDayOfMonth = parts[2] !== '*' && dayOfMonth.length > 0;
                     }
                   }
                   if (!hours.length || (hours.length === 1 && hours[0] === '*')) hours = ['All'];
                   if (!minutes.length || (minutes.length === 1 && minutes[0] === '*')) minutes = ['All'];
                   if (!months.length) months = ['All'];
-                  if (!weekdays.length) weekdays = ['All'];
-                  const weekdayMap: Record<string, string> = { '1': 'Sunday', '2': 'Monday', '3': 'Tuesday', '4': 'Wednesday', '5': 'Thursday', '6': 'Friday', '7': 'Saturday' };
-                  const weekdayNames = weekdays.map(wd => weekdayMap[wd] || wd);
+                  
+                  // Determine what to show in the day column
+                  let dayColumnHeader = '';
+                  let dayColumnValue = '';
+                  
+                  if (isDayOfMonth) {
+                    dayColumnHeader = 'Date of Month';
+                    dayColumnValue = dayOfMonth.join(', ');
+                  } else {
+                    dayColumnHeader = 'Day of Week';
+                    if (weekdays.length === 0) {
+                      dayColumnValue = 'All';
+                    } else {
+                      const weekdayMap: Record<string, string> = { 
+                        '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday', 
+                        '5': 'Friday', '6': 'Saturday', '7': 'Sunday' 
+                      };
+                      dayColumnValue = weekdays.map(wd => weekdayMap[wd] || wd).join(', ');
+                    }
+                  }
+                  
                   return (
                     <div className="rounded-lg border border-gray-200 overflow-hidden">
                       <Table className="border-separate">
@@ -762,7 +785,7 @@ export const ViewSchedulePage = () => {
                           <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
                             <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Hours</TableHead>
                             <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Minutes</TableHead>
-                            <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Day of Week</TableHead>
+                            <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>{dayColumnHeader}</TableHead>
                             <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Month</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -770,7 +793,7 @@ export const ViewSchedulePage = () => {
                           <TableRow className="hover:bg-gray-50 transition-colors">
                             <TableCell className="py-3 px-4 font-medium">{hours.join(', ')}</TableCell>
                             <TableCell className="py-3 px-4">{minutes.join(', ')}</TableCell>
-                            <TableCell className="py-3 px-4">{weekdayNames.join(', ')}</TableCell>
+                            <TableCell className="py-3 px-4">{dayColumnValue}</TableCell>
                             <TableCell className="py-3 px-4">{months.join(', ')}</TableCell>
                           </TableRow>
                         </TableBody>
