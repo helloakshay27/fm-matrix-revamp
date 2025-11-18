@@ -268,8 +268,8 @@ const SMTDetailPage = () => {
         </div>
       </div>
 
-      {/* ATTACHMENTS */}
-      <div className="bg-white rounded-lg border text-[15px] mb-6">
+      {/* ATTACHMENTS */} 
+      {/* <div className="bg-white rounded-lg border text-[15px] mb-6">
         <div className="flex p-4 items-center">
           <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-xs mr-3">
             <Paperclip className="w-5 h-5 text-[#C72030]" />
@@ -311,10 +311,10 @@ const SMTDetailPage = () => {
             )}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Image Preview Modal */}
-      <Dialog open={imgPreviewOpen} onOpenChange={(open) => { setImgPreviewOpen(open); if (!open) setImgPreviewUrl(null); }}>
+      {/* <Dialog open={imgPreviewOpen} onOpenChange={(open) => { setImgPreviewOpen(open); if (!open) setImgPreviewUrl(null); }}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Attachment Preview</DialogTitle>
@@ -327,7 +327,7 @@ const SMTDetailPage = () => {
             <div className="text-gray-400">No image</div>
           )}
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
 
       {/* KEY OBSERVATIONS */}

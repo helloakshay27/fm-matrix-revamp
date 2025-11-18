@@ -157,6 +157,7 @@ const TrainingUserDetailPage: React.FC = () => {
               </div>
             ))}
           </div>
+          {/* ---__________________
           <div className="px-4 pb-4">
             <div className="text-sm font-semibold text-gray-700 mb-2">Attachments</div>
             {!rec.training_attachments || rec.training_attachments.length === 0 ? (
@@ -188,6 +189,7 @@ const TrainingUserDetailPage: React.FC = () => {
               </div>
             )}
           </div>
+          ---_________________ */}
         </div>
       ))}
 
