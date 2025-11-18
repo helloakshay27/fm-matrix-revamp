@@ -22,6 +22,7 @@ interface Asset {
   breakdown?: boolean;
   ownership_total_cost?: number;
   ownership_costs?: OwnershipCost[];
+  pms_site_id?: number | null;
 }
 
 interface OwnershipCost {
@@ -133,12 +134,82 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
   const [showAssetStatusModal, setShowAssetStatusModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const totalCost = asset?.ownership_total_cost || 0;
-  
-  // Get currency and calculate padding based on length
-  const currency = localStorage.getItem('currency') || '₹';
+
+  // Currency – fetch using site (pms_site_id) just for this page
+  const [currency, setCurrency] = useState<string>('₹');
+
+  useEffect(() => {
+    const fetchCurrencyForSite = async () => {
+      try {
+        if (!asset?.id) return;
+
+        const token =
+          sessionStorage.getItem('mobile_token') || sessionStorage.getItem('token');
+        if (!token) return;
+
+        // Ensure we have the site id: use asset.pms_site_id if present, otherwise fetch asset details
+        let siteId: number | null | undefined = asset.pms_site_id;
+
+        if (!siteId) {
+          const assetResponse = await baseClient.get(`/pms/assets/${asset.id}.json`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const assetData = assetResponse.data;
+          siteId =
+            assetData?.pms_asset?.pms_site_id ??
+            assetData?.pms_site_id ??
+            null;
+        }
+
+        if (!siteId) return;
+
+        const response = await baseClient.get('/currencies.json', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            'q[pms_site_id_eq]': siteId,
+          },
+        });
+
+        const data = response.data;
+        const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+        const first = Array.isArray(list) && list.length > 0 ? list[0] : null;
+
+        const symbol =
+          (first &&
+            (first.symbol ||
+              first.code ||
+              first.currency ||
+              first.short_name)) ||
+          '₹';
+
+        setCurrency(symbol);
+      } catch (error) {
+        console.error('Failed to fetch currency for site (mobile owner cost):', error);
+        try {
+          if (typeof window !== 'undefined') {
+            const fallback = window.localStorage.getItem('currency');
+            if (fallback) {
+              setCurrency(fallback);
+            }
+          }
+        } catch {
+          // ignore storage errors
+        }
+      }
+    };
+
+    fetchCurrencyForSite();
+  }, [asset?.id, asset?.pms_site_id]);
+
+  // Calculate padding: adjust based on currency length
   const currencyLength = currency.length;
-  // Calculate padding: 12px base + 8px per character (minimum 48px for 1 char, more for longer)
-  const costInputPadding = currencyLength <= 1 ? 'pl-12' : currencyLength === 2 ? 'pl-14' : 'pl-16';
+  const costInputPadding =
+    currencyLength <= 1 ? 'pl-12' : currencyLength === 2 ? 'pl-14' : 'pl-16';
 
   // Debug: Log asset data to check ownership_costs
   useEffect(() => {
@@ -389,7 +460,7 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
           <div className="p-3 bg-[#FFF3F3] border border-[#FFE5E5] rounded-lg mb-4">
             <p className="text-sm text-gray-600 mb-1">Total Cost</p>
             <p className="text-2xl font-bold text-[#C72030]">
-              {localStorage.getItem('currency') || '₹'}{totalCost.toLocaleString()}
+              {currency}{totalCost.toLocaleString()}
             </p>
           </div>
 
@@ -424,7 +495,7 @@ export const MobileOwnerCostDetails: React.FC<MobileOwnerCostDetailsProps> = ({ 
                       <p className="text-gray-500 text-xs mb-1">Cost</p>
                       <p className="font-semibold text-gray-900">
                         {item.cost !== null && item.cost !== undefined 
-                          ? `${localStorage.getItem('currency') || '₹'}${item.cost.toLocaleString()}`
+                          ? `${currency}${item.cost.toLocaleString()}`
                           : 'N/A'}
                       </p>
                     </div>
