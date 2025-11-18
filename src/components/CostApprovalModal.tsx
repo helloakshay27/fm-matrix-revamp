@@ -22,6 +22,9 @@ export const CostApprovalModal: React.FC<CostApprovalModalProps> = ({
 }) => {
   const [cost, setCost] = useState('');
   const [description, setDescription] = useState('');
+  const [quotation, setQuotation] = useState('');
+  const [vendorId, setVendorId] = useState('');
+  const [status, setStatus] = useState('pending');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -42,7 +45,7 @@ export const CostApprovalModal: React.FC<CostApprovalModalProps> = ({
     if (!cost || !description) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields (Cost and Description).",
         variant: "destructive"
       });
       return;
@@ -60,8 +63,15 @@ export const CostApprovalModal: React.FC<CostApprovalModalProps> = ({
     setIsSubmitting(true);
     
     try {
-      console.log('💰 Creating cost approval for tickets:', selectedTickets);
-      console.log('💰 Cost data:', { cost, description, attachments: attachedFiles.length });
+      console.log('💰 Creating multiple cost approvals for tickets:', selectedTickets);
+      console.log('💰 Cost data:', { 
+        cost, 
+        description, 
+        quotation, 
+        vendorId, 
+        status,
+        attachments: attachedFiles.length 
+      });
 
       // Prepare FormData for API submission
       const formData = new FormData();
@@ -71,9 +81,18 @@ export const CostApprovalModal: React.FC<CostApprovalModalProps> = ({
         formData.append('complaint_ids[]', ticketId.toString());
       });
       
-      // Add cost and comment
+      // Add required fields
       formData.append('cost', cost);
       formData.append('comment', description);
+      
+      // Add optional fields
+      if (quotation) {
+        formData.append('quotation', quotation);
+      }
+      if (vendorId) {
+        formData.append('vendor_id', vendorId);
+      }
+      formData.append('status', status);
       
       // Add attachments[] if any
       attachedFiles.forEach(file => {
@@ -81,8 +100,8 @@ export const CostApprovalModal: React.FC<CostApprovalModalProps> = ({
       });
 
       // Log FormData contents for debugging
-      console.log('📤 Cost Approval API FormData:');
-      for (let [key, value] of formData.entries()) {
+      console.log('📤 Multiple Cost Approval API FormData:');
+      for (const [key, value] of formData.entries()) {
         console.log(key, value);
       }
 
@@ -115,6 +134,9 @@ export const CostApprovalModal: React.FC<CostApprovalModalProps> = ({
       // Reset form 
       setCost('');
       setDescription('');
+      setQuotation('');
+      setVendorId('');
+      setStatus('pending');
       setAttachedFiles([]);
       
       // Close modal first
@@ -173,12 +195,40 @@ export const CostApprovalModal: React.FC<CostApprovalModalProps> = ({
               Description*
             </label>
             <Textarea
-              placeholder="Enter Cost"
+              placeholder="Enter Description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full min-h-[100px] resize-none"
             />
           </div>
+
+          {/* Quotation Field */}
+          {/* <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Quotation
+            </label>
+            <Input
+              type='text'
+              placeholder="Enter Quotation"
+              value={quotation}
+              onChange={(e) => setQuotation(e.target.value)}
+              className="w-full"
+            />
+          </div> */}
+
+          {/* Vendor ID Field */}
+          {/* <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Vendor ID
+            </label>
+            <Input
+              type='text'
+              placeholder="Enter Vendor ID"
+              value={vendorId}
+              onChange={(e) => setVendorId(e.target.value)}
+              className="w-full"
+            />
+          </div> */}
 
           {/* Attachment Field */}
           <div>

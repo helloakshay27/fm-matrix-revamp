@@ -622,6 +622,7 @@ import { MobileTicketsPage } from "./pages/mobile/MobileTicketsPage";
 import { TicketListPage } from "./pages/TicketListPage";
 import { MobileRestaurantPage } from "./pages/mobile/MobileRestaurantPage";
 import { MobileAssetPage } from "./pages/mobile/MobileAssetPage";
+import { MobileOwnerCostAssetPage } from "./pages/mobile/MobileOwnerCostAssetPage";
 import { MobileOrdersPage } from "./components/mobile/MobileOrdersPage";
 import { QRTestPage } from "./pages/QRTestPage";
 
@@ -771,7 +772,7 @@ import { DirectPDFDownloadPage } from "./pages/DirectPDFDownloadPage";
 import { DeletedPRs } from "./pages/DeletedPRs";
 import MsafeDashboardVI from "./pages/MsafeDashboardVI";
 import { DashboardMobile } from "./pages/DashboardMobile";
-import SafetyCheckAudit from './pages/SafetyCheckAudit';
+import SafetyCheckAudit from "./pages/SafetyCheckAudit";
 import MsafeCirlce from "./pages/MsafeCirlce";
 import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
 import Sitemap from "./pages/Sitemap";
@@ -946,7 +947,6 @@ function App() {
                 <Route path="/thepdf" element={<AllContent />} />
                 <Route path="/dailypdf" element={<DailyReport />} />
                 <Route path="/weeklypdf" element={<WeeklyReport />} />
-                <Route path="/msafedashboard" element={<MsafeDashboardVI />} />
 
                 <Route
                   path="/login"
@@ -1001,6 +1001,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+
                 <Route
                   path="/dashboard-executive"
                   element={
@@ -1457,6 +1458,12 @@ function App() {
                     path="/crm/wallet-list/:id"
                     element={<CRMWalletDetails />}
                   />
+
+                  <Route
+                    path="/msafedashboard"
+                    element={<MsafeDashboardVI />}
+                  />
+
                   <Route
                     path="/crm/point-expiry"
                     element={<CRMWalletPointExpiry />}
@@ -1542,7 +1549,7 @@ function App() {
                     element={<UpdateTicketsPage />}
                   />
                   <Route
-                    path="/maintenance/ticket/details/:id"
+                    path="/maintenance/ticket/debls/:id"
                     element={<TicketDetailsPage />}
                   />
                   <Route
@@ -1648,7 +1655,10 @@ function App() {
                     path="/safety/permit/details/:id"
                     element={<PermitDetails />}
                   />
-                  <Route path="/safety-check-audit" element={<SafetyCheckAudit />} />
+                  <Route
+                    path="/safety-check-audit"
+                    element={<SafetyCheckAudit />}
+                  />
 
                   <Route
                     path="/safety/permit/edit/:id"
@@ -2877,10 +2887,7 @@ function App() {
                   />
 
                   {/* VAS Booking Routes */}
-                  <Route
-                    path="/vas/booking/list"
-                    element={<BookingList />}
-                  />
+                  <Route path="/vas/booking/list" element={<BookingList />} />
                   <Route
                     path="/vas/booking/add"
                     element={<AddFacilityBookingPage />}
@@ -3083,7 +3090,6 @@ function App() {
                     path="/master/inventory-sub-type/edit/:id"
                     element={<EditInventorySubTypePage />}
                   />
-
 
                   <Route
                     path="/maintenance/waste/generation/add"
@@ -3423,6 +3429,15 @@ function App() {
                 <Route
                   path="/mobile/assets/:assetId/breakdown"
                   element={<MobileAssetPage />}
+                />
+                {/* Mobile Owner Cost Routes */}
+                <Route
+                  path="/mobile/owner-cost/:assetId"
+                  element={<MobileOwnerCostAssetPage />}
+                />
+                <Route
+                  path="/mo/:assetId"
+                  element={<MobileOwnerCostAssetPage />}
                 />
                 {/* QR Test Route */}
                 <Route path="/qr-test" element={<QRTestPage />} />

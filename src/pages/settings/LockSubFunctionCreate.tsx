@@ -24,9 +24,24 @@ interface LockFunction {
   function_name: string;
 }
 
+// Predefined sub-function names
+const PREDEFINED_SUB_FUNCTIONS = [
+  { value: 'add', label: 'Add' },
+  { value: 'edit', label: 'Edit' },
+  { value: 'list', label: 'List' },
+  { value: 'export', label: 'Export' },
+  { value: 'import', label: 'Import' },
+  { value: 'delete', label: 'Delete' },
+  { value: 'view', label: 'View' },
+  { value: 'approve', label: 'Approve' },
+  { value: 'reject', label: 'Reject' },
+  { value: 'custom', label: 'Custom (Enter manually)' }
+];
+
 export const CreateLockSubFunctionDialog = ({ open, onOpenChange, onLockSubFunctionCreated }: CreateLockSubFunctionDialogProps) => {
   const { toast } = useToast();
   const [subFunctionName, setSubFunctionName] = useState<string>("");
+  const [selectedPredefined, setSelectedPredefined] = useState<string>("");
   const [parentFunctionId, setParentFunctionId] = useState<string>("");
   const [lockFunctions, setLockFunctions] = useState<LockFunction[]>([]);
   const [active, setActive] = useState<boolean>(true);
@@ -84,8 +99,24 @@ export const CreateLockSubFunctionDialog = ({ open, onOpenChange, onLockSubFunct
 
   const resetForm = () => {
     setSubFunctionName("");
+    setSelectedPredefined("");
     setParentFunctionId("");
     setActive(true);
+  };
+
+  // Handle predefined selection change
+  const handlePredefinedChange = (value: string) => {
+    setSelectedPredefined(value);
+    if (value !== 'custom') {
+      // Auto-fill the sub-function name with the selected predefined value
+      const selected = PREDEFINED_SUB_FUNCTIONS.find(item => item.value === value);
+      if (selected) {
+        setSubFunctionName(selected.label);
+      }
+    } else {
+      // Clear the name field for custom entry
+      setSubFunctionName("");
+    }
   };
 
   const handleCreate = async () => {
@@ -154,7 +185,29 @@ export const CreateLockSubFunctionDialog = ({ open, onOpenChange, onLockSubFunct
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Sub Function Name */}
+          {/* Predefined Sub Function Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="predefinedSubFunction" className="text-sm font-medium">
+              Select Sub Function Type
+            </Label>
+            <Select value={selectedPredefined} onValueChange={handlePredefinedChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a predefined sub function or custom" />
+              </SelectTrigger>
+              <SelectContent>
+                {PREDEFINED_SUB_FUNCTIONS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500">
+              Choose from predefined options or select "Custom" to enter your own
+            </p>
+          </div>
+
+          {/* Sub Function Name - Only editable if custom is selected */}
           <div className="space-y-2">
             <Label htmlFor="subFunctionName" className="text-sm font-medium">
               Sub Function Name *
@@ -164,9 +217,15 @@ export const CreateLockSubFunctionDialog = ({ open, onOpenChange, onLockSubFunct
               type="text"
               value={subFunctionName}
               onChange={(e) => setSubFunctionName(e.target.value)}
-              placeholder="Enter sub function name"
+              placeholder={selectedPredefined === 'custom' || !selectedPredefined ? "Enter sub function name" : "Auto-filled from selection"}
               className="w-full"
+              disabled={selectedPredefined !== 'custom' && selectedPredefined !== ''}
             />
+            {selectedPredefined && selectedPredefined !== 'custom' && (
+              <p className="text-xs text-blue-600">
+                Auto-filled from selection. Choose "Custom" to enter manually.
+              </p>
+            )}
           </div>
 
           {/* Parent Function */}

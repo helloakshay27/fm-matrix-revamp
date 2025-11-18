@@ -90,6 +90,7 @@ const dashboardAnalyticsOptions = {
         endpoint: "resolution_tat",
         label: "Resolution TAT Report",
       },
+     
     ],
   },
   assets: {
@@ -293,6 +294,16 @@ const executiveAnalyticsOptions = {
         endpoint: "customer_rating_overview",
         label: "Site Performance: Customer Rating Overview",
       },
+      {
+        id: "helpdesk_response_tat_quarterly",
+        endpoint: "response_tat_performance_quarterly",
+        label: "Response TAT Performance",
+      },
+      {
+        id: "helpdesk_resolution_tat_quarterly",
+        endpoint: "resolution_tat_performance_quarterly",
+        label: "Resolution TAT Performance",
+      },
     ],
   },
 
@@ -316,11 +327,11 @@ const executiveAnalyticsOptions = {
         endpoint: "highest_maintenance_assets",
         label: "Assets With Highest Maintenance Spend",
       },
-      {
-        id: "am_amc_contract_summary",
-        endpoint: "amc_contract_summary",
-        label: "AMC Contract Summary",
-      },
+      // {
+      //   id: "am_amc_contract_summary",
+      //   endpoint: "amc_contract_summary",
+      //   label: "AMC Contract Summary",
+      // },
       {
         id: "am_amc_contract_expiry_90",
         endpoint: "amc_contract_expiry_90",

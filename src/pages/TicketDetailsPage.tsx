@@ -329,6 +329,18 @@ interface ServiceOption {
   service_code: string;
 }
 
+// Helper function to format asset status (handles underscores and capitalizes)
+const formatAssetStatus = (status: string | null | undefined): string => {
+  if (!status || typeof status !== 'string') return '-';
+  // Replace underscores with spaces, then capitalize each word
+  return status
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 // Helper function to render association-specific data
 const renderAssociationSpecificData = (ticketData: any) => {
   const associationType = ticketData?.asset_service || ticketData?.service_or_asset || 'Asset';
@@ -405,7 +417,7 @@ const renderAssociationSpecificData = (ticketData: any) => {
         return [
           { label: 'Asset Name', value: ticketData.asset_or_service_name || '-' },
           { label: 'Group', value: ticketData.asset_group || '-' },
-          { label: 'Asset Status', value: ticketData.asset_status || ticketData.amc?.asset_status || '-' },
+          { label: 'Asset Status', value: formatAssetStatus(ticketData.asset_status || ticketData.amc?.asset_status) },
           { label: 'Criticality', value: ticketData.asset_criticality === null || ticketData.asset_criticality === "" ? '-' : (ticketData.asset_criticality ? 'Critical' : 'Non Critical') },
           { label: 'Asset ID', value: ticketData.pms_asset_id || ticketData.asset_or_service_id || '-' },
           { label: 'Sub group', value: ticketData.asset_sub_group || '-' },
@@ -3397,6 +3409,10 @@ export const TicketDetailsPage = () => {
 
 console.log("status logic:", isTicketOnHold, isTicketClosed)
    useEffect(() => {
+    // Reset initialization flag when TAT timings data changes
+    // This allows recalculation with fresh API data
+    escalationInitRef.current = false;
+    
     if (ticketData?.created_at) {
       // Calculate ageing in seconds from created_at to now
       const createdTime = new Date(ticketData.created_at).getTime();
@@ -3404,26 +3420,64 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
       const initialAgeingSeconds = Math.max(0, Math.floor((now - createdTime) / 1000));
       setCurrentAgeing(initialAgeingSeconds);
 
-      // Initialize escalation timers ONCE when ticket first loads
-      // After that, preserve values through status changes (freeze/resume)
+      // Initialize escalation timers based on current aging and API data
       const updateEscalationTimers = () => {
-        // Only initialize if not already initialized
+        // Only initialize if not already initialized (in this render cycle)
         if (escalationInitRef.current) {
-          console.log('⏭️ Skipping escalation timer initialization - already initialized');
+          console.log('⏭️ Skipping escalation timer initialization - already initialized in this cycle');
           return;
         }
 
         const now = Date.now();
+        const currentAgeingSeconds = initialAgeingSeconds; // Work with seconds directly
+        console.log("🕐 Current ticket aging:", currentAgeingSeconds, "seconds (", (currentAgeingSeconds / 60).toFixed(2), "minutes)");
         console.log("Updating escalation timers ", responseTatTimings)
         
-        // Response Escalation - initialize once from sequence
+        // Response Escalation - calculate based on current aging
+        // Each escalation level has INDIVIDUAL time, not cumulative
+        // Example: E1=5min (300s), Aging=30s → E1 should show 4min 30s (270s) remaining
         try {
           if (Array.isArray(responseTatTimings) && responseTatTimings.length > 0) {
-            const idx = responseSeqIndexRef.current || 0;
-            const step = responseTatTimings[idx] || responseTatTimings[0];
-            const mins = step?.scheduled_minutes ?? step?.minutes ?? 0;
-            console.log("res minnnn:", mins)
-            setResponseEscalationSeconds(Math.floor((mins || 0) * 60));
+            let currentLevelIndex = -1;
+            let remainingSeconds = 0;
+            let consumedSeconds = 0; // Track consumed time in SECONDS
+
+            // Iterate through escalation levels to find current level
+            for (let i = 0; i < responseTatTimings.length; i++) {
+              const step = responseTatTimings[i];
+              const stepMinutes = step?.scheduled_minutes ?? step?.minutes ?? 0;
+              const stepSeconds = step?.scheduled_seconds ?? 0;
+              const stepTotalSeconds = (stepMinutes * 60) + stepSeconds; // Convert to total seconds
+              
+              // Check if aging fits within this level
+              if (currentAgeingSeconds < consumedSeconds + stepTotalSeconds) {
+                // We're in this escalation level
+                currentLevelIndex = i;
+                const secondsUsedInThisLevel = currentAgeingSeconds - consumedSeconds;
+                remainingSeconds = stepTotalSeconds - secondsUsedInThisLevel;
+                console.log(`📍 Response TAT: Found active level ${step.escalation_name}, ${stepTotalSeconds}s total, ${secondsUsedInThisLevel}s used, ${remainingSeconds}s (${Math.floor(remainingSeconds/60)}m ${remainingSeconds%60}s) remaining`);
+                break;
+              }
+              
+              // This level is complete, move to next
+              consumedSeconds += stepTotalSeconds;
+            }
+
+            // If no active level found, we've exceeded all levels
+            if (currentLevelIndex === -1) {
+              currentLevelIndex = responseTatTimings.length - 1;
+              const lastStep = responseTatTimings[currentLevelIndex];
+              const lastStepMinutes = lastStep?.scheduled_minutes ?? lastStep?.minutes ?? 0;
+              const lastStepSeconds = lastStep?.scheduled_seconds ?? 0;
+              const lastStepTotalSeconds = (lastStepMinutes * 60) + lastStepSeconds;
+              const excessSeconds = currentAgeingSeconds - consumedSeconds;
+              remainingSeconds = lastStepTotalSeconds - excessSeconds; // Will be negative
+              console.log(`⚠️ Response TAT: Exceeded all levels, ${Math.abs(remainingSeconds)}s over`);
+            }
+
+            responseSeqIndexRef.current = currentLevelIndex;
+            setResponseSequenceIndex(currentLevelIndex);
+            setResponseEscalationSeconds(remainingSeconds);
           } else {
             setResponseEscalationSeconds(0);
           }
@@ -3432,13 +3486,50 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
           setResponseEscalationSeconds(0);
         }
 
-        // Resolution Escalation - initialize once from sequence
+        // Resolution Escalation - calculate based on current aging
+        // Same logic as Response TAT using seconds
         try {
           if (Array.isArray(resolutionTatTimings) && resolutionTatTimings.length > 0) {
-            const idx = resolutionSeqIndexRef.current || 0;
-            const step = resolutionTatTimings[idx] || resolutionTatTimings[0];
-            const mins = step?.scheduled_minutes ?? step?.minutes ?? 0;
-            setResolutionEscalationSeconds(Math.floor((mins || 0) * 60));
+            let currentLevelIndex = -1;
+            let remainingSeconds = 0;
+            let consumedSeconds = 0; // Track consumed time in SECONDS
+
+            // Iterate through escalation levels to find current level
+            for (let i = 0; i < resolutionTatTimings.length; i++) {
+              const step = resolutionTatTimings[i];
+              const stepMinutes = step?.scheduled_minutes ?? step?.minutes ?? 0;
+              const stepSeconds = step?.scheduled_seconds ?? 0;
+              const stepTotalSeconds = (stepMinutes * 60) + stepSeconds; // Convert to total seconds
+              
+              // Check if aging fits within this level
+              if (currentAgeingSeconds < consumedSeconds + stepTotalSeconds) {
+                // We're in this escalation level
+                currentLevelIndex = i;
+                const secondsUsedInThisLevel = currentAgeingSeconds - consumedSeconds;
+                remainingSeconds = stepTotalSeconds - secondsUsedInThisLevel;
+                console.log(`📍 Resolution TAT: Found active level ${step.escalation_name}, ${stepTotalSeconds}s total, ${secondsUsedInThisLevel}s used, ${remainingSeconds}s (${Math.floor(remainingSeconds/60)}m ${remainingSeconds%60}s) remaining`);
+                break;
+              }
+              
+              // This level is complete, move to next
+              consumedSeconds += stepTotalSeconds;
+            }
+
+            // If no active level found, we've exceeded all levels
+            if (currentLevelIndex === -1) {
+              currentLevelIndex = resolutionTatTimings.length - 1;
+              const lastStep = resolutionTatTimings[currentLevelIndex];
+              const lastStepMinutes = lastStep?.scheduled_minutes ?? lastStep?.minutes ?? 0;
+              const lastStepSeconds = lastStep?.scheduled_seconds ?? 0;
+              const lastStepTotalSeconds = (lastStepMinutes * 60) + lastStepSeconds;
+              const excessSeconds = currentAgeingSeconds - consumedSeconds;
+              remainingSeconds = lastStepTotalSeconds - excessSeconds; // Will be negative
+              console.log(`⚠️ Resolution TAT: Exceeded all levels, ${Math.abs(remainingSeconds)}s over`);
+            }
+
+            resolutionSeqIndexRef.current = currentLevelIndex;
+            setResolutionSequenceIndex(currentLevelIndex);
+            setResolutionEscalationSeconds(remainingSeconds);
           } else {
             setResolutionEscalationSeconds(0);
           }
@@ -3496,8 +3587,12 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
               const newIdx = idx + 1;
               responseSeqIndexRef.current = newIdx;
               setResponseSequenceIndex(newIdx);
-              const mins = seq[newIdx]?.scheduled_minutes ?? seq[newIdx]?.minutes ?? 0;
-              return Math.floor((mins || 0) * 60);
+              // Get total seconds for next level (minutes * 60 + seconds)
+              const nextStepMinutes = seq[newIdx]?.scheduled_minutes ?? seq[newIdx]?.minutes ?? 0;
+              const nextStepSeconds = seq[newIdx]?.scheduled_seconds ?? 0;
+              const nextStepTotalSeconds = (nextStepMinutes * 60) + nextStepSeconds;
+              console.log(`⏩ Advancing to ${seq[newIdx]?.escalation_name}, starting ${nextStepTotalSeconds}s timer`);
+              return nextStepTotalSeconds;
             }
 
             // If sequence end or no sequence, allow negative for exceeded display (don't clamp)
@@ -3518,8 +3613,12 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
               const newIdx = idx + 1;
               resolutionSeqIndexRef.current = newIdx;
               setResolutionSequenceIndex(newIdx);
-              const mins = seq[newIdx]?.scheduled_minutes ?? seq[newIdx]?.minutes ?? 0;
-              return Math.floor((mins || 0) * 60);
+              // Get total seconds for next level (minutes * 60 + seconds)
+              const nextStepMinutes = seq[newIdx]?.scheduled_minutes ?? seq[newIdx]?.minutes ?? 0;
+              const nextStepSeconds = seq[newIdx]?.scheduled_seconds ?? 0;
+              const nextStepTotalSeconds = (nextStepMinutes * 60) + nextStepSeconds;
+              console.log(`⏩ Advancing to ${seq[newIdx]?.escalation_name}, starting ${nextStepTotalSeconds}s timer`);
+              return nextStepTotalSeconds;
             }
             return next;
           });
@@ -11532,10 +11631,10 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {log.log_by || "System"}
+                          {log.log_by || "-"}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {log.priority || "-"}
+                          {getPriorityLabel(log.priority)}
                         </TableCell>
                         <TableCell className="text-sm">
                           {log.log_comment && log.log_comment.length > 5 ? (

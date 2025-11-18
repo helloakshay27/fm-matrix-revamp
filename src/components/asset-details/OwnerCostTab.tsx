@@ -40,6 +40,8 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
   const [showModal, setShowModal] = useState(false);
   const [showAssetStatusModal, setShowAssetStatusModal] = useState(false);
   const totalCost = asset?.ownership_total_cost || 0;
+  const currencySymbol =
+    (typeof window !== 'undefined' ? localStorage.getItem('currency') : null) || 'INR ';
 
   const [formData, setFormData] = useState({
     status: 'repaired',
@@ -277,7 +279,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{item.date}</TableCell>
                     <TableCell>{item.status}</TableCell>
-                    <TableCell>{localStorage.getItem('currency')}{item.cost}</TableCell>
+                    <TableCell>{currencySymbol}{item.cost}</TableCell>
                     <TableCell>{item.warranty_in_month} months</TableCell>
                     <TableCell>{(item.warranty_type || "N/A").toUpperCase()}</TableCell>
                     <TableCell>{(item.payment_status || "N/A").replace(/_/g, ' ').toUpperCase()}</TableCell>
@@ -297,7 +299,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
           {/* Footer */}
           <div className=" p-4 border-t text-right">
             <span className="text-lg font-semibold text-[#1A1A1A]">
-              Total Cost: INR {totalCost.toLocaleString()}
+              Total Cost: {currencySymbol}{totalCost.toLocaleString()}
             </span>
           </div>
         </div>
@@ -337,11 +339,11 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
 
             <div>
               <Label htmlFor="cost" className="text-sm font-medium">
-                Cost (in INR):
+                Cost ({currencySymbol.trim()}):
               </Label>
               <div className="relative mt-1">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 ">
-                  INR
+                  {currencySymbol}
                 </span>
                 <Input
                   id="cost"
@@ -463,11 +465,11 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
 
             <div>
               <Label htmlFor="asset-cost" className="text-sm font-medium">
-                Cost (in INR):
+                Cost ({currencySymbol.trim()}):
               </Label>
               <div className="relative mt-1">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  INR
+                  {currencySymbol}
                 </span>
                 <Input
                   id="asset-cost"

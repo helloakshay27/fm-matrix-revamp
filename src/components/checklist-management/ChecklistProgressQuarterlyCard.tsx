@@ -64,7 +64,7 @@ export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterly
   dateRange,
 }) => {
   const { periodUnit } = getPeriodLabels(dateRange?.startDate ?? new Date(), dateRange?.endDate ?? new Date());
-  const computedTitle = title ?? `Checklist Progress Status – Center-Wise ${periodUnit}ly Comparison`;
+  const computedTitle = title ?? `Checklist Progress Status`;
   return (
     <Card className="border border-gray-300">
       <CardHeader className="py-4">
@@ -158,6 +158,11 @@ export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterly
               )}
             </tbody>
           </table>
+        </div>
+        <div className="p-3 rounded-md">
+          <p className="text-xs text-gray-700">
+            <span className="font-semibold">Note:</span> This table shows checklist progress by status across centers, comparing the current and last quarter. The "Change in Closed" column highlights the shift in closed checklists since the previous quarter.
+          </p>
         </div>
       </CardContent>
     </Card>

@@ -417,11 +417,25 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
 
         {/* Tickets List */}
         <div className="flex-1  space-y-4 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ">
-          {recentTickets.map((ticket, index) => {
-            // Debug logging for each ticket
-            const isCurrentlyFlagged = flaggedTickets.has(ticket.id.toString());
-            const isCurrentlyGolden = goldenTickets.has(ticket.id.toString());
-            // Render based on type
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center py-12">
+                <div className="h-8 w-8 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin mx-auto mb-4" />
+                <p className="text-sm text-gray-500">Loading recent updates...</p>
+              </div>
+            </div>
+          ) : recentTickets.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center py-12">
+                <p className="text-sm text-gray-500 font-medium">No recent update data is available</p>
+              </div>
+            </div>
+          ) : (
+            recentTickets.map((ticket, index) => {
+              // Debug logging for each ticket
+              const isCurrentlyFlagged = flaggedTickets.has(ticket.id.toString());
+              const isCurrentlyGolden = goldenTickets.has(ticket.id.toString());
+              // Render based on type
             if (ticket.type === "ticket") {
               return (
                 <div
@@ -814,11 +828,12 @@ export const RecentUpdatedSidebar: React.FC<RecentTicketsSidebarProps> = ({
                   </div>
                 </div>
               );
-            } else {
-              // fallback for unknown type
-              return null;
-            }
-          })}
+              } else {
+                // fallback for unknown type
+                return null;
+              }
+            })
+          )}
         </div>
       </div>
 

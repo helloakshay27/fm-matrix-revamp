@@ -5,8 +5,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Paper, Box, Typography, RadioGroup, FormControlLabel, Radio, TextField, 
-  IconButton, Button as MuiButton, Checkbox as MuiCheckbox, Select as MuiSelect, 
+  Paper, Box, Typography, RadioGroup, FormControlLabel, Radio, TextField,
+  IconButton, Button as MuiButton, Checkbox as MuiCheckbox, Select as MuiSelect,
   MenuItem, FormControl, InputLabel, OutlinedInput
 } from '@mui/material';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { API_CONFIG, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAssetTypes } from '@/services/assetTypesAPI';
+import { toast, Toaster } from 'sonner';
 
 const fieldStyles = {
   height: { xs: 36, sm: 40, md: 44 },
@@ -65,7 +66,7 @@ export const EditChecklistMasterPage = () => {
 
         // Map API data to local state
         setType(data.schedule_type || '');
-        
+
         // Parse checklist_for to determine schedule for
         let parsedScheduleFor = 'Asset'; // default
         if (data.checklist_for) {
@@ -82,7 +83,7 @@ export const EditChecklistMasterPage = () => {
           }
         }
         setScheduleFor(parsedScheduleFor);
-        
+
         setActivityName(data.form_name || '');
         setDescription(data.description || '');
         setAssetType(data.asset_meter_type_id ? String(data.asset_meter_type_id) : '');
@@ -122,11 +123,11 @@ export const EditChecklistMasterPage = () => {
                 label: opt.label || '',
                 value: opt.type || '',
               }))
-              : (task.type === 'radio-group' || task.type === 'select' || task.type === 'checkbox-group') 
+              : (task.type === 'radio-group' || task.type === 'select' || task.type === 'checkbox-group')
                 ? [
-                    { id: 1, label: 'Yes', value: 'positive' },
-                    { id: 2, label: 'No', value: 'negative' }
-                  ]
+                  { id: 1, label: 'Yes', value: 'positive' },
+                  { id: 2, label: 'No', value: 'negative' }
+                ]
                 : [],
           }));
 
@@ -257,11 +258,11 @@ export const EditChecklistMasterPage = () => {
           ...section,
           tasks: section.tasks.map((task) => {
             if (task.id !== taskId) return task;
-            
+
             // Handle input type changes with default options
             if (field === 'inputType') {
               let newOptions = task.options || [];
-              
+
               // Add default options for input types that need them
               if ((value === 'Radio Button' || value === 'Dropdown' || value === 'Checkbox') && newOptions.length === 0) {
                 newOptions = [
@@ -269,10 +270,10 @@ export const EditChecklistMasterPage = () => {
                   { id: Date.now() + 1, label: 'No', value: 'negative' }
                 ];
               }
-              
+
               return { ...task, [field]: value, options: newOptions };
             }
-            
+
             return { ...task, [field]: value };
           })
         };
@@ -378,7 +379,8 @@ export const EditChecklistMasterPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log({ id, type, scheduleFor, activityName, description, assetType, taskSections });
-    alert('Checklist master updated successfully!');
+    // alert('Checklist master updated successfully!');
+    toast.success('Checklist master updated successfully!');
     navigate('/master/checklist');
   };
 
@@ -404,6 +406,9 @@ export const EditChecklistMasterPage = () => {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-screen-xl mx-auto">
+      {/* Sonner Toaster for notifications */}
+      <Toaster position="top-right" richColors closeButton />
+      
       <Button
         onClick={() => navigate('/master/checklist')}
         variant="outline"
@@ -599,7 +604,7 @@ export const EditChecklistMasterPage = () => {
                     disabled={!section.group}
                   >
                     <MenuItem value="">Select Sub Group</MenuItem>
-                    {section.group && taskSubGroups[section.group] ? 
+                    {section.group && taskSubGroups[section.group] ?
                       taskSubGroups[section.group].map((subGroup) => (
                         <MenuItem key={subGroup.id} value={String(subGroup.id)}>
                           {subGroup.name}
@@ -749,7 +754,7 @@ export const EditChecklistMasterPage = () => {
                             { id: Date.now() + 1, label: 'No', value: 'negative' }
                           ]).map((option, optionIndex) => (
                             <Box key={option.id || optionIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-                              
+
                               {task.inputType === 'Dropdown' ? null : (
                                 task.inputType === 'Checkbox' ? (
                                   <MuiCheckbox
@@ -850,13 +855,21 @@ export const EditChecklistMasterPage = () => {
           </div>
         ))}
 
-        <div className="flex justify-end">
+        <div className="flex justify-end space-x-4 p-6 bg-white">
           <Button
             type="submit"
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:opacity-90 px-8"
           >
-            Submit
+            Update
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate('/master/checklist')}
+            className="text-gray-700 border-gray-300"
+          >
+            Cancel
           </Button>
         </div>
       </form>

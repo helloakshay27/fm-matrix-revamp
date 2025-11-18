@@ -4,6 +4,7 @@ import { Plus, Eye } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { toast } from 'sonner';
 
 interface PermitChecklist {
     id: number;
@@ -32,37 +33,60 @@ export const PermitChecklistList = () => {
 
     const [checklists, setChecklists] = React.useState<PermitChecklist[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
 
     const fetchChecklists = async () => {
         try {
-            const baseUrl = localStorage.getItem('baseUrl');
-            const token = localStorage.getItem('token');
+            setIsLoading(true);
+            setError(null);
+
+            let baseUrl = localStorage.getItem('baseUrl') || '';
+            const token = localStorage.getItem('token') || '';
 
             if (!baseUrl || !token) {
-                console.error('Base URL or token not found in localStorage');
+                const errorMsg = 'Authentication credentials not found. Please login again.';
+                console.error(errorMsg);
+                setError(errorMsg);
+                toast.error(errorMsg);
+                setIsLoading(false);
                 return;
             }
 
-            const response = await fetch(
-                `https://${baseUrl}/pms/admin/snag_checklists/permit_checklist.json`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
+            // Ensure baseUrl has the correct format
+            if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+                baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+            }
+
+            const url = `${baseUrl}/pms/admin/snag_checklists/permit_checklist.json`;
+            console.log('Fetching checklists from:', url);
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+            });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch checklists');
+                throw new Error(`Failed to fetch checklists: ${response.status} ${response.statusText}`);
             }
 
             const data = await response.json();
-            if (data.status === 'success') {
-                console.log('Checklist data:', data.checklists);
+            console.log('API Response:', data);
+
+            if (data.status === 'success' && data.checklists) {
                 setChecklists(data.checklists);
+                console.log(`Successfully loaded ${data.checklists.length} checklists`);
+            } else {
+                console.warn('Unexpected API response format:', data);
+                setChecklists([]);
             }
-        } catch (error) {
+        } catch (error: any) {
+            const errorMsg = error.message || 'Failed to fetch checklists';
             console.error('Error fetching checklists:', error);
+            setError(errorMsg);
+            toast.error(errorMsg);
+            setChecklists([]);
         } finally {
             setIsLoading(false);
         }
@@ -73,7 +97,32 @@ export const PermitChecklistList = () => {
     }, []);
 
     if (isLoading) {
-        return <div className="p-6">Loading...</div>;
+        return (
+            <div className="p-6">
+                <div className="flex flex-col items-center justify-center min-h-[400px]">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
+                    <p className="text-gray-600">Loading checklists...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-6">
+                <div className="flex flex-col items-center justify-center min-h-[400px]">
+                    <div className="text-red-500 mb-4">
+                        <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <p className="text-gray-600 mb-4">{error}</p>
+                    <Button onClick={fetchChecklists} className="bg-purple-600 hover:bg-purple-700">
+                        Retry
+                    </Button>
+                </div>
+            </div>
+        );
     }
 
     return (
