@@ -175,6 +175,7 @@ export const API_CONFIG = {
     TICKET_RESOLUTION_TAT_DOWNLOAD: '/pms/admin/complaints/chart_resolution_tat_downloads.json',
     TICKET_RESPONSE_TAT_DOWNLOAD: '/pms/admin/complaints/chart_response_tat_downloads.json',
     COST_APPROVALS_CREATE: '/pms/create_muliple_cost_Approvals.json',
+    COST_APPROVALS_CREATE_MULTIPLE: '/pms/create_cost_approvals_for_complaint.json',
     SURVEY_RESPONSES: '/survey_mapping_responses/all_responses.json',
     SURVEY_DETAILS: '/pms/admin/snag_checklists/survey_details.json',
     SUPPORT_STAFF_CATEGORIES: '/pms/admin/support_staff_categories.json',

@@ -2252,7 +2252,7 @@ export const TicketDetailsPage = () => {
 
       // Make API call
       const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
-      const url = `https://${baseUrl}${API_CONFIG.ENDPOINTS.COST_APPROVALS_CREATE}`;
+      const url = `https://${baseUrl}${API_CONFIG.ENDPOINTS.COST_APPROVALS_CREATE_MULTIPLE}`;
 
       console.log('Submitting cost approval to:', url);
 
