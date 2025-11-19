@@ -769,6 +769,7 @@ import CurrencyPage from "./pages/CurrencyPage";
 import { LockedUsersDashboard } from "./pages/settings/LockedUsersDashboard";
 import { PRDeletionRequests } from "./pages/PRDeletionRequests";
 import { DirectPDFDownloadPage } from "./pages/DirectPDFDownloadPage";
+import { DirectPDFDownloadAPIPage } from "./pages/DirectPDFDownloadAPIPage";
 import { DeletedPRs } from "./pages/DeletedPRs";
 import MsafeDashboardVI from "./pages/MsafeDashboardVI";
 import { DashboardMobile } from "./pages/DashboardMobile";
@@ -980,6 +981,10 @@ function App() {
                 <Route
                   path="/direct-pdf-download/:taskId"
                   element={<DirectPDFDownloadPage />}
+                />
+                <Route
+                  path="/api/direct-pdf-download/:taskId"
+                  element={<DirectPDFDownloadAPIPage />}
                 />
                 <Route path="/dashboard-mobile" element={<DashboardMobile />} />
                 <Route path="/sitemap" element={<Sitemap />} />
