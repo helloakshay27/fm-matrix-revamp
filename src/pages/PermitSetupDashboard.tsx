@@ -1703,16 +1703,17 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, Edit, Trash2, X } from 'lucide-react';
+import { toast } from "@/components/ui/use-toast";
 // import { API_CONFIG, getAuthenticatedFetchOptions, getFullUrl } from '@/config/apiConfig';
 import {
   FormControl,
   InputLabel,
   Select as MuiSelect,
   MenuItem,
+  TextField,
   ThemeProvider,
   createTheme
 } from '@mui/material';
@@ -1741,6 +1742,23 @@ const muiTheme = createTheme({
           color: '#374151',
           fontWeight: 500,
           '&.Mui-focused': { color: '#C72030' },
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            height: '45px',
+            '@media (max-width: 768px)': { height: '36px' },
+            backgroundColor: '#FFFFFF',
+            '& fieldset': { borderColor: '#d1d5db' },
+            '&:hover fieldset': { borderColor: '#9ca3af' },
+            '&.Mui-focused fieldset': { borderColor: '#C72030', borderWidth: '2px' },
+          },
+          '& .MuiOutlinedInput-input': {
+            padding: '10px 14px',
+          },
         },
       },
     },
@@ -1781,6 +1799,13 @@ const menuProps = {
 /** ----------------- HELPERS ----------------- */
 const toNum = (v: any) => (v === '' || v === null || v === undefined ? '' : Number(v));
 const safeStr = (v: any, fallback = '—') => (typeof v === 'string' && v.trim() ? v : fallback);
+
+/** Validate text-only input (no numbers or special characters) */
+const validateTextOnly = (value: string): boolean => {
+  // Only allow letters (including Unicode/international characters) and spaces
+  const textOnlyRegex = /^[a-zA-Z\s]+$/;
+  return textOnlyRegex.test(value);
+};
 
 /** Split a flat array by tag_type */
 const splitByType = (raw: any[]) => {
@@ -2122,49 +2147,120 @@ export const PermitSetupDashboard = () => {
   );
 
   /** ----------------- CLEAR DEPENDENCIES ON PARENT CHANGE ----------------- */
-  useEffect(() => { setSelectedPermitActivity(''); }, [selectedPermitTypeForSub]);
-  useEffect(() => { setSelectedSubCategoryForHazard(''); setSelectedSubSubCategoryForHazard(''); }, [selectedCategoryForHazard]);
-  useEffect(() => { setSelectedSubSubCategoryForHazard(''); }, [selectedSubCategoryForHazard]);
+  useEffect(() => {
+    // Don't clear when in edit mode
+    if (editingSubActivityId === null) {
+      setSelectedPermitActivity('');
+    }
+  }, [selectedPermitTypeForSub, editingSubActivityId]);
+  useEffect(() => {
+    // Don't clear when in edit mode
+    if (editingHazardId === null) {
+      setSelectedSubCategoryForHazard('');
+      setSelectedSubSubCategoryForHazard('');
+    }
+  }, [selectedCategoryForHazard, editingHazardId]);
+  useEffect(() => {
+    // Don't clear when in edit mode
+    if (editingHazardId === null) {
+      setSelectedSubSubCategoryForHazard('');
+    }
+  }, [selectedSubCategoryForHazard, editingHazardId]);
 
-  useEffect(() => { setSelectedSubCategoryForRisk(''); setSelectedSubSubCategoryForRisk(''); setSelectedSubSubSubCategoryForRisk(''); }, [selectedPermitTypeForRisk]);
-  useEffect(() => { setSelectedSubSubCategoryForRisk(''); setSelectedSubSubSubCategoryForRisk(''); }, [selectedSubCategoryForRisk]);
-  useEffect(() => { setSelectedSubSubSubCategoryForRisk(''); }, [selectedSubSubCategoryForRisk]);
+  useEffect(() => {
+    // Don't clear when in edit mode
+    if (editingRiskId === null) {
+      setSelectedSubCategoryForRisk('');
+      setSelectedSubSubCategoryForRisk('');
+      setSelectedSubSubSubCategoryForRisk('');
+    }
+  }, [selectedPermitTypeForRisk, editingRiskId]);
+  useEffect(() => {
+    // Don't clear when in edit mode
+    if (editingRiskId === null) {
+      setSelectedSubSubCategoryForRisk('');
+      setSelectedSubSubSubCategoryForRisk('');
+    }
+  }, [selectedSubCategoryForRisk, editingRiskId]);
+  useEffect(() => {
+    // Don't clear when in edit mode
+    if (editingRiskId === null) {
+      setSelectedSubSubSubCategoryForRisk('');
+    }
+  }, [selectedSubSubCategoryForRisk, editingRiskId]);
 
   useEffect(() => {
-    setSelectedPermitActivityForSafety('');
-    setSelectedPermitSubActivityForSafety('');
-    setSelectedPermitHazardCategoryForSafety('');
-    setSelectedPermitRiskForSafety('');
-  }, [selectedPermitTypeForSafety]);
+    // Don't clear when in edit mode
+    if (editingSafetyId === null) {
+      setSelectedPermitActivityForSafety('');
+      setSelectedPermitSubActivityForSafety('');
+      setSelectedPermitHazardCategoryForSafety('');
+      setSelectedPermitRiskForSafety('');
+    }
+  }, [selectedPermitTypeForSafety, editingSafetyId]);
   useEffect(() => {
-    setSelectedPermitSubActivityForSafety('');
-    setSelectedPermitHazardCategoryForSafety('');
-    setSelectedPermitRiskForSafety('');
-  }, [selectedPermitActivityForSafety]);
+    // Don't clear when in edit mode
+    if (editingSafetyId === null) {
+      setSelectedPermitSubActivityForSafety('');
+      setSelectedPermitHazardCategoryForSafety('');
+      setSelectedPermitRiskForSafety('');
+    }
+  }, [selectedPermitActivityForSafety, editingSafetyId]);
   useEffect(() => {
-    setSelectedPermitHazardCategoryForSafety('');
-    setSelectedPermitRiskForSafety('');
-  }, [selectedPermitSubActivityForSafety]);
-  useEffect(() => { setSelectedPermitRiskForSafety(''); }, [selectedPermitHazardCategoryForSafety]);
+    // Don't clear when in edit mode
+    if (editingSafetyId === null) {
+      setSelectedPermitHazardCategoryForSafety('');
+      setSelectedPermitRiskForSafety('');
+    }
+  }, [selectedPermitSubActivityForSafety, editingSafetyId]);
+  useEffect(() => {
+    // Don't clear when in edit mode
+    if (editingSafetyId === null) {
+      setSelectedPermitRiskForSafety('');
+    }
+  }, [selectedPermitHazardCategoryForSafety, editingSafetyId]);
 
   /** ----------------- SUBMIT HANDLERS (CREATE / UPDATE) ----------------- */
   // TYPE
   const handleTypeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!permitType.trim()) return;
+
+    // Validate text-only input
+    if (!validateTextOnly(permitType.trim())) {
+      toast({
+        title: "Invalid Input",
+        description: "Only letters and spaces are allowed. No numbers or special characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (editingTypeId) {
-        await apiUpdate(editingTypeId, { name: permitType, active: true, parent_id: null, tag_type: 'PermitType' });
+        await apiUpdate(editingTypeId, { name: permitType.trim(), active: true, parent_id: null, tag_type: 'PermitType' });
+        toast({
+          title: "Success",
+          description: "Permit Type updated successfully!",
+        });
       } else {
-        await apiCreate({ name: permitType, active: true, parent_id: null, tag_type: 'PermitType' });
+        await apiCreate({ name: permitType.trim(), active: true, parent_id: null, tag_type: 'PermitType' });
+        toast({
+          title: "Success",
+          description: "Permit Type created successfully!",
+        });
       }
       setPermitType('');
       setEditingTypeId(null);
       await loadAllData();
     } catch (err) {
       console.error('Type submit failed:', err);
-      alert('Failed to save permit type.');
+      toast({
+        title: "Error",
+        description: "Failed to save permit type. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -2183,15 +2279,34 @@ export const PermitSetupDashboard = () => {
   const handlePermitActivitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!permitActivity.trim() || selectedPermitType === '') return;
+
+    // Validate text-only input
+    if (!validateTextOnly(permitActivity.trim())) {
+      toast({
+        title: "Invalid Input",
+        description: "Only letters and spaces are allowed. No numbers or special characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmittingPermitActivity(true);
     try {
       if (editingActivityId) {
         await apiUpdate(editingActivityId, {
-          name: permitActivity, active: true, parent_id: toNum(selectedPermitType), tag_type: 'PermitActivity'
+          name: permitActivity.trim(), active: true, parent_id: toNum(selectedPermitType), tag_type: 'PermitActivity'
+        });
+        toast({
+          title: "Success",
+          description: "Permit Activity updated successfully!",
         });
       } else {
         await apiCreate({
-          name: permitActivity, active: true, parent_id: toNum(selectedPermitType), tag_type: 'PermitActivity'
+          name: permitActivity.trim(), active: true, parent_id: toNum(selectedPermitType), tag_type: 'PermitActivity'
+        });
+        toast({
+          title: "Success",
+          description: "Permit Activity created successfully!",
         });
       }
       setPermitActivity('');
@@ -2200,7 +2315,11 @@ export const PermitSetupDashboard = () => {
       await loadAllData();
     } catch (err) {
       console.error('Activity submit failed:', err);
-      alert('Failed to save permit activity.');
+      toast({
+        title: "Error",
+        description: "Failed to save permit activity. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmittingPermitActivity(false);
     }
@@ -2221,16 +2340,35 @@ export const PermitSetupDashboard = () => {
   const handlePermitSubActivitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!permitSubActivity.trim() || selectedPermitTypeForSub === '' || selectedPermitActivity === '') return;
+
+    // Validate text-only input
+    if (!validateTextOnly(permitSubActivity.trim())) {
+      toast({
+        title: "Invalid Input",
+        description: "Only letters and spaces are allowed. No numbers or special characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmittingPermitSubActivity(true);
     try {
       const parentActivityId = toNum(selectedPermitActivity);
       if (editingSubActivityId) {
         await apiUpdate(editingSubActivityId, {
-          name: permitSubActivity, active: true, parent_id: parentActivityId, tag_type: 'PermitSubActivity'
+          name: permitSubActivity.trim(), active: true, parent_id: parentActivityId, tag_type: 'PermitSubActivity'
+        });
+        toast({
+          title: "Success",
+          description: "Permit Sub Activity updated successfully!",
         });
       } else {
         await apiCreate({
-          name: permitSubActivity, active: true, parent_id: parentActivityId, tag_type: 'PermitSubActivity'
+          name: permitSubActivity.trim(), active: true, parent_id: parentActivityId, tag_type: 'PermitSubActivity'
+        });
+        toast({
+          title: "Success",
+          description: "Permit Sub Activity created successfully!",
         });
       }
       setPermitSubActivity('');
@@ -2240,7 +2378,11 @@ export const PermitSetupDashboard = () => {
       await loadAllData();
     } catch (err) {
       console.error('Sub-activity submit failed:', err);
-      alert('Failed to save permit sub activity.');
+      toast({
+        title: "Error",
+        description: "Failed to save permit sub activity. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmittingPermitSubActivity(false);
     }
@@ -2266,16 +2408,35 @@ export const PermitSetupDashboard = () => {
   const handlePermitHazardCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!permitHazardCategory.trim() || selectedSubSubCategoryForHazard === '') return;
+
+    // Validate text-only input
+    if (!validateTextOnly(permitHazardCategory.trim())) {
+      toast({
+        title: "Invalid Input",
+        description: "Only letters and spaces are allowed. No numbers or special characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmittingPermitHazardCategory(true);
     try {
       const parentSubId = toNum(selectedSubSubCategoryForHazard);
       if (editingHazardId) {
         await apiUpdate(editingHazardId, {
-          name: permitHazardCategory, active: true, parent_id: parentSubId, tag_type: 'PermitHazardCategory'
+          name: permitHazardCategory.trim(), active: true, parent_id: parentSubId, tag_type: 'PermitHazardCategory'
+        });
+        toast({
+          title: "Success",
+          description: "Permit Hazard Category updated successfully!",
         });
       } else {
         await apiCreate({
-          name: permitHazardCategory, active: true, parent_id: parentSubId, tag_type: 'PermitHazardCategory'
+          name: permitHazardCategory.trim(), active: true, parent_id: parentSubId, tag_type: 'PermitHazardCategory'
+        });
+        toast({
+          title: "Success",
+          description: "Permit Hazard Category created successfully!",
         });
       }
       setPermitHazardCategory('');
@@ -2286,7 +2447,11 @@ export const PermitSetupDashboard = () => {
       await loadAllData();
     } catch (err) {
       console.error('Hazard category submit failed:', err);
-      alert('Failed to save hazard category.');
+      toast({
+        title: "Error",
+        description: "Failed to save hazard category. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmittingPermitHazardCategory(false);
     }
@@ -2315,16 +2480,35 @@ export const PermitSetupDashboard = () => {
   const handlePermitRiskSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!permitRisk.trim() || selectedSubSubSubCategoryForRisk === '') return;
+
+    // Validate text-only input
+    if (!validateTextOnly(permitRisk.trim())) {
+      toast({
+        title: "Invalid Input",
+        description: "Only letters and spaces are allowed. No numbers or special characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmittingPermitRisk(true);
     try {
       const parentHazardId = toNum(selectedSubSubSubCategoryForRisk);
       if (editingRiskId) {
         await apiUpdate(editingRiskId, {
-          name: permitRisk, active: true, parent_id: parentHazardId, tag_type: 'PermitRisk'
+          name: permitRisk.trim(), active: true, parent_id: parentHazardId, tag_type: 'PermitRisk'
+        });
+        toast({
+          title: "Success",
+          description: "Permit Risk updated successfully!",
         });
       } else {
         await apiCreate({
-          name: permitRisk, active: true, parent_id: parentHazardId, tag_type: 'PermitRisk'
+          name: permitRisk.trim(), active: true, parent_id: parentHazardId, tag_type: 'PermitRisk'
+        });
+        toast({
+          title: "Success",
+          description: "Permit Risk created successfully!",
         });
       }
       setPermitRisk('');
@@ -2336,7 +2520,11 @@ export const PermitSetupDashboard = () => {
       await loadAllData();
     } catch (err) {
       console.error('Risk submit failed:', err);
-      alert('Failed to save permit risk.');
+      toast({
+        title: "Error",
+        description: "Failed to save permit risk. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmittingPermitRisk(false);
     }
@@ -2368,16 +2556,35 @@ export const PermitSetupDashboard = () => {
   const handlePermitSafetyEquipmentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!permitSafetyEquipment.trim() || selectedPermitRiskForSafety === '') return;
+
+    // Validate text-only input
+    if (!validateTextOnly(permitSafetyEquipment.trim())) {
+      toast({
+        title: "Invalid Input",
+        description: "Only letters and spaces are allowed. No numbers or special characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmittingPermitSafetyEquipment(true);
     try {
       const parentRiskId = toNum(selectedPermitRiskForSafety);
       if (editingSafetyId) {
         await apiUpdate(editingSafetyId, {
-          name: permitSafetyEquipment, active: true, parent_id: parentRiskId, tag_type: 'PermitSafetyEquipment'
+          name: permitSafetyEquipment.trim(), active: true, parent_id: parentRiskId, tag_type: 'PermitSafetyEquipment'
+        });
+        toast({
+          title: "Success",
+          description: "Permit Safety Equipment updated successfully!",
         });
       } else {
         await apiCreate({
-          name: permitSafetyEquipment, active: true, parent_id: parentRiskId, tag_type: 'PermitSafetyEquipment'
+          name: permitSafetyEquipment.trim(), active: true, parent_id: parentRiskId, tag_type: 'PermitSafetyEquipment'
+        });
+        toast({
+          title: "Success",
+          description: "Permit Safety Equipment created successfully!",
         });
       }
       setPermitSafetyEquipment('');
@@ -2390,7 +2597,11 @@ export const PermitSetupDashboard = () => {
       await loadAllData();
     } catch (err) {
       console.error('Safety equipment submit failed:', err);
-      alert('Failed to save permit safety equipment.');
+      toast({
+        title: "Error",
+        description: "Failed to save permit safety equipment. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmittingPermitSafetyEquipment(false);
     }
@@ -2424,27 +2635,63 @@ export const PermitSetupDashboard = () => {
   /** ----------------- DELETE HANDLERS ----------------- */
   const deleteType = async (id: number) => {
     if (!confirm('Delete this Permit Type?')) return;
-    try { await apiDelete(id); await loadAllData(); } catch (e) { alert('Delete failed.'); }
+    try {
+      await apiDelete(id);
+      await loadAllData();
+      toast({ title: "Success", description: "Permit Type deleted successfully!" });
+    } catch (e) {
+      toast({ title: "Error", description: "Delete failed. Please try again.", variant: "destructive" });
+    }
   };
   const deleteActivity = async (id: number) => {
     if (!confirm('Delete this Permit Activity?')) return;
-    try { await apiDelete(id); await loadAllData(); } catch (e) { alert('Delete failed.'); }
+    try {
+      await apiDelete(id);
+      await loadAllData();
+      toast({ title: "Success", description: "Permit Activity deleted successfully!" });
+    } catch (e) {
+      toast({ title: "Error", description: "Delete failed. Please try again.", variant: "destructive" });
+    }
   };
   const deleteSubActivity = async (id: number) => {
     if (!confirm('Delete this Permit Sub Activity?')) return;
-    try { await apiDelete(id); await loadAllData(); } catch (e) { alert('Delete failed.'); }
+    try {
+      await apiDelete(id);
+      await loadAllData();
+      toast({ title: "Success", description: "Permit Sub Activity deleted successfully!" });
+    } catch (e) {
+      toast({ title: "Error", description: "Delete failed. Please try again.", variant: "destructive" });
+    }
   };
   const deleteHazard = async (id: number) => {
     if (!confirm('Delete this Permit Hazard Category?')) return;
-    try { await apiDelete(id); await loadAllData(); } catch (e) { alert('Delete failed.'); }
+    try {
+      await apiDelete(id);
+      await loadAllData();
+      toast({ title: "Success", description: "Permit Hazard Category deleted successfully!" });
+    } catch (e) {
+      toast({ title: "Error", description: "Delete failed. Please try again.", variant: "destructive" });
+    }
   };
   const deleteRisk = async (id: number) => {
     if (!confirm('Delete this Permit Risk?')) return;
-    try { await apiDelete(id); await loadAllData(); } catch (e) { alert('Delete failed.'); }
+    try {
+      await apiDelete(id);
+      await loadAllData();
+      toast({ title: "Success", description: "Permit Risk deleted successfully!" });
+    } catch (e) {
+      toast({ title: "Error", description: "Delete failed. Please try again.", variant: "destructive" });
+    }
   };
   const deleteSafety = async (id: number) => {
     if (!confirm('Delete this Permit Safety Equipment?')) return;
-    try { await apiDelete(id); await loadAllData(); } catch (e) { alert('Delete failed.'); }
+    try {
+      await apiDelete(id);
+      await loadAllData();
+      toast({ title: "Success", description: "Permit Safety Equipment deleted successfully!" });
+    } catch (e) {
+      toast({ title: "Error", description: "Delete failed. Please try again.", variant: "destructive" });
+    }
   };
 
   /** ----------------- RENDER ----------------- */
@@ -2480,14 +2727,21 @@ export const PermitSetupDashboard = () => {
             <form onSubmit={handleTypeSubmit} className="space-y-4">
               <div className="flex items-end gap-4">
                 <div className="flex-1">
-                  <label htmlFor="permitTypeName" className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                  <Input
+                  <TextField
                     id="permitTypeName"
-                    type="text"
+                    label="Name"
+                    variant="outlined"
+                    fullWidth
                     value={permitType}
-                    onChange={(e) => setPermitType(e.target.value)}
-                    className="w-full"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Only update if empty or contains only letters and spaces
+                      if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                        setPermitType(value);
+                      }
+                    }}
                     placeholder="Enter permit type name"
+                    InputLabelProps={{ shrink: true }}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -2546,14 +2800,16 @@ export const PermitSetupDashboard = () => {
               <div className="flex items-end gap-4">
                 <div className="flex-1">
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Category</InputLabel>
+                    <InputLabel shrink>Permit Type</InputLabel>
                     <MuiSelect
                       value={selectedPermitType}
                       onChange={(e) => setSelectedPermitType(toNum(e.target.value))}
-                      label="Category"
+                      label="Permit Type"
                       displayEmpty
                       MenuProps={menuProps}
+                      
                     >
+                      <MenuItem value=""><em>Select Permit Type</em></MenuItem>
                       {isLoading ? (
                         <MenuItem value="" disabled>Loading permit types...</MenuItem>
                       ) : permitTypes.length === 0 ? (
@@ -2567,14 +2823,21 @@ export const PermitSetupDashboard = () => {
                   </FormControl>
                 </div>
                 <div className="flex-1">
-                  <label htmlFor="permitActivityName" className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                  <Input
+                  <TextField
                     id="permitActivityName"
-                    type="text"
+                    label="Name"
+                    variant="outlined"
+                    fullWidth
                     value={permitActivity}
-                    onChange={(e) => setPermitActivity(e.target.value)}
-                    className="w-full"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Only update if empty or contains only letters and spaces
+                      if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                        setPermitActivity(value);
+                      }
+                    }}
                     placeholder="Enter permit activity name"
+                    InputLabelProps={{ shrink: true }}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -2635,14 +2898,15 @@ export const PermitSetupDashboard = () => {
               <div className="flex items-end gap-4">
                 <div className="flex-1">
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Category</InputLabel>
+                    <InputLabel shrink>Permit Type</InputLabel>
                     <MuiSelect
                       value={selectedPermitTypeForSub}
                       onChange={(e) => setSelectedPermitTypeForSub(toNum(e.target.value))}
-                      label="Category"
+                      label="Permit Type"
                       displayEmpty
                       MenuProps={menuProps}
                     >
+                      <MenuItem value=""><em>Select Permit Type</em></MenuItem>
                       {isLoading ? (
                         <MenuItem value="" disabled>Loading permit types...</MenuItem>
                       ) : permitTypes.length === 0 ? (
@@ -2670,14 +2934,20 @@ export const PermitSetupDashboard = () => {
                   </FormControl>
                 </div>
                 <div className="flex-1">
-                  <label htmlFor="permitSubActivityName" className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                  <Input
+                  <TextField
                     id="permitSubActivityName"
-                    type="text"
+                    label="Name"
+                    variant="outlined"
+                    fullWidth
                     value={permitSubActivity}
-                    onChange={(e) => setPermitSubActivity(e.target.value)}
-                    className="w-full"
-                    placeholder=""
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                        setPermitSubActivity(value);
+                      }
+                    }}
+                    placeholder="Enter permit sub activity name"
+                    InputLabelProps={{ shrink: true }}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -2736,14 +3006,15 @@ export const PermitSetupDashboard = () => {
               <div className="flex items-end gap-4">
                 <div className="flex-1">
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Category</InputLabel>
+                    <InputLabel shrink>Permit Type</InputLabel>
                     <MuiSelect
                       value={selectedCategoryForHazard}
                       onChange={(e) => setSelectedCategoryForHazard(toNum(e.target.value))}
-                      label="Category"
+                      label="Permit Type"
                       displayEmpty
                       MenuProps={menuProps}
                     >
+                      <MenuItem value=""><em>Select Permit Type</em></MenuItem>
                       {isLoading ? (
                         <MenuItem value="" disabled>Loading permit types...</MenuItem>
                       ) : permitTypes.length === 0 ? (
@@ -2765,7 +3036,7 @@ export const PermitSetupDashboard = () => {
                       MenuProps={menuProps}
                       disabled={selectedCategoryForHazard === ''}
                     >
-                      <MenuItem value=""><em>Select Sub Category</em></MenuItem>
+                      <MenuItem value=""><em>Select Permit Activity</em></MenuItem>
                       {filteredActivitiesForHazard.map(a => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}
                     </MuiSelect>
                   </FormControl>
@@ -2781,20 +3052,27 @@ export const PermitSetupDashboard = () => {
                       MenuProps={menuProps}
                       disabled={selectedSubCategoryForHazard === ''}
                     >
-                      <MenuItem value=""><em>Select Sub Sub Category</em></MenuItem>
+                      <MenuItem value=""><em>Select Permit Sub Activity</em></MenuItem>
                       {filteredSubsForHazard.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
                     </MuiSelect>
                   </FormControl>
                 </div>
                 <div className="flex-1">
-                  <label htmlFor="hazardCategoryName" className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                  <Input
+                  <TextField
                     id="hazardCategoryName"
-                    type="text"
+                    label="Name"
+                    variant="outlined"
+                    fullWidth
                     value={permitHazardCategory}
-                    onChange={(e) => setPermitHazardCategory(e.target.value)}
-                    className="w-full"
-                    placeholder=""
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Only update if empty or contains only letters and spaces
+                      if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                        setPermitHazardCategory(value);
+                      }
+                    }}
+                    placeholder="Enter hazard category name"
+                    InputLabelProps={{ shrink: true }}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -2855,14 +3133,15 @@ export const PermitSetupDashboard = () => {
               <div className="flex items-end gap-4">
                 <div className="flex-1">
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Permit type</InputLabel>
+                    <InputLabel shrink>Permit Type</InputLabel>
                     <MuiSelect
                       value={selectedPermitTypeForRisk}
                       onChange={(e) => setSelectedPermitTypeForRisk(toNum(e.target.value))}
-                      label="Permit type"
+                      label="Permit Type"
                       displayEmpty
                       MenuProps={menuProps}
                     >
+                      <MenuItem value=""><em>Select Permit Type</em></MenuItem>
                       {isLoading ? (
                         <MenuItem value="" disabled>Loading permit types...</MenuItem>
                       ) : permitTypes.length === 0 ? (
@@ -2884,7 +3163,7 @@ export const PermitSetupDashboard = () => {
                       MenuProps={menuProps}
                       disabled={selectedPermitTypeForRisk === ''}
                     >
-                      <MenuItem value=""><em>Select Sub Category</em></MenuItem>
+                      <MenuItem value=""><em>Select Permit Activity</em></MenuItem>
                       {filteredActivitiesForRisk.map(a => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}
                     </MuiSelect>
                   </FormControl>
@@ -2900,7 +3179,7 @@ export const PermitSetupDashboard = () => {
                       MenuProps={menuProps}
                       disabled={selectedSubCategoryForRisk === ''}
                     >
-                      <MenuItem value=""><em>Select Sub Sub Category</em></MenuItem>
+                      <MenuItem value=""><em>Select Permit Sub Activity</em></MenuItem>
                       {filteredSubsForRisk.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
                     </MuiSelect>
                   </FormControl>
@@ -2916,20 +3195,27 @@ export const PermitSetupDashboard = () => {
                       MenuProps={menuProps}
                       disabled={selectedSubSubCategoryForRisk === ''}
                     >
-                      <MenuItem value=""><em>Select Sub Sub Sub Category</em></MenuItem>
+                      <MenuItem value=""><em>Select Permit Hazard Category</em></MenuItem>
                       {filteredHazardsForRisk.map(h => <MenuItem key={h.id} value={h.id}>{h.name}</MenuItem>)}
                     </MuiSelect>
                   </FormControl>
                 </div>
                 <div className="flex-1">
-                  <label htmlFor="riskName" className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                  <Input
+                  <TextField
                     id="riskName"
-                    type="text"
+                    label="Name"
+                    variant="outlined"
+                    fullWidth
                     value={permitRisk}
-                    onChange={(e) => setPermitRisk(e.target.value)}
-                    className="w-full"
-                    placeholder=""
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Only update if empty or contains only letters and spaces
+                      if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                        setPermitRisk(value);
+                      }
+                    }}
+                    placeholder="Enter risk name"
+                    InputLabelProps={{ shrink: true }}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -2992,14 +3278,15 @@ export const PermitSetupDashboard = () => {
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Permit type</InputLabel>
+                    <InputLabel shrink>Permit Type</InputLabel>
                     <MuiSelect
                       value={selectedPermitTypeForSafety}
                       onChange={(e) => setSelectedPermitTypeForSafety(toNum(e.target.value))}
-                      label="Permit type"
+                      label="Permit Type"
                       displayEmpty
                       MenuProps={menuProps}
                     >
+                      <MenuItem value=""><em>Select Permit Type</em></MenuItem>
                       {isLoading ? (
                         <MenuItem value="" disabled>Loading permit types...</MenuItem>
                       ) : permitTypes.length === 0 ? (
@@ -3021,7 +3308,7 @@ export const PermitSetupDashboard = () => {
                       MenuProps={menuProps}
                       disabled={selectedPermitTypeForSafety === ''}
                     >
-                      <MenuItem value=""><em>Permit Activity</em></MenuItem>
+                      <MenuItem value=""><em>Select Permit Activity</em></MenuItem>
                       {filteredActivitiesForSafety.map(a => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}
                     </MuiSelect>
                   </FormControl>
@@ -3037,7 +3324,7 @@ export const PermitSetupDashboard = () => {
                       MenuProps={menuProps}
                       disabled={selectedPermitActivityForSafety === ''}
                     >
-                      <MenuItem value=""><em>Permit Sub Activity</em></MenuItem>
+                      <MenuItem value=""><em>Select Permit Sub Activity</em></MenuItem>
                       {filteredSubsForSafety.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
                     </MuiSelect>
                   </FormControl>
@@ -3053,7 +3340,7 @@ export const PermitSetupDashboard = () => {
                       MenuProps={menuProps}
                       disabled={selectedPermitSubActivityForSafety === ''}
                     >
-                      <MenuItem value=""><em>Permit Hazard Category</em></MenuItem>
+                      <MenuItem value=""><em>Select Permit Hazard Category</em></MenuItem>
                       {filteredHazardsForSafety.map(h => <MenuItem key={h.id} value={h.id}>{h.name}</MenuItem>)}
                     </MuiSelect>
                   </FormControl>
@@ -3069,20 +3356,27 @@ export const PermitSetupDashboard = () => {
                       MenuProps={menuProps}
                       disabled={selectedPermitHazardCategoryForSafety === ''}
                     >
-                      <MenuItem value=""><em>Permit Risk</em></MenuItem>
+                      <MenuItem value=""><em>Select Permit Risk</em></MenuItem>
                       {filteredRisksForSafety.map(r => <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>)}
                     </MuiSelect>
                   </FormControl>
                 </div>
                 <div>
-                  <label htmlFor="safetyEquipmentName" className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                  <Input
+                  <TextField
                     id="safetyEquipmentName"
-                    type="text"
+                    label="Name"
+                    variant="outlined"
+                    fullWidth
                     value={permitSafetyEquipment}
-                    onChange={(e) => setPermitSafetyEquipment(e.target.value)}
-                    className="w-full"
-                    placeholder=""
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Only update if empty or contains only letters and spaces
+                      if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                        setPermitSafetyEquipment(value);
+                      }
+                    }}
+                    placeholder="Enter safety equipment name"
+                    InputLabelProps={{ shrink: true }}
                   />
                 </div>
               </div>
