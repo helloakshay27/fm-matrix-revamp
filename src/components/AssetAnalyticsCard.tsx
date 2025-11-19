@@ -25,7 +25,29 @@ interface AssetAnalyticsCardProps {
   info?: string;
 }
 
-const COLORS = ['#C4AE9D', '#C4B99D', '#DAD6CA', '#D5DBDB', '#8B5A3C', '#A0A0A0', '#FFB366', '#FF8C42', '#6B8E23'];
+const DEFAULT_COLORS = [
+  "#C4AE9D",
+  "#C4B99D",
+  "#DAD6CA",
+  "#D5DBDB",
+  "#8B5A3C",
+  "#A0A0A0",
+  "#FFB366",
+  "#FF8C42",
+  "#6B8E23",
+];
+
+const CATEGORY_COLORS = [
+  "#C8B89E",
+  "#E2D9C9",
+  "#D5CBB4",
+  "#BEB39D",
+  "#E8E0D2",
+  "#CDC2AB",
+  "#B7B09E",
+  "#D9D0C0",
+  "#C2B9A5",
+];
 
 export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
   title,
@@ -75,7 +97,8 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
           </ResponsiveContainer>
         );
 
-      case 'categoryWise':
+      case 'categoryWise': {
+        const palette = CATEGORY_COLORS;
         return (
           <ResponsiveContainer width="100%" height={320}>
             <PieChart>
@@ -93,7 +116,10 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 strokeWidth={2}
               >
                 {data.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.color || palette[index % palette.length]}
+                  />
                 ))}
               </Pie>
               <Tooltip
@@ -109,6 +135,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
             </PieChart>
           </ResponsiveContainer>
         );
+      }
 
       case 'statusDistribution':
         return (
@@ -128,7 +155,10 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 strokeWidth={2}
               >
                 {data.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
+                  />
                 ))}
               </Pie>
               <Tooltip 
@@ -162,7 +192,10 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 strokeWidth={2}
               >
                 {data.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
+                  />
                 ))}
               </Pie>
               <Tooltip 
@@ -193,7 +226,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold text-[#C72030]">{title}</CardTitle>
           <div className="flex items-center gap-2">
-            {info && (title === "Asset Status" || title === "Asset Type Distribution" || title === "Group-wise Assets" || title === "Category-wise Assets") && (
+            {info && (
               <TooltipProvider>
                 <UITooltip>
                   <TooltipTrigger asChild>
