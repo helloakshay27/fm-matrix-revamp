@@ -995,44 +995,7 @@ export const TaskDetailsPage = () => {
         );
       case "score":
         return <span className="text-xs">{item.score}</span>;
-      case "attachments":
-        // Handle attachments display
-        if (!item.attachments || item.attachments.length === 0) {
-          return <span className="text-xs text-gray-400">-</span>;
-        }
-        return (
-          <div className="flex flex-wrap gap-1">
-            {item.attachments.map((attachment: any, idx: number) => {
-              const attachmentUrl =
-                typeof attachment === "string"
-                  ? attachment
-                  : attachment.url || attachment.file_url;
-              const attachmentName =
-                typeof attachment === "string"
-                  ? `Attachment ${idx + 1}`
-                  : attachment.name ||
-                    attachment.filename ||
-                    `Attachment ${idx + 1}`;
 
-              return (
-                <a
-                  key={idx}
-                  href={attachmentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1"
-                  title={attachmentName}
-                >
-                  <img
-                    src={attachmentUrl}
-                    alt={attachmentName}
-                    className="w-12 h-12"
-                  />
-                </a>
-              );
-            })}
-          </div>
-        );
       default:
         return item[columnKey] || "-";
     }
