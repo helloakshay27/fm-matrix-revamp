@@ -200,7 +200,15 @@ interface PermitDetailsResponse {
     permit: Permit;
     approval_levels: ApprovalLevel[];
     permit_extends: PermitExtend[];
-    permit_resume: any[];
+    permit_resume: {
+        reason_for_resume: string;
+        resume_date: string;
+        created_by: {
+            full_name: string;
+        };
+        assignees: string;
+        attachments_count: number;
+    } | null;
     permit_closure: PermitClosure;
     activity_details: any[];
     main_attachments: MainAttachment[];
@@ -2803,16 +2811,16 @@ export const PermitDetails = () => {
                                             >
                                                 <Select
                                                     multiple
-                                                    value={selectedExtendAssignees}
-                                                    onChange={handleAssigneeChange}
+                                                    value={selectedExtendAssignees as any}
+                                                    onChange={handleAssigneeChange as any}
                                                     input={<OutlinedInput />}
                                                     renderValue={(selected) => {
-                                                        if ((selected as string[]).length === 0) {
+                                                        if ((selected as unknown as string[]).length === 0) {
                                                             return <span style={{ color: '#9CA3AF' }}>Select assignees</span>;
                                                         }
                                                         return (
                                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                                {(selected as string[]).map((value) => {
+                                                                {(selected as unknown as string[]).map((value) => {
                                                                     const assignee = permitData?.permit?.permit_assignees?.find(a => a.id.toString() === value);
                                                                     return (
                                                                         <Chip
@@ -3142,16 +3150,16 @@ export const PermitDetails = () => {
                                         >
                                             <Select
                                                 multiple
-                                                value={selectedResumeAssignees}
-                                                onChange={handleResumeAssigneeChange}
+                                                value={selectedResumeAssignees as any}
+                                                onChange={handleResumeAssigneeChange as any}
                                                 input={<OutlinedInput />}
                                                 renderValue={(selected) => {
-                                                    if ((selected as string[]).length === 0) {
+                                                    if ((selected as unknown as string[]).length === 0) {
                                                         return <span style={{ color: '#9CA3AF' }}>Select assignees</span>;
                                                     }
                                                     return (
                                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                            {(selected as string[]).map((value) => {
+                                                            {(selected as unknown as string[]).map((value) => {
                                                                 const assignee = permitData?.permit?.permit_assignees?.find(a => a.id.toString() === value);
                                                                 return (
                                                                     <Chip
@@ -3284,7 +3292,7 @@ export const PermitDetails = () => {
                                     </div>
                                     <div>
                                         <span className="text-gray-600">Resume Date: </span>
-                                        <span className="text-gray-900">{permitData?.permit_resume?.resume_date && format(permitData.permit_resume?.resume_date, "dd/MM/yyyy hh:mm a")}</span>
+                                        <span className="text-gray-900">{permitData.permit_resume?.resume_date ? format(permitData.permit_resume.resume_date, "dd/MM/yyyy hh:mm a") : "-"}</span>
                                     </div>
                                     <div>
                                         <span className="text-gray-600">Created By: </span>
