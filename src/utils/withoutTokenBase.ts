@@ -20,26 +20,20 @@ export const baseClient = axios.create({
 baseClient.interceptors.request.use(
   async (config) => {
     try {
+      // Extract URL parameters
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("token");
       const email = urlParams.get("email");
       const organizationId = urlParams.get("organization_id");
-      const orgcompanyId = urlParams.get("org_id");
+      const orgId = urlParams.get("org_id");
 
       // Store token in session storage if available
       if (token) {
         sessionStorage.setItem("token", token);
+        console.log("✅ Token stored in session storage");
       }
 
-      // if (!email || !organizationId) {
-      //   throw new Error("Email or organization_id not found in URL");
-      // }
-
-      // if (!orgcompanyId) {
-      //   throw new Error("org_id not found in URL");
-      // }
-
-      // Determine API URL based on hostname
+      // Determine site type based on hostname
       const hostname = window.location.hostname;
       const isOmanSite = hostname.includes("oig.gophygital.work");
       const isViSite =
@@ -47,71 +41,92 @@ baseClient.interceptors.request.use(
         hostname.includes("web.gophygital.work");
       const isFmSite =
         hostname.includes("fm-uat.gophygital.work") ||
-        hostname.includes("fm.gophygital.work");
+        hostname.includes("fm.gophygital.work") ||
+        hostname.includes("fm-matrix.lockated.com");
 
+      // Build API URL based on site type and available parameters
       let apiUrl = "";
-
+      
       if (isOmanSite || isFmSite) {
-        apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+        // FM/Oman sites: prefer org_id, fallback to email
+        if (orgId) {
+          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
+          console.log("🔍 Using org_id for FM/Oman site:", orgId);
+        } else if (email) {
+          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+          console.log("🔍 Using email for FM/Oman site:", email);
+        } else {
+          throw new Error("Either org_id or email is required for FM/Oman sites");
+        }
       } else if (isViSite) {
-        apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`;
+        // VI sites: use email
+        if (email) {
+          apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`;
+          console.log("🔍 Using email for VI site:", email);
+        } else {
+          throw new Error("Email is required for VI sites");
+        }
       } else {
-        // Default fallback
-        apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+        // Default fallback: prefer org_id, fallback to email
+        if (orgId) {
+          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
+          console.log("🔍 Using org_id for default fallback:", orgId);
+        } else if (email) {
+          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+          console.log("🔍 Using email for default fallback:", email);
+        } else {
+          throw new Error("Either org_id or email is required");
+        }
       }
 
-
-
-      if (isOmanSite || isFmSite) {
-        apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgcompanyId}`;
-      } else if (isViSite) {
-        apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`;
-      } else {
-        // Default fallback
-        apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgcompanyId}`;
-      }
-
-
-
-
-
-
-
-
-      // Call organizations API with the email from URL
+      // Fetch organizations from API
+      console.log("📡 Fetching organizations from:", apiUrl);
       const response = await axios.get(apiUrl);
       const { organizations, backend_url } = response.data;
 
-      // First priority: Use backend_url from API response
+      // Priority 1: Use backend_url from API response (highest priority)
       if (backend_url) {
         config.baseURL = backend_url;
-        console.log("Base URL set from backend_url:", backend_url);
-      } else if (organizations && organizations.length > 0) {
-        // Second priority: Find the organization matching the organization_id from URL
-        const selectedOrg = organizations.find(
-          (org: Organization) => org.id === parseInt(organizationId)
-        );
-
-        if (selectedOrg && selectedOrg.backend_domain) {
-          // Set baseURL from the organization's backend_domain
-          config.baseURL = selectedOrg.backend_domain;
-          console.log("Base URL set to:", selectedOrg.backend_domain);
-        } else {
-          // Fallback URL if organization not found or no backend_domain
-          config.baseURL = "https://fm-uat-api.lockated.com/";
-          console.warn(
-            "Organization not found or no backend_domain, using fallback URL"
-          );
-        }
-      } else {
-        // Fallback URL if no organizations found
-        config.baseURL = "https://fm-uat-api.lockated.com/";
-        console.warn("No organizations found, using fallback URL");
+        console.log("✅ Base URL set from API response backend_url:", backend_url);
+        return config;
       }
-    } catch (error) {
-      console.error("Error fetching organizations:", error);
-      // Fallback URL in case of error
+
+      // Priority 2: Find organization by organizationId and use its backend_domain
+      if (organizations && organizations.length > 0) {
+        if (organizationId) {
+          const selectedOrg = organizations.find(
+            (org: Organization) => org.id === parseInt(organizationId)
+          );
+
+          if (selectedOrg && selectedOrg.backend_domain) {
+            config.baseURL = selectedOrg.backend_domain;
+            console.log("✅ Base URL set from organization backend_domain:", selectedOrg.backend_domain);
+            return config;
+          } else if (selectedOrg) {
+            console.warn("⚠️ Organization found but no backend_domain available");
+          } else {
+            console.warn("⚠️ Organization with ID", organizationId, "not found in response");
+          }
+        }
+
+        // Priority 3: Use first organization's backend_domain if available
+        const firstOrg = organizations[0];
+        if (firstOrg.backend_domain) {
+          config.baseURL = firstOrg.backend_domain;
+          console.log("✅ Base URL set from first organization backend_domain:", firstOrg.backend_domain);
+          return config;
+        }
+      }
+
+      // Priority 4: Fallback URL
       config.baseURL = "https://fm-uat-api.lockated.com/";
+      console.warn("⚠️ Using fallback URL:", config.baseURL);
+      
+    } catch (error) {
+      console.error("❌ Error in request interceptor:", error);
+      // Always set a fallback URL on error
+      config.baseURL = "https://fm-uat-api.lockated.com/";
+      console.warn("⚠️ Using fallback URL due to error:", config.baseURL);
     }
 
     return config;
