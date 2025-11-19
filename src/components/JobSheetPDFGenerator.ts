@@ -70,6 +70,53 @@ export class JobSheetPDFGenerator {
     }
   }
 
+  /**
+   * Generate Job Sheet PDF and return as Blob (for mobile webview compatibility)
+   * @param taskDetails Task details object
+   * @param jobSheetData Job sheet data object
+   * @param comments Additional comments
+   * @returns Promise<Blob> PDF as Blob
+   */
+  async generateJobSheetPDFBlob(
+    taskDetails: any,
+    jobSheetData: any,
+    comments: string = ""
+  ): Promise<Blob> {
+    try {
+      // Properly extract job_sheet from the API response
+      const jobSheet =
+        jobSheetData?.data?.job_sheet ||
+        jobSheetData?.job_sheet ||
+        jobSheetData;
+      const checklistResponses = jobSheet?.checklist_responses || [];
+
+      // Enhanced page break logic for better content distribution
+      const estimatedContentHeight = this.estimateContentHeight(
+        jobSheet,
+        comments
+      );
+      const maxSinglePageHeight = 280;
+      const maxChecklistItemsPerPage = 20;
+
+      const needsPageBreak =
+        estimatedContentHeight > maxSinglePageHeight ||
+        checklistResponses.length > maxChecklistItemsPerPage;
+
+      if (needsPageBreak) {
+        await this.generateSinglePagePDF(taskDetails, jobSheetData, comments);
+      } else {
+        await this.generateSinglePagePDF(taskDetails, jobSheetData, comments);
+      }
+
+      // Return PDF as Blob instead of saving
+      const blob = this.pdf.output("blob");
+      return blob;
+    } catch (error) {
+      console.error("Error generating PDF blob:", error);
+      throw error;
+    }
+  }
+
   private async generateSinglePagePDF(
     taskDetails: any,
     jobSheetData: any,

@@ -98,10 +98,31 @@ export const DirectPDFDownloadPage: React.FC = () => {
           comments
         );
 
-        console.log('✅ PDF downloaded successfully');
+        console.log('✅ PDF download initiated successfully');
         
-        // Optional: Close window after download (if opened in new tab)
-        // setTimeout(() => window.close(), 1000);
+        // Show success message briefly, then close or redirect
+        document.body.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: Arial, sans-serif; background: #f0f0f0;">
+            <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); text-align: center; max-width: 500px;">
+              <svg width="80" height="80" viewBox="0 0 80 80" style="margin-bottom: 20px;">
+                <circle cx="40" cy="40" r="36" fill="#10b981" opacity="0.2"/>
+                <path d="M25 40 L35 50 L55 30" stroke="#10b981" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <h2 style="color: #1f2937; margin: 0 0 10px 0; font-size: 24px;">PDF Download Started</h2>
+              <p style="color: #6b7280; margin: 0; font-size: 16px;">Your job sheet PDF has been generated and should download automatically.</p>
+              <p style="color: #9ca3af; margin: 20px 0 0 0; font-size: 14px;">Task ID: ${taskId}</p>
+            </div>
+          </div>
+        `;
+        
+        // Optional: Close window after 3 seconds (if opened in new tab)
+        setTimeout(() => {
+          try {
+            window.close();
+          } catch (e) {
+            console.log('Cannot close window - user may need to close manually');
+          }
+        }, 3000);
         
       } catch (error: any) {
         console.error('❌ Error downloading PDF:', error);
