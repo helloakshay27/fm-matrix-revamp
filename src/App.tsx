@@ -983,7 +983,7 @@ function App() {
                   element={<DirectPDFDownloadPage />}
                 />
                 <Route
-                  path="/api/direct-pdf-download/:taskId"
+                  path="/app/direct-pdf-download/:taskId"
                   element={<DirectPDFDownloadAPIPage />}
                 />
                 <Route path="/dashboard-mobile" element={<DashboardMobile />} />
