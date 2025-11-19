@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { Eye, Users, UserCheck, ClipboardList, Building2, Download } from 'lucide-react';
+import { Eye, Users, UserCheck, ClipboardList, Building2, Download, Plus, UploadIcon } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { SMTImportModal } from '@/components/SMTImportModal';
 
 const SMTDashboard = () => {
   // simple debounce hook (local)
@@ -70,6 +72,13 @@ const SMTDashboard = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const debouncedSearch = useDebounce(searchTerm, 500);
   const navigate = useNavigate();
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+
+  // Permission: show Action button only for these userIds
+  const allowedActionIds = useMemo(() => new Set(['92501', '88468']), []);
+  const currentUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+  const canSeeActionButton = currentUserId ? allowedActionIds.has(String(currentUserId)) : false;
 
   // Fetch data from API
   const fetchSMTs = useCallback(async (page: number, searchValue?: string) => {
@@ -571,10 +580,29 @@ const SMTDashboard = () => {
           </div>
         ))}
       </div> */}
+      {showActionPanel && (
+        <SelectionPanel
+          actions={[
+            { label: 'Import', icon: UploadIcon, onClick: () => setImportModalOpen(true) },
+          ]}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
       <EnhancedTable
         data={tableData}
         columns={columns}
         renderCell={renderCell}
+        leftActions={
+          canSeeActionButton ? (
+            <Button
+              onClick={() => setShowActionPanel(true)}
+              className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+            >
+              <Plus className="w-4 h-4" />
+              Action
+            </Button>
+          ) : undefined
+        }
         // selectable={true}
         selectedItems={selectedItems}
         onSelectAll={handleSelectAll}
@@ -612,6 +640,14 @@ const SMTDashboard = () => {
           </Pagination>
         </div>
       )}
+      <SMTImportModal 
+        isOpen={importModalOpen} 
+        onClose={() => setImportModalOpen(false)} 
+        onImport={() => {
+          // Refresh the table after successful import
+          fetchSMTs(currentPage, debouncedSearch);
+        }} 
+      />
     </div>
   );
 }

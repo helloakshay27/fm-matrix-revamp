@@ -10,7 +10,7 @@ import { ChevronDown } from 'lucide-react';
 
 interface AssetAnalyticsSelectorProps {
   onSelectionChange: (selectedOptions: string[]) => void;
-  dateRange?: { startDate?: Date; endDate?: Date };
+  dateRange: { startDate: Date; endDate: Date };
   selectedOptions?: string[];
 }
 
@@ -123,7 +123,7 @@ export const AssetAnalyticsSelector: React.FC<AssetAnalyticsSelectorProps> = ({
 
           <div className="pt-2 border-t">
             <p className="text-xs text-muted-foreground">
-              Date Range: {dateRange?.startDate?.toLocaleDateString() || 'N/A'} - {dateRange?.endDate?.toLocaleDateString() || 'N/A'}
+              Date Range: {dateRange.startDate.toLocaleDateString()} - {dateRange.endDate.toLocaleDateString()}
             </p>
           </div>
         </div>
