@@ -9,9 +9,9 @@ const CenterAssetsDowntimeMetricsCard: React.FC<Props> = ({ data }) => {
 
   return (
     <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
-      <h3 className="font-semibold text-base mb-4">Site Wise – Assets And Downtime Metrics</h3>
+      <h3 className="font-semibold text-base mb-4">Center Wise – Assets And Downtime Metrics</h3>
       <table className="min-w-[800px] w-full text-sm border">
-  <thead className="bg-[#DAD6C9] text-[#C72030] text-xs">
+        <thead className="bg-[#DAD6C9] text-[#C72030]">
           <tr>
             <th rowSpan={2} className="border px-2 py-2 text-left">Site Name</th>
             <th rowSpan={2} className="border px-2 py-2">Total No. of Assets</th>

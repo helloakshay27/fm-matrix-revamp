@@ -27,13 +27,6 @@ interface AssetAnalyticsCardProps {
 
 const COLORS = ['#C4AE9D', '#C4B99D', '#DAD6CA', '#D5DBDB', '#8B5A3C', '#A0A0A0', '#FFB366', '#FF8C42', '#6B8E23'];
 
-// Category-wise pie chart color palette - uses base colors and nearby variations
-const CATEGORY_COLORS = [
-  '#C4B99D', '#CFC4A8', '#D9CFB3', // C4B99D variations
-  '#D5DBDB', '#DCE0E0', '#E3E5E5', // D5DBDB variations
-  '#DAD6CA', '#DED9D1', '#E2DDD8', // DAD6CA variations
-];
-
 export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
   title,
   data,
@@ -100,7 +93,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 strokeWidth={2}
               >
                 {data.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={entry.color || CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip
@@ -236,11 +229,11 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
 
       </CardHeader>
       <CardContent className="px-6 pb-6">
-        {data && Array.isArray(data) && data.length > 0 && data.some((item: { value: number }) => item.value > 0) ? (
+        {data && Array.isArray(data) && data.length > 0 ? (
           <div className="bg-gray-50 rounded-lg p-4">
             {renderChart()}
           </div>
-        ) : data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length > 0 ? (
+        ) : data && typeof data === 'object' && Object.keys(data).length > 0 ? (
           <div className="bg-gray-50 rounded-lg p-4">
             {renderChart()}
           </div>

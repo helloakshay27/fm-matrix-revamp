@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,11 +51,6 @@ interface AssetStatistics {
       info: string;
       total: number;
     };
-  };
-  amc_assets?: {
-    assets_under_amc: number;
-    assets_missing_amc: number;
-    info: string;
   };
   // Legacy support for transformed data
   total_value?: string;
@@ -130,16 +125,6 @@ const METRICS_CONFIG = [
     iconBgColor: 'bg-[#C4B89D54]',
     downloadType: 'card_ppm_conduct_assets',
   },
-  {
-    id: 'amc_assets',
-    label: 'AMC Assets',
-    icon: BarChart3,
-    color: 'text-[#C72030]',
-    bgColor: 'bg-[#F6F4EE]',
-    borderColor: 'border-gray-200',
-    iconBgColor: 'bg-[#C4B89D54]',
-    downloadType: 'card_amc_assets',
-  },
 ];
 
 export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = ({
@@ -149,8 +134,7 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
     'assets_in_use', 
     'assets_in_breakdown', 
     'critical_assets_in_breakdown', 
-    'ppm_conduct_assets_count',
-    'amc_assets'
+    'ppm_conduct_assets_count'
   ],
   onMetricsChange,
   onDownload,
@@ -164,26 +148,16 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
   const [currentSelectedMetrics, setCurrentSelectedMetrics] = useState<string[]>(selectedMetrics);
 
   // Fetch asset statistics
-  const fetchStatistics = useCallback(async () => {
+  const fetchStatistics = async () => {
     setLoading(true);
     setError(null);
-
+    
     try {
-      // Defensive: ensure dateRange.startDate and endDate are valid Dates
-      let fromDate = dateRange?.startDate instanceof Date && !isNaN(dateRange.startDate.getTime())
-        ? dateRange.startDate
-        : new Date();
-      let toDate = dateRange?.endDate instanceof Date && !isNaN(dateRange.endDate.getTime())
-        ? dateRange.endDate
-        : new Date();
-
       const data = await assetAnalyticsAPI.getAssetStatistics(
-        fromDate,
-        toDate
+        dateRange.startDate,
+        dateRange.endDate
       );
-
-      console.log('AssetStatisticsSelector - Raw API response:', data);
-
+      
       // Transform the API response to our interface if needed
       // Handle new API structure where each field contains both count and info
       const transformedData: AssetStatistics = {
@@ -205,9 +179,6 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
           total_assets_count: data.total_assets.assets_total_count || 0
         } : data.total_assets_count
       };
-      
-      console.log('AssetStatisticsSelector - Transformed data:', transformedData);
-      
       setStatistics(transformedData);
     } catch (err) {
       console.error('Error fetching asset statistics:', err);
@@ -215,7 +186,7 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
     } finally {
       setLoading(false);
     }
-  }, [dateRange?.startDate, dateRange?.endDate]);
+  };
 
   // Handle metric selection
   const handleMetricToggle = (metricId: string) => {
@@ -255,10 +226,6 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
           await assetAnalyticsDownloadAPI.downloadCardPPMConductAssets(dateRange.startDate, dateRange.endDate);
           toast.success('PPM conduct assets data downloaded successfully!');
           break;
-        case 'card_amc_assets':
-          await assetAnalyticsDownloadAPI.downloadCardAMCAssets(dateRange.startDate, dateRange.endDate);
-          toast.success('AMC assets data downloaded successfully!');
-          break;
         default:
           toast.info('Download not available for this metric');
       }
@@ -270,8 +237,6 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
 
   // Format values
   const formatValue = (key: string, value: number | string | object | undefined) => {
-    console.log(`formatValue called for ${key}:`, value);
-    
     if (value === undefined || value === null) return 'N/A';
     
     // Handle new API structure
@@ -279,31 +244,18 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
       switch (key) {
         case 'total_assets_count':
           // Check for new structure first, then fallback to old structure
-          const totalAssets = (value as any).assets_total_count?.toLocaleString() || 
+          return (value as any).assets_total_count?.toLocaleString() || 
                  (value as any).total_assets_count?.toLocaleString() || 'N/A';
-          console.log(`Total assets formatted:`, totalAssets);
-          return totalAssets;
         case 'assets_in_use':
-          const inUse = (value as any).assets_in_use_total?.toLocaleString() || 'N/A';
-          console.log(`Assets in use formatted:`, inUse);
-          return inUse;
+          return (value as any).assets_in_use_total?.toLocaleString() || 'N/A';
         case 'assets_in_breakdown':
-          const inBreakdown = (value as any).assets_in_breakdown_total?.toLocaleString() || 'N/A';
-          console.log(`Assets in breakdown formatted:`, inBreakdown);
-          return inBreakdown;
+          return (value as any).assets_in_breakdown_total?.toLocaleString() || 'N/A';
         case 'critical_assets_in_breakdown':
-          const critical = (value as any).critical_assets_breakdown_total?.toLocaleString() || 'N/A';
-          console.log(`Critical assets formatted:`, critical);
-          return critical;
+          return (value as any).critical_assets_breakdown_total?.toLocaleString() || 'N/A';
         case 'ppm_conduct_assets_count':
           // Check for new structure first, then fallback to old structure
-          const ppm = (value as any).ppm_conduct_assets_count?.toLocaleString() || 
+          return (value as any).ppm_conduct_assets_count?.toLocaleString() || 
                  (value as any).total?.toLocaleString() || 'N/A';
-          console.log(`PPM assets formatted:`, ppm);
-          return ppm;
-        case 'amc_assets':
-          // Special handling for AMC assets - return the object itself
-          return value;
         default:
           return 'N/A';
       }
@@ -323,40 +275,26 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
 
   // Extract metric value from statistics
   const getMetricValue = (metricId: string) => {
-    console.log(`getMetricValue called for ${metricId}, statistics:`, statistics);
-    
-    let value;
     switch (metricId) {
       case 'total_assets_count':
-        value = statistics.total_assets || statistics.total_assets_count;
-        break;
+        return statistics.total_assets || statistics.total_assets_count;
       case 'assets_in_use':
-        value = statistics.assets_in_use;
-        break;
+        return statistics.assets_in_use;
       case 'assets_in_breakdown':
-        value = statistics.assets_in_breakdown;
-        break;
+        return statistics.assets_in_breakdown;
       case 'critical_assets_in_breakdown':
-        value = statistics.critical_assets_breakdown;
-        break;
+        return statistics.critical_assets_breakdown;
       case 'ppm_conduct_assets_count':
-        value = statistics.ppm_overdue_assets || statistics.ppm_conduct_assets_count;
-        break;
-      case 'amc_assets':
-        value = statistics.amc_assets;
-        break;
+        return statistics.ppm_overdue_assets || statistics.ppm_conduct_assets_count;
       default:
-        value = statistics[metricId as keyof AssetStatistics];
+        return statistics[metricId as keyof AssetStatistics];
     }
-    
-    console.log(`getMetricValue result for ${metricId}:`, value);
-    return value;
   };
 
   // Effects
   useEffect(() => {
     fetchStatistics();
-  }, [fetchStatistics]);
+  }, [dateRange]);
 
   // Render loading state
   if (loading) {
@@ -403,235 +341,156 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
     const displayValue = formatValue(metric.id, value);
     const isDataAvailable = displayValue !== 'N/A' && displayValue !== '0';
 
-    // Special rendering for AMC Assets card with two values
-    if (metric.id === 'amc_assets' && value && typeof value === 'object') {
-      const amcData = value as { assets_under_amc?: number; assets_missing_amc?: number; info?: string };
-      const underAmc = amcData.assets_under_amc ?? 0;
-      const missingAmc = amcData.assets_missing_amc ?? 0;
-      const hasData = underAmc > 0 || missingAmc > 0;
-
-      return (
-        <div
-          key={metric.id}
-          className={`group relative bg-[#F6F4EE] rounded-lg border border-[#E5E5E5] hover:shadow-md transition-all duration-200 overflow-hidden ${
-            !hasData ? 'opacity-60' : ''
-          }`}
-        >
-          <div className="p-6">
-            {/* Icon and Actions Row */}
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-lg bg-[#C4B89D54] flex items-center justify-center">
-                <Icon className="w-6 h-6 text-[#C72030]" />
-              </div>
-              <div className="flex items-center gap-1">
-                {amcData.info && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-white/50"
-                        >
-                          <Info className="w-4 h-4 text-[#6B7280]" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 text-white border-gray-700 max-w-xs">
-                        <p className="text-sm font-medium">{amcData.info}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                {hasDownload && showDownload && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDownload(metric.downloadType);
-                    }}
-                    className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-white/50"
-                    title={`Download ${metric.label} data`}
-                    disabled={!hasData}
-                  >
-                    <Download className="w-4 h-4 text-[#C72030]" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Title */}
-            <h3 className="text-sm font-medium text-[#6B7280] leading-tight mb-4">
-              {metric.label}
-            </h3>
-
-            {/* Two-part divided display */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* Assets Under AMC */}
-              <div className="border-r border-gray-300 pr-3">
-                <div className="text-xs text-[#6B7280] mb-1">Assets Under AMC</div>
-                <div className="text-2xl font-semibold text-[#1F2937]">
-                  {underAmc.toLocaleString()}
-                </div>
-              </div>
-              {/* Assets Missing AMC */}
-              <div className="pl-3">
-                <div className="text-xs text-[#6B7280] mb-1">Assets Missing AMC</div>
-                <div className="text-2xl font-semibold text-[#1F2937]">
-                  {missingAmc.toLocaleString()}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div
         key={metric.id}
-        className={`group relative bg-[#F6F4EE] rounded-lg border border-[#E5E5E5] hover:shadow-md transition-all duration-200 overflow-hidden ${
-          !isDataAvailable ? 'opacity-60' : ''
-        }`}
+        className={`group ${metric.bgColor} p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
+          isSelected
+            ? "shadow-lg"
+            : ""
+        } ${!isDataAvailable ? 'opacity-60' : ''}`}
+        onClick={() => handleMetricToggle(metric.id)}
       >
-        {/* Card Content */}
-        <div className="p-6">
-          {/* Icon and Actions Row */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 rounded-lg bg-[#C4B89D54] flex items-center justify-center">
-              <Icon className="w-6 h-6 text-[#C72030]" />
-            </div>
-            <div className="flex items-center gap-1">
-              {/* Info tooltip for each metric */}
-              {metric.id === 'total_assets_count' && statistics.total_assets?.assets_total_count_info && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-white/50"
-                      >
-                        <Info className="w-4 h-4 text-[#6B7280]" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 text-white border-gray-700 max-w-xs">
-                      <p className="text-sm font-medium">
-                        {statistics.total_assets.assets_total_count_info}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {metric.id === 'assets_in_use' && statistics.assets_in_use?.assets_in_use_info && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-white/50"
-                      >
-                        <Info className="w-4 h-4 text-[#6B7280]" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 text-white border-gray-700 max-w-xs">
-                      <p className="text-sm font-medium">
-                        {statistics.assets_in_use.assets_in_use_info}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {metric.id === 'assets_in_breakdown' && statistics.assets_in_breakdown?.assets_in_breakdown_info && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-white/50"
-                      >
-                        <Info className="w-4 h-4 text-[#6B7280]" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 text-white border-gray-700 max-w-xs">
-                      <p className="text-sm font-medium">
-                        {statistics.assets_in_breakdown.assets_in_breakdown_info}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {metric.id === 'critical_assets_in_breakdown' && statistics.critical_assets_breakdown?.critical_assets_breakdown_info && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-white/50"
-                      >
-                        <Info className="w-4 h-4 text-[#6B7280]" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 text-white border-gray-700 max-w-xs">
-                      <p className="text-sm font-medium">
-                        {statistics.critical_assets_breakdown.critical_assets_breakdown_info}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {metric.id === 'ppm_conduct_assets_count' && (statistics.ppm_overdue_assets?.ppm_conduct_assets_info?.info || statistics.ppm_conduct_assets_count?.ppm_conduct_assets_info) && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-white/50"
-                      >
-                        <Info className="w-4 h-4 text-[#6B7280]" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 text-white border-gray-700 max-w-xs">
-                      <p className="text-sm font-medium">
-                        {statistics.ppm_overdue_assets?.ppm_conduct_assets_info?.info || statistics.ppm_conduct_assets_count?.ppm_conduct_assets_info}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {hasDownload && showDownload && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownload(metric.downloadType);
-                  }}
-                  className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-white/50"
-                  title={`Download ${metric.label} data`}
-                  disabled={!isDataAvailable}
-                >
-                  <Download className="w-4 h-4 text-[#C72030]" />
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          {/* Title and Value */}
-          <div className="space-y-1">
-            <h3 className="text-sm font-medium text-[#6B7280] leading-tight">
-              {metric.label}
-            </h3>
-            <div className="text-3xl font-semibold text-[#1F2937]">
-              {displayValue}
-            </div>
-          
-          </div>
+        <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+          <Icon className="w-6 h-6 text-[#C72030]" />
         </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-medium text-[#1A1A1A]">
+              {metric.label}
+            </span>
+           
+            {/* {isSelected && (
+              <Badge variant="secondary" className="text-xs">
+                Selected
+              </Badge>
+            )} */}
+          </div>
+          <div className="text-2xl font-semibold text-[#1A1A1A]">
+            {displayValue}
+          </div>
+          {!isDataAvailable && (
+            <div className="text-xs text-gray-500">
+              No data available for the selected period
+            </div>
+          )}
+        </div>
+            {/* Info tooltip for each metric */}
+            {metric.id === 'total_assets_count' && statistics.total_assets?.assets_total_count_info && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100"
+                    >
+                      <Info className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                    <p className="max-w-xs text-sm font-medium">
+                      {statistics.total_assets.assets_total_count_info}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {metric.id === 'assets_in_use' && statistics.assets_in_use?.assets_in_use_info && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100"
+                    >
+                      <Info className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                    <p className="max-w-xs text-sm font-medium">
+                      {statistics.assets_in_use.assets_in_use_info}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {metric.id === 'assets_in_breakdown' && statistics.assets_in_breakdown?.assets_in_breakdown_info && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100"
+                    >
+                      <Info className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                    <p className="max-w-xs text-sm font-medium">
+                      {statistics.assets_in_breakdown.assets_in_breakdown_info}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {metric.id === 'critical_assets_in_breakdown' && statistics.critical_assets_breakdown?.critical_assets_breakdown_info && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100"
+                    >
+                      <Info className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                    <p className="max-w-xs text-sm font-medium">
+                      {statistics.critical_assets_breakdown.critical_assets_breakdown_info}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {metric.id === 'ppm_conduct_assets_count' && (statistics.ppm_overdue_assets?.ppm_conduct_assets_info?.info || statistics.ppm_conduct_assets_count?.ppm_conduct_assets_info) && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100"
+                    >
+                      <Info className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                    <p className="max-w-xs text-sm font-medium">
+                      {statistics.ppm_overdue_assets?.ppm_conduct_assets_info?.info || statistics.ppm_conduct_assets_count?.ppm_conduct_assets_info}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+        {hasDownload && showDownload && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDownload(metric.downloadType);
+            }}
+            className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100"
+            title={`Download ${metric.label} data`}
+            disabled={!isDataAvailable}
+          >
+            <Download className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+          </Button>
+        )}
       </div>
     );
   };
@@ -657,7 +516,7 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
       );
     }
 
-    // Default grid layout - responsive grid for 6 cards
+    // Default grid layout - responsive grid for 5 cards
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 min-h-[300px]">
         {allMetrics.map(renderMetricCard)}
