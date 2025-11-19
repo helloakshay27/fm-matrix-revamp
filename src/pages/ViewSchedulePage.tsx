@@ -869,6 +869,30 @@ export const ViewSchedulePage = () => {
                       <span className="text-gray-900 font-medium">{assetTask?.backup_assigned?.name || 'No backup assigned'}</span>
                     </div>
                     <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Supervisors</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {customForm?.supervisors && Array.isArray(customForm.supervisors) && customForm.supervisors.length > 0
+                          ? customForm.supervisors.map(supervisorId => {
+                              const supervisor = users.find(user => user.id === parseInt(supervisorId));
+                              return supervisor ? supervisor.full_name : `ID: ${supervisorId}`;
+                            }).join(', ')
+                          : 'No supervisors assigned'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Supplier</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {customForm?.supplier_id && suppliers.length > 0
+                          ? (() => {
+                              const supplier = suppliers.find(sup => sup.id === customForm.supplier_id);
+                              return supplier ? supplier.name : `ID: ${customForm.supplier_id}`;
+                            })()
+                          : 'No supplier assigned'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
                       <span className="text-gray-500 min-w-[140px]">Submission Time</span>
                       <span className="text-gray-500 mx-2">:</span>
                       <span className="text-gray-900 font-medium">{customForm?.submission_time_value} {customForm?.submission_time_type}</span>
