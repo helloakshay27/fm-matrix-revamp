@@ -2224,7 +2224,7 @@ export const PermitSetupDashboard = () => {
   // TYPE
   const handleTypeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!permitType.trim()) {
       toast.error('Please enter a Permit Type name');
@@ -2269,7 +2269,7 @@ export const PermitSetupDashboard = () => {
   // ACTIVITY
   const handlePermitActivitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (selectedPermitType === '') {
       toast.error('Please select a Category');
@@ -2325,7 +2325,7 @@ export const PermitSetupDashboard = () => {
   // SUB ACTIVITY
   const handlePermitSubActivitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (selectedPermitTypeForSub === '') {
       toast.error('Please select a Category');
@@ -2392,7 +2392,7 @@ export const PermitSetupDashboard = () => {
   // HAZARD CATEGORY
   const handlePermitHazardCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (selectedCategoryForHazard === '') {
       toast.error('Please select a Category');
@@ -2467,7 +2467,7 @@ export const PermitSetupDashboard = () => {
   // RISK
   const handlePermitRiskSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (selectedPermitTypeForRisk === '') {
       toast.error('Please select a Permit Type');
@@ -2550,7 +2550,7 @@ export const PermitSetupDashboard = () => {
   // SAFETY EQUIPMENT
   const handlePermitSafetyEquipmentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (selectedPermitTypeForSafety === '') {
       toast.error('Please select a Permit Type');
@@ -2644,9 +2644,9 @@ export const PermitSetupDashboard = () => {
     try {
       await apiDelete(id);
       await loadAllData();
-      toast({ title: "Success", description: "Permit Type deleted successfully!" });
+      toast.success("Permit Type deleted successfully!");
     } catch (e) {
-      toast({ title: "Error", description: "Delete failed. Please try again.", variant: "destructive" });
+      toast.error("Delete failed. Please try again.");
     }
   };
   const deleteActivity = async (id: number) => {
@@ -2654,9 +2654,9 @@ export const PermitSetupDashboard = () => {
     try {
       await apiDelete(id);
       await loadAllData();
-      toast({ title: "Success", description: "Permit Activity deleted successfully!" });
+      toast.success("Permit Activity deleted successfully!");
     } catch (e) {
-      toast({ title: "Error", description: "Delete failed. Please try again.", variant: "destructive" });
+      toast.error("Delete failed. Please try again.");
     }
   };
   const deleteSubActivity = async (id: number) => {
@@ -2664,9 +2664,9 @@ export const PermitSetupDashboard = () => {
     try {
       await apiDelete(id);
       await loadAllData();
-      toast({ title: "Success", description: "Permit Sub Activity deleted successfully!" });
+      toast.success("Permit Sub Activity deleted successfully!");
     } catch (e) {
-      toast({ title: "Error", description: "Delete failed. Please try again.", variant: "destructive" });
+      toast.error("Delete failed. Please try again.");
     }
   };
   const deleteHazard = async (id: number) => {
@@ -2674,9 +2674,9 @@ export const PermitSetupDashboard = () => {
     try {
       await apiDelete(id);
       await loadAllData();
-      toast({ title: "Success", description: "Permit Hazard Category deleted successfully!" });
+      toast.success("Permit Hazard Category deleted successfully!");
     } catch (e) {
-      toast({ title: "Error", description: "Delete failed. Please try again.", variant: "destructive" });
+      toast.error("Delete failed. Please try again.");
     }
   };
   const deleteRisk = async (id: number) => {
@@ -2684,9 +2684,9 @@ export const PermitSetupDashboard = () => {
     try {
       await apiDelete(id);
       await loadAllData();
-      toast({ title: "Success", description: "Permit Risk deleted successfully!" });
+      toast.success("Permit Risk deleted successfully!");
     } catch (e) {
-      toast({ title: "Error", description: "Delete failed. Please try again.", variant: "destructive" });
+      toast.error("Delete failed. Please try again.");
     }
   };
   const deleteSafety = async (id: number) => {
@@ -2694,9 +2694,9 @@ export const PermitSetupDashboard = () => {
     try {
       await apiDelete(id);
       await loadAllData();
-      toast({ title: "Success", description: "Permit Safety Equipment deleted successfully!" });
+      toast.success("Permit Safety Equipment deleted successfully!");
     } catch (e) {
-      toast({ title: "Error", description: "Delete failed. Please try again.", variant: "destructive" });
+      toast.error("Delete failed. Please try again.");
     }
   };
 
@@ -2813,7 +2813,7 @@ export const PermitSetupDashboard = () => {
                       label="Permit Type"
                       displayEmpty
                       MenuProps={menuProps}
-                      
+
                     >
                       <MenuItem value=""><em>Select Permit Type</em></MenuItem>
                       {isLoading ? (
