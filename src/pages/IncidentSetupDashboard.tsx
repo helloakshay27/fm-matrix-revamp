@@ -2495,7 +2495,7 @@ export const IncidentSetupDashboard = () => {
                   {selectedCategory === 'Approval Setup' ? (
                     <div className="flex-1">
                       <FormControl fullWidth size="small" className="mb-2">
-                        <InputLabel>Select Users *</InputLabel>
+                        <InputLabel>Select Users <span style={{ color: '#C72030' }}>*</span></InputLabel>
                         <MuiSelect
                           multiple
                           value={selectedApprovalUsers}
@@ -2567,7 +2567,7 @@ export const IncidentSetupDashboard = () => {
                     <>
                       <div className="flex-1">
                         <FormControl fullWidth size="small">
-                          <InputLabel>Level *</InputLabel>
+                          <InputLabel>Level <span style={{ color: '#C72030' }}>*</span></InputLabel>
                           <MuiSelect
                             value={selectedEscalationLevel}
                             onChange={e => setSelectedEscalationLevel(e.target.value)}
@@ -2590,7 +2590,7 @@ export const IncidentSetupDashboard = () => {
                       </div>
                       <div className="flex-1">
                         <TextField
-                          label="Escalate In Days *"
+                          label={<>Escalate In Days <span style={{ color: '#C72030' }}>*</span></>}
                           type="number"
                           value={escalateInDays}
                           onChange={e => setEscalateInDays(e.target.value)}
@@ -2603,7 +2603,7 @@ export const IncidentSetupDashboard = () => {
                       </div>
                       <div className="flex-1">
                         <FormControl fullWidth size="small" className="mb-2">
-                          <InputLabel>Escalate To Users *</InputLabel>
+                          <InputLabel>Escalate To Users <span style={{ color: '#C72030' }}>*</span></InputLabel>
                           <MuiSelect
                             multiple
                             value={escalateToUsers}
@@ -2702,7 +2702,7 @@ export const IncidentSetupDashboard = () => {
                     <>
                       <div className="flex-1">
                         <FormControl fullWidth size="small" className="mb-2">
-                          <InputLabel>Secondary Category *</InputLabel>
+                          <InputLabel>Secondary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
                           <MuiSelect
                             value={selectedSecondaryCategory}
                             onChange={(e) => setSelectedSecondaryCategory(e.target.value)}
@@ -2725,7 +2725,7 @@ export const IncidentSetupDashboard = () => {
                       </div>
                       <div className="flex-1">
                         <FormControl fullWidth size="small" className="mb-2">
-                          <InputLabel>Secondary Sub Category *</InputLabel>
+                          <InputLabel>Secondary Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
                           <MuiSelect
                             value={selectedSecondarySubCategory}
                             onChange={(e) => setSelectedSecondarySubCategory(e.target.value)}
@@ -2753,7 +2753,7 @@ export const IncidentSetupDashboard = () => {
                     <>
                       <div className="flex-1">
                         <FormControl fullWidth size="small" className="mb-2">
-                          <InputLabel>Secondary Category *</InputLabel>
+                          <InputLabel>Secondary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
                           <MuiSelect
                             value={selectedSecondaryCategory}
                             onChange={(e) => setSelectedSecondaryCategory(e.target.value)}
@@ -2776,7 +2776,7 @@ export const IncidentSetupDashboard = () => {
                       </div>
                       <div className="flex-1">
                         <FormControl fullWidth size="small" className="mb-2">
-                          <InputLabel>Secondary Sub Category *</InputLabel>
+                          <InputLabel>Secondary Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
                           <MuiSelect
                             value={selectedSecondarySubCategory}
                             onChange={(e) => setSelectedSecondarySubCategory(e.target.value)}
@@ -2801,7 +2801,7 @@ export const IncidentSetupDashboard = () => {
                       </div>
                       <div className="flex-1">
                         <FormControl fullWidth size="small" className="mb-2">
-                          <InputLabel>Secondary Sub Sub Category *</InputLabel>
+                          <InputLabel>Secondary Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
                           <MuiSelect
                             value={selectedSecondarySubSubCategory}
                             onChange={(e) => setSelectedSecondarySubSubCategory(e.target.value)}
@@ -2828,7 +2828,7 @@ export const IncidentSetupDashboard = () => {
                   ) : (selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') ? (
                     <div className="flex-1">
                       <FormControl fullWidth size="small">
-                        <InputLabel>Category *</InputLabel>
+                        <InputLabel>Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
                         <MuiSelect
                           value={selectedParentCategory}
                           onChange={e => {
@@ -2858,7 +2858,7 @@ export const IncidentSetupDashboard = () => {
                   {(selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') && (
                     <div className="flex-1">
                       <FormControl fullWidth size="small" className="mb-2">
-                        <InputLabel>Sub Category *</InputLabel>
+                        <InputLabel>Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
                         <MuiSelect
                           value={selectedSubCategory}
                           onChange={(e) => {
@@ -2887,7 +2887,7 @@ export const IncidentSetupDashboard = () => {
                   {selectedCategory === 'Sub Sub Sub Category' && (
                     <div className="flex-1">
                       <FormControl fullWidth size="small" className="mb-2">
-                        <InputLabel>Sub Sub Category *</InputLabel>
+                        <InputLabel>Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
                         <MuiSelect
                           value={selectedSubSubCategory}
                           onChange={(e) => setSelectedSubSubCategory(e.target.value)}
@@ -2915,7 +2915,7 @@ export const IncidentSetupDashboard = () => {
                   {selectedCategory !== 'Escalations' && selectedCategory !== 'Approval Setup' && (
                     <div className="flex-1">
                       <TextField
-                        label="Name *"
+                        label={<>Name <span style={{ color: '#C72030' }}>*</span></>}
                         type="text"
                         value={categoryName}
                         onChange={e => setCategoryName(e.target.value)}

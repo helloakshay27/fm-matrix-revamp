@@ -24,15 +24,20 @@ baseClient.interceptors.request.use(
       const token = urlParams.get("token");
       const email = urlParams.get("email");
       const organizationId = urlParams.get("organization_id");
+      const orgcompanyId = urlParams.get("org_id");
 
       // Store token in session storage if available
       if (token) {
         sessionStorage.setItem("token", token);
       }
 
-      if (!email || !organizationId) {
-        throw new Error("Email or organization_id not found in URL");
-      }
+      // if (!email || !organizationId) {
+      //   throw new Error("Email or organization_id not found in URL");
+      // }
+
+      // if (!orgcompanyId) {
+      //   throw new Error("org_id not found in URL");
+      // }
 
       // Determine API URL based on hostname
       const hostname = window.location.hostname;
@@ -55,12 +60,34 @@ baseClient.interceptors.request.use(
         apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
       }
 
+
+
+      if (isOmanSite || isFmSite) {
+        apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgcompanyId}`;
+      } else if (isViSite) {
+        apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`;
+      } else {
+        // Default fallback
+        apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgcompanyId}`;
+      }
+
+
+
+
+
+
+
+
       // Call organizations API with the email from URL
       const response = await axios.get(apiUrl);
-      const { organizations } = response.data;
+      const { organizations, backend_url } = response.data;
 
-      if (organizations && organizations.length > 0) {
-        // Find the organization matching the organization_id from URL
+      // First priority: Use backend_url from API response
+      if (backend_url) {
+        config.baseURL = backend_url;
+        console.log("Base URL set from backend_url:", backend_url);
+      } else if (organizations && organizations.length > 0) {
+        // Second priority: Find the organization matching the organization_id from URL
         const selectedOrg = organizations.find(
           (org: Organization) => org.id === parseInt(organizationId)
         );
