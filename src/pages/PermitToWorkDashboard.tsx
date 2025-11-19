@@ -739,6 +739,18 @@ export const PermitToWorkDashboard = () => {
     </div>
   );
 
+  const leftActions = (
+    <div className="flex items-center gap-2">
+      <Button
+        onClick={handleAddPermit}
+        className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
+      >
+        <Plus className="w-4 h-4" />
+        Create Permit
+      </Button>
+    </div>
+  )
+
   return (
     <div className="p-4 sm:p-6">
       <Tabs defaultValue="list" className="w-full">
@@ -931,17 +943,7 @@ export const PermitToWorkDashboard = () => {
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 ">
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={handleAddPermit}
-                className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Create Permit
-              </Button>
-            </div>
-          </div>
+
 
           <EnhancedTable
             data={permits}
@@ -961,6 +963,8 @@ export const PermitToWorkDashboard = () => {
             onFilterClick={() => setIsFilterModalOpen(true)}
             emptyMessage={error || "No permits found"}
             storageKey="permit-dashboard-table"
+            leftActions={leftActions}
+
           />
 
           {/* Standard pagination like AMC/Asset dashboards */}

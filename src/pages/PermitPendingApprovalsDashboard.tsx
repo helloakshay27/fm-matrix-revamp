@@ -227,7 +227,7 @@ export const PermitPendingApprovalsDashboard = () => {
           emptyMessage={loading ? 'Loading pending approvals...' : 'No pending approvals found'}
           loading={loading}
           pagination={true}
-          pageSize={10}
+          pageSize={15}
           storageKey="pending-approvals-table"
         />
       </div>
