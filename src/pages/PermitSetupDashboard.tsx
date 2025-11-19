@@ -1706,7 +1706,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, Edit, Trash2, X } from 'lucide-react';
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 // import { API_CONFIG, getAuthenticatedFetchOptions, getFullUrl } from '@/config/apiConfig';
 import {
   FormControl,
@@ -2224,15 +2224,16 @@ export const PermitSetupDashboard = () => {
   // TYPE
   const handleTypeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!permitType.trim()) return;
+    
+    // Validate required fields
+    if (!permitType.trim()) {
+      toast.error('Please enter a Permit Type name');
+      return;
+    }
 
     // Validate text-only input
     if (!validateTextOnly(permitType.trim())) {
-      toast({
-        title: "Invalid Input",
-        description: "Only letters and spaces are allowed. No numbers or special characters.",
-        variant: "destructive",
-      });
+      toast.error('Only letters and spaces are allowed. No numbers or special characters.');
       return;
     }
 
@@ -2240,27 +2241,17 @@ export const PermitSetupDashboard = () => {
     try {
       if (editingTypeId) {
         await apiUpdate(editingTypeId, { name: permitType.trim(), active: true, parent_id: null, tag_type: 'PermitType' });
-        toast({
-          title: "Success",
-          description: "Permit Type updated successfully!",
-        });
+        toast.success('Permit Type updated successfully!');
       } else {
         await apiCreate({ name: permitType.trim(), active: true, parent_id: null, tag_type: 'PermitType' });
-        toast({
-          title: "Success",
-          description: "Permit Type created successfully!",
-        });
+        toast.success('Permit Type created successfully!');
       }
       setPermitType('');
       setEditingTypeId(null);
       await loadAllData();
     } catch (err) {
       console.error('Type submit failed:', err);
-      toast({
-        title: "Error",
-        description: "Failed to save permit type. Please try again.",
-        variant: "destructive",
-      });
+      toast.error('Failed to save permit type. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -2278,15 +2269,20 @@ export const PermitSetupDashboard = () => {
   // ACTIVITY
   const handlePermitActivitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!permitActivity.trim() || selectedPermitType === '') return;
+    
+    // Validate required fields
+    if (selectedPermitType === '') {
+      toast.error('Please select a Category');
+      return;
+    }
+    if (!permitActivity.trim()) {
+      toast.error('Please enter a Permit Activity name');
+      return;
+    }
 
     // Validate text-only input
     if (!validateTextOnly(permitActivity.trim())) {
-      toast({
-        title: "Invalid Input",
-        description: "Only letters and spaces are allowed. No numbers or special characters.",
-        variant: "destructive",
-      });
+      toast.error('Only letters and spaces are allowed. No numbers or special characters.');
       return;
     }
 
@@ -2296,18 +2292,12 @@ export const PermitSetupDashboard = () => {
         await apiUpdate(editingActivityId, {
           name: permitActivity.trim(), active: true, parent_id: toNum(selectedPermitType), tag_type: 'PermitActivity'
         });
-        toast({
-          title: "Success",
-          description: "Permit Activity updated successfully!",
-        });
+        toast.success('Permit Activity updated successfully!');
       } else {
         await apiCreate({
           name: permitActivity.trim(), active: true, parent_id: toNum(selectedPermitType), tag_type: 'PermitActivity'
         });
-        toast({
-          title: "Success",
-          description: "Permit Activity created successfully!",
-        });
+        toast.success('Permit Activity created successfully!');
       }
       setPermitActivity('');
       setSelectedPermitType('');
@@ -2315,11 +2305,7 @@ export const PermitSetupDashboard = () => {
       await loadAllData();
     } catch (err) {
       console.error('Activity submit failed:', err);
-      toast({
-        title: "Error",
-        description: "Failed to save permit activity. Please try again.",
-        variant: "destructive",
-      });
+      toast.error('Failed to save permit activity. Please try again.');
     } finally {
       setIsSubmittingPermitActivity(false);
     }
@@ -2339,15 +2325,24 @@ export const PermitSetupDashboard = () => {
   // SUB ACTIVITY
   const handlePermitSubActivitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!permitSubActivity.trim() || selectedPermitTypeForSub === '' || selectedPermitActivity === '') return;
+    
+    // Validate required fields
+    if (selectedPermitTypeForSub === '') {
+      toast.error('Please select a Category');
+      return;
+    }
+    if (selectedPermitActivity === '') {
+      toast.error('Please select a Sub Category');
+      return;
+    }
+    if (!permitSubActivity.trim()) {
+      toast.error('Please enter a Permit Sub Activity name');
+      return;
+    }
 
     // Validate text-only input
     if (!validateTextOnly(permitSubActivity.trim())) {
-      toast({
-        title: "Invalid Input",
-        description: "Only letters and spaces are allowed. No numbers or special characters.",
-        variant: "destructive",
-      });
+      toast.error('Only letters and spaces are allowed. No numbers or special characters.');
       return;
     }
 
@@ -2358,18 +2353,12 @@ export const PermitSetupDashboard = () => {
         await apiUpdate(editingSubActivityId, {
           name: permitSubActivity.trim(), active: true, parent_id: parentActivityId, tag_type: 'PermitSubActivity'
         });
-        toast({
-          title: "Success",
-          description: "Permit Sub Activity updated successfully!",
-        });
+        toast.success('Permit Sub Activity updated successfully!');
       } else {
         await apiCreate({
           name: permitSubActivity.trim(), active: true, parent_id: parentActivityId, tag_type: 'PermitSubActivity'
         });
-        toast({
-          title: "Success",
-          description: "Permit Sub Activity created successfully!",
-        });
+        toast.success('Permit Sub Activity created successfully!');
       }
       setPermitSubActivity('');
       setSelectedPermitTypeForSub('');
@@ -2378,11 +2367,7 @@ export const PermitSetupDashboard = () => {
       await loadAllData();
     } catch (err) {
       console.error('Sub-activity submit failed:', err);
-      toast({
-        title: "Error",
-        description: "Failed to save permit sub activity. Please try again.",
-        variant: "destructive",
-      });
+      toast.error('Failed to save permit sub activity. Please try again.');
     } finally {
       setIsSubmittingPermitSubActivity(false);
     }
@@ -2407,15 +2392,28 @@ export const PermitSetupDashboard = () => {
   // HAZARD CATEGORY
   const handlePermitHazardCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!permitHazardCategory.trim() || selectedSubSubCategoryForHazard === '') return;
+    
+    // Validate required fields
+    if (selectedCategoryForHazard === '') {
+      toast.error('Please select a Category');
+      return;
+    }
+    if (selectedSubCategoryForHazard === '') {
+      toast.error('Please select a Sub Category');
+      return;
+    }
+    if (selectedSubSubCategoryForHazard === '') {
+      toast.error('Please select a Sub Sub Category');
+      return;
+    }
+    if (!permitHazardCategory.trim()) {
+      toast.error('Please enter a Permit Hazard Category name');
+      return;
+    }
 
     // Validate text-only input
     if (!validateTextOnly(permitHazardCategory.trim())) {
-      toast({
-        title: "Invalid Input",
-        description: "Only letters and spaces are allowed. No numbers or special characters.",
-        variant: "destructive",
-      });
+      toast.error('Only letters and spaces are allowed. No numbers or special characters.');
       return;
     }
 
@@ -2426,18 +2424,12 @@ export const PermitSetupDashboard = () => {
         await apiUpdate(editingHazardId, {
           name: permitHazardCategory.trim(), active: true, parent_id: parentSubId, tag_type: 'PermitHazardCategory'
         });
-        toast({
-          title: "Success",
-          description: "Permit Hazard Category updated successfully!",
-        });
+        toast.success('Permit Hazard Category updated successfully!');
       } else {
         await apiCreate({
           name: permitHazardCategory.trim(), active: true, parent_id: parentSubId, tag_type: 'PermitHazardCategory'
         });
-        toast({
-          title: "Success",
-          description: "Permit Hazard Category created successfully!",
-        });
+        toast.success('Permit Hazard Category created successfully!');
       }
       setPermitHazardCategory('');
       setSelectedCategoryForHazard('');
@@ -2447,11 +2439,7 @@ export const PermitSetupDashboard = () => {
       await loadAllData();
     } catch (err) {
       console.error('Hazard category submit failed:', err);
-      toast({
-        title: "Error",
-        description: "Failed to save hazard category. Please try again.",
-        variant: "destructive",
-      });
+      toast.error('Failed to save hazard category. Please try again.');
     } finally {
       setIsSubmittingPermitHazardCategory(false);
     }
@@ -2479,15 +2467,32 @@ export const PermitSetupDashboard = () => {
   // RISK
   const handlePermitRiskSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!permitRisk.trim() || selectedSubSubSubCategoryForRisk === '') return;
+    
+    // Validate required fields
+    if (selectedPermitTypeForRisk === '') {
+      toast.error('Please select a Permit Type');
+      return;
+    }
+    if (selectedSubCategoryForRisk === '') {
+      toast.error('Please select a Sub Category');
+      return;
+    }
+    if (selectedSubSubCategoryForRisk === '') {
+      toast.error('Please select a Sub Sub Category');
+      return;
+    }
+    if (selectedSubSubSubCategoryForRisk === '') {
+      toast.error('Please select a Sub Sub Sub Category');
+      return;
+    }
+    if (!permitRisk.trim()) {
+      toast.error('Please enter a Permit Risk name');
+      return;
+    }
 
     // Validate text-only input
     if (!validateTextOnly(permitRisk.trim())) {
-      toast({
-        title: "Invalid Input",
-        description: "Only letters and spaces are allowed. No numbers or special characters.",
-        variant: "destructive",
-      });
+      toast.error('Only letters and spaces are allowed. No numbers or special characters.');
       return;
     }
 
@@ -2498,18 +2503,12 @@ export const PermitSetupDashboard = () => {
         await apiUpdate(editingRiskId, {
           name: permitRisk.trim(), active: true, parent_id: parentHazardId, tag_type: 'PermitRisk'
         });
-        toast({
-          title: "Success",
-          description: "Permit Risk updated successfully!",
-        });
+        toast.success('Permit Risk updated successfully!');
       } else {
         await apiCreate({
           name: permitRisk.trim(), active: true, parent_id: parentHazardId, tag_type: 'PermitRisk'
         });
-        toast({
-          title: "Success",
-          description: "Permit Risk created successfully!",
-        });
+        toast.success('Permit Risk created successfully!');
       }
       setPermitRisk('');
       setSelectedPermitTypeForRisk('');
@@ -2520,11 +2519,7 @@ export const PermitSetupDashboard = () => {
       await loadAllData();
     } catch (err) {
       console.error('Risk submit failed:', err);
-      toast({
-        title: "Error",
-        description: "Failed to save permit risk. Please try again.",
-        variant: "destructive",
-      });
+      toast.error('Failed to save permit risk. Please try again.');
     } finally {
       setIsSubmittingPermitRisk(false);
     }
@@ -2555,15 +2550,36 @@ export const PermitSetupDashboard = () => {
   // SAFETY EQUIPMENT
   const handlePermitSafetyEquipmentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!permitSafetyEquipment.trim() || selectedPermitRiskForSafety === '') return;
+    
+    // Validate required fields
+    if (selectedPermitTypeForSafety === '') {
+      toast.error('Please select a Permit Type');
+      return;
+    }
+    if (selectedPermitActivityForSafety === '') {
+      toast.error('Please select a Permit Activity');
+      return;
+    }
+    if (selectedPermitSubActivityForSafety === '') {
+      toast.error('Please select a Permit Sub Activity');
+      return;
+    }
+    if (selectedPermitHazardCategoryForSafety === '') {
+      toast.error('Please select a Permit Hazard Category');
+      return;
+    }
+    if (selectedPermitRiskForSafety === '') {
+      toast.error('Please select a Permit Risk');
+      return;
+    }
+    if (!permitSafetyEquipment.trim()) {
+      toast.error('Please enter a Permit Safety Equipment name');
+      return;
+    }
 
     // Validate text-only input
     if (!validateTextOnly(permitSafetyEquipment.trim())) {
-      toast({
-        title: "Invalid Input",
-        description: "Only letters and spaces are allowed. No numbers or special characters.",
-        variant: "destructive",
-      });
+      toast.error('Only letters and spaces are allowed. No numbers or special characters.');
       return;
     }
 
@@ -2574,18 +2590,12 @@ export const PermitSetupDashboard = () => {
         await apiUpdate(editingSafetyId, {
           name: permitSafetyEquipment.trim(), active: true, parent_id: parentRiskId, tag_type: 'PermitSafetyEquipment'
         });
-        toast({
-          title: "Success",
-          description: "Permit Safety Equipment updated successfully!",
-        });
+        toast.success('Permit Safety Equipment updated successfully!');
       } else {
         await apiCreate({
           name: permitSafetyEquipment.trim(), active: true, parent_id: parentRiskId, tag_type: 'PermitSafetyEquipment'
         });
-        toast({
-          title: "Success",
-          description: "Permit Safety Equipment created successfully!",
-        });
+        toast.success('Permit Safety Equipment created successfully!');
       }
       setPermitSafetyEquipment('');
       setSelectedPermitTypeForSafety('');
@@ -2597,11 +2607,7 @@ export const PermitSetupDashboard = () => {
       await loadAllData();
     } catch (err) {
       console.error('Safety equipment submit failed:', err);
-      toast({
-        title: "Error",
-        description: "Failed to save permit safety equipment. Please try again.",
-        variant: "destructive",
-      });
+      toast.error('Failed to save permit safety equipment. Please try again.');
     } finally {
       setIsSubmittingPermitSafetyEquipment(false);
     }
