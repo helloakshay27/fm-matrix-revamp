@@ -50,14 +50,8 @@ import { AMCCoverageByLocationCard } from "@/components/AMCCoverageByLocationCar
 import { InventoryAnalyticsCard } from "@/components/InventoryAnalyticsCard";
 import { ScheduleAnalyticsCard } from "@/components/dashboard/ScheduleAnalyticsCard";
 // Import individual asset analytics components
-import {
-  AssetStatusCard,
-  AssetStatisticsCard,
-  AssetGroupWiseCard,
-  AssetCategoryWiseCard,
-  AssetDistributionCard,
-} from "@/components/asset-analytics";
-import { AssetAnalyticsComponents } from "@/components/AssetAnalyticsComponents";
+import { AssetStatisticsCard } from "@/components/asset-analytics";
+import { AssetAnalyticsCard } from "@/components/AssetAnalyticsCard";
 // Import individual ticket analytics components from TicketDashboard
 import communityAnalyticsAPI from "@/services/communityAnalyticsAPI";
 import { CommunityEngagementMetricsCard } from "@/components/community/CommunityEngagementMetricsCard";
@@ -184,6 +178,161 @@ type LastFailedMap = Partial<
 > &
   Record<string, Record<string, string>>;
 
+const buildAssetStatusChartData = (data: any) => {
+  const statusData = data?.assets_statistics?.status || data || {};
+  const siteNames =
+    data?.assets_statistics?.filters?.site_names ||
+    data?.filters?.site_names ||
+    [];
+  const hasSiteNames = Array.isArray(siteNames) && siteNames.length > 0;
+
+  const chartData = [
+    {
+      name: "In Use",
+      value:
+        statusData.assets_in_use_total ??
+        statusData.total_assets_in_use ??
+        0,
+      color: "#C4B99D",
+    },
+    {
+      name: "Breakdown",
+      value:
+        statusData.assets_in_breakdown_total ??
+        statusData.total_assets_in_breakdown ??
+        0,
+      color: "#DAD6CA",
+    },
+    {
+      name: "In Store",
+      value: statusData.in_store ?? 0,
+      color: "#D5DBDB",
+    },
+    {
+      name: "Disposed",
+      value: statusData.in_disposed ?? 0,
+      color: "#A5A5A5",
+    },
+  ].filter((item) => item.value > 0);
+
+  const info =
+    statusData.info ??
+    (hasSiteNames
+      ? `Status distribution for ${siteNames.join(", ")}`
+      : "Overall distribution between in-use, breakdown, in-store, disposed assets");
+
+  return {
+    data: chartData.length
+      ? chartData
+      : [{ name: "No Data", value: 0, color: "#D5DBDB" }],
+    info,
+  };
+};
+
+const buildAssetDistributionChartData = (data: any) => {
+  const distribution =
+    data?.assets_statistics?.assets_distribution ||
+    data?.assets_distribution ||
+    {};
+  const siteNames =
+    data?.assets_statistics?.filters?.site_names ||
+    data?.filters?.site_names ||
+    [];
+  const hasSiteNames = Array.isArray(siteNames) && siteNames.length > 0;
+
+  const itAssets =
+    distribution.it_assets_count ?? data?.info?.total_it_assets ?? 0;
+  const nonItAssets =
+    distribution.non_it_assets_count ??
+    data?.info?.total_non_it_assets ??
+    0;
+
+  const chartData =
+    itAssets + nonItAssets > 0
+      ? [
+          { name: "IT Equipment", value: itAssets, color: "#C4B99D" },
+          { name: "Non-IT Equipment", value: nonItAssets, color: "#DAD6CA" },
+        ]
+      : [{ name: "No Data", value: 0, color: "#D5DBDB" }];
+
+  const info = hasSiteNames
+    ? `IT vs Non-IT assets for ${siteNames.join(", ")}`
+    : data?.info?.info || "Distribution between IT and Non-IT assets";
+
+  return { data: chartData, info };
+};
+
+const buildAssetCategoryChartData = (data: any) => {
+  let categories: Array<{ name: string; value: number }> = [];
+  const siteNames =
+    data?.assets_statistics?.filters?.site_names ||
+    data?.filters?.site_names ||
+    [];
+  const hasSiteNames = Array.isArray(siteNames) && siteNames.length > 0;
+
+  if (data?.assets_statistics?.asset_categorywise) {
+    categories = data.assets_statistics.asset_categorywise.map((item: any) => ({
+      name: item.category,
+      value: Number(item.count) || 0,
+    }));
+  } else if (Array.isArray(data?.categories)) {
+    categories = data.categories.map((item: any) => ({
+      name: item.category_name,
+      value: Number(item.asset_count) || 0,
+    }));
+  } else if (data?.asset_type_category_counts) {
+    categories = Object.entries(data.asset_type_category_counts).map(
+      ([name, value]: [string, any]) => ({
+        name,
+        value: Number(value) || 0,
+      })
+    );
+  }
+
+  const info = hasSiteNames
+    ? `Category distribution for ${siteNames.join(", ")}`
+    : "Assets category-wise based on site/date range";
+
+  if (!categories.length) {
+    categories = [{ name: "No Data", value: 0 }];
+  }
+
+  return { data: categories, info };
+};
+
+const buildAssetGroupChartData = (data: any) => {
+  let groups: Array<{ name: string; value: number }> = [];
+  const siteNames =
+    data?.assets_statistics?.filters?.site_names ||
+    data?.filters?.site_names ||
+    [];
+  const hasSiteNames = Array.isArray(siteNames) && siteNames.length > 0;
+
+  if (data?.assets_statistics?.assets_group_count_by_name) {
+    groups = data.assets_statistics.assets_group_count_by_name.map(
+      (item: any) => ({
+        name: item.group_name,
+        value: Number(item.count) || 0,
+      })
+    );
+  } else if (Array.isArray(data?.group_wise_assets)) {
+    groups = data.group_wise_assets.map((item: any) => ({
+      name: item.group_name,
+      value: Number(item.asset_count) || 0,
+    }));
+  }
+
+  const info = hasSiteNames
+    ? `Group-wise assets for ${siteNames.join(", ")}`
+    : data?.info || "Assets group-wise based on site/date range";
+
+  if (!groups.length) {
+    groups = [{ name: "No Data", value: 0 }];
+  }
+
+  return { data: groups, info };
+};
+
 // Sortable Chart Item Component for Drag and Drop
 const SortableChartItem = ({
   id,
@@ -247,7 +396,7 @@ const SortableChartItem = ({
     </div>
   );
 };
-
+ 
 // Simple loader overlay to show on each section while data is loading
 const SectionLoader: React.FC<{
   loading: boolean;
@@ -1640,6 +1789,10 @@ export const Dashboard = () => {
   };
 
   const summaryStats = getSummaryStats();
+  const assetDateRange =
+    dateRange?.from && dateRange?.to
+      ? { startDate: dateRange.from, endDate: dateRange.to }
+      : null;
 
   const renderAnalyticsCard = (analytic: SelectedAnalytic) => {
     const errorFor = (a: SelectedAnalytic): string | null => {
@@ -2168,50 +2321,129 @@ export const Dashboard = () => {
             title={analytic.title}
             data={data}
             type={analytic.endpoint as any}
-            dateRange={
-              dateRange
-                ? {
-                    startDate: dateRange.from!,
-                    endDate: dateRange.to!,
-                  }
-                : undefined
-            }
           />
         );
-      case "assets":
-        // Map endpoint to AssetAnalyticsComponents type
-        const getAssetAnalyticsType = (endpoint: string): string[] => {
-          switch (endpoint) {
-            case "asset_status":
-              return ["statusDistribution"];
-            case "asset_statistics":
-              return ["assetStatistics"];
-            case "group_wise":
-              return ["groupWise"];
-            case "category_wise":
-              return ["categoryWise"];
-            case "asset_distribution":
-              return ["assetDistributions"];
-            default:
-              return ["assetStatistics"];
-          }
+      case "assets": {
+        const downloadGuard = (
+          fn: (from: Date, to: Date) => Promise<void>
+        ): (() => Promise<void>) | undefined => {
+          if (!assetDateRange) return undefined;
+          return () => fn(assetDateRange.startDate, assetDateRange.endDate);
         };
 
-        // Use the comprehensive AssetAnalyticsComponents for individual asset analytics
-        // This provides better integration and handles asset-related charts consistently
-        return (
-          <AssetAnalyticsComponents
-            defaultDateRange={
-              dateRange?.from && dateRange?.to
-                ? {
-                    fromDate: dateRange.from,
-                    toDate: dateRange.to,
+        switch (analytic.endpoint) {
+          case "asset_status": {
+            if (!assetDateRange) return null;
+            const { data: chartData, info } = buildAssetStatusChartData(rawData);
+            return (
+              <AssetAnalyticsCard
+                title={analytic.title}
+                data={chartData}
+                type="statusDistribution"
+                dateRange={assetDateRange}
+                info={info}
+                onDownload={downloadGuard(
+                  assetAnalyticsDownloadAPI.downloadAssetsInUseData
+                )}
+              />
+            );
+          }
+          case "asset_statistics": {
+            const metricDownloads = assetDateRange
+              ? {
+                  total_assets: downloadGuard(
+                    assetAnalyticsDownloadAPI.downloadCardTotalAssets
+                  ),
+                  assets_in_use: downloadGuard(
+                    assetAnalyticsDownloadAPI.downloadCardAssetsInUse
+                  ),
+                  assets_in_breakdown: downloadGuard(
+                    assetAnalyticsDownloadAPI.downloadCardAssetsInBreakdown
+                  ),
+                  critical_assets_breakdown: downloadGuard(
+                    assetAnalyticsDownloadAPI.downloadCardCriticalAssetsInBreakdown
+                  ),
+                  ppm_assets: downloadGuard(
+                    assetAnalyticsDownloadAPI.downloadCardPPMConductAssets
+                  ),
+                  amc_assets: downloadGuard(
+                    assetAnalyticsDownloadAPI.downloadCardAMCAssets
+                  ),
+                }
+              : undefined;
+
+            const onDownloadAll =
+              metricDownloads && Object.values(metricDownloads).some(Boolean)
+                ? async () => {
+                    for (const handler of Object.values(metricDownloads)) {
+                      if (handler) {
+                        await handler();
+                      }
+                    }
                   }
-                : undefined
-            }
-            selectedEndpoint={analytic.endpoint}
-          />
-        );
+                : undefined;
+
+            return (
+              <AssetStatisticsCard
+                data={data}
+                onDownload={onDownloadAll}
+                metricDownloads={metricDownloads}
+              />
+            );
+          }
+          case "group_wise": {
+            if (!assetDateRange) return null;
+            const { data: chartData, info } = buildAssetGroupChartData(rawData);
+            return (
+              <AssetAnalyticsCard
+                title={analytic.title}
+                data={chartData}
+                type="groupWise"
+                dateRange={assetDateRange}
+                info={info}
+                onDownload={downloadGuard(
+                  assetAnalyticsDownloadAPI.downloadGroupWiseAssetsData
+                )}
+              />
+            );
+          }
+          case "category_wise": {
+            if (!assetDateRange) return null;
+            const { data: chartData, info } = buildAssetCategoryChartData(rawData);
+            return (
+              <AssetAnalyticsCard
+                title={analytic.title}
+                data={chartData}
+                type="categoryWise"
+                dateRange={assetDateRange}
+                info={info}
+                onDownload={downloadGuard(
+                  assetAnalyticsDownloadAPI.downloadCategoryWiseAssetsData
+                )}
+              />
+            );
+          }
+          case "asset_distribution": {
+            if (!assetDateRange) return null;
+            const { data: chartData, info } =
+              buildAssetDistributionChartData(rawData);
+            return (
+              <AssetAnalyticsCard
+                title={analytic.title}
+                data={chartData}
+                type="assetDistributions"
+                dateRange={assetDateRange}
+                info={info}
+                onDownload={downloadGuard(
+                  assetAnalyticsDownloadAPI.downloadAssetDistributionsData
+                )}
+              />
+            );
+          }
+          default:
+            return null;
+        }
+      }
       case "meeting_room":
         switch (analytic.endpoint) {
           case "revenue_generation_overview": {

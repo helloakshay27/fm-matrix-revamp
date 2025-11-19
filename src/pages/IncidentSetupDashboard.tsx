@@ -237,8 +237,10 @@ export const IncidentSetupDashboard = () => {
   const [whoGotInjured, setWhoGotInjured] = useState([]);
   const [propertyDamageCategories, setPropertyDamageCategories] = useState([]);
   const [rcaCategories, setRcaCategories] = useState([]);
+  const [substandardActCategories, setSubstandardActCategories] = useState([]);
+  const [substandardConditionCategories, setSubstandardConditionCategories] = useState([]);
   const [escalateToUsersList, setEscalateToUsersList] = useState([]);
-  const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category'];
+  const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category', 'Substandard Act', 'Substandard Condition'];
 
 
 
@@ -425,6 +427,50 @@ export const IncidentSetupDashboard = () => {
     }
   };
 
+  // Fetch SubstandardAct data from API
+  const fetchSubstandardActCategories = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const substandardActTypes = (result.data || [])
+          .filter(item => item.tag_type === 'SubstandardAct')
+          .map(item => ({ id: item.id, name: item.name }));
+        setSubstandardActCategories(substandardActTypes);
+      } else {
+        console.error('Failed to fetch Substandard Act categories');
+      }
+    } catch (error) {
+      console.error('Error fetching Substandard Act categories:', error);
+    }
+  };
+
+  // Fetch SubstandardCondition data from API
+  const fetchSubstandardConditionCategories = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const substandardConditionTypes = (result.data || [])
+          .filter(item => item.tag_type === 'SubstandardCondition')
+          .map(item => ({ id: item.id, name: item.name }));
+        setSubstandardConditionCategories(substandardConditionTypes);
+      } else {
+        console.error('Failed to fetch Substandard Condition categories');
+      }
+    } catch (error) {
+      console.error('Error fetching Substandard Condition categories:', error);
+    }
+  };
+
   // Fetch PropertyDamageCategory data from API
   const fetchPropertyDamageCategories = async () => {
     try {
@@ -588,6 +634,10 @@ export const IncidentSetupDashboard = () => {
       fetchIncidenceLevels();
     } else if (selectedCategory === 'RCA Category') {
       fetchRCACategories();
+    } else if (selectedCategory === 'Substandard Act') {
+      fetchSubstandardActCategories();
+    } else if (selectedCategory === 'Substandard Condition') {
+      fetchSubstandardConditionCategories();
     } else if (selectedCategory === 'Escalations') {
       fetchIncidenceLevels();
       fetchEscalateToUsers();
@@ -643,6 +693,10 @@ export const IncidentSetupDashboard = () => {
         if (!categoryName.trim()) return false;
       } else if (selectedCategory === 'RCA Category') {
         if (!categoryName.trim()) return false;
+      } else if (selectedCategory === 'Substandard Act') {
+        if (!categoryName.trim()) return false;
+      } else if (selectedCategory === 'Substandard Condition') {
+        if (!categoryName.trim()) return false;
       }
       return true;
     };
@@ -689,13 +743,14 @@ export const IncidentSetupDashboard = () => {
         if (response.ok) {
           await fetchCategories();
           setCategoryName('');
+          toast.success('Category added successfully!');
         } else {
           console.error('Failed to add category:', response.statusText);
-          alert('Failed to add category. Please try again.');
+          toast.error('Failed to add category. Please try again.');
         }
       } catch (error) {
         console.error('Error adding category:', error);
-        alert('An error occurred while adding the category.');
+        toast.error('An error occurred while adding the category.');
       }
     } else if (selectedCategory === 'Sub Category') {
       // Use selectedParentCategory as the id directly
@@ -720,13 +775,14 @@ export const IncidentSetupDashboard = () => {
             // Always refetch subcategories from API to show latest data
             await fetchSubCategories();
             setCategoryName('');
+            toast.success('Sub Category added successfully!');
           } else {
             console.error('Failed to add sub category:', response.statusText);
-            alert('Failed to add sub category. Please try again.');
+            toast.error('Failed to add sub category. Please try again.');
           }
         } catch (error) {
           console.error('Error adding sub category:', error);
-          alert('An error occurred while adding the sub category.');
+          toast.error('An error occurred while adding the sub category.');
         }
       }
     } else if (selectedCategory === 'Sub Sub Category') {
@@ -753,13 +809,14 @@ export const IncidentSetupDashboard = () => {
             // Always refetch sub sub categories from API to show latest data
             await fetchSubSubCategories();
             setCategoryName('');
+            toast.success('Sub Sub Category added successfully!');
           } else {
             console.error('Failed to add sub sub category:', response.statusText);
-            alert('Failed to add sub sub category. Please try again.');
+            toast.error('Failed to add sub sub category. Please try again.');
           }
         } catch (error) {
           console.error('Error adding sub sub category:', error);
-          alert('An error occurred while adding the sub sub category.');
+          toast.error('An error occurred while adding the sub sub category.');
         }
       }
     } else if (selectedCategory === 'Sub Sub Sub Category') {
@@ -786,14 +843,15 @@ export const IncidentSetupDashboard = () => {
             await fetchSubSubSubCategories();
             setCategoryName('');
             setSelectedSubSubCategory('');
+            toast.success('Sub Sub Sub Category added successfully!');
           } else {
             const errorText = await response.text();
             console.error('Failed to add sub sub sub category:', response.status, errorText);
-            alert('Failed to add sub sub sub category. Please try again.');
+            toast.error('Failed to add sub sub sub category. Please try again.');
           }
         } catch (error) {
           console.error('Error adding sub sub sub category:', error);
-          alert('An error occurred while adding the sub sub sub category.');
+          toast.error('An error occurred while adding the sub sub sub category.');
         }
       }
     } else if (selectedCategory === 'Incidence status') {
@@ -817,14 +875,15 @@ export const IncidentSetupDashboard = () => {
         if (response.ok) {
           await fetchIncidenceStatuses();
           setCategoryName('');
+          toast.success('Incidence Status added successfully!');
         } else {
           const errorText = await response.text();
           console.error('Failed to add incidence status:', response.status, errorText);
-          alert('Failed to add incidence status. Please try again.');
+          toast.error('Failed to add incidence status. Please try again.');
         }
       } catch (error) {
         console.error('Error adding incidence status:', error);
-        alert('An error occurred while adding the incidence status.');
+        toast.error('An error occurred while adding the incidence status.');
       }
     } else if (selectedCategory === 'Incidence level') {
       try {
@@ -846,14 +905,15 @@ export const IncidentSetupDashboard = () => {
         if (response.ok) {
           await fetchIncidenceLevels();
           setCategoryName('');
+          toast.success('Incidence Level added successfully!');
         } else {
           const errorText = await response.text();
           console.error('Failed to add incidence level:', response.status, errorText);
-          alert('Failed to add incidence level. Please try again.');
+          toast.error('Failed to add incidence level. Please try again.');
         }
       } catch (error) {
         console.error('Error adding incidence level:', error);
-        alert('An error occurred while adding the incidence level.');
+        toast.error('An error occurred while adding the incidence level.');
       }
     } else if (selectedCategory === 'Escalations') {
       if (selectedEscalationLevel && escalateInDays && escalateToUsers.length > 0) {
@@ -879,6 +939,7 @@ export const IncidentSetupDashboard = () => {
             setSelectedEscalationLevel('');
             setEscalateInDays('');
             setEscalateToUsers([]);
+            toast.success('Escalation added successfully!');
           } else {
             const errorText = await response.text();
             // Enhanced error logging for debugging
@@ -890,11 +951,11 @@ export const IncidentSetupDashboard = () => {
               payload,
               errorText
             });
-            alert(`Failed to add escalation. Status: ${response.status} - ${response.statusText}\n${errorText}`);
+            toast.error(`Failed to add escalation. Status: ${response.status} - ${response.statusText}`);
           }
         } catch (error) {
           console.error('Error adding escalation:', error);
-          alert('An error occurred while adding the escalation.');
+          toast.error('An error occurred while adding the escalation.');
         }
       }
     } else if (selectedCategory === 'Approval Setup') {
@@ -959,14 +1020,15 @@ export const IncidentSetupDashboard = () => {
           if (response.ok) {
             await fetchSecondaryCategories();
             setCategoryName('');
+            toast.success('Secondary Category added successfully!');
           } else {
             const errorText = await response.text();
             console.error('Failed to add secondary category:', response.status, errorText);
-            alert('Failed to add secondary category. Please try again.');
+            toast.error('Failed to add secondary category. Please try again.');
           }
         } catch (error) {
           console.error('Error adding secondary category:', error);
-          alert('An error occurred while adding the secondary category.');
+          toast.error('An error occurred while adding the secondary category.');
         }
       }
     } else if (selectedCategory === 'Secondary Sub Category') {
@@ -992,14 +1054,15 @@ export const IncidentSetupDashboard = () => {
           if (response.ok) {
             await fetchSecondarySubCategories();
             setCategoryName('');
+            toast.success('Secondary Sub Category added successfully!');
           } else {
             const errorText = await response.text();
             console.error('Failed to add secondary sub category:', response.status, errorText);
-            alert('Failed to add secondary sub category. Please try again.');
+            toast.error('Failed to add secondary sub category. Please try again.');
           }
         } catch (error) {
           console.error('Error adding secondary sub category:', error);
-          alert('An error occurred while adding the secondary sub category.');
+          toast.error('An error occurred while adding the secondary sub category.');
         }
       }
     } else if (selectedCategory === 'Secondary Sub Sub Category') {
@@ -1028,14 +1091,15 @@ export const IncidentSetupDashboard = () => {
           if (response.ok) {
             await fetchSecondarySubSubCategories();
             setCategoryName('');
+            toast.success('Secondary Sub Sub Category added successfully!');
           } else {
             const errorText = await response.text();
             console.error('Failed to add secondary sub sub category:', response.status, errorText);
-            alert('Failed to add secondary sub sub category. Please try again.');
+            toast.error('Failed to add secondary sub sub category. Please try again.');
           }
         } catch (error) {
           console.error('Error adding secondary sub sub category:', error);
-          alert('An error occurred while adding the secondary sub sub category.');
+          toast.error('An error occurred while adding the secondary sub sub category.');
         }
       }
     } else if (selectedCategory === 'Secondary Sub Sub Sub Category') {
@@ -1107,14 +1171,15 @@ export const IncidentSetupDashboard = () => {
           if (response.ok) {
             await fetchWhoGotInjured();
             setCategoryName('');
+            toast.success('Injured Type added successfully!');
           } else {
             const errorText = await response.text();
             console.error('Failed to add injured type:', response.status, errorText);
-            alert('Failed to add injured type. Please try again.');
+            toast.error('Failed to add injured type. Please try again.');
           }
         } catch (error) {
           console.error('Error adding injured type:', error);
-          alert('An error occurred while adding the injured type.');
+          toast.error('An error occurred while adding the injured type.');
         }
       }
     } else if (selectedCategory === 'Property Damage Category') {
@@ -1139,14 +1204,15 @@ export const IncidentSetupDashboard = () => {
             // Always refetch the list from API to ensure latest data
             await fetchPropertyDamageCategories();
             setCategoryName('');
+            toast.success('Property Damage Category added successfully!');
           } else {
             const errorText = await response.text();
             console.error('Failed to add property damage category:', response.status, errorText);
-            alert('Failed to add property damage category. Please try again.');
+            toast.error('Failed to add property damage category. Please try again.');
           }
         } catch (error) {
           console.error('Error adding property damage category:', error);
-          alert('An error occurred while adding the property damage category.');
+          toast.error('An error occurred while adding the property damage category.');
         }
       }
     } else if (selectedCategory === 'RCA Category') {
@@ -1170,14 +1236,79 @@ export const IncidentSetupDashboard = () => {
           if (response.ok) {
             await fetchRCACategories();
             setCategoryName('');
+            toast.success('RCA Category added successfully!');
           } else {
             const errorText = await response.text();
             console.error('Failed to add RCA category:', response.status, errorText);
-            alert('Failed to add RCA category. Please try again.');
+            toast.error('Failed to add RCA category. Please try again.');
           }
         } catch (error) {
           console.error('Error adding RCA category:', error);
-          alert('An error occurred while adding the RCA category.');
+          toast.error('An error occurred while adding the RCA category.');
+        }
+      }
+    } else if (selectedCategory === 'Substandard Act') {
+      // API integration for SubstandardAct
+      if (categoryName.trim()) {
+        try {
+          const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              incidence_tag: {
+                tag_type: 'SubstandardAct',
+                active: true,
+                name: categoryName
+              }
+            })
+          });
+          if (response.ok) {
+            await fetchSubstandardActCategories();
+            setCategoryName('');
+            toast.success('Substandard Act added successfully!');
+          } else {
+            const errorText = await response.text();
+            console.error('Failed to add Substandard Act:', response.status, errorText);
+            toast.error('Failed to add Substandard Act. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error adding Substandard Act:', error);
+          toast.error('An error occurred while adding the Substandard Act.');
+        }
+      }
+    } else if (selectedCategory === 'Substandard Condition') {
+      // API integration for SubstandardCondition
+      if (categoryName.trim()) {
+        try {
+          const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              incidence_tag: {
+                tag_type: 'SubstandardCondition',
+                active: true,
+                name: categoryName
+              }
+            })
+          });
+          if (response.ok) {
+            await fetchSubstandardConditionCategories();
+            setCategoryName('');
+            toast.success('Substandard Condition added successfully!');
+          } else {
+            const errorText = await response.text();
+            console.error('Failed to add Substandard Condition:', response.status, errorText);
+            toast.error('Failed to add Substandard Condition. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error adding Substandard Condition:', error);
+          toast.error('An error occurred while adding the Substandard Condition.');
         }
       }
     }
@@ -1357,14 +1488,15 @@ export const IncidentSetupDashboard = () => {
 
         if (response.ok) {
           await fetchWhoGotInjured();
+          toast.success('Injured Type updated successfully!');
         } else {
           console.error('Failed to update injured type:', response.statusText);
-          alert('Failed to update injured type. Please try again.');
+          toast.error('Failed to update injured type. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating injured type:', error);
-        alert('An error occurred while updating the injured type.');
+        toast.error('An error occurred while updating the injured type.');
         return;
       }
     } else if (editingItem?.type === 'Property Damage Category') {
@@ -1411,14 +1543,15 @@ export const IncidentSetupDashboard = () => {
 
         if (response.ok) {
           await fetchRCACategories();
+          toast.success('RCA Category updated successfully!');
         } else {
           console.error('Failed to update RCA category:', response.statusText);
-          alert('Failed to update RCA category. Please try again.');
+          toast.error('Failed to update RCA category. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating RCA category:', error);
-        alert('An error occurred while updating the RCA category.');
+        toast.error('An error occurred while updating the RCA category.');
         return;
       }
     } else if (editingItem?.type === 'Secondary Category') {
@@ -1438,14 +1571,15 @@ export const IncidentSetupDashboard = () => {
 
         if (response.ok) {
           await fetchSecondaryCategories();
+          toast.success('Secondary Category updated successfully!');
         } else {
           console.error('Failed to update secondary category:', response.statusText);
-          alert('Failed to update secondary category. Please try again.');
+          toast.error('Failed to update secondary category. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating secondary category:', error);
-        alert('An error occurred while updating the secondary category.');
+        toast.error('An error occurred while updating the secondary category.');
         return;
       }
     } else if (editingItem?.type === 'Category') {
@@ -1465,21 +1599,22 @@ export const IncidentSetupDashboard = () => {
 
         if (response.ok) {
           await fetchCategories();
+          toast.success('Category updated successfully!');
         } else {
           console.error('Failed to update category:', response.statusText);
-          alert('Failed to update category. Please try again.');
+          toast.error('Failed to update category. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating category:', error);
-        alert('An error occurred while updating the category.');
+        toast.error('An error occurred while updating the category.');
         return;
       }
     } else if (editingItem?.type === 'Sub Category') {
       // Find the selected category object to get its id for parent_id
       const parentCategoryObj = categories.find(cat => cat.name === editFormData.category);
       if (!parentCategoryObj) {
-        alert('Please select a valid Category');
+        toast.error('Please select a valid Category');
         return;
       }
 
@@ -1500,24 +1635,24 @@ export const IncidentSetupDashboard = () => {
 
         if (response.ok) {
           await fetchSubCategories();
+          toast.success('Sub Category updated successfully!');
         } else {
           console.error('Failed to update sub category:', response.statusText);
-          alert('Failed to update sub category. Please try again.');
+          toast.error('Failed to update sub category. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating sub category:', error);
-        alert('An error occurred while updating the sub category.');
+        toast.error('An error occurred while updating the sub category.');
         return;
       }
     } else if (editingItem?.type === 'Sub Sub Category') {
-      // Find the selected sub category object to get its id for parent_id
       const parentSubCategoryObj = subCategories.find(sub =>
         sub.subCategory === editFormData.subCategory &&
         sub.category === editFormData.category
       );
       if (!parentSubCategoryObj) {
-        alert('Please select a valid Sub Category');
+        toast.error('Please select a valid Sub Category');
         return;
       }
 
@@ -1538,25 +1673,25 @@ export const IncidentSetupDashboard = () => {
 
         if (response.ok) {
           await fetchSubSubCategories();
+          toast.success('Sub Sub Category updated successfully!');
         } else {
           console.error('Failed to update sub sub category:', response.statusText);
-          alert('Failed to update sub sub category. Please try again.');
+          toast.error('Failed to update sub sub category. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating sub sub category:', error);
-        alert('An error occurred while updating the sub sub category.');
+        toast.error('An error occurred while updating the sub sub category.');
         return;
       }
     } else if (editingItem?.type === 'Sub Sub Sub Category') {
-      // Find the selected sub sub category object to get its id for parent_id
       const parentSubSubCategoryObj = subSubCategories.find(subsub =>
         subsub.subSubCategory === editFormData.subSubCategory &&
         subsub.subCategory === editFormData.subCategory &&
         subsub.category === editFormData.category
       );
       if (!parentSubSubCategoryObj) {
-        alert('Please select a valid Sub Sub Category');
+        toast.error('Please select a valid Sub Sub Category');
         return;
       }
 
@@ -1577,14 +1712,15 @@ export const IncidentSetupDashboard = () => {
 
         if (response.ok) {
           await fetchSubSubSubCategories();
+          toast.success('Sub Sub Sub Category updated successfully!');
         } else {
           console.error('Failed to update sub sub sub category:', response.statusText);
-          alert('Failed to update sub sub sub category. Please try again.');
+          toast.error('Failed to update sub sub sub category. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating sub sub sub category:', error);
-        alert('An error occurred while updating the sub sub sub category.');
+        toast.error('An error occurred while updating the sub sub sub category.');
         return;
       }
     } else if (editingItem?.type === 'Incidence status') {
@@ -1601,17 +1737,17 @@ export const IncidentSetupDashboard = () => {
             }
           })
         });
-
         if (response.ok) {
           await fetchIncidenceStatuses();
+          toast.success('Incidence Status updated successfully!');
         } else {
           console.error('Failed to update incidence status:', response.statusText);
-          alert('Failed to update incidence status. Please try again.');
+          toast.error('Failed to update incidence status. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating incidence status:', error);
-        alert('An error occurred while updating the incidence status.');
+        toast.error('An error occurred while updating the incidence status.');
         return;
       }
     } else if (editingItem?.type === 'Incidence level') {
@@ -1628,20 +1764,20 @@ export const IncidentSetupDashboard = () => {
             }
           })
         });
-
         if (response.ok) {
           await fetchIncidenceLevels();
+          toast.success('Incidence Level updated successfully!');
         } else {
           console.error('Failed to update incidence level:', response.statusText);
-          alert('Failed to update incidence level. Please try again.');
+          toast.error('Failed to update incidence level. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating incidence level:', error);
-        alert('An error occurred while updating the incidence level.');
+        toast.error('An error occurred while updating the incidence level.');
         return;
       }
-    } else if (editingItem?.type === 'Who got injured') {
+    } else if (editingItem?.type === 'Substandard Act') {
       try {
         const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
           method: 'PUT',
@@ -1657,18 +1793,19 @@ export const IncidentSetupDashboard = () => {
         });
 
         if (response.ok) {
-          await fetchWhoGotInjured();
+          await fetchSubstandardActCategories();
+          toast.success('Substandard Act updated successfully!');
         } else {
-          console.error('Failed to update injured type:', response.statusText);
-          alert('Failed to update injured type. Please try again.');
+          console.error('Failed to update Substandard Act:', response.statusText);
+          toast.error('Failed to update Substandard Act. Please try again.');
           return;
         }
       } catch (error) {
-        console.error('Error updating injured type:', error);
-        alert('An error occurred while updating the injured type.');
+        console.error('Error updating Substandard Act:', error);
+        toast.error('An error occurred while updating the Substandard Act.');
         return;
       }
-    } else if (editingItem?.type === 'Property Damage Category') {
+    } else if (editingItem?.type === 'Substandard Condition') {
       try {
         const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
           method: 'PUT',
@@ -1684,42 +1821,16 @@ export const IncidentSetupDashboard = () => {
         });
 
         if (response.ok) {
-          await fetchPropertyDamageCategories();
+          await fetchSubstandardConditionCategories();
+          toast.success('Substandard Condition updated successfully!');
         } else {
-          console.error('Failed to update property damage category:', response.statusText);
-          alert('Failed to update property damage category. Please try again.');
+          console.error('Failed to update Substandard Condition:', response.statusText);
+          toast.error('Failed to update Substandard Condition. Please try again.');
           return;
         }
       } catch (error) {
-        console.error('Error updating property damage category:', error);
-        alert('An error occurred while updating the property damage category.');
-        return;
-      }
-    } else if (editingItem?.type === 'RCA Category') {
-      try {
-        const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            incidence_tag: {
-              name: editFormData.name
-            }
-          })
-        });
-
-        if (response.ok) {
-          await fetchRCACategories();
-        } else {
-          console.error('Failed to update RCA category:', response.statusText);
-          alert('Failed to update RCA category. Please try again.');
-          return;
-        }
-      } catch (error) {
-        console.error('Error updating RCA category:', error);
-        alert('An error occurred while updating the RCA category.');
+        console.error('Error updating Substandard Condition:', error);
+        toast.error('An error occurred while updating the Substandard Condition.');
         return;
       }
     } else if (editingItem?.type === 'Escalations') {
@@ -1758,7 +1869,7 @@ export const IncidentSetupDashboard = () => {
       // Find the selected secondary category object to get its id for parent_id
       const parentSecondaryCategoryObj = secondaryCategories.find(cat => cat.name === editFormData.category);
       if (!parentSecondaryCategoryObj) {
-        alert('Please select a valid Secondary Category');
+        toast.error('Please select a valid Secondary Category');
         return;
       }
 
@@ -1779,14 +1890,15 @@ export const IncidentSetupDashboard = () => {
 
         if (response.ok) {
           await fetchSecondarySubCategories();
+          toast.success('Secondary Sub Category updated successfully!');
         } else {
           console.error('Failed to update secondary sub category:', response.statusText);
-          alert('Failed to update secondary sub category. Please try again.');
+          toast.error('Failed to update secondary sub category. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating secondary sub category:', error);
-        alert('An error occurred while updating the secondary sub category.');
+        toast.error('An error occurred while updating the secondary sub category.');
         return;
       }
     } else if (editingItem?.type === 'Secondary Sub Sub Category') {
@@ -1796,7 +1908,7 @@ export const IncidentSetupDashboard = () => {
         sub.secondaryCategory === editFormData.category
       );
       if (!parentSecondarySubCategoryObj) {
-        alert('Please select a valid Secondary Sub Category');
+        toast.error('Please select a valid Secondary Sub Category');
         return;
       }
 
@@ -1817,25 +1929,25 @@ export const IncidentSetupDashboard = () => {
 
         if (response.ok) {
           await fetchSecondarySubSubCategories();
+          toast.success('Secondary Sub Sub Category updated successfully!');
         } else {
           console.error('Failed to update secondary sub sub category:', response.statusText);
-          alert('Failed to update secondary sub sub category. Please try again.');
+          toast.error('Failed to update secondary sub sub category. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating secondary sub sub category:', error);
-        alert('An error occurred while updating the secondary sub sub category.');
+        toast.error('An error occurred while updating the secondary sub sub category.');
         return;
       }
     } else if (editingItem?.type === 'Secondary Sub Sub Sub Category') {
-      // Find the selected secondary sub sub category object to get its id for parent_id
       const parentSecondarySubSubCategoryObj = secondarySubSubCategories.find(subsub =>
         subsub.secondarySubSubCategory === editFormData.subSubCategory &&
         subsub.secondarySubCategory === editFormData.subCategory &&
         subsub.secondaryCategory === editFormData.category
       );
       if (!parentSecondarySubSubCategoryObj) {
-        alert('Please select a valid Secondary Sub Sub Category');
+        toast.error('Please select a valid Secondary Sub Sub Category');
         return;
       }
 
@@ -1856,14 +1968,15 @@ export const IncidentSetupDashboard = () => {
 
         if (response.ok) {
           await fetchSecondarySubSubSubCategories();
+          toast.success('Secondary Sub Sub Sub Category updated successfully!');
         } else {
           console.error('Failed to update secondary sub sub sub category:', response.statusText);
-          alert('Failed to update secondary sub sub sub category. Please try again.');
+          toast.error('Failed to update secondary sub sub sub category. Please try again.');
           return;
         }
       } catch (error) {
         console.error('Error updating secondary sub sub sub category:', error);
-        alert('An error occurred while updating the secondary sub sub sub category.');
+        toast.error('An error occurred while updating the secondary sub sub sub category.');
         return;
       }
     }
@@ -1907,11 +2020,10 @@ export const IncidentSetupDashboard = () => {
             'Authorization': `Bearer ${token}`
           }
         });
-
         if (response.ok) {
           // await fetchEscalations();
           fetchEscalationMatrix();
-          toast.success('Escalation deleted successfully');
+          toast.success('Escalation deleted successfully!');
         } else {
           toast.error('Failed to delete escalation. Please try again.');
         }
@@ -1940,6 +2052,8 @@ export const IncidentSetupDashboard = () => {
       else if (type === 'Who got injured') fetchFn = fetchWhoGotInjured;
       else if (type === 'Property Damage Category') fetchFn = fetchPropertyDamageCategories;
       else if (type === 'RCA Category') fetchFn = fetchRCACategories;
+      else if (type === 'Substandard Act') fetchFn = fetchSubstandardActCategories;
+      else if (type === 'Substandard Condition') fetchFn = fetchSubstandardConditionCategories;
 
       // Only use local state for types that are not stored in backend
       if (fetchFn) {
@@ -1955,11 +2069,12 @@ export const IncidentSetupDashboard = () => {
 
           if (response.ok) {
             await fetchFn();
+            toast.success(`${type} deleted successfully!`);
           } else {
-            alert('Failed to delete. Please try again.');
+            toast.error('Failed to delete. Please try again.');
           }
         } catch (error) {
-          alert('An error occurred while deleting.');
+          toast.error('An error occurred while deleting.');
         }
       } else {
         // For local-only types that don't have backend API
@@ -2006,11 +2121,18 @@ export const IncidentSetupDashboard = () => {
                       Level
                     </label>
                     <FormControl fullWidth size="small">
-                      <InputLabel>Select Level</InputLabel>
+                      <InputLabel>Level</InputLabel>
                       <MuiSelect
                         value={editFormData.level}
                         onChange={e => setEditFormData({ ...editFormData, level: e.target.value })}
-                        label="Select Level"
+                        label="Level"
+                        displayEmpty
+                        renderValue={(selected) => {
+                          if (!selected) {
+                            return <span style={{ color: '#999' }}>Please select level</span>;
+                          }
+                          return selected;
+                        }}
                       >
                         {incidenceLevels.map(level =>
                           <MenuItem key={level.id} value={level.name}>
@@ -2026,13 +2148,14 @@ export const IncidentSetupDashboard = () => {
                       Escalate In Days
                     </label>
                     <TextField
-                      type="text"
+                      type="number"
                       value={editFormData.escalateInDays}
                       onChange={e => setEditFormData({ ...editFormData, escalateInDays: e.target.value })}
-                      placeholder="Enter days"
+                      placeholder="Please enter number of days"
                       variant="outlined"
                       size="small"
                       fullWidth
+                      InputLabelProps={{ shrink: true }}
                     />
                   </div>
 
@@ -2134,17 +2257,20 @@ export const IncidentSetupDashboard = () => {
                     </Button>
                   </div>
                 </div>
-              ) : (editingItem?.type === 'Who got injured' || editingItem?.type === 'Property Damage Category' || editingItem?.type === 'RCA Category' || editingItem?.type === 'Category') ? (
+              ) : (editingItem?.type === 'Who got injured' || editingItem?.type === 'Property Damage Category' || editingItem?.type === 'RCA Category' || editingItem?.type === 'Substandard Act' || editingItem?.type === 'Substandard Condition' || editingItem?.type === 'Category') ? (
                 <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Name
                     </label>
-                    <Input
+                    <TextField
                       placeholder="Enter Name"
                       value={editFormData.name}
                       onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                      className="focus:ring-[#C72030] focus:border-[#C72030]"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
                     />
                   </div>
 
@@ -2174,6 +2300,13 @@ export const IncidentSetupDashboard = () => {
                           value={editFormData.category}
                           onChange={e => setEditFormData({ ...editFormData, category: e.target.value })}
                           label="Secondary Category"
+                          displayEmpty
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <span style={{ color: '#999' }}>Please select secondary category</span>;
+                            }
+                            return selected;
+                          }}
                         >
                           {secondaryCategories.map(category => (
                             <MenuItem key={category.id} value={category.name}>
@@ -2193,6 +2326,13 @@ export const IncidentSetupDashboard = () => {
                           value={editFormData.subCategory}
                           onChange={e => setEditFormData({ ...editFormData, subCategory: e.target.value })}
                           label="Secondary Sub Category"
+                          displayEmpty
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <span style={{ color: '#999' }}>Please select secondary sub category</span>;
+                            }
+                            return selected;
+                          }}
                         >
                           {secondarySubCategories
                             .filter(sub => sub.secondaryCategory === editFormData.category)
@@ -2214,6 +2354,13 @@ export const IncidentSetupDashboard = () => {
                           value={editFormData.subSubCategory}
                           onChange={e => setEditFormData({ ...editFormData, subSubCategory: e.target.value })}
                           label="Secondary Sub Sub Category"
+                          displayEmpty
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <span style={{ color: '#999' }}>Please select secondary sub sub category</span>;
+                            }
+                            return selected;
+                          }}
                         >
                           {secondarySubSubCategories
                             .filter(subsub => subsub.secondaryCategory === editFormData.category && subsub.secondarySubCategory === editFormData.subCategory)
@@ -2240,6 +2387,13 @@ export const IncidentSetupDashboard = () => {
                             // await fetchSubCategories();
                           }}
                           label="Category"
+                          displayEmpty
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <span style={{ color: '#999' }}>Please select category</span>;
+                            }
+                            return selected;
+                          }}
                         >
                           {categories.map(category => (
                             <MenuItem key={category.id} value={category.name}>
@@ -2259,6 +2413,13 @@ export const IncidentSetupDashboard = () => {
                           value={editFormData.subCategory}
                           onChange={(e) => setEditFormData({ ...editFormData, subCategory: e.target.value, subSubCategory: '' })}
                           label="Sub-Category"
+                          displayEmpty
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <span style={{ color: '#999' }}>Please select sub category</span>;
+                            }
+                            return selected;
+                          }}
                         >
                           {subCategories
                             .filter(sub => sub.category === editFormData.category)
@@ -2280,6 +2441,13 @@ export const IncidentSetupDashboard = () => {
                           value={editFormData.subSubCategory}
                           onChange={e => setEditFormData({ ...editFormData, subSubCategory: e.target.value })}
                           label="Sub Sub Category"
+                          displayEmpty
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <span style={{ color: '#999' }}>Please select sub sub category</span>;
+                            }
+                            return selected;
+                          }}
                         >
                           {subSubCategories
                             .filter(subsub => subsub.category === editFormData.category && subsub.subCategory === editFormData.subCategory)
@@ -2301,10 +2469,11 @@ export const IncidentSetupDashboard = () => {
                       type="text"
                       value={editFormData.name}
                       onChange={e => setEditFormData({ ...editFormData, name: e.target.value })}
-                      placeholder="Enter name"
+                      placeholder="Please enter name"
                       variant="outlined"
                       size="small"
                       fullWidth
+                      InputLabelProps={{ shrink: true }}
                     />
                   </div>
 
@@ -2325,11 +2494,8 @@ export const IncidentSetupDashboard = () => {
                 <div className="flex gap-4 items-end">
                   {selectedCategory === 'Approval Setup' ? (
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Select Users <span style={{ color: '#C72030' }}>*</span>
-                      </label>
-                      <FormControl fullWidth className="mb-2">
-                        <InputLabel>Select up to 15 Options... <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                      <FormControl fullWidth size="small" className="mb-2">
+                        <InputLabel>Select Users *</InputLabel>
                         <MuiSelect
                           multiple
                           value={selectedApprovalUsers}
@@ -2337,7 +2503,7 @@ export const IncidentSetupDashboard = () => {
                             const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
                             setSelectedApprovalUsers(value);
                           }}
-                          input={<OutlinedInput label="Select up to 15 Options..." />}
+                          input={<OutlinedInput label="Select Users *" />}
                           renderValue={(selected) => {
                             if (selected.length === 0) {
                               return <span style={{ color: '#999' }}>Select users...</span>;
@@ -2400,15 +2566,19 @@ export const IncidentSetupDashboard = () => {
                   ) : selectedCategory === 'Escalations' ? (
                     <>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Level <span style={{ color: '#C72030' }}>*</span>
-                        </label>
                         <FormControl fullWidth size="small">
-                          <InputLabel>Select Level <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          <InputLabel>Level *</InputLabel>
                           <MuiSelect
                             value={selectedEscalationLevel}
                             onChange={e => setSelectedEscalationLevel(e.target.value)}
-                            label="Select Level"
+                            label="Level *"
+                            displayEmpty
+                            renderValue={(selected) => {
+                              if (!selected) {
+                                return <span style={{ color: '#999' }}>Please select level</span>;
+                              }
+                              return selected;
+                            }}
                           >
                             {incidenceLevels.map(level => (
                               <MenuItem key={level.id} value={level.name}>
@@ -2419,25 +2589,21 @@ export const IncidentSetupDashboard = () => {
                         </FormControl>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Escalate In Days <span style={{ color: '#C72030' }}>*</span>
-                        </label>
                         <TextField
-                          type="text"
+                          label="Escalate In Days *"
+                          type="number"
                           value={escalateInDays}
                           onChange={e => setEscalateInDays(e.target.value)}
-                          placeholder="Enter days"
+                          placeholder="Please enter number of days"
                           variant="outlined"
                           size="small"
                           fullWidth
+                          InputLabelProps={{ shrink: true }}
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Escalate To Users <span style={{ color: '#C72030' }}>*</span>
-                        </label>
-                        <FormControl fullWidth className="mb-2">
-                          {/* <InputLabel>Escalate To Users <span style={{ color: '#C72030' }}>*</span></InputLabel> */}
+                        <FormControl fullWidth size="small" className="mb-2">
+                          <InputLabel>Escalate To Users *</InputLabel>
                           <MuiSelect
                             multiple
                             value={escalateToUsers}
@@ -2445,7 +2611,7 @@ export const IncidentSetupDashboard = () => {
                               const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
                               setEscalateToUsers(value);
                             }}
-                            input={<OutlinedInput label="Escalate To Users" />}
+                            input={<OutlinedInput label="Escalate To Users *" />}
                             renderValue={(selected) => {
                               if (selected.length === 0) {
                                 return <span style={{ color: '#999' }}>Select users...</span>;
@@ -2509,12 +2675,19 @@ export const IncidentSetupDashboard = () => {
                   ) : selectedCategory === 'Secondary Sub Category' ? (
                     <>
                       <div className="flex-1">
-                        <FormControl fullWidth className="mb-2">
-                          <InputLabel>Secondary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                        <FormControl fullWidth size="small" className="mb-2">
+                          <InputLabel>Secondary Category *</InputLabel>
                           <MuiSelect
                             value={selectedSecondaryCategory}
                             onChange={(e) => setSelectedSecondaryCategory(e.target.value)}
-                            label="Secondary Category"
+                            label="Secondary Category *"
+                            displayEmpty
+                            renderValue={(selected) => {
+                              if (!selected) {
+                                return <span style={{ color: '#999' }}>Please select secondary category</span>;
+                              }
+                              return selected;
+                            }}
                           >
                             {secondaryCategories.map(category => (
                               <MenuItem key={category.id} value={category.name}>
@@ -2528,12 +2701,19 @@ export const IncidentSetupDashboard = () => {
                   ) : selectedCategory === 'Secondary Sub Sub Category' ? (
                     <>
                       <div className="flex-1">
-                        <FormControl fullWidth className="mb-2">
-                          <InputLabel>Secondary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                        <FormControl fullWidth size="small" className="mb-2">
+                          <InputLabel>Secondary Category *</InputLabel>
                           <MuiSelect
                             value={selectedSecondaryCategory}
                             onChange={(e) => setSelectedSecondaryCategory(e.target.value)}
-                            label="Secondary Category"
+                            label="Secondary Category *"
+                            displayEmpty
+                            renderValue={(selected) => {
+                              if (!selected) {
+                                return <span style={{ color: '#999' }}>Please select secondary category</span>;
+                              }
+                              return selected;
+                            }}
                           >
                             {secondaryCategories.map(category => (
                               <MenuItem key={category.id} value={category.name}>
@@ -2544,12 +2724,19 @@ export const IncidentSetupDashboard = () => {
                         </FormControl>
                       </div>
                       <div className="flex-1">
-                        <FormControl fullWidth className="mb-2">
-                          <InputLabel>Secondary Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                        <FormControl fullWidth size="small" className="mb-2">
+                          <InputLabel>Secondary Sub Category *</InputLabel>
                           <MuiSelect
                             value={selectedSecondarySubCategory}
                             onChange={(e) => setSelectedSecondarySubCategory(e.target.value)}
-                            label="Secondary Sub Category"
+                            label="Secondary Sub Category *"
+                            displayEmpty
+                            renderValue={(selected) => {
+                              if (!selected) {
+                                return <span style={{ color: '#999' }}>Please select secondary sub category</span>;
+                              }
+                              return selected;
+                            }}
                           >
                             {secondarySubCategories
                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
@@ -2565,12 +2752,19 @@ export const IncidentSetupDashboard = () => {
                   ) : selectedCategory === 'Secondary Sub Sub Sub Category' ? (
                     <>
                       <div className="flex-1">
-                        <FormControl fullWidth className="mb-2">
-                          <InputLabel>Secondary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                        <FormControl fullWidth size="small" className="mb-2">
+                          <InputLabel>Secondary Category *</InputLabel>
                           <MuiSelect
                             value={selectedSecondaryCategory}
                             onChange={(e) => setSelectedSecondaryCategory(e.target.value)}
-                            label="Secondary Category"
+                            label="Secondary Category *"
+                            displayEmpty
+                            renderValue={(selected) => {
+                              if (!selected) {
+                                return <span style={{ color: '#999' }}>Please select secondary category</span>;
+                              }
+                              return selected;
+                            }}
                           >
                             {secondaryCategories.map(category => (
                               <MenuItem key={category.id} value={category.name}>
@@ -2581,12 +2775,19 @@ export const IncidentSetupDashboard = () => {
                         </FormControl>
                       </div>
                       <div className="flex-1">
-                        <FormControl fullWidth className="mb-2">
-                          <InputLabel>Secondary Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                        <FormControl fullWidth size="small" className="mb-2">
+                          <InputLabel>Secondary Sub Category *</InputLabel>
                           <MuiSelect
                             value={selectedSecondarySubCategory}
                             onChange={(e) => setSelectedSecondarySubCategory(e.target.value)}
-                            label="Secondary Sub Category"
+                            label="Secondary Sub Category *"
+                            displayEmpty
+                            renderValue={(selected) => {
+                              if (!selected) {
+                                return <span style={{ color: '#999' }}>Please select secondary sub category</span>;
+                              }
+                              return selected;
+                            }}
                           >
                             {secondarySubCategories
                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
@@ -2599,12 +2800,19 @@ export const IncidentSetupDashboard = () => {
                         </FormControl>
                       </div>
                       <div className="flex-1">
-                        <FormControl fullWidth className="mb-2">
-                          <InputLabel>Secondary Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                        <FormControl fullWidth size="small" className="mb-2">
+                          <InputLabel>Secondary Sub Sub Category *</InputLabel>
                           <MuiSelect
                             value={selectedSecondarySubSubCategory}
                             onChange={(e) => setSelectedSecondarySubSubCategory(e.target.value)}
-                            label="Secondary Sub Sub Category"
+                            label="Secondary Sub Sub Category *"
+                            displayEmpty
+                            renderValue={(selected) => {
+                              if (!selected) {
+                                return <span style={{ color: '#999' }}>Please select secondary sub sub category</span>;
+                              }
+                              return selected;
+                            }}
                           >
                             {secondarySubSubCategories
                               .filter(subsub => subsub.secondaryCategory === selectedSecondaryCategory && subsub.secondarySubCategory === selectedSecondarySubCategory)
@@ -2619,11 +2827,8 @@ export const IncidentSetupDashboard = () => {
                     </>
                   ) : (selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') ? (
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {/* Category <span style={{ color: '#C72030' }}>*</span> */}
-                      </label>
                       <FormControl fullWidth size="small">
-                        <InputLabel>Select Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                        <InputLabel>Category *</InputLabel>
                         <MuiSelect
                           value={selectedParentCategory}
                           onChange={e => {
@@ -2631,7 +2836,15 @@ export const IncidentSetupDashboard = () => {
                             setSelectedSubCategory('');
                             setSelectedSubSubCategory('');
                           }}
-                          label="Select Category"
+                          label="Category *"
+                          displayEmpty
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <span style={{ color: '#999' }}>Please select category</span>;
+                            }
+                            const cat = categories.find(c => c.id === selected);
+                            return cat ? cat.name : '';
+                          }}
                         >
                           {categories.map(category => (
                             <MenuItem key={category.id} value={category.id}>
@@ -2644,15 +2857,23 @@ export const IncidentSetupDashboard = () => {
                   ) : null}
                   {(selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') && (
                     <div className="flex-1">
-                      <FormControl fullWidth className="mb-2">
-                        <InputLabel>Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                      <FormControl fullWidth size="small" className="mb-2">
+                        <InputLabel>Sub Category *</InputLabel>
                         <MuiSelect
                           value={selectedSubCategory}
                           onChange={(e) => {
                             setSelectedSubCategory(e.target.value);
                             setSelectedSubSubCategory('');
                           }}
-                          label="Sub Category"
+                          label="Sub Category *"
+                          displayEmpty
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <span style={{ color: '#999' }}>Please select sub category</span>;
+                            }
+                            const sub = subCategories.find(s => s.id === selected);
+                            return sub ? sub.subCategory : '';
+                          }}
                         >
                           {subCategories.filter(sub => String(sub.categoryId) === String(selectedParentCategory)).map(subCategory => (
                             <MenuItem key={subCategory.id} value={subCategory.id}>
@@ -2665,12 +2886,20 @@ export const IncidentSetupDashboard = () => {
                   )}
                   {selectedCategory === 'Sub Sub Sub Category' && (
                     <div className="flex-1">
-                      <FormControl fullWidth className="mb-2">
-                        <InputLabel>Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                      <FormControl fullWidth size="small" className="mb-2">
+                        <InputLabel>Sub Sub Category *</InputLabel>
                         <MuiSelect
                           value={selectedSubSubCategory}
                           onChange={(e) => setSelectedSubSubCategory(e.target.value)}
-                          label="Sub Sub Category"
+                          label="Sub Sub Category *"
+                          displayEmpty
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <span style={{ color: '#999' }}>Please select sub sub category</span>;
+                            }
+                            const subsub = subSubCategories.find(s => String(s.id) === String(selected));
+                            return subsub ? subsub.subSubCategory : '';
+                          }}
                         >
                           {subSubCategories
                             .filter(subsub => String(subsub.categoryId) === String(selectedParentCategory) && String(subsub.subCategoryId) === String(selectedSubCategory))
@@ -2685,17 +2914,33 @@ export const IncidentSetupDashboard = () => {
                   )}
                   {selectedCategory !== 'Escalations' && selectedCategory !== 'Approval Setup' && (
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Name <span style={{ color: '#C72030' }}>*</span>
-                      </label>
                       <TextField
+                        label="Name *"
                         type="text"
                         value={categoryName}
                         onChange={e => setCategoryName(e.target.value)}
-                        placeholder="Enter name"
+                        placeholder={
+                          selectedCategory === 'Category' ? 'Please add category' :
+                          selectedCategory === 'Sub Category' ? 'Please add sub category name' :
+                          selectedCategory === 'Sub Sub Category' ? 'Please add sub sub category name' :
+                          selectedCategory === 'Sub Sub Sub Category' ? 'Please add sub sub sub category name' :
+                          selectedCategory === 'Secondary Category' ? 'Please add secondary category' :
+                          selectedCategory === 'Secondary Sub Category' ? 'Please add secondary sub category name' :
+                          selectedCategory === 'Secondary Sub Sub Category' ? 'Please add secondary sub sub category name' :
+                          selectedCategory === 'Secondary Sub Sub Sub Category' ? 'Please add secondary sub sub sub category name' :
+                          selectedCategory === 'Incidence status' ? 'Please add incidence status' :
+                          selectedCategory === 'Incidence level' ? 'Please add incidence level' :
+                          selectedCategory === 'Who got injured' ? 'Please add injured type' :
+                          selectedCategory === 'Property Damage Category' ? 'Please add property damage category' :
+                          selectedCategory === 'RCA Category' ? 'Please add RCA category' :
+                          selectedCategory === 'Substandard Act' ? 'Please add substandard act' :
+                          selectedCategory === 'Substandard Condition' ? 'Please add substandard condition' :
+                          'Enter name'
+                        }
                         variant="outlined"
                         size="small"
                         fullWidth
+                        InputLabelProps={{ shrink: true }}
                       />
                     </div>
                   )}
@@ -2743,6 +2988,16 @@ export const IncidentSetupDashboard = () => {
                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                             </>
                           ) : selectedCategory === 'RCA Category' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Substandard Act' ? (
+                            <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </>
+                          ) : selectedCategory === 'Substandard Condition' ? (
                             <>
                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
@@ -2874,6 +3129,34 @@ export const IncidentSetupDashboard = () => {
                                   <Edit className="w-4 h-4" />
                                 </Button>
                                 <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'RCA Category')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Substandard Act' ? substandardActCategories.map(item => (
+                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Substandard Act')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Substandard Act')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Substandard Condition' ? substandardConditionCategories.map(item => (
+                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Substandard Condition')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Substandard Condition')}>
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>

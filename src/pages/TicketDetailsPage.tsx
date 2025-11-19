@@ -4364,15 +4364,10 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          {(() => {
-                            // Use same logic as Ticket Details tab
-                            const seq = responseSequence;
-                            const seqMinutes = (seq && seq.length > 0 && responseSequenceIndex >= 0)
-                              ? (seq[responseSequenceIndex]?.scheduled_minutes ?? seq[responseSequenceIndex]?.minutes)
-                              : null;
-                            const sourceMinutes = seqMinutes ?? ticketData.next_response_escalation?.minutes ?? 0;
-                            return sourceMinutes ? formatMinutesToDDHHMM(sourceMinutes) : '00:00:00';
-                          })()}
+                          {isTicketClosed
+                            ? (ticketData.next_response_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes) : '00:00:00')
+                            : (ticketData.next_response_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes) : '00:00:00')
+                          }
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Response TAT
@@ -4413,15 +4408,10 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          {(() => {
-                            // Use same logic as Ticket Details tab
-                            const seq = resolutionSequence;
-                            const seqMinutes = (seq && seq.length > 0 && resolutionSequenceIndex >= 0)
-                              ? (seq[resolutionSequenceIndex]?.scheduled_minutes ?? seq[resolutionSequenceIndex]?.minutes)
-                              : null;
-                            const sourceMinutes = seqMinutes ?? ticketData.next_resolution_escalation?.minutes ?? 0;
-                            return sourceMinutes ? formatMinutesToDDHHMM(sourceMinutes) : '00:00:00';
-                          })()}
+                          {isTicketClosed
+                            ? (ticketData.next_resolution_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes) : '00:00:00')
+                            : (ticketData.next_resolution_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes) : '00:00:00')
+                          }
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Resolution TAT
@@ -4446,7 +4436,10 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                             className="font-semibold text-[#1A1A1A]"
                             style={{ fontSize: 24 }}
                           >
-                            {formatSecondsToDDHHMMSS(responseEscalationSeconds)}
+                            {isTicketClosed
+                              ? '00:00:00:00'
+                              : formatSecondsToDDHHMMSS(responseEscalationSeconds)
+                            }
                           </span>
 
                           <div className="text-[12px] text-[#9CA3AF] mt-1 leading-tight whitespace-pre-line" style={{ textAlign: 'left' }}>
@@ -4462,7 +4455,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                                 if (!escName && (!users || users.length === 0)) return '';
                                 
                                 if (users.length > 1) {
-                                  // Show first user with "..." and hover for remaining users
+                                  // Show first user with hover for remaining users
                                   const firstUser = users[0];
                                   const remainingUsers = users.slice(1);
                                   return (
@@ -4563,7 +4556,10 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                             className="font-semibold text-[#1A1A1A]"
                             style={{ fontSize: 24 }}
                           >
-                            {formatSecondsToDDHHMMSS(resolutionEscalationSeconds)}
+                            {isTicketClosed
+                              ? '00:00:00:00'
+                              : formatSecondsToDDHHMMSS(resolutionEscalationSeconds)
+                            }
                           </span>
                           <div className="text-[12px] text-[#9CA3AF] mt-1 leading-tight whitespace-pre-line" style={{ textAlign: 'left' }}>
                             {(() => {
@@ -4578,7 +4574,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                                 if (!escName && (!users || users.length === 0)) return '';
                                 
                                 if (users.length > 1) {
-                                  // Show first user with "..." and hover for remaining users
+                                  // Show first user with hover for remaining users
                                   const firstUser = users[0];
                                   const remainingUsers = users.slice(1);
                                   return (
@@ -4613,7 +4609,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                               if (!escName && (!users || users.length === 0)) return '';
                               
                               if (users.length > 1) {
-                                // Show first user with "..." and hover for remaining users
+                                // Show first user with hover for remaining users
                                 const firstUser = users[0];
                                 const remainingUsers = users.slice(1);
                                 return (
