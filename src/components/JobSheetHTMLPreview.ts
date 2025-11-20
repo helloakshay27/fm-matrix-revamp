@@ -105,7 +105,7 @@ export class JobSheetHTMLPreview {
             }
             
             @media print {
-              .preview-toolbar {
+            .preview-toolbar {
                 display: none !important;
               }
               .content-wrapper {
@@ -121,15 +121,7 @@ export class JobSheetHTMLPreview {
         </head>
         <body>
           <!-- Preview Toolbar (hidden when printing) -->
-          <div class="preview-toolbar no-print">
-            <div class="toolbar-title">
-              Job Sheet Preview - Task #${taskDetails.task_details?.id || taskDetails.id || 'N/A'}
-            </div>
-            <div class="toolbar-actions">
-              <button class="toolbar-button secondary" onclick="window.close()">Close</button>
-              <button class="toolbar-button" onclick="window.print()">Print / Save as PDF</button>
-            </div>
-          </div>
+         
           
           <!-- Main Content -->
           <div class="content-wrapper">
