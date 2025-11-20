@@ -190,10 +190,10 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({
     disabled?: boolean
   ) => {
     if (!handler) return null;
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
+  return (
+          <Button
+            variant="ghost"
+            size="sm"
         onClick={async (e) => {
           e.stopPropagation();
           try {
@@ -205,9 +205,9 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({
         className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-white/50 transition-opacity"
         title="Download data"
         disabled={disabled}
-      >
+          >
         <Download className="w-4 h-4 text-[#C72030]" />
-      </Button>
+          </Button>
     );
   };
 
@@ -255,13 +255,13 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({
                         className={`w-12 h-12 rounded-lg ${iconBgColor} flex items-center justify-center`}
                       >
                         <Icon className={`w-6 h-6 ${color}`} />
-                      </div>
+                  </div>
                       <div className="flex items-center gap-1">
                         {renderInfoButton(infoText || amcData.info)}
                         {renderDownloadButton(downloadHandler, !hasAmcData)}
-                      </div>
-                    </div>
-
+                </div>
+              </div>
+              
                     <h3 className="text-sm font-medium text-[#6B7280] leading-tight">
                       {metric.label}
                     </h3>
@@ -270,20 +270,20 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({
                       <div className="border-r border-gray-300 pr-3">
                         <div className="text-xs text-[#6B7280] mb-1">
                           Assets Under AMC
-                        </div>
+                  </div>
                         <div className="text-2xl font-semibold text-[#1F2937]">
                           {underAmc.toLocaleString()}
-                        </div>
-                      </div>
+                </div>
+              </div>
                       <div className="pl-3">
                         <div className="text-xs text-[#6B7280] mb-1">
                           Assets Missing AMC
                         </div>
                         <div className="text-2xl font-semibold text-[#1F2937]">
                           {missingAmc.toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
+                  </div>
+                </div>
+              </div>
                   </div>
                 </div>
               );
@@ -315,7 +315,7 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({
                     <div className="flex items-center gap-1">
                       {renderInfoButton(infoText)}
                       {renderDownloadButton(downloadHandler, !isDataAvailable)}
-                    </div>
+              </div>
                   </div>
 
                   <div className="space-y-1">
@@ -324,13 +324,13 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({
                     </h3>
                     <div className="text-3xl font-semibold text-[#1F2937]">
                       {displayValue}
-                    </div>
+              </div>
                   </div>
                 </div>
               </div>
             );
           })}
-        </div>
+          </div>
       </CardContent>
     </Card>
   );
