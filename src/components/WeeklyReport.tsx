@@ -29,12 +29,16 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
     const brcPctCalc = total ? (breached / total) * 100 : 0;
     const achPct = achievedPctOverride !== undefined ? achievedPctOverride : achPctCalc;
     const brcPct = breachedPctOverride !== undefined ? breachedPctOverride : brcPctCalc;
-    const data = [
-        { name: 'Achieved', value: achieved, color: '#DBC2A9' },
-        { name: 'Breached', value: breached, color: '#8B7355' }
-    ];
+    const baseData = React.useMemo(
+        () => [
+            { name: 'Achieved', value: achieved, color: '#DBC2A9' },
+            { name: 'Breached', value: breached, color: '#8B7355' }
+        ],
+        [achieved, breached]
+    );
     // Detect print to enlarge only the circle, not the container height
     const [isPrinting, setIsPrinting] = React.useState(false);
+    const [activeSlice, setActiveSlice] = React.useState<string | null>(null);
     React.useEffect(() => {
         if (typeof window === 'undefined') return;
         const before = () => setIsPrinting(true);
@@ -62,18 +66,78 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
         };
     }, []);
     const RADIAN = Math.PI / 180;
-    const outerRadiusValue = isPrinting ? 225 : 160;
+    const outerRadiusValue = isPrinting ? 225 : 150;
     const innerRadiusValue = 0;
     const formatPercent = (p: number) => `${p.toFixed(2)}%`;
+    const toggleSlice = React.useCallback((name: string) => {
+        if (isPrinting) return;
+        setActiveSlice(prev => (prev === name ? null : name));
+    }, [isPrinting]);
+
+    const pieData = React.useMemo(() => {
+        if (!activeSlice) return baseData;
+        const highlighted = baseData.find((item) => item.name === activeSlice);
+        if (!highlighted) return baseData;
+        const others = baseData.filter((item) => item.name !== activeSlice);
+        return [...others, highlighted];
+    }, [baseData, activeSlice]);
+
+    const legendData = React.useMemo(
+        () =>
+            baseData.map((item) => ({
+                ...item,
+                pct: item.name === 'Achieved' ? achPct : brcPct,
+            })),
+        [baseData, achPct, brcPct]
+    );
+
+    const handlePieClick = (_: any, index: number) => {
+        if (isPrinting) return;
+        const segment = pieData[index];
+        if (segment?.name) toggleSlice(segment.name);
+    };
+
+    const makeLegendHandlers = (name: string) => ({
+        onClick: () => toggleSlice(name),
+        onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleSlice(name);
+            }
+        }
+    });
+
+    const renderInnerLabel = (labelProps: any) => {
+        const { x, y, value, index } = labelProps;
+        if (value == null || index == null) return null;
+        const pct = total ? (Number(value) / total) * 100 : 0;
+        return (
+            <text
+                x={x}
+                y={y}
+                fill="#FFFFFF"
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={isPrinting ? 10 : 12}
+                fontWeight={500}
+                letterSpacing="0.05em"
+                fontFamily="'Inter','Segoe UI',sans-serif"
+                pointerEvents="none"
+            >
+                {`${pct.toFixed(2)}%`}
+            </text>
+        );
+    };
+
     return (
         <div className="w-full no-break tat-pie-card">
             <h3 className="text-black font-semibold text-base sm:text-lg mb-1 print:mb-1">{title}</h3>
             <div className="bg-[#F6F4EE] rounded-sm px-6 sm:px-8 py-4 sm:py-5 print:px-5 print:py-3">
                 <div className="w-full h-[260px] sm:h-[320px] print:h-[320px] tat-pie-container" style={{ overflow: 'visible' }}>
                     <ResponsiveContainer width="100%" height="100%">
-                        <PieChart margin={isPrinting ? { top: 0, right: 0, bottom: 0, left: 0 } : { top: 0, right: 0, bottom: 0, left: 0 }}>
+                        <PieChart margin={isPrinting ? { top: 0, right: 0, bottom: 0, left: 0 } : { top: 12, right: 12, bottom: 12, left: 12 }}>
                             <Pie
-                                data={data}
+                                data={pieData}
                                 dataKey="value"
                                 nameKey="name"
                                 innerRadius={innerRadiusValue}
@@ -88,7 +152,7 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
                                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
                                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
                                     const alignRight = x > cx;
-                                    const item = data[index];
+                                    const item = pieData[index];
                                     return (
                                         <text
                                             x={x}
@@ -103,26 +167,45 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
                                         </text>
                                     );
                                 }}
+                                onClick={handlePieClick}
                             >
-                                {data.map((d, i) => <Cell key={i} fill={d.color} />)}
-                                <LabelList
-                                    position="inside"
-                                    fill="black"
-                                    fontSize={10}
-                                    fontWeight={200}
-                                    formatter={(value: number) => {
-                                        const pct = total ? (value / total) * 100 : 0;
-                                        return `${pct.toFixed(0)}%`;
-                                    }}
-                                />
+                                {pieData.map((d, i) => (
+                                    <Cell
+                                        key={i}
+                                        fill={d.color}
+                                        stroke={!isPrinting && activeSlice === d.name ? '#4B351F' : '#FFFFFF'}
+                                        strokeWidth={!isPrinting && activeSlice === d.name ? 4 : 2}
+                                        style={{ cursor: isPrinting ? 'default' : 'pointer', outline: 'none' }}
+                                    />
+                                ))}
+                                <LabelList position="inside" content={renderInnerLabel} />
                             </Pie>
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
 
                 <div className="mt-2 print:mt-1 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm sm:text-base print:text-[12px]">
-                    <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: '#DBC2A9' }} /> <span className="text-black font-medium">Achieved:</span> <span className="text-black/80">{achieved.toLocaleString()} ({achPct.toFixed(2)}%)</span></div>
-                    <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: '#8B7355' }} /> <span className="text-black font-medium">Breached:</span> <span className="text-black/80">{breached.toLocaleString()} ({brcPct.toFixed(2)}%)</span></div>
+                    {legendData.map((legend) => {
+                        const handlers = makeLegendHandlers(legend.name);
+                        const isActive = !isPrinting && activeSlice === legend.name;
+                        return (
+                            <div
+                                key={legend.name}
+                                className={`legend-pill flex items-center gap-2 px-3 py-1 rounded-md transition ${
+                                    isActive ? 'bg-white/70 font-semibold text-[#4B351F]' : 'text-black'
+                                } ${isPrinting ? '' : 'cursor-pointer'}`}
+                                role={isPrinting ? undefined : 'button'}
+                                tabIndex={isPrinting ? -1 : 0}
+                                {...(!isPrinting ? handlers : {})}
+                            >
+                                <span className="inline-block h-3 w-3 rounded-sm" style={{ background: legend.color }} />
+                                <span className="text-black font-medium">{legend.name}:</span>
+                                <span className="text-black/80">
+                                    {legend.value.toLocaleString()} ({legend.pct.toFixed(2)}%)
+                                </span>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>
@@ -1011,6 +1094,22 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         <div className="w-full print-exact">
             {/* readiness marker so external logic (or tests) can detect when page content mounted */}
             <div data-component="weekly-report" data-loading={overallLoading ? 'true' : 'false'} style={{ display: 'none' }} />
+            <style>{`
+.tat-pie-card,
+.tat-pie-card:focus,
+.tat-pie-card:focus-visible,
+.tat-pie-card:focus-within,
+.tat-pie-card .legend-pill,
+.tat-pie-card .legend-pill:focus,
+.tat-pie-card .legend-pill:focus-visible,
+.tat-pie-card .legend-pill:focus-within,
+.tat-pie-card .recharts-sector,
+.tat-pie-card .recharts-sector:focus,
+.tat-pie-card .recharts-sector:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+`}</style>
               <style>{`
         @media print {
           @page {
@@ -1150,7 +1249,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
           }
 
           .date-range-text > span:last-of-type {
-              left: 281px !important;
+              left: 279px !important;
               max-width: none !important;
               overflow: visible !important;
           }
@@ -1740,7 +1839,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                   color: "black",
                   position: "relative",
                   display: "inline-block",
-                  left: "150px",
+                  left: "298px",
                   zIndex: 12,
                 }}
               >
@@ -1758,7 +1857,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                 style={{
                   color: "black",
                   position: "absolute",
-                  left: "190px",
+                  left: "337px",
                   top: 0,
                   zIndex: 12,
                   clipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
