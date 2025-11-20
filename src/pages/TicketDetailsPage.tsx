@@ -874,18 +874,7 @@ export const TicketDetailsPage = () => {
         if (Array.isArray(resp) && resp.length > 0) {
           setResponseSequence(resp);
           responseSeqRef.current = resp;
-          // find pending step; we don't show 'triggered' steps. If none pending, mark as inactive (-1)
-          const pendingIdx = resp.findIndex((r: any) => r.status === 'pending');
-          const startIdx = pendingIdx !== -1 ? pendingIdx : -1;
-          responseSeqIndexRef.current = startIdx;
-          setResponseSequenceIndex(startIdx);
-          // initialize seconds for that stage only if a pending step exists
-          if (startIdx !== -1) {
-            const mins = resp[startIdx]?.scheduled_minutes ?? resp[startIdx]?.minutes ?? 0;
-            setResponseEscalationSeconds(Math.floor((mins || 0) * 60));
-          } else {
-            setResponseEscalationSeconds(0);
-          }
+          console.log('✅ Response TAT timings fetched:', resp);
         }
       } catch (err) {
         console.error('Error fetching response TAT timings:', err);
@@ -898,16 +887,7 @@ export const TicketDetailsPage = () => {
         if (Array.isArray(res) && res.length > 0) {
           setResolutionSequence(res);
           resolutionSeqRef.current = res;
-          const pendingIdx = res.findIndex((r: any) => r.status === 'pending');
-          const startIdx = pendingIdx !== -1 ? pendingIdx : -1;
-          resolutionSeqIndexRef.current = startIdx;
-          setResolutionSequenceIndex(startIdx);
-          if (startIdx !== -1) {
-            const mins = res[startIdx]?.scheduled_minutes ?? res[startIdx]?.minutes ?? 0;
-            setResolutionEscalationSeconds(Math.floor((mins || 0) * 60));
-          } else {
-            setResolutionEscalationSeconds(0);
-          }
+          console.log('✅ Resolution TAT timings fetched:', res);
         }
       } catch (err) {
         console.error('Error fetching resolution TAT timings:', err);
@@ -3643,7 +3623,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
 
       return () => clearInterval(interval);
     }
-  }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time, ticketData, isTicketClosed, isTicketOnHold, refreshTicketData, responseTatTimings, resolutionTatTimings]);
+  }, [ticketData?.created_at, ticketData?.next_response_escalation?.escalation_time, ticketData?.next_resolution_escalation?.escalation_time, ticketData?.next_executive_escalation?.escalation_time, ticketData, isTicketClosed, isTicketOnHold, refreshTicketData, responseTatTimings, resolutionTatTimings, responseSequence, resolutionSequence]);
 
   // Add useEffect to trigger balance TAT recalculation every second for real-time countdown (removed - now handled in main timer)
 
@@ -4364,10 +4344,15 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          {isTicketClosed
-                            ? (ticketData.next_response_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes) : '00:00:00')
-                            : (ticketData.next_response_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_response_escalation.minutes) : '00:00:00')
-                          }
+                          {(() => {
+                            // Prefer sequence step minutes when available, otherwise fallback to ticketData
+                            const seq = responseSequence;
+                            const seqMinutes = (seq && seq.length > 0 && responseSequenceIndex >= 0)
+                              ? (seq[responseSequenceIndex]?.scheduled_minutes ?? seq[responseSequenceIndex]?.minutes)
+                              : null;
+                            const sourceMinutes = seqMinutes ?? ticketData.next_response_escalation?.minutes ?? 0;
+                            return sourceMinutes ? formatMinutesToDDHHMM(sourceMinutes) : '00:00:00';
+                          })()}
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Response TAT
@@ -4408,10 +4393,15 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                           className="font-semibold text-[#1A1A1A]"
                           style={{ fontSize: 24 }}
                         >
-                          {isTicketClosed
-                            ? (ticketData.next_resolution_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes) : '00:00:00')
-                            : (ticketData.next_resolution_escalation?.minutes ? formatMinutesToDDHHMM(ticketData.next_resolution_escalation.minutes) : '00:00:00')
-                          }
+                          {(() => {
+                            // Prefer sequence step minutes when available, otherwise fallback to ticketData
+                            const seq = resolutionSequence;
+                            const seqMinutes = (seq && seq.length > 0 && resolutionSequenceIndex >= 0)
+                              ? (seq[resolutionSequenceIndex]?.scheduled_minutes ?? seq[resolutionSequenceIndex]?.minutes)
+                              : null;
+                            const sourceMinutes = seqMinutes ?? ticketData.next_resolution_escalation?.minutes ?? 0;
+                            return sourceMinutes ? formatMinutesToDDHHMM(sourceMinutes) : '00:00:00';
+                          })()}
                         </span>
                         <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
                           Resolution TAT
@@ -4436,10 +4426,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                             className="font-semibold text-[#1A1A1A]"
                             style={{ fontSize: 24 }}
                           >
-                            {isTicketClosed
-                              ? '00:00:00:00'
-                              : formatSecondsToDDHHMMSS(responseEscalationSeconds)
-                            }
+                            {formatSecondsToDDHHMMSS(responseEscalationSeconds)}
                           </span>
 
                           <div className="text-[12px] text-[#9CA3AF] mt-1 leading-tight whitespace-pre-line" style={{ textAlign: 'left' }}>
@@ -4556,10 +4543,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                             className="font-semibold text-[#1A1A1A]"
                             style={{ fontSize: 24 }}
                           >
-                            {isTicketClosed
-                              ? '00:00:00:00'
-                              : formatSecondsToDDHHMMSS(resolutionEscalationSeconds)
-                            }
+                            {formatSecondsToDDHHMMSS(resolutionEscalationSeconds)}
                           </span>
                           <div className="text-[12px] text-[#9CA3AF] mt-1 leading-tight whitespace-pre-line" style={{ textAlign: 'left' }}>
                             {(() => {

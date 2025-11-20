@@ -556,15 +556,15 @@ export const Dashboard = () => {
         ? Math.max(...layouts.map(l => l.y + l.h))
         : 0;
       
-      // 2-column layout for analytics cards: full 12 columns (Recent Updates is outside grid)
-      const col = index % 2; // 2 columns for analytics cards
-      const row = Math.floor(index / 2);
+      // Full width layout for analytics cards: each card takes full width (12 columns)
+      // Recent Updates sidebar is outside the grid system
+      const row = index;
       
       return {
         i: analytic.id,
-        x: col * 6,
+        x: 0, // Start at column 0 for full width
         y: maxY + row * (isCompactCard ? 4 : 6),
-        w: 6,
+        w: 12, // Full width (12 columns)
         h: isCompactCard ? 4 : 6,
         minW: 4,
         minH: isCompactCard ? 3 : 5,
@@ -3026,6 +3026,20 @@ export const Dashboard = () => {
             .react-grid-item > div {
               height: 100%;
               overflow: hidden;
+            }
+
+            /* Placeholder styling for resize */
+            .react-grid-placeholder {
+              background: #e5e7eb !important;
+              opacity: 0.5 !important;
+              border-radius: 8px;
+              border: none !important;
+              z-index: 2;
+              -webkit-user-select: none;
+              -moz-user-select: none;
+              -ms-user-select: none;
+              -o-user-select: none;
+              user-select: none;
             }
 
         `}
