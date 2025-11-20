@@ -263,10 +263,10 @@ const MsafeReportDownload = () => {
           </div>
         </div>
 
-        <Button onClick={startExport} disabled={status === 'processing' || status === 'completed'} className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed">
+        {/* <Button onClick={startExport} disabled={status === 'processing' || status === 'completed'} className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed">
           <FileText className="w-4 h-4 mr-2" />
           Download Report
-        </Button>
+        </Button> */}
       </div>
 
       {isModalOpen && (
