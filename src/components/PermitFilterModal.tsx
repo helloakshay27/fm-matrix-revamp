@@ -47,7 +47,7 @@ export const PermitFilterModal: React.FC<PermitFilterModalProps> = ({
 
     // Add non-empty filters as query parameters
     if (filters.permitId.trim()) {
-      queryParams.append('q[reference_number_eq]', filters.permitId.trim());
+      queryParams.append('q[id_eq]', filters.permitId.trim());
     }
     if (filters.permitType.trim()) {
       queryParams.append('q[permit_type_name_cont]', filters.permitType.trim());
