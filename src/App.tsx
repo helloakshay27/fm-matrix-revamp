@@ -172,6 +172,7 @@ import FillJSAForm from "./pages/FillJSAForm";
 import { AddPermitChecklist } from "./pages/AddPermitChecklist";
 import { PermitChecklistList } from "./pages/PermitChecklistList";
 import { PermitChecklistDetails } from "./pages/PermitChecklistDetails";
+import { EditPermitChecklist } from "./pages/EditPermitCheklist";
 import { EditPermitPage } from "./pages/EditPermitPage";
 
 import { LeadDashboard } from "./pages/LeadDashboard";
@@ -368,6 +369,7 @@ import { AssetAuditDashboard } from "./pages/AssetAuditDashboard";
 import { AddAssetAuditPage } from "./pages/AddAssetAuditPage";
 import { EditAssetAuditPage } from "./pages/EditAssetAuditPage";
 import { AssetAuditDetailsPage } from "./pages/AssetAuditDetailsPage";
+import { AssetAuditReportPage } from "./pages/AssetAuditReportPage";
 
 // Import Master Checklist page
 import { AddMasterChecklistPage } from "./pages/AddMasterChecklistPage";
@@ -1653,6 +1655,10 @@ function App() {
                     element={<PermitChecklistDetails />}
                   />
                   <Route
+                    path="/safety/permit/checklist/edit/:id"
+                    element={<EditPermitChecklist />}
+                  />
+                  <Route
                     path="/safety/permit-checklist/add"
                     element={<AddPermitChecklist />}
                   />
@@ -1840,6 +1846,10 @@ function App() {
                   <Route
                     path="/maintenance/audit/assets/details/:id"
                     element={<AssetAuditDetailsPage />}
+                  />
+                  <Route
+                    path="/maintenance/audit/assets/report/:id"
+                    element={<AssetAuditReportPage />}
                   />
 
                   {/* Waste Generation Routes */}
