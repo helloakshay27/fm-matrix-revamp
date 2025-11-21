@@ -16,6 +16,7 @@ import ViSidebarWithToken from "./ViSidebarWithToken";
 import { ZxSidebar } from "./ZxSidebar";
 import { ZxDynamicHeader } from "./ZxDynamicHeader";
 import { saveToken, saveUser, saveBaseUrl } from "../utils/auth";
+import { ProtectionLayer } from "./ProtectionLayer";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -167,11 +168,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, [location.search]);
 
 
+
+
   return (
     <div
       className="min-h-screen bg-[#fafafa]"
       style={{ backgroundColor: layoutConfig.theme?.backgroundColor }}
     >
+      {/* Content protection for specified domains */}
+      <ProtectionLayer 
+        enabled={true}
+        allowedDomains={['web.gophygital.work', 'vi-web.gophygital.work']}
+      />
+      
       <Header />
       {renderSidebar()}
       {renderDynamicHeader()}
