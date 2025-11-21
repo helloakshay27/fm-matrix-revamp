@@ -53,7 +53,7 @@ baseClient.interceptors.request.use(
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
           console.log("🔍 Using org_id for FM/Oman site:", orgId);
         } else if (email) {
-          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+          apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
           console.log("🔍 Using email for FM/Oman site:", email);
         } else {
           throw new Error(
@@ -79,7 +79,7 @@ baseClient.interceptors.request.use(
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
           console.log("🔍 Using org_id for default fallback:", orgId);
         } else if (email) {
-          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+          apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
           console.log("🔍 Using email for default fallback:", email);
         } else {
           throw new Error("Either org_id or email is required");
