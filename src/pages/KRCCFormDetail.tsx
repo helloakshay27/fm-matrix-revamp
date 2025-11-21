@@ -703,12 +703,12 @@ export const KRCCFormDetail: React.FC = () => {
                 <KeyValue key={k} label={toTitle(k)} value={v} />
               ))}
             </div>
-            <AttachmentGroup title="M-Parivahan" items={bike.attachments?.mparivahan as IAttachmentItem[]} onPreview={openPreview} />
+            {/* <AttachmentGroup title="M-Parivahan" items={bike.attachments?.mparivahan as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="Vehicle" items={bike.attachments?.vehicle as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="Insurance" items={bike.attachments?.insurance as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="Helmet" items={bike.attachments?.helmet as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="PUC" items={bike.attachments?.puc as IAttachmentItem[]} onPreview={openPreview} />
-            <AttachmentGroup title="Medical Certificate" items={bike.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Medical Certificate" items={bike.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} /> */}
           </div>
         </div>
       )}
@@ -728,10 +728,10 @@ export const KRCCFormDetail: React.FC = () => {
                 <KeyValue key={k} label={toTitle(k)} value={v} />
               ))}
             </div>
-            <AttachmentGroup title="M-Parivahan" items={car.attachments?.mparivahan as IAttachmentItem[]} onPreview={openPreview} />
+            {/* <AttachmentGroup title="M-Parivahan" items={car.attachments?.mparivahan as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="Insurance" items={car.attachments?.insurance as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="PUC" items={car.attachments?.puc as IAttachmentItem[]} onPreview={openPreview} />
-            <AttachmentGroup title="Medical Certificate" items={car.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Medical Certificate" items={car.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} /> */}
           </div>
         </div>
       )}
@@ -751,11 +751,11 @@ export const KRCCFormDetail: React.FC = () => {
                 <KeyValue key={k} label={toTitle(k)} value={v} />
               ))}
             </div>
-            <AttachmentGroup title="Certificates" items={electrical.attachments?.certificate as IAttachmentItem[]} onPreview={openPreview} />
+            {/* <AttachmentGroup title="Certificates" items={electrical.attachments?.certificate as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="Licenses" items={electrical.attachments?.license as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="Medical Certificates" items={electrical.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
             <AttachmentGroup title="Experience Certificates" items={electrical.attachments?.experience_certificate as IAttachmentItem[]} onPreview={openPreview} />
-            <AttachmentGroup title="First Aid Training" items={electrical.attachments?.first_aid as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="First Aid Training" items={electrical.attachments?.first_aid as IAttachmentItem[]} onPreview={openPreview} /> */}
           </div>
         </div>
       )}
@@ -775,8 +775,8 @@ export const KRCCFormDetail: React.FC = () => {
                 <KeyValue key={k} label={toTitle(k)} value={v} />
               ))}
             </div>
-            <AttachmentGroup title="Medical Certificates" items={height.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
-            <AttachmentGroup title="First Aid" items={height.attachments?.first_aid as IAttachmentItem[]} onPreview={openPreview} />
+            {/* <AttachmentGroup title="Medical Certificates" items={height.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="First Aid" items={height.attachments?.first_aid as IAttachmentItem[]} onPreview={openPreview} /> */}
           </div>
         </div>
       )}
@@ -796,7 +796,7 @@ export const KRCCFormDetail: React.FC = () => {
                 <KeyValue key={k} label={toTitle(k)} value={v} />
               ))}
             </div>
-            <AttachmentGroup title="Medical Certificates" items={underground.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
+            {/* <AttachmentGroup title="Medical Certificates" items={underground.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} /> */}
           </div>
         </div>
       )}
