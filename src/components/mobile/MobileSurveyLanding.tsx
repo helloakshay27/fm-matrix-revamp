@@ -2013,7 +2013,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 {/* Generic Tags for Negative (Emoji, Smiley, Multiple, Rating) */}
                 {showGenericTags && (
                   <>
-                    <div className="bg-white/50 backdrop-blur-sm rounded-lg p-2 sm:p-3 shadow-lg relative">
+                    <div className="bg-white/50 backdrop-blur-sm rounded-lg p-1.5 xs:p-2 sm:p-3 shadow-lg relative">
                       <button
                         type="button"
                         onClick={() => {
@@ -2023,20 +2023,20 @@ export const MobileSurveyLanding: React.FC = () => {
                           setPendingNegativeType(null);
                           setPendingNegativeAnswer(null);
                         }}
-                        className="absolute top-2 right-2 z-10 text-black underline hover:text-black/90 text-[10px] sm:text-xs transition-colors"
+                        className="absolute top-1.5 right-1.5 xs:top-2 xs:right-2 z-10 text-black underline hover:text-black/90 text-[9px] xs:text-[10px] sm:text-xs transition-colors"
                       >
                         Back
                       </button>
 
                       {/* Centered heading */}
-                      <div className="flex mt-4 justify-center items-center mb-2 sm:mb-3 pr-10">
-                        <h4 className="text-center text-[11px] sm:text-sm font-semibold text-black/100 leading-tight">
+                      <div className="flex mt-3 xs:mt-4 justify-center items-center mb-1.5 xs:mb-2 sm:mb-3 pr-8 xs:pr-10">
+                        <h4 className="text-center text-[10px] xs:text-[11px] sm:text-sm font-semibold text-black/100 leading-tight px-1">
                           What specifically needs improvement?
                         </h4>
                       </div>
 
                       {/* Grid Layout - 2x2 for first 4, then repeat */}
-                      <div className="overflow-x-auto pb-2 -mx-1 sm:-mx-0">
+                      <div className="overflow-x-auto pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
                         {(() => {
                           const tags = getCurrentQuestion()?.generic_tags || [];
                           const itemsPerPage = 4;
@@ -2050,14 +2050,14 @@ export const MobileSurveyLanding: React.FC = () => {
                               )
                           );
                           return (
-                            <div className="flex flex-row gap-2 sm:gap-3 px-1 sm:px-0">
+                            <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3 px-0.5 xs:px-1 sm:px-0">
                               {pages.map((pageTags, pageIdx) => (
                                 <div
                                   key={pageIdx}
-                                  className="flex flex-col gap-2 sm:gap-3 flex-shrink-0 w-full"
+                                  className="flex flex-col gap-1.5 xs:gap-2 sm:gap-3 flex-shrink-0 w-full"
                                 >
                                   {/* First row: items 0,1 */}
-                                  <div className="flex flex-row gap-2 sm:gap-3">
+                                  <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3">
                                     {[0, 1].map((slotIdx) => {
                                       const tag = pageTags[slotIdx];
                                       return tag ? (
@@ -2067,7 +2067,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                           onClick={() =>
                                             handleGenericTagClick(tag)
                                           }
-                                          className={`flex-1 flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${
+                                          className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${
                                             selectedTags.some(
                                               (selectedTag) =>
                                                 selectedTag.id === tag.id
@@ -2077,7 +2077,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                           }`}
                                         >
                                           <div
-                                            className="w-full mb-0.5 sm:mb-1"
+                                            className="w-[80%] xs:w-[85%] sm:w-full mb-0.5 xs:mb-0.5 sm:mb-1"
                                             style={{ aspectRatio: "16/9" }}
                                           >
                                             {tag.icons &&
@@ -2089,13 +2089,13 @@ export const MobileSurveyLanding: React.FC = () => {
                                               />
                                             ) : (
                                               <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                                                <span className="text-base sm:text-xl">
+                                                <span className="text-sm xs:text-base sm:text-xl">
                                                   🏷️
                                                 </span>
                                               </div>
                                             )}
                                           </div>
-                                          <span className="text-[10px] sm:text-xs font-medium text-gray-700 leading-tight">
+                                          <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-gray-700 leading-tight break-words w-full px-0.5">
                                             {tag.category_name}
                                           </span>
                                         </button>
@@ -2108,7 +2108,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                     })}
                                   </div>
                                   {/* Second row: items 2,3 */}
-                                  <div className="flex flex-row gap-2 sm:gap-3">
+                                  <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3">
                                     {[2, 3].map((slotIdx) => {
                                       const tag = pageTags[slotIdx];
                                       return tag ? (
@@ -2118,7 +2118,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                           onClick={() =>
                                             handleGenericTagClick(tag)
                                           }
-                                          className={`flex-1 flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${
+                                          className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${
                                             selectedTags.some(
                                               (selectedTag) =>
                                                 selectedTag.id === tag.id
@@ -2128,7 +2128,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                           }`}
                                         >
                                           <div
-                                            className="w-full mb-0.5 sm:mb-1"
+                                            className="w-[80%] xs:w-[85%] sm:w-full mb-0.5 xs:mb-0.5 sm:mb-1"
                                             style={{ aspectRatio: "16/9" }}
                                           >
                                             {tag.icons &&
@@ -2140,13 +2140,13 @@ export const MobileSurveyLanding: React.FC = () => {
                                               />
                                             ) : (
                                               <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                                                <span className="text-base sm:text-xl">
+                                                <span className="text-sm xs:text-base sm:text-xl">
                                                   🏷️
                                                 </span>
                                               </div>
                                             )}
                                           </div>
-                                          <span className="text-[10px] sm:text-xs font-medium text-gray-700 leading-tight">
+                                          <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-gray-700 leading-tight break-words w-full px-0.5">
                                             {tag.category_name}
                                           </span>
                                         </button>
@@ -2168,7 +2168,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
                     {/* Description Field */}
                     <div>
-                      <label className="block text-[10px] sm:text-xs font-medium text-white/90 mb-1 sm:mb-2">
+                      <label className="block text-[9px] xs:text-[10px] sm:text-xs font-medium text-white/90 mb-1 xs:mb-1 sm:mb-2">
                         Comments (Optional)
                       </label>
                       <textarea
@@ -2177,7 +2177,7 @@ export const MobileSurveyLanding: React.FC = () => {
                           setCurrentNegativeComments(e.target.value)
                         }
                         placeholder="Please describe any specific issues or suggestions..."
-                        className="w-full h-14 sm:h-16 p-2 border border-blue-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[10px] sm:text-xs"
+                        className="w-full h-12 xs:h-14 sm:h-16 p-1.5 xs:p-2 border border-blue-300 rounded-[0.20rem] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-[9px] xs:text-[10px] sm:text-xs"
                         disabled={isSubmitting}
                       />
                     </div>
@@ -2264,12 +2264,12 @@ export const MobileSurveyLanding: React.FC = () => {
                         selectedTags.length === 0 &&
                         !getCurrentNegativeComments().trim()
                       }
-                      className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white/100 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors disabled:cursor-not-allowed"
+                      className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white/100 py-2 xs:py-2.5 px-3 xs:px-4 rounded-lg text-xs xs:text-sm font-medium transition-colors disabled:cursor-not-allowed"
                     >
                       {isSubmitting ? (
                         <div className="flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Submitting...
+                          <div className="animate-spin rounded-full h-3.5 xs:h-4 w-3.5 xs:w-4 border-b-2 border-white mr-2"></div>
+                          <span className="text-xs xs:text-sm">Submitting...</span>
                         </div>
                       ) : surveyData!.snag_checklist.questions_count === 1 ? (
                         "Submit Survey"
