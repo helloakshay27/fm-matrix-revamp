@@ -699,18 +699,94 @@ export const ViewSchedulePage = () => {
                               <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Help Images</span>
                                 <span className="text-gray-500 mx-2">:</span>
-                                <div className="flex flex-wrap gap-2">
-                                  {task.question_hint_image_url.map((image: any, imgIndex: number) => (
-                                    <a 
-                                      key={image.id || imgIndex} 
-                                      href={image.url} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:text-blue-800 underline"
-                                    >
-                                      {image.filename || `Image ${imgIndex + 1}`}
-                                    </a>
-                                  ))}
+                                <div className="flex items-center flex-wrap gap-4">
+                                  {task.question_hint_image_url.map((image: any, imgIndex: number) => {
+                                    const url = image.url || image.document;
+                                    const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                                    const isPdf = /\.pdf$/i.test(url);
+                                    const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                                    const isWord = /\.(doc|docx)$/i.test(url);
+                                    const isDownloadable = isPdf || isExcel || isWord;
+
+                                    return (
+                                      <div
+                                        key={image.id || imgIndex}
+                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                      >
+                                        {isImage ? (
+                                          <>
+                                            <button
+                                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                              title="View"
+                                              onClick={() => {
+                                                setSelectedDoc({
+                                                  ...image,
+                                                  url,
+                                                  type: 'image'
+                                                });
+                                                setShowImagePreview(true);
+                                              }}
+                                              type="button"
+                                            >
+                                              <Eye className="w-4 h-4" />
+                                            </button>
+                                            <img
+                                              src={url}
+                                              alt={image.filename || image.document_name || `Help Image ${imgIndex + 1}`}
+                                              className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                              onClick={() => {
+                                                setSelectedDoc({
+                                                  ...image,
+                                                  url,
+                                                  type: 'image'
+                                                });
+                                                setShowImagePreview(true);
+                                              }}
+                                            />
+                                          </>
+                                        ) : isPdf ? (
+                                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                            <FileText className="w-6 h-6" />
+                                          </div>
+                                        ) : isExcel ? (
+                                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                            <FileSpreadsheet className="w-6 h-6" />
+                                          </div>
+                                        ) : isWord ? (
+                                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                            <FileText className="w-6 h-6" />
+                                          </div>
+                                        ) : (
+                                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                            <File className="w-6 h-6" />
+                                          </div>
+                                        )}
+                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                          {image.filename ||
+                                            image.document_name ||
+                                            url.split('/').pop() ||
+                                            `Help Image ${imgIndex + 1}`}
+                                        </span>
+                                        {isDownloadable && (
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                            onClick={() => {
+                                              setSelectedDoc({
+                                                ...image,
+                                                url,
+                                                type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
+                                              });
+                                              setShowImagePreview(true);
+                                            }}
+                                          >
+                                            <Download className="w-4 h-4" />
+                                          </Button>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             </div>

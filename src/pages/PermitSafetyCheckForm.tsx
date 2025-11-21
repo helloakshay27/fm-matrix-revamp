@@ -46,7 +46,7 @@ const PermitSafetyCheckForm = () => {
             try {
                 const baseUrl = localStorage.getItem("baseUrl")?.replace(/\/+$/, "");
                 if (!permitId || !token) return;
-                const url = `https://${baseUrl}/pms/permits/${permitId}/safety_checklist_data`;
+                const url = `${baseUrl}/pms/permits/${permitId}/safety_checklist_data`;
 
                 const res = await axios.get(url, {
                     headers: {
@@ -92,7 +92,7 @@ const PermitSafetyCheckForm = () => {
         try {
             const baseUrl = localStorage.getItem("baseUrl")?.replace(/\/+$/, "");
             if (!permitId || !token) return;
-            const url = `https://${baseUrl}/pms/permits/${permitId}/submit_checklist_form.json`;
+            const url = `${baseUrl}/pms/permits/${permitId}/submit_checklist_form.json`;
 
             const formData = new FormData();
 
