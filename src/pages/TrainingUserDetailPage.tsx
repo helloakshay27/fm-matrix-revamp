@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Download, FileText, User2, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Download, FileText, User2, ClipboardList, Maximize2, X, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 
 type TrainingAttachment = { id: number; url: string; doctype: string | null };
 type CreatedBy = { id?: number; name?: string; email?: string; mobile?: string | null; employee_type?: string | null };
@@ -56,9 +56,35 @@ const TrainingUserDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [records, setRecords] = useState<TrainingApiRecord[]>([]);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [previewAttachmentId, setPreviewAttachmentId] = useState<number | null>(null);
-  const [downloadingAttachment, setDownloadingAttachment] = useState(false);
+  
+  // Preview modal state (like KRCC)
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewItems, setPreviewItems] = useState<TrainingAttachment[]>([]);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const [previewTitle, setPreviewTitle] = useState('');
+
+  const openPreview = useCallback((items: TrainingAttachment[], index: number, title: string) => {
+    setPreviewItems(items);
+    setPreviewIndex(index);
+    setPreviewTitle(title);
+    setPreviewOpen(true);
+  }, []);
+  
+  const closePreview = useCallback(() => setPreviewOpen(false), []);
+  const gotoPrev = useCallback(() => setPreviewIndex(i => (i - 1 + previewItems.length) % previewItems.length), [previewItems.length]);
+  const gotoNext = useCallback(() => setPreviewIndex(i => (i + 1) % previewItems.length), [previewItems.length]);
+
+  // Keyboard navigation for preview
+  useEffect(() => {
+    if (!previewOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closePreview();
+      if (e.key === 'ArrowLeft') gotoPrev();
+      if (e.key === 'ArrowRight') gotoNext();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [previewOpen, closePreview, gotoPrev, gotoNext]);
 
   const primary = records[0];
   const createdBy = primary?.created_by;
@@ -157,100 +183,146 @@ const TrainingUserDetailPage: React.FC = () => {
               </div>
             ))}
           </div>
-          {/* ---__________________
+          {/* ---__________________ */}
           <div className="px-4 pb-4">
-            <div className="text-sm font-semibold text-gray-700 mb-2">Attachments</div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-6 w-6 bg-gradient-to-tr from-[#C72030] to-[#e54654] text-white rounded-md flex items-center justify-center shadow-sm">
+                <FileText className="h-3.5 w-3.5" />
+              </div>
+              <label className="text-sm font-semibold tracking-wide text-gray-800">Attachments</label>
+              {rec.training_attachments && rec.training_attachments.length > 0 && (
+                <span className="px-1.5 py-0.5 text-[10px] rounded bg-gray-200 text-gray-700 font-medium">
+                  {rec.training_attachments.length}
+                </span>
+              )}
+            </div>
             {!rec.training_attachments || rec.training_attachments.length === 0 ? (
               <div className="text-gray-400 text-sm">No attachments</div>
             ) : (
-              <div className="flex flex-wrap gap-3">
-                {rec.training_attachments.map((att) => {
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+                {rec.training_attachments.map((att, idx) => {
                   const url = att.url;
                   const doctype = att.doctype || '';
                   const isImage = /(jpg|jpeg|png|webp|gif|svg)$/i.test(url) || doctype.startsWith('image/');
+                  const display = `Attachment-${att.id}`;
+                  
+                  if (!isImage) {
+                    return (
+                      <a 
+                        key={att.id} 
+                        href={url} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="flex items-center gap-2 text-[#C72030] hover:underline text-sm p-2 border rounded"
+                      >
+                        <FileText className="w-4 h-4" /> Open
+                      </a>
+                    );
+                  }
+                  
                   return (
-                    <div key={att.id}>
-                      {isImage ? (
-                        <div
-                          className="w-20 h-20 bg-[#F6F4EE] border rounded flex items-center justify-center overflow-hidden cursor-pointer"
-                          onClick={() => { setPreviewImage(url); setPreviewAttachmentId(att.id); }}
-                          title="View image"
-                        >
-                          <img src={url} alt="Attachment" className="w-full h-full object-cover" />
+                    <button
+                      key={att.id}
+                      type="button"
+                      onClick={() => openPreview(rec.training_attachments || [], idx, `Training Attachments (${idx + 1})`)}
+                      className="relative group/image rounded-lg overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-[#C72030]/40"
+                    >
+                      <div className="aspect-square w-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                        <img
+                          src={url}
+                          alt={display}
+                          loading="lazy"
+                          className="h-full w-full object-cover object-center transition-transform duration-300 group-hover/image:scale-105"
+                        />
+                        <div className="absolute inset-0 opacity-0 group-hover/image:opacity-100 bg-black/40 flex items-center justify-center transition-opacity">
+                          <Maximize2 className="h-5 w-5 text-white" />
                         </div>
-                      ) : (
-                        <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-[#C72030] hover:underline">
-                          <FileText className="w-4 h-4" /> Open attachment
-                        </a>
-                      )}
-                    </div>
+                      </div>
+                      <div className="p-1.5 text-[11px] font-medium truncate text-gray-700 text-left w-full bg-white/80 backdrop-blur-sm border-t border-gray-100">
+                        {display}
+                      </div>
+                    </button>
                   );
                 })}
               </div>
             )}
           </div>
-          ---_________________ */}
+          {/* ---_________________ */}
         </div>
       ))}
 
-      {/* Image Preview Modal */}
-      <Dialog open={!!previewImage} onOpenChange={(open) => { if (!open) { setPreviewImage(null); setPreviewAttachmentId(null); } }}>
-        <DialogContent className="max-w-[90vw] md:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Attachment Preview</DialogTitle>
-          </DialogHeader>
-          {previewImage && (
-            <div className="flex flex-col items-center gap-4">
-              <img src={previewImage} alt="Preview" className="max-h-[70vh] w-auto object-contain rounded border" />
-              <div className="flex gap-2">
-                <Button
-                  className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-                  disabled={downloadingAttachment}
-                  onClick={async () => {
-                    try {
-                      setDownloadingAttachment(true);
-                      const token = localStorage.getItem('token');
-                      const baseUrl = localStorage.getItem('baseUrl');
-                      if (previewAttachmentId && token && baseUrl) {
-                        const apiUrl = `https://${baseUrl}/attachfiles/${previewAttachmentId}?show_file=true`;
-                        const response = await fetch(apiUrl, { method: 'GET', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
-                        if (!response.ok) throw new Error('Failed to fetch the file');
-                        const disposition = response.headers.get('Content-Disposition') || response.headers.get('content-disposition') || '';
-                        let fileName = `Training_Attachment_${previewAttachmentId}`;
-                        const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
-                        if (match) fileName = decodeURIComponent(match[1] || match[2] || fileName);
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = fileName;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(url);
-                      } else {
-                        const a = document.createElement('a');
-                        a.href = previewImage!;
-                        a.download = 'Training_Attachment';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                      }
-                    } catch (e) {
-                      console.error('Error downloading attachment:', e);
-                      window.open(previewImage!, '_blank');
-                    } finally {
-                      setDownloadingAttachment(false);
-                    }
-                  }}
+      {/* Image Preview Modal (KRCC-style lightbox) */}
+      {previewOpen && previewItems.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-5xl mx-auto">
+            <div className="flex items-center justify-between mb-3 text-white">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5" />
+                <span className="font-medium text-sm tracking-wide">{previewTitle}</span>
+                <span className="text-xs px-2 py-0.5 rounded bg-white/10 border border-white/20">
+                  {previewIndex + 1}/{previewItems.length}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={gotoPrev} 
+                  className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"
                 >
-                  {downloadingAttachment ? 'Downloading...' : (<><Download className="w-4 h-4 mr-1" /> Download</>)}
-                </Button>
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button 
+                  onClick={gotoNext} 
+                  className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <button 
+                  onClick={closePreview} 
+                  className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            <div className="relative rounded-lg overflow-hidden shadow-2xl bg-black/40 border border-white/10">
+              <img
+                src={previewItems[previewIndex].url}
+                alt={`Training Attachment ${previewItems[previewIndex].id}`}
+                className="mx-auto max-h-[70vh] object-contain w-full select-none"
+                draggable={false}
+              />
+            </div>
+            <div className="mt-3 grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2 max-h-32 overflow-y-auto pr-1">
+              {previewItems.map((item, i) => {
+                const active = i === previewIndex;
+                const thumbName = `Attachment-${item.id}`;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setPreviewIndex(i)}
+                    className={`relative group/thumb rounded border ${
+                      active 
+                        ? 'border-[#C72030] ring-2 ring-[#C72030]/50' 
+                        : 'border-white/20 hover:border-white/50'
+                    } overflow-hidden h-14 bg-white/5`}
+                    title={thumbName}
+                  >
+                    <img 
+                      src={item.url} 
+                      alt={thumbName} 
+                      className="h-full w-full object-cover" 
+                      loading="lazy" 
+                    />
+                    {active && (
+                      <span className="absolute inset-0 border-2 border-[#C72030] pointer-events-none"></span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
