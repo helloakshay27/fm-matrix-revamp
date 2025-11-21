@@ -781,6 +781,10 @@ import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
 import Sitemap from "./pages/Sitemap";
 import BookingList from "./pages/BookingList";
 import IframeDashboardMsafe from "./pages/IframeDashboardMsafe";
+import { ProjectsDashboard } from "./pages/ProjectsDashboard";
+import ProjectDetailsPage from "./pages/ProjectDetailsPage";
+import ProjectMilestones from "./pages/ProjectMilestones";
+import ProjectTasksPage from "./pages/ProjectTasksPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2290,6 +2294,22 @@ function App() {
                   <Route
                     path="/maintenance/vendor/view/:id"
                     element={<DetailsVendorPage />}
+                  />
+                  <Route
+                    path="/maintenance/projects"
+                    element={<ProjectsDashboard />}
+                  />
+                  <Route
+                    path="/maintenance/projects/details/:id"
+                    element={<ProjectDetailsPage />}
+                  />
+                  <Route
+                    path="/maintenance/projects/:id/milestones"
+                    element={<ProjectMilestones />}
+                  />
+                  <Route
+                    path="/maintenance/projects/:id/milestones/:mid/tasks"
+                    element={<ProjectTasksPage />}
                   />
 
                   {/* Utility Routes */}

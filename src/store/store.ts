@@ -66,6 +66,12 @@ import { createAmenityReducer, editAmenityReducer, fetchAmenityByIdReducer, fetc
 import { createCompanyPartnerReducers, editCompanyPartnerReducer, fetchCompanyPartnersReducer } from './slices/companyPartnerSlice'
 import { createChatTaskReducer, createConversationReducer, createGroupReducer, deleteChatTaskReducer, fetchChannelTaskDetailsReducer, fetchConversationMessagesReducer, fetchConversationReducer, fetchConversationsReducer, fetchGroupConversationReducer, fetchGroupsReducer, removeUserFromGroupReducer, sendMessageReducer, updateChatTaskReducer, updateMessageReducer } from './slices/channelSlice'
 import { createCircleReducer, fetchCircleListReducer, updateCircleReducer } from './slices/msafeCircleSlice'
+import { changeProjectStatusReducer, createProjectReducer, fetchProjectByIdReducer, fetchProjectsReducer } from './slices/projectManagementSlice'
+import { createMilestoneReducer, fetchMilestonesReducer } from './slices/projectMilestoneSlice'
+import { createProjectTeamReducer, fetchProjectTeamByIdReducer, fetchProjectTeamsReducer, updateProjectTeamReducer } from './slices/projectTeamsSlice'
+import { createProjectTypesReducer, fetchProjectTypesReducer, updateProjectTypesReducer } from './slices/projectTypeSlice'
+import { createProjectsTagsReducer, fetchProjectsTagsReducer, updateProjectsTagsReducer } from './slices/projectTagSlice'
+import { createProjectTaskReducer, fetchProjectTasksReducer } from './slices/projectTasksSlice'
 
 export const store = configureStore({
   reducer: {
@@ -327,6 +333,34 @@ export const store = configureStore({
     updateChatTask: updateChatTaskReducer,
     deleteChatTask: deleteChatTaskReducer,
     updateMessage: updateMessageReducer,
+
+    // Project Management
+    fetchProjects: fetchProjectsReducer,
+    createProject: createProjectReducer,
+    changeProjectStatus: changeProjectStatusReducer,
+    fetchProjectById: fetchProjectByIdReducer,
+
+    // Project Milestone
+    createMilestone: createMilestoneReducer,
+    fetchMilestones: fetchMilestonesReducer,
+
+    // Project Tasks
+    fetchProjectTasks: fetchProjectTasksReducer,
+    createProjectTask: createProjectTaskReducer,
+
+    // Project Team
+    fetchProjectTeams: fetchProjectTeamsReducer,
+    fetchProjectTeamById: fetchProjectTeamByIdReducer,
+    createProjectTeam: createProjectTeamReducer,
+    updateProjectTeam: updateProjectTeamReducer,
+
+    fetchProjectTypes: fetchProjectTypesReducer,
+    createProjectTypes: createProjectTypesReducer,
+    updateProjectTypes: updateProjectTypesReducer,
+
+    fetchProjectsTags: fetchProjectsTagsReducer,
+    createProjectsTags: createProjectsTagsReducer,
+    updateProjectsTags: updateProjectsTagsReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>
