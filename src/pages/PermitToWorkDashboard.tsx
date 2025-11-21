@@ -266,6 +266,8 @@ export const PermitToWorkDashboard = () => {
 
   // Filter state to maintain filters across page navigation
   const [currentFilters, setCurrentFilters] = useState<string>('');
+  // Search state to maintain search term across page navigation
+  const [currentSearchParam, setCurrentSearchParam] = useState<string>('');
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -279,16 +281,23 @@ export const PermitToWorkDashboard = () => {
       try {
         setLoading(true);
 
+        // Combine filters and search parameters
+        let combinedParams = currentFilters;
+        if (currentSearchParam) {
+          combinedParams = combinedParams
+            ? `${combinedParams}&${currentSearchParam}`
+            : currentSearchParam;
+        }
+
         // Fetch both permits and counts in parallel
-        // Pass current filters to maintain filtering across page navigation
         const [permitsResponse, countsResponse] = await Promise.all([
-          fetchPermits(currentPage, currentFilters),
+          fetchPermits(currentPage, combinedParams),
           fetchPermitCounts()
         ]);
 
         setPermits(permitsResponse.permits);
         // Only update originalPermits if no filters are applied
-        if (!currentFilters) {
+        if (!combinedParams) {
           setOriginalPermits(permitsResponse.permits);
         }
         setPermitCounts(countsResponse);
@@ -315,41 +324,23 @@ export const PermitToWorkDashboard = () => {
     };
 
     loadData();
-  }, [currentPage, currentFilters]); // Add currentFilters to dependencies
+  }, [currentPage, currentFilters, currentSearchParam]); // Add currentSearchParam to dependencies
 
   const debouncedSearch = useCallback(
     debounce(async (searchValue: string) => {
-      try {
-        setLoading(true);
-        setCurrentPage(1); // Reset to first page on search
+      // Reset to first page when search changes
+      setCurrentPage(1);
 
-        let filters = currentFilters;
-        if (searchValue) {
-          const searchParam = `q[reference_number_or_permit_type_name_cont]=${encodeURIComponent(searchValue)}`;
-          filters = filters ? `${filters}&${searchParam}` : searchParam;
-        }
-
-        const permitsResponse = await fetchPermits(1, filters);
-        setPermits(permitsResponse.permits || []);
-
-        if (permitsResponse.pagination) {
-          setCurrentPage(permitsResponse.pagination.current_page || 1);
-          setTotalPages(permitsResponse.pagination.total_pages || 1);
-          setTotalCount(permitsResponse.pagination.total_count || 0);
-        } else {
-          setCurrentPage(1);
-          setTotalPages(1);
-          setTotalCount(permitsResponse.permits?.length || 0);
-        }
-
-        setError(null);
-        setIsFilterApplied(!!searchValue || !!currentFilters);
-      } catch (err) {
-        setError('Failed to load permit data');
-        console.error('Error fetching search results:', err);
-      } finally {
-        setLoading(false);
+      // Store search parameter in state
+      if (searchValue) {
+        const searchParam = `q[reference_number_or_permit_type_name_cont]=${encodeURIComponent(searchValue)}`;
+        setCurrentSearchParam(searchParam);
+      } else {
+        setCurrentSearchParam('');
       }
+
+      // Mark filter as applied if there's a search value or existing filters
+      setIsFilterApplied(!!searchValue || !!currentFilters);
     }, 500), // 500ms debounce delay
     [currentFilters]
   );
@@ -476,6 +467,10 @@ export const PermitToWorkDashboard = () => {
     // Store the filter string to maintain filters across page navigation
     setCurrentFilters(filterString || '');
 
+    // Clear search when applying filters from modal
+    setCurrentSearchParam('');
+    setSearchTerm('');
+
     // Reset to page 1 when applying new filters
     setCurrentPage(1);
 
@@ -497,8 +492,10 @@ export const PermitToWorkDashboard = () => {
     setPermits(originalPermits);
     setIsFilterApplied(false);
 
-    // Clear the current filters
+    // Clear both filters and search parameters
     setCurrentFilters('');
+    setCurrentSearchParam('');
+    setSearchTerm(''); // Also clear the search term in the UI
 
     // Reset pagination to reflect the original data
     // This will trigger a refresh from the server
@@ -516,8 +513,10 @@ export const PermitToWorkDashboard = () => {
         filters = `q[status_eq]=${status}`;
       }
 
-      // Update current filters state
+      // Update current filters state and clear search
       setCurrentFilters(filters);
+      setCurrentSearchParam('');
+      setSearchTerm('');
 
       const permitsResponse = await fetchPermits(1, filters);
 
