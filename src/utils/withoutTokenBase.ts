@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
+import { getBaseUrl } from "@/utils/auth";
 
 // Organization type for API response
 interface Organization {
@@ -20,6 +21,18 @@ export const baseClient = axios.create({
 baseClient.interceptors.request.use(
   async (config) => {
     try {
+      // First preference: use base URL saved via auth utilities (e.g., Mobile pages)
+      try {
+        const storedBaseUrl = getBaseUrl();
+        if (storedBaseUrl) {
+          config.baseURL = storedBaseUrl;
+          console.log("✅ Base URL set from stored baseUrl:", storedBaseUrl);
+          return config;
+        }
+      } catch (storageError) {
+        console.warn("⚠️ Unable to read stored baseUrl:", storageError);
+      }
+
       // Extract URL parameters
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("token");
@@ -53,7 +66,7 @@ baseClient.interceptors.request.use(
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
           console.log("🔍 Using org_id for FM/Oman site:", orgId);
         } else if (email) {
-          apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
           console.log("🔍 Using email for FM/Oman site:", email);
         } else {
           throw new Error(
@@ -79,7 +92,7 @@ baseClient.interceptors.request.use(
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
           console.log("🔍 Using org_id for default fallback:", orgId);
         } else if (email) {
-          apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
           console.log("🔍 Using email for default fallback:", email);
         } else {
           throw new Error("Either org_id or email is required");
