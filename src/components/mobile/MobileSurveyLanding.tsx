@@ -2014,26 +2014,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 {showGenericTags && (
                   <>
                     <div className="bg-white/50 backdrop-blur-sm rounded-lg p-1.5 xs:p-2 sm:p-3 shadow-lg relative">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowGenericTags(false);
-                          setSelectedTags([]);
-                          setCurrentNegativeComments(""); // Reset only current question's comments
-                          setPendingNegativeType(null);
-                          setPendingNegativeAnswer(null);
-                        }}
-                        className="absolute top-1.5 right-1.5 xs:top-2 xs:right-2 z-10 text-black underline hover:text-black/90 text-[9px] xs:text-[10px] sm:text-xs transition-colors"
-                      >
-                        Back
-                      </button>
 
-                      {/* Centered heading */}
-                      <div className="flex mt-3 xs:mt-4 justify-center items-center mb-1.5 xs:mb-2 sm:mb-3 pr-8 xs:pr-10">
-                        <h4 className="text-center text-[10px] xs:text-[11px] sm:text-sm font-semibold text-black/100 leading-tight px-1">
-                          What specifically needs improvement?
-                        </h4>
-                      </div>
 
                       {/* Grid Layout - 2x2 for first 4, then repeat */}
                       <div className="overflow-x-auto pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
