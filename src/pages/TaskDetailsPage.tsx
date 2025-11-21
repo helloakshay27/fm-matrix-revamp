@@ -61,7 +61,7 @@ export const TaskDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [escalateUsers, setEscalateUsers] = useState<EscalateUser[]>([]);
-  const [ticketData, setTicketData] = useState<any>(null); // For storing ticket information
+  const [ticketData, setTicketData] = useState<any[]>([]); // For storing ALL tickets
   const [ticketLoading, setTicketLoading] = useState(false);
 
   // Removed showSubmitModal state as we now navigate to a separate page
@@ -240,6 +240,25 @@ export const TaskDetailsPage = () => {
           // Map before/after attachments
           bef_sub_attachment: rawDetails.bef_sub_attachment,
           aft_sub_attachment: rawDetails.aft_sub_attachment,
+          // Map response attachments (handle both array and object formats)
+          response_attachments: (() => {
+            if (!rawDetails.response_attachments) return [];
+            
+            // If it's already an array, return it
+            if (Array.isArray(rawDetails.response_attachments)) {
+              return rawDetails.response_attachments;
+            }
+            
+            // If it's an object with numeric keys, convert to array
+            if (typeof rawDetails.response_attachments === 'object') {
+              return Object.keys(rawDetails.response_attachments)
+                .filter(key => !isNaN(Number(key))) // Only numeric keys
+                .map(key => rawDetails.response_attachments[key])
+                .filter(url => typeof url === 'string' && url.trim() !== ''); // Only valid URLs
+            }
+            
+            return [];
+          })(),
           // Map checklist questions
           checklist_questions: rawDetails.checklist_questions || [],
           // Map actions based on status
@@ -327,9 +346,8 @@ export const TaskDetailsPage = () => {
               ticketResponse?.complaints &&
               ticketResponse.complaints.length > 0
             ) {
-              // Set the first ticket from the response
-              const ticket = ticketResponse.complaints[0];
-              setTicketData({
+              // Map ALL tickets from the response
+              const allTickets = ticketResponse.complaints.map((ticket: any) => ({
                 id: ticket.id,
                 ticket_number: ticket.ticket_number,
                 heading: ticket.heading,
@@ -368,17 +386,18 @@ export const TaskDetailsPage = () => {
                 complaint_logs: ticket.complaint_logs || [],
                 documents: ticket.documents || [],
                 faqs: ticket.faqs || [],
-              });
+              }));
+              setTicketData(allTickets);
             } else {
               console.log(
                 "No tickets found for task occurrence ID:",
                 mappedDetails.id
               );
-              setTicketData(null);
+              setTicketData([]);
             }
           } catch (error) {
             console.error("Could not fetch ticket details:", error);
-            setTicketData(null);
+            setTicketData([]);
           } finally {
             setTicketLoading(false);
           }
@@ -530,8 +549,8 @@ export const TaskDetailsPage = () => {
           ticketResponse?.complaints &&
           ticketResponse.complaints.length > 0
         ) {
-          const ticket = ticketResponse.complaints[0];
-          setTicketData({
+          // Map ALL tickets from the response
+          const allTickets = ticketResponse.complaints.map((ticket: any) => ({
             id: ticket.id,
             ticket_number: ticket.ticket_number,
             heading: ticket.heading,
@@ -570,10 +589,14 @@ export const TaskDetailsPage = () => {
             complaint_logs: ticket.complaint_logs || [],
             documents: ticket.documents || [],
             faqs: ticket.faqs || [],
-          });
+          }));
+          setTicketData(allTickets);
+        } else {
+          setTicketData([]);
         }
       } catch (refreshError) {
         console.error("Failed to refresh ticket data:", refreshError);
+        setTicketData([]);
       }
     }
   };
@@ -1942,6 +1965,81 @@ export const TaskDetailsPage = () => {
             </div>
           </Card>
 
+          {/* Attachments - Show only for closed/completed/partially closed status */}
+          {(() => {
+            const status =
+              taskDetails?.task_details?.status?.value?.toLowerCase() || 
+              taskDetails?.task_status?.toLowerCase() || "";
+            const responseAttachments = (taskDetails as any)?.response_attachments || [];
+            
+            // Debug logging
+            console.log("🎨 Attachments Section Debug:");
+            console.log("- Status:", status);
+            console.log("- Response Attachments:", responseAttachments);
+            console.log("- Attachments Count:", responseAttachments.length);
+            
+            return (
+               ["closed", "completed", "partially closed"].includes(status) && 
+              responseAttachments.length > 0 && (
+                <Card className="w-full bg-transparent shadow-none border-none">
+                  <div className="figma-card-header">
+                    <div className="flex items-center gap-3">
+                      <div className="figma-card-icon-wrapper">
+                        <FileText className="figma-card-icon" />
+                      </div>
+                      <h3 className="figma-card-title">Attachments</h3>
+                      <Badge className="ml-2 bg-blue-100 text-blue-700">
+                        {responseAttachments.length} {responseAttachments.length === 1 ? 'file' : 'files'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="figma-card-content">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {responseAttachments.map((url: string, index: number) => (
+                        <div 
+                          key={index} 
+                          className="group relative border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-200"
+                        >
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block"
+                          >
+                            <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                              <img
+                                src={url}
+                                alt={`Attachment ${index + 1}`}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = `data:image/svg+xml;base64,${btoa(`
+                                    <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+                                      <rect width="100%" height="100%" fill="#f3f4f6"/>
+                                      <text x="50%" y="50%" font-family="Arial" font-size="14" fill="#9ca3af" text-anchor="middle" dy=".3em">Attachment ${index + 1}</text>
+                                    </svg>
+                                  `)}`;
+                                }}
+                              />
+                            </div>
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
+                              <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                            </div>
+                          </a>
+                          <div className="p-2 bg-white border-t border-gray-200">
+                            <p className="text-xs text-gray-600 font-medium truncate">
+                              Attachment {index + 1}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              )
+            );
+          })()}
+
           {/* Ticket Details - Show only for closed/completed status */}
           {(() => {
             const status =
@@ -1965,9 +2063,9 @@ export const TaskDetailsPage = () => {
                           Loading ticket details...
                         </p>
                       </div>
-                    ) : ticketData ? (
+                    ) : ticketData && ticketData.length > 0 ? (
                       <EnhancedTable
-                        data={[ticketData]}
+                        data={ticketData}
                         columns={ticketColumns}
                         renderCell={renderTicketCell}
                         storageKey="task-ticket-table"
