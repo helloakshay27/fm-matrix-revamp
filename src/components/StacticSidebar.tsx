@@ -613,11 +613,11 @@ const modulesByPackage = {
       href: "/maintenance/vendor",
     },
 
-    {
-      name: 'Projects & Tasks',
-      icon: Briefcase,
-      href: "/maintenance/projects"
-    }
+    // {
+    //   name: 'Projects & Tasks',
+    //   icon: Briefcase,
+    //   href: "/maintenance/projects"
+    // }
 
 
     // {

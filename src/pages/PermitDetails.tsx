@@ -196,19 +196,24 @@ interface PermitExtend {
     status?: string;
 }
 
+interface PermitResume {
+    id?: number;
+    reason_for_resume: string;
+    resume_date: string;
+    created_by: {
+        full_name: string;
+    };
+    assignees: string;
+    attachments_count: number;
+    extend_approval_levels: ApprovalLevel[];
+    status?: string;
+}
+
 interface PermitDetailsResponse {
     permit: Permit;
     approval_levels: ApprovalLevel[];
     permit_extends: PermitExtend[];
-    permit_resume: {
-        reason_for_resume: string;
-        resume_date: string;
-        created_by: {
-            full_name: string;
-        };
-        assignees: string;
-        attachments_count: number;
-    } | null;
+    permit_resume: PermitResume[];
     permit_closure: PermitClosure;
     activity_details: any[];
     main_attachments: MainAttachment[];
@@ -235,6 +240,7 @@ interface PermitDetailsResponse {
     show_resume_button?: boolean;
     show_upload_jsa_button?: boolean;
     show_complete_button?: boolean;
+    fill_permit_form?: boolean;
 }
 
 // API function to fetch permit details
@@ -1477,7 +1483,7 @@ export const PermitDetails = () => {
                                 Extend (Extended)
                             </Button>
                         )}
-                        {!isFromPendingApprovals && (
+                        {!isFromPendingApprovals && permitData.fill_permit_form && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1543,7 +1549,7 @@ export const PermitDetails = () => {
                                 Upload JSA
                             </Button>
                         )}
-                        {!isFromPendingApprovals && (
+                        {!isFromPendingApprovals && permitData.show_resume_permit_button && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1557,16 +1563,7 @@ export const PermitDetails = () => {
                                 Resume
                             </Button>
                         )}
-                        {/* {!isFromPendingApprovals && permitData.show_print_form_button && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handlePrintForm}
-                            >
-                                <Printer className="w-4 h-4 mr-2" />
-                                Print Form
-                            </Button>
-                        )} */}
+
 
                         {permitData.show_print_form_button && (
                             <Button
@@ -1578,16 +1575,7 @@ export const PermitDetails = () => {
                                 Print Form
                             </Button>
                         )}
-                        {/* {!isFromPendingApprovals && permitData.show_print_jsa_button && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handlePrintJSA}
-                            >
-                                <Printer className="w-4 h-4 mr-2" />
-                                Print JSA
-                            </Button>
-                        )} */}
+
                         {permitData.show_print_jsa_button && (
                             <Button
                                 variant="outline"
@@ -2407,7 +2395,7 @@ export const PermitDetails = () => {
                                                                     }}
                                                                     type="button"
                                                                 >
-                                                                    <Eye className="w-4 h-4" />
+                                                                    {/* <Eye className="w-4 h-4" /> */}
                                                                 </button>
                                                                 <img
                                                                     src={attachmentUrl}
@@ -2492,7 +2480,7 @@ export const PermitDetails = () => {
                                                                     }}
                                                                     type="button"
                                                                 >
-                                                                    <Eye className="w-4 h-4" />
+                                                                    {/* <Eye className="w-4 h-4" /> */}
                                                                 </button>
                                                                 <img
                                                                     src={attachmentUrl}
@@ -2577,7 +2565,7 @@ export const PermitDetails = () => {
                                                                     }}
                                                                     type="button"
                                                                 >
-                                                                    <Eye className="w-4 h-4" />
+                                                                    {/* <Eye className="w-4 h-4" /> */}
                                                                 </button>
                                                                 <img
                                                                     src={attachmentUrl}
@@ -2662,7 +2650,7 @@ export const PermitDetails = () => {
                                                                     }}
                                                                     type="button"
                                                                 >
-                                                                    <Eye className="w-4 h-4" />
+                                                                    {/* <Eye className="w-4 h-4" /> */}
                                                                 </button>
                                                                 <img
                                                                     src={attachmentUrl}
@@ -3273,7 +3261,7 @@ export const PermitDetails = () => {
                     </Section>
                 )}
                 {/* Permit Resume Section */}
-                {permitData.permit_resume &&
+                {permitData.permit_resume && permitData.permit_resume.length > 0 && (
                     <Section
                         title="PERMIT RESUME"
                         icon={<RefreshCw />}
@@ -3281,41 +3269,62 @@ export const PermitDetails = () => {
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
                     >
-                        <div className="space-y-3">
-                            {/* {permitData.permit_resume.map((resume: any, index: number) => ( */}
-                            <div className="p-4 bg-gray-50 rounded-lg">
-                                <h4 className="font-medium text-gray-900 mb-2">Resume </h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <span className="text-gray-600">Reason for Resume: </span>
-                                        <span className="text-gray-900">{permitData.permit_resume?.reason_for_resume || "-"}</span>
+                        <div className="space-y-6">
+                            {permitData.permit_resume.map((resume, index) => (
+                                <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h4 className="font-semibold text-gray-900">Resume Request #{index + 1}</h4>
+                                        {resume.status && (
+                                            <span className={`px-3 py-1 text-sm rounded-md font-medium ${getStatusColor(resume.status)}`}>
+                                                {resume.status}
+                                            </span>
+                                        )}
                                     </div>
-                                    <div>
-                                        <span className="text-gray-600">Resume Date: </span>
-                                        <span className="text-gray-900">{permitData.permit_resume?.resume_date ? format(permitData.permit_resume.resume_date, "dd/MM/yyyy hh:mm a") : "-"}</span>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <Field label="Reason for Resume" value={resume.reason_for_resume} />
+                                        <Field label="Resume Date" value={formatDateOnly(resume.resume_date)} />
+                                        <Field label="Created By" value={resume.created_by.full_name} />
+                                        <Field label="Assignees" value={resume.assignees} />
+                                        <Field label="Attachments Count" value={resume.attachments_count} />
                                     </div>
-                                    <div>
-                                        <span className="text-gray-600">Created By: </span>
-                                        <span className="text-gray-900">{permitData.permit_resume?.created_by?.full_name || "-"}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-gray-600">Assignees: </span>
-                                        <span className="text-gray-900">{permitData.permit_resume?.assignees || "-"}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-gray-600">Attachments Count: </span>
-                                        <span className="text-gray-900">{permitData.permit_resume?.attachments_count?.toString() || "0"}</span>
-                                    </div>
+
+                                    {/* Resume Approval Levels */}
+                                    {/* {resume.extend_approval_levels && resume.extend_approval_levels.length > 0 && (
+                                        <div className="mt-6">
+                                            <h5 className="font-semibold text-gray-900 mb-3">Approval Levels</h5>
+                                            <div className="space-y-3">
+                                                {resume.extend_approval_levels.map((level, levelIndex) => (
+                                                    <div key={levelIndex} className="p-4 bg-white rounded-lg border">
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <h6 className="font-medium text-gray-900">{level.name}</h6>
+                                                                {level.updated_by && (
+                                                                    <p className="text-sm text-gray-600 mt-1">Updated by: {level.updated_by}</p>
+                                                                )}
+                                                                {level.status_updated_at && (
+                                                                    <p className="text-sm text-gray-500 mt-1">
+                                                                        {formatDateOnly(level.status_updated_at)}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <span className={`px-3 py-1 text-sm rounded-md font-medium ${getStatusColor(level.status)}`}>
+                                                                {level.status}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )} */}
                                 </div>
-                            </div>
-                            {/* ))} */}
+                            ))}
                         </div>
                     </Section>
-                }
+                )}
 
 
                 {/* Permit Closure Details Section */}
-                {permitData.permit_closure && permitData.permit_closure.completion_comment && permitData.permit_closure.attachments_count > 0 && permitData.permit_closure.closed_by && (
+                {permitData.permit_closure && permitData.permit_closure.completion_comment && permitData.permit_closure.closed_by && (
                     <Section
                         title="PERMIT CLOSURE DETAILS"
                         icon={<CheckCircle />}
