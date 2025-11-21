@@ -856,12 +856,7 @@ export const TaskDetailsPage = () => {
       defaultVisible: true,
     },
     { key: "score", label: "Score", sortable: true, defaultVisible: true },
-    {
-      key: "attachments",
-      label: "Attachments",
-      sortable: false,
-      defaultVisible: true,
-    },
+   
   ];
 
   // Ticket table columns configuration
