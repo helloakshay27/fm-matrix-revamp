@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Commit message validation (optional - enforces conventional commits)
+# Uncomment the lines below to enable conventional commit enforcement
+# commit_msg=$(cat "$1")
+# if ! echo "$commit_msg" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\(.+\))?: .{1,}$"; then
+#   echo "❌ Invalid commit message format!"
+#   echo "✅ Use: <type>(scope): <subject>"
+#   echo "📝 Types: feat, fix, docs, style, refactor, perf, test, chore, build, ci, revert"
+#   exit 1
+# fi
