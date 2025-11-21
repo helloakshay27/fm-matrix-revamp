@@ -3012,30 +3012,31 @@ export const AddSchedulePage = () => {
 
     // Build custom_form object
     const customForm: any = {};
-    questionSections.forEach((section, index) => {
-      // Only include question_for_{index+1} if at least one task has helpText checked
+    let taskCounter = 1; // Counter for individual tasks with help text attachments
+    
+    questionSections.forEach((section) => {
+      // Get tasks with help text attachments
       const sectionTasks = section.tasks.filter(task => task.task.trim());
       const helpTextTasks = sectionTasks.filter(task => task.helpText);
-      if (helpTextTasks.length > 0) {
+      
+      helpTextTasks.forEach(task => {
         // Validation: All helpText tasks must have helpTextValue and helpTextAttachments
-        const missingHelpText = helpTextTasks.some(task => !task.helpTextValue || !task.helpTextValue.trim());
-        const missingHelpAttachments = helpTextTasks.some(task => !task.helpTextAttachments || task.helpTextAttachments.length === 0);
-        if (missingHelpText) {
+        if (!task.helpTextValue || !task.helpTextValue.trim()) {
           throw new Error('Please enter Help Text for all tasks where Help Text is checked.');
         }
-        if (missingHelpAttachments) {
+        if (!task.helpTextAttachments || task.helpTextAttachments.length === 0) {
           throw new Error('Please attach a help file for all tasks where Help Text is checked.');
         }
-        // Only include question_for_{index+1} if helpText is checked
-        customForm[`question_for_${index + 1}`] = helpTextTasks.map(task => ({
-          attachments: task.helpTextAttachments.map(attachment => ({
-            filename: attachment.name,
-            content: attachment.content,
-            content_type: attachment.content_type
-          })),
+        
+        // Create individual question_for_{taskCounter} for each task with help text
+        customForm[`question_for_${taskCounter}`] = task.helpTextAttachments.map(attachment => ({
+          filename: attachment.name,
+          content: attachment.content,
+          content_type: attachment.content_type
         }));
-      }
-      // If no helpText checked, do not include question_for_{index+1}
+        
+        taskCounter++;
+      });
     });
 
     // Get selected asset IDs or service IDs based on scheduleFor
