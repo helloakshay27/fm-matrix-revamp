@@ -25,6 +25,7 @@ export interface FacilityBookingDetails {
   payment_method: string;
   facility_name: string;
   created_by_name: string;
+  fac_type: string;
 }
 
 export interface FacilityBookingResponse {

@@ -305,7 +305,7 @@ const BookingCalenderView = () => {
                 {/* Dates Header - Separate Scrolling */}
                 <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
                     <div className="min-w-fit flex">
-                        <div className="w-32 flex-shrink-0 bg-[#d8d8d8] border border-gray-400 py-1 sticky left-0 z-20">
+                        <div className="w-32 flex-shrink-0 bg-[#d8d8d8] border border-gray-400 py-1 sticky left-0 z-10">
                             <div className="flex items-center justify-between gap-2">
                                 <Button
                                     variant="ghost"
@@ -338,8 +338,8 @@ const BookingCalenderView = () => {
                                     className={`relative border bg-[rgba(86,86,86,0.2)] border-gray-400 px-2 py-1 text-center w-[110px] transition-colors ${selectedDate === dateInfo.date
                                         ? 'bg-[rgba(86,86,86,0.3)] border-b-[2px] !border-b-[#C72030]'
                                         : dateInfo.isOff
-                                            ? 'bg-gray-100 cursor-not-allowed'
-                                            : 'bg-white hover:bg-gray-50 cursor-pointer'
+                                            ? '!bg-gray-100 cursor-not-allowed'
+                                            : '!bg-white hover:bg-gray-50 cursor-pointer'
                                         }`}
                                 >
                                     {selectedDate === dateInfo.date && (
@@ -360,7 +360,7 @@ const BookingCalenderView = () => {
                     <div className="min-w-fit">
                         {/* Time Slots Header */}
                         <div className="flex">
-                            <div className="w-32 flex-shrink-0 bg-[#EDE9E3] text-[#C72030] border border-gray-300 p-2 sticky left-0 z-20 flex flex-col justify-center">
+                            <div className="w-32 flex-shrink-0 bg-[#EDE9E3] text-[#C72030] border border-gray-300 p-2 sticky left-0 z-10 flex flex-col justify-center">
                                 <div className="text-xs text-center">{selectedDate}</div>
                                 <div className="text-sm text-center">{selectedDateInfo?.day}</div>
                             </div>
@@ -390,7 +390,7 @@ const BookingCalenderView = () => {
                         {/* Facility Rows */}
                         {facilities?.map((facility) => (
                             <div key={facility.id} className="flex">
-                                <div className="w-32 flex-shrink-0 border border-gray-300 sticky left-0 z-20 bg-white">
+                                <div className="w-32 flex-shrink-0 border border-gray-300 sticky left-0 z-10 bg-white">
                                     <div className="relative h-16">
                                         <img src={facility.cover_image?.document} alt={facility.fac_name} className="w-full h-full object-cover" />
                                         <span className="text-xs font-medium whitespace-nowrap absolute bottom-0 text-white backdrop-blur-md bg-white/40 px-2 w-full">

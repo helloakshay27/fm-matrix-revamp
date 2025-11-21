@@ -9,6 +9,9 @@ import {
 import { ArrowLeft, Logs, Ticket } from "lucide-react";
 import { CustomTabs } from "@/components/CustomTabs";
 import { LogsTimeline } from "@/components/LogTimeline";
+import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
+import axios from "axios";
+import { toast } from "sonner";
 
 export const BookingDetailsPage = () => {
   const { id } = useParams();
@@ -16,6 +19,7 @@ export const BookingDetailsPage = () => {
   const navigate = useNavigate();
 
   const [bookings, setBookings] = useState<FacilityBookingDetails | null>(null);
+  const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("details");
   const [logs, setLogs] = useState([
     {
@@ -28,36 +32,58 @@ export const BookingDetailsPage = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
+  const fetchDetails = async () => {
+    try {
+      const response = await dispatch(
+        fetchBookingDetails({ baseUrl, token, id })
+      ).unwrap();
+      setBookings(response);
+    } catch (error) {
+      console.error("Error fetching booking details:", error);
+    }
+  };
+
+  const fetchLogs = async () => {
+    try {
+      const response = await dispatch(
+        getLogs({ baseUrl, token, id })
+      ).unwrap();
+      setLogs(response.logs.map((log, index) => ({
+        id: index,
+        description: log.text,
+        timestamp: log.date + " " + log.time,
+      })));
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchDetails = async () => {
-      try {
-        const response = await dispatch(
-          fetchBookingDetails({ baseUrl, token, id })
-        ).unwrap();
-        setBookings(response);
-      } catch (error) {
-        console.error("Error fetching booking details:", error);
-      }
-    };
-
-    const fetchLogs = async () => {
-      try {
-        const response = await dispatch(
-          getLogs({ baseUrl, token, id })
-        ).unwrap();
-        setLogs(response.logs.map((log, index) => ({
-          id: index,
-          description: log.text,
-          timestamp: log.date + " " + log.time,
-        })));
-      } catch (error) {
-        console.error("Error fetching logs:", error);
-      }
-    };
-
     fetchDetails();
     fetchLogs();
   }, []);
+
+  const handleStatusChange = async (newStatus: string) => {
+    setStatusUpdating(id);
+    try {
+      await axios.patch(
+        `https://${baseUrl}/pms/admin/facility_bookings/${id}.json`,
+        { current_status: newStatus.toLowerCase() },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      toast.success(`Booking ${id} status updated to ${newStatus}`);
+      fetchDetails();
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      toast.error('Failed to update booking status');
+    } finally {
+      setStatusUpdating(null);
+    }
+  };
 
   console.log(logs)
 
@@ -92,7 +118,7 @@ export const BookingDetailsPage = () => {
                   {bookings?.comment}
                 </span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Status</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className={`text-gray-900 px-2 py-[2px] flex items-center gap-2 text-sm ${bookings?.current_status === "Cancelled"
@@ -109,7 +135,56 @@ export const BookingDetailsPage = () => {
                     }`}></span>
                   {bookings?.current_status}
                 </span>
+              </div> */}
+
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Status</span>
+                <span className="text-gray-500 mx-2">:</span>
+
+                <Select
+                  value={bookings?.current_status}
+                  onValueChange={(newStatus) => handleStatusChange(newStatus)}
+                >
+                  <SelectTrigger className="border-none bg-transparent p-0 h-auto [&>svg]:hidden">
+                    <div
+                      className={`text-gray-900 px-2 py-[2px] flex items-center gap-2 text-sm cursor-pointer ${bookings?.current_status === "Cancelled"
+                        ? "bg-red-100"
+                        : bookings?.current_status === "Confirmed"
+                          ? "bg-green-100"
+                          : "bg-yellow-100"
+                        }`}
+                      style={{ borderRadius: "4px" }}
+                      title={bookings?.comment}
+                    >
+                      <span
+                        className={`rounded-full w-2 h-2 inline-block ${bookings?.current_status === "Cancelled"
+                          ? "bg-[#D92E14]"
+                          : bookings?.current_status === "Confirmed"
+                            ? "bg-[#16B364]"
+                            : "bg-[#D9CA20]"
+                          }`}
+                      ></span>
+                      {bookings?.current_status}
+                    </div>
+                  </SelectTrigger>
+                  {
+                    bookings?.fac_type === "Request" && <SelectContent>
+                      <SelectItem value="Pending">
+                        Pending
+                      </SelectItem>
+
+                      <SelectItem value="Confirmed">
+                        Confirmed
+                      </SelectItem>
+
+                      <SelectItem value="Cancelled">
+                        Cancelled
+                      </SelectItem>
+                    </SelectContent>
+                  }
+                </Select>
               </div>
+
 
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Payment Method</span>
