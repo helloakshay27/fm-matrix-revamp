@@ -178,7 +178,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Content protection for specified domains */}
       <ProtectionLayer 
         enabled={true}
-        allowedDomains={['web.gophygital.work', 'vi-web.gophygital.work']}
+        allowedDomains={['vi-web.gophygital.work']}
       />
       
       <Header />
