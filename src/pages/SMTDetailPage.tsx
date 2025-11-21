@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Users, Building2, CalendarCheck2, MessageCircle, ClipboardList, Paperclip, Eye } from 'lucide-react';
+import { ArrowLeft, User, Users, Building2, CalendarCheck2, MessageCircle, ClipboardList, Paperclip, Eye, Maximize2, X, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -34,8 +34,35 @@ const SMTDetailPage = () => {
   const [smtDetails, setSmtDetails] = useState<SmtDetail | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [imgPreviewOpen, setImgPreviewOpen] = useState(false);
-  const [imgPreviewUrl, setImgPreviewUrl] = useState<string | null>(null);
+  
+  // Preview modal state (KRCC-style)
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewItems, setPreviewItems] = useState<string[]>([]);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const [previewTitle, setPreviewTitle] = useState('');
+
+  const openPreview = useCallback((items: string[], index: number, title: string) => {
+    setPreviewItems(items);
+    setPreviewIndex(index);
+    setPreviewTitle(title);
+    setPreviewOpen(true);
+  }, []);
+  
+  const closePreview = useCallback(() => setPreviewOpen(false), []);
+  const gotoPrev = useCallback(() => setPreviewIndex(i => (i - 1 + previewItems.length) % previewItems.length), [previewItems.length]);
+  const gotoNext = useCallback(() => setPreviewIndex(i => (i + 1) % previewItems.length), [previewItems.length]);
+
+  // Keyboard navigation for preview
+  useEffect(() => {
+    if (!previewOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closePreview();
+      if (e.key === 'ArrowLeft') gotoPrev();
+      if (e.key === 'ArrowRight') gotoNext();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [previewOpen, closePreview, gotoPrev, gotoNext]);
 
   const smtDetailPageByID = async () => {
     const baseUrl = localStorage.getItem('baseUrl');
@@ -269,7 +296,7 @@ const SMTDetailPage = () => {
       </div>
 
       {/* ATTACHMENTS */} 
-      {/* <div className="bg-white rounded-lg border text-[15px] mb-6">
+      <div className="bg-white rounded-lg border text-[15px] mb-6">
         <div className="flex p-4 items-center">
           <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-xs mr-3">
             <Paperclip className="w-5 h-5 text-[#C72030]" />
@@ -277,57 +304,157 @@ const SMTDetailPage = () => {
           <h2 className="text-lg font-bold">ATTACHMENTS</h2>
         </div>
         <div className="p-4 space-y-6">
-          <div>
-            <div className="flex mb-2"><span className="text-gray-500 w-40">Attach Card Image</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{thankYouCardUrl ? '' : '—'}</span></div>
-            {thankYouCardUrl && (
-              <div className="flex gap-3">
+          {/* Thank You Card */}
+          {thankYouCardUrl && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-6 w-6 bg-gradient-to-tr from-[#C72030] to-[#e54654] text-white rounded-md flex items-center justify-center shadow-sm">
+                  <Paperclip className="h-3.5 w-3.5" />
+                </div>
+                <label className="text-sm font-semibold tracking-wide text-gray-800">Thank You Card</label>
+                <span className="px-1.5 py-0.5 text-[10px] rounded bg-gray-200 text-gray-700 font-medium">1</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
                 <button
                   type="button"
-                  onClick={() => { setImgPreviewUrl(thankYouCardUrl); setImgPreviewOpen(true); }}
-                  className="group rounded-md overflow-hidden hover:shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
-                  aria-label="Open thank you card image"
+                  onClick={() => openPreview([thankYouCardUrl], 0, 'Thank You Card')}
+                  className="relative group/image rounded-lg overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-[#C72030]/40"
                 >
-                  <img src={thankYouCardUrl} alt="Thank You Card" className="h-24 w-24 object-cover" />
+                  <div className="aspect-square w-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                    <img
+                      src={thankYouCardUrl}
+                      alt="Thank You Card"
+                      loading="lazy"
+                      className="h-full w-full object-cover object-center transition-transform duration-300 group-hover/image:scale-105"
+                    />
+                    <div className="absolute inset-0 opacity-0 group-hover/image:opacity-100 bg-black/40 flex items-center justify-center transition-opacity">
+                      <Maximize2 className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="p-1.5 text-[11px] font-medium truncate text-gray-700 text-left w-full bg-white/80 backdrop-blur-sm border-t border-gray-100">
+                    Thank You Card
+                  </div>
                 </button>
               </div>
-            )}
-          </div>
-          <div>
-            <div className="flex mb-2"><span className="text-gray-500 w-40">Other Images</span><span className="text-gray-500 mx-2">:</span><span className="text-gray-900 font-medium">{otherImages.length ? '' : '—'}</span></div>
-            {otherImages.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+            </div>
+          )}
+          
+          {/* Other Images */}
+          {otherImages.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-6 w-6 bg-gradient-to-tr from-[#C72030] to-[#e54654] text-white rounded-md flex items-center justify-center shadow-sm">
+                  <Paperclip className="h-3.5 w-3.5" />
+                </div>
+                <label className="text-sm font-semibold tracking-wide text-gray-800">Other Images</label>
+                <span className="px-1.5 py-0.5 text-[10px] rounded bg-gray-200 text-gray-700 font-medium">{otherImages.length}</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
                 {otherImages.map((img, idx) => (
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => { setImgPreviewUrl(img); setImgPreviewOpen(true); }}
-                    className="group rounded-md overflow-hidden hover:shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
-                    aria-label={`Open attachment ${idx + 1}`}
+                    onClick={() => openPreview(otherImages, idx, 'Other Images')}
+                    className="relative group/image rounded-lg overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-[#C72030]/40"
                   >
-                    <img src={img} alt={`Attachment ${idx + 1}`} className="h-24 w-24 object-cover" />
+                    <div className="aspect-square w-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                      <img
+                        src={img}
+                        alt={`Attachment ${idx + 1}`}
+                        loading="lazy"
+                        className="h-full w-full object-cover object-center transition-transform duration-300 group-hover/image:scale-105"
+                      />
+                      <div className="absolute inset-0 opacity-0 group-hover/image:opacity-100 bg-black/40 flex items-center justify-center transition-opacity">
+                        <Maximize2 className="h-5 w-5 text-white" />
+                      </div>
+                    </div>
+                    <div className="p-1.5 text-[11px] font-medium truncate text-gray-700 text-left w-full bg-white/80 backdrop-blur-sm border-t border-gray-100">
+                      Attachment {idx + 1}
+                    </div>
                   </button>
                 ))}
               </div>
-            )}
+            </div>
+          )}
+          
+          {!thankYouCardUrl && otherImages.length === 0 && (
+            <div className="text-gray-400 text-sm">No attachments</div>
+          )}
+        </div>
+      </div>
+
+      {/* Image Preview Modal (KRCC-style lightbox) */}
+      {previewOpen && previewItems.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-5xl mx-auto">
+            <div className="flex items-center justify-between mb-3 text-white">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5" />
+                <span className="font-medium text-sm tracking-wide">{previewTitle}</span>
+                <span className="text-xs px-2 py-0.5 rounded bg-white/10 border border-white/20">
+                  {previewIndex + 1}/{previewItems.length}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={gotoPrev} 
+                  className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button 
+                  onClick={gotoNext} 
+                  className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <button 
+                  onClick={closePreview} 
+                  className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="relative rounded-lg overflow-hidden shadow-2xl bg-black/40 border border-white/10">
+              <img
+                src={previewItems[previewIndex]}
+                alt={`${previewTitle} ${previewIndex + 1}`}
+                className="mx-auto max-h-[70vh] object-contain w-full select-none"
+                draggable={false}
+              />
+            </div>
+            <div className="mt-3 grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2 max-h-32 overflow-y-auto pr-1">
+              {previewItems.map((item, i) => {
+                const active = i === previewIndex;
+                const thumbName = `${previewTitle} ${i + 1}`;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setPreviewIndex(i)}
+                    className={`relative group/thumb rounded border ${
+                      active 
+                        ? 'border-[#C72030] ring-2 ring-[#C72030]/50' 
+                        : 'border-white/20 hover:border-white/50'
+                    } overflow-hidden h-14 bg-white/5`}
+                    title={thumbName}
+                  >
+                    <img 
+                      src={item} 
+                      alt={thumbName} 
+                      className="h-full w-full object-cover" 
+                      loading="lazy" 
+                    />
+                    {active && (
+                      <span className="absolute inset-0 border-2 border-[#C72030] pointer-events-none"></span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div> */}
-
-      {/* Image Preview Modal */}
-      {/* <Dialog open={imgPreviewOpen} onOpenChange={(open) => { setImgPreviewOpen(open); if (!open) setImgPreviewUrl(null); }}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Attachment Preview</DialogTitle>
-          </DialogHeader>
-          {imgPreviewUrl ? (
-            <div className="w-full">
-              <img src={imgPreviewUrl} alt="Attachment Preview" className="max-h-[80vh] w-full object-contain rounded" />
-            </div>
-          ) : (
-            <div className="text-gray-400">No image</div>
-          )}
-        </DialogContent>
-      </Dialog> */}
+      )}
 
 
       {/* KEY OBSERVATIONS */}
