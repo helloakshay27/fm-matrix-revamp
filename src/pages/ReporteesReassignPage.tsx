@@ -3,7 +3,8 @@ import { TextField } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Users, Repeat, ClipboardList } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 type ReassignResult = {
@@ -15,6 +16,7 @@ type ReassignResult = {
 };
 
 const ReporteesReassignPage = () => {
+    const navigate = useNavigate();
     const [currentEmail, setCurrentEmail] = useState('');
     const [updatedEmail, setUpdatedEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,7 +38,7 @@ const ReporteesReassignPage = () => {
             const params = new URLSearchParams(window.location.search);
             const fromQ = (params.get('current_email') || '').trim();
             if (fromQ && !currentEmail) setCurrentEmail(fromQ.toLowerCase());
-        } catch {}
+        } catch { }
     }, []); // run once
 
     const handleFetchReportees = async () => {
@@ -53,8 +55,10 @@ const ReporteesReassignPage = () => {
         }
         setIsFetching(true);
         try {
+
             const basePath = '/pms/users/get_reportees_of_line_magager';
             const qs = new URLSearchParams({ line_manager_email: current, company_id: String(companyId) });
+
             const url = getFullUrl(`${basePath}?${qs.toString()}`);
             const res = await fetch(url, {
                 method: 'GET',
@@ -215,7 +219,7 @@ const ReporteesReassignPage = () => {
                 toast.error(message);
                 return;
             }
-            
+
             const resultData = data as ReassignResult;
             toast.success(resultData?.message || 'Reportees reassigned successfully');
             setResults(prev => [...prev, resultData || {}]);
@@ -230,24 +234,30 @@ const ReporteesReassignPage = () => {
     };
 
     return (
-        <div className="p-6">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-[#1a1a1a]">EXTERNAL REPORTEE REASSIGN</h1>
-                <p className="text-sm text-gray-600 mt-1">Enter the current and updated reporting emails, then submit.</p>
+        <div className="p-4 sm:p-6">
+            {/* Top bar similar to ServiceDetailsPage */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div>
+                    <div className="mb-2">
+                        <h1 className="text-2xl font-bold text-[#1a1a1a] truncate">EXTERNAL REPORTEE REASSIGN</h1>
+                        <p className="text-sm text-gray-500">Enter the current and updated reporting emails, then submit.</p>
+                    </div>
+                </div>
             </div>
 
-            <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-                <CardHeader className='bg-[#F6F4EE] mb-4'>
-                    <CardTitle className="text-lg text-black flex items-center">
-                        <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
-                        DETAILS
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* DETAILS SECTION */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
+                <div className="flex items-center p-4 border-b border-gray-200">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+                        <Repeat className="w-6 h-6 text-[#C72030]" />
+                    </div>
+                    <h2 className="text-lg font-bold tracking-wide">DETAILS</h2>
+                </div>
+                <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <span className="text-gray-500 text-sm">Current Report To</span>
                         <TextField
                             type="email"
-                            label="Current Report To"
                             placeholder="Enter current report-to email"
                             value={currentEmail}
                             onChange={(e) => setCurrentEmail(e.target.value)}
@@ -256,19 +266,14 @@ const ReporteesReassignPage = () => {
                             autoComplete="off"
                             slotProps={{ inputLabel: { shrink: true } as any }}
                             InputProps={{ sx: fieldStyles }}
-                            inputProps={{
-                                autoComplete: 'off',
-                                name: 'current-report-to',
-                                autoCorrect: 'off',
-                                autoCapitalize: 'none',
-                                spellCheck: 'false',
-                            }}
+                            inputProps={{ autoComplete: 'off', autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false' }}
                             disabled={isSubmitting}
                         />
-
+                    </div>
+                    <div className="space-y-2">
+                        <span className="text-gray-500 text-sm">Updated Report To</span>
                         <TextField
                             type="email"
-                            label="Updated Report To"
                             placeholder="Enter updated report-to email"
                             value={updatedEmail}
                             onChange={(e) => setUpdatedEmail(e.target.value)}
@@ -277,68 +282,46 @@ const ReporteesReassignPage = () => {
                             autoComplete="off"
                             slotProps={{ inputLabel: { shrink: true } as any }}
                             InputProps={{ sx: fieldStyles }}
-                            inputProps={{
-                                autoComplete: 'off',
-                                name: 'updated-report-to',
-                                autoCorrect: 'off',
-                                autoCapitalize: 'none',
-                                spellCheck: 'false',
-                            }}
+                            inputProps={{ autoComplete: 'off', autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false' }}
                             disabled={isSubmitting}
                         />
                     </div>
-                </CardContent>
-            </Card>
-
-            <div className="flex gap-4 flex-wrap justify-center">
-                <Button
-                    onClick={handleFetchReportees}
-                    variant="outline"
-                    className="flex items-center"
-                    disabled={isFetching || !currentEmail.trim()}
-                >
-                    {isFetching ? (
-                        <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Fetching...
-                        </>
-                    ) : (
-                        'Fetch Reportees'
-                    )}
-                </Button>
-
-                <Button
-                    onClick={handleReassign}
-                    style={{ backgroundColor: '#C72030' }}
-                    className="text-white hover:bg-[#C72030]/90 flex items-center"
-                    disabled={isSubmitting || selectedIds.size === 0 || !updatedEmail.trim()}
-                >
-                    {isSubmitting ? (
-                        <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Submitting...
-                        </>
-                    ) : (
-                        'Reassign Selected'
-                    )}
-                </Button>
+                </div>
+                <div className="px-4 pb-4 flex gap-3 flex-wrap justify-start">
+                    <Button
+                        onClick={handleFetchReportees}
+                        variant="outline"
+                        className="flex items-center"
+                        disabled={isFetching || !currentEmail.trim()}
+                    >
+                        {isFetching ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Fetching...</>) : 'Fetch Reportees'}
+                    </Button>
+                    <Button
+                        onClick={handleReassign}
+                        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex items-center"
+                        disabled={isSubmitting || selectedIds.size === 0 || !updatedEmail.trim()}
+                    >
+                        {isSubmitting ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...</>) : 'Reassign Selected'}
+                    </Button>
+                </div>
             </div>
 
             {reportees.length > 0 && (
-                <Card className="mt-6 border-[#E5E7EB]">
-                    <CardHeader className="bg-[#F6F4EE]">
-                        <CardTitle className="text-base font-semibold text-gray-900 flex items-center justify-between">
-                            <span>Reportees ({reportees.length})</span>
-                            <label className="text-sm flex items-center gap-2">
-                                <input type="checkbox" checked={allSelected} onChange={handleToggleAll} />
-                                Select All
-                            </label>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4">
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm mt-6">
+                    <div className="flex items-center p-4 border-b border-gray-200">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+                            <Users className="w-6 h-6 text-[#C72030]" />
+                        </div>
+                        <h2 className="text-lg font-bold tracking-wide flex-1">REPORTEES ({reportees.length})</h2>
+                        <label className="text-sm flex items-center gap-2 text-gray-600">
+                            <input type="checkbox" checked={allSelected} onChange={handleToggleAll} />
+                            Select All
+                        </label>
+                    </div>
+                    <div className="p-4 pt-2">
                         <div className="overflow-x-auto rounded-md border border-gray-200">
                             <table className="min-w-full text-sm">
-                                <thead className="bg-gray-100">
+                                <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-3 py-2"></th>
                                         <th className="text-left px-3 py-2 font-medium text-gray-700">Name</th>
@@ -361,20 +344,21 @@ const ReporteesReassignPage = () => {
                             </table>
                         </div>
                         <div className="mt-3 text-xs text-gray-600">Selected: {selectedIds.size}</div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             )}
 
             {results.length > 0 && (
-                <div className="mt-6 space-y-4">
+                <div className="mt-6 space-y-6">
                     {results.map((res, idx) => (
-                        <Card key={`${res.from || ''}-${res.to || ''}-${idx}`} className="border-[#E5E7EB]">
-                            <CardHeader className="bg-[#F6F4EE]">
-                                <CardTitle className="text-base font-semibold text-gray-900">
-                                    Reassign Summary {results.length > 1 ? `#${idx + 1}` : ''}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-4">
+                        <div key={`${res.from || ''}-${res.to || ''}-${idx}`} className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div className="flex items-center p-4 border-b border-gray-200">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+                                    <ClipboardList className="w-6 h-6 text-[#C72030]" />
+                                </div>
+                                <h2 className="text-lg font-bold tracking-wide flex-1">REASSIGN SUMMARY {results.length > 1 ? `#${idx + 1}` : ''}</h2>
+                            </div>
+                            <div className="p-4 space-y-4">
                                 <div className="flex flex-col gap-2">
                                     {res.message && (
                                         <div className="text-sm font-medium text-green-700">{res.message}</div>
@@ -390,13 +374,12 @@ const ReporteesReassignPage = () => {
                                         </div>
                                     )}
                                 </div>
-
-                                <div className="mt-4">
+                                <div>
                                     <div className="text-sm font-semibold text-gray-900 mb-2">Reassigned reportees</div>
                                     {Array.isArray(res.reassigned_reportees) && res.reassigned_reportees.length > 0 ? (
                                         <div className="overflow-x-auto rounded-md border border-gray-200">
                                             <table className="min-w-full text-sm">
-                                                <thead className="bg-gray-100">
+                                                <thead className="bg-gray-50">
                                                     <tr>
                                                         <th className="text-left px-3 py-2 font-medium text-gray-700">Name</th>
                                                         <th className="text-left px-3 py-2 font-medium text-gray-700">Email</th>
@@ -418,8 +401,8 @@ const ReporteesReassignPage = () => {
                                         <div className="text-sm text-gray-500">No reportees were reassigned.</div>
                                     )}
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     ))}
                 </div>
             )}

@@ -18,6 +18,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 // Define your API base URL here or import it from your config/environment
 const API_BASE_URL = API_CONFIG.BASE_URL;
@@ -137,7 +138,7 @@ export const GatePassOutwardsDashboard = () => {
   const dataWithIndex = outwardData.map((item, index) => {
     const materials = Array.isArray(item.gate_pass_materials) ? item.gate_pass_materials : [];
     console.log('Gate Pass Item:', item);
-    
+
     return {
       sNo: index + 1,
       actions: '', // Placeholder, will be filled by renderRow
@@ -227,8 +228,8 @@ export const GatePassOutwardsDashboard = () => {
     actions: (
       <div className="flex gap-2 justify-center" style={{ maxWidth: '80px' }}>
         <div title="View details">
-          <Eye 
-            className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+          <Eye
+            className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
             onClick={() => handleViewDetails(entry.id)}
           />
         </div>
@@ -277,9 +278,17 @@ export const GatePassOutwardsDashboard = () => {
   ];
 
   const renderActionButton = () => (
+    // <Button
+    //   onClick={() => setShowActionPanel((prev) => !prev)}
+    //   className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
+    // >
+    //   <Plus className="w-4 h-4 mr-2" />
+    //   Action
+    // </Button>
     <Button
+      size="sm"
+      className="mr-2"
       onClick={() => setShowActionPanel((prev) => !prev)}
-      className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
     >
       <Plus className="w-4 h-4 mr-2" />
       Action
@@ -330,7 +339,6 @@ export const GatePassOutwardsDashboard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Outward List</h1>
       {/* Action Panel overlay */}
       {showActionPanel && (
         <SelectionPanel
@@ -338,7 +346,7 @@ export const GatePassOutwardsDashboard = () => {
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
-      <div style={{overflowX: 'auto'}}>
+      <div style={{ overflowX: 'auto' }}>
         <EnhancedTable
           data={dataWithIndex}
           columns={columns}
@@ -353,7 +361,6 @@ export const GatePassOutwardsDashboard = () => {
           exportFileName="outward-gate-pass-entries"
           leftActions={renderActionButton()}
           loading={loading}
-          selectable={true}
           selectedItems={selectedItems}
           onSelectItem={(id, checked) => setSelectedItems(checked ? [...selectedItems, id] : selectedItems.filter(i => i !== id))}
           onSelectAll={checked => setSelectedItems(checked ? dataWithIndex.map(d => d.id) : [])}
@@ -405,7 +412,7 @@ export const GatePassOutwardsDashboard = () => {
           </div>
         </div>
       )}
-      <GatePassOutwardsFilterModal 
+      <GatePassOutwardsFilterModal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
         filters={filters}

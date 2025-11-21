@@ -1,37 +1,125 @@
-@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import './styles/enhanced-select.css';
+@import url("https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import "./styles/enhanced-select.css";
+@import "./styles/datepicker.css";
+@import "./styles/grid-layout.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Mobile-friendly scrollbar styling */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+.fc .fc-list-sticky .fc-list-day > * {
+    position: sticky;
+    top: 0px;
+    z-index: 1;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.fc .fc-more-popover .fc-popover-body {
+    min-width: 220px;
+    padding: 10px;
+    height: 400px;
+    overflow-y: auto;
+}
+
+
+.tracking-tight ,  .text-lg {
+  color: #000000 !important;
+  font-weight: 600;
+  leading-trim: NONE;
+}
+
+.bg-card button svg {
+  color: #000000 !important;
+}
+
+.bg-card ,
+.cursor-grab svg {
+  color: #000000 !important;
+}
+
+/* 
+
+
+
+
+ */
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Hide scrollbar for mobile devices but keep functionality */
+@media (max-width: 640px) {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
 
 /* ===========================================
    GLOBAL MUI SELECT OVERRIDE INJECTION
    Ensures all MUI components are enhanced globally
    EXCLUDES textarea and multiline fields
    =========================================== */
-   
+
 /* Force apply to any MUI component that might not be caught - EXCLUDE TEXTAREA */
-[class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
+[class*="MuiFormControl"]
+  [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not(
+    [class*="multiline"]
+  ) {
   height: 36px !important;
   background-color: transparent !important;
 }
 
+body {
+  /* font-family: "Work Sans" !important; */
+}
 @media (min-width: 640px) {
-  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
+  [class*="MuiFormControl"]
+    [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not(
+      [class*="multiline"]
+    ) {
     height: 40px !important;
   }
 }
 
 @media (min-width: 768px) {
-  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
+  [class*="MuiFormControl"]
+    [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not(
+      [class*="multiline"]
+    ) {
     height: 45px !important;
   }
 }
 
 /* EXCLUDE textarea from padding and height constraints */
 [class*="MuiFormControl"] [class*="MuiSelect-select"]:not(textarea),
-[class*="MuiFormControl"] [class*="MuiInputBase-input"]:not(textarea):not(.MuiInputBase-inputMultiline) {
+[class*="MuiFormControl"]
+  [class*="MuiInputBase-input"]:not(textarea):not(
+    .MuiInputBase-inputMultiline
+  ) {
   padding: 8px 12px !important;
   display: block !important;
   align-items: center !important;
@@ -39,14 +127,20 @@
 
 @media (min-width: 640px) {
   [class*="MuiFormControl"] [class*="MuiSelect-select"]:not(textarea),
-  [class*="MuiFormControl"] [class*="MuiInputBase-input"]:not(textarea):not(.MuiInputBase-inputMultiline) {
+  [class*="MuiFormControl"]
+    [class*="MuiInputBase-input"]:not(textarea):not(
+      .MuiInputBase-inputMultiline
+    ) {
     padding: 10px 14px !important;
   }
 }
 
 @media (min-width: 768px) {
   [class*="MuiFormControl"] [class*="MuiSelect-select"]:not(textarea),
-  [class*="MuiFormControl"] [class*="MuiInputBase-input"]:not(textarea):not(.MuiInputBase-inputMultiline) {
+  [class*="MuiFormControl"]
+    [class*="MuiInputBase-input"]:not(textarea):not(
+      .MuiInputBase-inputMultiline
+    ) {
     padding: 12px 14px !important;
   }
 }
@@ -57,7 +151,8 @@
    =========================================== */
 
 /* Make all textarea/multiline fields shorter but functional */
-[class*="MuiFormControl"] [class*="MuiOutlinedInput-root"].MuiInputBase-multiline,
+[class*="MuiFormControl"]
+  [class*="MuiOutlinedInput-root"].MuiInputBase-multiline,
 [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"][class*="multiline"],
 [class*="MuiFormControl"] textarea {
   height: 80px !important;
@@ -111,7 +206,8 @@
 }
 
 /* Focused state for textarea labels */
-[class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"].Mui-focused,
+[class*="MuiFormControl"]:has(.MuiInputBase-multiline)
+  [class*="MuiInputLabel"].Mui-focused,
 [class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"].Mui-focused {
   color: #1976d2 !important;
 }
@@ -160,7 +256,8 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 0 65% 45%; /* #C72030 */
+    --primary: 0 65% 45%;
+    /* #C72030 */
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -187,7 +284,7 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    
+
     /* Analytics theme colors - beige/tan palette */
     --analytics-primary: 35 25% 75%;
     --analytics-secondary: 35 35% 85%;
@@ -196,14 +293,14 @@
     --analytics-border: 35 20% 80%;
     --analytics-text: 25 25% 25%;
     --analytics-muted: 35 15% 65%;
-    
+
     /* Chart colors - matching design */
     --chart-tan: 35 35% 75%;
     --chart-beige: 45 25% 85%;
     --chart-brown: 25 45% 55%;
     --chart-cream: 50 20% 90%;
     --chart-mocha: 20 35% 45%;
-    
+
     --radius: 0.5rem;
   }
 
@@ -234,18 +331,30 @@
     --chart-5: 340 75% 55%;
 
     /* Analytics specific colors - Beige/Tan Theme */
-    --analytics-background: 249 246 237; /* Light beige background */
-    --analytics-border: 215 204 200; /* Tan border */
-    --analytics-text: 101 85 73; /* Dark brown text */
-    --analytics-accent: 180 140 102; /* Warm tan accent */
-    --analytics-chart-1: 205 164 94; /* Chart color 1 */
-    --analytics-chart-2: 139 115 85; /* Chart color 2 */
-    --analytics-chart-3: 160 134 104; /* Chart color 3 */
-    --analytics-chart-4: 185 155 121; /* Chart color 4 */
-    --analytics-success: 134 154 120; /* Muted green */
-    --analytics-warning: 204 154 104; /* Warm orange */
-    --analytics-error: 180 120 115; /* Muted red */
-    --analytics-muted: 145 130 120; /* Muted text color */
+    --analytics-background: 249 246 237;
+    /* Light beige background */
+    --analytics-border: 215 204 200;
+    /* Tan border */
+    --analytics-text: 101 85 73;
+    /* Dark brown text */
+    --analytics-accent: 180 140 102;
+    /* Warm tan accent */
+    --analytics-chart-1: 205 164 94;
+    /* Chart color 1 */
+    --analytics-chart-2: 139 115 85;
+    /* Chart color 2 */
+    --analytics-chart-3: 160 134 104;
+    /* Chart color 3 */
+    --analytics-chart-4: 185 155 121;
+    /* Chart color 4 */
+    --analytics-success: 134 154 120;
+    /* Muted green */
+    --analytics-warning: 204 154 104;
+    /* Warm orange */
+    --analytics-error: 180 120 115;
+    /* Muted red */
+    --analytics-muted: 145 130 120;
+    /* Muted text color */
   }
 }
 
@@ -253,6 +362,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -261,9 +371,12 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none !important;
 }
+
 .no-scrollbar {
-  -ms-overflow-style: none !important; /* IE/Edge */
-  scrollbar-width: none !important;    /* Firefox */
+  -ms-overflow-style: none !important;
+  /* IE/Edge */
+  scrollbar-width: none !important;
+  /* Firefox */
 }
 
 /* Comprehensive Date Picker - Exact Design Implementation */
@@ -271,22 +384,22 @@
   /* Container dimensions - exact measurements */
   width: 328px;
   height: 386px;
-  background: #FFFFFF;
-  
+  background: #ffffff;
+
   /* Sharp corners - no border radius */
   border-radius: 0px;
-  
+
   /* Drop shadow specifications */
   box-shadow: 0px 2px 18px rgba(69, 69, 69, 0.1);
-  
+
   /* Layout structure */
   display: flex;
   flex-direction: column;
-  
+
   /* Typography base */
   font-family: system-ui, -apple-system, sans-serif;
-  color: #1A1A1A;
-  
+  color: #1a1a1a;
+
   /* Positioning */
   position: relative;
   z-index: 50;
@@ -310,7 +423,7 @@
 .month-year-text {
   font-size: 16px;
   font-weight: 500;
-  color: #1A1A1A;
+  color: #1a1a1a;
   letter-spacing: 0;
   line-height: auto;
 }
@@ -337,7 +450,7 @@
 }
 
 .nav-arrow-btn:hover {
-  background-color: #F8F8F8;
+  background-color: #f8f8f8;
 }
 
 .nav-arrow {
@@ -395,11 +508,11 @@
 
 /* Date Cell States */
 .date-number-cell.hovered-date {
-  background-color: #F8F8F8;
+  background-color: #f8f8f8;
 }
 
 .date-number-cell.selected-date {
-  background-color: #DC2626;
+  background-color: #dc2626;
   color: white;
 }
 
@@ -410,7 +523,7 @@
 }
 
 .date-number-cell.disabled-date {
-  color: #CCCCCC;
+  color: #cccccc;
   cursor: not-allowed;
 }
 
@@ -458,41 +571,41 @@
     width: 280px;
     height: 330px;
   }
-  
+
   .date-picker-header {
     padding: 20px 14px 12px 18px;
   }
-  
+
   .month-year-text {
     font-size: 14px;
   }
-  
+
   .week-days-row {
     padding: 0 18px;
   }
-  
+
   .week-day-cell {
     font-size: 12px;
   }
-  
+
   .calendar-dates-grid {
     padding: 0 18px;
   }
-  
+
   .empty-date-cell,
   .date-number-cell {
     width: 35px;
     height: 35px;
   }
-  
+
   .date-number-cell {
     font-size: 14px;
   }
-  
+
   .date-picker-footer {
     padding: 12px 18px;
   }
-  
+
   .action-button {
     font-size: 14px;
   }
@@ -504,50 +617,50 @@
     width: 180px;
     height: 220px;
   }
-  
+
   .date-picker-header {
     padding: 12px 8px 8px 12px;
   }
-  
+
   .month-year-text {
     font-size: 12px;
   }
-  
+
   .dropdown-arrow,
   .nav-arrow {
     width: 10px;
     height: 10px;
   }
-  
+
   .week-days-row {
     padding: 0 12px;
   }
-  
+
   .week-day-cell {
     font-size: 10px;
     padding: 4px 0;
   }
-  
+
   .calendar-dates-grid {
     padding: 0 12px;
     gap: 1px;
   }
-  
+
   .empty-date-cell,
   .date-number-cell {
     width: 24px;
     height: 24px;
   }
-  
+
   .date-number-cell {
     font-size: 12px;
   }
-  
+
   .date-picker-footer {
     padding: 10px 12px;
     gap: 16px;
   }
-  
+
   .action-button {
     font-size: 12px;
     padding: 4px 8px;
@@ -556,16 +669,19 @@
 
 /* Mobile responsive textarea styling */
 @media (max-width: 640px) {
-  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"].MuiInputBase-multiline,
-  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"][class*="multiline"],
+  [class*="MuiFormControl"]
+    [class*="MuiOutlinedInput-root"].MuiInputBase-multiline,
+  [class*="MuiFormControl"]
+    [class*="MuiOutlinedInput-root"][class*="multiline"],
   [class*="MuiFormControl"] textarea {
     height: 70px !important;
     min-height: 70px !important;
     max-height: 100px !important;
   }
-  
+
   /* Smaller label on mobile */
-  [class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"],
+  [class*="MuiFormControl"]:has(.MuiInputBase-multiline)
+    [class*="MuiInputLabel"],
   [class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"] {
     transform: translate(12px, -8px) scale(0.75) !important;
     font-size: 12px !important;
@@ -587,7 +703,7 @@
   .date-picker-container {
     border: 2px solid #000;
   }
-  
+
   .date-number-cell.selected-date {
     background-color: #000;
     color: #fff;
@@ -604,11 +720,10 @@
   }
 }
 
-
 @media (min-width: 640px) {
-    .sm\:max-w-7xl {
-        max-width: 100% !important;
-    }
+  .sm\:max-w-7xl {
+    max-width: 100% !important;
+  }
 }
 
 /* Sticky/Frozen Scrollbar Styles for Asset Table */
@@ -644,7 +759,7 @@
 
 /* FullCalendar Custom Styles */
 .fc {
-  font-family: 'Inter', 'Work Sans', system-ui, -apple-system, sans-serif;
+  font-family: "Inter", "Work Sans", system-ui, -apple-system, sans-serif;
 }
 
 .fc-theme-standard .fc-scrollgrid {
@@ -723,7 +838,6 @@
   text-decoration: underline;
 }
 
-
 .timeline {
   position: relative;
   padding-left: 40px;
@@ -747,7 +861,8 @@
   left: -7px;
   margin-top: 2px;
 
-  @media screen and (max-width: 942px) {}
+  @media screen and (max-width: 942px) {
+  }
 }
 
 .year-change .timeline-icon {
@@ -778,4 +893,368 @@
 .timeline-content p {
   font-size: 14px;
   font-weight: 400;
+}
+
+.bg-green-500 {
+  background-color: #bf213e !important;
+  /* your red */
+}
+
+[data-state="checked"].bg-green-600,
+[data-state="checked"][class*="bg-green-600"] {
+  --tw-bg-opacity: 1;
+  background-color: #bf213e !important; /* your red color */
+}
+
+[data-state="checked"].border-green-600,
+[data-state="checked"][class*="border-green-600"] {
+  border-color: transparent !important; /* remove the green border */
+}
+
+td div,
+td span,
+th div,
+th span {
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+
+td div,
+td span,
+th div,
+td button,
+td a {
+  padding-left: 2px !important;
+}
+
+/* ===========================================
+   GLOBAL CARD STYLES - FIGMA DESIGN
+   =========================================== */
+
+/* Card Header Styles */
+
+.css-rizt0-MuiTypography-root {
+  /* font-family: "Work Sans" !important; */
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0.00938em;
+}
+
+.figma-card-header {
+  border: 1px solid #f6e7e7;
+  background: #f6f4ee !important;
+  padding: 16px 20px !important;
+  /* border-radius: 8px 8px 0 0 !important; */
+  margin: 0 !important;
+}
+
+/* Card Header Icon Wrapper */
+.figma-card-icon-wrapper {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 55px !important;
+  background: rgba(196, 184, 157, 0.33) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Card Header Icon */
+.figma-card-icon {
+  color: #c72030 !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Card Header Title */
+.figma-card-title {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+  margin: 0 !important;
+}
+
+/* Card Content */
+.figma-card-content {
+  border: 1px solid #f6e7e7;
+  padding: 24px 20px !important;
+  background: white !important;
+  border-top: none !important;
+  border-radius: 0 0 8px 8px !important;
+}
+
+/* Location Stepper Line - Responsive Design */
+.location-stepper-line {
+  background: #c72030ad !important;
+  height: 2px !important;
+  width: 86% !important;
+  top: 2.45rem !important;
+  left: 4rem !important;
+  position: relative !important;
+}
+
+/* Mobile styles (default - up to 640px) */
+@media (max-width: 640px) {
+  .location-stepper-line {
+    width: 82% !important;
+    top: 2rem !important;
+    left: 2.5rem !important;
+    height: 1.5px !important;
+  }
+}
+
+/* Small screens (sm: 640px and up) */
+@media (min-width: 640px) {
+  .location-stepper-line {
+    width: 84% !important;
+    top: 2.2rem !important;
+    left: 3.2rem !important;
+    height: 1.8px !important;
+  }
+}
+
+/* Medium screens (md: 768px and up) */
+@media (min-width: 768px) {
+  .location-stepper-line {
+    width: 86% !important;
+    top: 2.45rem !important;
+    left: 4rem !important;
+    height: 2px !important;
+  }
+}
+
+/* Large screens (lg: 1024px and up) */
+@media (min-width: 1024px) {
+  .location-stepper-line {
+    width: 85% !important;
+    top: 2.5rem !important;
+    left: 4.2rem !important;
+    height: 2px !important;
+  }
+}
+
+/* Extra large screens (xl: 1280px and up) */
+@media (min-width: 1280px) {
+  .location-stepper-line {
+    width: 85% !important;
+    top: 2.6rem !important;
+    left: 4.5rem !important;
+    height: 2.5px !important;
+  }
+}
+
+/* Location Step Dots - Responsive Design */
+.location-step-dot {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background: #c72030 !important;
+  border: 2px solid white !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Mobile styles (default - up to 640px) */
+@media (max-width: 640px) {
+  .location-step-dot {
+    width: 8px !important;
+    height: 8px !important;
+    border: 1.5px solid white !important;
+  }
+}
+
+/* Small screens (sm: 640px and up) */
+@media (min-width: 640px) {
+  .location-step-dot {
+    width: 10px !important;
+    height: 10px !important;
+    border: 1.5px solid white !important;
+  }
+}
+
+/* Medium screens (md: 768px and up) */
+@media (min-width: 768px) {
+  .location-step-dot {
+    width: 12px !important;
+    height: 12px !important;
+    border: 2px solid white !important;
+  }
+}
+
+/* Large screens (lg: 1024px and up) */
+@media (min-width: 1024px) {
+  .location-step-dot {
+    width: 14px !important;
+    height: 14px !important;
+    border: 2px solid white !important;
+  }
+}
+
+/* Extra large screens (xl: 1280px and up) */
+@media (min-width: 1280px) {
+  .location-step-dot {
+    width: 16px !important;
+    height: 16px !important;
+    border: 2.5px solid white !important;
+  }
+}
+
+/* Task Info Grid Improvements - Responsive Design */
+.task-info-enhanced {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 16px 32px !important;
+  font-size: 14px !important;
+}
+
+/* Mobile styles (default - up to 640px) */
+@media (max-width: 640px) {
+  .task-info-enhanced {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Small screens (sm: 640px and up) */
+@media (min-width: 640px) {
+  .task-info-enhanced {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+    gap: 14px 24px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* Medium screens (md: 768px and up) */
+@media (min-width: 768px) {
+  .task-info-enhanced {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+    gap: 16px 32px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* Large screens (lg: 1024px and up) */
+@media (min-width: 1024px) {
+  .task-info-enhanced {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)) !important;
+    gap: 18px 36px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* Extra large screens (xl: 1280px and up) */
+@media (min-width: 1280px) {
+  .task-info-enhanced {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)) !important;
+    gap: 20px 40px !important;
+    font-size: 15px !important;
+  }
+}
+
+.task-info-row {
+  display: flex !important;
+  align-items: flex-start !important;
+}
+
+.task-info-label-enhanced {
+  color: #1a1a1a80 !important;
+  min-width: 140px !important;
+  font-weight: 400 !important;
+}
+
+.task-info-separator-enhanced {
+  color: #6b7280 !important;
+  margin: 0 8px !important;
+}
+
+.task-info-value-enhanced {
+  color: #1a1a1a !important;
+  font-weight: 500 !important;
+  flex: 1 !important;
+}
+
+/* Mobile styles (default - up to 640px) */
+@media (max-width: 640px) {
+  .task-info-label-enhanced {
+    min-width: 100px !important;
+    font-size: 12px !important;
+  }
+
+  .task-info-separator-enhanced {
+    margin: 0 4px !important;
+  }
+
+  .task-info-value-enhanced {
+    font-size: 12px !important;
+  }
+}
+
+/* Small screens (sm: 640px and up) */
+@media (min-width: 640px) {
+  .task-info-label-enhanced {
+    min-width: 120px !important;
+    font-size: 13px !important;
+  }
+
+  .task-info-separator-enhanced {
+    margin: 0 6px !important;
+  }
+
+  .task-info-value-enhanced {
+    font-size: 13px !important;
+  }
+}
+
+/* Medium screens (md: 768px and up) */
+@media (min-width: 768px) {
+  .task-info-label-enhanced {
+    min-width: 140px !important;
+    font-size: 14px !important;
+  }
+
+  .task-info-separator-enhanced {
+    margin: 0 8px !important;
+  }
+
+  .task-info-value-enhanced {
+    font-size: 14px !important;
+  }
+}
+
+/* Large screens (lg: 1024px and up) */
+@media (min-width: 1024px) {
+  .task-info-label-enhanced {
+    min-width: 160px !important;
+    font-size: 14px !important;
+  }
+
+  .task-info-separator-enhanced {
+    margin: 0 10px !important;
+  }
+
+  .task-info-value-enhanced {
+    font-size: 14px !important;
+  }
+}
+
+/* Extra large screens (xl: 1280px and up) */
+@media (min-width: 1280px) {
+  .task-info-label-enhanced {
+    min-width: 180px !important;
+    font-size: 14px !important;
+  }
+
+  .task-info-separator-enhanced {
+    margin: 0 12px !important;
+  }
+
+  .task-info-value-enhanced {
+    font-size: 14.5px !important;
+  }
+}
+
+.hover\:bg-primary\/80:hover {
+  color: white !important;
 }

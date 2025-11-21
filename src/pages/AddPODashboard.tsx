@@ -680,14 +680,17 @@ export const AddPODashboard = () => {
                 <TextField
                   label="Retention(%)"
                   value={formData.retention}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      retention: e.target.value,
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                      setFormData({
+                        ...formData,
+                        retention: value,
+                      });
+                    }
+                  }}
                   fullWidth
-                  type="number"
+                  type="text"
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
@@ -697,14 +700,18 @@ export const AddPODashboard = () => {
                 <TextField
                   label="TDS(%)"
                   value={formData.tds}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      tds: e.target.value,
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                      setFormData({
+                        ...formData,
+                        tds: value,
+                      });
+                    }
+                  }}
                   fullWidth
-                  type="number"
+                  type="text"
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
@@ -714,14 +721,17 @@ export const AddPODashboard = () => {
                 <TextField
                   label="QC(%)"
                   value={formData.qc}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      qc: e.target.value,
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                      setFormData({
+                        ...formData,
+                        qc: value,
+                      });
+                    }
+                  }}
                   fullWidth
-                  type="number"
+                  type="text"
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
@@ -748,14 +758,17 @@ export const AddPODashboard = () => {
                 <TextField
                   label="Advance Amount"
                   value={formData.advanceAmount}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      advanceAmount: e.target.value,
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                      setFormData({
+                        ...formData,
+                        advanceAmount: value,
+                      });
+                    }
+                  }}
                   fullWidth
-                  type="number"
+                  type="text"
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
@@ -887,6 +900,9 @@ export const AddPODashboard = () => {
                         InputLabelProps={{ shrink: true }}
                         InputProps={{ sx: fieldStyles }}
                         sx={{ mt: 1 }}
+                        inputProps={{
+                          min: new Date().toISOString().split("T")[0],
+                        }}
                       />
 
                       <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -928,12 +944,15 @@ export const AddPODashboard = () => {
                       <TextField
                         label="Rate"
                         value={item.rate}
-                        onChange={(e) =>
-                          updateItem(item.id, "rate", e.target.value)
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                            updateItem(item.id, "rate", value);
+                          }
+                        }}
                         fullWidth
                         variant="outlined"
-                        type="number"
+                        type="text"
                         InputLabelProps={{ shrink: true }}
                         InputProps={{ sx: fieldStyles }}
                         sx={{ mt: 1 }}
@@ -942,12 +961,15 @@ export const AddPODashboard = () => {
                       <TextField
                         label="CGST Rate"
                         value={item.cgstRate}
-                        onChange={(e) =>
-                          updateItem(item.id, "cgstRate", e.target.value)
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                            updateItem(item.id, "cgstRate", value);
+                          }
+                        }}
                         fullWidth
                         variant="outlined"
-                        type="number"
+                        type="text"
                         InputLabelProps={{ shrink: true }}
                         InputProps={{ sx: fieldStyles }}
                         sx={{ mt: 1 }}
@@ -966,11 +988,14 @@ export const AddPODashboard = () => {
 
                       <TextField
                         label="SGST Rate"
-                        type="number"
+                        type="text"
                         value={item.sgstRate}
-                        onChange={(e) =>
-                          updateItem(item.id, "sgstRate", e.target.value)
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                            updateItem(item.id, "sgstRate", value);
+                          }
+                        }}
                         fullWidth
                         variant="outlined"
                         InputLabelProps={{ shrink: true }}
@@ -991,11 +1016,14 @@ export const AddPODashboard = () => {
 
                       <TextField
                         label="IGST Rate"
-                        type="number"
+                        type="text"
                         value={item.igstRate}
-                        onChange={(e) =>
-                          updateItem(item.id, "igstRate", e.target.value)
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                            updateItem(item.id, "igstRate", value);
+                          }
+                        }}
                         fullWidth
                         variant="outlined"
                         InputLabelProps={{ shrink: true }}
@@ -1016,11 +1044,14 @@ export const AddPODashboard = () => {
 
                       <TextField
                         label="TCS Rate"
-                        type="number"
+                        type="text"
                         value={item.tcsRate}
-                        onChange={(e) =>
-                          updateItem(item.id, "tcsRate", e.target.value)
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                            updateItem(item.id, "tcsRate", value);
+                          }
+                        }}
                         fullWidth
                         variant="outlined"
                         InputLabelProps={{ shrink: true }}

@@ -40,7 +40,6 @@ export const EditExternalUserPage = () => {
     role_id: '',
     ext_company_name: '',
     org_user_id: '',
-    birth_date: '',
     joining_date: ''
   };
 
@@ -108,12 +107,12 @@ export const EditExternalUserPage = () => {
       }));
       return;
     }
-    if (field === 'birth_date' || field === 'joining_date') {
+  if (field === 'joining_date') {
       const val = String(value || '');
       setFormData((prev: any) => ({ ...prev, [field]: val }));
       setFieldErrors(prev => ({
         ...prev,
-        [field]: val && val > todayISO ? `${field === 'birth_date' ? 'Birth' : 'Joining'} Date cannot be in the future` : ''
+    [field]: val && val > todayISO ? 'Joining Date cannot be in the future' : ''
       }));
       return;
     }
@@ -149,7 +148,6 @@ export const EditExternalUserPage = () => {
       ['company_cluster_id', 'Cluster'],
       ['work_location', 'Work Location'],
       ['role_id', 'Role'],
-      ['birth_date', 'Birth Date'],
       ['joining_date', 'Joining Date'],
     ];
 
@@ -184,12 +182,6 @@ export const EditExternalUserPage = () => {
       errors.mobile = errors.mobile || 'Enter a valid 10-digit mobile number';
     }
     const dateRe = /^\d{4}-\d{2}-\d{2}$/;
-    if (!isEmpty(formData.birth_date) && !dateRe.test(String(formData.birth_date))) {
-      errors.birth_date = 'Birth Date must be YYYY-MM-DD';
-    }
-    if (!errors.birth_date && !isEmpty(formData.birth_date) && String(formData.birth_date) > todayISO) {
-      errors.birth_date = 'Birth Date cannot be in the future';
-    }
     if (!isEmpty(formData.joining_date) && !dateRe.test(String(formData.joining_date))) {
       errors.joining_date = 'Joining Date must be YYYY-MM-DD';
     }
@@ -252,7 +244,6 @@ export const EditExternalUserPage = () => {
           company_cluster_id: formData.company_cluster_id || null,
           ext_company_name: formData.ext_company_name || null,
           org_user_id: formData.org_user_id || null,
-          birth_date: formData.birth_date || null,
           lock_user_permissions_attributes: permission?.id ? [
             {
               id: permission.id,
@@ -264,10 +255,11 @@ export const EditExternalUserPage = () => {
           ] : []
         }
       };
-      const url = `https://${baseUrl}/pms/users/${idForUpdate}/update_vi_user`;
+      const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      const url = `${cleanBaseUrl}/pms/users/${idForUpdate}/update_vi_user`;
       await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('External user updated');
-      navigate(`/maintenance/m-safe/external/user/${idForUpdate}`, { state: { user: { ...originalUser, ...formData } } });
+      navigate(`/safety/m-safe/external/user/${idForUpdate}`, { state: { user: { ...originalUser, ...formData } } });
     } catch (e: any) {
       console.error('Update external user error', e);
       const respData = e?.response?.data;
@@ -295,7 +287,7 @@ export const EditExternalUserPage = () => {
     }
   };
 
-  const handleCancel = () => navigate(`/maintenance/m-safe/external/user/${userId}`, { state: { user: location.state?.user || initialUser } });
+  const handleCancel = () => navigate(`/safety/m-safe/external/user/${userId}`, { state: { user: location.state?.user || initialUser } });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -305,7 +297,8 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) { setError('Missing base URL or token'); setLoading(false); return; }
-        const url = `https://${baseUrl}/pms/users/${userId}/user_show.json`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/${userId}/user_show.json`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const data = resp.data?.user || resp.data;
         // Normalize date values to strict YYYY-MM-DD to satisfy validation regex
@@ -334,7 +327,6 @@ export const EditExternalUserPage = () => {
           role_name: data.lock_user_permission?.lock_role_name || data.role_name || data.role?.name || '',
           ext_company_name: data.ext_company_name || '',
           org_user_id: data.org_user_id || data.lock_user_permission?.employee_id || '',
-          birth_date: normalizeDate(data.birth_date),
           joining_date: normalizeDate(data.lock_user_permission?.joining_date || data.joining_date)
         }));
         setOriginalUser(data);
@@ -358,7 +350,8 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         const companyId = getSelectedCompanyId() ?? (formData.company_id || 15);
-        const url = `https://${baseUrl}/pms/users/get_departments.json?company_id=${companyId}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/get_departments.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const list = resp.data?.departments || [];
         setDepartments(list);
@@ -386,7 +379,8 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         const companyIdForRoles = getSelectedCompanyId() ?? formData.company_id;
-        const url = `https://${baseUrl}/pms/users/get_lock_roles.json?company_id=${companyIdForRoles}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/get_lock_roles.json?company_id=${companyIdForRoles}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const list = resp.data?.lock_roles || [];
         setRoles(list);
@@ -414,7 +408,8 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         const companyId = getSelectedCompanyId() ?? (formData.company_id || 15);
-        const url = `https://${baseUrl}/pms/users/get_circles.json?company_id=${companyId}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/get_circles.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setCircles(resp.data?.circles || []);
       } catch (e) { console.error('Fetch circles error', e); }
@@ -439,7 +434,8 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         const companyId = getSelectedCompanyId() ?? (formData.company_id || 145);
-        const url = `https://${baseUrl}/pms/users/get_clusters.json?company_id=${companyId}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/get_clusters.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setClusters(resp.data?.clusters || []);
       } catch (e) { console.error('Fetch clusters error', e); }
@@ -464,7 +460,8 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         const companyId = getSelectedCompanyId() ?? (formData.company_id || 15);
-        const url = `https://${baseUrl}/pms/users/get_work_locations.json?company_id=${companyId}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/get_work_locations.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setWorkLocations(resp.data?.work_locations || []);
       } catch (e) { console.error('Fetch work locations error', e); }
@@ -502,7 +499,8 @@ export const EditExternalUserPage = () => {
         if (!baseUrl || !token) return;
         setLmLoading(true);
         const companyId = getSelectedCompanyId() ?? (originalUser?.company_id || originalUser?.lock_user_permission?.company_id || formData.company_id || 145 || 15);
-        const url = `https://${baseUrl}/pms/users/company_wise_users.json?company_id=${companyId}&q[email_cont]=${encodeURIComponent(lmQuery)}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        const url = `${cleanBaseUrl}/pms/users/company_wise_users.json?company_id=${companyId}&q[email_cont]=${encodeURIComponent(lmQuery)}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         if (!active) return;
         const users = resp.data?.users || [];
@@ -554,7 +552,7 @@ export const EditExternalUserPage = () => {
     return (
       <div className="p-6">
         <div className="flex items-center mb-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/maintenance/m-safe/external')} className="p-1 hover:bg-gray-100 mr-2"><ArrowLeft className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/safety/m-safe/external')} className="p-1 hover:bg-gray-100 mr-2"><ArrowLeft className="w-4 h-4" /></Button>
         </div>
         <div className="text-gray-500">Loading user...</div>
       </div>
@@ -564,7 +562,7 @@ export const EditExternalUserPage = () => {
     return (
       <div className="p-6">
         <div className="flex items-center mb-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/maintenance/m-safe/external')} className="p-1 hover:bg-gray-100 mr-2"><ArrowLeft className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/safety/m-safe/external')} className="p-1 hover:bg-gray-100 mr-2"><ArrowLeft className="w-4 h-4" /></Button>
         </div>
         <div className="text-red-500 text-sm">{error}</div>
       </div>
@@ -767,41 +765,7 @@ export const EditExternalUserPage = () => {
               </Select>
               {fieldErrors.role_id && <FormHelperText>{fieldErrors.role_id}</FormHelperText>}
             </FormControl>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                label={<>Birth Date<span style={{ color: '#C72030' }}>*</span></>}
-                value={formData.birth_date ? dayjs(formData.birth_date) : null}
-                onChange={(val) => {
-                  const d = val ? dayjs(val) : null;
-                  if (!d || !d.isValid()) {
-                    handleChange('birth_date', '');
-                    setFieldErrors(prev => ({ ...prev, birth_date: 'Invalid date' }));
-                    return;
-                  }
-                  const today = dayjs();
-                  if (d.isAfter(today, 'day')) {
-                    setFieldErrors(prev => ({ ...prev, birth_date: `Birth Date cannot be after ${today.format('DD/MM/YYYY')}` }));
-                    return;
-                  }
-                  setFieldErrors(prev => ({ ...prev, birth_date: '' }));
-                  // Store in canonical ISO (YYYY-MM-DD) while displaying DD-MM-YYYY
-                  handleChange('birth_date', d.format('YYYY-MM-DD'));
-                }}
-                maxDate={dayjs()}
-                shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
-                slotProps={{
-                  textField: {
-                    size: 'small',
-                    fullWidth: true,
-                    error: !!fieldErrors.birth_date,
-                    helperText: fieldErrors.birth_date || '',
-                    InputLabelProps: { shrink: true },
-                    placeholder: 'DD-MM-YYYY'
-                  }
-                }}
-                format="DD-MM-YYYY"
-              />
-            </LocalizationProvider>
+            {/* Birth Date field removed as per requirement */}
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 label={<>Joining Date<span style={{ color: '#C72030' }}>*</span></>}

@@ -481,24 +481,25 @@ export const PatrollingDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
+      {/* Header */}
       <div className="mb-6">
-        <Button
-          variant="ghost"
+        <button
           onClick={() => navigate("/security/patrolling")}
-          className="mb-4"
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-4 h-4" />
           Back to Patrolling List
-        </Button>
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            Patrolling Details - {patrolling.name}
-          </h1>
-          <div className="flex gap-2">
+        </button>
+
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">
+              {patrolling.name}
+            </h1>
             <Badge
               variant={patrolling.active ? "default" : "secondary"}
-              className="mr-2"
+              className="text-xs"
             >
               {patrolling.active ? (
                 <>
@@ -512,19 +513,24 @@ export const PatrollingDetailPage: React.FC = () => {
                 </>
               )}
             </Badge>
+          </div>
+
+          <div className="flex gap-2">
             <Button
               onClick={handleEdit}
               variant="outline"
-              className="border-[#C72030] text-[#C72030]"
+              size="sm"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit
             </Button>
             <Button
               onClick={handleDelete}
-              variant="destructive"
-              style={{ backgroundColor: "#C72030" }}
-              className="text-white hover:bg-[#C72030]/90"
+              variant="outline"
+              size="sm"
+              style={{ borderColor: "#C72030", color: "#C72030" }}
+              className="hover:bg-red-50"
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Delete
@@ -533,174 +539,178 @@ export const PatrollingDetailPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
-            {[
-              { label: "Patrol Information", value: "patrol-information" },
-              { label: "Questions", value: "questions" },
-              { label: "Schedules", value: "schedules" },
-              { label: "Checkpoints", value: "checkpoints" },
-            ].map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      {/* Main Content */}
+      <div className="space-y-6">
+        {/* Tabs */}
+        <Card className="w-full bg-white shadow-sm border border-gray-200">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm border-b border-gray-200">
+              {[
+                { label: "Patrol Information", value: "patrol-information" },
+                { label: "Questions", value: "questions" },
+                { label: "Schedules", value: "schedules" },
+                { label: "Checkpoints", value: "checkpoints" },
+              ].map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] px-3 py-2 border-r border-gray-200 last:border-r-0 text-sm"
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
           {/* Patrol Information */}
-          <TabsContent value="patrol-information" className="p-3 sm:p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-8 h-8 text-or-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Duration</p>
-                      <p className="text-xl font-semibold">
-                        {patrolling.grace_period_minutes} min
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <ListChecks className="w-8 h-8 text-gray-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Questions</p>
-                      <p className="text-xl font-semibold">
-                        {patrolling.summary?.questions_count || 0}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <Users className="w-8 h-8 text-gray-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Schedules</p>
-                      <p className="text-xl font-semibold">
-                        {patrolling.summary?.schedules_count || 0}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-8 h-8 text-gray-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Checkpoints</p>
-                      <p className="text-xl font-semibold">
-                        {patrolling.summary?.checkpoints_count || 0}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <Shield className="h-4 w-4" />
-                  </div>
-                  PATROL INFORMATION
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <strong>Name:</strong> {patrolling.name}
+          <TabsContent value="patrol-information" className="p-4 sm:p-6">
+            {/* Summary Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <strong>Description:</strong>{" "}
-                    {patrolling.description || "—"}
-                  </div>
-                  <div>
-                    <strong>Start Date:</strong>{" "}
-                    {formatDate(patrolling.validity_start_date)}
-                  </div>
-                  <div>
-                    <strong>End Date:</strong>{" "}
-                    {formatDate(patrolling.validity_end_date)}
-                  </div>
-                  <div>
-                    <strong>Grace Period:</strong>{" "}
-                    {patrolling.grace_period_minutes} minutes
-                  </div>
-
-                  <div>
-                    <strong>Status:</strong>
-                    <Badge
-                      variant={patrolling.active ? "default" : "secondary"}
-                      className="ml-2"
-                    >
-                      {patrolling.active ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                  <div>
-                    <strong>Created on:</strong>{" "}
-                    {formatDateTime(patrolling.created_at)}
+                    <p className="text-xs text-gray-600">Duration</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {patrolling.grace_period_minutes} min
+                    </p>
                   </div>
                 </div>
-              </CardContent>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <ListChecks className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Questions</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {patrolling.summary?.questions_count || 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Schedules</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {patrolling.summary?.schedules_count || 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Checkpoints</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {patrolling.summary?.checkpoints_count || 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Patrol Information Card */}
+            <Card className="mb-6 border-none bg-transparent shadow-none">
+              <div className="figma-card-header">
+                <div className="flex items-center gap-3">
+                  <div className="figma-card-icon-wrapper">
+                    <Shield className="figma-card-icon" />
+                  </div>
+                  <h3 className="figma-card-title">Patrol Information</h3>
+                </div>
+              </div>
+              <div className="figma-card-content">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                  <div className="flex flex-col">
+                    <span className="text-gray-600 text-xs mb-1">Name</span>
+                    <span className="font-medium text-gray-900">{patrolling.name}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-gray-600 text-xs mb-1">Description</span>
+                    <span className="font-medium text-gray-900">{patrolling.description || "—"}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-gray-600 text-xs mb-1">Start Date</span>
+                    <span className="font-medium text-gray-900">{formatDate(patrolling.validity_start_date)}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-gray-600 text-xs mb-1">End Date</span>
+                    <span className="font-medium text-gray-900">{formatDate(patrolling.validity_end_date)}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-gray-600 text-xs mb-1">Grace Period</span>
+                    <span className="font-medium text-gray-900">{patrolling.grace_period_minutes} minutes</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-gray-600 text-xs mb-1">Status</span>
+                    <div>
+                      <Badge
+                        variant={patrolling.active ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {patrolling.active ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-gray-600 text-xs mb-1">Created On</span>
+                    <span className="font-medium text-gray-900">{formatDateTime(patrolling.created_at)}</span>
+                  </div>
+                </div>
+              </div>
             </Card>
 
             {/* Checklist Information */}
             {patrolling.checklist && (
-              <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                <CardHeader className="bg-[#F6F4EE] mb-6">
-                  <CardTitle className="text-lg flex items-center">
-                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                      <ListChecks className="h-4 w-4" />
+              <Card className="mb-6 border-none bg-transparent shadow-none">
+                <div className="figma-card-header">
+                  <div className="flex items-center gap-3">
+                    <div className="figma-card-icon-wrapper">
+                      <ListChecks className="figma-card-icon" />
                     </div>
-                    CHECKLIST INFORMATION
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <strong>Checklist Name:</strong>{" "}
-                      {patrolling.checklist.name}
+                    <h3 className="figma-card-title">Checklist Information</h3>
+                  </div>
+                </div>
+                <div className="figma-card-content">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                    <div className="flex flex-col">
+                      <span className="text-gray-600 text-xs mb-1">Checklist Name</span>
+                      <span className="font-medium text-gray-900">{patrolling.checklist.name}</span>
                     </div>
-                    <div>
-                      <strong>Check Type:</strong>{" "}
-                      {patrolling.checklist.check_type}
+                    <div className="flex flex-col">
+                      <span className="text-gray-600 text-xs mb-1">Check Type</span>
+                      <span className="font-medium text-gray-900">{patrolling.checklist.check_type}</span>
                     </div>
-
-                    <div>
-                      <strong>Status:</strong>
-                      <Badge
-                        variant={
-                          patrolling.checklist.active ? "default" : "secondary"
-                        }
-                        className="ml-2"
-                      >
-                        {patrolling.checklist.active ? "Active" : "Inactive"}
-                      </Badge>
+                    <div className="flex flex-col">
+                      <span className="text-gray-600 text-xs mb-1">Status</span>
+                      <div>
+                        <Badge
+                          variant={patrolling.checklist.active ? "default" : "secondary"}
+                          className="text-xs"
+                        >
+                          {patrolling.checklist.active ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
                     </div>
-                    <div>
-                      <strong>Created on:</strong>{" "}
-                      {formatDateTime(patrolling.checklist.created_at)}
+                    <div className="flex flex-col">
+                      <span className="text-gray-600 text-xs mb-1">Created On</span>
+                      <span className="font-medium text-gray-900">{formatDateTime(patrolling.checklist.created_at)}</span>
                     </div>
                   </div>
-                </CardContent>
+                </div>
               </Card>
             )}
 
@@ -708,20 +718,22 @@ export const PatrollingDetailPage: React.FC = () => {
             {patrolling.checkpoints &&
               patrolling.checkpoints.some &&
               patrolling.checkpoints.some((cp) => cp.qr_code_available) && (
-                <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                  <CardHeader className="bg-[#F6F4EE] mb-6">
-                    <CardTitle className="text-lg flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                          <QrCode className="h-4 w-4" />
+                <Card className="mb-6 border-none bg-transparent shadow-none">
+                  <div className="figma-card-header">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3">
+                        <div className="figma-card-icon-wrapper">
+                          <QrCode className="figma-card-icon" />
                         </div>
-                        QR CODES (
-                        {
-                          patrolling.checkpoints.filter(
-                            (cp) => cp.qr_code_available
-                          ).length
-                        }
-                        )
+                        <h3 className="figma-card-title">
+                          QR Codes (
+                          {
+                            patrolling.checkpoints.filter(
+                              (cp) => cp.qr_code_available
+                            ).length
+                          }
+                          )
+                        </h3>
                       </div>
                       <Button
                         variant="outline"
@@ -781,9 +793,9 @@ export const PatrollingDetailPage: React.FC = () => {
                         <Download className="w-3 h-3 mr-1" />
                         Download All QR Codes
                       </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                    </div>
+                  </div>
+                  <div className="figma-card-content">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {patrolling.checkpoints
                         .filter((cp) => cp.qr_code_available)
@@ -939,24 +951,24 @@ export const PatrollingDetailPage: React.FC = () => {
                         checkpoint during patrol.
                       </p>
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
               )}
           </TabsContent>
 
           {/* Questions */}
-          <TabsContent value="questions" className="p-3 sm:p-6">
+          <TabsContent value="questions" className="p-4 sm:p-6">
             {patrolling.checklist && checklistQuestions.length > 0 ? (
               // Show checklist questions
               <>
-                <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <Info className="w-5 h-5 text-gray-600" />
+                    <Info className="w-5 h-5 text-blue-600" />
                     <div>
-                      <p className="text-sm font-medium text-gray-800">
+                      <p className="text-sm font-medium text-blue-800">
                         Questions from Checklist
                       </p>
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-blue-600">
                         Questions are loaded from the selected checklist:{" "}
                         <strong>{patrolling.checklist.name}</strong>
                       </p>
@@ -964,19 +976,21 @@ export const PatrollingDetailPage: React.FC = () => {
                   </div>
                 </div>
 
-                <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                  <CardHeader className="bg-[#F6F4EE] mb-6">
-                    <CardTitle className="text-lg flex items-center">
-                      <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                        <ListChecks className="h-4 w-4" />
+                <Card className="mb-6 border-none bg-transparent shadow-none">
+                  <div className="figma-card-header">
+                    <div className="flex items-center gap-3">
+                      <div className="figma-card-icon-wrapper">
+                        <ListChecks className="figma-card-icon" />
                       </div>
-                      CHECKLIST QUESTIONS ({checklistQuestions.length})
-                      {loadingChecklistQuestions && (
-                        <Loader2 className="w-4 h-4 animate-spin ml-2 text-[#C72030]" />
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                      <h3 className="figma-card-title">
+                        Checklist Questions ({checklistQuestions.length})
+                        {loadingChecklistQuestions && (
+                          <Loader2 className="w-4 h-4 animate-spin ml-2 text-[#C72030]" />
+                        )}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="figma-card-content">
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
@@ -1046,24 +1060,26 @@ export const PatrollingDetailPage: React.FC = () => {
                         </TableBody>
                       </Table>
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
               </>
             ) : (
               // Show patrolling questions
-              <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                <CardHeader className="bg-[#F6F4EE] mb-6">
-                  <CardTitle className="text-lg flex items-center">
-                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                      <ListChecks className="h-4 w-4" />
+              <Card className="mb-6 border-none bg-transparent shadow-none">
+                <div className="figma-card-header">
+                  <div className="flex items-center gap-3">
+                    <div className="figma-card-icon-wrapper">
+                      <ListChecks className="figma-card-icon" />
                     </div>
-                    QUESTIONS ({patrolling.questions?.length || 0})
-                    {patrolling.checklist && loadingChecklistQuestions && (
-                      <Loader2 className="w-4 h-4 animate-spin ml-2 text-[#C72030]" />
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                    <h3 className="figma-card-title">
+                      Questions ({patrolling.questions?.length || 0})
+                      {patrolling.checklist && loadingChecklistQuestions && (
+                        <Loader2 className="w-4 h-4 animate-spin ml-2 text-[#C72030]" />
+                      )}
+                    </h3>
+                  </div>
+                </div>
+                <div className="figma-card-content">
          
 
                   <div className="overflow-x-auto">
@@ -1145,21 +1161,21 @@ export const PatrollingDetailPage: React.FC = () => {
                       </TableBody>
                     </Table>
                   </div>
-                </CardContent>
+                </div>
               </Card>
             )}
           </TabsContent>
 
           {/* Schedules */}
-          <TabsContent value="schedules" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                      <Calendar className="h-4 w-4" />
+          <TabsContent value="schedules" className="p-4 sm:p-6">
+            <Card className="mb-6 border-none bg-transparent shadow-none">
+              <div className="figma-card-header">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-3">
+                    <div className="figma-card-icon-wrapper">
+                      <Calendar className="figma-card-icon" />
                     </div>
-                    SCHEDULES ({patrolling.schedules?.length || 0})
+                    <h3 className="figma-card-title">Schedules ({patrolling.schedules?.length || 0})</h3>
                   </div>
                   {patrolling.schedules && patrolling.schedules.length > 0 && (
                     <div className="flex items-center gap-4 text-sm">
@@ -1177,9 +1193,9 @@ export const PatrollingDetailPage: React.FC = () => {
                       </div>
                     </div>
                   )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </div>
+              </div>
+              <div className="figma-card-content">
                 {patrolling.schedules && patrolling.schedules.length > 0 ? (
                   <div className="space-y-6">
                     {patrolling.schedules.map((schedule) => (
@@ -1358,22 +1374,22 @@ export const PatrollingDetailPage: React.FC = () => {
                     </Button>
                   </div>
                 )}
-              </CardContent>
+              </div>
             </Card>
           </TabsContent>
 
           {/* Checkpoints */}
-          <TabsContent value="checkpoints" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <MapPin className="h-4 w-4" />
+          <TabsContent value="checkpoints" className="p-4 sm:p-6">
+            <Card className="mb-6 border-none bg-transparent shadow-none">
+              <div className="figma-card-header">
+                <div className="flex items-center gap-3">
+                  <div className="figma-card-icon-wrapper">
+                    <MapPin className="figma-card-icon" />
                   </div>
-                  CHECKPOINTS ({patrolling.checkpoints?.length || 0})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                  <h3 className="figma-card-title">Checkpoints ({patrolling.checkpoints?.length || 0})</h3>
+                </div>
+              </div>
+              <div className="figma-card-content">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -1534,22 +1550,22 @@ export const PatrollingDetailPage: React.FC = () => {
                     </TableBody>
                   </Table>
                 </div>
-              </CardContent>
+              </div>
             </Card>
           </TabsContent>
 
           {/* Recent Sessions */}
-          <TabsContent value="recent-sessions" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <Activity className="h-4 w-4" />
+          <TabsContent value="recent-sessions" className="p-4 sm:p-6">
+            <Card className="mb-6 border-none bg-transparent shadow-none">
+              <div className="figma-card-header">
+                <div className="flex items-center gap-3">
+                  <div className="figma-card-icon-wrapper">
+                    <Activity className="figma-card-icon" />
                   </div>
-                  RECENT SESSIONS ({patrolling.recent_sessions?.length || 0})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                  <h3 className="figma-card-title">Recent Sessions ({patrolling.recent_sessions?.length || 0})</h3>
+                </div>
+              </div>
+              <div className="figma-card-content">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -1628,10 +1644,11 @@ export const PatrollingDetailPage: React.FC = () => {
                     </TableBody>
                   </Table>
                 </div>
-              </CardContent>
+              </div>
             </Card>
           </TabsContent>
         </Tabs>
+        </Card>
       </div>
 
       {/* Delete Confirmation Modal */}

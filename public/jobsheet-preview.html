@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Sheet Preview - FMMatrix</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    /* Preview Toolbar */
+    .preview-toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #1f2937;
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .toolbar-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .toolbar-button {
+      background: #C72030;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .toolbar-button:hover {
+      background: #A01828;
+    }
+
+    .toolbar-button.secondary {
+      background: #374151;
+    }
+
+    .toolbar-button.secondary:hover {
+      background: #4B5563;
+    }
+
+    /* Page Container */
+    .content-wrapper {
+      /* margin-top: 70px; */
+      padding: 20px;
+    }
+
+    .page-wrapper {
+      max-width: 210mm;
+      margin: 0 auto;
+      background: white;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      padding: 20mm;
+      min-height: 297mm;
+    }
+
+    /* Header Section */
+    .header {
+      border-bottom: 3px solid #C72030;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .left-logo {
+      height: 60px;
+      display: flex;
+      align-items: center;
+    }
+
+    .left-logo svg, .left-logo img {
+      max-height: 100%;
+      width: auto;
+    }
+    
+    .header-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #C72030;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Client Info Section */
+    .figma-client-info {
+      margin-bottom: 20px;
+    }
+
+    .figma-info-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #ddd;
+    }
+
+    .figma-info-table td {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      font-size: 11px;
+    }
+
+    .figma-label-cell {
+      background: #f9fafb;
+      font-weight: 600;
+      width: 20%;
+      color: #374151;
+    }
+
+    .figma-value-cell {
+      width: 30%;
+      color: #1f2937;
+    }
+
+    .figma-status-overdue {
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+    /* Location Section */
+    .figma-location-section {
+      margin-bottom: 20px;
+    }
+
+    .figma-location-header {
+      background: linear-gradient(to right, #C72030, #A01828);
+      color: white;
+      padding: 10px 15px;
+      font-weight: 600;
+      font-size: 13px;
+      border-radius: 4px 4px 0 0;
+    }
+
+    .figma-location-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #ddd;
+    }
+
+    .figma-location-th {
+      background: #f3f4f6;
+      padding: 8px;
+      border: 1px solid #ddd;
+      font-size: 10px;
+      font-weight: 600;
+      text-align: center;
+      color: #374151;
+    }
+
+    .figma-location-td {
+      padding: 8px;
+      border: 1px solid #ddd;
+      font-size: 11px;
+      text-align: center;
+      color: #1f2937;
+    }
+
+    /* Before/After Images Section */
+    .figma-images-section {
+      margin-bottom: 20px;
+    }
+
+    .figma-images-header {
+      background: linear-gradient(to right, #C72030, #A01828);
+      color: white;
+      padding: 10px 15px;
+      font-weight: 600;
+      font-size: 13px;
+      border-radius: 4px 4px 0 0;
+    }
+
+    .figma-images-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #ddd;
+    }
+
+    .figma-image-header-cell {
+      background: #f3f4f6;
+      padding: 10px;
+      border: 1px solid #ddd;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      color: #374151;
+    }
+
+    .figma-image-cell {
+      padding: 15px;
+      border: 1px solid #ddd;
+      text-align: center;
+      vertical-align: top;
+    }
+
+    .figma-image-container {
+      position: relative;
+    }
+
+    .figma-maintenance-image {
+      max-width: 100%;
+      height: auto;
+      max-height: 200px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .figma-no-image {
+      padding: 40px;
+      text-align: center;
+      color: #9ca3af;
+      font-size: 12px;
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      background: #f9fafb;
+    }
+
+    .figma-image-timestamp {
+      margin-top: 8px;
+      font-size: 10px;
+      color: #6b7280;
+      font-style: italic;
+    }
+
+    /* Checklist Section */
+    .figma-checklist-section {
+      margin-bottom: 20px;
+    }
+
+    .figma-checklist-header {
+      background: linear-gradient(to right, #C72030, #A01828);
+      color: white;
+      padding: 12px 15px;
+      font-weight: 700;
+      font-size: 14px;
+      text-align: center;
+      border-radius: 4px 4px 0 0;
+      letter-spacing: 0.5px;
+    }
+
+    .figma-section-wrapper {
+      margin-bottom: 20px;
+      page-break-inside: avoid;
+    }
+
+    .figma-section-header {
+      background: linear-gradient(to right, #f3f4f6, #f9fafb);
+      padding: 12px 16px;
+      border-radius: 8px;
+      border-left: 4px solid #C72030;
+      margin-bottom: 12px;
+    }
+
+    .figma-checklist-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #ddd;
+    }
+
+    .figma-table-header-row th {
+      background: #f3f4f6;
+      padding: 10px 8px;
+      border: 1px solid #ddd;
+      font-size: 10px;
+      font-weight: 700;
+      text-align: center;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .figma-sl-header {
+      width: 8%;
+    }
+
+    .figma-inspection-header {
+      width: 40%;
+    }
+
+    .figma-result-header {
+      width: 15%;
+    }
+
+    .figma-remarks-header {
+      width: 22%;
+    }
+
+    .figma-attachment-header {
+      width: 15%;
+    }
+
+    .figma-checklist-row td {
+      padding: 10px 8px;
+      border: 1px solid #ddd;
+      font-size: 11px;
+      vertical-align: top;
+    }
+
+    .figma-sl-cell {
+      text-align: center;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .figma-inspection-cell {
+      color: #1f2937;
+      line-height: 1.4;
+    }
+
+    .figma-result-cell {
+      text-align: center;
+      font-weight: 500;
+      color: #059669;
+    }
+
+    .figma-remarks-cell {
+      color: #6b7280;
+      font-size: 10px;
+      line-height: 1.3;
+    }
+
+    .figma-attachment-cell {
+      text-align: center;
+    }
+
+    .figma-measurement-section {
+      margin-top: 15px;
+      padding: 12px 15px;
+      background: linear-gradient(to right, #f9fafb, #ffffff);
+      border-radius: 6px;
+      border-left: 4px solid #3b82f6;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .figma-status-note {
+      font-size: 11px;
+      color: #374151;
+      margin: 4px 0;
+      font-weight: 500;
+    }
+    
+    .figma-section-wrapper {
+      margin-bottom: 20px;
+      page-break-inside: avoid;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .figma-section-header {
+      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+      padding: 12px 16px;
+      border-bottom: 2px solid #C72030;
+    }
+
+    /* Remarks Section */
+    .svg-remarks-section {
+      margin-bottom: 20px;
+    }
+
+    .svg-remarks-container {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .svg-remarks-label {
+      background: #f3f4f6;
+      padding: 8px 12px;
+      font-weight: 600;
+      font-size: 11px;
+      color: #374151;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .svg-remarks-content {
+      padding: 12px;
+      font-size: 11px;
+      color: #1f2937;
+      min-height: 60px;
+      line-height: 1.5;
+    }
+
+    /* Bottom Section */
+    .bottom-section {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #e5e7eb;
+    }
+
+    .system-note {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .system-note p {
+      font-size: 10px;
+      color: #6b7280;
+      font-style: italic;
+    }
+
+    .powered-by {
+      text-align: center;
+    }
+
+    .powered-by p {
+      font-size: 11px;
+      color: #374151;
+    }
+
+    .powered-by strong {
+      color: #C72030;
+      font-weight: 700;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: white;
+      }
+
+      .preview-toolbar {
+        display: none !important;
+      }
+
+      .content-wrapper {
+        margin-top: 0 !important;
+        padding: 0 !important;
+      }
+
+      .page-wrapper {
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 15mm !important;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Preview Toolbar -->
+  <div class="preview-toolbar no-print">
+    <div class="toolbar-title">
+      Job Sheet Preview - FMMatrix
+    </div>
+    <div class="toolbar-actions">
+      <button class="toolbar-button secondary" onclick="window.close()">Close</button>
+      <button class="toolbar-button" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <div class="page-wrapper">
+      <!-- Header -->
+      <div class="header">
+        <div class="left-logo">
+          <!-- FMMatrix Logo -->
+          <svg width="180" height="60" viewBox="0 0 180 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="180" height="60" rx="4" fill="url(#paint0_linear)"/>
+            <text x="90" y="38" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="white" text-anchor="middle" letter-spacing="1">
+              FM<tspan fill="#FFD700">Matrix</tspan>
+            </text>
+            <defs>
+              <linearGradient id="paint0_linear" x1="0" y1="0" x2="180" y2="60" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#C72030"/>
+                <stop offset="1" stop-color="#8B0000"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="header-title">Job Sheet</div>
+      </div>
+
+      <!-- Client Info -->
+      <div class="figma-client-info">
+        <table class="figma-info-table">
+          <tbody>
+            <tr>
+              <td class="figma-label-cell">Site Name:</td>
+              <td class="figma-value-cell">Demo Site Building A</td>
+              <td class="figma-label-cell">Job Code:</td>
+              <td class="figma-value-cell">JOB-2025-001</td>
+            </tr>
+            <tr>
+              <td class="figma-label-cell">Asset Name:</td>
+              <td class="figma-value-cell">HVAC Unit 01</td>
+              <td class="figma-label-cell">Asset No.:</td>
+              <td class="figma-value-cell">HVAC-001</td>
+            </tr>
+            <tr>
+              <td class="figma-label-cell">Group:</td>
+              <td class="figma-value-cell">HVAC Systems</td>
+              <td class="figma-label-cell">Sr. No.:</td>
+              <td class="figma-value-cell">12345</td>
+            </tr>
+            <tr>
+              <td class="figma-label-cell">Check In:</td>
+              <td class="figma-value-cell">09:00 AM</td>
+              <td class="figma-label-cell">Sub Group:</td>
+              <td class="figma-value-cell">Air Conditioning</td>
+            </tr>
+            <tr>
+              <td class="figma-label-cell">Assignee:</td>
+              <td class="figma-value-cell">John Technician</td>
+              <td class="figma-label-cell">Check Out:</td>
+              <td class="figma-value-cell">11:30 AM</td>
+            </tr>
+            <tr>
+              <td class="figma-label-cell">Verified By:</td>
+              <td class="figma-value-cell">Supervisor Smith</td>
+              <td class="figma-label-cell">Completed By:</td>
+              <td class="figma-value-cell">John Technician</td>
+            </tr>
+            <tr>
+              <td class="figma-label-cell">Verified On:</td>
+              <td class="figma-value-cell">19/11/2025</td>
+              <td class="figma-label-cell">Duration:</td>
+              <td class="figma-value-cell">2:30:00</td>
+            </tr>
+            <tr>
+              <td class="figma-label-cell">Schedule:</td>
+              <td class="figma-value-cell">19/11/2025 09:00 AM</td>
+              <td class="figma-label-cell">Status:</td>
+              <td class="figma-value-cell">Completed</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Location Details -->
+      <div class="figma-location-section">
+        <div class="figma-location-header">Location Details</div>
+        <table class="figma-location-table">
+          <thead>
+            <tr>
+              <th class="figma-location-th">Site</th>
+              <th class="figma-location-th">Building</th>
+              <th class="figma-location-th">Wing</th>
+              <th class="figma-location-th">Floor</th>
+              <th class="figma-location-th">Area</th>
+              <th class="figma-location-th">Room</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="figma-location-td">Main Campus</td>
+              <td class="figma-location-td">Building A</td>
+              <td class="figma-location-td">North Wing</td>
+              <td class="figma-location-td">3rd Floor</td>
+              <td class="figma-location-td">Technical Area</td>
+              <td class="figma-location-td">Room 301</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Before/After Images -->
+      <div class="figma-images-section">
+        <div class="figma-images-header">Pre-Post Inspection Info</div>
+        <table class="figma-images-table">
+          <thead>
+            <tr>
+              <th class="figma-image-header-cell">BEFORE</th>
+              <th class="figma-image-header-cell">AFTER</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="figma-image-cell">
+                <div class="figma-image-container">
+                  <div class="figma-no-image">No image available</div>
+                  <div class="figma-image-timestamp">19/11/2025, 09:00 AM</div>
+                </div>
+              </td>
+              <td class="figma-image-cell">
+                <div class="figma-image-container">
+                  <div class="figma-no-image">No image available</div>
+                  <div class="figma-image-timestamp">19/11/2025, 11:30 AM</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Checklist Section -->
+      <div class="figma-checklist-section">
+        <div class="figma-checklist-header">HVAC MAINTENANCE CHECKLIST</div>
+        
+        <!-- Section 1 -->
+        <div class="figma-section-wrapper">
+          <div class="figma-section-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h4 style="font-size: 14px; font-weight: 700; color: #1f2937; margin: 0 0 4px 0;">
+                  General Inspection
+                </h4>
+                <p style="font-size: 12px; color: #6b7280; margin: 0; font-style: italic;">
+                  Visual and operational checks
+                </p>
+              </div>
+              <div style="background: linear-gradient(135deg, rgba(199,32,48,0.15), rgba(199,32,48,0.25)); color: #C72030; padding: 6px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid rgba(199,32,48,0.3);">
+                Section 1
+              </div>
+            </div>
+          </div>
+          
+          <table class="figma-checklist-table">
+            <thead>
+              <tr class="figma-table-header-row">
+                <th class="figma-sl-header">SL<br>NO</th>
+                <th class="figma-inspection-header">INSPECTION POINT</th>
+                <th class="figma-result-header">RESULT</th>
+                <th class="figma-remarks-header">REMARKS</th>
+                <th class="figma-attachment-header">ATTACHMENTS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="figma-checklist-row">
+                <td class="figma-sl-cell">1</td>
+                <td class="figma-inspection-cell">Check air filter condition</td>
+                <td class="figma-result-cell">OK</td>
+                <td class="figma-remarks-cell">Filter clean, no replacement needed</td>
+                <td class="figma-attachment-cell">-</td>
+              </tr>
+              <tr class="figma-checklist-row">
+                <td class="figma-sl-cell">2</td>
+                <td class="figma-inspection-cell">Inspect condensate drain</td>
+                <td class="figma-result-cell">OK</td>
+                <td class="figma-remarks-cell">Drain clear and functioning</td>
+                <td class="figma-attachment-cell">-</td>
+              </tr>
+              <tr class="figma-checklist-row">
+                <td class="figma-sl-cell">3</td>
+                <td class="figma-inspection-cell">Check refrigerant levels</td>
+                <td class="figma-result-cell">OK</td>
+                <td class="figma-remarks-cell">Levels within normal range</td>
+                <td class="figma-attachment-cell">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 2 -->
+        <div class="figma-section-wrapper">
+          <div class="figma-section-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h4 style="font-size: 14px; font-weight: 700; color: #1f2937; margin: 0 0 4px 0;">
+                  Electrical Components
+                </h4>
+                <p style="font-size: 12px; color: #6b7280; margin: 0; font-style: italic;">
+                  Power and control systems
+                </p>
+              </div>
+              <div style="background: linear-gradient(135deg, rgba(199,32,48,0.15), rgba(199,32,48,0.25)); color: #C72030; padding: 6px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid rgba(199,32,48,0.3);">
+                Section 2
+              </div>
+            </div>
+          </div>
+          
+          <table class="figma-checklist-table">
+            <thead>
+              <tr class="figma-table-header-row">
+                <th class="figma-sl-header">SL<br>NO</th>
+                <th class="figma-inspection-header">INSPECTION POINT</th>
+                <th class="figma-result-header">RESULT</th>
+                <th class="figma-remarks-header">REMARKS</th>
+                <th class="figma-attachment-header">ATTACHMENTS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="figma-checklist-row">
+                <td class="figma-sl-cell">4</td>
+                <td class="figma-inspection-cell">Test electrical connections</td>
+                <td class="figma-result-cell">OK</td>
+                <td class="figma-remarks-cell">All connections secure</td>
+                <td class="figma-attachment-cell">-</td>
+              </tr>
+              <tr class="figma-checklist-row">
+                <td class="figma-sl-cell">5</td>
+                <td class="figma-inspection-cell">Check thermostat calibration</td>
+                <td class="figma-result-cell">OK</td>
+                <td class="figma-remarks-cell">Temperature accurate</td>
+                <td class="figma-attachment-cell">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 3: Additional Checks -->
+        <div class="figma-section-wrapper">
+          <div class="figma-section-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h4 style="font-size: 14px; font-weight: 700; color: #1f2937; margin: 0 0 4px 0;">
+                  Safety & Performance
+                </h4>
+                <p style="font-size: 12px; color: #6b7280; margin: 0; font-style: italic;">
+                  Final verification and safety checks
+                </p>
+              </div>
+              <div style="background: linear-gradient(135deg, rgba(199,32,48,0.15), rgba(199,32,48,0.25)); color: #C72030; padding: 6px 14px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid rgba(199,32,48,0.3);">
+                Section 3
+              </div>
+            </div>
+          </div>
+          
+          <table class="figma-checklist-table">
+            <thead>
+              <tr class="figma-table-header-row">
+                <th class="figma-sl-header">SL<br>NO</th>
+                <th class="figma-inspection-header">INSPECTION POINT</th>
+                <th class="figma-result-header">RESULT</th>
+                <th class="figma-remarks-header">REMARKS</th>
+                <th class="figma-attachment-header">ATTACHMENTS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="figma-checklist-row">
+                <td class="figma-sl-cell">6</td>
+                <td class="figma-inspection-cell">Verify safety controls functioning</td>
+                <td class="figma-result-cell">OK</td>
+                <td class="figma-remarks-cell">All safety mechanisms operational</td>
+                <td class="figma-attachment-cell">-</td>
+              </tr>
+              <tr class="figma-checklist-row">
+                <td class="figma-sl-cell">7</td>
+                <td class="figma-inspection-cell">Test emergency shutdown procedure</td>
+                <td class="figma-result-cell">OK</td>
+                <td class="figma-remarks-cell">Emergency stop working properly</td>
+                <td class="figma-attachment-cell">-</td>
+              </tr>
+              <tr class="figma-checklist-row">
+                <td class="figma-sl-cell">8</td>
+                <td class="figma-inspection-cell">Record final temperature readings</td>
+                <td class="figma-result-cell">22°C</td>
+                <td class="figma-remarks-cell">Within normal operating range</td>
+                <td class="figma-attachment-cell">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Status Section -->
+        <div class="figma-measurement-section">
+          <div class="figma-status-note">✓ Showing all 8 checklist items in 3 section(s)</div>
+          <div class="figma-status-note">✓ Completion: 8/8 items (100.0%)</div>
+          <div class="figma-status-note" style="color: #059669; margin-top: 8px;">
+            <strong>Status:</strong> All maintenance tasks completed successfully
+          </div>
+        </div>
+      </div>
+
+      <!-- Remarks Section -->
+      <div class="svg-remarks-section">
+        <div class="svg-remarks-container">
+          <div class="svg-remarks-label">Remarks</div>
+          <div class="svg-remarks-content">
+            Regular maintenance completed successfully. All systems functioning within normal parameters. No major issues detected. Recommended next service in 3 months.
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Section -->
+      <div class="bottom-section">
+        <div class="system-note">
+          <p><em>This is a system generated report and does not require any signature.</em></p>
+        </div>
+        
+        <div class="powered-by">
+          <p>Powered By <strong>FMMatrix</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Add keyboard shortcut for printing
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        window.print();
+      }
+    });
+  </script>
+</body>
+</html>

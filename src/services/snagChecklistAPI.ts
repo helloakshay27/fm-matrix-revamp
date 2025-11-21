@@ -22,6 +22,26 @@ export interface SnagChecklistQuestion {
   quest_map_id: number | null;
 }
 
+export interface SnagChecklistAttachment {
+  id: number;
+  file_name: string;
+  content_type: string;
+  file_size: number;
+  updated_at: string;
+  url: string;
+}
+
+export interface SnagChecklistTicketConfig {
+  category: string;
+  category_id: number;
+  assigned_to: string | null;
+  assigned_to_id: number;
+  tag_type: string | null;
+  active: boolean;
+  tag_created_at: string;
+  tag_updated_at: string;
+}
+
 export interface SnagChecklist {
   id: number;
   name: string;
@@ -40,6 +60,10 @@ export interface SnagChecklist {
   snag_audit_sub_category: string | null;
   questions_count: number;
   snag_questions: SnagChecklistQuestion[];
+  survey_attachment?: SnagChecklistAttachment | null;
+  ticket_configs?: SnagChecklistTicketConfig | null;
+  snag_attach_id?: number | null;
+  snag_attach?: unknown | null;
 }
 
 export interface SnagChecklistResponse {

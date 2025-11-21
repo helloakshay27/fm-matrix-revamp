@@ -218,7 +218,7 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
 
           <TextField
             select
-            label="Building*"
+            label="Building"
             value={buildingId || ''}
             onChange={(e) => setBuildingId(e.target.value ? Number(e.target.value) : null)}
             variant="outlined"
@@ -248,7 +248,7 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
 
           <TextField
             select
-            label="Wing*"
+            label="Wing"
             value={wingId || ''}
             onChange={(e) => setWingId(e.target.value ? Number(e.target.value) : null)}
             variant="outlined"
@@ -278,7 +278,7 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
 
           <TextField
             select
-            label="Area*"
+            label="Area"
             value={areaId || ''}
             onChange={(e) => setAreaId(e.target.value ? Number(e.target.value) : null)}
             variant="outlined"
@@ -308,7 +308,7 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
 
           <TextField
             select
-            label="Floor*"
+            label="Floor"
             value={floorId || ''}
             onChange={(e) => setFloorId(e.target.value ? Number(e.target.value) : null)}
             variant="outlined"
@@ -338,7 +338,7 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
 
           <TextField
             select
-            label="Room*"
+            label="Room"
             value={roomId || ''}
             onChange={(e) => setRoomId(e.target.value ? Number(e.target.value) : null)}
             variant="outlined"

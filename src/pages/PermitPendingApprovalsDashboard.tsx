@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye, Loader2 } from "lucide-react";
 
 interface PendingApproval {
+  permit_id?: number;
   resource_id: number;
   resource_type: string;
   created_at: string;
@@ -97,79 +99,137 @@ export const PermitPendingApprovalsDashboard = () => {
     navigate(`/safety/permit/details/${permitId}?${queryParams.toString()}`);
   };
 
+  // Define columns for EnhancedTable
+  const columns = [
+
+    {
+      key: 'view',
+      label: 'View',
+      sortable: false,
+      draggable: false,
+      defaultVisible: true
+    },
+    {
+      key: 'srNo',
+      label: 'Sr. No.',
+      sortable: false,
+      draggable: false,
+      defaultVisible: true
+    },
+    {
+      key: 'permit_type',
+      label: 'Permit Type',
+      sortable: true,
+      draggable: true,
+      defaultVisible: true
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      sortable: true,
+      draggable: true,
+      defaultVisible: true
+    },
+    {
+      key: 'permit_id',
+      label: 'Reference No',
+      sortable: true,
+      draggable: true,
+      defaultVisible: true
+    },
+    {
+      key: 'site_name',
+      label: 'Site Name',
+      sortable: true,
+      draggable: true,
+      defaultVisible: true
+    },
+    {
+      key: 'level_id',
+      label: 'Level ID',
+      sortable: true,
+      draggable: true,
+      defaultVisible: true
+    }
+  ];
+
+  // Render cell for EnhancedTable
+  const renderCell = (approval: PendingApproval, columnKey: string) => {
+    if (columnKey === 'srNo') {
+      // Find index in current sortedData for correct Sr. No.
+      const index = pendingApprovals.findIndex(a => a.resource_id === approval.resource_id);
+      return <span className="font-medium">{index + 1}</span>;
+    }
+    switch (columnKey) {
+      case 'view':
+        return (
+          // <Button
+          //   // variant="outline"
+          //   size="sm"
+          //   onClick={() => handleViewPermit(
+          //     approval.permit_id || 0,
+          //     approval.level_id || 0,
+          //     approval.resource_type || ''
+          //   )}
+          // >
+          //   <Eye className="h-4 w-4" />
+          // </Button>
+          <div className="flex items-center gap-2">
+            <div title="View permit details">
+              <Eye
+                className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewPermit(
+                    approval.permit_id || 0,
+                    approval.level_id || 0,
+                    approval.resource_type || ''
+                  );
+                }}
+              />
+            </div>
+          </div>
+        );
+      case 'permit_type':
+        return getPermitType(approval.resource_type);
+      case 'status':
+        return (
+          <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+            Pending
+          </span>
+        );
+      case 'permit_id':
+        return approval.permit_id;
+      case 'site_name':
+        return approval.site_name || '';
+      case 'level_id':
+        return approval.level_id || 'N/A';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="flex-1 p-6 bg-white min-h-screen">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Pending Approvals</h1>
       </div>
-
-      {/* Error Message */}
       {error && (
         <div className="mb-4 p-4 text-red-700 bg-red-50 border border-red-200 rounded-lg">
           {error}
         </div>
       )}
-
-      {/* Table */}
-      <div className="bg-white rounded-lg border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead>View</TableHead>
-              <TableHead>Permit Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Reference No</TableHead>
-              <TableHead>Site Name</TableHead>
-              <TableHead>Level ID</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  <div className="flex items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                    Loading pending approvals...
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : pendingApprovals.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  No pending approvals found
-                </TableCell>
-              </TableRow>
-            ) : (
-              pendingApprovals.map((approval) => (
-                <TableRow key={`${approval.resource_type}-${approval.resource_id}`}>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleViewPermit(
-                        approval.permit_id || 0,
-                        approval.level_id || 0,
-                        approval.resource_type || ''
-                      )}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell>{getPermitType(approval.resource_type)}</TableCell>
-                  <TableCell>
-                    <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                      Pending
-                    </span>
-                  </TableCell>
-                  <TableCell>{approval.permit_id}</TableCell>
-                  <TableCell>{approval.site_name}</TableCell>
-                  <TableCell>{approval.level_id || 'N/A'}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      <div className="bg-white rounded-lg ">
+        <EnhancedTable
+          data={pendingApprovals}
+          columns={columns}
+          renderCell={renderCell}
+          emptyMessage={loading ? 'Loading pending approvals...' : 'No pending approvals found'}
+          loading={loading}
+          pagination={true}
+          pageSize={15}
+          storageKey="pending-approvals-table"
+        />
       </div>
     </div>
   );

@@ -102,8 +102,8 @@ const transformFMUserData = (apiUser: FMUser): TransformedFMUser => ({
 });
 
 const columns: ColumnConfig[] = [
-  { key: "active", label: "Active", sortable: true, draggable: true },
   { key: "id", label: "ID", sortable: true, draggable: true },
+  { key: "active", label: "Active", sortable: true, draggable: true },
   { key: "userName", label: "User Name", sortable: true, draggable: true },
   { key: "gender", label: "Gender", sortable: true, draggable: true },
   { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
@@ -189,6 +189,7 @@ export const FMUserMasterDashboard = () => {
   });
 
   const [fmUsersData, setFmUsersData] = useState<TransformedFMUser[]>([]);
+  const [fmForClone, setFmForClone] = useState([])
   const [filteredFMUsersData, setFilteredFMUsersData] = useState<TransformedFMUser[]>([]);
   const [cloneLoading, setCloneLoading] = useState<boolean>(false);
   const [pagination, setPagination] = useState<PaginationState>({
@@ -216,9 +217,24 @@ export const FMUserMasterDashboard = () => {
     }
   };
 
+  const getShortFmUsers = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+
+      setFmForClone(response.data.users)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   useEffect(() => {
     if (baseUrl && token) {
       fetchUsers(1);
+      getShortFmUsers()
     }
   }, [baseUrl, token]);
 
@@ -739,39 +755,39 @@ export const FMUserMasterDashboard = () => {
         </h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
           title="Total Users"
           value={totalUsers}
-          icon={<Users className="w-6 h-6" />}
+          icon={<Users className="w-6 h-6 text-[#C72030]" />}
           onClick={() => fetchUsers(pagination.current_page)}
           className="cursor-pointer"
         />
         <StatsCard
           title="Approved Users"
           value={approvedUsers}
-          icon={<Users className="w-6 h-6" />}
+          icon={<Users className="w-6 h-6 text-[#C72030]" />}
           onClick={() => cardFilter({ status: "approved" })}
           className="cursor-pointer"
         />
         <StatsCard
           title="Pending Users"
           value={pendingUsers}
-          icon={<Users className="w-6 h-6" />}
+          icon={<Users className="w-6 h-6 text-[#C72030]" />}
           onClick={() => cardFilter({ status: "pending" })}
           className="cursor-pointer"
         />
         <StatsCard
           title="Rejected Users"
           value={rejectedUsers}
-          icon={<Users className="w-6 h-6" />}
+          icon={<Users className="w-6 h-6 text-[#C72030]" />}
           onClick={() => cardFilter({ status: "rejected" })}
           className="cursor-pointer"
         />
         <StatsCard
           title="App Downloaded"
           value={appDownloaded}
-          icon={<Download className="w-6 h-6" />}
+          icon={<Download className="w-6 h-6 text-[#C72030]" />}
           onClick={() => cardFilter({ downloaded: true })}
           className="cursor-pointer"
         />
@@ -986,10 +1002,10 @@ export const FMUserMasterDashboard = () => {
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                   >
-                    {fmUsersData.length > 0 ? (
-                      fmUsersData.map((user) => (
+                    {fmForClone.length > 0 ? (
+                      fmForClone.map((user) => (
                         <MenuItem key={user.id} value={user.id}>
-                          {user.userName}
+                          {user.full_name}
                         </MenuItem>
                       ))
                     ) : (
@@ -1010,10 +1026,10 @@ export const FMUserMasterDashboard = () => {
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                   >
-                    {fmUsersData.length > 0 ? (
-                      fmUsersData.map((user) => (
+                    {fmForClone.length > 0 ? (
+                      fmForClone.map((user) => (
                         <MenuItem key={user.id} value={user.id}>
-                          {user.userName}
+                          {user.full_name}
                         </MenuItem>
                       ))
                     ) : (
@@ -1036,10 +1052,10 @@ export const FMUserMasterDashboard = () => {
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                   >
-                    {fmUsersData.length > 0 ? (
-                      fmUsersData.map((user) => (
+                    {fmForClone.length > 0 ? (
+                      fmForClone.map((user) => (
                         <MenuItem key={user.id} value={user.id}>
-                          {user.userName}
+                          {user.full_name}
                         </MenuItem>
                       ))
                     ) : (
@@ -1060,10 +1076,10 @@ export const FMUserMasterDashboard = () => {
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                   >
-                    {fmUsersData.length > 0 ? (
-                      fmUsersData.map((user) => (
+                    {fmForClone.length > 0 ? (
+                      fmForClone.map((user) => (
                         <MenuItem key={user.id} value={user.id}>
-                          {user.userName}
+                          {user.full_name}
                         </MenuItem>
                       ))
                     ) : (

@@ -51,6 +51,8 @@ export const EditInventoryPage = () => {
   const [invSubTypeId, setInvSubTypeId] = useState<string>('');
   // Preserve the originally saved expiry date (YYYY-MM-DD) to enforce as minimum in edit
   const [initialExpiryYMD, setInitialExpiryYMD] = useState<string>('');
+  // Plants list for Plant Code dropdown
+  const [plants, setPlants] = useState<Array<{ id?: string | number; plant_name?: string }>>([]);
   // Main form data state (moved up so suggestion filtering can reference it)
   const [formData, setFormData] = useState({
     assetName: '',
@@ -69,7 +71,11 @@ export const EditInventoryPage = () => {
     sacHsnCode: '',
     sgstRate: '',
     cgstRate: '',
-    igstRate: ''
+    igstRate: '',
+    // New fields
+    plantCode: '',
+    categoryCode: '',
+    taxCategory: '',
   });
   // Today (YYYY-MM-DD) in LOCAL time to align with DatePicker disablePast and comparisons
   const todayISO = useMemo(() => {
@@ -83,6 +89,9 @@ export const EditInventoryPage = () => {
   const [errors, setErrors] = useState<{
     inventoryName?: string;
     inventoryCode?: string;
+    quantity?: string;
+    unit?: string;
+    category?: string;
     minStockLevel?: string;
     maxStockLevel?: string;
     expiryDate?: string;
@@ -135,6 +144,30 @@ export const EditInventoryPage = () => {
   // Fetch SAC/HSN codes on mount
   useEffect(() => {
     fetchSAC();
+  }, []);
+
+  // Fetch plants for Plant Code dropdown
+  useEffect(() => {
+    const loadPlants = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const url = `https://${baseUrl}/pms/purchase_orders/get_plant_detail?token=${encodeURIComponent(token)}`;
+        const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+        if (!res.ok) return;
+        const data = await res.json();
+        const arr: Array<{ id?: string | number; plant_name?: string }> = Array.isArray(data)
+          ? data
+          : Array.isArray((data as any)?.data)
+            ? (data as any).data
+            : Array.isArray((data as any)?.plants)
+              ? (data as any).plants
+              : [];
+        setPlants(arr);
+      } catch {/* ignore */}
+    };
+    loadPlants();
   }, []);
 
 
@@ -256,7 +289,11 @@ export const EditInventoryPage = () => {
         ),
         sgstRate: fetchedInventory.sgst_rate?.toString() || '',
         cgstRate: fetchedInventory.cgst_rate?.toString() || '',
-        igstRate: fetchedInventory.igst_rate?.toString() || ''
+        igstRate: fetchedInventory.igst_rate?.toString() || '',
+        // New fields hydrate
+        plantCode: (fetchedInventory as any)?.sap_plant_code || '',
+        categoryCode: (fetchedInventory as any)?.category_code || '',
+        taxCategory: (fetchedInventory as any)?.tax_category || '',
       });
 
       // Handle numeric values for radio buttons
@@ -400,12 +437,10 @@ export const EditInventoryPage = () => {
       setFormData(prev => ({ ...prev, expiryDate: val }));
       setErrors(prev => ({
         ...prev,
-        // In edit, the minimum allowed should be the originally saved expiry date.
-        // Fallback to today only if we don't have an original.
+        // In edit, the minimum allowed should be today; do not allow past dates
         expiryDate: (() => {
-          const minYMD = initialExpiryYMD || todayISO;
+          const minYMD = todayISO;
           if (val && minYMD && val < minYMD) {
-            // Show friendly dd-MM-yyyy for the min date
             const [y,m,d] = minYMD.split('-');
             return `Expiry Date cannot be earlier than ${d}-${m}-${y}.`;
           }
@@ -426,6 +461,18 @@ export const EditInventoryPage = () => {
       const msg = nextVal.trim() ? '' : 'Inventory Code is required.';
       setErrors(prev => ({ ...prev, inventoryCode: msg }));
     }
+    if (field === 'quantity') {
+      const isValidPositiveNumber = (val: string) => {
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= 0;
+      };
+      const msg = !nextVal
+        ? 'Quantity is required'
+        : !isValidPositiveNumber(nextVal)
+          ? 'Quantity must be a valid number'
+          : '';
+      setErrors(prev => ({ ...prev, quantity: msg }));
+    }
     // Min/Max Stock cross-field validation (Edit page)
     if (field === 'minStockLevel' || field === 'maxStockLevel') {
       const newMin = field === 'minStockLevel' ? nextVal : formData.minStockLevel;
@@ -438,7 +485,8 @@ export const EditInventoryPage = () => {
       if (!newMin.trim()) minErr = 'Min. Stock Level is required.';
       else if (!/^\d+$/.test(newMin)) minErr = 'Enter a valid number.';
 
-      if (newMax && !/^\d+$/.test(newMax)) maxErr = 'Max Stock Level must be a valid number';
+      if (!newMax.trim()) maxErr = 'Max. Stock Level is required.';
+      else if (!/^\d+$/.test(newMax)) maxErr = 'Max Stock Level must be a valid number';
 
       // Cross-field compare when both present and numeric
       if (/^\d+$/.test(newMin) && /^\d+$/.test(newMax)) {
@@ -453,7 +501,18 @@ export const EditInventoryPage = () => {
   };
 
   const handleSelectChange = (field: string) => (event: SelectChangeEvent<string>) => {
-    setFormData(prev => ({ ...prev, [field]: event.target.value }));
+    const value = event.target.value;
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Validate unit and category when changed
+    if (field === 'unit') {
+      const msg = !value ? 'Unit is required' : '';
+      setErrors(prev => ({ ...prev, unit: msg }));
+    }
+    if (field === 'category') {
+      const msg = !value ? 'Category is required' : '';
+      setErrors(prev => ({ ...prev, category: msg }));
+    }
   };
 
   // Validate full form for required fields
@@ -461,18 +520,31 @@ export const EditInventoryPage = () => {
     const newErrors: typeof errors = {};
     if (!formData.inventoryName.trim()) newErrors.inventoryName = 'Inventory Name is required.';
     if (!formData.inventoryCode.trim()) newErrors.inventoryCode = 'Inventory Code is required.';
+    if (!formData.quantity) {
+      newErrors.quantity = 'Quantity is required';
+    } else {
+      const qtyNum = parseFloat(formData.quantity);
+      if (isNaN(qtyNum) || qtyNum < 0) {
+        newErrors.quantity = 'Quantity must be a valid number';
+      }
+    }
+    if (!formData.unit) newErrors.unit = 'Unit is required';
+    if (!formData.category) newErrors.category = 'Category is required';
     if (!formData.minStockLevel.trim()) newErrors.minStockLevel = 'Min. Stock Level is required.';
     else if (!/^\d+$/.test(formData.minStockLevel)) newErrors.minStockLevel = 'Enter a valid number.';
-    if (formData.maxStockLevel && !/^\d+$/.test(formData.maxStockLevel)) newErrors.maxStockLevel = 'Max Stock Level must be a valid number';
-    // Cross-field: Min <= Max when both provided
+    if (!formData.maxStockLevel.trim()) newErrors.maxStockLevel = 'Max. Stock Level is required.';
+    else if (!/^\d+$/.test(formData.maxStockLevel)) newErrors.maxStockLevel = 'Max Stock Level must be a valid number';
+    // Cross-field: Min <= Max when both provided and valid
     if (/^\d+$/.test(formData.minStockLevel) && /^\d+$/.test(formData.maxStockLevel)) {
-      if (parseInt(formData.minStockLevel, 10) > parseInt(formData.maxStockLevel, 10)) {
+      const minStock = parseInt(formData.minStockLevel, 10);
+      const maxStock = parseInt(formData.maxStockLevel, 10);
+      if (minStock > maxStock) {
         newErrors.minStockLevel = 'Min Stock Level cannot be greater than Max Stock Level';
         newErrors.maxStockLevel = 'Max Stock Level cannot be less than Min Stock Level';
       }
     }
     if (formData.expiryDate) {
-      const minYMD = initialExpiryYMD || todayISO;
+      const minYMD = todayISO;
       if (formData.expiryDate < minYMD) {
         const [y,m,d] = minYMD.split('-');
         newErrors.expiryDate = `Expiry Date cannot be earlier than ${d}-${m}-${y}.`;
@@ -528,8 +600,12 @@ export const EditInventoryPage = () => {
       criticality: criticalityValue,
       expiry_date: formatExpiryDate(formData.expiryDate),
       unit: formData.unit || "",
+      category: formData.category || "",
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      // New fields in payload
+      sap_plant_code: formData.plantCode || null,
+      category_code: formData.categoryCode || null,
     };
 
     if (taxApplicable) {
@@ -538,6 +614,7 @@ export const EditInventoryPage = () => {
       inventoryData.cgst_rate = formData.cgstRate ? parseFloat(formData.cgstRate) : 0;
       inventoryData.igst_rate = formData.igstRate ? parseFloat(formData.igstRate) : 0;
       inventoryData.tax_applicable = 1;
+      inventoryData.tax_category = formData.taxCategory || null;
     } else {
       inventoryData.tax_applicable = 0;
     }
@@ -811,7 +888,7 @@ export const EditInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label="Quantity"
+                    label={<>Quantity<span className="text-red-500">*</span></>}
                     placeholder="Qty"
                     value={formData.quantity}
                     onChange={(e) => handleInputChange('quantity', e.target.value.replace(/[^0-9.]/g, ''))}
@@ -831,13 +908,17 @@ export const EditInventoryPage = () => {
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
+                    error={!!errors.quantity}
+                    helperText={errors.quantity}
                     sx={fieldStyles}
                   />
                 </div>
+
+           
               </div>
 
               {/* Form Grid - Second Row */}
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <div>
                   <TextField
                     label="Cost"
@@ -871,8 +952,36 @@ export const EditInventoryPage = () => {
                 </div>
 
                 <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Select Unit</InputLabel>
+                  <TextField
+                    label="Total Value"
+                    placeholder="Total Value"
+                    value={(() => {
+                      const qty = parseFloat(formData.quantity) || 0;
+                      const cost = parseFloat(formData.cost) || 0;
+                      const total = qty * cost;
+                      return total > 0 ? total.toFixed(2) : '';
+                    })()}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={{
+                      ...fieldStyles,
+                      '& .MuiOutlinedInput-root': {
+                        ...fieldStyles['& .MuiOutlinedInput-root'],
+                        backgroundColor: '#F5F5F5',
+                      },
+                      '& .MuiInputBase-input': {
+                        ...fieldStyles['& .MuiInputBase-input'],
+                        cursor: 'not-allowed',
+                      },
+                    }}
+                    disabled
+                  />
+                </div>
+
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.unit}>
+                    <InputLabel shrink>Select Unit<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={formData.unit}
                       onChange={handleSelectChange('unit')}
@@ -912,6 +1021,9 @@ export const EditInventoryPage = () => {
                       <MenuItem value="Brass">Brass</MenuItem>
                       <MenuItem value="Tonnes">Tonnes</MenuItem>
                     </MuiSelect>
+                    {errors.unit && (
+                      <p className="text-red-500 text-sm mt-1">{errors.unit}</p>
+                    )}
                   </FormControl>
                 </div>
 
@@ -924,8 +1036,8 @@ export const EditInventoryPage = () => {
                         const ymd = formatDateToYMD(date as Date | null);
                         handleInputChange("expiryDate", ymd);
                       }}
-                      // In edit mode, allow any date on/after the originally saved expiry date
-                      minDate={parseYMDToDate(initialExpiryYMD) || undefined}
+                      // Allow any date on/after today only
+                      minDate={parseYMDToDate(todayISO) || undefined}
                       format='dd-MM-yyyy'
                       slotProps={{
                         textField: {
@@ -951,32 +1063,9 @@ export const EditInventoryPage = () => {
 
                 </div>
 
-                {/* Inventory Type moved here before Select Category */}
                 <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Inventory Type</InputLabel>
-                    <MuiSelect
-                      value={invTypeId}
-                      onChange={(e) => {
-                        setInvTypeId(e.target.value as string);
-                      }}
-                      label="Inventory Type"
-                      notched
-                      displayEmpty
-                    >
-                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
-                      {invTypeOptions.map((opt) => (
-                        <MenuItem key={opt.id} value={String(opt.id)}>
-                          {opt.name || opt.title || opt.label || String(opt.id)}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Select Category</InputLabel>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.category}>
+                    <InputLabel shrink>Select Category<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={formData.category}
                       onChange={handleSelectChange('category')}
@@ -993,7 +1082,46 @@ export const EditInventoryPage = () => {
                       <MenuItem value="Stationary">Stationary</MenuItem>
                       <MenuItem value="Pantry">Pantry</MenuItem>
                     </MuiSelect>
+                    {errors.category && (
+                      <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+                    )}
                   </FormControl>
+                </div>
+
+
+                     {/* Plant Code dropdown */}
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
+                    <InputLabel shrink>Plant Code</InputLabel>
+                    <MuiSelect
+                      value={formData.plantCode}
+                      onChange={handleSelectChange('plantCode')}
+                      label="Plant Code"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Plant</MenuItem>
+                      {plants.map((p, idx) => (
+                        <MenuItem key={p.id ?? idx} value={(p as any)?.plant_name || ''}>
+                          {(p as any)?.plant_name || 'Unnamed Plant'}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+
+                {/* Category Code input */}
+                <div>
+                  <TextField
+                    label="Category Code"
+                    placeholder="Enter Category Code"
+                    value={formData.categoryCode}
+                    onChange={(e) => handleInputChange('categoryCode', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                  />
                 </div>
 
                 <div>
@@ -1028,7 +1156,7 @@ export const EditInventoryPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <TextField
-                    label="Max.Stock Level"
+                    label={<>Max.Stock Level<span style={{ color: '#C72030' }}>*</span></>}
                     placeholder="Max Stock"
                     value={formData.maxStockLevel}
                     onChange={(e) => handleInputChange('maxStockLevel', e.target.value.replace(/\D/g, ''))}
@@ -1121,6 +1249,20 @@ export const EditInventoryPage = () => {
                         ))}
                       </MuiSelect>
                     </FormControl>
+                  </div>
+
+                  {/* Tax Category input */}
+                  <div>
+                    <TextField
+                      label="Tax Category"
+                      placeholder="Enter Tax Category"
+                      value={formData.taxCategory}
+                      onChange={(e) => handleInputChange('taxCategory', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
                   </div>
 
                   <div>

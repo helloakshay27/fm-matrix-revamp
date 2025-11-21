@@ -130,23 +130,7 @@ export const MoveAssetPage: React.FC = () => {
       return;
     }
 
-    if (!buildingId) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a building.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (allocateTo && !allocatedToId) {
-      toast({
-        title: "Validation Error",
-        description: `Please select a ${allocateTo} for allocation.`,
-        variant: "destructive",
-      });
-      return;
-    }
+    // Building, department/user allocation, and other location fields are optional
 
     const assets = selectedAssets.map((asset) => ({
       id: asset.id,

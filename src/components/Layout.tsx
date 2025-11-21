@@ -13,6 +13,8 @@ import ViDynamicHeader from "./ViDynamicHeader";
 import { StaticDynamicHeader } from "./StaticDynamicHeader";
 import { StacticSidebar } from "./StacticSidebar";
 import ViSidebarWithToken from "./ViSidebarWithToken";
+import { ZxSidebar } from "./ZxSidebar";
+import { ZxDynamicHeader } from "./ZxDynamicHeader";
 import { saveToken, saveUser, saveBaseUrl } from "../utils/auth";
 
 interface LayoutProps {
@@ -25,7 +27,94 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
 
   // Handle token-based authentication from URL parameters
-  useEffect(() => {
+
+  // Get current domain for backward compatibility
+  const hostname = window.location.hostname;
+  const isOmanSite = hostname.includes("oig.gophygital.work");
+  const isViSite = hostname.includes("vi-web.gophygital.work") || hostname.includes("localhost:5174");
+
+  // Get layout configuration based on company ID
+  const layoutConfig = getLayoutByCompanyId(
+    selectedCompany?.id === 199 ? selectedCompany.id : null
+  );
+
+  // Layout behavior:
+  // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
+  // - Company ID 199 (Customer Support): Default layout (Sidebar + DynamicHeader)
+  // - Other companies (193, 204): Static layout (Sidebar + StaticDynamicHeader)
+  // - No company selected: Static layout (fallback)
+
+  // Render sidebar component based on configuration
+  const renderSidebar = () => {
+    // Check for token-based VI access first
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasTokenParam = urlParams.has("access_token");
+    const storedToken = localStorage.getItem("token");
+    const hasToken = hasTokenParam || storedToken;
+    
+    // Domain-based logic takes precedence for backward compatibility
+    if (isOmanSite) {
+      return <OmanSidebar />;
+    }
+
+    // Check for VI site with token parameter or stored token
+    if (isViSite && hasToken) {
+      return <ViSidebarWithToken />;
+    }
+    
+    if (isViSite) {
+      return <ViSidebar />;
+    }
+
+    // Company-specific logic
+    if (selectedCompany?.id === 189) {
+      return <ZxSidebar />;
+    }
+
+    // Use company ID-based layout
+    switch (layoutConfig.sidebarComponent) {
+      case "oman":
+        return <OmanSidebar />;
+      case "vi":
+        return <ViSidebar />;
+      case "static":
+        return <StacticSidebar />;
+      case "default":
+      default:
+        return <Sidebar />;
+    }
+  };
+
+  // Render header component based on configuration
+  const renderDynamicHeader = () => {
+    // Domain-based logic takes precedence for backward compatibility
+    if (isOmanSite) {
+      return <OmanDynamicHeader />;
+    }
+    if (isViSite) {
+      return <ViDynamicHeader />;
+    }
+
+    // Company-specific logic
+    if (selectedCompany?.id === 189) {
+      return <ZxDynamicHeader />;
+    }
+
+    // Use company ID-based layout
+    switch (layoutConfig.headerComponent) {
+      case "oman":
+        return <OmanDynamicHeader />;
+      case "vi":
+        return <ViDynamicHeader />;
+      case "static":
+        return <StaticDynamicHeader />;
+      case "default":
+      default:
+        return <DynamicHeader />;
+    }
+  };
+
+    useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const access_token = urlParams.get("access_token");
     const company_id = urlParams.get("company_id");
@@ -77,81 +166,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   }, [location.search]);
 
-  // Get current domain for backward compatibility
-  const hostname = window.location.hostname;
-  const isOmanSite = hostname.includes("oig.gophygital.work");
-  const isViSite = hostname.includes("vi-web.gophygital.work") || hostname.includes("localhost:5174");
-
-  // Get layout configuration based on company ID
-  const layoutConfig = getLayoutByCompanyId(
-    selectedCompany?.id === 199 ? selectedCompany.id : null
-  );
-
-  // Layout behavior:
-  // - Company ID 111 (Lockated HO): Default layout (Sidebar + DynamicHeader)
-  // - Company ID 199 (Customer Support): Default layout (Sidebar + DynamicHeader)
-  // - Other companies (193, 204): Static layout (Sidebar + StaticDynamicHeader)
-  // - No company selected: Static layout (fallback)
-
-  // Render sidebar component based on configuration
-  const renderSidebar = () => {
-    // Check for token-based VI access first
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasTokenParam = urlParams.has("access_token");
-    const storedToken = localStorage.getItem("token");
-    const hasToken = hasTokenParam || storedToken;
-    
-    // Domain-based logic takes precedence for backward compatibility
-    if (isOmanSite) {
-      return <OmanSidebar />;
-    }
-
-    // Check for VI site with token parameter or stored token
-    if (isViSite && hasToken) {
-      return <ViSidebarWithToken />;
-    }
-    
-    if (isViSite) {
-      return <ViSidebar />;
-    }
-
-    // Use company ID-based layout
-    switch (layoutConfig.sidebarComponent) {
-      case "oman":
-        return <OmanSidebar />;
-      case "vi":
-        return <ViSidebar />;
-      case "static":
-        return <StacticSidebar />;
-      case "default":
-      default:
-        return <Sidebar />;
-    }
-  };
-
-  // Render header component based on configuration
-  const renderDynamicHeader = () => {
-    // Domain-based logic takes precedence for backward compatibility
-    if (isOmanSite) {
-      return <OmanDynamicHeader />;
-    }
-    if (isViSite) {
-      return <ViDynamicHeader />;
-    }
-
-    // Use company ID-based layout
-    switch (layoutConfig.headerComponent) {
-      case "oman":
-        return <OmanDynamicHeader />;
-      case "vi":
-        return <ViDynamicHeader />;
-      case "static":
-        return <StaticDynamicHeader />;
-      case "default":
-      default:
-        return <DynamicHeader />;
-    }
-  };
 
   return (
     <div

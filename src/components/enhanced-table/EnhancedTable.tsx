@@ -840,6 +840,12 @@ interface EnhancedTableProps<T> {
   handleExport?: (columnVisibility?: Record<string, boolean>) => void;
   enableGlobalSearch?: boolean; // Add this prop
   onGlobalSearch?: (searchTerm: string) => void; // Add this prop
+  // Custom search input props
+  customSearchInput?: React.ReactNode;
+  searchValue?: string;
+  searchStatus?: string;
+  disableClientSearch?: boolean;
+  loadingMessage?: string;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -878,13 +884,19 @@ export function EnhancedTable<T extends Record<string, any>>({
   leftActions,
   rightActions,
   onFilterClick,
-  enableGlobalSearch = false,
-  onGlobalSearch,
   canAddRow = false,
   onAddRow,
   renderEditableCell,
   newRowPlaceholder = "Click to add new record",
   readonlyColumns = [],
+  enableGlobalSearch = false, // Add this
+  onGlobalSearch, // Add this
+  // Custom search input props
+  customSearchInput,
+  searchValue,
+  searchStatus,
+  disableClientSearch = false,
+  loadingMessage = "Loading...",
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -1046,23 +1058,30 @@ export function EnhancedTable<T extends Record<string, any>>({
     }
   };
 
-  const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
+  // Use external search value if provided (for custom search input)
+  const effectiveSearchValue = searchValue !== undefined ? searchValue : searchInput;
+  const effectiveSearchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
   // Use API search results or filter data based on search term
   const filteredData = useMemo(() => {
+    // If client search is disabled, don't filter - return original data
+    if (disableClientSearch) {
+      return baseSortedData;
+    }
+
     // If we have API search results, use them instead of filtering original data
     if (apiSearchResults) {
       return apiSearchResults;
     }
 
-    if (!searchTerm) return baseSortedData;
+    if (!effectiveSearchTerm) return baseSortedData;
 
     return baseSortedData.filter(item =>
       Object.values(item).some(value =>
-        String(value).toLowerCase().includes(searchTerm.toLowerCase())
+        String(value).toLowerCase().includes(effectiveSearchTerm.toLowerCase())
       )
     );
-  }, [baseSortedData, searchTerm, apiSearchResults]);
+  }, [baseSortedData, effectiveSearchTerm, apiSearchResults, disableClientSearch]);
 
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
@@ -1149,6 +1168,41 @@ export function EnhancedTable<T extends Record<string, any>>({
     if (enableGlobalSearch && onGlobalSearch) {
       onGlobalSearch('');
     }
+  };
+
+  // Custom search input render function
+  const renderCustomSearchInput = () => {
+    if (customSearchInput) {
+      return customSearchInput;
+    }
+
+    // Default search input
+    return (
+      <div className="relative max-w-sm">
+        {isSearching && (
+          <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
+        )}
+        {!isSearching && (
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        )}
+        <Input
+          placeholder={enableGlobalSearch ? `${searchPlaceholder}` : searchPlaceholder}
+          value={effectiveSearchValue}
+          onChange={(e) => handleSearchInputChange(e.target.value)}
+          className="pl-10 pr-10"
+          disabled={isSearching}
+        />
+        {effectiveSearchValue && (
+          <button
+            onClick={handleClearSearch}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            disabled={isSearching}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    );
   };
 
   const selectedItemObjects = useMemo(() => {
@@ -1264,30 +1318,34 @@ export function EnhancedTable<T extends Record<string, any>>({
           {rightActions}
 
           {!hideTableSearch && (onSearchChange || !externalSearchTerm || enableGlobalSearch) && (
-            <div className="relative max-w-sm">
-              {isSearching && (
-                <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
-              )}
-              {!isSearching && (
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              )}
-              <Input
-                placeholder={enableGlobalSearch ? `${searchPlaceholder}` : searchPlaceholder}
-                value={searchInput}
-                onChange={(e) => handleSearchInputChange(e.target.value)}
-                className="pl-10 pr-10"
-                disabled={isSearching}
-              />
-              {searchInput && (
-                <button
-                  onClick={handleClearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            customSearchInput ? (
+              <div className="relative max-w-sm">
+                {isSearching && (
+                  <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
+                )}
+                {!isSearching && (
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                )}
+                <Input
+                  placeholder={searchPlaceholder}
+                  value={effectiveSearchValue}
+                  onChange={(e) => handleSearchInputChange(e.target.value)}
+                  className="pl-10 pr-10"
                   disabled={isSearching}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+                />
+                {effectiveSearchValue && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    disabled={isSearching}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              renderCustomSearchInput()
+            )
           )}
 
           {onFilterClick && (
@@ -1332,12 +1390,16 @@ export function EnhancedTable<T extends Record<string, any>>({
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <Table className={cn(className, "w-full min-w-max")}>
+            <Table className={cn(className, "w-full min-w-max enhancedTable")}>
               <TableHeader className="sticky-header">
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                     {renderActions && (
-                      <TableHead className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0" data-actions>Actions</TableHead>
+                      <TableHead className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0" data-actions>
+                        <div className="flex justify-center items-center text-center">
+                          Actions
+                        </div>
+                      </TableHead>
                     )}
                     {selectable && (
                       <TableHead className="bg-[#f6f4ee] w-12 min-w-12 text-center sticky top-0" data-checkbox>
@@ -1359,7 +1421,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => column.sortable !== false && handleSort(column.key)} // Only call handleSort if sortable
-                        className="bg-[#f6f4ee] text-center text-black min-w-32 sticky top-0"
+                        className="bg-[#f6f4ee] text-left text-black min-w-32 sticky top-0"
                       >
                         {column.label}
                       </SortableColumnHeader>
@@ -1452,7 +1514,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                     >
                       <div className="flex items-center justify-center">
                         <Loader2 className="h-8 w-8 animate-spin" />
-                        <span className="ml-2">Loading...</span>
+                        <span className="ml-2">{loadingMessage}</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1502,7 +1564,9 @@ export function EnhancedTable<T extends Record<string, any>>({
                     >
                       {renderActions && (
                         <TableCell className="p-4 text-center w-16 min-w-16" data-actions>
-                          {renderActions(item)}
+                          <div className="flex justify-center items-center gap-2">
+                            {renderActions(item)}
+                          </div>
                         </TableCell>
                       )}
                       {selectable && (
@@ -1521,7 +1585,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="p-4 text-center min-w-32">
+                          <TableCell key={column.key} className="p-4 text-left min-w-32">
                             {cellContent}
                           </TableCell>
                         );

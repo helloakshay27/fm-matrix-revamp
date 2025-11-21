@@ -17,6 +17,12 @@ import {
   FileSpreadsheet,
   File,
   Eye,
+  AlertTriangle,
+  Contact,
+  ScrollText,
+  ClipboardList,
+  Images,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -32,6 +38,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   FormControl,
   InputLabel,
@@ -43,6 +50,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { fetchWBS } from "@/store/slices/materialPRSlice";
+import { approveDeletionRequest } from "@/store/slices/pendingApprovalSlice";
 
 // Interfaces
 interface Company {
@@ -92,6 +100,7 @@ interface WorkOrder {
   wo_status?: string;
   term_condition?: string;
   all_level_approved?: boolean;
+  active?: boolean;
 }
 
 interface ServiceItem {
@@ -197,8 +206,10 @@ export const ServicePRDetailsPage = () => {
   const searchParams = new URLSearchParams(location.search);
   const levelId = searchParams.get("level_id");
   const userId = searchParams.get("user_id");
+  const requestId = searchParams.get("request_id");
   const shouldShowButtons = Boolean(levelId && userId);
 
+  const [isDeletionRequest, setIsDeletionRequest] = useState(false)
   const [servicePR, setServicePR] = useState<ServicePR>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
@@ -208,6 +219,8 @@ export const ServicePRDetailsPage = () => {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [showEditWbsModal, setShowEditWbsModal] = useState(false);
   const [wbsCodes, setWbsCodes] = useState([]);
+  const [openDeletionModal, setOpenDeletionModal] = useState(false)
+  const [printing, setPrinting] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
   }>({});
@@ -215,6 +228,12 @@ export const ServicePRDetailsPage = () => {
     showSap: false,
     editWbsCode: false,
   });
+
+  useEffect(() => {
+    if (searchParams.get("type") === "delete-request") {
+      setIsDeletionRequest(true)
+    }
+  }, [])
 
   // Fetch service PR data
   useEffect(() => {
@@ -326,7 +345,7 @@ export const ServicePRDetailsPage = () => {
       toast.error("Missing required configuration");
       return;
     }
-
+    setPrinting(true)
     try {
       const response = await axios.get(
         `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
@@ -347,6 +366,8 @@ export const ServicePRDetailsPage = () => {
       URL.revokeObjectURL(downloadUrl);
     } catch (error: any) {
       toast.error(error.message || "Failed to download PDF");
+    } finally {
+      setPrinting(false)
     }
   }, [id]);
 
@@ -372,31 +393,67 @@ export const ServicePRDetailsPage = () => {
     }
   }, [id]);
 
-  // Handle approve
-  const handleApprove = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
-    if (!baseUrl || !token || !id || !levelId || !userId) {
-      toast.error("Missing required configuration");
-      return;
-    }
-
+  const handleApproveDeletionRequest = async () => {
     const payload = {
       level_id: Number(levelId),
       user_id: Number(userId),
       approve: true,
-    };
-
-    try {
-      await dispatch(
-        approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
-      ).unwrap();
-      toast.success("Work Order approved successfully");
-      navigate(`/finance/pending-approvals`);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to approve Work Order");
+      redirect: false
     }
-  }, [dispatch, id, levelId, userId, navigate]);
+    try {
+      await dispatch(approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })).unwrap();
+      toast.success("Deletion request approved successfully");
+      navigate(-1);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const handleRejectDeletionRequest = async () => {
+    const payload = {
+      level_id: Number(levelId),
+      user_id: Number(userId),
+      approve: false,
+      redirect: false,
+      rejection_reason: rejectComment
+    }
+    try {
+      await dispatch(approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })).unwrap();
+      toast.success("Deletion request rejected successfully");
+      navigate(-1);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+
+  // Handle approve
+  const handleApprove = async () => {
+    if (isDeletionRequest) {
+      await handleApproveDeletionRequest();
+    } else {
+      if (!baseUrl || !token || !id || !levelId || !userId) {
+        toast.error("Missing required configuration");
+        return;
+      }
+
+      const payload = {
+        level_id: Number(levelId),
+        user_id: Number(userId),
+        approve: true,
+      };
+
+      try {
+        await dispatch(
+          approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+        ).unwrap();
+        toast.success("Work Order approved successfully");
+        navigate(`/finance/pending-approvals`);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to approve Work Order");
+      }
+    }
+  };
 
   // Handle reject
   const handleRejectConfirm = useCallback(async () => {
@@ -405,33 +462,58 @@ export const ServicePRDetailsPage = () => {
       return;
     }
 
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
-    if (!baseUrl || !token || !id || !levelId || !userId) {
-      toast.error("Missing required configuration");
-      return;
-    }
+    if (isDeletionRequest) {
+      await handleRejectDeletionRequest();
+    } else {
+      if (!baseUrl || !token || !id || !levelId || !userId) {
+        toast.error("Missing required configuration");
+        return;
+      }
 
-    const payload = {
-      level_id: Number(levelId),
-      user_id: Number(userId),
-      approve: false,
-      rejection_reason: rejectComment,
-    };
+      const payload = {
+        level_id: Number(levelId),
+        user_id: Number(userId),
+        approve: false,
+        rejection_reason: rejectComment,
+      };
 
-    try {
-      await dispatch(
-        approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
-      ).unwrap();
-      toast.success("Work Order rejected successfully");
-      navigate(`/finance/pending-approvals`);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to reject Work Order");
-    } finally {
-      setOpenRejectDialog(false);
-      setRejectComment("");
+      try {
+        await dispatch(
+          approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+        ).unwrap();
+        toast.success("Work Order rejected successfully");
+        navigate(`/finance/pending-approvals`);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to reject Work Order");
+      } finally {
+        setOpenRejectDialog(false);
+        setRejectComment("");
+      }
     }
   }, [dispatch, id, levelId, userId, rejectComment, navigate]);
+
+  const handleDelete = async () => {
+    const payload = {
+      deletion_request: {
+        resource_id: id,
+        resource_type: "Pms::WorkOrder",
+        approve: false
+      }
+    }
+    try {
+      await axios.post(`https://${baseUrl}/deletion_requests.json`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      toast.success("Deletion request raised successfully")
+      setOpenDeletionModal(false)
+    } catch (error) {
+      console.log(error)
+      toast.error(error.response.data.error)
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -502,68 +584,120 @@ export const ServicePRDetailsPage = () => {
       <div className="flex items-end justify-between">
         <h1 className="text-2xl font-semibold">Service PR Details</h1>
         <div className="flex items-center gap-2">
-          {buttonCondition.showSap && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={handleSendToSap}
-            >
-              Send To SAP Team
-            </Button>
-          )}
-          {
-            servicePR?.all_level_approved === null &&
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300"
-              onClick={() => navigate(`/finance/service-pr/edit/${id}`)}
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </Button>
-          }
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-            onClick={() => navigate(`/finance/service-pr/add?clone=${id}`)}
-          >
-            <Copy className="w-4 h-4 mr-1" />
-            Clone
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-            onClick={handlePrint}
-          >
-            <Printer className="w-4 h-4 mr-1" />
-            Print
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-gray-300"
-            onClick={() => navigate(`/finance/service-pr/feeds/${id}`)}
-          >
-            <Rss className="w-4 h-4 mr-1" />
-            Feeds
-          </Button>
-          {
-            buttonCondition.editWbsCode && (
+          {!servicePR?.work_order?.active ? (
+            <>
               <Button
                 size="sm"
                 variant="outline"
-                className="border-gray-300 btn-primary"
-                onClick={() => setShowEditWbsModal(true)}
+                className="border-gray-300 !bg-[#C72030] !text-white cursor-default"
               >
-                Edit WBS Codes
+                Deleted
               </Button>
-            )
-          }
+              <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
+                {
+                  printing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Print
+                    </>
+                  ) : (
+                    <>
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print
+                    </>
+                  )
+                }
+              </Button>
+            </>
+          ) : (
+            <>
+              {buttonCondition.showSap && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                  onClick={handleSendToSap}
+                >
+                  Send To SAP Team
+                </Button>
+              )}
+
+              {servicePR?.all_level_approved === null && !shouldShowButtons && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300"
+                  onClick={() => navigate(`/finance/service-pr/edit/${id}`)}
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
+              )}
+
+              {!shouldShowButtons && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                    onClick={() => navigate(`/finance/service-pr/add?clone=${id}`)}
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    Clone
+                  </Button>
+
+                  <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
+                    {
+                      printing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Print
+                        </>
+                      ) : (
+                        <>
+                          <Printer className="w-4 h-4 mr-2" />
+                          Print
+                        </>
+                      )
+                    }
+                  </Button>
+                </>
+              )}
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300"
+                onClick={() => navigate(`/finance/service-pr/feeds/${id}`)}
+              >
+                <Rss className="w-4 h-4 mr-1" />
+                Feeds
+              </Button>
+
+              {servicePR?.all_level_approved && !shouldShowButtons && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-300 btn-primary"
+                    onClick={() => setShowEditWbsModal(true)}
+                  >
+                    Edit WBS Codes
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-300 btn-primary"
+                    onClick={() => setOpenDeletionModal(true)}
+                  >
+                    Raise Deletion Request
+                  </Button>
+                </>
+              )}
+            </>
+          )}
         </div>
+
       </div>
 
       <TooltipProvider>
@@ -612,233 +746,229 @@ export const ServicePRDetailsPage = () => {
 
       <div className="space-y-6">
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium text-center">
-              {servicePR.company?.site_name || "Company Details"}
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <Contact className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">{servicePR.company?.site_name || "Company Details"}</h3>
+          </div>
           <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Phone</span>
-                  <span className="font-medium">
-                    : {servicePR.company?.phone ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Email</span>
-                  <span className="font-medium">
-                    : {servicePR.company?.email ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">PAN</span>
-                  <span className="font-medium">
-                    : {servicePR.company?.pan ?? "-"}
-                  </span>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Phone</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.company?.phone ?? "-"}
+                </span>
               </div>
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Fax</span>
-                  <span className="font-medium">
-                    : {servicePR.company?.fax ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">GST</span>
-                  <span className="font-medium">
-                    : {servicePR.company?.gst ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Address</span>
-                  <span className="font-medium">
-                    : {servicePR.company?.address ?? "-"}
-                  </span>
-                </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Fax</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.company?.fax ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Email</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.company?.email ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">GST</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.company?.gst ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">PAN</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.company?.pan ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Address</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.company?.address ?? "-"}
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium text-center">
-              Service Purchase Request ({servicePR.work_order?.wo_status || "-"})
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ScrollText className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Service Purchase Request</h3>
+          </div>
           <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">SPR Number</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.number ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">SPR Date</span>
-                  <span className="font-medium">
-                    :{" "}
-                    {servicePR.work_order?.wo_date
-                      ? format(
-                        new Date(servicePR.work_order.wo_date),
-                        "dd-MM-yyyy"
-                      )
-                      : "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">
-                    Kind Attention
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.kind_attention ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Subject</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.subject ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Related To</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.related_to ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">
-                    Payment Tenure(In Days)
-                  </span>
-                  <span className="font-medium">
-                    :{" "}
-                    {servicePR.work_order?.payment_terms?.payment_tenure ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">
-                    Retention(%)
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.payment_terms?.retention ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">TDS(%)</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.payment_terms?.tds ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">QC(%)</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.payment_terms?.qc ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">
-                    Advance Amount
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.advance_amount ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">
-                    Description
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.description ?? "-"}
-                  </span>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">SPR Number</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.number ?? "-"}
+                </span>
               </div>
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">
-                    Reference No.
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.reference_no ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">ID</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.id ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">Contractor</span>
-                  <span className="font-medium">
-                    :{" "}
-                    {servicePR.work_order?.supplier_details?.company_name ??
-                      "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">Address</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.supplier_address?.address ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">Phone</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.supplier_details?.mobile1 ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">Email</span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.supplier_details?.email ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">GST</span>
-                  <span className="font-medium">
-                    :{" "}
-                    {servicePR.work_order?.supplier_details?.gstin_number ??
-                      "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">PAN</span>
-                  <span className="font-medium">
-                    :{" "}
-                    {servicePR.work_order?.supplier_details?.pan_number ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">
-                    Work Category
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.work_category ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-32">
-                    Plant Detail
-                  </span>
-                  <span className="font-medium">
-                    : {servicePR.work_order?.plant_detail ?? "-"}
-                  </span>
-                </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Reference No.</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.reference_no ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">SPR Date</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.wo_date
+                    ? format(new Date(servicePR.work_order.wo_date), "dd-MM-yyyy")
+                    : "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.id ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Kind Attention</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.kind_attention ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Contractor</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.supplier_details?.company_name ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Subject</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.subject ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Address</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.supplier_address?.address ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Related To</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.related_to ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Phone</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.supplier_details?.mobile1 ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Payment Tenure</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.payment_terms?.payment_tenure ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Email</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.supplier_details?.email ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Retention(%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.payment_terms?.retention ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">GST</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.supplier_details?.gstin_number ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">TDS(%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.payment_terms?.tds ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">PAN</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.supplier_details?.pan_number ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">QC(%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.payment_terms?.qc ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Work Category</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.work_category ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Advance Amount</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.advance_amount ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Plant Detail</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.plant_detail ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Description</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {servicePR.work_order?.description ?? "-"}
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-medium">
-              Service Items Details
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ClipboardList className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Service Items Details</h3>
+          </div>
           <CardContent>
             <EnhancedTable
               data={serviceItems}
@@ -900,11 +1030,12 @@ export const ServicePRDetailsPage = () => {
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">
-              Terms & Conditions
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 px-6 pt-6 pb-1">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ScrollText className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
+          </div>
           <CardContent className="text-wrap break-words">
             <p className="text-muted-foreground">
               {servicePR.work_order?.term_condition ??
@@ -931,9 +1062,12 @@ export const ServicePRDetailsPage = () => {
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">Attachments</CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <Images className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+          </div>
           <CardContent>
             {Array.isArray(servicePR.attachments) &&
               servicePR.attachments.length > 0 ? (
@@ -1046,7 +1180,7 @@ export const ServicePRDetailsPage = () => {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Reject Work Order</DialogTitle>
+          <DialogTitle>{isDeletionRequest ? "Reject Deletion Request" : "Reject Work Order"}</DialogTitle>
           <DialogContent>
             <TextField
               autoFocus
@@ -1059,6 +1193,25 @@ export const ServicePRDetailsPage = () => {
               value={rejectComment}
               onChange={(e) => setRejectComment(e.target.value)}
               variant="outlined"
+              sx={{
+                mt: 1,
+                "& .MuiOutlinedInput-root": {
+                  height: "auto !important",
+                  padding: "2px !important",
+                  display: "flex",
+                },
+                "& .MuiInputBase-input[aria-hidden='true']": {
+                  flex: 0,
+                  width: 0,
+                  height: 0,
+                  padding: "0 !important",
+                  margin: 0,
+                  display: "none",
+                },
+                "& .MuiInputBase-input": {
+                  resize: "none !important",
+                },
+              }}
             />
           </DialogContent>
           <DialogActions>
@@ -1124,6 +1277,31 @@ export const ServicePRDetailsPage = () => {
               className="bg-[#C72030] text-white hover:bg-[#a61b27]"
             >
               Update
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={openDeletionModal}
+          onClose={() => setOpenDeletionModal(false)}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AlertTriangle size={24} color="#d32f2f" />
+            Confirm Deletion Request
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to raise a deletion request? This action will initiate the deletion process.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setOpenDeletionModal(false)} variant="outline">
+              Cancel
+            </Button>
+            <Button onClick={handleDelete}>
+              Yes
             </Button>
           </DialogActions>
         </Dialog>

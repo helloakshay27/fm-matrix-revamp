@@ -13,10 +13,14 @@ import {
   Eye,
   Plus,
   Package,
-  Settings,
+  Boxes,
+  BadgeCheck,
+  CircleSlash,
+  Leaf,
   Download,
   BarChart3,
   Pencil,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 // Removed legacy BulkUploadDialog; using new design
 import { InventoryBulkUploadDialog } from "@/components/InventoryBulkUploaddialogbox";
@@ -68,6 +72,7 @@ import {
 import bio from "@/assets/bio.png";
 import { InventorySelectionPanel } from "@/components/InventorySelectionPanel";
 import { toast } from "sonner";
+import { StatsCard } from "@/components/StatsCard";
 
 // Map API field names to display field names for backward compatibility
 const mapInventoryData = (apiData: any[]) => {
@@ -179,11 +184,20 @@ export const InventoryDashboard = () => {
   ]);
   const [activeTab, setActiveTab] = useState<string>("list");
   const [showDateFilter, setShowDateFilter] = useState(false);
-  const [dateRange, setDateRange] = useState({
-    // Updated default range per request: 01/07/2025 - 15/08/2025 (DD/MM/YYYY)
-    startDate: new Date(2025, 6, 1), // 01 July 2025
-    endDate: new Date(2025, 7, 15), // 15 August 2025
-  });
+  // Default date range: last 7 days from today
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    // Reset time to start of day
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+    today.setHours(23, 59, 59, 999);
+    return {
+      startDate: sevenDaysAgo,
+      endDate: today,
+    };
+  };
+  const [dateRange, setDateRange] = useState(getDefaultDateRange());
   const [inventory, setInventory] = useState([]);
   const [downloadingQR, setDownloadingQR] = useState(false);
   // Track currently applied server-side filters so pagination & refresh honor them
@@ -241,6 +255,18 @@ export const InventoryDashboard = () => {
   ]);
   // Maintain explicit draggable order for analytics cards
   const [analyticsCardOrder, setAnalyticsCardOrder] = useState<string[]>([]);
+  const formatAnalyticsDateForDisplay = (date: Date) => {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+  const getAnalyticsDateRangeLabel = () => {
+    const { startDate, endDate } = dateRange;
+    if (!startDate || !endDate) return '';
+    return `${formatAnalyticsDateForDisplay(startDate)} - ${formatAnalyticsDateForDisplay(endDate)}`;
+  };
   // Load saved order from localStorage on first mount
   useEffect(() => {
     try {
@@ -459,18 +485,22 @@ export const InventoryDashboard = () => {
     if (name) newFilters['q[name_cont]'] = name;
     if (code) newFilters['q[code_cont]'] = code;
     if (category) newFilters['q[category_eq]'] = category;
-    if (criticality) {
-      if (criticality === "1") {
-        newFilters['q[criticality_eq]'] = "0";  // Critical items have value 0
-      } else {
-        newFilters['q[criticality_eq]'] = "2";  // Non-Critical items have value 2
+    if (criticality !== undefined && criticality !== null && criticality !== '') {
+      // Accept both numeric & string inputs; normalize then translate.
+      // UI semantics: 1 (or 'Critical') => Critical, 2 (or 'Non-Critical') => Non-Critical.
+      // Backend still expects legacy: 0 = Critical, 2 = Non-Critical.
+      const rawCrit = String(criticality).trim().toLowerCase();
+      if (['1', 'critical', '0'].includes(rawCrit)) {
+        newFilters['q[criticality_eq]'] = '1';
+      } else if (['2', 'non-critical', 'non_critical'].includes(rawCrit)) {
+        newFilters['q[criticality_eq]'] = '2';
       }
     }
     if (groupId) newFilters['q[pms_asset_pms_asset_group_id_eq]'] = groupId;
     if (subGroupId) newFilters['q[pms_asset_pms_asset_sub_group_id_eq]'] = subGroupId;
     setActiveFilters(newFilters);
-  // Changing filters via dialog shouldn't preselect any summary tile
-  setSelectedSummary(null);
+    // Changing filters via dialog shouldn't preselect any summary tile
+    setSelectedSummary(null);
     setLocalCurrentPage(1);
   };
 
@@ -680,26 +710,20 @@ export const InventoryDashboard = () => {
     }
     if (columnKey === "criticality") {
       const raw = item.criticality;
-      let label = '-';
-      if (typeof raw === 'number') {
-        label = raw === 0 ? 'Critical' : raw === 2 ? 'Non-Critical' : '-';
-      } else if (typeof raw === 'string') {
+      // Normalise to numeric code: 1 = Critical, 2 = Non-Critical (backward compat: 0 also treated as Critical)
+      let code: number | null = null;
+      if (typeof raw === 'number') code = raw;
+      else if (typeof raw === 'string') {
         const v = raw.trim().toLowerCase();
-        if (v === '0' || v === 'critical') label = 'Critical';
-        else if (v === '2' || v === 'non-critical' || v === 'non_critical') label = 'Non-Critical';
-        else if (v !== '') label = raw || '-'; // Only show raw value if it's not empty
+        if (v === '1' || v === 'critical') code = 1;
+        else if (v === '2' || v === 'non-critical' || v === 'non_critical') code = 2;
+        else if (v === '0') code = 1; // legacy mapping (old API used 0 for Critical)
       }
-      // Handle the case where raw is exactly the API values
-      if (raw === 0 || raw === '0') {
-        label = 'Critical';
-      } else if (raw === 2 || raw === '2') {
-        label = 'Non-Critical';
-      }
+      if (code === 0) code = 1; // legacy safeguard
+      const label = code === 1 ? 'Critical' : code === 2 ? 'Non-Critical' : '-';
       const isCritical = label === 'Critical';
       return (
-        <span
-          className={`px-2 py-1 rounded text-xs ${isCritical ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}
-        >
+        <span className={`px-2 py-1 rounded text-xs ${label === '-' ? 'bg-gray-50 text-gray-400' : isCritical ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
           {label}
         </span>
       );
@@ -814,11 +838,11 @@ export const InventoryDashboard = () => {
     if (term && term.trim()) {
       const nf = { 'q[name_cont]': term.trim() };
       setActiveFilters(nf);
-  setSelectedSummary(null);
+      setSelectedSummary(null);
       dispatch(fetchInventoryData({ page: 1, pageSize, filters: nf }));
     } else {
       setActiveFilters({});
-  setSelectedSummary(null);
+      setSelectedSummary(null);
       dispatch(fetchInventoryData({ page: 1, pageSize }));
     }
   };
@@ -897,7 +921,7 @@ export const InventoryDashboard = () => {
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      
+
       // Create descriptive filename based on filters
       let filename = 'inventories';
       if (Object.keys(activeFilters).length > 0) {
@@ -907,14 +931,14 @@ export const InventoryDashboard = () => {
         filename += '_selected';
       }
       filename += '.xlsx';
-      
+
       link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
-      
-      const message = Object.keys(activeFilters).length > 0 
+
+      const message = Object.keys(activeFilters).length > 0
         ? 'Filtered inventory data exported successfully'
         : 'Inventory data exported successfully';
       toast.success(message);
@@ -1120,7 +1144,7 @@ export const InventoryDashboard = () => {
     setShowFilter(false);
     setShowDateFilter(false);
     setActiveFilters({});
-  setSelectedSummary(null);
+    setSelectedSummary(null);
     setLocalCurrentPage(1);
     dispatch(fetchInventoryData({ page: 1, pageSize }));
   };
@@ -1161,7 +1185,11 @@ export const InventoryDashboard = () => {
                 variant="outline"
                 className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
               >
-                <Filter className="w-4 h-4" />
+                <CalendarIcon className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  {getAnalyticsDateRangeLabel()}
+                </span>
+                <Filter className="w-4 h-4 text-gray-600" />
               </Button>
             </div>
             <InventoryAnalyticsSelector
@@ -1225,106 +1253,68 @@ export const InventoryDashboard = () => {
           )}
           <div className="overflow-x-auto">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 my-6">
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'total' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
-                  onClick={() => {
-                    setActiveFilters({});
-                    setSelectedSummary('total');
-                    setLocalCurrentPage(1);
-                  }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {baselineCounts.totalInventories}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Total Inventories
-                  </div>
-                </div>
-              </div>
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'active' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
-                  onClick={() => {
-                    const nf = { 'q[active_eq]': true as any } as Record<string, string>;
-                    setActiveFilters(nf);
-                    setSelectedSummary('active');
-                    setLocalCurrentPage(1);
-                  }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {baselineCounts.activeCount}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Active Inventory
-                  </div>
-                </div>
-              </div>
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'inactive' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
-                  onClick={() => {
-                    const nf = { 'q[active_eq]': false as any } as Record<string, string>;
-                    setActiveFilters(nf);
-                    setSelectedSummary('inactive');
-                    setLocalCurrentPage(1);
-                  }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {baselineCounts.inactiveCount}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                    Inactive
-                  </div>
-                </div>
-              </div>
-              <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'green' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
-                  onClick={() => {
-                    const nf = { 'q[green_product_eq]': true as any } as Record<string, string>;
-                    setActiveFilters(nf);
-                    setSelectedSummary('green');
-                    setLocalCurrentPage(1);
-                  }}
-              >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+              <StatsCard
+                title="Total Inventories"
+                value={baselineCounts.totalInventories}
+                selected={selectedSummary === 'total'}
+                icon={<Boxes className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
+                // selected={selectedSummary === 'total'}
+                onClick={() => {
+                  setActiveFilters({});
+                  setSelectedSummary('total');
+                  setLocalCurrentPage(1);
+                }}
+              />
+              <StatsCard
+                title="Active Inventory"
+                value={baselineCounts.activeCount}
+                selected={selectedSummary === 'active'}
+                icon={<BadgeCheck className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
+                // selected={selectedSummary === 'active'}
+                onClick={() => {
+                  const nf = { 'q[active_eq]': true as any } as Record<string, string>;
+                  setActiveFilters(nf);
+                  setSelectedSummary('active');
+                  setLocalCurrentPage(1);
+                }}
+              />
+              <StatsCard
+                title="Inactive Inventory"
+                value={baselineCounts.inactiveCount}
+                selected={selectedSummary === 'inactive'}
+                icon={<CircleSlash className="w-6 h-6 sm:w-8 sm:h-8 text-[#C72030]" />}
+                // selected={selectedSummary === 'inactive'}
+                onClick={() => {
+                  const nf = { 'q[active_eq]': false as any } as Record<string, string>;
+                  setActiveFilters(nf);
+                  setSelectedSummary('inactive');
+                  setLocalCurrentPage(1);
+                }}
+              />
+              <StatsCard
+                title="Ecofriendly"
+                value={baselineCounts.greenInventories}
+                selected={selectedSummary === 'green'}
+                icon={
                   <img
                     src={bio}
                     alt="Green Product"
-                    className="w-6 h-6 sm:w-8 sm:h-8"
+                    className="w-8 h-8 sm:w-10 sm:h-10"
                     style={{
                       filter:
                         "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
                     }}
                   />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {baselineCounts.greenInventories}
-                  </div>
-                  <div className="text-xs sm:text-sm text-green-600 font-medium leading-tight">
-                    Ecofriendly
-                  </div>
-                </div>
-              </div>
+                }
+
+                // selected={selectedSummary === 'green'}
+                onClick={() => {
+                  const nf = { 'q[green_product_eq]': true as any } as Record<string, string>;
+                  setActiveFilters(nf);
+                  setSelectedSummary('green');
+                  setLocalCurrentPage(1);
+                }}
+              />
             </div>
             {showActionPanel && (
               <InventorySelectionPanel
@@ -1334,6 +1324,12 @@ export const InventoryDashboard = () => {
                 onAddConsumable={() => {
                   const firstId = selectedItems[0];
                   if (!firstId) return;
+                  console.log(paginatedData)
+                  if (paginatedData.find(item => item.id === firstId)?.active === "Inactive") {
+                    toast.dismiss()
+                    toast.error("Inactive inventory cannot be consumed or add")
+                    return;
+                  }
                   const now = new Date();
                   const year = now.getFullYear();
                   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -1436,12 +1432,17 @@ export const InventoryDashboard = () => {
       <InventoryAnalyticsFilterDialog
         isOpen={isAnalyticsFilterOpen}
         onClose={() => setIsAnalyticsFilterOpen(false)}
+        currentStartDate={dateRange.startDate}
+        currentEndDate={dateRange.endDate}
         onApplyFilters={(filters) => {
           // Parse DD/MM/YYYY to Date objects
           const [startDay, startMonth, startYear] = filters.startDate.split('/').map(Number);
           const [endDay, endMonth, endYear] = filters.endDate.split('/').map(Number);
           const startDate = new Date(startYear, startMonth - 1, startDay);
           const endDate = new Date(endYear, endMonth - 1, endDay);
+          // Set time to start of day for startDate and end of day for endDate
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(23, 59, 59, 999);
           setDateRange({ startDate, endDate });
         }}
       />

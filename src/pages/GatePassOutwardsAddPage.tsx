@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { API_CONFIG } from '@/config/apiConfig';
 import { useSelector } from 'react-redux';
 import { toast } from "sonner";
+import { Loader2 } from 'lucide-react';
 
 // Define DropdownOption type
 interface DropdownOption {
@@ -89,6 +90,8 @@ export const GatePassOutwardsAddPage = () => {
   const selectedBuilding = useSelector((state: any) => state.project.selectedBuilding);
   const selectedCompany = useSelector((state: any) => state.project.selectedCompany);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     // Fetch suppliers for Company Name dropdown
     fetch(`${API_CONFIG.BASE_URL}/pms/suppliers/get_suppliers.json`, {
@@ -114,6 +117,8 @@ export const GatePassOutwardsAddPage = () => {
       .then(res => res.json())
       .then(data => setGateNumbers(data || data))
       .catch(() => setGateNumbers([]));
+
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -417,21 +422,43 @@ export const GatePassOutwardsAddPage = () => {
     }
   }, [gatePassDetails.buildingId]);
 
+  const handleGoBack = () => {
+    navigate('/security/gate-pass/outwards');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <div className="flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="mb-6">
-        <div
-          onClick={() => navigate('/security/gate-pass/outwards')}
-          className="flex items-center gap-2 text-gray-600 cursor-pointer hover:text-gray-800"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Outward List
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+          <button
+            onClick={handleGoBack}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Gate Pass Outward List</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium">Create New Gate Pass Outward</span>
         </div>
-        <div className="flex justify-between items-center my-4">
-          <h1 className="text-2xl font-bold text-gray-800">Create Gate Pass</h1>
-        </div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          NEW GATE PASS OUTWARD
+        </h1>
+      </div>
 
+      <div className="mb-6">
         <FormControl component="fieldset">
           <RadioGroup
             row
@@ -729,7 +756,7 @@ export const GatePassOutwardsAddPage = () => {
                   <tr key={row.id} className="bg-white border-b">
                     <td className="px-4 py-4">{index + 1}</td>
                     <td className="px-4 py-4" style={{ minWidth: 150 }}>
-                      <FormControl fullWidth variant="outlined" size="small" >
+                      <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}>
                         <InputLabel shrink>Item Type <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Type"
@@ -746,7 +773,7 @@ export const GatePassOutwardsAddPage = () => {
                       </FormControl>
                     </td>
                     <td className="px-4 py-4" style={{ minWidth: 150 }}>
-                      <FormControl fullWidth variant="outlined" size="small" >
+                      <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}>
                         <InputLabel shrink>Item Category <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Category"
@@ -796,13 +823,14 @@ export const GatePassOutwardsAddPage = () => {
     <TextField
       variant="outlined"
       size="small"
+      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
       placeholder="Enter Item Name"
       value={row.otherMaterialName || ''}
       onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
       required
     />
   ) : (
-    <FormControl fullWidth variant="outlined" size="small" >
+    <FormControl fullWidth variant="outlined" size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}>
       <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
       <MuiSelect
         label="Item Name"
@@ -840,10 +868,12 @@ export const GatePassOutwardsAddPage = () => {
 <td className="px-4 py-4">
                       <TextField
                         variant="outlined"
+                        placeholder='Quantity'
                         size="small"
                         type="number"
                         value={row.quantity}
                         onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
                         inputProps={{
                           // Remove max validation to avoid browser tooltip
                           min: 0,
@@ -852,13 +882,13 @@ export const GatePassOutwardsAddPage = () => {
                         // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
                       />
                     </td>
-                    <td className="px-4 py-4"><TextField variant="outlined" size="small" value={row.unit} onChange={(e) => {
+                    <td className="px-4 py-4"><TextField variant="outlined" placeholder='Unit' size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} value={row.unit} onChange={(e) => {
                       const value = e.target.value;
                       if (/^[a-zA-Z\s]*$/.test(value)) handleRowChange(row.id, 'unit', value);
                     }}
                       inputProps={{ pattern: "[a-zA-Z\s]*" }}
                     /></td>
-                    <td className="px-4 py-4"><TextField variant="outlined" size="small" value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
+                    <td className="px-4 py-4"><TextField placeholder='Enter Description' variant="outlined" size="small" value={row.description} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
                     <td className="px-4 py-4">
                       <button type="button" onClick={() => handleDeleteRow(row.id)}>
                         <Trash2 className="w-4 h-4 text-red-600" />

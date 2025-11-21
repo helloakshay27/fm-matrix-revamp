@@ -44,15 +44,15 @@ import wingsReducer from './slices/wingsSlice'
 import floorsReducer from './slices/floorsSlice'
 import zonesReducer from './slices/zonesSlice'
 import roomsReducer from './slices/roomsSlice'
-import { addCurrencyReducer, getCurrencyReducer } from './slices/currencySlice'
+import { addCurrencyReducer, getCurrencyReducer, updateCurrencyReducer } from './slices/currencySlice'
 import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from './slices/eventSlice'
-import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGroupSlice'
+import { createUserGroupReducer, fetchUserGroupIdReducer, fetchUserGroupsReducer, updateUserGroupReducer } from './slices/userGroupSlice'
 import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
 import { addWOInvoiceReducer, approveRejectWOReducer, fetchBOQReducer, fetchServicePRReducer, fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
 import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, getAddressesReducer, getFeedsReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer, updateActiveStausReducer, updateMaterialPRReducer } from './slices/materialPRSlice'
 import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer, rejectPOReducer, updatePurchaseOrderReducer } from './slices/purchaseOrderSlice'
 import { createServicePRReducer, editServicePRReducer, getServiceFeedsReducer, getServicePrReducer, getServicesReducer, updateServiceActiveStausReducer } from './slices/servicePRSlice'
-import { fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
+import { approveDeletionRequestReducer, fetchDeletedPRsReducer, fetchDeletionRequestsReducer, fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
 import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer, rejectGrnReducer, getGRNFeedsReducer, editGRNReducer } from './slices/grnSlice'
 import { createCustomerReducer, editCustomerReducer, getCustomerByIdReducer, getCustomerListReducer } from './slices/cusomerSlice'
 import { approveInvoiceReducer, getInvoiceByIdReducer, getInvoiceFeedsReducer, getInvoincesReducer } from './slices/invoicesSlice'
@@ -75,6 +75,8 @@ import { createProjectsTagsReducer, fetchProjectsTagsReducer, updateProjectsTags
 import { createProjectStatusesReducer, fetchProjectStatusesReducer, updateProjectStatusesReducer } from './slices/projectStatusSlice'
 import { createProjectGroupsReducer, fetchProjectGroupsReducer, updateProjectGroupsReducer } from './slices/projectGroupSlice'
 import { createMilestoneReducer } from './slices/projectMilestoneSlice'
+import { createChatTaskReducer, createConversationReducer, createGroupReducer, deleteChatTaskReducer, fetchChannelTaskDetailsReducer, fetchConversationMessagesReducer, fetchConversationReducer, fetchConversationsReducer, fetchGroupConversationReducer, fetchGroupsReducer, removeUserFromGroupReducer, sendMessageReducer, updateChatTaskReducer, updateMessageReducer } from './slices/channelSlice'
+import { createCircleReducer, fetchCircleListReducer, updateCircleReducer } from './slices/msafeCircleSlice'
 
 export const store = configureStore({
   reducer: {
@@ -151,6 +153,9 @@ export const store = configureStore({
     filterBookings: filterBookingsReducer,
     getLogs: getLogsReducer,
     fetchActiveFacilities: fetchActiveFacilitiesReducer,
+    fetchCircleList: fetchCircleListReducer,
+    updateCircle: updateCircleReducer,
+    createCircle: createCircleReducer,
 
     // Unit Master
     fetchMasterUnits: fetchMasterUnitsReducer,
@@ -163,8 +168,9 @@ export const store = configureStore({
     updateService: updateServiceReducer,
 
     // Currency
-    // addCurrency: addCurrencyReducer,
+    addCurrency: addCurrencyReducer,
     getCurrency: getCurrencyReducer,
+    updateCurrency: updateCurrencyReducer,
 
     fetchSuppliers: fetchSuppliersReducer,
     fetchUnits: fetchUnitsReducer,
@@ -192,6 +198,8 @@ export const store = configureStore({
     // User Groups
     fetchUserGroups: fetchUserGroupsReducer,
     createUserGroup: createUserGroupReducer,
+    updateUserGroup: updateUserGroupReducer,
+    fetchUserGroupId: fetchUserGroupIdReducer,
 
     // Work Order
     fetchWorkOrders: fetchWorkOrdersReducer,
@@ -234,6 +242,11 @@ export const store = configureStore({
 
     // Pending Approval
     fetchPendingApprovals: fetchPendingApprovalsReducer,
+
+    // Deletion Requests
+    fetchDeletionRequests: fetchDeletionRequestsReducer,
+    approveDeletionRequest: approveDeletionRequestReducer,
+    fetchDeletedPRs: fetchDeletedPRsReducer,
 
     // GRN
     getGRN: getGRNReducer,
@@ -362,6 +375,21 @@ export const store = configureStore({
     fetchProjectGroups: fetchProjectGroupsReducer,
     createProjectGroups: createProjectGroupsReducer,
     updateProjectGroups: updateProjectGroupsReducer,
+    // Channel
+    fetchConversation: fetchConversationReducer,
+    createConversation: createConversationReducer,
+    fetchConversations: fetchConversationsReducer,
+    fetchConversationMessages: fetchConversationMessagesReducer,
+    sendMessage: sendMessageReducer,
+    fetchGroups: fetchGroupsReducer,
+    createGroup: createGroupReducer,
+    fetchGroupConversation: fetchGroupConversationReducer,
+    createChatTask: createChatTaskReducer,
+    removeUserFromGroup: removeUserFromGroupReducer,
+    fetchChannelTaskDetails: fetchChannelTaskDetailsReducer,
+    updateChatTask: updateChatTaskReducer,
+    deleteChatTask: deleteChatTaskReducer,
+    updateMessage: updateMessageReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

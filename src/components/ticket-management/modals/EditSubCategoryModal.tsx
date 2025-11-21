@@ -97,8 +97,7 @@ interface EditSubCategoryModalProps {
 
 interface Engineer {
   id: number;
-  firstname: string;
-  lastname: string;
+  full_name: string;
 }
 
 export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
@@ -194,14 +193,14 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
   const fetchEngineers = async () => {
     try {
       const engineersResponse = await ticketManagementAPI.getEngineers();
-      const formattedEngineers = engineersResponse?.fm_users?.map(user => ({
+      const formattedEngineers = engineersResponse?.users?.map(user => ({
         id: user.id,
-        firstname: user.firstname,
-        lastname: user.lastname
+        full_name: user.full_name
       })) || [];
       setEngineers(formattedEngineers);
     } catch (error) {
       console.error('Error fetching engineers:', error);
+      toast.error('Failed to fetch engineers');
     }
   };
 
@@ -473,7 +472,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
                 )}
               />
 
-              {/* <div className="space-y-2">
+              <div className="space-y-2">
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Icon
                 </label>
@@ -526,7 +525,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
                     />
                   </div>
                 )}
-              </div> */}
+              </div>
             </div>
 
             {/* Tags Section */}
@@ -588,24 +587,37 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
                   }
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full relative">
                   <SelectValue placeholder={
                     selectedEngineers.length === 0 
                       ? "Select engineers" 
                       : `${selectedEngineers.length} engineer(s) selected`
                   } />
                 </SelectTrigger>
-                <SelectContent>
-                  {engineers.map((engineer) => (
-                    <SelectItem key={engineer.id} value={engineer.id.toString()}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{engineer.firstname} {engineer.lastname}</span>
-                        {selectedEngineers.includes(engineer.id) && (
-                          <span className="ml-2 text-primary">✓</span>
-                        )}
-                      </div>
+                <SelectContent 
+                  position="popper" 
+                  side="bottom" 
+                  align="start" 
+                  sideOffset={8}
+                  avoidCollisions={false}
+                  className="z-[9999] min-w-[var(--radix-select-trigger-width)] max-h-[200px] overflow-y-auto"
+                >
+                  {engineers.length === 0 ? (
+                    <SelectItem value="no-engineers" disabled>
+                      Loading engineers...
                     </SelectItem>
-                  ))}
+                  ) : (
+                    engineers.map((engineer) => (
+                      <SelectItem key={engineer.id} value={engineer.id.toString()}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>{engineer.full_name}</span>
+                          {selectedEngineers.includes(engineer.id) && (
+                            <span className="ml-2 text-primary">✓</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               
@@ -616,7 +628,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
                     const engineer = engineers.find(e => e.id === engineerId);
                     return engineer ? (
                       <div key={engineerId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
-                        {engineer.firstname} {engineer.lastname}
+                        {engineer.full_name}
                         <X
                           className="h-3 w-3 cursor-pointer"
                           onClick={() => setSelectedEngineers(selectedEngineers.filter(id => id !== engineerId))}

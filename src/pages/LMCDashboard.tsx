@@ -109,7 +109,8 @@ const LMCDashboard = () => {
             if (appliedUserEmail) params.push(`q[user_email_cont]=${appliedUserEmail.trim()}`);
             else if (searchTerm) params.push(`q[user_email_cont]=${searchTerm.trim()}`);
             if (appliedCreatedByEmail) params.push(`q[created_by_email_cont]=${appliedCreatedByEmail.trim()}`);
-            const url = `https://${baseUrl}/lmcs.json?${params.join('&')}`;
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+            const url = `${cleanBaseUrl}/lmcs.json?${params.join('&')}`;
             const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`Failed (${res.status})`);
             const json: LMCApiResponse = await res.json();
@@ -396,11 +397,11 @@ const LMCDashboard = () => {
                         size="sm"
                         className="h-8 w-8 p-0"
                         title="View"
-                        onClick={() => navigate(`/maintenance/m-safe/lmc/${row.id}`, { state: { row } })}
+                        onClick={() => navigate(`/safety/m-safe/lmc/${row.id}`, { state: { row } })}
                     >
                         <Eye className="h-4 w-4" />
                     </Button>
-                    <Button
+                    {/* <Button
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0 disabled:opacity-50"
@@ -413,7 +414,7 @@ const LMCDashboard = () => {
                         ) : (
                             <Download className="h-4 w-4" />
                         )}
-                    </Button>
+                    </Button> */}
                 </div>
             );
         }

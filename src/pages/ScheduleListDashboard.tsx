@@ -26,6 +26,7 @@ import { apiClient } from '@/utils/apiClient';
 import { toast, Toaster } from "sonner";
 import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 import axios from 'axios';
+import { Loader2 } from 'lucide-react';
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
@@ -45,6 +46,10 @@ export const ScheduleListDashboard = () => {
     category: ''
   });
 
+  // Add search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
@@ -61,6 +66,16 @@ export const ScheduleListDashboard = () => {
 
     return () => clearTimeout(timeoutId);
   }, [filters]);
+
+  // Debounce search query changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   // Build query parameters for API
   const buildQueryParams = (page: number = 1) => {
@@ -86,6 +101,11 @@ export const ScheduleListDashboard = () => {
       params['q[tasks_category_eq]'] = debouncedFilters.category.charAt(0).toUpperCase() + debouncedFilters.category.slice(1).toLowerCase();
     }
     
+    // Add search query to API params (lowercase for case-insensitive search)
+    if (debouncedSearchQuery.trim()) {
+      params['q[form_name_cont]'] = debouncedSearchQuery.trim().toLowerCase();
+    }
+    
     return params;
   };
 
@@ -97,7 +117,7 @@ export const ScheduleListDashboard = () => {
     isError,
     refetch
   } = useQuery({
-    queryKey: ['custom-forms', debouncedFilters, currentPage],
+    queryKey: ['custom-forms', debouncedFilters, debouncedSearchQuery, currentPage],
     queryFn: async () => {
       try {
         const params = buildQueryParams(currentPage);
@@ -146,7 +166,8 @@ export const ScheduleListDashboard = () => {
     isLoading, 
     error, 
     isError,
-    filters: debouncedFilters 
+    filters: debouncedFilters,
+    searchQuery: debouncedSearchQuery 
   });
   
   // Debug configuration
@@ -159,13 +180,18 @@ export const ScheduleListDashboard = () => {
   
   // Process schedules data for both analytics and table
   const schedules = React.useMemo(() => {
-    if (!customFormsData?.custom_forms) return [];
+    if (!customFormsData?.custom_forms) {
+      console.log('No custom forms data available');
+      return [];
+    }
     
     const forms = Array.isArray(customFormsData.custom_forms) 
       ? customFormsData.custom_forms 
       : Object.values(customFormsData.custom_forms);
       
-    return forms.map((item: any) => {
+    console.log('Raw forms data:', forms);
+      
+    const processedSchedules = forms.map((item: any) => {
       let scheduleType = '';
       if (item.checklist_for && typeof item.checklist_for === 'string' && item.checklist_for.includes('::')) {
         scheduleType = item.checklist_for.split('::')[1] || '';
@@ -177,6 +203,7 @@ export const ScheduleListDashboard = () => {
         id: item.id,
         activityName: item.form_name || '',
         type: item.schedule_type || '',
+        steps:item.steps ||'-',
         scheduleType,
         noOfAssociation: item.no_of_associations?.toString() || '0',
         category: item.category_name
@@ -189,6 +216,9 @@ export const ScheduleListDashboard = () => {
         custom_form_code: item.custom_form_code,
       };
     });
+    
+    console.log('Processed schedules count:', processedSchedules.length);
+    return processedSchedules;
   }, [customFormsData]);
   
   // Pagination info
@@ -196,6 +226,7 @@ export const ScheduleListDashboard = () => {
   const totalPages = customFormsData?.pagination?.total_pages || Math.ceil(schedules.length / pageSize);
   
   console.log('Processed schedules:', schedules);
+  console.log('Search Query State:', { searchQuery, debouncedSearchQuery });
   console.log('Pagination info:', { currentPage, totalPages, totalCount });
 
   function formatDateDDMMYYYY(dateString: string): string {
@@ -356,7 +387,13 @@ export const ScheduleListDashboard = () => {
     key: 'type',
     label: 'Type',
     sortable: true
-  }, {
+  }, 
+  {
+    key: 'steps',
+    label: 'Checklist Step',
+    sortable: true
+  },
+  {
     key: 'scheduleType',
     label: 'Schedule For',
     sortable: true
@@ -378,7 +415,7 @@ export const ScheduleListDashboard = () => {
     sortable: true
   }, {
     key: 'active',
-    label: 'Active',
+    label: 'Status',
     sortable: true
   }, {
     key: 'createdOn',
@@ -744,6 +781,12 @@ export const ScheduleListDashboard = () => {
     setCurrentPage(page);
   };
 
+  // Handle search changes
+  const handleSearchChange = (query: string) => {
+    console.log('Search change triggered:', query);
+    setSearchQuery(query);
+  };
+
   const renderListTab = () => (
     <div className="space-y-4">
       {showActionPanel && (
@@ -755,27 +798,6 @@ export const ScheduleListDashboard = () => {
         />
       )}
 
-      {isLoading ? (
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-2 text-sm text-muted-foreground">Loading schedules...</p>
-          </div>
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center max-w-md">
-            <p className="text-sm text-red-600 mb-2">Error loading schedules</p>
-            <p className="text-xs text-gray-500 mb-3">{error instanceof Error ? error.message : 'Unknown error'}</p>
-            <button
-              onClick={() => refetch()}
-              className="mt-2 px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      ) : (
         <>
           <EnhancedTable
             data={schedules}
@@ -787,10 +809,17 @@ export const ScheduleListDashboard = () => {
             storageKey="schedules-table"
             enableSearch={true}
             searchPlaceholder="Search schedules..."
+            searchValue={searchQuery}
+            onSearchChange={handleSearchChange}
             leftActions={renderCustomActions()}
             onFilterClick={() => setShowFilterDialog(true)}
             onExport={handleScheduleExport}
             loading={isLoading}
+            loadingMessage="Loading schedules..."
+            emptyMessage={isLoading ? "Loading schedules..." : (debouncedSearchQuery ? `No schedules found for "${debouncedSearchQuery}"` : "No schedules available")}
+            disableClientSearch={true}
+            searchStatus={isLoading ? 'Loading...' : (searchQuery !== debouncedSearchQuery ? 'Searching...' : `${schedules.length} schedule(s) found`)}
+            customSearchInput={true}
           />
 
           {/* Pagination */}
@@ -840,7 +869,7 @@ export const ScheduleListDashboard = () => {
             </div>
           )}
         </>
-      )}
+      
     </div>
   );
 

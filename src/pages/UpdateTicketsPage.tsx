@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Upload, X, Download, User, Ticket, Settings, FileText, Users, AlertTriangle, Building, DollarSign } from "lucide-react";
+import { ArrowLeft, Upload, X, Download, User, Ticket, Settings, FileText, Users, AlertTriangle, Building, DollarSign, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/utils/apiClient";
 import { getToken, getUser } from "@/utils/auth";
@@ -80,6 +80,72 @@ interface ServiceOption {
   service_name: string;
 }
 
+// Add location interfaces
+interface AreaResponse {
+  id: number;
+  name: string;
+  wing_id: string;
+  building_id: string;
+  wing?: {
+    id: number;
+    name: string;
+  };
+  building?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface BuildingResponse {
+  id: number;
+  name: string;
+  site_id: string;
+  wings?: Array<{
+    id: number;
+    name: string;
+  }>;
+  areas?: Array<{
+    id: number;
+    name: string;
+    wing_id: string;
+  }>;
+}
+
+interface WingResponse {
+  id: number;
+  name: string;
+  building_id: string;
+  building?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface FloorResponse {
+  id: number;
+  name: string;
+  wing_id: number;
+  area_id: number;
+  building_id: string;
+  wing?: {
+    id: number;
+    name: string;
+  };
+  area?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface RoomResponse {
+  id: number;
+  name: string;
+  floor_id: number;
+  wing_id: number;
+  area_id: string;
+  building_id: string;
+}
+
 const UpdateTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -96,6 +162,7 @@ const UpdateTicketsPage: React.FC = () => {
     responsiblePerson: "",
     proactiveReactive: "",
     adminPriority: "",
+    severity: "",
     softClose: "",
     refNumber: "",
     issueRelatedTo: "",
@@ -117,9 +184,23 @@ const UpdateTicketsPage: React.FC = () => {
     costInvolved: false,
     selectedStatus: "",
     rootCause: "",
+    rootCauseTemplateIds: [] as number[], // Store template IDs for API submission
+    preventiveActionTemplateIds: [] as number[], // Store preventive action template IDs
+    correctiveActionTemplateIds: [] as number[], // Store corrective action template IDs
+    shortTermImpactTemplateIds: [] as number[], // Store short-term impact template IDs
+    longTermImpactTemplateIds: [] as number[], // Store long-term impact template IDs
     correction: "",
     selectedAsset: "",
     selectedService: "",
+    shortTermImpact: "",
+    longTermImpact: "",
+    // Add location fields
+    area: '',
+    building: '',
+    wing: '',
+    floor: '',
+    room: '',
+    vendor: "" // <-- Add this line to fix the error
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -131,6 +212,9 @@ const UpdateTicketsPage: React.FC = () => {
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [subCategoriesLoading, setSubCategoriesLoading] = useState(false);
   const [complaintModes, setComplaintModes] = useState<ComplaintMode[]>([]);
+  const [suppliers, setSuppliers] = useState<{ id: number; name: string }[]>([]);
+const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+
   const [attachments, setAttachments] = useState<File[]>([]);
   const [showCostPopup, setShowCostPopup] = useState(false);
   const [costPopupData, setCostPopupData] = useState({
@@ -144,6 +228,14 @@ const UpdateTicketsPage: React.FC = () => {
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [reviewDate, setReviewDate] = useState<string>(""); // Changed to string for date input
   const [ticketApiData, setTicketApiData] = useState<any>(null); // Store original API data
+  const [communicationTemplates, setCommunicationTemplates] = useState<Array<{
+    id: number;
+    identifier: string;
+    identifier_action: string;
+    body: string;
+    active?: boolean;
+  }>>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [costApprovalRequests, setCostApprovalRequests] = useState<
     Array<{
       id: string;
@@ -165,6 +257,25 @@ const UpdateTicketsPage: React.FC = () => {
       isFromAPI?: boolean; // Add flag to distinguish API data from new requests
     }>
   >([]);
+  const [areas, setAreas] = useState<AreaResponse[]>([]);
+  const [buildings, setBuildings] = useState<BuildingResponse[]>([]);
+  const [wings, setWings] = useState<WingResponse[]>([]);
+  const [floors, setFloors] = useState<FloorResponse[]>([]);
+  const [rooms, setRooms] = useState<RoomResponse[]>([]);
+
+  // Loading state for locations
+  const [loadingAreas, setLoadingAreas] = useState(false);
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
+  const [loadingWings, setLoadingWings] = useState(false);
+  const [loadingFloors, setLoadingFloors] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+
+  // Filtered location state
+  const [filteredBuildings, setFilteredBuildings] = useState<BuildingResponse[]>([]);
+  const [filteredWings, setFilteredWings] = useState<WingResponse[]>([]);
+  const [filteredAreas, setFilteredAreas] = useState<AreaResponse[]>([]);
+  const [filteredFloors, setFilteredFloors] = useState<FloorResponse[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<RoomResponse[]>([]);
 
   // Field styles for Material-UI components
   const fieldStyles = {
@@ -190,6 +301,384 @@ const UpdateTicketsPage: React.FC = () => {
     },
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [statusResponse, usersResponse, complaintModesResponse, templatesResponse] =
+          await Promise.all([
+            apiClient.get("/pms/admin/complaint_statuses.json"),
+            apiClient.get("/pms/users/get_escalate_to_users.json"),
+            apiClient.get("/pms/admin/complaint_modes.json"),
+            apiClient.get(API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES),
+          ]);
+
+        setComplaintStatuses(statusResponse.data || []);
+        setFmUsers(usersResponse.data.users || []);
+        setComplaintModes(complaintModesResponse.data || []);
+        setCommunicationTemplates(Array.isArray(templatesResponse.data) ? templatesResponse.data : []);
+        console.log("📋 Communication templates loaded:", templatesResponse.data);
+
+        // Load location data
+        await loadLocationData();
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load form data.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+    dispatch(fetchHelpdeskCategories());
+  }, [toast, dispatch]);
+
+  useEffect(() => {
+  const fetchSuppliers = async () => {
+    setLoadingSuppliers(true);
+    try {
+      const url = getFullUrl('/pms/suppliers.json');
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch suppliers');
+      const data = await response.json();
+      setSuppliers(
+        Array.isArray(data.pms_suppliers)
+          ? data.pms_suppliers.map(s => ({
+            id: s.id,
+            name: s.company_name || `Supplier #${s.id}`
+          }))
+          : []
+      );
+    } catch (error) {
+      console.error('Error loading suppliers:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load suppliers",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingSuppliers(false);
+    }
+  };
+  fetchSuppliers();
+}, []);
+
+  // Add location data loading functions
+  const loadLocationData = async () => {
+    await Promise.all([
+      loadAreas(),
+      loadBuildings(),
+      loadWings(),
+      loadFloors(),
+      loadRooms()
+    ]);
+  };
+
+  const loadAreas = async () => {
+    setLoadingAreas(true);
+    try {
+      const url = getFullUrl('/pms/areas.json');
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch areas');
+      const data = await response.json();
+      setAreas(data.areas || []);
+    } catch (error) {
+      console.error('Error loading areas:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load areas",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingAreas(false);
+    }
+  };
+
+  const loadBuildings = async (siteId?: string) => {
+    setLoadingBuildings(true);
+    try {
+      // Use site_id in API call if provided, otherwise load all buildings
+      const url = siteId
+        ? getFullUrl(`/pms/sites/${siteId}/buildings.json`)
+        : getFullUrl('/pms/buildings.json');
+
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch buildings');
+      const data = await response.json();
+      setBuildings(data.pms_buildings || data || []);
+    } catch (error) {
+      console.error('Error loading buildings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load buildings",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingBuildings(false);
+    }
+  };
+
+  const loadWings = async (buildingId?: string) => {
+    setLoadingWings(true);
+    try {
+      // Add building_id as query parameter if provided
+      const url = buildingId
+        ? getFullUrl(`/pms/wings.json?building_id=${buildingId}`)
+        : getFullUrl('/pms/wings.json');
+
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch wings');
+      const data = await response.json();
+      setWings(data.wings || []);
+    } catch (error) {
+      console.error('Error loading wings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load wings",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingWings(false);
+    }
+  };
+
+  const loadFloors = async (wingId?: string) => {
+    setLoadingFloors(true);
+    try {
+      // Add wing_id as query parameter if provided
+      const url = wingId
+        ? getFullUrl(`/pms/floors.json?wing_id=${wingId}`)
+        : getFullUrl('/pms/floors.json');
+
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch floors');
+      const data = await response.json();
+      setFloors(data.floors || []);
+    } catch (error) {
+      console.error('Error loading floors:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load floors",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingFloors(false);
+    }
+  };
+
+  const loadRooms = async (floorId?: string) => {
+    setLoadingRooms(true);
+    try {
+      // Add floor_id as query parameter if provided
+      const url = floorId
+        ? getFullUrl(`/pms/rooms.json?floor_id=${floorId}`)
+        : getFullUrl('/pms/rooms.json');
+
+      const options = {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch rooms');
+      const data = await response.json();
+      setRooms(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading rooms:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load rooms",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  // Handle location changes with cascading API calls
+  const handleAreaChange = async (areaId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      area: areaId,
+      floor: '',
+      room: ''
+    }));
+
+    // Clear dependent dropdowns
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+
+    if (areaId) {
+      // Call floors API with area_id parameter
+      try {
+        setLoadingFloors(true);
+        const url = getFullUrl(`/pms/floors.json?area_id=${areaId}`);
+        const options = {
+          method: 'GET',
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        };
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredFloors(data.floors || []);
+        }
+      } catch (error) {
+        console.error('Error loading floors for area:', error);
+      } finally {
+        setLoadingFloors(false);
+      }
+    }
+  };
+
+  const handleBuildingChange = async (buildingId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      building: buildingId,
+      wing: '',
+      area: '',
+      floor: '',
+      room: ''
+    }));
+
+    // Clear dependent dropdowns
+    setFilteredWings([]);
+    setFilteredAreas([]);
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+
+    if (buildingId) {
+      // Call wings API with building_id parameter
+      try {
+        setLoadingWings(true);
+        const url = getFullUrl(`/pms/wings.json?building_id=${buildingId}`);
+        const options = {
+          method: 'GET',
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        };
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredWings(data.wings || []);
+        }
+      } catch (error) {
+        console.error('Error loading wings for building:', error);
+      } finally {
+        setLoadingWings(false);
+      }
+    }
+  };
+
+  const handleWingChange = async (wingId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      wing: wingId,
+      area: '',
+      floor: '',
+      room: ''
+    }));
+
+    // Clear dependent dropdowns
+    setFilteredAreas([]);
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+
+    if (wingId) {
+      // Call areas API with wing_id parameter
+      try {
+        setLoadingAreas(true);
+        const url = getFullUrl(`/pms/areas.json?wing_id=${wingId}`);
+        const options = {
+          method: 'GET',
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        };
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredAreas(data.areas || []);
+        }
+      } catch (error) {
+        console.error('Error loading areas for wing:', error);
+      } finally {
+        setLoadingAreas(false);
+      }
+    }
+  };
+
+  const handleFloorChange = async (floorId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      floor: floorId,
+      room: ''
+    }));
+
+    // Clear dependent dropdown
+    setFilteredRooms([]);
+
+    if (floorId) {
+      // Call rooms API with floor_id parameter
+      try {
+        setLoadingRooms(true);
+        const url = getFullUrl(`/pms/rooms.json?floor_id=${floorId}`);
+        const options = {
+          method: 'GET',
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        };
+        const response = await fetch(url, options);
+        if (response.ok) {
+          const data = await response.json();
+          setFilteredRooms(Array.isArray(data) ? data : (data.rooms || []));
+        }
+      } catch (error) {
+        console.error('Error loading rooms for floor:', error);
+      } finally {
+        setLoadingRooms(false);
+      }
+    }
+  };
+
   // Fetch ticket data for editing
   const fetchTicketData = async (ticketId: string) => {
     try {
@@ -200,240 +689,282 @@ const UpdateTicketsPage: React.FC = () => {
       const ticketData = response.data;
 
       console.log("📥 Received ticket data:", ticketData);
-      console.log("📋 Category type:", ticketData.category_type);
-      console.log("📋 Sub category type:", ticketData.sub_category_type);
 
       // Store original API data for later use FIRST
       setTicketApiData(ticketData);
 
-      // Find the category ID that matches the category name from API
-      const matchingCategory = helpdeskData?.helpdesk_categories?.find(
-        (category) => category.name === ticketData.category_type
+      // Match category, mode, status, and users
+      const matchedCategory = helpdeskData?.helpdesk_categories.find(
+        (cat) => cat.name === ticketData.category_type
+      );
+      const matchedMode = complaintModes.find((mode) => mode.name === ticketData.complaint_mode);
+      const matchedStatus = complaintStatuses.find(
+        (status) => status.id === ticketData.complaint_status_id
       );
 
-      // Find the complaint mode ID that matches the mode name from API
-      console.log("🔍 Looking for complaint mode match:", ticketData.complaint_mode);
-      console.log("🔍 Available complaint modes:", complaintModes.map(m => ({ id: m.id, name: m.name })));
-      
-      const matchingMode = complaintModes.find(
-        (mode) => mode.name === ticketData.complaint_mode
-      );
-      console.log("✅ Found matching complaint mode:", matchingMode);
+      // Match assigned user by name (API returns name, not ID)
+      const assignedUser = fmUsers.find((user) => user.full_name === ticketData.assigned_to);
 
-      // Find the status ID that matches the status name from API
-      const matchingStatus = complaintStatuses.find(
-        (status) => status.name === ticketData.issue_status
-      );
+      // Match responsible person by name if available
+      const responsiblePersonUser = ticketData.responsible_person
+        ? fmUsers.find((user) => user.full_name === ticketData.responsible_person)
+        : null;
 
-      // Find the responsible person ID that matches the name from API
-      console.log(
-        "👤 Looking for responsible_person match:",
-        ticketData.responsible_person
-      );
-      const matchingResponsiblePerson = fmUsers.find((user) => {
-        const fullName = user.full_name;
-        const apiResponsiblePerson =
-          ticketData.responsible_person?.trim() || "";
-        console.log(
-          "🔍 Comparing responsible person:",
-          fullName,
-          "with:",
-          apiResponsiblePerson
-        );
-
-        // Try exact match first
-        if (fullName === apiResponsiblePerson) return true;
-
-        // Try partial matches
-        if (
-          apiResponsiblePerson.includes(fullName) ||
-          fullName.includes(apiResponsiblePerson)
-        )
-          return true;
-
-        // Try case-insensitive match
-        if (fullName.toLowerCase() === apiResponsiblePerson.toLowerCase())
-          return true;
-
-        return false;
+      console.log("👤 Matching assigned user:", {
+        apiAssignedTo: ticketData.assigned_to,
+        matchedUser: assignedUser,
+        responsiblePerson: ticketData.responsible_person,
+        matchedResponsiblePerson: responsiblePersonUser,
       });
-      console.log(
-        "✅ Found matching responsible person:",
-        matchingResponsiblePerson
-      );
 
-      // Find the user ID that matches the assigned_to name from API
-      console.log("👤 Looking for assigned_to match:", ticketData.assigned_to);
-      console.log("👥 Available fmUsers:", fmUsers);
-      const matchingUser = fmUsers.find((user) => {
-        const fullName = user.full_name;
-        const apiAssignedTo = ticketData.assigned_to?.trim() || "";
-        console.log("🔍 Comparing:", fullName, "with:", apiAssignedTo);
+      // Find location IDs by matching names from API response
+      let buildingId = "";
+      let wingId = "";
+      let areaId = "";
+      let floorId = ticketData.floor_id?.toString() || "";
+      let roomId = ticketData.room_id?.toString() || "";
 
-        // Try exact match first
-        if (fullName === apiAssignedTo) return true;
+      // Match building by name
+      if (ticketData.building_name) {
+        const matchedBuilding = buildings.find(b => b.name === ticketData.building_name);
+        if (matchedBuilding) {
+          buildingId = matchedBuilding.id.toString();
+        }
+      }
 
-        // Try partial matches
-        if (
-          apiAssignedTo.includes(fullName) ||
-          fullName.includes(apiAssignedTo)
-        )
-          return true;
-
-        // Try case-insensitive match
-        if (fullName.toLowerCase() === apiAssignedTo.toLowerCase()) return true;
-
-        return false;
+      // Populate form with API data including ALL fields from the response
+      console.log("📋 Setting form data with values:", {
+        adminPriority: ticketData.priority,
+        severity: ticketData.severity,
+        issueRelatedTo: ticketData.issue_related_to,
+        refNumber: ticketData.reference_number,
+        externalPriority: ticketData.external_priority,
+        assignTo: ticketData.assigned_to,
+        responsiblePerson: ticketData.responsible_person,
+        correctiveAction: ticketData.corrective_action,
+        preventiveAction: ticketData.preventive_action,
+        shortTermImpact: ticketData.short_term_impact,
+        longTermImpact: ticketData.impact,
+        issueType: ticketData.issue_type,
       });
-      console.log("✅ Found matching user:", matchingUser);
 
-      // Populate form with API data
+      console.log("📋 Available templates:", {
+        preventiveTemplates: communicationTemplates.filter(t => t.identifier === "Preventive Action"),
+        correctiveTemplates: communicationTemplates.filter(t => t.identifier === "Corrective Action"),
+        shortTermTemplates: communicationTemplates.filter(t => t.identifier === "Short-term Impact"),
+        longTermTemplates: communicationTemplates.filter(t => t.identifier === "Long-term Impact"),
+      });
+
       setFormData((prev) => ({
         ...prev,
         title: ticketData.heading || "",
-        adminPriority: ticketData.priority ? ticketData.priority.toLowerCase() : "",
-        selectedStatus: matchingStatus?.id.toString() || "",
+        categoryType: matchedCategory ? matchedCategory.id.toString() : "",
+        subCategoryType: ticketData.sub_category_type || "",
         proactiveReactive: ticketData.proactive_reactive || "",
-        serviceType: ticketData.service_type || "",
-        externalPriority: ticketData.external_priority || "",
-        preventiveAction: ticketData.preventive_action || "",
-        impact: ticketData.impact || "",
-        correction: ticketData.correction || "",
-        rootCause: ticketData.root_cause || "",
-        categoryType: matchingCategory?.id.toString() || "",
-        subCategoryType: "", // Will be set after subcategories are fetched
-        assignTo: matchingUser?.id.toString() || "",
-        mode: matchingMode?.id.toString() || "",
-        responsiblePerson: matchingResponsiblePerson?.id.toString() || "",
+        assignTo: assignedUser ? assignedUser.id.toString() : "", // Use matched user ID
+        mode: matchedMode ? matchedMode.id.toString() : "",
+        serviceType: ticketData.service_or_asset || "",
+        selectedStatus: matchedStatus ? matchedStatus.id.toString() : "",
+        vendor: ticketData.supplier_id ? ticketData.supplier_id.toString() : "",
+        comments: ticketData.comment || "",
+        // Responsible Person
+        responsiblePerson: responsiblePersonUser ? responsiblePersonUser.id.toString() : "",
+        // Complaint Type (from issue_type)
         complaintType: ticketData.issue_type || "",
+        // Admin Priority
+        adminPriority: ticketData.priority || "",
+        // Severity
+        severity: ticketData.severity || "",
+        // Issue Related To
         issueRelatedTo: ticketData.issue_related_to || "",
+        // Reference Number
         refNumber: ticketData.reference_number || "",
+        // External Priority
+        externalPriority: ticketData.external_priority || "",
+        // Corrective Action - directly use the value from API
         correctiveAction: ticketData.corrective_action || "",
-        selectedAsset: "", // Will be set after fetching assets/services if needed
-        selectedService: "", // Will be set after fetching assets/services if needed
+        // Preventive Action - directly use the value from API
+        preventiveAction: ticketData.preventive_action || "",
+        // Impact (Short Term Impact) - directly use the value from API
+        impact: ticketData.short_term_impact || "",
+        // Long Term Impact - directly use the value from API
+        longTermImpact: ticketData.impact || "",
+        // Correction
+        correction: ticketData.correction || "",
+        // Root Cause
+        rootCause: ticketData.root_cause || "",
+        // Root Cause Template IDs from API
+        rootCauseTemplateIds: ticketData.rca_template_ids || [],
+        // Preventive Action Template IDs from API
+        preventiveActionTemplateIds: ticketData.preventive_action_template_ids || [],
+        // Corrective Action Template IDs from API
+        correctiveActionTemplateIds: ticketData.corrective_action_template_ids || [],
+        // Short-term Impact Template IDs from API
+        shortTermImpactTemplateIds: ticketData.short_term_impact_template_ids || [],
+        // Long-term Impact Template IDs from API
+        longTermImpactTemplateIds: ticketData.long_term_impact_template_ids || [],
+        // Service Type - bind from API
+        serviceType: ticketData.service_type || "",
+        // Associated To (Asset or Service) - using asset_service field
         associatedTo: {
           asset: ticketData.asset_service === "Asset",
-          service: ticketData.asset_service === "Service",
+          service: ticketData.asset_service === "Service"
         },
+        // Location fields from API (using IDs from response)
+        building: buildingId,
+        wing: wingId,
+        area: areaId,
+        floor: floorId,
+        room: roomId,
       }));
 
-      console.log(
-        "💾 Stored subcategory for later matching:",
-        ticketData.sub_category_type
-      );
+      console.log("✅ Form data updated successfully");
 
-      // Set review date if available
-      console.log("Review tracking from API:", ticketData.review_tracking);
-      if (ticketData.review_tracking && ticketData.review_tracking !== null) {
-        // Check if it's in DD/MM/YYYY format
-        const dateMatch = ticketData.review_tracking.match(
-          /^(\d{2})\/(\d{2})\/(\d{4})$/
-        );
-        if (dateMatch) {
-          const [, day, month, year] = dateMatch;
-          // Convert to YYYY-MM-DD format for input[type="date"]
-          const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-          setReviewDate(formattedDate);
-          console.log("Set review date from DD/MM/YYYY format:", formattedDate);
-        } else {
-          // Try ISO format as fallback
-          const date = new Date(ticketData.review_tracking);
-          if (!isNaN(date.getTime())) {
-            // Convert to YYYY-MM-DD format for input[type="date"]
-            const formattedDate = date.toISOString().split('T')[0];
-            setReviewDate(formattedDate);
-            console.log("Set review date from ISO format:", formattedDate);
-          } else {
-            console.log("Invalid date value:", ticketData.review_tracking);
+      // Trigger cascading API calls for location if data exists
+      if (buildingId) {
+        // Call wings API with building_id parameter
+        try {
+          const url = getFullUrl(`/pms/wings.json?building_id=${buildingId}`);
+          const options = {
+            method: 'GET',
+            headers: {
+              Authorization: getAuthHeader(),
+            },
+          };
+          const response = await fetch(url, options);
+          if (response.ok) {
+            const data = await response.json();
+            const wingsData = data.wings || [];
+            setFilteredWings(wingsData);
+
+            // Match wing by name after fetching wings
+            if (ticketData.wing_name) {
+              const matchedWing = wingsData.find((w: any) => w.name === ticketData.wing_name);
+              if (matchedWing) {
+                wingId = matchedWing.id.toString();
+                setFormData(prev => ({ ...prev, wing: wingId }));
+
+                // Call areas API with wing_id parameter
+                const areasUrl = getFullUrl(`/pms/areas.json?wing_id=${wingId}`);
+                const areasResponse = await fetch(areasUrl, options);
+                if (areasResponse.ok) {
+                  const areasData = await areasResponse.json();
+                  const areas = areasData.areas || [];
+                  setFilteredAreas(areas);
+
+                  // Match area by name after fetching areas
+                  if (ticketData.area_name) {
+                    const matchedArea = areas.find((a: any) => a.name === ticketData.area_name);
+                    if (matchedArea) {
+                      areaId = matchedArea.id.toString();
+                      setFormData(prev => ({ ...prev, area: areaId }));
+
+                      // Call floors API with area_id parameter
+                      const floorsUrl = getFullUrl(`/pms/floors.json?area_id=${areaId}`);
+                      const floorsResponse = await fetch(floorsUrl, options);
+                      if (floorsResponse.ok) {
+                        const floorsData = await floorsResponse.json();
+                        const floors = floorsData.floors || [];
+                        setFilteredFloors(floors);
+
+                        // If we have floor_id, fetch rooms
+                        if (floorId) {
+                          const roomsUrl = getFullUrl(`/pms/rooms.json?floor_id=${floorId}`);
+                          const roomsResponse = await fetch(roomsUrl, options);
+                          if (roomsResponse.ok) {
+                            const roomsData = await roomsResponse.json();
+                            setFilteredRooms(Array.isArray(roomsData) ? roomsData : (roomsData.rooms || []));
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
+        } catch (error) {
+          console.error('Error loading location cascade for ticket:', error);
         }
-      } else {
-        console.log("No review tracking date available");
-        setReviewDate("");
       }
 
-      // Fetch sub-categories if category is set
-      if (matchingCategory?.id) {
-        console.log(
-          "🔄 Fetching subcategories for category ID:",
-          matchingCategory.id
-        );
-        console.log(
-          "🎯 Target subcategory to match:",
-          ticketData.sub_category_type
-        );
-
-        // Pass the target subcategory name to fetchSubCategories
-        await fetchSubCategories(
-          matchingCategory.id.toString(),
-          ticketData.sub_category_type
-        );
-      } else {
-        console.log(
-          "❌ No matching category found for:",
-          ticketData.category_type
-        );
+      // Fetch assets and services based on ticket data
+      if (ticketData.asset_service === "Asset" && ticketData.asset_or_service_id) {
+        setFormData(prev => ({
+          ...prev,
+          associatedTo: { asset: true, service: false },
+          selectedAsset: ticketData.asset_or_service_id.toString(),
+          selectedService: "",
+        }));
+        fetchAssets(false); // Don't auto-select during manual changes
+      } else if (ticketData.asset_service === "Service" && ticketData.asset_or_service_id) {
+        setFormData(prev => ({
+          ...prev,
+          associatedTo: { asset: false, service: true },
+          selectedAsset: "",
+          selectedService: ticketData.asset_or_service_id.toString(),
+        }));
+        fetchServices(false); // Don't auto-select during manual changes
       }
 
-      // Fetch assets/services if associated to asset or service
-      console.log("🏢 Asset service type from API:", ticketData.asset_service);
-      console.log(
-        "🆔 Asset or service ID from API:",
-        ticketData.asset_or_service_id
-      );
-
-      if (ticketData.asset_service === "Asset") {
-        console.log("🔄 Fetching assets for Asset selection");
-        await fetchAssets();
-        // Asset matching is now handled inside fetchAssets function
-      } else if (ticketData.asset_service === "Service") {
-        console.log("🔄 Fetching services for Service selection");
-        await fetchServices();
-        // Service matching is now handled inside fetchServices function
+      // Set review tracking date if available
+      if (ticketData.review_tracking) {
+        // Convert review_tracking date from DD/MM/YYYY to YYYY-MM-DD format
+        const dateStr = ticketData.review_tracking;
+        if (dateStr.includes('/')) {
+          // Format is DD/MM/YYYY, convert to YYYY-MM-DD
+          const parts = dateStr.split('/');
+          if (parts.length === 3) {
+            const [day, month, year] = parts;
+            const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            setReviewDate(formattedDate);
+            console.log('📅 Review date converted from', dateStr, 'to', formattedDate);
+          }
+        } else if (dateStr.includes('T')) {
+          // Format is ISO timestamp, extract date part
+          const reviewDateStr = dateStr.split('T')[0];
+          setReviewDate(reviewDateStr);
+          console.log('📅 Review date extracted from ISO:', reviewDateStr);
+        } else {
+          // Assume already in correct format
+          setReviewDate(dateStr);
+        }
       }
 
-      // Handle cost approval requests if available
-      console.log("💰 Cost approval data from API:", ticketData.requests);
-      if (ticketData.requests && Array.isArray(ticketData.requests)) {
-        const formattedRequests = ticketData.requests.map((request: any) => ({
-          id: request.id.toString(),
-          amount: request.amount.toString(),
-          comments: request.comment || "",
-          createdOn: request.created_on || "",
-          createdBy: request.created_by || "",
-          attachments: request.attachments || [],
-          approvals: request.approvals || {
-            L1: "Na",
-            L2: "Na",
-            L3: "Na",
-            L4: "Na",
-            L5: "Na",
-          },
-          masterStatus: request.master_status || "Pending",
-          cancelledBy: request.cancelled_by || "NA",
-          action: request.action || null,
+      // Set cost involved flag
+      if (ticketData.cost_involved !== undefined) {
+        setFormData(prev => ({
+          ...prev,
+          costInvolved: ticketData.cost_involved
+        }));
+      }
+
+      // Load cost approval requests if cost is involved
+      if (ticketData.cost_involved) {
+        const costRequests = ticketData.cost_approval_requests_attributes || [];
+        const mappedRequests = costRequests.map((req: any) => ({
+          id: req.id,
+          amount: req.cost,
+          comments: req.comment,
+          createdOn: new Date(req.created_at).toLocaleString(),
+          createdBy: req.created_by_name || "Unknown",
+          approvals: req.approvals || {},
+          masterStatus: req.master_status,
+          cancelledBy: req.cancelled_by_name || null,
+          attachments: req.attachments_attributes ? req.attachments_attributes.map((att: any) => att.document) : [],
           isFromAPI: true, // Mark as API data
         }));
-
-        console.log(
-          "💰 Formatted cost approval requests from API:",
-          formattedRequests
-        );
-
-        // Only set API requests, don't add to existing array to avoid duplicates
-        setCostApprovalRequests(formattedRequests);
-
-        // Set cost involved to true if there are any requests
-        if (formattedRequests.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            costInvolved: true,
-          }));
-        }
+        setCostApprovalRequests(mappedRequests);
       } else {
-        console.log("💰 No cost approval requests found in API data");
-        // Only clear if no API data, preserve any new user-added requests
-        setCostApprovalRequests((prev) => prev.filter((req) => !req.isFromAPI));
+        setCostApprovalRequests([]);
+      }
+
+      // Fetch sub-categories based on category selection
+      if (matchedCategory && matchedCategory.id) {
+        fetchSubCategories(matchedCategory.id.toString(), ticketData.sub_category_type);
+      } else {
+        setSubCategories([]);
+        setFormData(prev => ({ ...prev, subCategoryType: "" }));
       }
     } catch (error) {
       console.error("Error fetching ticket data:", error);
@@ -447,10 +978,15 @@ const UpdateTicketsPage: React.FC = () => {
 
   useEffect(() => {
     // If we have an ID from the URL, fetch the ticket data
-    if (
-      id &&
-      helpdeskData?.helpdesk_categories
-    ) {
+    // Wait for all required data including buildings and templates to be loaded
+    if (id &&
+      helpdeskData?.helpdesk_categories &&
+      complaintModes.length > 0 &&
+      fmUsers.length > 0 &&
+      complaintStatuses.length > 0 &&
+      buildings.length > 0 &&
+      communicationTemplates.length > 0) { // Add templates check
+      console.log("✅ All data loaded, fetching ticket data for ID:", id);
       fetchTicketData(id);
     }
     // If we have selected tickets from navigation state, use the first one
@@ -477,7 +1013,10 @@ const UpdateTicketsPage: React.FC = () => {
     complaintModes,
     fmUsers,
     complaintStatuses,
+    buildings, // Add buildings dependency
+    communicationTemplates, // Add templates dependency
   ]);
+
 
   // Define fetchAssets and fetchServices before useEffect hooks to avoid hoisting issues
   const fetchAssets = useCallback(async (shouldSetSelectedValue = true) => {
@@ -634,25 +1173,25 @@ const UpdateTicketsPage: React.FC = () => {
   // Handle asset/service loading when associatedTo changes
   useEffect(() => {
     console.log("🔄 AssociatedTo change detected:", formData.associatedTo);
-    
+
     // Fetch assets when asset checkbox is checked and we don't have asset options yet
     if (formData.associatedTo.asset && assetOptions.length === 0 && !isLoadingAssets) {
       console.log("🔄 Fetching assets due to checkbox change");
       fetchAssets(false); // Don't auto-select during manual changes
     }
-    
+
     // Fetch services when service checkbox is checked and we don't have service options yet
     if (formData.associatedTo.service && serviceOptions.length === 0 && !isLoadingServices) {
       console.log("🔄 Fetching services due to checkbox change");
       fetchServices(false); // Don't auto-select during manual changes
     }
   }, [
-    formData.associatedTo, 
-    assetOptions.length, 
-    serviceOptions.length, 
-    isLoadingAssets, 
-    isLoadingServices, 
-    fetchAssets, 
+    formData.associatedTo,
+    assetOptions.length,
+    serviceOptions.length,
+    isLoadingAssets,
+    isLoadingServices,
+    fetchAssets,
     fetchServices
   ]);
 
@@ -672,17 +1211,17 @@ const UpdateTicketsPage: React.FC = () => {
     // If we have ticket data with asset/service info but haven't set the selection yet
     if (ticketApiData && ticketApiData.asset_or_service_id) {
       const targetId = ticketApiData.asset_or_service_id.toString();
-      
+
       // Handle asset synchronization
-      if (ticketApiData.asset_service === "Asset" && 
-          assetOptions.length > 0 && 
-          (!formData.selectedAsset || !formData.associatedTo.asset)) {
-        
+      if (ticketApiData.asset_service === "Asset" &&
+        assetOptions.length > 0 &&
+        (!formData.selectedAsset || !formData.associatedTo.asset)) {
+
         console.log("🔄 Attempting asset synchronization with ID:", targetId);
-        const matchingAsset = assetOptions.find(asset => 
+        const matchingAsset = assetOptions.find(asset =>
           asset.id.toString() === targetId
         );
-        
+
         if (matchingAsset) {
           console.log("✅ Synchronizing asset selection:", matchingAsset.name);
           setFormData(prev => ({
@@ -698,17 +1237,17 @@ const UpdateTicketsPage: React.FC = () => {
           console.log("❌ Asset not found in options for ID:", targetId);
         }
       }
-      
+
       // Handle service synchronization
-      if (ticketApiData.asset_service === "Service" && 
-          serviceOptions.length > 0 && 
-          (!formData.selectedService || !formData.associatedTo.service)) {
-        
+      if (ticketApiData.asset_service === "Service" &&
+        serviceOptions.length > 0 &&
+        (!formData.selectedService || !formData.associatedTo.service)) {
+
         console.log("🔄 Attempting service synchronization with ID:", targetId);
-        const matchingService = serviceOptions.find(service => 
+        const matchingService = serviceOptions.find(service =>
           service.id.toString() === targetId
         );
-        
+
         if (matchingService) {
           console.log("✅ Synchronizing service selection:", matchingService.service_name);
           setFormData(prev => ({
@@ -766,40 +1305,25 @@ const UpdateTicketsPage: React.FC = () => {
     }
   }, [formData.associatedTo, formData.selectedAsset, formData.selectedService, assetOptions, serviceOptions]);
 
+  // Load communication templates on mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchTemplates = async () => {
+      setLoadingTemplates(true);
       try {
-        setIsLoading(true);
-        const [statusResponse, usersResponse, complaintModesResponse] =
-          await Promise.all([
-            apiClient.get("/pms/admin/complaint_statuses.json"),
-            apiClient.get("/pms/users/get_escalate_to_users.json"),
-            apiClient.get("/pms/admin/complaint_modes.json"),
-          ]);
-
-        setComplaintStatuses(statusResponse.data || []);
-        setFmUsers(usersResponse.data.users || []);
-        setComplaintModes(complaintModesResponse.data || []);
+        const response = await apiClient.get(API_CONFIG.ENDPOINTS.COMMUNICATION_TEMPLATES);
+        const templates = response.data || [];
+        setCommunicationTemplates(templates);
       } catch (error) {
-        console.error("Error fetching data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load form data.",
-          variant: "destructive",
-        });
+        console.error("Error loading communication templates:", error);
       } finally {
-        setIsLoading(false);
+        setLoadingTemplates(false);
       }
     };
 
-    fetchData();
-    dispatch(fetchHelpdeskCategories());
-  }, [toast, dispatch]);
+    fetchTemplates();
+  }, []);
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
+  // Handle form field changes
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({
       ...prev,
@@ -815,6 +1339,7 @@ const UpdateTicketsPage: React.FC = () => {
     }
   };
 
+  // Fetch sub-categories based on category selection
   const fetchSubCategories = async (
     categoryId: string,
     targetSubCategoryName?: string
@@ -903,7 +1428,7 @@ const UpdateTicketsPage: React.FC = () => {
     checked: boolean
   ) => {
     console.log("📋 Checkbox change:", { group, field, checked });
-    
+
     setFormData((prev) => ({
       ...prev,
       [group]: {
@@ -957,9 +1482,82 @@ const UpdateTicketsPage: React.FC = () => {
       setShowCostPopup(true);
     } else {
       // Only clear new requests, keep API requests
-      setCostApprovalRequests((prev) => prev.filter((req) => req.isFromAPI));
+      setCostApprovalRequests((prev) => prev.filter((req) => !req.isFromAPI));
       setCostPopupData({ cost: "", description: "", attachments: [] });
     }
+  };
+
+  // Helper function to get Root Cause Analysis values from ticket data
+  const getRootCauseAnalysisValues = () => {
+    // First priority: Use formData.rootCauseTemplateIds (user's current selections)
+    if (formData.rootCauseTemplateIds && formData.rootCauseTemplateIds.length > 0) {
+      console.log('🔍 Root Cause Analysis Template IDs from formData:', formData.rootCauseTemplateIds);
+      return formData.rootCauseTemplateIds;
+    }
+    
+    // Second priority: Use template IDs from API if available (initial load)
+    if (ticketApiData?.rca_template_ids && Array.isArray(ticketApiData.rca_template_ids)) {
+      // Filter out duplicate IDs using Set
+      const uniqueIds = [...new Set(ticketApiData.rca_template_ids)];
+      
+      console.log('🔍 Root Cause Analysis Template IDs from API:', uniqueIds);
+      
+      // Find templates by IDs
+      const matchedTemplates = communicationTemplates.filter(
+        (t) =>
+          uniqueIds.includes(t.id) &&
+          t.identifier === "Root Cause Analysis"
+      );
+      
+      console.log('🔍 Root Cause Analysis Matched Templates:', matchedTemplates.map(t => ({ id: t.id, action: t.identifier_action })));
+      
+      // Return array of IDs for Material-UI Select
+      return matchedTemplates.map((t) => t.id);
+    }
+    
+    // Fallback: Use text matching if no template IDs
+    if (!formData.rootCause && !ticketApiData?.root_cause) return [];
+    
+    const rootCauseString = formData.rootCause || ticketApiData?.root_cause || '';
+    
+    if (!rootCauseString) return [];
+
+    const rootCauseValues = rootCauseString.split(",").map((s) => s.trim());
+    const matchedTemplates = communicationTemplates.filter(
+      (t) =>
+        t.identifier === "Root Cause Analysis" &&
+        rootCauseValues.includes(t.identifier_action)
+    );
+
+    return matchedTemplates.map((t) => t.id);
+  };
+
+  // Handle Root Cause multi-select change with auto-save
+  // Handle Root Cause multi-select change (only updates state, API call happens on Save) 
+  const handleRootCauseChange = (selectedValues: string | string[] | number | number[]) => {
+    // Convert to array of numbers (template IDs)
+    let templateIds: number[] = [];
+    if (Array.isArray(selectedValues)) {
+      templateIds = selectedValues.map(v => typeof v === 'number' ? v : parseInt(String(v)));
+    } else {
+      templateIds = [typeof selectedValues === 'number' ? selectedValues : parseInt(String(selectedValues))];
+    }
+
+    // Filter out any NaN values
+    templateIds = templateIds.filter(id => !isNaN(id));
+
+    // Update local state with the selected template text for display
+    const selectedTemplates = communicationTemplates.filter(t => templateIds.includes(t.id));
+    const rootCauseString = selectedTemplates.map(t => t.identifier_action).join(', ');
+
+    // Store both the display string and the template IDs
+    setFormData((prev) => ({
+      ...prev,
+      rootCause: rootCauseString,
+      rootCauseTemplateIds: templateIds // Store IDs for submission
+    }));
+
+    console.log('✅ Root cause selected:', { templateIds, rootCauseString });
   };
 
   const handleCostPopupFileUpload = (
@@ -1168,6 +1766,7 @@ const UpdateTicketsPage: React.FC = () => {
         "complaint[person_id]",
         formData.responsiblePerson || ""
       );
+      formDataToSend.append("complaint[supplier_id]", formData.vendor || "");
 
       // Format review tracking date properly
       if (reviewDate) {
@@ -1198,9 +1797,66 @@ const UpdateTicketsPage: React.FC = () => {
         "complaint[complaint_mode_id]",
         formData.mode || ""
       );
-      formDataToSend.append("complaint[root_cause]", formData.rootCause || "");
-      formDataToSend.append("complaint[impact]", formData.impact || "");
+
+      // Add severity
+      formDataToSend.append(
+        "complaint[severity]",
+        formData.severity || ""
+      );
+
+      // Add root cause template IDs with array notation
+      if (formData.rootCauseTemplateIds && formData.rootCauseTemplateIds.length > 0) {
+        formData.rootCauseTemplateIds.forEach(templateId => {
+          formDataToSend.append('root_cause[template_ids][]', String(templateId));
+        });
+        console.log('📝 Adding root cause template IDs:', formData.rootCauseTemplateIds);
+      } else {
+        console.log('⚠️ No root cause template IDs to submit');
+      }
+
+      // Add preventive action template IDs with array notation
+      if (formData.preventiveActionTemplateIds && formData.preventiveActionTemplateIds.length > 0) {
+        formData.preventiveActionTemplateIds.forEach(templateId => {
+          formDataToSend.append('preventive_action[template_ids][]', String(templateId));
+        });
+        console.log('📝 Adding preventive action template IDs:', formData.preventiveActionTemplateIds);
+      } else {
+        console.log('⚠️ No preventive action template IDs to submit');
+      }
+
+      // Add corrective action template IDs with array notation
+      if (formData.correctiveActionTemplateIds && formData.correctiveActionTemplateIds.length > 0) {
+        formData.correctiveActionTemplateIds.forEach(templateId => {
+          formDataToSend.append('corrective_action[template_ids][]', String(templateId));
+        });
+        console.log('📝 Adding corrective action template IDs:', formData.correctiveActionTemplateIds);
+      } else {
+        console.log('⚠️ No corrective action template IDs to submit');
+      }
+
+      // Add short-term impact template IDs with array notation
+      if (formData.shortTermImpactTemplateIds && formData.shortTermImpactTemplateIds.length > 0) {
+        formData.shortTermImpactTemplateIds.forEach(templateId => {
+          formDataToSend.append('short_term_impact[template_ids][]', String(templateId));
+        });
+        console.log('📝 Adding short-term impact template IDs:', formData.shortTermImpactTemplateIds);
+      } else {
+        console.log('⚠️ No short-term impact template IDs to submit');
+      }
+
+      // Add long-term impact template IDs with array notation
+      if (formData.longTermImpactTemplateIds && formData.longTermImpactTemplateIds.length > 0) {
+        formData.longTermImpactTemplateIds.forEach(templateId => {
+          formDataToSend.append('long_term_impact[template_ids][]', String(templateId));
+        });
+        console.log('📝 Adding long-term impact template IDs:', formData.longTermImpactTemplateIds);
+      } else {
+        console.log('⚠️ No long-term impact template IDs to submit');
+      }
+
+      formDataToSend.append("complaint[short_term_impact]", formData.impact || "");
       formDataToSend.append("complaint[correction]", formData.correction || "");
+      formDataToSend.append("complaint[impact]", formData.longTermImpact || "");
       formDataToSend.append(
         "complaint[reference_number]",
         formData.refNumber || ""
@@ -1221,6 +1877,23 @@ const UpdateTicketsPage: React.FC = () => {
         "complaint[cost_involved]",
         formData.costInvolved ? "true" : "false"
       );
+
+      // Add location parameters to formData with correct keys
+      if (formData.area) {
+        formDataToSend.append("complaint[area_id]", formData.area);
+      }
+      if (formData.building) {
+        formDataToSend.append("complaint[tower_id]", formData.building);
+      }
+      if (formData.wing) {
+        formDataToSend.append("complaint[wing_id]", formData.wing);
+      }
+      if (formData.floor) {
+        formDataToSend.append("complaint[floor_id]", formData.floor);
+      }
+      if (formData.room) {
+        formDataToSend.append("complaint[room_id]", formData.room);
+      }
 
       // Add cost approval data if cost is involved
       console.log("💰 Cost involved:", formData.costInvolved);
@@ -1406,10 +2079,21 @@ const UpdateTicketsPage: React.FC = () => {
     }
   };
 
+  const handleBackToList = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full p-6">
         {/* Header */}
+        <button
+          onClick={handleBackToList}
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Ticket List
+        </button>
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">UPDATE TICKET</h1>
         </div>
@@ -1463,22 +2147,65 @@ const UpdateTicketsPage: React.FC = () => {
 
                   {/* Preventive Action */}
                   <div className="space-y-1">
-                    <TextField
-                      label="Preventive Action"
-                      placeholder="Enter preventive action"
-                      value={formData.preventiveAction}
-                      onChange={(e) => handleInputChange("preventiveAction", e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      slotProps={{
-                        inputLabel: {
-                          shrink: true,
-                        },
-                      }}
-                      InputProps={{
-                        sx: fieldStyles,
-                      }}
-                    />
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Preventive Action</InputLabel>
+                      <MuiSelect
+                        multiple
+                        value={(() => {
+                          // Use template IDs from formData to find selected template actions
+                          if (formData.preventiveActionTemplateIds && formData.preventiveActionTemplateIds.length > 0) {
+                            return formData.preventiveActionTemplateIds
+                              .map(id => {
+                                const template = communicationTemplates.find(t => t.id === id);
+                                return template?.identifier_action || "";
+                              })
+                              .filter(action => action !== "");
+                          }
+                          return [];
+                        })()}
+                        onChange={(e) => {
+                          const selectedValues = e.target.value as string[];
+                          
+                          // Find all selected templates and store their IDs
+                          const selectedTemplateIds = selectedValues
+                            .map(value => {
+                              const template = communicationTemplates.find(
+                                t => t.identifier === "Preventive Action" && t.identifier_action === value
+                              );
+                              return template?.id;
+                            })
+                            .filter((id): id is number => id !== undefined);
+                          
+                          setFormData(prev => ({
+                            ...prev,
+                            preventiveActionTemplateIds: selectedTemplateIds,
+                            preventiveAction: selectedValues.join(", ")
+                          }));
+                          console.log('📝 Preventive Action Template IDs stored:', selectedTemplateIds);
+                        }}
+                        label="Preventive Action"
+                        notched
+                        displayEmpty
+                        disabled={loadingTemplates}
+                        renderValue={(selected) => {
+                          const selectedArray = selected as string[];
+                          if (selectedArray.length === 0) {
+                            return <span className="text-gray-500">
+                              {loadingTemplates ? 'Loading templates...' : 'Select preventive action'}
+                            </span>;
+                          }
+                          return selectedArray.join(", ");
+                        }}
+                      >
+                        {communicationTemplates
+                          .filter(template => template.identifier === "Preventive Action" && template?.active === true)
+                          .map((template) => (
+                            <MenuItem key={template.id} value={template.identifier_action}>
+                              {template.identifier_action}
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
 
                   {/* Status */}
@@ -1507,6 +2234,31 @@ const UpdateTicketsPage: React.FC = () => {
                       </MuiSelect>
                     </FormControl>
                   </div>
+                  <div className="space-y-1">
+                  <FormControl
+  fullWidth
+  variant="outlined"
+  sx={{ '& .MuiInputBase-root': fieldStyles }}
+>
+  <InputLabel shrink>Vendor</InputLabel>
+  <MuiSelect
+    value={formData.vendor}
+    onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+    label="Vendor"
+    notched
+    displayEmpty
+    disabled={loadingSuppliers}
+  >
+    <MenuItem value="">
+      {loadingSuppliers ? "Loading..." : "Select Vendor"}
+    </MenuItem>
+    {suppliers.map((supplier) => (
+      <MenuItem key={supplier.id} value={supplier.id.toString()}>
+        {supplier.name}
+      </MenuItem>
+    ))}
+  </MuiSelect>
+</FormControl>  </div>
                 </div>
               </div>
             </div>
@@ -1727,11 +2479,35 @@ const UpdateTicketsPage: React.FC = () => {
                         <MenuItem value="">
                           <span className="text-gray-500">Select admin priority</span>
                         </MenuItem>
-                        <MenuItem value="p1">P1 - Critical</MenuItem>
-                        <MenuItem value="p2">P2 - Very High</MenuItem>
-                        <MenuItem value="p3">P3 - High</MenuItem>
-                        <MenuItem value="p4">P4 - Medium</MenuItem>
-                        <MenuItem value="p5">P5 - Low</MenuItem>
+                        <MenuItem value="P1">P1 - Critical</MenuItem>
+                        <MenuItem value="P2">P2 - Very High</MenuItem>
+                        <MenuItem value="P3">P3 - High</MenuItem>
+                        <MenuItem value="P4">P4 - Medium</MenuItem>
+                        <MenuItem value="P5">P5 - Low</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  {/* Severity */}
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Severity</InputLabel>
+                      <MuiSelect
+                        value={formData.severity}
+                        onChange={(e) => handleInputChange("severity", e.target.value)}
+                        label="Severity"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select severity</span>
+                        </MenuItem>
+                        <MenuItem value="Major">Major</MenuItem>
+                        <MenuItem value="Minor">Minor</MenuItem>
                       </MuiSelect>
                     </FormControl>
                   </div>
@@ -1789,43 +2565,112 @@ const UpdateTicketsPage: React.FC = () => {
                   </div>
 
                   {/* Root Cause */}
-                  <div className="space-y-1">
-                    <TextField
-                      label="Root Cause"
-                      placeholder="Enter root cause"
-                      value={formData.rootCause}
-                      onChange={(e) => handleInputChange("rootCause", e.target.value)}
+                  <div className="flex flex-col">
+                    <FormControl
                       fullWidth
                       variant="outlined"
-                      slotProps={{
-                        inputLabel: {
-                          shrink: true,
-                        },
-                      }}
-                      InputProps={{
-                        sx: fieldStyles,
-                      }}
-                    />
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Root Cause Analysis</InputLabel>
+                      <MuiSelect
+                        multiple
+                        label="Root Cause Analysis"
+                        notched
+                        displayEmpty
+                        value={getRootCauseAnalysisValues()}
+                        onChange={(e) => handleRootCauseChange(e.target.value)}
+                        renderValue={(selected) => {
+                          if (!selected || (Array.isArray(selected) && selected.length === 0)) {
+                            return <span style={{ color: '#aaa' }}>Select Root Cause Analysis</span>;
+                          }
+
+                          // Convert selected IDs back to display text
+                          const selectedIds = Array.isArray(selected) ? selected : [selected];
+                          const selectedTemplates = communicationTemplates.filter(
+                            t => selectedIds.includes(t.id)
+                          );
+
+                          return selectedTemplates.map(t => t.identifier_action).join(', ');
+                        }}
+                        disabled={loadingTemplates}
+                      >
+                        <MenuItem value="" disabled>
+                          <span className="text-gray-500">
+                            {loadingTemplates ? 'Loading templates...' : 'Select Root Cause Analysis'}
+                          </span>
+                        </MenuItem>
+                        {communicationTemplates
+                          .filter(template => template.identifier === "Root Cause Analysis" && template?.active === true)
+                          .map((template) => (
+                            <MenuItem key={template.id} value={template.id}>
+                              {template.identifier_action}
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
 
-                  {/* Impact */}
+                  {/* Short-term Impact */}
                   <div className="space-y-1">
-                    <TextField
-                      label="Impact"
-                      placeholder="Enter impact"
-                      value={formData.impact}
-                      onChange={(e) => handleInputChange("impact", e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      slotProps={{
-                        inputLabel: {
-                          shrink: true,
-                        },
-                      }}
-                      InputProps={{
-                        sx: fieldStyles,
-                      }}
-                    />
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Short-term Impact</InputLabel>
+                      <MuiSelect
+                        multiple
+                        value={(() => {
+                          // Use template IDs from formData to find selected template actions
+                          if (formData.shortTermImpactTemplateIds && formData.shortTermImpactTemplateIds.length > 0) {
+                            return formData.shortTermImpactTemplateIds
+                              .map(id => {
+                                const template = communicationTemplates.find(t => t.id === id);
+                                return template?.identifier_action || "";
+                              })
+                              .filter(action => action !== "");
+                          }
+                          return [];
+                        })()}
+                        onChange={(e) => {
+                          const selectedValues = e.target.value as string[];
+                          
+                          // Find all selected templates and store their IDs
+                          const selectedTemplateIds = selectedValues
+                            .map(value => {
+                              const template = communicationTemplates.find(
+                                t => t.identifier === "Short-term Impact" && t.identifier_action === value
+                              );
+                              return template?.id;
+                            })
+                            .filter((id): id is number => id !== undefined);
+                          
+                          setFormData(prev => ({
+                            ...prev,
+                            shortTermImpactTemplateIds: selectedTemplateIds,
+                            impact: selectedValues.join(", ")
+                          }));
+                          console.log('📝 Short-term Impact Template IDs stored:', selectedTemplateIds);
+                        }}
+                        label="Short-term Impact"
+                        notched
+                        displayEmpty
+                        disabled={loadingTemplates}
+                        renderValue={(selected) => {
+                          const selectedArray = selected as string[];
+                          if (selectedArray.length === 0) {
+                            return <span className="text-gray-500">
+                              {loadingTemplates ? 'Loading templates...' : 'Select short-term impact'}
+                            </span>;
+                          }
+                          return selectedArray.join(", ");
+                        }}
+                      >
+                        {communicationTemplates
+                          .filter(template => template.identifier === "Short-term Impact" && template?.active === true)
+                          .map((template) => (
+                            <MenuItem key={template.id} value={template.identifier_action}>
+                              {template.identifier_action}
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
 
                   {/* Correction */}
@@ -1848,323 +2693,539 @@ const UpdateTicketsPage: React.FC = () => {
                     />
                   </div>
 
-                   <div className="space-y-1">
-                <TextField
-                  label="Reference Number"
-                  placeholder="Enter reference number"
-                  value={formData.refNumber}
-                  onChange={(e) => handleInputChange("refNumber", e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
-                />
-              </div>
-               <div className="space-y-1">
-                <TextField
-                  label="Corrective Action"
-                  placeholder="Enter corrective action"
-                  value={formData.correctiveAction}
-                  onChange={(e) => handleInputChange("correctiveAction", e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
-                />
-              </div>
-                <div className="space-y-1">
-                <FormControl
-                  fullWidth
-                  variant="outlined"
-                  sx={{ '& .MuiInputBase-root': fieldStyles }}
-                >
-                  <InputLabel shrink>Service Type</InputLabel>
-                  <MuiSelect
-                    value={formData.serviceType}
-                    onChange={(e) => handleInputChange("serviceType", e.target.value)}
-                    label="Service Type"
-                    notched
-                    displayEmpty
-                  >
-                    <MenuItem value="">
-                      <span className="text-gray-500">Select service type</span>
-                    </MenuItem>
-                    {[
-                      { id: 'product', name: 'Product' },
-                      { id: 'service', name: 'Service' }
-                    ].map((type) => (
-                      <MenuItem key={type.id} value={type.id.toString()}>
-                        {type.name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Additional Details section continues with remaining fields */}
-            {/* <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6"> */}
-              {/* Reference Number */}
-              {/* <div className="space-y-1">
-                <TextField
-                  label="Reference Number"
-                  placeholder="Enter reference number"
-                  value={formData.refNumber}
-                  onChange={(e) => handleInputChange("refNumber", e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
-                />
-              </div> */}
-
-              {/* Corrective Action */}
-             
-
-              {/* Service Type */}
-              {/* <div className="space-y-1">
-                <FormControl
-                  fullWidth
-                  variant="outlined"
-                  sx={{ '& .MuiInputBase-root': fieldStyles }}
-                >
-                  <InputLabel shrink>Service Type</InputLabel>
-                  <MuiSelect
-                    value={formData.serviceType}
-                    onChange={(e) => handleInputChange("serviceType", e.target.value)}
-                    label="Service Type"
-                    notched
-                    displayEmpty
-                  >
-                    <MenuItem value="">
-                      <span className="text-gray-500">Select service type</span>
-                    </MenuItem>
-                    {[
-                      { id: 'product', name: 'Product' },
-                      { id: 'service', name: 'Service' }
-                    ].map((type) => (
-                      <MenuItem key={type.id} value={type.id.toString()}>
-                        {type.name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div> */}
-            {/* </div> */}
-
-        {/* Section 5: Issue Related To */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <Building size={16} color="#C72030" />
-              </span>
-              Issue Related To
-            </h2>
-          </div>
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Issue Related To */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Issue Related To
-                </label>
-                <div className="flex gap-6">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="issueRelatedTo"
-                      value="Projects"
-                      checked={formData.issueRelatedTo === "Projects"}
-                      onChange={(e) => handleInputChange("issueRelatedTo", e.target.value)}
-                      style={{
-                        accentColor: "#C72030",
-                        width: "16px",
-                        height: "16px",
-                        borderColor: "#C72030",
-                      }}
-                    />
-                    <span className="text-sm text-gray-700">Project</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="issueRelatedTo"
-                      value="FM"
-                      checked={formData.issueRelatedTo === "FM"}
-                      onChange={(e) =>
-                        handleInputChange("issueRelatedTo", e.target.value)
-                      }
-                      style={{
-                        accentColor: "#C72030",
-                        width: "16px",
-                        height: "16px",
-                        borderColor: "#C72030",
-                      }}
-                    />
-                    <span className="text-sm text-gray-700">FM</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Associated To */}
-              <div className="space-y-1">
-
-                <label className="block text-sm font-medium text-gray-700 mb-2">Associated To</label>
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                  <div className="flex gap-6">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="associatedTo"
-                        value="asset"
-                        checked={formData.associatedTo.asset}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFormData((prev) => ({
-                              ...prev,
-                              associatedTo: { asset: true, service: false },
-                              selectedService: "", // Reset service selection
-                            }));
-                            fetchAssets(false); // Don't auto-select when manually changing
-                          }
-                        }}
-                        style={{
-                          accentColor: "#C72030",
-                          width: "16px",
-                          height: "16px",
-                          borderColor: "#C72030",
-                        }}
-                      />
-                      <span className="text-sm text-gray-700">Asset</span>
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="associatedTo"
-                        value="service"
-                        checked={formData.associatedTo.service}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFormData((prev) => ({
-                              ...prev,
-                              associatedTo: { asset: false, service: true },
-                              selectedAsset: "", // Reset asset selection
-                            }));
-                            fetchServices(false); // Don't auto-select when manually changing
-                          }
-                        }}
-                        style={{
-                          accentColor: "#C72030",
-                          width: "16px",
-                          height: "16px",
-                          borderColor: "#C72030",
-                        }}
-                      />
-                      <span className="text-sm text-gray-700">Service</span>
-                    </label>
-                  </div>
-                  {(formData.associatedTo.asset || formData.associatedTo.service) && (
-                    <FormControl
-                      fullWidth
-                      variant="outlined"
-                      sx={{
-                        minWidth: 260, // Increased width
-                        maxWidth: 340, // Optional: limit max width
-                        ...fieldStyles,
-                      }}
-                    >
-                      <InputLabel shrink>{formData.associatedTo.asset ? "Select Asset" : "Select Service"}</InputLabel>
+                  {/* Long-term Impact */}
+                  <div className="space-y-1">
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Long-term Impact</InputLabel>
                       <MuiSelect
-                        value={formData.associatedTo.asset ? formData.selectedAsset : formData.selectedService}
-                        onChange={(e) => {
-                          if (formData.associatedTo.asset) {
-                            handleInputChange("selectedAsset", e.target.value);
-                          } else {
-                            handleInputChange("selectedService", e.target.value);
+                        multiple
+                        value={(() => {
+                          // Use template IDs from formData to find selected template actions
+                          if (formData.longTermImpactTemplateIds && formData.longTermImpactTemplateIds.length > 0) {
+                            return formData.longTermImpactTemplateIds
+                              .map(id => {
+                                const template = communicationTemplates.find(t => t.id === id);
+                                return template?.identifier_action || "";
+                              })
+                              .filter(action => action !== "");
                           }
+                          return [];
+                        })()}
+                        onChange={(e) => {
+                          const selectedValues = e.target.value as string[];
+                          
+                          // Find all selected templates and store their IDs
+                          const selectedTemplateIds = selectedValues
+                            .map(value => {
+                              const template = communicationTemplates.find(
+                                t => t.identifier === "Long-term Impact" && t.identifier_action === value
+                              );
+                              return template?.id;
+                            })
+                            .filter((id): id is number => id !== undefined);
+                          
+                          setFormData(prev => ({
+                            ...prev,
+                            longTermImpactTemplateIds: selectedTemplateIds,
+                            longTermImpact: selectedValues.join(", ")
+                          }));
+                          console.log('📝 Long-term Impact Template IDs stored:', selectedTemplateIds);
                         }}
-                        label={formData.associatedTo.asset ? "Select Asset" : "Select Service"}
+                        label="Long-term Impact"
                         notched
                         displayEmpty
-                        disabled={isLoadingAssets || isLoadingServices}
+                        disabled={loadingTemplates}
+                        renderValue={(selected) => {
+                          const selectedArray = selected as string[];
+                          if (selectedArray.length === 0) {
+                            return <span className="text-gray-500">
+                              {loadingTemplates ? 'Loading templates...' : 'Select long-term impact'}
+                            </span>;
+                          }
+                          return selectedArray.join(", ");
+                        }}
                       >
-                        <MenuItem value="">
-                          <span className="text-gray-500">{isLoadingAssets || isLoadingServices ? "Loading..." : `Select ${formData.associatedTo.asset ? "Asset" : "Service"}`}</span>
-                        </MenuItem>
-                        {formData.associatedTo.asset && assetOptions.length > 0 &&
-                          assetOptions.map((asset) => (
-                            <MenuItem key={asset.id} value={asset.id.toString()}>
-                              {asset.name}
-                            </MenuItem>
-                          ))}
-                        {formData.associatedTo.service && serviceOptions.length > 0 &&
-                          serviceOptions.map((service) => (
-                            <MenuItem key={service.id} value={service.id.toString()}>
-                              {service.service_name}
+                        {communicationTemplates
+                          .filter(template => template.identifier === "Long-term Impact" && template?.active === true)
+                          .map((template) => (
+                            <MenuItem key={template.id} value={template.identifier_action}>
+                              {template.identifier_action}
                             </MenuItem>
                           ))}
                       </MuiSelect>
                     </FormControl>
-                  )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <TextField
+                      label="Reference Number"
+                      placeholder="Enter reference number"
+                      value={formData.refNumber}
+                      onChange={(e) => handleInputChange("refNumber", e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
+                      }}
+                      InputProps={{
+                        sx: fieldStyles,
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Corrective Action</InputLabel>
+                      <MuiSelect
+                        multiple
+                        value={(() => {
+                          // Use template IDs from formData to find selected template actions
+                          if (formData.correctiveActionTemplateIds && formData.correctiveActionTemplateIds.length > 0) {
+                            return formData.correctiveActionTemplateIds
+                              .map(id => {
+                                const template = communicationTemplates.find(t => t.id === id);
+                                return template?.identifier_action || "";
+                              })
+                              .filter(action => action !== "");
+                          }
+                          return [];
+                        })()}
+                        onChange={(e) => {
+                          const selectedValues = e.target.value as string[];
+                          
+                          // Find all selected templates and store their IDs
+                          const selectedTemplateIds = selectedValues
+                            .map(value => {
+                              const template = communicationTemplates.find(
+                                t => t.identifier === "Corrective Action" && t.identifier_action === value
+                              );
+                              return template?.id;
+                            })
+                            .filter((id): id is number => id !== undefined);
+                          
+                          setFormData(prev => ({
+                            ...prev,
+                            correctiveActionTemplateIds: selectedTemplateIds,
+                            correctiveAction: selectedValues.join(", ")
+                          }));
+                          console.log('📝 Corrective Action Template IDs stored:', selectedTemplateIds);
+                        }}
+                        label="Corrective Action"
+                        notched
+                        displayEmpty
+                        disabled={loadingTemplates}
+                        renderValue={(selected) => {
+                          const selectedArray = selected as string[];
+                          if (selectedArray.length === 0) {
+                            return <span className="text-gray-500">
+                              {loadingTemplates ? 'Loading templates...' : 'Select corrective action'}
+                            </span>;
+                          }
+                          return selectedArray.join(", ");
+                        }}
+                      >
+                        {communicationTemplates
+                          .filter(template => template.identifier === "Corrective Action" && template?.active === true)
+                          .map((template) => (
+                            <MenuItem key={template.id} value={template.identifier_action}>
+                              {template.identifier_action}
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                  <div className="space-y-1">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{ '& .MuiInputBase-root': fieldStyles }}
+                    >
+                      <InputLabel shrink>Service Type</InputLabel>
+                      <MuiSelect
+                        value={formData.serviceType}
+                        onChange={(e) => handleInputChange("serviceType", e.target.value)}
+                        label="Service Type"
+                        notched
+                        displayEmpty
+                      >
+                        <MenuItem value="">
+                          <span className="text-gray-500">Select service type</span>
+                        </MenuItem>
+                        {[
+                          { id: 'product', name: 'Product' },
+                          { id: 'service', name: 'Service' }
+                        ].map((type) => (
+                          <MenuItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Comments Section */}
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Add Comments
-              </label>
-              <Textarea
-                value={formData.comments}
-                onChange={(e) => handleInputChange("comments", e.target.value)}
-                rows={4}
-                className="text-base border rounded min-h-[100px] w-full border-gray-300 bg-white px-3 py-2 focus:outline-none"
-                placeholder="Add comment"
-              />
-              <div className="mt-2">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.costInvolved}
-                    onChange={(e) => handleCostInvolvedChange(e.target.checked)}
-                    style={{
-                      accentColor: '#C72030',
-                      width: '12px',
-                      height: '12px',
-                      borderColor: '#C72030',
-                    }}
-                    className="mr-2"
-                  />
-                  Cost Involved
-                </label>
+            {/* Section 5: Location Details */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-3 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                    <MapPin size={16} color="#C72030" />
+                  </span>
+                  Location Details
+                </h2>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Building */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                  >
+                    <InputLabel shrink>Building</InputLabel>
+                    <MuiSelect
+                      value={formData.building}
+                      onChange={(e) => handleBuildingChange(e.target.value)}
+                      label="Building"
+                      notched
+                      displayEmpty
+                      disabled={loadingBuildings}
+                    >
+                      <MenuItem value="">
+                        {loadingBuildings ? "Loading..." : "Select Building"}
+                      </MenuItem>
+                      {buildings.map((building) => (
+                        <MenuItem key={building.id} value={building.id.toString()}>
+                          {building.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  {/* Wing */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                  >
+                    <InputLabel shrink>Wing</InputLabel>
+                    <MuiSelect
+                      value={formData.wing}
+                      onChange={(e) => handleWingChange(e.target.value)}
+                      label="Wing"
+                      notched
+                      displayEmpty
+                      disabled={loadingWings || !formData.building}
+                    >
+                      <MenuItem value="">
+                        {loadingWings ? "Loading..." :
+                          !formData.building ? "Select Building First" : "Select Wing"}
+                      </MenuItem>
+                      {filteredWings.map((wing) => (
+                        <MenuItem key={wing.id} value={wing.id.toString()}>
+                          {wing.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  {/* Area */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                  >
+                    <InputLabel shrink>Area</InputLabel>
+                    <MuiSelect
+                      value={formData.area}
+                      onChange={(e) => handleAreaChange(e.target.value)}
+                      label="Area"
+                      notched
+                      displayEmpty
+                      disabled={loadingAreas || !formData.wing}
+                    >
+                      <MenuItem value="">
+                        {loadingAreas ? "Loading..." :
+                          !formData.wing ? "Select Wing First" : "Select Area"}
+                      </MenuItem>
+                      {filteredAreas.map((area) => (
+                        <MenuItem key={area.id} value={area.id.toString()}>
+                          {area.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  {/* Floor */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                  >
+                    <InputLabel shrink>Floor</InputLabel>
+                    <MuiSelect
+                      value={formData.floor}
+                      onChange={(e) => handleFloorChange(e.target.value)}
+                      label="Floor"
+                      notched
+                      displayEmpty
+                      disabled={loadingFloors || !formData.area}
+                    >
+                      <MenuItem value="">
+                        {loadingFloors ? "Loading..." :
+                          !formData.area ? "Select Area First" : "Select Floor"}
+                      </MenuItem>
+                      {filteredFloors.map((floor) => (
+                        <MenuItem key={floor.id} value={floor.id.toString()}>
+                          {floor.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  {/* Room */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ '& .MuiInputBase-root': fieldStyles }}
+                  >
+                    <InputLabel shrink>Room</InputLabel>
+                    <MuiSelect
+                      value={formData.room}
+                      onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                      label="Room"
+                      notched
+                      displayEmpty
+                      disabled={loadingRooms || !formData.floor}
+                    >
+                      <MenuItem value="">
+                        {loadingRooms ? "Loading..." :
+                          !formData.floor ? "Select Floor First" : "Select Room"}
+                      </MenuItem>
+                      {filteredRooms.map((room) => (
+                        <MenuItem key={room.id} value={room.id.toString()}>
+                          {room.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-            {/* Section 6: Cost Approval Requests */}
+            {/* Section 6: Issue Related To */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-3 border-b border-gray-200">
+                <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                  <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                    <Building size={16} color="#C72030" />
+                  </span>
+                  Issue Related To
+                </h2>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Issue Related To */}
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Issue Related To
+                    </label>
+                    <div className="flex gap-6">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="issueRelatedTo"
+                          value="Projects"
+                          checked={formData.issueRelatedTo === "Projects"}
+                          onChange={(e) => handleInputChange("issueRelatedTo", e.target.value)}
+                          style={{
+                            accentColor: "#C72030",
+                            width: "16px",
+                            height: "16px",
+                            borderColor: "#C72030",
+                          }}
+                        />
+                        <span className="text-sm text-gray-700">Project</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="issueRelatedTo"
+                          value="FM"
+                          checked={formData.issueRelatedTo === "FM"}
+                          onChange={(e) =>
+                            handleInputChange("issueRelatedTo", e.target.value)
+                          }
+                          style={{
+                            accentColor: "#C72030",
+                            width: "16px",
+                            height: "16px",
+                            borderColor: "#C72030",
+                          }}
+                        />
+                        <span className="text-sm text-gray-700">FM</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Associated To */}
+                  <div className="space-y-1">
+
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Associated To</label>
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                      <div className="flex gap-6">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="associatedTo"
+                            value="asset"
+                            checked={formData.associatedTo.asset}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  associatedTo: { asset: true, service: false },
+                                  selectedService: "", // Reset service selection
+                                }));
+                                fetchAssets(false); // Don't auto-select when manually changing
+                              }
+                            }}
+                            style={{
+                              accentColor: "#C72030",
+                              width: "16px",
+                              height: "16px",
+                              borderColor: "#C72030",
+                            }}
+                          />
+                          <span className="text-sm text-gray-700">Asset</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="associatedTo"
+                            value="service"
+                            checked={formData.associatedTo.service}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  associatedTo: { asset: false, service: true },
+                                  selectedAsset: "", // Reset asset selection
+                                }));
+                                fetchServices(false); // Don't auto-select when manually changing
+                              }
+                            }}
+                            style={{
+                              accentColor: "#C72030",
+                              width: "16px",
+                              height: "16px",
+                              borderColor: "#C72030",
+                            }}
+                          />
+                          <span className="text-sm text-gray-700">Service</span>
+                        </label>
+                      </div>
+                      {(formData.associatedTo.asset || formData.associatedTo.service) && (
+                        <FormControl
+                          fullWidth
+                          variant="outlined"
+                          sx={{
+                            minWidth: 260, // Increased width
+                            maxWidth: 340, // Optional: limit max width
+                            ...fieldStyles,
+                          }}
+                        >
+                          <InputLabel shrink>{formData.associatedTo.asset ? "Select Asset" : "Select Service"}</InputLabel>
+                          <MuiSelect
+                            value={formData.associatedTo.asset ? formData.selectedAsset : formData.selectedService}
+                            onChange={(e) => {
+                              if (formData.associatedTo.asset) {
+                                handleInputChange("selectedAsset", e.target.value);
+                              } else {
+                                handleInputChange("selectedService", e.target.value);
+                              }
+                            }}
+                            label={formData.associatedTo.asset ? "Select Asset" : "Select Service"}
+                            notched
+                            displayEmpty
+                            disabled={isLoadingAssets || isLoadingServices}
+                          >
+                            <MenuItem value="">
+                              <span className="text-gray-500">{isLoadingAssets || isLoadingServices ? "Loading..." : `Select ${formData.associatedTo.asset ? "Asset" : "Service"}`}</span>
+                            </MenuItem>
+                            {formData.associatedTo.asset && assetOptions.length > 0 &&
+                              assetOptions.map((asset) => (
+                                <MenuItem key={asset.id} value={asset.id.toString()}>
+                                  {asset.name}
+                                </MenuItem>
+                              ))}
+                            {formData.associatedTo.service && serviceOptions.length > 0 &&
+                              serviceOptions.map((service) => (
+                                <MenuItem key={service.id} value={service.id.toString()}>
+                                  {service.service_name}
+                                </MenuItem>
+                              ))}
+                          </MuiSelect>
+                        </FormControl>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Comments Section */}
+                <div className="mt-6">
+                  <div className="relative w-full">
+  <textarea
+    id="comments"
+    value={formData.comments}
+    onChange={(e) => handleInputChange("comments", e.target.value)}
+    rows={4}
+    placeholder=" "
+    className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+      focus:outline-none 
+      focus:border-[2px] 
+      focus:border-[rgb(25,118,210)] 
+      resize-vertical"
+  />
+
+  <label
+    htmlFor="comments"
+    className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+      peer-placeholder-shown:top-4
+      peer-placeholder-shown:text-base
+      peer-placeholder-shown:text-gray-400
+      peer-focus:-top-[10px]
+      peer-focus:text-sm
+      peer-focus:text-[rgb(25,118,210)]"
+  >
+    Add comment
+  </label>
+</div>
+
+                  <div className="mt-2">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.costInvolved}
+                        onChange={(e) => handleCostInvolvedChange(e.target.checked)}
+                        style={{
+                          accentColor: '#C72030',
+                          width: '12px',
+                          height: '12px',
+                        }}
+                        className="mr-2"
+                      />
+                      Cost Involved
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 7: Cost Approval Requests */}
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="px-6 py-3 border-b border-gray-200">
                 <h2 className="text-lg font-medium text-gray-900 flex items-center">
@@ -2376,12 +3437,16 @@ const UpdateTicketsPage: React.FC = () => {
                   <input
                     type="number"
                     value={costPopupData.cost}
-                    onChange={(e) =>
-                      setCostPopupData((prev) => ({
-                        ...prev,
-                        cost: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+
+                      const regex = /^\d*\.?\d{0,2}$/;
+                      if (regex.test(value) && Number(value) >= 0) {
+                        setCostPopupData(prev =>
+                          ({ ...prev, cost: value })
+                        );
+                      }
+                    }}
                     placeholder="Enter Cost"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
                   />

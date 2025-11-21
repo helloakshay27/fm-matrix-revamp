@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Edit, Download, Truck, Boxes, FileTextIcon, Paperclip, FileText, FileSpreadsheet, X } from 'lucide-react';
+import { ArrowLeft, Edit, Download, Truck, Boxes, FileTextIcon, Paperclip, FileText, FileSpreadsheet, X, Ticket } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AddVisitModal } from '@/components/AddVisitModal';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -45,7 +45,7 @@ interface AMCDetailsData {
     sub_group_id?: number | null;
     service_name?: string | null;
     sset_code?: string | null; // keeping backend field name as provided
-  asset_code?: string | null; // allow dummy fallback field name
+    asset_code?: string | null; // allow dummy fallback field name
   }[];
 }
 
@@ -126,24 +126,24 @@ export const AMCDetailsPage = () => {
           const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
           if (!resp.ok) throw new Error(`Asset ${assetId} tickets fetch failed`);
           const data = await resp.json();
-            const arr = Array.isArray(data) ? data : (Array.isArray(data?.tickets) ? data.tickets : []);
-            arr.forEach((t: any) => {
-              all.push({
-                id: t.id,
-                heading: t.heading || null,
-                category_type: t.category_type || null,
-                status: t.status || null,
-                updated_at: t.updated_at || null,
-                created_at: t.created_at || null,
-                updated_by: t.updated_by || null,
-              });
+          const arr = Array.isArray(data) ? data : (Array.isArray(data?.tickets) ? data.tickets : []);
+          arr.forEach((t: any) => {
+            all.push({
+              id: t.id,
+              heading: t.heading || null,
+              category_type: t.category_type || null,
+              status: t.status || null,
+              updated_at: t.updated_at || null,
+              created_at: t.created_at || null,
+              updated_by: t.updated_by || null,
             });
+          });
         } catch (inner) {
           console.warn(inner);
         }
       }
       setTickets(all);
-    } catch (e:any) {
+    } catch (e: any) {
       setTicketsError(e.message || 'Failed to load tickets');
     } finally {
       setTicketsLoading(false);
@@ -153,10 +153,10 @@ export const AMCDetailsPage = () => {
   // Fetch tickets when AMC details loaded
   useEffect(() => {
     if (amcDetails?.amc_assets?.length) {
-      const ids = amcDetails.amc_assets.map((a:any) => a.asset_id).filter((v: any) => !!v);
+      const ids = amcDetails.amc_assets.map((a: any) => a.asset_id).filter((v: any) => !!v);
       fetchTicketsForAssets(ids);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [amcDetails?.amc_assets]);
 
   useEffect(() => {
@@ -188,9 +188,10 @@ export const AMCDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading AMC details...</div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading AMC details...</p>
         </div>
       </div>
     );
@@ -225,41 +226,78 @@ export const AMCDetailsPage = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <Button
+        {/* <Button
           variant="ghost"
           onClick={() => navigate('/maintenance/amc')}
           className="mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to AMC List
-        </Button>
+        </Button> */}
+        <button
+          onClick={() => navigate('/maintenance/amc')}
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to AMC List
+        </button>
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">AMC Details - {amcDetails.id}</h1>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">AMC Details</h1>
           <div className="flex gap-2">
+            <Button
+              onClick={() => navigate(`/maintenance/amc/edit/${id}`)}
+              variant="outline"
+              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+            >
+              <svg
+                width="21"
+                height="21"
+                viewBox="0 0 21 21"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <mask
+                  id="mask0_107_2076"
+                  style={{ maskType: "alpha" }}
+                  maskUnits="userSpaceOnUse"
+                  x="0"
+                  y="0"
+                  width="21"
+                  height="21"
+                >
+                  <rect width="21" height="21" fill="#C72030" />
+                </mask>
+                <g mask="url(#mask0_107_2076)">
+                  <path
+                    d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
+                    fill="#C72030"
+                  />
+                </g>
+              </svg>
+            </Button>
             <Button
               onClick={() => setShowAddVisitModal(true)}
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:bg-[#C72030]/90"
             >
-              + Add Visit
+              Add Visit
             </Button>
-            <Button
+            {/* <Button
               onClick={() => navigate(`/maintenance/amc/edit/${id}`)}
               variant="outline"
               className="border-[#C72030] text-[#C72030]"
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit
-            </Button>
+            </Button> */}
+
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="amc-information" className="w-full">
-          <TabsList
-            className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg h-auto p-0 text-sm"
-          >
+          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
             {[
               { label: 'AMC Information', value: 'amc-information' },
               { label: 'Supplier Information', value: 'supplier-information' },
@@ -269,38 +307,74 @@ export const AMCDetailsPage = () => {
               {
                 label: amcDetails.amc_type === "Service" ? "Service Information" : "Asset Information",
                 value: "asset-information",
-              },].map((tab) => (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-                >
-                  {tab.label}
-                </TabsTrigger>
-              ))}
+              },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0 text-sm"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           {/* AMC Information */}
           <TabsContent value="amc-information" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
+            <Card className="border ">
+              <CardHeader>
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <FileTextIcon className="h-4 w-4" />
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                    <FileTextIcon className="w-5 h-5 text-[#C72030]" />
                   </div>
+                  {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <FileTextIcon className="h-4 w-4" />
+                  </div> */}
                   AMC INFORMATION
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className='bg-white text-[15px]'>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><strong>ID:</strong> {amcDetails.id}</div>
-                  <div><strong>Cost:</strong> {formatCurrency(amcDetails.amc_cost)}</div>
-                  <div><strong>Start Date:</strong> {formatDate(amcDetails.amc_start_date)}</div>
-                  <div><strong>End Date:</strong> {formatDate(amcDetails.amc_end_date)}</div>
-                  <div><strong>First Service:</strong> {formatDate(amcDetails.amc_first_service)}</div>
-                  <div><strong>No. of Visits:</strong> {amcDetails.no_of_visits || '—'}</div>
-                  <div><strong>Payment Terms:</strong> {formatPaymentTerm(amcDetails.payment_term)}</div>
-                  <div className="md:col-span-2"><strong>Remarks:</strong> {amcDetails.remarks || '—'}</div>
+                  <div className="flex text-[15px]">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">ID</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.id}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Cost</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{formatCurrency(amcDetails.amc_cost)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Start Date</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{formatDate(amcDetails.amc_start_date)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">End Date</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{formatDate(amcDetails.amc_end_date)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">First Service</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{formatDate(amcDetails.amc_first_service)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">No. of Visits</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.no_of_visits || '—'}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Payment Terms</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{formatPaymentTerm(amcDetails.payment_term)}</span>
+                  </div>
+                  <div className="md:col-span-2 flex">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Remarks</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.remarks || '—'}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -308,22 +382,45 @@ export const AMCDetailsPage = () => {
 
           {/* Supplier Information */}
           <TabsContent value="supplier-information" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
+            <Card className="border">
+              <CardHeader>
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <Truck className="h-4 w-4" />
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                    <Truck className="w-5 h-5 text-[#C72030]" />
                   </div>
+                  {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <Truck className="h-4 w-4" />
+                  </div> */}
                   SUPPLIER INFORMATION
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[15px]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><strong>Name:</strong> {amcDetails.amc_vendor_name || '—'}</div>
-                  <div><strong>Email:</strong> {amcDetails.amc_vendor_email || '—'}</div>
-                  <div><strong>Mobile1:</strong> {amcDetails.amc_vendor_mobile || '—'}</div>
-                  <div><strong>Mobile2:</strong> —</div>
-                  <div><strong>Company name:</strong> {amcDetails.amc_vendor_name || '—'}</div>
+                  <div className="flex">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Name</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_name || '—'}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Email</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_email || '—'}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Mobile1</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_mobile || '—'}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Mobile2</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">—</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 min-w-[140px] whitespace-nowrap">Company name</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcDetails.amc_vendor_name || '—'}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -331,16 +428,19 @@ export const AMCDetailsPage = () => {
 
           {/* Attachments */}
           <TabsContent value="attachments" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-4">
+            <Card className="border">
+              <CardHeader >
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <Paperclip className="h-4 w-4" />
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                    <Paperclip className="w-5 h-5 text-[#C72030]" />
                   </div>
+                  {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <Paperclip className="h-4 w-4" />
+                  </div> */}
                   ATTACHMENTS
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 text-[15px]">
                 <div className="flex flex-wrap gap-6">
                   {['amc_contracts', 'amc_invoices'].map((sectionKey) => {
                     const sectionTitle = sectionKey === 'amc_contracts' ? 'AMC Contract:' : 'AMC Invoice:';
@@ -561,16 +661,16 @@ export const AMCDetailsPage = () => {
 
           {/* AMC Visits */}
           <TabsContent value="amc-visits" className="p-3 sm:p-6">
-            <Card className="border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
+            <Card className="border">
+              <CardHeader >
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <FileTextIcon className="h-4 w-4" />
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                    <FileTextIcon className="w-5 h-5 text-[#C72030]" />
                   </div>
                   AMC VISITS
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[15px]">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -775,16 +875,19 @@ export const AMCDetailsPage = () => {
 
           {/* Tickets */}
           <TabsContent value="tickets" className="p-3 sm:p-6">
-            <Card className="border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
+            <Card className="border">
+              <CardHeader className="">
                 <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                  {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                     <FileTextIcon className="h-4 w-4" />
+                  </div> */}
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                    <Ticket className="w-5 h-5 text-[#C72030]" />
                   </div>
                   TICKETS
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[15px]">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
@@ -838,16 +941,19 @@ export const AMCDetailsPage = () => {
           {/* Asset Information */}
           {amcDetails.amc_type === 'Asset' && (
             <TabsContent value="asset-information" className="p-3 sm:p-6">
-              <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                <CardHeader className="bg-[#F6F4EE] mb-6">
+              <Card className="border">
+                <CardHeader >
                   <CardTitle className="text-lg flex items-center">
-                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                       <Boxes className="h-4 w-4" />
+                    </div> */}
+                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                      <Boxes className="w-5 h-5 text-[#C72030]" />
                     </div>
                     ASSET INFORMATION
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="text-[15px]">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -909,16 +1015,19 @@ export const AMCDetailsPage = () => {
 
           {amcDetails.amc_type === 'Service' && (
             <TabsContent value="asset-information" className="p-3 sm:p-6">
-              <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-                <CardHeader className="bg-[#F6F4EE] mb-6">
+              <Card className="border">
+                <CardHeader >
                   <CardTitle className="text-lg flex items-center">
-                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                       <Boxes className="h-4 w-4" />
+                    </div> */}
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                      <Boxes className="w-5 h-5 text-[#C72030]" />
                     </div>
                     SERVICE INFORMATION
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="text-[15px]">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>

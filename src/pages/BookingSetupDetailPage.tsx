@@ -7,6 +7,21 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronUp,
+  User,
+  CalendarDays,
+  CreditCard,
+  FileImage,
+  Image,
+  NotepadText,
+  ReceiptText,
+  MessageSquareX,
+  Settings,
+  FileCog,
+  Tv,
+  Armchair,
+  LampFloor,
+  Share2,
+  BookKey,
 } from "lucide-react";
 import {
   TextField,
@@ -20,6 +35,8 @@ import { facilityBookingSetupDetails } from "@/store/slices/facilityBookingsSlic
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { QRCodeModal } from "@/components/QRCodeModal";
 import axios from "axios";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -82,6 +99,37 @@ const muiTheme = createTheme({
   },
 });
 
+const columns: ColumnConfig[] = [
+  {
+    key: "start_hour",
+    label: "Start Hour",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "start_min",
+    label: "Start Minute",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "end_hour",
+    label: "End Hour",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "end_min",
+    label: "End Minute",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+]
+
 export const BookingSetupDetailPage = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -93,6 +141,7 @@ export const BookingSetupDetailPage = () => {
   const [showQr, setShowQr] = useState(false);
   const [qrUrl, setQrUrl] = useState("");
   const [additionalOpen, setAdditionalOpen] = useState(false);
+  const [slotsConfigured, setSlotsConfigured] = useState([])
   const [formData, setFormData] = useState({
     facilityName: "",
     isBookable: true,
@@ -187,7 +236,6 @@ export const BookingSetupDetailPage = () => {
       console.error('Error downloading PDF:', error);
     }
   };
-
 
   const handleAdditionalOpen = () => {
     setAdditionalOpen(!additionalOpen);
@@ -300,6 +348,15 @@ export const BookingSetupDetailPage = () => {
 
       setCancellationRules([...transformedRules]);
 
+      setSlotsConfigured(response.facility_slots.map(slot => (
+        {
+          start_hour: slot.facility_slot.start_hour.toString().padStart(2, "0"),
+          start_min: slot.facility_slot.start_min.toString().padStart(2, "0"),
+          end_hour: slot.facility_slot.end_hour.toString().padStart(2, "0"),
+          end_min: slot.facility_slot.end_min.toString().padStart(2, "0"),
+        }
+      )));
+
       // setCancellationRules(response.cancellation_rules)
       setSelectedFile(response?.cover_image?.document);
       setSelectedBookingFiles(
@@ -318,14 +375,23 @@ export const BookingSetupDetailPage = () => {
     fetchFacilityBookingDetails();
   }, []);
 
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      default:
+        return item[columnKey] || "-";
+    }
+  }
+
   return (
     <ThemeProvider theme={muiTheme}>
-      <div className="px-5 bg-white min-h-screen">
-        <div className="bg-white rounded-lg max-w-6xl mx-auto pt-3">
-          <div className="flex items-center justify-between pr-6">
+      <div className="p-6 bg-white">
+        {/* <div className="bg-white rounded-lg max-w-6xl mx-auto pt-3"> */}
+        <div className="mb-6">
+          <div className="flex items-end justify-between gap-2">
             <Button
               variant="ghost"
               onClick={() => navigate("/settings/vas/booking/setup")}
+              className="p-0"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Booking List
@@ -338,13 +404,6 @@ export const BookingSetupDetailPage = () => {
               >
                 Edit
               </Button>
-              {/* <button
-                className="bg-[#F6F4EE] py-2 px-4 rounded mt-2 flex items-center gap-2"
-                onClick={() => setShowQr(true)}
-              >
-                <QrCode className="w-4 h-4" color="#000" /> QR Code
-              </button> */}
-
               <Button
                 onClick={() => setShowQr(true)}
                 className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
@@ -365,947 +424,825 @@ export const BookingSetupDetailPage = () => {
               </Button>
             </div>
           </div>
-          <div className="p-6 space-y-8">
-            {/* Basic Info */}
-            <div className="border rounded-lg">
-              <div
-                className="flex items-center gap-2 bg-[#F6F4EE] p-6"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  1
-                </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  Basic Info
-                </h3>
+        </div>
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <User className="w-4 h-4" />
               </div>
-              <div
-                className="p-[31px] bg-[#F6F7F7] space-y-4"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <TextField
-                    label="Facility Name*"
-                    value={formData.facilityName}
-                    variant="outlined"
-                    InputProps={{ readOnly: true }}
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BASIC INFo</h3>
+            </div>
+            <div className="space-y-6 py-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <TextField
+                  label="Facility Name*"
+                  value={formData.facilityName}
+                  variant="outlined"
+                  InputProps={{ readOnly: true }}
+                />
+                <FormControl>
+                  <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
+                  <Select
+                    value={formData.department}
+                    label="Department"
+                    disabled
+                    displayEmpty
+                  >
+                    <MenuItem value="">
+                      {loadingDepartments ? "Loading..." : "All"}
+                    </MenuItem>
+                    {Array.isArray(departments) &&
+                      departments.map((dept, index) => (
+                        <MenuItem key={index} value={dept.id}>
+                          {dept.department_name}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+              </div>
+
+              <div className="flex gap-6 py-2">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="bookable"
+                    name="type"
+                    checked={formData.isBookable}
+                    disabled
+                    className="text-blue-600"
                   />
-                  <FormControl>
-                    <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
-                    <Select
-                      value={formData.department}
-                      label="Department"
-                      disabled
-                      displayEmpty
-                    >
-                      <MenuItem value="">
-                        {loadingDepartments ? "Loading..." : "All"}
-                      </MenuItem>
-                      {Array.isArray(departments) &&
-                        departments.map((dept, index) => (
-                          <MenuItem key={index} value={dept.id}>
-                            {dept.department_name}
-                          </MenuItem>
-                        ))}
-                    </Select>
-                  </FormControl>
+                  <label htmlFor="bookable">Bookable</label>
                 </div>
-                <div className="flex gap-6 bg-[#F6F7F7]">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="bookable"
-                      name="type"
-                      checked={formData.isBookable}
-                      disabled
-                      className="text-blue-600"
-                    />
-                    <label htmlFor="bookable">Bookable</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="request"
-                      name="type"
-                      checked={formData.isRequest}
-                      disabled
-                      className="text-blue-600"
-                    />
-                    <label htmlFor="request">Request</label>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="request"
+                    name="type"
+                    checked={formData.isRequest}
+                    disabled
+                    className="text-blue-600"
+                  />
+                  <label htmlFor="request">Request</label>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Configure Slot */}
-            <div className="border rounded-lg">
-              <div
-                className="flex items-center gap-2 bg-[#F6F4EE] p-6"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  2
-                </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  CONFIGURE SLOT
-                </h3>
+          {/* Configure Slot */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <CalendarDays className="w-4 h-4" />
               </div>
-              <div
-                className="p-[31px] bg-[#F6F7F7]"
-                style={{ border: "1px solid #D9D9D9" }}
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE SLOT</h3>
+            </div>
+
+            <div>
+              <Button
+                disabled
+                className="bg-purple-600 hover:bg-purple-700 mb-4 opacity-50 cursor-not-allowed"
               >
-                <Button
-                  disabled
-                  className="bg-purple-600 hover:bg-purple-700 mb-4 opacity-50 cursor-not-allowed"
-                >
-                  Add
-                </Button>
-                <div className="grid grid-cols-7 gap-2 mb-2 text-sm font-medium text-gray-600">
-                  <div>Start Time</div>
-                  <div>Break Time Start</div>
-                  <div>Break Time End</div>
-                  <div>End Time</div>
-                  <div>Concurrent Slots</div>
-                  <div>Slot by</div>
-                  <div>Wrap Time</div>
-                </div>
-                {formData.slots.map((slot, index) => (
-                  <div key={index} className="grid grid-cols-7 gap-2 mb-2">
-                    <div className="flex gap-1">
-                      <FormControl size="small">
-                        <Select
-                          value={slot.startTime.hour}
-                          disabled
-                        >
-                          {Array.from({ length: 24 }, (_, i) => (
-                            <MenuItem key={i} value={i.toString()}>
-                              {i.toString().padStart(2, "0")}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      <FormControl size="small">
-                        <Select
-                          value={slot.startTime.minute}
-                          disabled
-                        >
-                          {Array.from({ length: 60 }, (_, i) => (
-                            <MenuItem key={i} value={i.toString()}>
-                              {i.toString().padStart(2, "0")}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </div>
-                    <div className="flex gap-1">
-                      <FormControl size="small">
-                        <Select
-                          value={slot.breakTimeStart.hour}
-                          disabled
-                        >
-                          {Array.from({ length: 24 }, (_, i) => (
-                            <MenuItem key={i} value={i.toString()}>
-                              {i.toString().padStart(2, "0")}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      <FormControl size="small">
-                        <Select
-                          value={slot.breakTimeStart.minute}
-                          disabled
-                        >
-                          {Array.from({ length: 60 }, (_, i) => (
-                            <MenuItem key={i} value={i.toString()}>
-                              {i.toString().padStart(2, "0")}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </div>
-                    <div className="flex gap-1">
-                      <FormControl size="small">
-                        <Select
-                          value={slot.breakTimeEnd.hour}
-                          disabled
-                        >
-                          {Array.from({ length: 24 }, (_, i) => (
-                            <MenuItem key={i} value={i.toString()}>
-                              {i.toString().padStart(2, "0")}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      <FormControl size="small">
-                        <Select
-                          value={slot.breakTimeEnd.minute}
-                          disabled
-                        >
-                          {Array.from({ length: 60 }, (_, i) => (
-                            <MenuItem key={i} value={i.toString()}>
-                              {i.toString().padStart(2, "0")}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </div>
-                    <div className="flex gap-1">
-                      <FormControl size="small">
-                        <Select
-                          value={slot.endTime.hour}
-                          disabled
-                        >
-                          {Array.from({ length: 24 }, (_, i) => (
-                            <MenuItem key={i} value={i.toString()}>
-                              {i.toString().padStart(2, "0")}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      <FormControl size="small">
-                        <Select
-                          value={slot.endTime.minute}
-                          disabled
-                        >
-                          {Array.from({ length: 60 }, (_, i) => (
-                            <MenuItem key={i} value={i.toString()}>
-                              {i.toString().padStart(2, "0")}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </div>
-                    <TextField
-                      size="small"
-                      value={slot.concurrentSlots}
-                      variant="outlined"
-                      InputProps={{ readOnly: true }}
-                    />
+                Add
+              </Button>
+              <div className="grid grid-cols-7 gap-2 mb-2 text-sm font-medium text-gray-600">
+                <div>Start Time</div>
+                <div>Break Time Start</div>
+                <div>Break Time End</div>
+                <div>End Time</div>
+                <div>Concurrent Slots</div>
+                <div>Slot by</div>
+                <div>Wrap Time</div>
+              </div>
+              {formData.slots.map((slot, index) => (
+                <div key={index} className="grid grid-cols-7 gap-2 mb-2">
+                  <div className="flex gap-1">
                     <FormControl size="small">
                       <Select
-                        value={slot.slotBy}
+                        value={slot.startTime.hour}
                         disabled
                       >
-                        <MenuItem value={"15 Minutes"}>15 Minutes</MenuItem>
-                        <MenuItem value={"30 Minutes"}>Half hour</MenuItem>
-                        <MenuItem value={"45 Minutes"}>45 Minutes</MenuItem>
-                        <MenuItem value={"60 Minutes"}>1 hour</MenuItem>
-                        <MenuItem value={"90 Minutes"}>1 and a half hours</MenuItem>
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString()}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
                       </Select>
                     </FormControl>
-                    <TextField
-                      size="small"
-                      value={slot.wrapTime}
-                      variant="outlined"
-                      InputProps={{ readOnly: true }}
-                    />
-                  </div>
-                ))}
-                <div className="space-y-4 mt-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Booking Allowed before :
-                    </label>
-                    <p className="text-sm text-gray-600 mb-2">
-                      (Enter Time: DD Days, HH Hours, MM Minutes)
-                    </p>
-                    <div className="flex gap-2 items-center">
-                      <TextField
-                        placeholder="Day"
-                        size="small"
-                        style={{ width: "80px" }}
-                        variant="outlined"
-                        value={formData.bookingAllowedBefore.day}
-                        InputProps={{ readOnly: true }}
-                      />
-                      <span>d</span>
-                      <TextField
-                        placeholder="Hour"
-                        size="small"
-                        style={{ width: "80px" }}
-                        variant="outlined"
-                        value={formData.bookingAllowedBefore.hour}
-                        InputProps={{ readOnly: true }}
-                      />
-                      <span>h</span>
-                      <TextField
-                        placeholder="Mins"
-                        size="small"
-                        style={{ width: "80px" }}
-                        variant="outlined"
-                        value={formData.bookingAllowedBefore.minute}
-                        InputProps={{ readOnly: true }}
-                      />
-                      <span>m</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Advance Booking :
-                    </label>
-                    <div className="flex gap-2 items-center">
-                      <TextField
-                        placeholder="Day"
-                        size="small"
-                        style={{ width: "80px" }}
-                        variant="outlined"
-                        value={formData.advanceBooking.day}
-                        InputProps={{ readOnly: true }}
-                      />
-                      <span>d</span>
-                      <TextField
-                        placeholder="Hour"
-                        size="small"
-                        style={{ width: "80px" }}
-                        variant="outlined"
-                        value={formData.advanceBooking.hour}
-                        InputProps={{ readOnly: true }}
-                      />
-                      <span>h</span>
-                      <TextField
-                        placeholder="Mins"
-                        size="small"
-                        style={{ width: "80px" }}
-                        variant="outlined"
-                        value={formData.advanceBooking.minute}
-                        InputProps={{ readOnly: true }}
-                      />
-                      <span>m</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Can Cancel Before Schedule :
-                    </label>
-                    <div className="flex gap-2 items-center">
-                      <TextField
-                        placeholder="Day"
-                        size="small"
-                        style={{ width: "80px" }}
-                        variant="outlined"
-                        value={formData.canCancelBefore.day}
-                        InputProps={{ readOnly: true }}
-                      />
-                      <span>d</span>
-                      <TextField
-                        placeholder="Hour"
-                        size="small"
-                        style={{ width: "80px" }}
-                        variant="outlined"
-                        value={formData.canCancelBefore.hour}
-                        InputProps={{ readOnly: true }}
-                      />
-                      <span>h</span>
-                      <TextField
-                        placeholder="Mins"
-                        size="small"
-                        style={{ width: "80px" }}
-                        variant="outlined"
-                        value={formData.canCancelBefore.minute}
-                        InputProps={{ readOnly: true }}
-                      />
-                      <span>m</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4 flex items-center justify-between mt-4">
-                  <div className="flex flex-col gap-5">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="allowMultipleSlots"
-                        checked={formData.allowMultipleSlots}
+                    <FormControl size="small">
+                      <Select
+                        value={slot.startTime.minute}
                         disabled
-                      />
-                      <label htmlFor="allowMultipleSlots">
-                        Allow Multiple Slots
-                      </label>
-                    </div>
-                    {formData.allowMultipleSlots && (
-                      <div>
-                        <TextField
-                          label="Maximum no. of slots"
-                          value={formData.maximumSlots}
-                          variant="outlined"
-                          size="small"
-                          style={{ width: "200px" }}
-                          InputProps={{ readOnly: true }}
-                        />
-                      </div>
-                    )}
+                      >
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString()}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <span>Facility can be booked</span>
+                  <div className="flex gap-1">
+                    <FormControl size="small">
+                      <Select
+                        value={slot.breakTimeStart.hour}
+                        disabled
+                      >
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString()}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <FormControl size="small">
+                      <Select
+                        value={slot.breakTimeStart.minute}
+                        disabled
+                      >
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString()}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </div>
+                  <div className="flex gap-1">
+                    <FormControl size="small">
+                      <Select
+                        value={slot.breakTimeEnd.hour}
+                        disabled
+                      >
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString()}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <FormControl size="small">
+                      <Select
+                        value={slot.breakTimeEnd.minute}
+                        disabled
+                      >
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString()}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </div>
+                  <div className="flex gap-1">
+                    <FormControl size="small">
+                      <Select
+                        value={slot.endTime.hour}
+                        disabled
+                      >
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString()}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <FormControl size="small">
+                      <Select
+                        value={slot.endTime.minute}
+                        disabled
+                      >
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <MenuItem key={i} value={i.toString()}>
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </div>
+                  <TextField
+                    size="small"
+                    value={slot.concurrentSlots}
+                    variant="outlined"
+                    InputProps={{ readOnly: true }}
+                  />
+                  <FormControl size="small">
+                    <Select
+                      value={slot.slotBy}
+                      disabled
+                    >
+                      <MenuItem value={"15 Minutes"}>15 Minutes</MenuItem>
+                      <MenuItem value={"30 Minutes"}>Half hour</MenuItem>
+                      <MenuItem value={"45 Minutes"}>45 Minutes</MenuItem>
+                      <MenuItem value={"60 Minutes"}>1 hour</MenuItem>
+                      <MenuItem value={"90 Minutes"}>1 and a half hours</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    size="small"
+                    value={slot.wrapTime}
+                    variant="outlined"
+                    InputProps={{ readOnly: true }}
+                  />
+                </div>
+              ))}
+              <div className="space-y-4 mt-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Booking Allowed before :
+                  </label>
+                  <p className="text-sm text-gray-600 mb-2">
+                    (Enter Time: DD Days, HH Hours, MM Minutes)
+                  </p>
+                  <div className="flex gap-2 items-center">
                     <TextField
-                      value={formData.facilityBookedTimes}
-                      variant="outlined"
+                      placeholder="Day"
                       size="small"
                       style={{ width: "80px" }}
+                      variant="outlined"
+                      value={formData.bookingAllowedBefore.day}
                       InputProps={{ readOnly: true }}
                     />
-                    <span>times per day by User</span>
+                    <span>d</span>
+                    <TextField
+                      placeholder="Hour"
+                      size="small"
+                      style={{ width: "80px" }}
+                      variant="outlined"
+                      value={formData.bookingAllowedBefore.hour}
+                      InputProps={{ readOnly: true }}
+                    />
+                    <span>h</span>
+                    <TextField
+                      placeholder="Mins"
+                      size="small"
+                      style={{ width: "80px" }}
+                      variant="outlined"
+                      value={formData.bookingAllowedBefore.minute}
+                      InputProps={{ readOnly: true }}
+                    />
+                    <span>m</span>
                   </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Advance Booking :
+                  </label>
+                  <div className="flex gap-2 items-center">
+                    <TextField
+                      placeholder="Day"
+                      size="small"
+                      style={{ width: "80px" }}
+                      variant="outlined"
+                      value={formData.advanceBooking.day}
+                      InputProps={{ readOnly: true }}
+                    />
+                    <span>d</span>
+                    <TextField
+                      placeholder="Hour"
+                      size="small"
+                      style={{ width: "80px" }}
+                      variant="outlined"
+                      value={formData.advanceBooking.hour}
+                      InputProps={{ readOnly: true }}
+                    />
+                    <span>h</span>
+                    <TextField
+                      placeholder="Mins"
+                      size="small"
+                      style={{ width: "80px" }}
+                      variant="outlined"
+                      value={formData.advanceBooking.minute}
+                      InputProps={{ readOnly: true }}
+                    />
+                    <span>m</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Can Cancel Before Schedule :
+                  </label>
+                  <div className="flex gap-2 items-center">
+                    <TextField
+                      placeholder="Day"
+                      size="small"
+                      style={{ width: "80px" }}
+                      variant="outlined"
+                      value={formData.canCancelBefore.day}
+                      InputProps={{ readOnly: true }}
+                    />
+                    <span>d</span>
+                    <TextField
+                      placeholder="Hour"
+                      size="small"
+                      style={{ width: "80px" }}
+                      variant="outlined"
+                      value={formData.canCancelBefore.hour}
+                      InputProps={{ readOnly: true }}
+                    />
+                    <span>h</span>
+                    <TextField
+                      placeholder="Mins"
+                      size="small"
+                      style={{ width: "80px" }}
+                      variant="outlined"
+                      value={formData.canCancelBefore.minute}
+                      InputProps={{ readOnly: true }}
+                    />
+                    <span>m</span>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4 flex items-center justify-between mt-4">
+                <div className="flex flex-col gap-5">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="allowMultipleSlots"
+                      checked={formData.allowMultipleSlots}
+                      disabled
+                    />
+                    <label htmlFor="allowMultipleSlots">
+                      Allow Multiple Slots
+                    </label>
+                  </div>
+                  {formData.allowMultipleSlots && (
+                    <div>
+                      <TextField
+                        label="Maximum no. of slots"
+                        value={formData.maximumSlots}
+                        variant="outlined"
+                        size="small"
+                        style={{ width: "200px" }}
+                        InputProps={{ readOnly: true }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span>Facility can be booked</span>
+                  <TextField
+                    value={formData.facilityBookedTimes}
+                    variant="outlined"
+                    size="small"
+                    style={{ width: "80px" }}
+                    InputProps={{ readOnly: true }}
+                  />
+                  <span>times per day by User</span>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Configure Payment */}
-            <div className="border rounded-lg">
-              <div
-                className="flex items-center gap-2 bg-[#F6F4EE] p-6"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  3
-                </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  CONFIGURE PAYMENT
-                </h3>
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3 -mb-3">
+              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <CalendarDays className="w-4 h-4" />
               </div>
-              <div
-                className="p-[31px] bg-[#F6F7F7] space-y-6"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="postpaid"
-                      checked={formData.postpaid}
-                      disabled
-                    />
-                    <label htmlFor="postpaid">Postpaid</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="prepaid"
-                      checked={formData.prepaid}
-                      disabled
-                    />
-                    <label htmlFor="prepaid">Prepaid</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="payOnFacility"
-                      checked={formData.payOnFacility}
-                      disabled
-                    />
-                    <label htmlFor="payOnFacility">Pay on Facility</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="complimentary"
-                      checked={formData.complimentary}
-                      disabled
-                    />
-                    <label htmlFor="complimentary">Complimentary</label>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <TextField
-                    label="SGST(%)"
-                    value={formData.sgstPercentage}
-                    variant="outlined"
-                    InputProps={{ readOnly: true }}
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">SLOTS CONFIGURED</h3>
+            </div>
+
+            <EnhancedTable
+              data={slotsConfigured}
+              columns={columns}
+              renderCell={renderCell}
+              storageKey="slots-configured-table"
+              hideColumnsButton={true}
+              hideTableExport={true}
+              hideTableSearch={true}
+            />
+          </div>
+
+          {/* Configure Payment */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <CreditCard className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE PAYMENT</h3>
+            </div>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="postpaid"
+                    checked={formData.postpaid}
+                    disabled
                   />
-                  <TextField
-                    label="GST(%)"
-                    value={formData.gstPercentage}
-                    variant="outlined"
-                    InputProps={{ readOnly: true }}
-                  />
+                  <label htmlFor="postpaid">Postpaid</label>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="prepaid"
+                    checked={formData.prepaid}
+                    disabled
+                  />
+                  <label htmlFor="prepaid">Prepaid</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="payOnFacility"
+                    checked={formData.payOnFacility}
+                    disabled
+                  />
+                  <label htmlFor="payOnFacility">Pay on Facility</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="complimentary"
+                    checked={formData.complimentary}
+                    disabled
+                  />
+                  <label htmlFor="complimentary">Complimentary</label>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <TextField
-                  label="Per Slot Charge"
-                  value={formData.perSlotCharge}
+                  label="SGST(%)"
+                  value={formData.sgstPercentage}
+                  variant="outlined"
+                  InputProps={{ readOnly: true }}
+                />
+                <TextField
+                  label="GST(%)"
+                  value={formData.gstPercentage}
                   variant="outlined"
                   InputProps={{ readOnly: true }}
                 />
               </div>
+              <TextField
+                label="Per Slot Charge"
+                value={formData.perSlotCharge}
+                variant="outlined"
+                InputProps={{ readOnly: true }}
+              />
             </div>
+          </div>
 
-            {/* Cover Image and Booking Summary Image */}
-            <div className="flex items-center justify-between gap-4">
-              <div className="border rounded-lg w-full">
-                <div
-                  className="flex items-center gap-2 bg-[#F6F4EE] p-6"
-                  style={{ border: "1px solid #D9D9D9" }}
-                >
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    4
-                  </div>
-                  <h3 className="text-lg font-semibold text-[#C72030]">
-                    COVER IMAGE
-                  </h3>
+          {/* Cover Image and Booking Summary Image */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <FileImage className="w-4 h-4" />
                 </div>
-                <div
-                  className="p-6 bg-[#F6F7F7]"
-                  style={{ border: "1px solid #D9D9D9" }}
-                >
-                  {selectedFile && (
-                    <div className="flex gap-2 flex-wrap">
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">COVER IMAGE</h3>
+              </div>
+              <div>
+                {selectedFile ? (
+                  <div className="flex gap-2 flex-wrap">
+                    <img
+                      src={selectedFile}
+                      alt="cover-preview"
+                      className="h-[80px] w-20 rounded border border-gray-200"
+                    />
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    No image selected
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <Image className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Booking Summary Image</h3>
+              </div>
+              <div>
+                {selectedBookingFiles.length > 0 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedBookingFiles.map((file, index) => (
                       <img
-                        src={selectedFile}
-                        alt="cover-preview"
-                        className="h-[80px] w-20 rounded border border-gray-200"
+                        key={index}
+                        src={file}
+                        alt={`cover-preview-${index}`}
+                        className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
                       />
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="border rounded-lg w-full">
-                <div
-                  className="flex items-center gap-2 bg-[#F6F4EE] p-6"
-                  style={{ border: "1px solid #D9D9D9" }}
-                >
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    5
+                    ))}
                   </div>
-                  <h3 className="text-lg font-semibold text-[#C72030]">
-                    Booking Summary Image
-                  </h3>
-                </div>
-                <div
-                  className="p-6 bg-[#F6F7F7]"
-                  style={{ border: "1px solid #D9D9D9" }}
-                >
-                  {selectedBookingFiles.length > 0 && (
-                    <div className="flex gap-2 flex-wrap">
-                      {selectedBookingFiles.map((file, index) => (
-                        <img
-                          key={index}
-                          src={file}
-                          alt={`cover-preview-${index}`}
-                          className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             </div>
+          </div>
 
-            {/* Description */}
-            <div className="border rounded-lg">
-              <div
-                className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  6
-                </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  DESCRIPTION
-                </h3>
+          {/* Description */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <NotepadText className="w-4 h-4" />
               </div>
-              <div
-                className="p-6 bg-[#F6F7F7]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">DESCRIPTION</h3>
+            </div>
+            <div>
+              <Textarea
+                value={formData.description}
+                className="min-h-[100px]"
+                readOnly
+              />
+            </div>
+          </div>
+
+          {/* Terms & Conditions and Cancellation Text */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <ReceiptText className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">TERMS & CONDITIONS*</h3>
+              </div>
+              <div>
                 <Textarea
-                  value={formData.description}
+                  value={formData.termsConditions}
                   className="min-h-[100px]"
                   readOnly
                 />
               </div>
             </div>
-
-            {/* Terms & Conditions and Cancellation Text */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border rounded-lg">
-                <div
-                  className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
-                  style={{ border: "1px solid #D9D9D9" }}
-                >
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    7
-                  </div>
-                  <h3 className="text-lg font-semibold text-[#C72030]">
-                    TERMS & CONDITIONS
-                  </h3>
+            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <MessageSquareX className="w-4 h-4" />
                 </div>
-                <div
-                  className="p-6 bg-[#F6F7F7]"
-                  style={{ border: "1px solid #D9D9D9" }}
-                >
-                  <Textarea
-                    value={formData.termsConditions}
-                    className="min-h-[100px]"
-                    readOnly
-                  />
-                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CANCELLATION POLICY*</h3>
               </div>
-              <div className="border rounded-lg">
-                <div
-                  className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
-                  style={{ border: "1px solid #D9D9D9" }}
-                >
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    8
-                  </div>
-                  <h3 className="text-lg font-semibold text-[#C72030]">
-                    CANCELLATION POLICY
-                  </h3>
-                </div>
-                <div
-                  className="p-6 bg-[#F6F7F7]"
-                  style={{ border: "1px solid #D9D9D9" }}
-                >
-                  <Textarea
-                    value={formData.cancellationText}
-                    className="min-h-[100px]"
-                    readOnly
-                  />
-                </div>
+              <div>
+                <Textarea
+                  value={formData.cancellationText}
+                  className="min-h-[100px]"
+                  readOnly
+                />
               </div>
             </div>
+          </div>
 
-            {/* Cancellation Rules */}
-            <div className="border rounded-lg">
-              <div
-                className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  9
-                </div>
-                <h3 className="text-lg font-semibold text-[#C72030]">
-                  RULE SETUP
-                </h3>
+          {/* Cancellation Rules */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <Settings className="w-4 h-4" />
               </div>
-              <div
-                className="p-6 bg-[#F6F7F7]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div className="font-medium text-gray-700">
-                    Rules Description
-                  </div>
-                  <div className="font-medium text-gray-700">Time</div>
-                  <div className="font-medium text-gray-700">Deduction</div>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">RULE SETUP</h3>
+            </div>
+            <div>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="font-medium text-gray-700">
+                  Rules Description
                 </div>
-                {cancellationRules.map((rule, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-3 gap-4 mb-2 items-center"
-                  >
-                    <div className="text-sm text-gray-600">
-                      {rule.description}
-                    </div>
-                    <div className="flex gap-2">
-                      <TextField
-                        placeholder="Day"
-                        size="small"
-                        style={{ width: "80px" }}
-                        variant="outlined"
-                        value={rule.time.day}
-                        InputProps={{ readOnly: true }}
-                      />
-                      <FormControl size="small" style={{ width: "80px" }}>
-                        <Select
-                          value={rule.time.type}
-                          disabled
-                        >
-                          {Array.from({ length: 24 }, (_, i) => (
-                            <MenuItem key={i} value={i}>
-                              {i}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-
-                      <FormControl size="small" style={{ width: "80px" }}>
-                        <Select
-                          value={rule.time.value}
-                          disabled
-                        >
-                          {Array.from({ length: 24 }, (_, i) => (
-                            <MenuItem
-                              key={i}
-                              value={i}
-                            >
-                              {i}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </div>
+                <div className="font-medium text-gray-700">Time</div>
+                <div className="font-medium text-gray-700">Deduction</div>
+              </div>
+              {cancellationRules.map((rule, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-3 gap-4 mb-2 items-center"
+                >
+                  <div className="text-sm text-gray-600">
+                    {rule.description}
+                  </div>
+                  <div className="flex gap-2">
                     <TextField
-                      placeholder="%"
+                      placeholder="Day"
                       size="small"
+                      style={{ width: "80px" }}
                       variant="outlined"
-                      value={rule.deduction}
+                      value={rule.time.day}
                       InputProps={{ readOnly: true }}
                     />
-                  </div>
-                ))}
-              </div>
-            </div>
+                    <FormControl size="small" style={{ width: "80px" }}>
+                      <Select
+                        value={rule.time.type}
+                        disabled
+                      >
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <MenuItem key={i} value={i}>
+                            {i}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
 
-            {/* Additional Setup */}
-            <div
-              className={`border rounded-lg overflow-hidden ${additionalOpen ? "h-auto" : "h-[3.8rem]"}`}
-            >
-              <div
-                className="flex justify-between p-6 bg-[#F6F4EE]"
-                style={{ border: "1px solid #D9D9D9" }}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold"></div>
-                  <h3 className="text-lg font-semibold text-[#C72030]">
-                    ADDITIONAL SETUP
-                  </h3>
+                    <FormControl size="small" style={{ width: "80px" }}>
+                      <Select
+                        value={rule.time.value}
+                        disabled
+                      >
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <MenuItem
+                            key={i}
+                            value={i}
+                          >
+                            {i}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </div>
+                  <TextField
+                    placeholder="%"
+                    size="small"
+                    variant="outlined"
+                    value={rule.deduction}
+                    InputProps={{ readOnly: true }}
+                  />
                 </div>
-                {additionalOpen ? (
-                  <ChevronUp
-                    onClick={handleAdditionalOpen}
-                    className="cursor-pointer"
-                  />
-                ) : (
-                  <ChevronDown
-                    onClick={handleAdditionalOpen}
-                    className="cursor-pointer"
-                  />
-                )}
+              ))}
+            </div>
+          </div>
+
+          {/* Additional Setup */}
+          <div className={`bg-white rounded-lg border-2 p-6 space-y-6 overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[6rem]'}`}>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <FileCog className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">ADDITIONAL SETUP</h3>
               </div>
-              <div
-                className="p-6 space-y-4"
-                style={{ border: "1px solid #D9D9D9" }}
-                id="additional"
-              >
-                <div className="border rounded-lg">
-                  <div
-                    className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                  >
-                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      10
-                    </div>
-                    <h3 className="text-lg font-semibold text-[#C72030]">
-                      CONFIGURE AMENITY INFO
-                    </h3>
+              {additionalOpen ? (
+                <ChevronUp
+                  onClick={handleAdditionalOpen}
+                  className="cursor-pointer"
+                />
+              ) : (
+                <ChevronDown
+                  onClick={handleAdditionalOpen}
+                  className="cursor-pointer"
+                />
+              )}
+            </div>
+            <div className="space-y-4" id="additional">
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                    <Tv className="w-4 h-4" />
                   </div>
-                  <div
-                    className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                    id="amenities"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="tv"
-                        checked={formData.amenities.tv}
-                        disabled
-                      />
-                      <label htmlFor="tv">TV</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="whiteboard"
-                        checked={formData.amenities.whiteboard}
-                        disabled
-                      />
-                      <label htmlFor="whiteboard">Whiteboard</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="casting"
-                        checked={formData.amenities.casting}
-                        disabled
-                      />
-                      <label htmlFor="casting">Casting</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="smartPenForTV"
-                        checked={formData.amenities.smartPenForTV}
-                        disabled
-                      />
-                      <label htmlFor="smartPenForTV">Smart Pen for TV</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="wirelessCharging"
-                        checked={formData.amenities.wirelessCharging}
-                        disabled
-                      />
-                      <label htmlFor="wirelessCharging">Wireless Charging</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="meetingRoomInventory"
-                        checked={formData.amenities.meetingRoomInventory}
-                        disabled
-                      />
-                      <label htmlFor="meetingRoomInventory">
-                        Meeting Room Inventory
-                      </label>
-                    </div>
-                  </div>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
                 </div>
-                <div className="border rounded-lg">
-                  <div
-                    className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                    id="seater"
-                  >
-                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      11
-                    </div>
-                    <h3 className="text-lg font-semibold text-[#C72030]">
-                      SEATER INFO
-                    </h3>
-                  </div>
-                  <div
-                    className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                  >
-                    <FormControl>
-                      <InputLabel sx={{ backgroundColor: '#F6F7F7', paddingRight: "5px" }}>Seater Info</InputLabel>
-                      <Select
-                        value={formData.seaterInfo}
-                        label="Seater Info"
-                        disabled
-                      >
-                        <MenuItem value="Select a seater">Select a seater</MenuItem>
-                        <MenuItem value="1 Seater">1 Seater</MenuItem>
-                        <MenuItem value="2 Seater">2 Seater</MenuItem>
-                        <MenuItem value="3 Seater">3 Seater</MenuItem>
-                        <MenuItem value="4 Seater">4 Seater</MenuItem>
-                        <MenuItem value="5 Seater">5 Seater</MenuItem>
-                        <MenuItem value="6 Seater">6 Seater</MenuItem>
-                        <MenuItem value="7 Seater">7 Seater</MenuItem>
-                        <MenuItem value="8 Seater">8 Seater</MenuItem>
-                        <MenuItem value="9 Seater">9 Seater</MenuItem>
-                        <MenuItem value="10 Seater">10 Seater</MenuItem>
-                        <MenuItem value="11 Seater">11 Seater</MenuItem>
-                        <MenuItem value="12 Seater">12 Seater</MenuItem>
-                        <MenuItem value="13 Seater">13 Seater</MenuItem>
-                        <MenuItem value="14 Seater">14 Seater</MenuItem>
-                        <MenuItem value="15 Seater">15 Seater</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </div>
-                </div>
-                <div className="border rounded-lg">
-                  <div
-                    className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                    id="floor"
-                  >
-                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      12
-                    </div>
-                    <h3 className="text-lg font-semibold text-[#C72030]">
-                      FLOOR INFO
-                    </h3>
-                  </div>
-                  <div
-                    className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                  >
-                    <FormControl>
-                      <InputLabel sx={{ backgroundColor: '#F6F7F7', paddingRight: "5px" }}>Floor Info</InputLabel>
-                      <Select
-                        value={formData.floorInfo}
-                        label="Floor Info"
-                        disabled
-                      >
-                        <MenuItem value="Select a floor">Select a floor</MenuItem>
-                        <MenuItem value="1st Floor">1st Floor</MenuItem>
-                        <MenuItem value="2nd Floor">2nd Floor</MenuItem>
-                        <MenuItem value="3rd Floor">3rd Floor</MenuItem>
-                        <MenuItem value="4th Floor">4th Floor</MenuItem>
-                        <MenuItem value="5th Floor">5th Floor</MenuItem>
-                        <MenuItem value="6th Floor">6th Floor</MenuItem>
-                        <MenuItem value="7th Floor">7th Floor</MenuItem>
-                        <MenuItem value="8th Floor">8th Floor</MenuItem>
-                        <MenuItem value="9th Floor">9th Floor</MenuItem>
-                        <MenuItem value="10th Floor">10th Floor</MenuItem>
-                        <MenuItem value="11th Floor">11th Floor</MenuItem>
-                        <MenuItem value="12th Floor">12th Floor</MenuItem>
-                        <MenuItem value="13th Floor">13th Floor</MenuItem>
-                        <MenuItem value="14th Floor">14th Floor</MenuItem>
-                        <MenuItem value="15th Floor">15th Floor</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </div>
-                </div>
-                <div className="border rounded-lg">
-                  <div
-                    className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                    id="shared"
-                  >
-                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      13
-                    </div>
-                    <h3 className="text-lg font-semibold text-[#C72030]">
-                      Shared Content Info
-                    </h3>
-                  </div>
-                  <div
-                    className="p-6 bg-[#F6F7F7]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                  >
-                    <Textarea
-                      value={formData.sharedContentInfo}
-                      className="min-h-[100px]"
-                      readOnly
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="tv"
+                      checked={formData.amenities.tv}
+                      disabled
                     />
+                    <label htmlFor="tv">TV</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="whiteboard"
+                      checked={formData.amenities.whiteboard}
+                      disabled
+                    />
+                    <label htmlFor="whiteboard">Whiteboard</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="casting"
+                      checked={formData.amenities.casting}
+                      disabled
+                    />
+                    <label htmlFor="casting">Casting</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="smartPenForTV"
+                      checked={formData.amenities.smartPenForTV}
+                      disabled
+                    />
+                    <label htmlFor="smartPenForTV">Smart Pen for TV</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="wirelessCharging"
+                      checked={formData.amenities.wirelessCharging}
+                      disabled
+                    />
+                    <label htmlFor="wirelessCharging">Wireless Charging</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="meetingRoomInventory"
+                      checked={formData.amenities.meetingRoomInventory}
+                      disabled
+                    />
+                    <label htmlFor="meetingRoomInventory">
+                      Meeting Room Inventory
+                    </label>
                   </div>
                 </div>
-                <div className="border rounded-lg">
-                  <div
-                    className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                    id="appKey"
-                  >
-                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      14
-                    </div>
-                    <h3 className="text-lg font-semibold text-[#C72030]">
-                      CONFIGURE APP KEY
-                    </h3>
+              </div>
+
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                    <Armchair className="w-4 h-4" />
                   </div>
-                  <div
-                    className="p-6 bg-[#F6F7F7]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                    id="appKey"
-                  >
-                    <TextField
-                      label="App Key"
-                      value={formData.appKey}
-                      variant="outlined"
-                      InputProps={{ readOnly: true }}
-                    />
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">SEATER INFO</h3>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-2">
+                  <FormControl>
+                    <InputLabel sx={{ backgroundColor: '#F6F7F7', paddingRight: "5px" }}>Seater Info</InputLabel>
+                    <Select
+                      value={formData.seaterInfo}
+                      label="Seater Info"
+                      disabled
+                    >
+                      <MenuItem value="Select a seater">Select a seater</MenuItem>
+                      <MenuItem value="1 Seater">1 Seater</MenuItem>
+                      <MenuItem value="2 Seater">2 Seater</MenuItem>
+                      <MenuItem value="3 Seater">3 Seater</MenuItem>
+                      <MenuItem value="4 Seater">4 Seater</MenuItem>
+                      <MenuItem value="5 Seater">5 Seater</MenuItem>
+                      <MenuItem value="6 Seater">6 Seater</MenuItem>
+                      <MenuItem value="7 Seater">7 Seater</MenuItem>
+                      <MenuItem value="8 Seater">8 Seater</MenuItem>
+                      <MenuItem value="9 Seater">9 Seater</MenuItem>
+                      <MenuItem value="10 Seater">10 Seater</MenuItem>
+                      <MenuItem value="11 Seater">11 Seater</MenuItem>
+                      <MenuItem value="12 Seater">12 Seater</MenuItem>
+                      <MenuItem value="13 Seater">13 Seater</MenuItem>
+                      <MenuItem value="14 Seater">14 Seater</MenuItem>
+                      <MenuItem value="15 Seater">15 Seater</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                    <LampFloor className="w-4 h-4" />
                   </div>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">FLOOR INFO</h3>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-2">
+                  <FormControl>
+                    <InputLabel sx={{ backgroundColor: '#F6F7F7', paddingRight: "5px" }}>Floor Info</InputLabel>
+                    <Select
+                      value={formData.floorInfo}
+                      label="Floor Info"
+                      disabled
+                    >
+                      <MenuItem value="Select a floor">Select a floor</MenuItem>
+                      <MenuItem value="1st Floor">1st Floor</MenuItem>
+                      <MenuItem value="2nd Floor">2nd Floor</MenuItem>
+                      <MenuItem value="3rd Floor">3rd Floor</MenuItem>
+                      <MenuItem value="4th Floor">4th Floor</MenuItem>
+                      <MenuItem value="5th Floor">5th Floor</MenuItem>
+                      <MenuItem value="6th Floor">6th Floor</MenuItem>
+                      <MenuItem value="7th Floor">7th Floor</MenuItem>
+                      <MenuItem value="8th Floor">8th Floor</MenuItem>
+                      <MenuItem value="9th Floor">9th Floor</MenuItem>
+                      <MenuItem value="10th Floor">10th Floor</MenuItem>
+                      <MenuItem value="11th Floor">11th Floor</MenuItem>
+                      <MenuItem value="12th Floor">12th Floor</MenuItem>
+                      <MenuItem value="13th Floor">13th Floor</MenuItem>
+                      <MenuItem value="14th Floor">14th Floor</MenuItem>
+                      <MenuItem value="15th Floor">15th Floor</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                    <Share2 className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Shared Content Info</h3>
+                </div>
+                <div>
+                  <Textarea
+                    value={formData.sharedContentInfo}
+                    className="min-h-[100px]"
+                    readOnly
+                  />
+                </div>
+              </div>
+              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                    <BookKey className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE APP KEY</h3>
+                </div>
+                <div className="my-2" id="appKey">
+                  <TextField
+                    label="App Key"
+                    value={formData.appKey}
+                    variant="outlined"
+                    InputProps={{ readOnly: true }}
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      {/* <Dialog
-        open={showQr}
-        onClose={() => setShowQr(false)}
-        aria-labelledby="qr-code-dialog-title"
-      >
-        <DialogContent>
-          <Box display="flex" justifyContent="center">
-            <img
-              src={qrUrl}
-              alt="QR Code"
-              style={{ width: "200px", height: "200px" }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <button
-            className="bg-[#F6F4EE] text-[#C72030] font-bold py-2 px-4 rounded mx-auto -mt-6 mb-4"
-            onClick={handleDownloadQr}
-          >
-            Download
-          </button>
-        </DialogActions>
-      </Dialog> */}
 
       <QRCodeModal
         isOpen={showQr}
@@ -1313,6 +1250,6 @@ export const BookingSetupDetailPage = () => {
         qrCode={qrUrl}
         handleDownloadQR={handleDownloadQr}
       />
-    </ThemeProvider>
+    </ThemeProvider >
   );
 };

@@ -176,15 +176,6 @@ export const VendorPage = () => {
         />
       )}
 
-      {loading && !isSearching ? (
-        <div className="flex items-center justify-center h-64">
-          <p>Loading...</p>
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center h-64">
-          <p className="text-red-500">{error}</p>
-        </div>
-      ) : (
         <>
           <EnhancedTable
             data={vendors}
@@ -199,6 +190,7 @@ export const VendorPage = () => {
             searchPlaceholder="Search by company name..."
             leftActions={renderCustomActions()}
             loading={isSearching || loading}
+            loadingMessage={isSearching ? "Searching vendors..." : "Loading vendors..."}
           />
 
           {!searchTerm && totalPages > 1 && (
@@ -244,7 +236,6 @@ export const VendorPage = () => {
             </div>
           )}
         </>
-      )}
     </div>
   );
 

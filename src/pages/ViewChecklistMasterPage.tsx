@@ -1,38 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  TextField,
-  FormControl,
-  InputLabel,
-  RadioGroup,
-  Radio,
-  FormControlLabel,
-  Autocomplete,
-  Box,
-  Typography,
-} from '@mui/material';
+import { ArrowLeft, FileText, Box, Loader2 } from 'lucide-react';
 import { API_CONFIG, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAssetTypes } from '@/services/assetTypesAPI';
 
-const fieldStyles = {
-  height: { xs: 36, sm: 40, md: 44 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
-  },
-};
-
-
 export const ViewChecklistMasterPage = () => {
-
   const navigate = useNavigate();
   const { id } = useParams();
   const [checklistData, setChecklistData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("basic");
 
   // Fetch asset types data from API
   const {
@@ -71,12 +53,26 @@ export const ViewChecklistMasterPage = () => {
     navigate(`/master/checklist-master/edit/${id}`);
   };
 
+  // Format date function
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   if (!checklistData) {
     return (
       <div className="p-6">
         <div className="text-center py-8">
           {loading ? (
-            <p className="text-gray-500">Loading checklist details...</p>
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading checklist details...</span>
+            </div>
           ) : error ? (
             <p className="text-red-500">{error}</p>
           ) : (
@@ -106,332 +102,248 @@ export const ViewChecklistMasterPage = () => {
         return 'Service';
       } else if (scheduleForPart.includes('vendor')) {
         return 'Vendor';
+      } else if (scheduleForPart.includes('amc')) {
+        return 'AMC';
       }
     }
     return '';
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-screen-xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => navigate('/master/checklist')}
-            variant="outline"
-          >
-            ← Back to List
-          </Button>
-        </div>
-
-        <Button
-          onClick={handleEditDetails}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:opacity-90"
+    <div className="p-4 sm:p-6 min-h-screen">
+      {/* Header */}
+      <div className="mb-6">
+        <button
+          onClick={() => navigate('/master/checklist')}
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
-          Edit Details
-        </Button>
-      </div>
+          <ArrowLeft className="w-4 h-4" />
+          Back to Checklist Master
+        </button>
 
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            checked={!!checklistData.weightage_enabled}
-            disabled
-            id="weightage"
-          />
-          <Label htmlFor="weightage">Weightage</Label>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
+                {checklistData.form_name || 'Checklist Master'}
+              </h1>
+            </div>
+            <div className="text-sm text-gray-600">
+              ID: {checklistData.id || '--'} • Type: {checklistData.schedule_type || '--'} • Schedule For: {getScheduleFor(checklistData.checklist_for) || '--'} • Created: {formatDate(checklistData.created_at)}
+            </div>
+          </div>
+          
+          <div className="flex gap-3">
+            <Button
+              onClick={handleEditDetails}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90"
+            >
+              Edit Details
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-8">
-        <div className="bg-white border rounded-lg p-4 sm:p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">1</div>
-            <h2 className="font-semibold text-lg" style={{ color: '#C72030' }}>Basic Info</h2>
-          </div>
+      {/* Tabs */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <Tabs defaultValue="basic" className="w-full" onValueChange={setActiveTab}>
+          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
+            <TabsTrigger
+              value="basic"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Basic Information
+            </TabsTrigger>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Type</Label>
-              <RadioGroup
-                value={checklistData.schedule_type}
-                row
-                sx={{
-                  '& .MuiFormControlLabel-root .MuiRadio-root': {
-                    color: '#C72030',
-                    '&.Mui-checked': {
-                      color: '#C72030',
-                    },
-                  },
-                }}
-              >
-                {['PPM', 'AMC', 'Preparedness', 'HSC', 'Routine'].map((typeOption) => (
-                  <FormControlLabel
-                    key={typeOption}
-                    value={typeOption}
-                    control={<Radio disabled />}
-                    label={typeOption}
-                  />
-                ))}
-              </RadioGroup>
-            </div>
+            <TabsTrigger
+              value="tasks"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Tasks
+            </TabsTrigger>
+          </TabsList>
 
-            <div>
-              <Label className="mb-2 block text-sm font-medium">Schedule For</Label>
-              <RadioGroup
-                value={getScheduleFor(checklistData.checklist_for)}
-                row
-                sx={{
-                  '& .MuiFormControlLabel-root .MuiRadio-root': {
-                    color: '#C72030',
-                    '&.Mui-checked': {
-                      color: '#C72030',
-                    },
-                  },
-                }}
-              >
-                {['Asset', 'Service', 'Vendor'].map((scheduleOption) => (
-                  <FormControlLabel
-                    key={scheduleOption}
-                    value={scheduleOption}
-                    control={<Radio disabled />}
-                    label={scheduleOption}
-                  />
-                ))}
-              </RadioGroup>
-            </div>
-
-            <TextField
-              fullWidth
-              label="Activity Name"
-              value={checklistData.form_name || ''}
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                sx: fieldStyles,
-                readOnly: true
-              }}
-              disabled={true}
-            />
-
-            <TextField
-              fullWidth
-              label="Description"
-              value={checklistData.description || ''}
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                sx: fieldStyles,
-                readOnly: true
-              }}
-              disabled={true}
-            />
-
-            {getScheduleFor(checklistData.checklist_for) === 'Asset' && checklistData.asset_meter_type_id && (
-              <TextField
-                fullWidth
-                label="Asset Type"
-                value={getAssetTypeName(checklistData.asset_meter_type_id)}
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: fieldStyles,
-                  readOnly: true
-                }}
-                disabled={true}
-              />
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white border rounded-lg p-4 sm:p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">2</div>
-            <h2 className="font-semibold text-lg" style={{ color: '#C72030' }}>Tasks</h2>
-          </div>
-
-          {Array.isArray(checklistData.content) && checklistData.content.length > 0 ? (
-            checklistData.content.map((task, taskIndex) => (
-              <div
-                key={taskIndex}
-                className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 border p-4 rounded"
-              >
-                <div className="md:col-span-2">
-                  <h4 className="font-medium mb-4">Task {taskIndex + 1}</h4>
-                </div>
-
-                <TextField
-                  fullWidth
-                  label="Task"
-                  value={task.label || ''}
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    sx: fieldStyles,
-                    readOnly: true
-                  }}
-                  disabled={true}
-                />
-
-                <FormControl fullWidth>
-                  <Autocomplete
-                    options={[
-                      'Text',
-                      'Number',
-                      'Checkbox',
-                      'Radio Button',
-                      'Dropdown',
-                      'Date'
-                    ]}
-                    value={
-                      task.type === 'radio-group' ? 'Radio Button'
-                        : task.type === 'text' ? 'Text'
-                          : task.type === 'checkbox-group' ? 'Checkbox'
-                            : task.type === 'select' ? 'Dropdown'
-                              : task.type === 'number' ? 'Number'
-                                : task.type === 'date' ? 'Date'
-                                  : task.type
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Input Type"
-                        InputLabelProps={{ shrink: true }}
-                        sx={fieldStyles}
-                        disabled
-                      />
+          <TabsContent value="basic" className="p-4 sm:p-6">
+            <div className="space-y-6">
+              {/* Basic Information Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Basic Information</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Type</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{checklistData.schedule_type || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Schedule For</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{getScheduleFor(checklistData.checklist_for) || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Form Name</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{checklistData.form_name || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Create Ticket</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{checklistData.create_ticket ? 'Yes' : 'No'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Ticket Level</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{checklistData.ticket_level || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Company ID</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{checklistData.company_id || '--'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Created At</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{formatDate(checklistData.created_at)}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Updated At</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{formatDate(checklistData.updated_at)}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Weightage Enabled</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{checklistData.weightage_enabled ? 'Yes' : 'No'}</span>
+                    </div>
+                    {getScheduleFor(checklistData.checklist_for) === 'Asset' && checklistData.asset_meter_type_id && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Asset Type</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{getAssetTypeName(checklistData.asset_meter_type_id) || '--'}</span>
+                      </div>
                     )}
-                    disableClearable
-                    disabled
-                  />
-                </FormControl>
-
-                <div className="md:col-span-2 flex flex-wrap gap-4 pt-2">
-                  <label className="flex items-center gap-2">
-                    <Checkbox
-                      checked={task.required === 'true'}
-                      disabled
-                    />
-                    <span>Mandatory</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <Checkbox
-                      checked={task.is_reading === 'true'}
-                      disabled
-                    />
-                    <span>Reading</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <Checkbox
-                      checked={!!task.hint}
-                      disabled
-                    />
-                    <span>Help Text</span>
-                  </label>
-                </div>
-
-                {/* Show help text input if hint is present */}
-                {task.hint && (
-                  <div className="md:col-span-2 pt-2">
-                    <TextField
-                      fullWidth
-                      label="Help Text"
-                      value={task.hint}
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{
-                        sx: fieldStyles,
-                        readOnly: true
-                      }}
-                      disabled={true}
-                    />
+                    {checklistData.description && (
+                      <div className="flex items-start col-span-2">
+                        <span className="text-gray-500 min-w-[140px]">Description</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{checklistData.description}</span>
+                      </div>
+                    )}
                   </div>
-                )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
-                {Array.isArray(task.values) && task.values.length > 0 && (
-                  <div className="md:col-span-2 mt-4">
-                    <Box sx={{
-                      backgroundColor: '#F5F5F5',
-                      border: '1px solid #E0E0E0',
-                      borderRadius: 0,
-                      padding: 2
-                    }}>
-                      {task.type === 'select' ? (
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
-                          Enter Value
-                        </Typography>
-                      ) : (
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
-                            Selected
-                          </Typography>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
-                            Enter Value
-                          </Typography>
-                        </Box>
-                      )}
-                      
-                      {task.values.map((option, optionIndex) => (
-                        <Box key={optionIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-                          {task.type === 'select' ? null : (
-                            task.type === 'checkbox-group' ? (
-                              <MuiCheckbox
-                                checked={optionIndex === 0}
-                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                                disabled
-                              />
-                            ) : (
-                              <Radio
-                                checked={optionIndex === 0}
-                                name={`option-${task.name}`}
-                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                                disabled
-                              />
-                            )
+          <TabsContent value="tasks" className="p-4 sm:p-6">
+            <div className="space-y-6">
+              {/* Tasks Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <Box className="w-6 h-6" style={{ color: '#C72030' }} />
+                    </div>
+                    <span className="uppercase tracking-wide">Task Details</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-6">
+                    {Array.isArray(checklistData.content) && checklistData.content.length > 0 ? (
+                      checklistData.content.map((task, taskIndex) => (
+                        <div key={taskIndex} className="p-4 border rounded-lg bg-gray-50">
+                          <h4 className="font-medium mb-4 text-gray-900">Task {taskIndex + 1}</h4>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-4">
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Task Name</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{task.label || '--'}</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Input Type</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">
+                                {task.type === 'radio-group' ? 'Radio Button' :
+                                 task.type === 'text' ? 'Text' :
+                                 task.type === 'checkbox-group' ? 'Checkbox' :
+                                 task.type === 'select' ? 'Dropdown' :
+                                 task.type === 'number' ? 'Number' :
+                                 task.type === 'date' ? 'Date' :
+                                 task.type === 'options-inputs' ? 'Multiple Options' :
+                                 task.type}
+                              </span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Mandatory</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{task.required === 'true' ? 'Yes' : 'No'}</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Reading</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{task.is_reading === 'true' ? 'Yes' : 'No'}</span>
+                            </div>
+                            {task.rating_enabled === 'true' && (
+                              <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Rating Enabled</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">Yes</span>
+                              </div>
+                            )}
+                            {task.weightage && (
+                              <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Weightage</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">{task.weightage}</span>
+                              </div>
+                            )}
+                            {task.hint && (
+                              <div className="flex items-start col-span-2">
+                                <span className="text-gray-500 min-w-[140px]">Help Text</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">{task.hint}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Task Values */}
+                          {Array.isArray(task.values) && task.values.length > 0 && (
+                            <div className="mt-4">
+                              <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Available Options</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {task.values.map((value, valueIndex) => (
+                                    <span key={valueIndex} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                      {value.label} ({value.type === 'positive' ? 'P' : 'N'})
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
                           )}
-                          
-                          <TextField
-                            fullWidth
-                            size="small"
-                            value={option.label || ''}
-                            InputProps={{
-                              sx: { 
-                                height: 32,
-                                '& .MuiOutlinedInput-root': {
-                                  backgroundColor: 'white'
-                                }
-                              },
-                              readOnly: true
-                            }}
-                            disabled
-                          />
-                          
-                          <TextField
-                            size="small"
-                            value={option.type.toLowerCase() === 'positive' ?  'P' : option.type.toLowerCase() === 'negative' ? 'N' : '' }
-                            InputProps={{
-                              sx: { 
-                                height: 32, 
-                                width: 80,
-                                '& .MuiOutlinedInput-root': {
-                                  backgroundColor: 'white'
-                                }
-                              },
-                              readOnly: true
-                            }}
-                            disabled
-                          />
-                        </Box>
-                      ))}
-                    </Box>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 py-8">
+                        No tasks found
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))
-          ) : (
-            <div className="text-gray-500">No tasks found.</div>
-          )}
-        </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

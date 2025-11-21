@@ -14,10 +14,46 @@ interface AMCStatusCardProps {
   } | null;
   className?: string;
   onDownload?: () => Promise<void>;
+  colorPalette?: {
+    primary: string;
+    secondary: string;
+    tertiary: string;
+    primaryLight: string;
+    secondaryLight: string;
+    tertiaryLight: string;
+  };
+  headerClassName?: string;
 }
 
-export const AMCStatusCard: React.FC<AMCStatusCardProps> = ({ data, className, onDownload }) => {
+export const AMCStatusCard: React.FC<AMCStatusCardProps> = ({ data, className, onDownload, colorPalette, headerClassName }) => {
   const { toast } = useToast();
+
+  const palette = colorPalette || {
+    primary: '#C4B99D',
+    secondary: '#DAD6CA',
+    tertiary: '#D5DBDB',
+    primaryLight: '#DDD4C4',
+    secondaryLight: '#E8E5DD',
+    tertiaryLight: '#E5E9E9',
+  };
+
+  const BASE_COLORS = [palette.primary, palette.tertiary, palette.primaryLight, palette.primaryLight];
+  const toBg = (hex: string) => {
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r}, ${g}, ${b}, 0.18)`;
+  };
+
+  const cards: Array<{ label: string; value: number; color: string; key: string }> = data ? [
+    { key: 'total', label: 'Total AMCs', value: data.totalAMCs, color: BASE_COLORS[0] },
+    { key: 'active', label: 'Active', value: data.activeAMCs, color: BASE_COLORS[1] },
+    { key: 'inactive', label: 'Inactive', value: data.inactiveAMCs, color: BASE_COLORS[2] },
+    { key: 'critical', label: 'Critical Assets Under AMC', value: data.criticalAssetsUnderAMC, color: BASE_COLORS[3] },
+    { key: 'missing', label: 'Missed Visit', value: data.missingAMC, color: BASE_COLORS[0] },
+    { key: 'comp', label: 'Comprehensive', value: data.comprehensiveAMCs, color: BASE_COLORS[1] },
+    { key: 'noncomp', label: 'Non-Comprehensive', value: data.nonComprehensiveAMCs, color: BASE_COLORS[2] },
+  ] : [];
 
   const handleDownload = async () => {
     if (onDownload) {
@@ -40,56 +76,32 @@ export const AMCStatusCard: React.FC<AMCStatusCardProps> = ({ data, className, o
 
   return (
     <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 h-full flex flex-col ${className}`}>
-      <div className="flex items-center justify-between mb-4 sm:mb-6 p-3 sm:p-6 pb-0">
-        <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMC Status Overview</h3>
+      <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6 p-3 sm:p-4 lg:p-6 pb-0">
+        <h3 className={`text-sm sm:text-base lg:text-lg font-bold truncate flex-1 ${headerClassName || 'text-[#1A1A1A]'}`}>AMC Status Overview</h3>
         {onDownload && (
           <Download
-            className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer text-[#C72030] hover:text-[#A01828]"
+            className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:opacity-80 flex-shrink-0 ml-2 text-[#1A1A1A]"
             onClick={handleDownload}
           />
         )}
       </div>
-      
-      <div className="flex-1 overflow-auto p-3 sm:p-6 pt-0">
+
+      <div className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6 pt-0">
         {data ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="text-2xl font-bold text-blue-600">{data.totalAMCs}</div>
-              <div className="text-sm text-blue-700 font-medium">Total AMCs</div>
-            </div>
-            
-            <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="text-2xl font-bold text-green-600">{data.activeAMCs}</div>
-              <div className="text-sm text-green-700 font-medium">Active</div>
-            </div>
-            
-            <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="text-2xl font-bold text-gray-600">{data.inactiveAMCs}</div>
-              <div className="text-sm text-gray-700 font-medium">Inactive</div>
-            </div>
-            
-            <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="text-2xl font-bold text-orange-600">{data.criticalAssetsUnderAMC}</div>
-              <div className="text-sm text-orange-700 font-medium">Critical Assets Under AMC</div>
-            </div>
-            
-            <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
-              <div className="text-2xl font-bold text-red-600">{data.missingAMC}</div>
-              <div className="text-sm text-red-700 font-medium">Missing AMC</div>
-            </div>
-            
-            <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <div className="text-2xl font-bold text-purple-600">{data.comprehensiveAMCs}</div>
-              <div className="text-sm text-purple-700 font-medium">Comprehensive</div>
-            </div>
-            
-            <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              <div className="text-2xl font-bold text-yellow-600">{data.nonComprehensiveAMCs}</div>
-              <div className="text-sm text-yellow-700 font-medium">Non-Comprehensive</div>
-            </div>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+            {cards.map(card => (
+              <div
+                key={card.key}
+                className="text-center p-2 sm:p-3 lg:p-4 rounded-lg border shadow-sm"
+                style={{ background: toBg(card.color), borderColor: card.color + '55' }}
+              >
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#1A1A1A]">{card.value}</div>
+                <div className="text-xs sm:text-sm font-medium mt-1 text-[#1A1A1A] line-clamp-2">{card.label}</div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 text-sm sm:text-base">
             No AMC status data available for the selected date range
           </div>
         )}

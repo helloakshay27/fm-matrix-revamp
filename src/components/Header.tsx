@@ -10,6 +10,11 @@ import {
   Settings,
   Mail,
   Building2,
+  MessageSquare,
+  CircleCheckBig,
+  MessagesSquare,
+  ChartArea,
+  ChartAreaIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -35,6 +40,8 @@ import {
 import { getUser, clearAuth } from "@/utils/auth";
 import { permissionService } from "@/services/permissionService";
 import { is } from "date-fns/locale";
+import { Dashboard } from "@mui/icons-material";
+import { AnalyticsGrid } from "./dashboard/AnalyticsGrid";
 
 export interface Company {
   id: number;
@@ -51,7 +58,12 @@ export const Header = () => {
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   const [userRoleName, setUserRoleName] = useState<string | null>(null);
   // VI account details (for vi-web only)
-  const [viAccount, setViAccount] = useState<{ firstname?: string; lastname?: string; email?: string; role_name?: string } | null>(null);
+  const [viAccount, setViAccount] = useState<{
+    firstname?: string;
+    lastname?: string;
+    email?: string;
+    role_name?: string;
+  } | null>(null);
   const dispatch = useDispatch<AppDispatch>();
 
   const currentPath = window.location.pathname;
@@ -75,6 +87,8 @@ export const Header = () => {
   // Treat vi-web prod and localhost as VI for dev account fetch
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
+  const isWebSite = hostname.includes("web.gophygital.work");
+
   const navigate = useNavigate();
   const [notificationCount, setNotificationCount] = useState(3);
 
@@ -82,7 +96,7 @@ export const Header = () => {
     if (selectedSite) {
       localStorage.setItem("selectedSiteName", selectedSite.name);
     }
-  }, [selectedSite])
+  }, [selectedSite]);
 
   // Get user data from localStorage
   const user = getUser() || {
@@ -132,22 +146,23 @@ export const Header = () => {
   useEffect(() => {
     if (!isViSite) return;
     try {
-      let token = localStorage.getItem('token');
+      let token = localStorage.getItem("token");
       if (!token) {
         const params = new URLSearchParams(window.location.search);
-        const urlToken = params.get('access_token') || params.get('token');
+        const urlToken = params.get("access_token") || params.get("token");
         if (urlToken) {
-          localStorage.setItem('token', urlToken);
+          localStorage.setItem("token", urlToken);
           token = urlToken;
         }
       }
       if (!token) return;
-      const raw = localStorage.getItem('baseUrl') || 'https://live-api.gophygital.work';
+      const raw =
+        localStorage.getItem("baseUrl") || "https://live-api.gophygital.work";
       const base = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-      const url = `${base.replace(/\/+$/, '')}/api/users/account.json`;
+      const url = `${base.replace(/\/+$/, "")}/api/users/account.json`;
       fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => res.ok ? res.json() : Promise.reject(res))
-        .then(data => {
+        .then((res) => (res.ok ? res.json() : Promise.reject(res)))
+        .then((data) => {
           setViAccount({
             firstname: data?.firstname,
             lastname: data?.lastname,
@@ -156,7 +171,9 @@ export const Header = () => {
           });
         })
         .catch(() => { });
-    } catch { /* no-op */ }
+    } catch {
+      /* no-op */
+    }
   }, [isViSite]);
 
   useEffect(() => {
@@ -216,17 +233,16 @@ export const Header = () => {
   };
 
   // Compute profile display name (prefer VI account when available)
-  const profileDisplayName = (
+  const profileDisplayName =
     (isViSite && viAccount
       ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim()
       : `${user.firstname || ""} ${user.lastname || ""}`.trim()) ||
     userDisplayName ||
     user.firstname ||
-    "User"
-  );
+    "User";
 
   return (
-    <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-10 w-full shadow-sm">
+    <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-20 w-full shadow-sm">
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex align-items-center gap-14">
           {isOmanSite ? (
@@ -336,20 +352,63 @@ export const Header = () => {
           )}
 
           {/* Dashboard Button */}
-          {!isViSite && (
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-            >
-              <Home className="w-4 h-4" />
-              Dashboard
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {!isViSite && (
+              <button
+                onClick={() => (window.location.href = "/dashboard")}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+              >
+                <ChartArea className="w-4 h-4" />
+                Dashboard
+              </button>
+
+
+            )}
+            {!isViSite && (
+              <button
+                onClick={() => (window.location.href = "/dashboard-executive")}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+              >
+                <ChartAreaIcon className="w-4 h-4" />
+                Executive Dashboard
+              </button>
+
+
+            )}
+
+            {isViSite && (
+              <button
+                onClick={() =>
+                  navigate("/msafedashboard")
+                }
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+              >
+                <Home className="w-4 h-4" />
+                MSafe Dashboard
+              </button>
+            )}
+
+
+            {isWebSite && !isViSite && (
+              <button
+                onClick={() =>
+                  window.open(
+                    "https://web.gophygital.work/msafedashboard",
+                    "_blank"
+                  )
+                }
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+              >
+                <Home className="w-4 h-4" />
+                MSafe Dashboard
+              </button>
+            )}
+          </div>
 
           {/* Project Dropdown */}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
               <Building2 className="w-4 h-4" />
@@ -420,6 +479,60 @@ export const Header = () => {
             </DropdownMenu>
           )}
 
+          {!isViSite && (
+            <div className="flex items-center gap-3">
+              <button
+                className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                onClick={() => {
+                  navigate(`/vas/channels/tasks`);
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 37 34"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M10.7383 15.09L15.7739 19.9581C16.6315 20.7871 18.0221 20.7871 18.8797 19.9581L34.8962 4.47461"
+                    stroke="black"
+                    stroke-width="3.2"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M34 17C34 20.812 32.7188 24.5134 30.3621 27.5097C28.0055 30.5059 24.7102 32.6232 21.0055 33.5214C17.3008 34.4196 13.4018 34.0465 9.9346 32.4622C6.46742 30.8779 3.63334 28.1742 1.88755 24.7855C0.141766 21.3967 -0.414403 17.5196 0.308373 13.7767C1.03115 10.0339 2.99092 6.64253 5.87293 4.14744C8.75493 1.65236 12.3919 0.19831 16.1997 0.0188492C20.0075 -0.160612 23.7651 0.944926 26.869 3.1579L25.1444 5.57673C22.5829 3.75046 19.4819 2.83811 16.3395 2.98621C13.1971 3.13431 10.1957 4.33427 7.81732 6.39335C5.43893 8.45244 3.82161 11.2511 3.22514 14.34C2.62866 17.4288 3.08764 20.6284 4.52836 23.425C5.96908 26.2216 8.30793 28.4528 11.1692 29.7603C14.0306 31.0677 17.2483 31.3756 20.3056 30.6344C23.3629 29.8931 26.0824 28.1459 28.0272 25.6732C29.972 23.2005 31.0293 20.1459 31.0293 17H34Z"
+                    fill="black"
+                  />
+                </svg>
+              </button>
+              <button
+                className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                onClick={() => {
+                  navigate(`/vas/channels`);
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 36 33"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M35.9998 10.3125C35.9992 9.76567 35.7714 9.24142 35.3665 8.85476C34.9615 8.46809 34.4125 8.2506 33.8398 8.24999H27.36V2.0625C27.3594 1.51568 27.1316 0.991428 26.7266 0.604767C26.3217 0.218106 25.7727 0.000611413 25.2 0H2.16C1.58733 0.000610958 1.0383 0.218106 0.633356 0.604767C0.228416 0.991427 0.000639841 1.51568 0 2.0625V24.0625C3.78713e-06 24.1923 0.0384875 24.3194 0.111 24.4292C0.183513 24.539 0.287092 24.6269 0.409758 24.6829C0.532424 24.7388 0.669165 24.7604 0.804168 24.7453C0.93917 24.7301 1.06692 24.6787 1.17264 24.5971L8.09947 19.25H8.63982L8.64 25.4375C8.64064 25.9843 8.86842 26.5085 9.27336 26.8952C9.6783 27.2819 10.2273 27.4994 10.8 27.5H27.9004L34.8274 32.8471C34.9331 32.9287 35.0608 32.9801 35.1958 32.9953C35.3308 33.0105 35.4676 32.9888 35.5903 32.9329C35.7129 32.877 35.8165 32.789 35.889 32.6792C35.9615 32.5694 36 32.4423 36 32.3125L35.9998 10.3125ZM7.84476 17.875C7.68002 17.875 7.52026 17.9289 7.39212 18.0278L1.44 22.6226V2.0625C1.4402 1.88022 1.51612 1.70547 1.65111 1.57658C1.78609 1.44769 1.96911 1.37519 2.16 1.375H25.2C25.3909 1.37519 25.5739 1.44769 25.7089 1.57658C25.8439 1.70547 25.9198 1.88022 25.92 2.0625V8.93582L25.9198 8.93749L25.92 8.93916V17.1875C25.9198 17.3698 25.8439 17.5445 25.7089 17.6734C25.5739 17.8023 25.3909 17.8748 25.2 17.875H7.84476ZM28.6077 26.2778C28.4796 26.1789 28.3198 26.125 28.1551 26.125H10.8C10.6091 26.1248 10.4261 26.0523 10.2911 25.9234C10.1561 25.7945 10.0802 25.6197 10.08 25.4375L10.0798 19.25H25.2C25.7727 19.2494 26.3217 19.0319 26.7266 18.6452C27.1316 18.2585 27.3594 17.7343 27.36 17.1875V9.62499H33.8398C34.0307 9.62518 34.2137 9.69768 34.3487 9.82657C34.4837 9.95545 34.5596 10.1302 34.5598 10.3125L34.56 30.8726L28.6077 26.2778Z"
+                    fill="none"
+                    stroke="black"
+                    strokeWidth="1.6"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                </svg>
+
+              </button>
+            </div>
+          )}
+
           <div className="relative">
             <button className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">
               <Bell className="w-5 h-5 text-[#1a1a1a]" />
@@ -434,26 +547,33 @@ export const Header = () => {
           <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
             <DropdownMenuTrigger className="flex items-center gap-2">
               <div className="w-9 h-9 bg-[#C4b89D] rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-[#1a1a1a]" />
-              </div>
-              <div className="hidden md:block">
-                <span className="text-sm font-medium text-[#1a1a1a]">{profileDisplayName}</span>
-                <ChevronDown className="w-3 h-3 text-[#1a1a1a] inline-block ml-1" />
+                {profileDisplayName
+                  ?.split(" ")
+                  .map((word) => word[0])
+                  .join("")
+                  .toUpperCase()}
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64 bg-white border border-[#D5DbDB] shadow-lg p-2">
               <div className="px-2 py-2 mb-2 border-b border-gray-100">
                 <p className="font-medium text-sm">
                   {isViSite && viAccount
-                    ? `${viAccount.firstname || ''} ${viAccount.lastname || ''}`.trim() || 'User'
+                    ? `${viAccount.firstname || ""} ${viAccount.lastname || ""
+                      }`.trim() || "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-1">
                   <Mail className="w-3 h-3 mr-1" />
-                  <span>{(isViSite && viAccount ? (viAccount.email || '') : user.email) || ''}</span>
+                  <span>
+                    {(isViSite && viAccount
+                      ? viAccount.email || ""
+                      : user.email) || ""}
+                  </span>
                 </div>
                 <div className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded mt-2 inline-block">
-                  {(isViSite && viAccount ? (viAccount.role_name || '') : (userRoleName || user?.lock_role?.name)) || "No Role"}{" "}
+                  {(isViSite && viAccount
+                    ? viAccount.role_name || ""
+                    : userRoleName || user?.lock_role?.name) || "No Role"}{" "}
                 </div>
               </div>
 

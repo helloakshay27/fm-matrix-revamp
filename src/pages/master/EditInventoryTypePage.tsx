@@ -160,7 +160,7 @@ const EditInventoryTypePage = () => {
                       {...field}
                       label={
                         <span style={{ fontSize: '16px' }}>
-                          Description <span style={{ color: "red" }}>*</span>
+                          Description
                         </span>
                       }
                       placeholder="Enter Description/SOP"

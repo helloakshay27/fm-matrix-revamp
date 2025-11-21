@@ -347,7 +347,7 @@ export const SubCategoryTab: React.FC = () => {
     { key: 'floor', label: 'Floor', sortable: true },
     { key: 'zone', label: 'Zone', sortable: true },
     { key: 'room', label: 'Room', sortable: true },
-    // { key: 'icon_url', label: 'Icon', sortable: false },
+    { key: 'icon_url', label: 'Icon', sortable: false },
   ];
 
   const renderCell = (item: SubCategoryType, columnKey: string) => {
@@ -358,20 +358,35 @@ export const SubCategoryTab: React.FC = () => {
       case 'zone':
       case 'room': {
         const key = `${columnKey}_enabled` as keyof typeof item.location_config;
-        return item.location_config?.[key] ? 'Yes' : 'No';
-      }
-      case 'icon_url':
-        return item.icon_url ? (
-          <img src={item.icon_url} alt="Icon" className="w-8 h-8 object-cover rounded" />
-        ) : (
-          <span className="text-gray-400">No icon</span>
+        return (
+          <div className="flex justify-center">
+            <Checkbox
+              checked={item.location_config?.[key] || false}
+              disabled
+            />
+          </div>
         );
+      }
       case 'helpdesk_category_name':
         return item.helpdesk_category_name || '--';
       case 'name':
         return item.name || '--';
       case 'id':
         return item.id || '--';
+      case 'icon_url':
+        if (!item.icon_url) return <span className="text-gray-400">No icon</span>;
+        return (
+          <div className="flex justify-center">
+            <img 
+              src={item.icon_url} 
+              alt="Icon" 
+              className="w-8 h-8 object-cover rounded" 
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
+        );
       default:
         return '--';
     }
@@ -457,7 +472,7 @@ export const SubCategoryTab: React.FC = () => {
                   )}
                 />
 
-                {/* <div className="space-y-2">
+                <div className="space-y-2">
                   <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Icon
                   </label>
@@ -481,7 +496,7 @@ export const SubCategoryTab: React.FC = () => {
                       <span className="text-sm text-gray-600">{iconFile.name}</span>
                     )}
                   </div>
-                </div> */}
+                </div>
               </div>
 
               {/* Tags Section */}

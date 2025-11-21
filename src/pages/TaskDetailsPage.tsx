@@ -1,25 +1,51 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ArrowLeft,
+  X,
+  FileText,
+  User,
+  MapPin,
+  Eye,
+  Edit,
+  Star,
+  Trash2,
+  Flag,
+} from "lucide-react";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast as sonnerToast } from "sonner";
 import {
   TextField,
   FormControl,
   InputLabel,
   Select as MuiSelect,
-  MenuItem
-} from '@mui/material';
-import { userService } from '@/services/userService';
-import { taskService, TaskOccurrence } from '@/services/taskService';
-import { JobSheetModal } from '@/components/JobSheetModal';
-
-
-
+  MenuItem,
+} from "@mui/material";
+import { userService } from "@/services/userService";
+import { taskService, TaskOccurrence } from "@/services/taskService";
+import { ticketManagementAPI } from "@/services/ticketManagementAPI";
+import { bulkTaskService, EscalateUser } from "@/services/bulkTaskService";
+import { JobSheetModal } from "@/components/JobSheetModal";
 
 // If User type is not imported, define minimally here:
 type User = {
@@ -30,38 +56,43 @@ type User = {
 export const TaskDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
+
   const [taskDetails, setTaskDetails] = useState<TaskOccurrence | null>(null);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
-  const [showSubmitForm, setShowSubmitForm] = useState(false);
+  const [escalateUsers, setEscalateUsers] = useState<EscalateUser[]>([]);
+  const [ticketData, setTicketData] = useState<any>(null); // For storing ticket information
+  const [ticketLoading, setTicketLoading] = useState(false);
+
+  // Removed showSubmitModal state as we now navigate to a separate page
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
   const [showJobSheetModal, setShowJobSheetModal] = useState(false);
   const [jobSheetData, setJobSheetData] = useState<any>(null);
   const [jobSheetLoading, setJobSheetLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("task-details");
 
-  // Submit form state
+  // Legacy form state (can be removed if not needed elsewhere)
   const [formData, setFormData] = useState({
     isFloorClean: false,
-    floorComment: '',
+    floorComment: "",
     isDustClean: false,
-    dustComment: '',
+    dustComment: "",
     isLiftClean: false,
     liftOptions: {
       dust: false,
       dryMop: false,
       wetMop: false,
-      vacuum: false
+      vacuum: false,
     },
-    liftComment: '',
-    attachments: null as File | null
+    liftComment: "",
+    attachments: null as File | null,
   });
 
-  // Reschedule form state
+  // Reschedule form state with current date and time
   const [rescheduleData, setRescheduleData] = useState({
-    scheduleDate: new Date().toISOString().split('T')[0], // "YYYY-MM-DD"
-    scheduleTime: '10:30',
-    email: false
+    scheduleDate: new Date().toISOString().split("T")[0], // "YYYY-MM-DD"
+    scheduleTime: new Date().toTimeString().slice(0, 5), // Get current time in HH:MM format
+    email: false,
   });
 
   // File upload state (for attachments in submit form)
@@ -71,32 +102,41 @@ export const TaskDetailsPage = () => {
     file1: null,
     file2: null,
     file3: null,
-    file4: null
+    file4: null,
   });
 
   // Menu props for MUI Select
+  // Helper function to extract location parts from asset_path
+  const extractLocationPart = (assetPath: string, part: string): string => {
+    if (!assetPath) return "NA";
+    const regex = new RegExp(`${part}\\s*-\\s*([^/]+)`, "i");
+    const match = assetPath.match(regex);
+    const value = match ? match[1].trim() : "NA";
+    return value === "NA" ? "NA" : value;
+  };
+
   const selectMenuProps = {
     PaperProps: {
       style: {
         maxHeight: 224,
-        backgroundColor: 'white',
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
+        backgroundColor: "white",
+        border: "1px solid #e2e8f0",
+        borderRadius: "8px",
         boxShadow:
-          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        zIndex: 9999
-      }
+          "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+        zIndex: 9999,
+      },
     },
     disablePortal: true,
-    container: document.body
+    container: document.body,
   };
 
   // Style for fields
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' }
-    }
+    "& .MuiInputBase-input, & .MuiSelect-select": {
+      padding: { xs: "8px", sm: "10px", md: "12px" },
+    },
   };
 
   useEffect(() => {
@@ -105,32 +145,260 @@ export const TaskDetailsPage = () => {
       try {
         setLoading(true);
         const response = await taskService.getTaskDetails(id);
+
+        // Log the response from taskService to see what we're getting
+        console.log("📡 Raw API Response from taskService:", response);
+        console.log(
+          "📍 Location from taskService:",
+          response?.task_details?.location
+        );
+
         // Map the API response to match our component structure
-        const mappedDetails = (response as any).task_occurrence ? (response as any).task_occurrence : response;
+        const rawDetails = (response as any).task_occurrence
+          ? (response as any).task_occurrence
+          : response;
+
+        // Enhanced mapping to handle the new API structure
+        const mappedDetails = {
+          ...rawDetails,
+          // task_details is already properly mapped by taskService, just ensure it exists
+          task_details: rawDetails.task_details || {
+            id: rawDetails.id,
+            task_name: rawDetails.checklist,
+            asset_service_code: rawDetails.asset_code,
+            created_by: rawDetails.first_name || rawDetails.assigned_to_name,
+            scheduled_on: rawDetails.start_date,
+            associated_with: rawDetails.asset,
+            asset_service_name: rawDetails.asset,
+            task_duration: rawDetails.grace_time,
+            supplier: rawDetails.company,
+            backup_assigned_user: rawDetails.backup_assigned_user,
+            assigned_to: rawDetails.assigned_to_name,
+            created_on: rawDetails.created_at,
+            start_time: rawDetails.task_start_time,
+            completed_on: rawDetails.updated_at,
+            performed_by: rawDetails.performed_by,
+            status: rawDetails.task_details?.status || {
+              value:
+                rawDetails.task_status?.toLowerCase().replace(/\s+/g, "") ||
+                "unknown",
+              display_name: rawDetails.task_status || "Unknown",
+            },
+            // Use the location that was already mapped by taskService
+            location: rawDetails.task_details?.location ||
+              rawDetails.location || {
+                site: "NA",
+                building: "NA",
+                wing: "NA",
+                floor: "NA",
+                area: "NA",
+                room: "NA",
+              },
+          },
+          // Map activity/checklist responses - if responses exist, map them; otherwise map questions
+          activity: {
+            resp: rawDetails.checklist_responses
+              ? rawDetails.checklist_responses.map((item: any) => ({
+                  label: item.label || item.activity,
+                  hint: item.hint || item.help_text || "",
+                  userData: item.userData || [item.input_value],
+                  comment: item.comment || item.comments || "",
+                  weightage: item.weightage || "",
+                  rating: item.rating || "",
+                  values: item.values || [],
+                  attachments: item.attachments || [],
+                  name: item.name,
+                  className: item.className,
+                  type: item.type,
+                  required: item.required,
+                  is_reading: item.is_reading,
+                  group_id: item.group_id || "",
+                  sub_group_id: item.sub_group_id || "",
+                  group_name: item.group_name || "",
+                  sub_group_name: item.sub_group_name || "",
+                }))
+              : (rawDetails.checklist_questions || []).map((item: any) => ({
+                  label: item.label || item.activity,
+                  hint: item.hint || item.help_text || "",
+                  userData: ["-"], // Show '-' for questions without responses
+                  comment: "-",
+                  weightage: item.weightage || "",
+                  rating: "",
+                  values: item.values || [],
+                  attachments: [],
+                  name: item.name,
+                  className: item.className,
+                  type: item.type,
+                  required: item.required,
+                  is_reading: item.is_reading,
+                  group_id: item.group_id || "",
+                  sub_group_id: item.sub_group_id || "",
+                  group_name: item.group_name || "",
+                  sub_group_name: item.sub_group_name || "",
+                })),
+          },
+          // Map before/after attachments
+          bef_sub_attachment: rawDetails.bef_sub_attachment,
+          aft_sub_attachment: rawDetails.aft_sub_attachment,
+          // Map checklist questions
+          checklist_questions: rawDetails.checklist_questions || [],
+          // Map actions based on status
+          actions: {
+            can_submit_task: [
+              "open",
+              "inprogress",
+              "scheduled",
+              "workinprogress",
+              "overdue",
+            ].includes(
+              rawDetails.task_status?.toLowerCase().replace(/\s+/g, "") || ""
+            ),
+            can_reschedule: [
+              "open",
+              "inprogress",
+              "scheduled",
+              "workinprogress",
+            ].includes(
+              rawDetails.task_status?.toLowerCase().replace(/\s+/g, "") || ""
+            ),
+            can_edit: [
+              "open",
+              "inprogress",
+              "scheduled",
+              "workinprogress",
+            ].includes(
+              rawDetails.task_status?.toLowerCase().replace(/\s+/g, "") || ""
+            ),
+            can_view_job_sheet: [
+              "closed",
+              "completed",
+              "partially closed",
+            ].includes(
+              rawDetails.task_status?.toLowerCase().replace(/\s+/g, "") || ""
+            ),
+          },
+          // Keep original fields for reference
+          before_after_enabled: rawDetails.steps === 3 ? "Yes" : "No",
+          steps: rawDetails.steps,
+        };
+
         setTaskDetails(mappedDetails);
+
+        // Enhanced debug logging
+        console.log("🗺️ Final Mapped Details:", mappedDetails);
+        console.log(
+          "📍 Final Location Object:",
+          mappedDetails?.task_details?.location
+        );
+
+        // Debug logging for image attachments and checklist
+        console.log("🖼️ Task Details Image Data:");
+        console.log(
+          "- Before Image (bef_sub_attachment):",
+          mappedDetails?.bef_sub_attachment || "null"
+        );
+        console.log(
+          "- After Image (aft_sub_attachment):",
+          mappedDetails?.aft_sub_attachment || "null"
+        );
+        console.log(
+          "- Before/After Enabled:",
+          mappedDetails?.before_after_enabled || false
+        );
+        console.log(
+          "📋 Checklist Responses with Attachments:",
+          mappedDetails?.activity?.resp?.map((r: any) => ({
+            label: r.label,
+            attachments: r.attachments?.length || 0,
+          }))
+        );
+
+        // Fetch ticket data using the task occurrence ID
+        if (mappedDetails?.id) {
+          try {
+            setTicketLoading(true);
+            const ticketResponse =
+              await ticketManagementAPI.getTicketsByTaskOccurrenceId(
+                mappedDetails.id.toString()
+              );
+            console.log("🎫 Ticket API Response:", ticketResponse);
+
+            if (
+              ticketResponse?.complaints &&
+              ticketResponse.complaints.length > 0
+            ) {
+              // Set the first ticket from the response
+              const ticket = ticketResponse.complaints[0];
+              setTicketData({
+                id: ticket.id,
+                ticket_number: ticket.ticket_number,
+                heading: ticket.heading,
+                category_type: ticket.category_type,
+                sub_category_type: ticket.sub_category_type,
+                posted_by: ticket.posted_by,
+                is_flagged: ticket.is_flagged,
+                is_golden_ticket: ticket.is_golden_ticket,
+                priority: ticket.priority,
+                issue_status: ticket.issue_status,
+                department_name: ticket.department_name,
+                assigned_to: ticket.backup_assigned_user || ticket.assigned_to,
+                created_at: ticket.created_at,
+                updated_at: ticket.updated_at,
+                building_name: ticket.building_name,
+                floor_name: ticket.floor_name,
+                site_name: ticket.site_name,
+                pms_site_name: ticket.pms_site_name,
+                complaint_type: ticket.complaint_type,
+                issue_type: ticket.issue_type,
+                color_code: ticket.color_code,
+                updated_by: ticket.updated_by,
+                priority_status: ticket.priority_status,
+                effective_priority: ticket.effective_priority,
+                schedule_type: ticket.schedule_type,
+                service_or_asset: ticket.service_or_asset,
+                asset_or_service_name: ticket.asset_or_service_name,
+                response_escalation: ticket.response_escalation,
+                resolution_escalation: ticket.resolution_escalation,
+                response_tat: ticket.response_tat,
+                resolution_tat: ticket.resolution_tat,
+                escalation_response_name: ticket.escalation_response_name,
+                escalation_resolution_name: ticket.escalation_resolution_name,
+                status: ticket.status,
+                unit_name: ticket.unit_name,
+                complaint_logs: ticket.complaint_logs || [],
+                documents: ticket.documents || [],
+                faqs: ticket.faqs || [],
+              });
+            } else {
+              console.log(
+                "No tickets found for task occurrence ID:",
+                mappedDetails.id
+              );
+              setTicketData(null);
+            }
+          } catch (error) {
+            console.error("Could not fetch ticket details:", error);
+            setTicketData(null);
+          } finally {
+            setTicketLoading(false);
+          }
+        }
       } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to load task details',
-          variant: 'destructive'
-        });
+        sonnerToast.error("Failed to load task details");
       } finally {
         setLoading(false);
       }
     };
     fetchTaskDetails();
-  }, [id, toast]);
+  }, [id]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const fetchedUsers = await userService.searchUsers('');
+        const fetchedUsers = await userService.searchUsers("");
         setUsers(fetchedUsers);
       } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch users'
-        });
+        sonnerToast.error("Failed to fetch users");
       }
     };
     fetchUsers();
@@ -138,15 +406,20 @@ export const TaskDetailsPage = () => {
 
   // Utility: build start_date as "YYYY-MM-DD HH:mm:ss"
   const getStartDateString = () => {
-    if (!rescheduleData.scheduleDate || !rescheduleData.scheduleTime) return '';
+    if (!rescheduleData.scheduleDate || !rescheduleData.scheduleTime) return "";
     return `${rescheduleData.scheduleDate} ${rescheduleData.scheduleTime}:00`;
   };
 
-  const handleBack = () => navigate('/maintenance/task');
-  const handleSubmitTask = () => setShowSubmitForm(true);
+  const handleBack = () => navigate("/maintenance/task");
+  const handleSubmitTask = () => navigate(`/maintenance/task/submit/${id}`);
   const handleTaskReschedule = () => setShowRescheduleDialog(true);
 
-  const handleJobSheetClick = async () => {
+  const handleJobSheetClick = () => {
+    if (!id) return;
+    navigate(`/maintenance/task/job-sheet/${id}`);
+  };
+
+  const handleJobSheetModalClick = async () => {
     if (!id) return;
     try {
       setJobSheetLoading(true);
@@ -154,76 +427,87 @@ export const TaskDetailsPage = () => {
       const jobSheet = await taskService.getJobSheet(id);
       setJobSheetData(jobSheet);
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load job sheet',
-        variant: 'destructive'
-      });
+      sonnerToast.error("Failed to load job sheet");
       setShowJobSheetModal(false);
     } finally {
       setJobSheetLoading(false);
     }
   };
 
+  // Refresh job sheet data
+  const handleRefreshJobSheet = async () => {
+    if (!id) return;
+    try {
+      setJobSheetLoading(true);
+      const jobSheet = await taskService.getJobSheet(id);
+      setJobSheetData(jobSheet);
+    } catch (error) {
+      sonnerToast.error("Failed to refresh job sheet data");
+    } finally {
+      setJobSheetLoading(false);
+    }
+  };
+
   // File upload handler for form
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, fileKey: string) => {
+  const handleFileUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    fileKey: string
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
-      setAttachedFiles(prev => ({
+      setAttachedFiles((prev) => ({
         ...prev,
-        [fileKey]: file
+        [fileKey]: file,
       }));
     }
   };
 
-  // --- Submit Handlers
-
-  const handleSubmitForm = () => {
-    // Send to API if needed
-    setShowSubmitForm(false);
-    toast({
-      title: 'Success',
-      description: 'Task submitted successfully!'
-    });
-  };
+  // --- Submit Handlers (task submission now handled on separate page)
 
   const handleRescheduleSubmit = async () => {
-    if (
-      !rescheduleData.scheduleDate ||
-      !rescheduleData.scheduleTime
-    ) {
-      toast({
-        title: 'Error',
-        description: 'Please fill in all required fields',
-        variant: 'destructive'
-      });
+    if (!rescheduleData.scheduleDate || !rescheduleData.scheduleTime) {
+      sonnerToast.error("Please fill in all required fields");
       return;
     }
 
+    const loadingToastId = sonnerToast.loading("Rescheduling task...", {
+      duration: Infinity,
+    });
+
     try {
+      // Convert date and time to format: YYYY-MM-DD HH:mm:ss
+      const dateTimeString = `${rescheduleData.scheduleDate} ${rescheduleData.scheduleTime}:00`;
+
       const payload = {
-        start_date: getStartDateString(),
-        user_ids: [Number(taskDetails?.task_details?.assigned_to) || 1], // Ensure it's a number
+        task_occurrence_ids: [parseInt(id!)],
+        start_date: dateTimeString,
         email: rescheduleData.email,
-        sms: false // Default to false for SMS
       };
 
-      await taskService.rescheduleTask(id!, payload);
+      // Use bulk reschedule API for consistency
+      await bulkTaskService.bulkReschedule(payload);
+
+      sonnerToast.dismiss(loadingToastId);
+      sonnerToast.success("Task rescheduled successfully!");
 
       // Refresh task details after successful reschedule
       const updatedDetails = await taskService.getTaskDetails(id!);
       setTaskDetails(updatedDetails);
 
       setShowRescheduleDialog(false);
-      toast({
-        title: 'Success',
-        description: 'Task rescheduled successfully!'
+
+      // Reset form with current date and time
+      setRescheduleData({
+        scheduleDate: new Date().toISOString().split("T")[0],
+        scheduleTime: new Date().toTimeString().slice(0, 5),
+        email: false,
       });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to reschedule task. Please try again.',
-      });
+      console.error("Task reschedule failed:", error);
+      sonnerToast.dismiss(loadingToastId);
+      sonnerToast.error(
+        error instanceof Error ? error.message : "Failed to reschedule task"
+      );
     }
   };
 
@@ -232,21 +516,657 @@ export const TaskDetailsPage = () => {
     setJobSheetData(null);
   };
 
-  // --- UI Helper
+  // --- API Action Handlers ---
+
+  // Helper function to refresh ticket data
+  const refreshTicketData = async () => {
+    if (taskDetails?.id) {
+      try {
+        const ticketResponse =
+          await ticketManagementAPI.getTicketsByTaskOccurrenceId(
+            taskDetails.id.toString()
+          );
+        if (
+          ticketResponse?.complaints &&
+          ticketResponse.complaints.length > 0
+        ) {
+          const ticket = ticketResponse.complaints[0];
+          setTicketData({
+            id: ticket.id,
+            ticket_number: ticket.ticket_number,
+            heading: ticket.heading,
+            category_type: ticket.category_type,
+            sub_category_type: ticket.sub_category_type,
+            posted_by: ticket.posted_by,
+            is_flagged: ticket.is_flagged,
+            is_golden_ticket: ticket.is_golden_ticket,
+            priority: ticket.priority,
+            issue_status: ticket.issue_status,
+            department_name: ticket.department_name,
+            assigned_to: ticket.assigned_to,
+            created_at: ticket.created_at,
+            updated_at: ticket.updated_at,
+            building_name: ticket.building_name,
+            floor_name: ticket.floor_name,
+            site_name: ticket.site_name,
+            pms_site_name: ticket.pms_site_name,
+            complaint_type: ticket.complaint_type,
+            issue_type: ticket.issue_type,
+            color_code: ticket.color_code,
+            updated_by: ticket.updated_by,
+            priority_status: ticket.priority_status,
+            effective_priority: ticket.effective_priority,
+            schedule_type: ticket.schedule_type,
+            service_or_asset: ticket.service_or_asset,
+            asset_or_service_name: ticket.asset_or_service_name,
+            response_escalation: ticket.response_escalation,
+            resolution_escalation: ticket.resolution_escalation,
+            response_tat: ticket.response_tat,
+            resolution_tat: ticket.resolution_tat,
+            escalation_response_name: ticket.escalation_response_name,
+            escalation_resolution_name: ticket.escalation_resolution_name,
+            status: ticket.status,
+            unit_name: ticket.unit_name,
+            complaint_logs: ticket.complaint_logs || [],
+            documents: ticket.documents || [],
+            faqs: ticket.faqs || [],
+          });
+        }
+      } catch (refreshError) {
+        console.error("Failed to refresh ticket data:", refreshError);
+      }
+    }
+  };
+
+  const handleTicketFlag = async (
+    ticketId: number,
+    currentFlagStatus: boolean
+  ) => {
+    try {
+      const response = await ticketManagementAPI.markAsFlagged([ticketId]);
+
+      sonnerToast.success(
+        response.message ||
+          `Ticket ${!currentFlagStatus ? "flagged" : "unflagged"} successfully`
+      );
+
+      // Refresh ticket data to ensure consistency with server
+      await refreshTicketData();
+    } catch (error) {
+      console.error("Flag action failed:", error);
+      sonnerToast.error("Failed to flag ticket");
+    }
+  };
+
+  const handleTicketGoldenTicket = async (
+    ticketId: number,
+    currentGoldenStatus: boolean
+  ) => {
+    try {
+      const response = await ticketManagementAPI.markAsGoldenTicket([ticketId]);
+
+      sonnerToast.success(
+        response.message ||
+          `Golden Ticket ${
+            !currentGoldenStatus ? "marked" : "unmarked"
+          } successfully!`
+      );
+
+      // Refresh ticket data to ensure consistency with server
+      await refreshTicketData();
+    } catch (error) {
+      console.error("Golden ticket action failed:", error);
+      sonnerToast.error("Failed to mark as golden ticket");
+    }
+  };
+
+  const handleTicketView = (ticketId: string) => {
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("tickets")) {
+      navigate(`/tickets/details/${ticketId}`);
+    } else {
+      navigate(`/maintenance/ticket/details/${ticketId}`);
+    }
+  };
+
+  const handleTicketEdit = (ticketId: string) => {
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("tickets")) {
+      navigate(`/tickets/edit/${ticketId}`);
+    } else {
+      navigate(`/maintenance/ticket/edit/${ticketId}`);
+    }
+  };
+
+  // --- Dynamic Data Helpers
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'open':
-        return 'bg-blue-100 text-blue-700';
-      case 'scheduled':
-        return 'bg-green-100 text-green-700';
-      case 'overdue':
-        return 'bg-red-100 text-red-700';
-      case 'completed':
-        return 'bg-gray-100 text-gray-700';
-      case 'in progress':
-        return 'bg-yellow-100 text-yellow-700';
+      case "open":
+        return "bg-blue-100 text-blue-700";
+      case "scheduled":
+        return "bg-green-100 text-green-700";
+      case "overdue":
+        return "bg-red-100 text-red-700";
+      case "completed":
+        return "bg-gray-100 text-gray-700";
+      case "in progress":
+        return "bg-yellow-100 text-yellow-700";
       default:
-        return 'bg-gray-100 text-gray-700';
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  // Get task name dynamically
+  const getTaskName = () => {
+    return taskDetails?.task_details?.task_name || "Task Details";
+  };
+
+  // Get task location details dynamically
+  const getLocationBadges = () => {
+    const location = taskDetails?.task_details?.location;
+    if (!location) return [];
+
+    const badges = [];
+    if (location.site && location.site !== "NA")
+      badges.push({ label: "Site", value: location.site });
+    if (location.building && location.building !== "NA")
+      badges.push({ label: "Building", value: location.building });
+    if (location.wing && location.wing !== "NA")
+      badges.push({ label: "Wing", value: location.wing });
+    if (location.floor && location.floor !== "NA")
+      badges.push({ label: "Floor", value: location.floor });
+    if (location.area && location.area !== "NA")
+      badges.push({ label: "Area", value: location.area });
+    if (location.room && location.room !== "NA")
+      badges.push({ label: "Room", value: location.room });
+
+    return badges;
+  };
+
+  // Get activity data grouped by sections
+  const getGroupedActivityData = () => {
+    const activityResp = (taskDetails?.activity as any)?.resp;
+    console.log("🎯 getActivityData - activityResp:", activityResp);
+    console.log(
+      "🎯 getActivityData - activityResp length:",
+      activityResp?.length
+    );
+
+    if (!activityResp || activityResp.length === 0) {
+      console.log("⚠️ No activity responses found");
+      return [];
+    }
+
+    // Group by group_id and sub_group_id
+    const grouped: { [key: string]: any[] } = {};
+
+    activityResp.forEach((item: any, index: number) => {
+      const groupId = item.group_id || "ungrouped";
+      const subGroupId = item.sub_group_id || "ungrouped";
+      const key = `${groupId}_${subGroupId}`;
+
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+
+      grouped[key].push({
+        id: item.name || `activity_${index}`,
+        helpText: item.hint || "-",
+        activities: item.label || "-",
+        input: item.userData?.length > 0 ? item.userData : ["-"],
+        comments: item.comment || "-",
+        weightage: item.weightage || "-",
+        rating: item.rating || "-",
+        attachments: item.attachments || [],
+        values: item.values || [],
+        group_name: item.group_name || "",
+        sub_group_name: item.sub_group_name || "",
+        group_id: groupId,
+        sub_group_id: subGroupId,
+      });
+    });
+
+    // Convert to array of sections
+    return Object.keys(grouped).map((key) => ({
+      sectionKey: key,
+      group_name: grouped[key][0]?.group_name || "Ungrouped",
+      sub_group_name: grouped[key][0]?.sub_group_name || "",
+      activities: grouped[key],
+    }));
+  };
+
+  // Get activity data dynamically (flat list for compatibility)
+  const getActivityData = () => {
+    const activityResp = (taskDetails?.activity as any)?.resp;
+
+    if (!activityResp || activityResp.length === 0) {
+      return [];
+    }
+
+    const mappedData = activityResp.map((item: any, index: number) => ({
+      id: item.name || `activity_${index}`,
+      helpText: item.hint || "-",
+      activities: item.label || "-",
+      input: item.userData?.length > 0 ? item.userData : ["-"],
+      comments: item.comment || "-",
+      weightage: item.weightage || "-",
+      rating: item.rating || "-",
+      attachments: item.attachments || [],
+      values: item.values || [],
+    }));
+
+    // Debug log to verify attachments
+    console.log("📊 Activity Data with Attachments:", mappedData);
+    console.log(
+      "📎 Items with attachments:",
+      mappedData.filter((item) => item.attachments?.length > 0)
+    );
+
+    return mappedData;
+  };
+
+  // Get assigned user name
+  const getAssignedUserName = () => {
+    return (
+      taskDetails?.task_details?.assigned_to ||
+      taskDetails?.task_details?.created_by ||
+      "-"
+    );
+  };
+
+  // Get before/after image URLs from task details
+  const getBeforeImageUrl = () => {
+    return taskDetails?.bef_sub_attachment || null;
+  };
+
+  const getAfterImageUrl = () => {
+    return taskDetails?.aft_sub_attachment || null;
+  };
+
+  // Handle image load errors with fallback SVGs
+  const handleImageError = (
+    e: React.SyntheticEvent<HTMLImageElement>,
+    type: "before" | "after"
+  ) => {
+    const target = e.target as HTMLImageElement;
+    const color = type === "before" ? "f5f5f5" : "e8f5e8";
+    const textColor = type === "before" ? "888888" : "2d5a2d";
+    const label = type === "before" ? "BEFORE" : "AFTER";
+
+    target.src = `data:image/svg+xml;base64,${btoa(`
+      <svg width="128" height="96" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="#${color}"/>
+        <text x="50%" y="40%" font-family="Arial" font-size="10" fill="#${textColor}" text-anchor="middle" dy=".3em">${label}</text>
+        <text x="50%" y="60%" font-family="Arial" font-size="8" fill="#${textColor}" text-anchor="middle" dy=".3em">No Image Available</text>
+      </svg>
+    `)}`;
+  };
+
+  // Helper function to format dates
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // Activity table columns configuration
+  const activityColumns: ColumnConfig[] = [
+    {
+      key: "helpText",
+      label: "Help Text",
+      sortable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "activities",
+      label: "Activities",
+      sortable: true,
+      defaultVisible: true,
+    },
+    { key: "input", label: "Input", sortable: true, defaultVisible: true },
+    {
+      key: "comments",
+      label: "Comments",
+      sortable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "weightage",
+      label: "Weightage",
+      sortable: true,
+      defaultVisible: true,
+    },
+    { key: "rating", label: "Rating", sortable: true, defaultVisible: true },
+    {
+      key: "attachments",
+      label: "Attachments",
+      sortable: false,
+      defaultVisible: true,
+    },
+    { key: "score", label: "Score", sortable: true, defaultVisible: true },
+    {
+      key: "attachments",
+      label: "Attachments",
+      sortable: false,
+      defaultVisible: true,
+    },
+  ];
+
+  // Ticket table columns configuration
+  const ticketColumns: ColumnConfig[] = [
+    { key: "actions", label: "Actions", sortable: false, defaultVisible: true },
+    {
+      key: "ticket_number",
+      label: "Ticket ID",
+      sortable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "heading",
+      label: "Description",
+      sortable: true,
+      defaultVisible: true,
+    },
+    { key: "issue_type", label: "Type", sortable: true, defaultVisible: true },
+    {
+      key: "category",
+      label: "Category",
+      sortable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "priority",
+      label: "Priority",
+      sortable: true,
+      defaultVisible: true,
+    },
+    { key: "status", label: "Status", sortable: true, defaultVisible: true },
+    {
+      key: "posted_by",
+      label: "Created By",
+      sortable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "assigned_to",
+      label: "Assigned To",
+      sortable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "location",
+      label: "Location",
+      sortable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "escalation",
+      label: "Escalation",
+      sortable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "created_at",
+      label: "Created",
+      sortable: true,
+      defaultVisible: true,
+    },
+  ];
+
+  // Activity table cell renderer
+  const renderActivityCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case "helpText":
+        return (
+          <span 
+            className="text-xs cursor-help truncate max-w-[200px] block" 
+            title={item.helpText}
+          >
+            {item.helpText}
+          </span>
+        );
+      case "activities":
+        return (
+          <span 
+            className="text-xs cursor-help truncate max-w-[200px] block" 
+            title={item.activities}
+          >
+            {item.activities}
+          </span>
+        );
+      case "input":
+        const inputText = Array.isArray(item.input) ? item.input.join(", ") : item.input;
+        return (
+          <span 
+            className="text-xs cursor-help truncate max-w-[200px] block" 
+            title={inputText}
+          >
+            {inputText}
+          </span>
+        );
+      case "comments":
+        return (
+          <span 
+            className="text-xs cursor-help truncate max-w-[200px] block" 
+            title={item.comments}
+          >
+            {item.comments}
+          </span>
+        );
+      case "weightage":
+        return <span className="text-xs">{item.weightage}</span>;
+      case "rating":
+        return <span className="text-xs">{item.rating}</span>;
+      case "attachments":
+        if (!item.attachments || item.attachments.length === 0) {
+          return <span className="text-xs text-gray-400">-</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {item.attachments.map((url: string, idx: number) => (
+              <a
+                key={idx}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:text-blue-800 underline"
+                title={`Attachment ${idx + 1}`}
+              >
+                <img
+                  src={url}
+                  alt={`Attachment ${idx + 1}`}
+                  className="w-8 h-8 object-cover"
+                />
+              </a>
+            ))}
+          </div>
+        );
+      case "score":
+        return <span className="text-xs">{item.score}</span>;
+
+      default:
+        return item[columnKey] || "-";
+    }
+  };
+
+  // Ticket table cell renderer
+  const renderTicketCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case "actions":
+        return (
+          <div className="flex items-center gap-1">
+            <button
+              className="p-1 hover:bg-gray-100 rounded"
+              onClick={() => handleTicketView(item.ticket_number)}
+              title="View ticket details"
+            >
+              <Eye className="w-4 h-4 text-gray-600" />
+            </button>
+            <button
+              className={`p-1 hover:bg-gray-100 rounded transition-colors ${
+                item.is_flagged
+                  ? "text-red-500 hover:text-red-600"
+                  : "text-gray-400 hover:text-red-400"
+              }`}
+              onClick={() => handleTicketFlag(item.id, item.is_flagged)}
+              title={item.is_flagged ? "Remove flag" : "Flag ticket"}
+            >
+              <Flag
+                className={`w-4 h-4 transition-all duration-200 ${
+                  item.is_flagged
+                    ? "text-red-500 fill-red-500"
+                    : "text-gray-600"
+                }`}
+              />
+            </button>
+            <button
+              className={`p-1 hover:bg-gray-100 rounded transition-colors ${
+                item.is_golden_ticket
+                  ? "text-yellow-500 hover:text-yellow-600"
+                  : "text-gray-400 hover:text-yellow-400"
+              }`}
+              onClick={() =>
+                handleTicketGoldenTicket(item.id, item.is_golden_ticket)
+              }
+              title={
+                item.is_golden_ticket
+                  ? "Remove golden ticket"
+                  : "Mark as golden ticket"
+              }
+            >
+              <Star
+                className={`w-4 h-4 transition-all duration-200 hover:scale-110 ${
+                  item.is_golden_ticket
+                    ? "text-yellow-500 fill-yellow-500"
+                    : "text-gray-600"
+                }`}
+              />
+            </button>
+          </div>
+        );
+      case "ticket_number":
+        return (
+          <span className="text-xs font-medium">{item.ticket_number}</span>
+        );
+      case "heading":
+        return <span className="text-xs">{item.heading || "N/A"}</span>;
+      case "issue_type":
+        return (
+          <Badge className="px-2 py-1 text-xs bg-blue-100 text-blue-700">
+            {item.issue_type || "N/A"}
+          </Badge>
+        );
+      case "category":
+        return (
+          <div className="space-y-1">
+            <div className="font-medium text-xs">
+              {item.category_type || "N/A"}
+            </div>
+            {item.sub_category_type && (
+              <div className="text-gray-500 text-xs">
+                {item.sub_category_type}
+              </div>
+            )}
+          </div>
+        );
+      case "priority":
+        return (
+          <div className="space-y-1">
+            <Badge
+              className={`px-2 py-1 text-xs ${
+                item.priority === "P1"
+                  ? "bg-red-100 text-red-700"
+                  : item.priority === "P2"
+                  ? "bg-yellow-100 text-yellow-700"
+                  : item.priority === "P3"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-gray-100 text-gray-700"
+              }`}
+            >
+              {item.priority || "N/A"}
+            </Badge>
+            <div className="text-xs text-gray-500">
+              {item.priority_status || "N/A"}
+            </div>
+          </div>
+        );
+      case "status":
+        return (
+          <Badge
+            className="px-2 py-1 text-xs text-white"
+            style={{
+              backgroundColor:
+                item.status?.color_code || item.color_code || "#60A8C0",
+              color: "white",
+            }}
+          >
+            {item.status?.name || item.issue_status || "N/A"}
+          </Badge>
+        );
+      case "posted_by":
+        return <span className="text-xs">{item.posted_by || "N/A"}</span>;
+      case "assigned_to":
+        return (
+          <div className="space-y-1">
+            <div className="font-medium text-xs">
+              {item.assigned_to || "N/A"}
+            </div>
+            <div className="text-gray-500 text-xs">
+              {item.department_name || "N/A"}
+            </div>
+          </div>
+        );
+      case "location":
+        return (
+          <div className="space-y-1">
+            <div className="font-medium text-xs">
+              {item.pms_site_name || item.site_name || "N/A"}
+            </div>
+            <div className="text-gray-500 text-xs">
+              {item.building_name && `${item.building_name}`}
+              {item.floor_name && ` - ${item.floor_name}`}
+            </div>
+          </div>
+        );
+      case "escalation":
+        return (
+          <div className="space-y-1">
+            <div
+              className={`text-xs px-2 py-1 rounded ${
+                item.response_escalation === "Breached"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-green-100 text-green-700"
+              }`}
+            >
+              Response: {item.response_escalation || "N/A"}
+            </div>
+            <div
+              className={`text-xs px-2 py-1 rounded ${
+                item.resolution_escalation === "Breached"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-green-100 text-green-700"
+              }`}
+            >
+              Resolution: {item.resolution_escalation || "N/A"}
+            </div>
+          </div>
+        );
+      case "created_at":
+        return <span className="text-xs">{formatDate(item.created_at)}</span>;
+      default:
+        return item[columnKey] || "-";
     }
   };
 
@@ -273,401 +1193,828 @@ export const TaskDetailsPage = () => {
 
   return (
     <>
-      <div className="p-6 bg-white min-h-screen">
+      <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-            <button
-              onClick={handleBack}
-              className="flex items-center gap-1 hover:text-[#C72030]"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Scheduled Task List</span>
-            </button>
-          </div>
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-[#1a1a1a]">Task Details</h1>
-            <div className="flex gap-3">
-              {(taskDetails?.actions?.can_view_job_sheet || taskDetails?.task_details?.status?.value?.toLowerCase() === 'closed') && (
-                <Button
-                  onClick={handleJobSheetClick}
-                  style={{
-                    backgroundColor: '#C72030'
-                  }}
-                  className="text-white hover:bg-[#C72030]/90"
-                >
-                  Job Sheet
-                </Button>
-              )}
-              {taskDetails?.actions?.can_submit_task && (
-                <Button
-                  onClick={handleSubmitTask}
-                  style={{
-                    backgroundColor: '#C72030'
-                  }}
-                  className="text-white hover:bg-[#C72030]/90"
-                >
-                  Submit Task
-                </Button>
-              )}
-              {taskDetails?.actions?.can_reschedule && (
-                <Button
-                  onClick={handleTaskReschedule}
-                  style={{
-                    backgroundColor: '#C72030'
-                  }}
-                  className="text-white hover:bg-[#C72030]/90"
-                >
-                  Task Reschedule
-                </Button>
-              )}
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-1 hover:text-gray-800 mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Task List
+          </button>
+
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-4">
+                <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">
+                  {getTaskName()}
+                </h1>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {(() => {
+                const status =
+                  taskDetails?.task_details?.status?.value?.toLowerCase();
+
+                // If status is open, in progress, scheduled, or work in progress - show Task Reschedule and Submit Task
+                if (
+                  [
+                    "open",
+                   
+                  ].includes(status)
+                ) {
+                  return (
+                    <>
+                      {(taskDetails?.actions?.can_reschedule ||
+                        taskDetails?.actions?.can_edit) && (
+                        <Button
+                          onClick={handleTaskReschedule}
+                          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        >
+                          Task Reschedule
+                        </Button>
+                      )}
+                      {(taskDetails?.actions?.can_submit_task ||
+                        taskDetails?.actions?.can_edit) && (
+                        <Button
+                          onClick={handleSubmitTask}
+                          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        >
+                          Submit Task
+                        </Button>
+                      )}
+                    </>
+                  );
+                } else if (["scheduled"].includes(status)) {
+                  return (
+                    <>
+                      {(taskDetails?.actions?.can_reschedule ||
+                        taskDetails?.actions?.can_edit) && (
+                        <Button
+                          onClick={handleTaskReschedule}
+                          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        >
+                          Task Reschedule
+                        </Button>
+                      )}
+                    </>
+                  );
+                }
+
+                // If status is closed - show Job Sheet
+                else if (
+                  ["closed", "completed", "partially closed"].includes(status)
+                ) {
+                  return (
+                    <>
+                      {(taskDetails?.actions?.can_view_job_sheet ||
+                        ["closed", "completed", "partially closed"].includes(
+                          status
+                        )) && (
+                        <Button
+                          onClick={handleJobSheetModalClick}
+                          variant="outline"
+                          className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
+                        >
+                          Job Sheet
+                        </Button>
+                      )}
+                    </>
+                  );
+                }
+
+                // If status is overdue - show Submit Task (even if can_submit_task is false, show for overdue)
+                else if (["overdue"].includes(status)) {
+                  return (
+                    <>
+                      <Button
+                        onClick={handleSubmitTask}
+                        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                      >
+                        Submit Task
+                      </Button>
+                    </>
+                  );
+                }
+
+                // Default case - show all buttons if conditions are met
+                return (
+                  <>
+                    {(taskDetails?.actions?.can_view_job_sheet ||
+                      ["closed", "completed", "partially closed"].includes(
+                        status
+                      )) && (
+                      <Button
+                        onClick={handleJobSheetModalClick}
+                        variant="outline"
+                        className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
+                      >
+                        Job Sheet
+                      </Button>
+                    )}
+                    {taskDetails?.actions?.can_submit_task && (
+                      <Button
+                        onClick={handleSubmitTask}
+                        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                      >
+                        Submit Task
+                      </Button>
+                    )}
+               
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
 
-        {/* Task Details Section */}
-        <Card className="mb-6">
-          <CardHeader className="border-b bg-white">
-            <CardTitle
-              className="flex items-center gap-2"
-              style={{
-                color: '#C72030'
-              }}
-            >
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm"
-                style={{
-                  backgroundColor: '#C72030'
-                }}
-              >
-                T
+        {/* Main Content */}
+        <div className="space-y-6">
+          {/* Pre-Post Inspection Info - Conditional rendering based on steps and before_after_enabled */}
+          {taskDetails?.steps == 3 && taskDetails?.task_status== "Closed" && (
+            <Card className="w-full bg-transparent shadow-none border-none">
+              <div className="figma-card-header">
+                <div className="flex items-center gap-3">
+                  <div className="figma-card-icon-wrapper">
+                    <User className="figma-card-icon" />
+                  </div>
+                  <h3 className="figma-card-title">Pre-Post Inspection Info</h3>
+                </div>
               </div>
-              Task Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-600">ID</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.id || taskDetails?.id}
-                  </p>
+              <div className="figma-card-content">
+                <div className="flex gap-10 mb-6">
+                  <div>
+                    <h4 className="text-base font-semibold text-gray-900 mb-3">
+                      Before
+                    </h4>
+                    <div 
+                      className="bg-gray-100 rounded-lg flex items-center justify-center border overflow-hidden"
+                      style={{ width: '175.165px', height: '175.165px' }}
+                    >
+                      {getBeforeImageUrl() ? (
+                        <img
+                          src={getBeforeImageUrl()!}
+                          alt="Before inspection"
+                          className="w-full h-full object-cover rounded-lg"
+                          onError={(e) => handleImageError(e, "before")}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                          <div className="text-sm font-medium">BEFORE</div>
+                          <div className="text-sm mt-1">
+                            No Image Available
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-base font-semibold text-gray-900 mb-3">
+                      After
+                    </h4>
+                    <div 
+                      className="bg-gray-100 rounded-lg flex items-center justify-center border overflow-hidden"
+                      style={{ width: '175.165px', height: '175.165px' }}
+                    >
+                      {getAfterImageUrl() ? (
+                        <img
+                          src={getAfterImageUrl()!}
+                          alt="After inspection"
+                          className="w-full h-full object-cover rounded-lg"
+                          onError={(e) => handleImageError(e, "after")}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                          <div className="text-sm font-medium">AFTER</div>
+                          <div className="text-sm mt-1">
+                            No Image Available
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-600">
+                  <label className="text-base font-semibold text-gray-900 mb-3 block">
+                    Name
+                  </label>
+                  <div className="w-80 px-4 py-3 border border-gray-300 rounded-md text-sm bg-gray-50">
+                    {getAssignedUserName()}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Task Info */}
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <FileText className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Task Info</h3>
+                {/* Steps Indicator */}
+                {taskDetails?.steps && (
+                  <div className="flex items-center gap-1 ml-auto">
+                    <div className="relative">
+                      <svg
+                        width="18"
+                        height="19"
+                        viewBox="0 0 13 14"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M10.25 9.5C11.2856 9.5 12.125 10.3394 12.125 11.375C12.125 12.4106 11.2856 13.25 10.25 13.25C9.21444 13.25 8.375 12.4106 8.375 11.375C8.375 10.3394 9.21444 9.5 10.25 9.5ZM8.6875 2C10.2408 2 11.5 3.2592 11.5 4.8125C11.5 6.36581 10.2408 7.625 8.6875 7.625H4.3125C3.44956 7.625 2.75 8.32456 2.75 9.1875C2.75 10.0504 3.44956 10.75 4.3125 10.75H7.125C7.47019 10.75 7.75 11.0298 7.75 11.375C7.75 11.7202 7.47019 12 7.125 12H4.3125C2.7592 12 1.5 10.7408 1.5 9.1875C1.5 7.63419 2.7592 6.375 4.3125 6.375H8.6875C9.55044 6.375 10.25 5.67544 10.25 4.8125C10.25 3.94956 9.55044 3.25 8.6875 3.25H5.875C5.52981 3.25 5.25 2.97018 5.25 2.625C5.25 2.27983 5.52981 2 5.875 2H8.6875ZM2.75 0.75C3.78553 0.75 4.625 1.58947 4.625 2.625C4.625 3.66053 3.78553 4.5 2.75 4.5C1.71447 4.5 0.875 3.66053 0.875 2.625C0.875 1.58947 1.71447 0.75 2.75 0.75Z"
+                          fill="black"
+                        />
+                      </svg>
+
+                      {/* <span className="absolute -top-2 -right-1 bg-[#C72030] text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                        {taskDetails.steps}
+                      </span> */}
+                    </div>
+                    <span className="text-xs text-gray-600 font-medium">
+                      {taskDetails.steps === 3
+                        ? "3-Step Journey"
+                        : "1-Step Journey"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                    ID
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {taskDetails?.task_details?.id || taskDetails?.id || "N/A"}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                    Asset/Service Id
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {taskDetails?.task_details?.asset_service_code || "N/A"}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                    Created By
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {taskDetails?.task_details?.created_by || "N/A"}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                    Task
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {taskDetails?.task_details?.task_name || "N/A"}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                    Scheduled On
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {taskDetails?.task_details?.scheduled_on || "N/A"}
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
                     Associated With
-                  </label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.associated_with}
-                  </p>
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {taskDetails?.task_details?.associated_with || "N/A"}
+                  </span>
                 </div>
-                <div>
-                  <label className="text-sm text-gray-600">
-                    Asset/Service Code
-                  </label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.asset_service_code}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Schedule on</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.scheduled_on}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">
-                    Task Duration
-                  </label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.task_duration}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Created By</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.created_by}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Status</label>
-                  <Badge className={getStatusColor(taskDetails?.task_details?.status?.value || '')}>
-                    {taskDetails?.task_details?.status?.display_name}
-                  </Badge>
-                </div>
-                {taskDetails?.task_details?.completed_on && (
-                  <div>
-                    <label className="text-sm text-gray-600">Completed on</label>
-                    <p className="font-medium">
-                      {taskDetails.task_details.completed_on}
-                    </p>
-                  </div>
-                )}
-                {taskDetails?.task_details?.start_time && (
-                  <div>
-                    <label className="text-sm text-gray-600">Start time</label>
-                    <p className="font-medium">
-                      {taskDetails.task_details.start_time}
-                    </p>
-                  </div>
-                )}
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-600">Task</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.task_name}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
                     Asset/Service Name
-                  </label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.asset_service_name}
-                  </p>
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {taskDetails?.task_details?.asset_service_name || "N/A"}
+                  </span>
                 </div>
-                <div>
-                  <label className="text-sm text-gray-600">Supplier</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.supplier || 'N/A'}
-                  </p>
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                    Task Duration
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {taskDetails?.task_details?.task_duration || "N/A"}
+                  </span>
                 </div>
-                <div>
-                  <label className="text-sm text-gray-600">Assigned to</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.assigned_to}
-                  </p>
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                    Supplier
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {taskDetails?.task_details?.supplier || "N/A"}
+                  </span>
                 </div>
-                <div>
-                  <label className="text-sm text-gray-600">Created on</label>
-                  <p className="font-medium">
-                    {taskDetails?.task_details?.created_on}
-                  </p>
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                    Assigned To
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {taskDetails?.task_details?.assigned_to ||
+                      "N/A"}
+                  </span>
                 </div>
-                <div>
-                  <label className="text-sm text-gray-600">Location</label>
-                  <p className="font-medium text-sm">
-                    {taskDetails?.task_details?.location?.full_location}
-                  </p>
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                    Created On
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    {taskDetails?.task_details?.created_on || "N/A"}
+                  </span>
                 </div>
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                    Status
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    <Badge
+                      className={getStatusColor(
+                        taskDetails?.task_details?.status?.value || ""
+                      )}
+                      title={taskDetails?.task_details?.status?.display_name || "Unknown"}
+                    >
+                      {taskDetails?.task_details?.status?.display_name ||
+                        "Unknown"}
+                    </Badge>
+                  </span>
+                </div>
+                <div className="task-info-row">
+                  <span
+                    className="task-info-label-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                    Check-in With <br /> Before/After <br /> Photograph
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span
+                    className="task-info-value-enhanced"
+                    style={{
+                      fontFamily: "Work Sans",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                    }}
+                  >
+                    <Badge
+                      className={
+                        taskDetails?.before_after_enabled
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-700"
+                      }
+                    >
+                      {taskDetails?.before_after_enabled}
+                    </Badge>
+                  </span>
+                </div>
+                {taskDetails?.task_details?.start_time && (
+                  <div className="task-info-row">
+                    <span
+                      className="task-info-label-enhanced"
+                      style={{
+                        fontFamily: "Work Sans",
+                        fontWeight: 500,
+                        fontSize: "16px",
+                      }}
+                    >
+                      Start Time
+                    </span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span
+                      className="task-info-value-enhanced"
+                      style={{
+                        fontFamily: "Work Sans",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                      }}
+                    >
+                      {taskDetails.task_details.start_time}
+                    </span>
+                  </div>
+                )}
+                {taskDetails?.task_details?.completed_on && (
+                  <div className="task-info-row">
+                    <span
+                      className="task-info-label-enhanced"
+                      style={{
+                        fontFamily: "Work Sans",
+                        fontWeight: 500,
+                        fontSize: "16px",
+                      }}
+                    >
+                      Completed On
+                    </span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span
+                      className="task-info-value-enhanced"
+                      style={{
+                        fontFamily: "Work Sans",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                      }}
+                    >
+                      {taskDetails.task_details.completed_on}
+                    </span>
+                  </div>
+                )}
                 {taskDetails?.task_details?.performed_by && (
-                  <div>
-                    <label className="text-sm text-gray-600">Performed by</label>
-                    <p className="font-medium">
+                  <div className="task-info-row">
+                    <span
+                      className="task-info-label-enhanced"
+                      style={{
+                        fontFamily: "Work Sans",
+                        fontWeight: 500,
+                        fontSize: "16px",
+                      }}
+                    >
+                      Completed By
+                    </span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span
+                      className="task-info-value-enhanced"
+                      style={{
+                        fontFamily: "Work Sans",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                      }}
+                    >
                       {taskDetails.task_details.performed_by}
-                    </p>
+                    </span>
                   </div>
                 )}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </Card>
 
-        {/* Activity Section */}
-        <Card>
-          <CardHeader className="border-b bg-white">
-            <CardTitle
-              style={{
-                color: '#C72030'
-              }}
-              className="flex items-center gap-2"
-            >
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm"
-                style={{
-                  backgroundColor: '#C72030'
-                }}
-              >
-                A
+          {/* Location Details */}
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <MapPin className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Location Details</h3>
               </div>
-              Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left bg-gray-50">
-                    <th className="p-3 border-b border-r">Help Text</th>
-                    <th className="p-3 border-b border-r">Activities</th>
-                    <th className="p-3 border-b border-r">Input</th>
-                    <th className="p-3 border-b border-r">Comments</th>
-                    <th className="p-3 border-b border-r">Weightage</th>
-                    <th className="p-3 border-b border-r">Rating</th>
-                    <th className="p-3 border-b border-r">Score</th>
-                    <th className="p-3 border-b border-r">Status</th>
-                    <th className="p-3 border-b">Attachments</th>
-                  </tr>
-                </thead>
-                <tbody>
-                        {taskDetails?.activity?.resp?.length > 0 ? (
-                          taskDetails.activity.resp.map((activity: any, index: number) => {
-                            const files = taskDetails.attachments?.blob_store_files?.filter(
-                              (file: any) => file.relation === `AssetQuestResponse${activity.name}`
-                            );
-
-                            const totalScore = taskDetails.activity.total_score;
-                            const score = totalScore ? `${totalScore.score}` : '-';
-
-                            return (
-                              <tr key={index} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
-                                <td className="p-3 border-b border-r">{activity.hint || '-'}</td>
-                                <td className="p-3 border-b border-r">{activity.label || '-'}</td>
-                                <td className="p-3 border-b border-r">
-                                  {activity.userData?.length > 0 ? (
-                                    <div className="flex flex-wrap gap-1">
-                                      {activity.userData.map((userValue: string, idx: number) => {
-                                        const matchingValue = activity.values?.find((val: any) => val.value === userValue);
-                                        const label = matchingValue ? matchingValue.label : userValue;
-                                        const type = matchingValue?.type;
-                                        
-                                        return (
-                                          <span
-                                            key={idx}
-                                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                              type === 'positive' 
-                                                ? 'bg-green-100 text-green-800' 
-                                                : type === 'negative' 
-                                                ? 'bg-red-100 text-red-800' 
-                                                : 'bg-gray-100 text-gray-800'
-                                            }`}
-                                          >
-                                            {label}
-                                          </span>
-                                        );
-                                      })}
-                                    </div>
-                                  ) : (
-                                    <span className="text-gray-500">-</span>
-                                  )}
-                                </td>
-                                <td className="p-3 border-b border-r">{activity.comment || '-'}</td>
-                                <td className="p-3 border-b border-r">{activity.weightage || '-'}</td>
-                                <td className="p-3 border-b border-r">{activity.rating || '-'}</td>
-                                <td className="p-3 border-b border-r">{score}</td>
-                                <td className="p-3 border-b border-r">
-                                  <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
-                                    {taskDetails.task_details.status.display_name}
-                                  </Badge>
-                                </td>
-                                <td className="p-3 border-b">
-                                  {files?.length > 0 ? (
-                                    <div className="space-y-1">
-                                      {files.map((file: any) => (
-                                        <div key={file.id} className="flex items-center gap-2">
-                                          <a
-                                            href={file.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
-                                            title={file.filename}
-                                          >
-                                            <img
-                                              src={file.url}
-                                              alt={file.filename}
-                                              className="w-8 h-8 object-cover rounded"
-                                            />
-                                          </a>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <span className="text-sm text-gray-500">No attachments for this activity</span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })
-                        ) : (
-                          <tr>
-                            <td colSpan={9} className="p-3 text-center text-gray-500">
-                              No activities found for this task.
-                            </td>
-                          </tr>
-                        )}
-
-
-                </tbody>
-
-              </table>
             </div>
-          </CardContent>
-        </Card>
+            <div className="figma-card-content">
+              <div className="relative w-full px-4">
+                <div
+                  className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
+                  style={{
+                    left: `calc(9%)`,
+                    right: `calc(9%)`,
+                  }}
+                />
+
+                <div className="flex justify-between items-start relative z-1">
+                  {[
+                    { label: "Site", value: taskDetails?.task_details?.location?.site || "-" },
+                    { label: "Building", value: taskDetails?.task_details?.location?.building || "-" },
+                    { label: "Wing", value: taskDetails?.task_details?.location?.wing || "-" },
+                    { label: "Floor", value: taskDetails?.task_details?.location?.floor || "-" },
+                    { label: "Area", value: taskDetails?.task_details?.location?.area || "-" },
+                    { label: "Room", value: taskDetails?.task_details?.location?.room || "-" },
+                  ].map((item, index) => (
+                    <div
+                      key={`location-${index}`}
+                      className="flex flex-col items-center w-full text-center"
+                    >
+                      <div className="text-sm text-gray-500 mb-2 mt-1">
+                        {item.label}
+                      </div>
+                      <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-1" />
+                      <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
+                        {item.value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Activity */}
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <FileText className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Activity</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              {taskDetails?.checklist_questions?.length > 0 ||
+              taskDetails?.activity?.resp?.length > 0 ? (
+                <div className="space-y-6">
+                  {/* Grouped Checklist Sections */}
+                  {getGroupedActivityData().map((section, sectionIndex) => (
+                    <div key={section.sectionKey} className="space-y-3">
+                      {/* Section Header */}
+                      <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-2 rounded-lg border-l-4 border-[#C72030AD]">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-base font-semibold text-gray-800">
+                              {section.group_name}
+                            </h4>
+                            {section.sub_group_name && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {section.sub_group_name}
+                              </p>
+                            )}
+                          </div>
+                          <Badge className="bg-[rgba(196,184,157,0.33)] text-black-700 px-3 py-1">
+                            Section {sectionIndex + 1}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {/* Section Table */}
+                      <EnhancedTable
+                        data={section.activities}
+                        columns={activityColumns}
+                        renderCell={renderActivityCell}
+                        emptyMessage="No activities found in this section."
+                        hideTableExport={true}
+                        hideTableSearch={true}
+                        hideColumnsButton={true}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-8">
+                  No activities found for this task.
+                </p>
+              )}
+            </div>
+          </Card>
+
+          {/* Ticket Details - Show only for closed/completed status */}
+          {(() => {
+            const status =
+              taskDetails?.task_details?.status?.value?.toLowerCase();
+            return (
+              ["closed", "completed", "partially closed"].includes(status) && (
+                <Card className="w-full bg-transparent shadow-none border-none">
+                  <div className="figma-card-header">
+                    <div className="flex items-center gap-3">
+                      <div className="figma-card-icon-wrapper">
+                        <FileText className="figma-card-icon" />
+                      </div>
+                      <h3 className="figma-card-title">Ticket Details</h3>
+                    </div>
+                  </div>
+                  <div className="figma-card-content">
+                    {ticketLoading ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#C72030] mx-auto mb-2"></div>
+                        <p className="text-gray-500 text-sm">
+                          Loading ticket details...
+                        </p>
+                      </div>
+                    ) : ticketData ? (
+                      <EnhancedTable
+                        data={[ticketData]}
+                        columns={ticketColumns}
+                        renderCell={renderTicketCell}
+                        storageKey="task-ticket-table"
+                        emptyMessage="No tickets found for this task."
+                        hideTableExport={true}
+                        hideTableSearch={true}
+                        hideColumnsButton={true}
+                      />
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">
+                          No tickets found for this task.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )
+            );
+          })()}
+        </div>
       </div>
 
-      {/* Submit Task Form Dialog */}
-      <Dialog open={showSubmitForm} onOpenChange={setShowSubmitForm}>
-        <DialogContent
-          className="max-w-4xl max-h-[80vh] overflow-y-auto"
-          aria-describedby="submit-task-dialog-description"
-        >
-          <span id="submit-task-dialog-description" className="sr-only">
-            Submit the task with your feedback and task completion details.
-          </span>
-          <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">
-              Test Ladies washroom Checklists
-            </DialogTitle>
-            <button
-              onClick={() => setShowSubmitForm(false)}
-              className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </button>
-          </DialogHeader>
-          {/* Place your submit form fields here */}
-          {/* Example: */}
-          <div className="p-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Comment
-              </label>
-              <TextField
-                fullWidth
-                multiline
-                minRows={2}
-                value={formData.floorComment}
-                onChange={e =>
-                  setFormData(prev => ({
-                    ...prev,
-                    floorComment: e.target.value
-                  }))
-                }
-                variant="outlined"
-                sx={{ mb: 2 }}
-              />
-            </div>
-            {/* Add your other fields as required */}
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowSubmitForm(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmitForm}
-                style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:bg-[#C72030]/90"
-              >
-                Submit
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Task submission now navigates to separate page */}
 
       {/* Task Reschedule Dialog */}
-      <Dialog open={showRescheduleDialog} onOpenChange={setShowRescheduleDialog}>
+      <Dialog
+        open={showRescheduleDialog}
+        onOpenChange={setShowRescheduleDialog}
+      >
         <DialogContent
           className="max-w-lg"
           aria-describedby="reschedule-dialog-description"
         >
           <span id="reschedule-dialog-description" className="sr-only">
-            Select a new schedule date, time, user, and notification preferences for this task.
+            Select a new schedule date, time, user, and notification preferences
+            for this task.
           </span>
           <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">Task Reschedule</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">
+              Task Reschedule
+            </DialogTitle>
             <button
               onClick={() => setShowRescheduleDialog(false)}
               className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
@@ -679,7 +2026,7 @@ export const TaskDetailsPage = () => {
 
           <div className="space-y-6 p-4">
             <div>
-              <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>
+              <h3 className="font-medium mb-4" style={{ color: "#C72030" }}>
                 New Schedule
               </h3>
               <div className="grid grid-cols-2 gap-4">
@@ -687,16 +2034,21 @@ export const TaskDetailsPage = () => {
                   label="Schedule Date"
                   type="date"
                   value={rescheduleData.scheduleDate}
-                  onChange={e =>
-                    setRescheduleData(prev => ({
+                  onChange={(e) =>
+                    setRescheduleData((prev) => ({
                       ...prev,
-                      scheduleDate: e.target.value
+                      scheduleDate: e.target.value,
                     }))
                   }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  InputProps={{ 
+                    sx: fieldStyles,
+                    inputProps: { 
+                      min: new Date().toISOString().split("T")[0] 
+                    }
+                  }}
                   sx={{ mt: 1 }}
                   required
                 />
@@ -704,10 +2056,10 @@ export const TaskDetailsPage = () => {
                   label="Time"
                   type="time"
                   value={rescheduleData.scheduleTime}
-                  onChange={e =>
-                    setRescheduleData(prev => ({
+                  onChange={(e) =>
+                    setRescheduleData((prev) => ({
                       ...prev,
-                      scheduleTime: e.target.value
+                      scheduleTime: e.target.value,
                     }))
                   }
                   fullWidth
@@ -721,17 +2073,17 @@ export const TaskDetailsPage = () => {
             </div>
 
             <div>
-              <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>
+              <h3 className="font-medium mb-4" style={{ color: "#C72030" }}>
                 Notification Preferences
               </h3>
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="email"
                   checked={rescheduleData.email}
-                  onCheckedChange={checked =>
-                    setRescheduleData(prev => ({
+                  onCheckedChange={(checked) =>
+                    setRescheduleData((prev) => ({
                       ...prev,
-                      email: !!checked
+                      email: !!checked,
                     }))
                   }
                 />
@@ -751,7 +2103,7 @@ export const TaskDetailsPage = () => {
               </Button>
               <Button
                 onClick={handleRescheduleSubmit}
-                style={{ backgroundColor: '#C72030' }}
+                style={{ backgroundColor: "#C72030" }}
                 className="text-white hover:bg-[#C72030]/90 px-6"
               >
                 Reschedule Task
@@ -765,10 +2117,11 @@ export const TaskDetailsPage = () => {
       <JobSheetModal
         isOpen={showJobSheetModal}
         onClose={handleCloseJobSheet}
-        taskId={id || ''}
+        taskId={id || ""}
         taskDetails={taskDetails}
         jobSheetData={jobSheetData}
         jobSheetLoading={jobSheetLoading}
+        onRefresh={handleRefreshJobSheet}
       />
     </>
   );

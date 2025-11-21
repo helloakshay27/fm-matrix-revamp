@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -67,6 +68,7 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
   });
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   // Define columns for the enhanced table
   const columns: ColumnConfig[] = [
@@ -213,7 +215,16 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
   const renderCell = (item: Ticket, columnKey: string) => {
     switch (columnKey) {
       case 'id':
-        return <span className="font-medium">#{item.id}</span>;
+        return (
+          <button
+            type="button"
+            onClick={() => navigate(`/maintenance/ticket/details/${item.id}`)}
+            className="font-medium text-[#C72030] hover:underline"
+            title={`View ticket #${item.id}`}
+          >
+            #{item.id}
+          </button>
+        );
       case 'heading':
         return item.heading;
       case 'category_type':

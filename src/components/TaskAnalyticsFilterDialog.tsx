@@ -90,15 +90,26 @@ export const TaskAnalyticsFilterDialog: React.FC<TaskAnalyticsFilterDialogProps>
             />
           </div>
         </div>
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={handleReset}>
-            Reset
+        <div className="flex flex-col sm:flex-row gap-4 pt-6">
+          <Button 
+            onClick={handleSubmit}
+            className="flex-1 h-11"
+          >
+            Apply Filters
           </Button>
-          <Button variant="outline" onClick={onClose}>
+          <Button 
+            variant="outline" 
+            onClick={onClose}
+            className="flex-1 h-11"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>
-            Apply Filters
+          <Button 
+            variant="outline" 
+            onClick={handleReset}
+            className="flex-1 h-11"
+          >
+            Reset
           </Button>
         </div>
       </DialogContent>

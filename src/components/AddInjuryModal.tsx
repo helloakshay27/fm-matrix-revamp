@@ -1,10 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -198,20 +204,19 @@ export const AddInjuryModal: React.FC<AddInjuryModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle>Add Injury</DialogTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-auto p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </DialogHeader>
-
+    <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 2 }}>
+        <h1 className="font-bold text-xl">Add Injury</h1>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+          className="h-auto p-0"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </DialogTitle>
+      <DialogContent>
         <div className="space-y-4 pt-4">
           {injuries.map((injury, index) => (
             <div key={injury.id} className="space-y-4 p-4 border rounded-lg">
@@ -229,52 +234,55 @@ export const AddInjuryModal: React.FC<AddInjuryModalProps> = ({
               )}
 
               <div className="space-y-2">
-                <Label>Injury Type</Label>
-                <Select
-                  value={injury.injuryType}
-                  onValueChange={(value) => handleInputChange(injury.id, 'injuryType', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Head">Head</SelectItem>
-                    <SelectItem value="Neck">Neck</SelectItem>
-                    <SelectItem value="Nose">Nose</SelectItem>
-                    <SelectItem value="Tongue">Tongue</SelectItem>
-                    <SelectItem value="Arms">Arms</SelectItem>
-                    <SelectItem value="Legs">Legs</SelectItem>
-                    <SelectItem value="Eyes">Eyes</SelectItem>
-                    <SelectItem value="Ears">Ears</SelectItem>
-                    <SelectItem value="Skin">Skin</SelectItem>
-                    <SelectItem value="Mouth">Mouth</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl size="small" fullWidth>
+                  <InputLabel id={`injury-type-label-${injury.id}`}>Injury Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                  <Select
+                    labelId={`injury-type-label-${injury.id}`}
+                    value={injury.injuryType}
+                    label="Injury Type"
+                    onChange={(e) => handleInputChange(injury.id, 'injuryType', e.target.value)}
+                  >
+                    <MenuItem value="">
+                      <em>Select Type</em>
+                    </MenuItem>
+                    <MenuItem value="Head">Head</MenuItem>
+                    <MenuItem value="Neck">Neck</MenuItem>
+                    <MenuItem value="Nose">Nose</MenuItem>
+                    <MenuItem value="Tongue">Tongue</MenuItem>
+                    <MenuItem value="Arms">Arms</MenuItem>
+                    <MenuItem value="Legs">Legs</MenuItem>
+                    <MenuItem value="Eyes">Eyes</MenuItem>
+                    <MenuItem value="Ears">Ears</MenuItem>
+                    <MenuItem value="Skin">Skin</MenuItem>
+                    <MenuItem value="Mouth">Mouth</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
 
               <div className="space-y-2">
-                <Label>Who got injured</Label>
-                <Select
-                  value={injury.whoGotInjured}
-                  onValueChange={(value) => handleInputChange(injury.id, 'whoGotInjured', value)}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={loading ? "Loading..." : "Select"} />
-                  </SelectTrigger>
-                  <SelectContent>
+                <FormControl size="small" fullWidth disabled={loading}>
+                  <InputLabel id={`who-got-injured-label-${injury.id}`}>Who got injured<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                  <Select
+                    labelId={`who-got-injured-label-${injury.id}`}
+                    value={injury.whoGotInjured}
+                    label="Who got injured"
+                    onChange={(e) => handleInputChange(injury.id, 'whoGotInjured', e.target.value)}
+                  >
+                    <MenuItem value="">
+                      <em>{loading ? 'Loading...' : 'Select'}</em>
+                    </MenuItem>
                     {whoGotInjured.map((injured) => (
-                      <SelectItem key={injured.id} value={injured.id.toString()}>
+                      <MenuItem key={injured.id} value={injured.id.toString()}>
                         {injured.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </Select>
+                </FormControl>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label>Name</Label>
+                  <Label>Name<span style={{ color: '#C72030' }}>*</span></Label>
                   <Input
                     value={injury.name}
                     onChange={(e) => handleInputChange(injury.id, 'name', e.target.value)}
@@ -302,27 +310,26 @@ export const AddInjuryModal: React.FC<AddInjuryModalProps> = ({
               </div>
             </div>
           ))}
-
-          <div className="flex justify-between items-center pt-4">
-            <Button
-              onClick={handleAddMore}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:opacity-90"
-            >
-              Add More
-            </Button>
-
-            <Button
-              onClick={handleAddInjury}
-              disabled={loading}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:opacity-90 px-8 disabled:opacity-50"
-            >
-              {loading ? 'Submitting...' : 'Submit'}
-            </Button>
-          </div>
         </div>
       </DialogContent>
+      <DialogActions sx={{ justifyContent: 'space-between', p: 3, pt: 0 }}>
+        <Button
+          onClick={handleAddMore}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:opacity-90"
+        >
+          Add More
+        </Button>
+
+        <Button
+          onClick={handleAddInjury}
+          disabled={loading}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:opacity-90 px-8 disabled:opacity-50"
+        >
+          {loading ? 'Submitting...' : 'Submit'}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };

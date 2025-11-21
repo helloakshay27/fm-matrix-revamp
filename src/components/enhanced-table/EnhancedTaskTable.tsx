@@ -252,6 +252,13 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
       return apiSearchResults;
     }
 
+    // If onSearchChange is provided, the parent is handling search (server-side)
+    // So don't apply client-side filtering, just use the data as-is
+    if (onSearchChange) {
+      return baseSortedData;
+    }
+
+    // Otherwise, apply client-side filtering
     if (!searchTerm) return baseSortedData;
 
     return baseSortedData.filter(item =>
@@ -259,7 +266,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
-  }, [baseSortedData, searchTerm, apiSearchResults]);
+  }, [baseSortedData, searchTerm, apiSearchResults, onSearchChange]);
 
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
@@ -494,8 +501,8 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className=" rounded-lg border border-[#D5DbDB] overflow-hidden">
+        <div className="overflow-x-auto enhancedTable">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -506,10 +513,14 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                     {renderActions && (
-                      <TableHead className="bg-[#f6f4ee] text-center" data-actions>Actions</TableHead>
+                      <TableHead className="bg-[#f6f4ee] text-center hover:bg-[#f0ede2] transition-colors duration-200" data-actions>
+                        <div className="flex justify-center items-center">
+                          Actions
+                        </div>
+                      </TableHead>
                     )}
                     {selectable && (
-                      <TableHead className="bg-[#f6f4ee] w-12 text-center" data-checkbox>
+                      <TableHead className="bg-[#f6f4ee] w-12 text-center hover:bg-[#f0ede2] transition-colors duration-200" data-checkbox>
                         <div className="flex justify-center">
                           <Checkbox
                             checked={isAllSelected}
@@ -524,11 +535,11 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                       <SortableColumnHeader
                         key={column.key}
                         id={column.key}
-                        sortable={column.sortable}
+                        sortable={column.sortable !== false}
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
-                        onSort={() => handleSort(column.key)}
-                        className="bg-[#f6f4ee] text-center text-black"
+                        onSort={() => column.sortable !== false && handleSort(column.key)}
+                        className="bg-[#f6f4ee] text-left text-black hover:bg-[#f0ede2] transition-colors duration-200"
                       >
                         {column.label}
                       </SortableColumnHeader>
@@ -577,18 +588,20 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                       key={index}
                       className={cn(
                         onRowClick && "cursor-pointer",
-                        "hover:bg-gray-50",
-                        isSelected && "bg-blue-50"
+                        "hover:bg-blue-50 hover:shadow-sm transition-colors duration-200",
+                        isSelected && "bg-blue-100 hover:bg-blue-150"
                       )}
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {renderActions && (
-                        <TableCell className="p-4 text-center" data-actions>
-                          {renderActions(item)}
+                        <TableCell className="p-4 text-center hover:bg-blue-25 transition-colors duration-150" data-actions>
+                          <div className="flex justify-center items-center gap-2">
+                            {renderActions(item)}
+                          </div>
                         </TableCell>
                       )}
                       {selectable && (
-                        <TableCell className="p-4 w-12 text-center" data-checkbox>
+                        <TableCell className="p-4 w-12 text-center hover:bg-blue-25 transition-colors duration-150" data-checkbox>
                           <div className="flex justify-center">
                             <Checkbox
                               checked={isSelected}
@@ -603,7 +616,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="p-4 text-center">
+                          <TableCell key={column.key} className="p-4 text-left hover:bg-blue-25 transition-colors duration-150">
                             {cellContent}
                           </TableCell>
                         );

@@ -1,5 +1,6 @@
 import { apiClient } from '@/utils/apiClient';
-import { ENDPOINTS } from '@/config/apiConfig';
+import { API_CONFIG, ENDPOINTS } from '@/config/apiConfig';
+
 
 // Category Types
 export interface CategoryFormData {
@@ -137,6 +138,16 @@ export interface ComplaintModeFormData {
   society_id: string;
 }
 
+// Escalation interfaces
+export interface EscalationInfo {
+  minutes: number;
+  is_overdue: boolean;
+  users: string[];
+  copy_to: string[];
+  escalation_name: string;
+  escalation_time: string;
+}
+
 // Ticket Types
 export interface TicketResponse {
   id: number;
@@ -171,6 +182,8 @@ export interface TicketResponse {
   color_code?: string;
   priority_status?: string;
   effective_priority?: string;
+  next_response_escalation?: EscalationInfo | null;
+  next_resolution_escalation?: EscalationInfo | null;
 }
 
 export interface TicketListResponse {
@@ -192,6 +205,7 @@ export interface CreateTicketFormData {
   complaint_type: string;
   category_type_id: number;
   priority: string;
+  severity?: string;
   society_staff_type: string;
   assigned_to?: number;
   proactive_reactive: string;
@@ -199,11 +213,11 @@ export interface CreateTicketFormData {
   heading: string;
   complaint_mode_id: number;
   sub_category_id?: number;
-  room_id: number;
-  wing_id: number;
-  area_id: number;
-  floor_id: number;
+  area_id?: number;
   tower_id?: number;
+  wing_id?: number;
+  floor_id?: number;
+  room_id?: number;
   is_golden_ticket?: boolean;
   is_flagged?: boolean;
 }
@@ -240,6 +254,7 @@ export interface OccupantUserResponse {
 // Interface for ticket filters
 export interface TicketFilters {
   date_range?: string;
+  'q[date_range]'?: string; // Add support for q[date_range] parameter format
   category_type_id_eq?: number;
   sub_category_id_eq?: number;
   dept_id_eq?: number;
@@ -256,6 +271,11 @@ export interface TicketFilters {
   complaint_status_fixed_state_not_eq?: string;
   complaint_status_fixed_state_null?: string;
   m?: string;
+  g?: Array<{
+    m?: string;
+    complaint_status_fixed_state_not_eq?: string;
+    complaint_status_fixed_state_null?: string;
+  }>;
 }
 
 // Helper function to format date for API (DD/MM/YYYY)
@@ -580,11 +600,21 @@ export const ticketManagementAPI = {
     queryParams.append('page', page.toString());
     queryParams.append('per_page', perPage.toString());
     
+    console.log('🔵 API getTickets called with filters:', filters);
     
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
-          if (Array.isArray(value)) {
+          // Handle nested group structure for open tickets
+          if (key === 'g' && Array.isArray(value)) {
+            value.forEach((group, index) => {
+              Object.entries(group).forEach(([groupKey, groupValue]) => {
+                if (groupValue !== undefined && groupValue !== null && groupValue !== '') {
+                  queryParams.append(`q[g][${index}][${groupKey}]`, groupValue.toString());
+                }
+              });
+            });
+          } else if (Array.isArray(value)) {
             value.forEach(v => queryParams.append(`q[${key}][]`, v.toString()));
           } else if (key === 'date_range' && typeof value === 'string' && value.includes('+-+')) {
             // Handle date range - convert from ISO to DD/MM/YYYY format
@@ -602,8 +632,8 @@ export const ticketManagementAPI = {
     }
 
     const url = `/pms/admin/complaints.json?${queryParams.toString()}`;
-    console.log('API URL:', url);
-    console.log('Query parameters:', Object.fromEntries(queryParams.entries()));
+    console.log('🔵 Final API URL:', url);
+    console.log('🔵 Query parameters object:', Object.fromEntries(queryParams.entries()));
     const response = await apiClient.get(url);
     return {
       complaints: response.data.complaints || [],
@@ -622,14 +652,22 @@ export const ticketManagementAPI = {
     formData.append('complaint[complaint_type]', ticketData.complaint_type);
     formData.append('complaint[category_type_id]', ticketData.category_type_id.toString());
     formData.append('complaint[priority]', ticketData.priority);
+    formData.append('complaint[supplier_id]', ticketData.supplier_id.toString());
     formData.append('complaint[society_staff_type]', ticketData.society_staff_type);
     formData.append('complaint[proactive_reactive]', ticketData.proactive_reactive);
     formData.append('complaint[heading]', ticketData.heading);
     formData.append('complaint[complaint_mode_id]', ticketData.complaint_mode_id.toString());
-    formData.append('complaint[room_id]', ticketData.room_id.toString());
-    formData.append('complaint[wing_id]', ticketData.wing_id.toString());
-    formData.append('complaint[area_id]', ticketData.area_id.toString());
-    formData.append('complaint[floor_id]', ticketData.floor_id.toString());
+    // Add vendor as complaint[supplier_id] if present (support both vendor and supplier_id)
+    if ('vendor' in ticketData && ticketData.vendor) {
+      formData.append('complaint[supplier_id]', String(ticketData.vendor));
+    } else if ('supplier_id' in ticketData && ticketData.supplier_id) {
+      formData.append('complaint[supplier_id]', String(ticketData.supplier_id));
+    }
+    
+    // Add severity if provided
+    if (ticketData.severity) {
+      formData.append('complaint[severity]', ticketData.severity);
+    }
 
     // Optional fields
     if (ticketData.id_user) {
@@ -647,8 +685,22 @@ export const ticketManagementAPI = {
     if (ticketData.sub_category_id) {
       formData.append('complaint[sub_category_id]', ticketData.sub_category_id.toString());
     }
+    
+    // Add all location parameters
+    if (ticketData.area_id) {
+      formData.append('complaint[area_id]', ticketData.area_id.toString());
+    }
     if (ticketData.tower_id) {
       formData.append('complaint[tower_id]', ticketData.tower_id.toString());
+    }
+    if (ticketData.wing_id) {
+      formData.append('complaint[wing_id]', ticketData.wing_id.toString());
+    }
+    if (ticketData.floor_id) {
+      formData.append('complaint[floor_id]', ticketData.floor_id.toString());
+    }
+    if (ticketData.room_id) {
+      formData.append('complaint[room_id]', ticketData.room_id.toString());
     }
 
     // Add golden ticket and flagged parameters
@@ -951,6 +1003,28 @@ export const ticketManagementAPI = {
     }
   },
 
+  // Get response TAT timings for a ticket by ID
+  async getResponseTatTimings(ticketId: string) {
+    try {
+      const response = await apiClient.get(`/response_tat_timings?id=${ticketId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching response TAT timings:', error);
+      throw error;
+    }
+  },
+
+  // Get resolution TAT timings for a ticket by ID
+  async getResolutionTatTimings(ticketId: string) {
+    try {
+      const response = await apiClient.get(`/resolution_tat_timings?id=${ticketId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching resolution TAT timings:', error);
+      throw error;
+    }
+  },
+
   // Get ticket feeds by ID
   async getTicketFeeds(ticketId: string) {
     try {
@@ -1087,54 +1161,52 @@ export const ticketManagementAPI = {
   },
 
   // Create visitor
-  async createVisitor(visitorData: {
-    visitorType: string;
-    frequency: string;
-    visitorVisit?: string;
-    host?: string;
-    tower?: string;
-    visitPurpose?: string;
-    supportCategory?: string;
-    passNumber: string;
-    vehicleNumber: string;
-    visitorName: string;
-    mobileNumber: string;
-    visitorComingFrom: string;
-    remarks: string;
-    expected_at?: string;
-    skipHostApproval: boolean;
-    goodsInwards: boolean;
-    passValidFrom?: string;
-    passValidTo?: string;
-    daysPermitted?: { [key: string]: boolean };
-    capturedPhoto?: string;
-    additionalVisitors?: Array<{ name: string; mobile: string }>;
-    goodsData?: {
-      selectType: string;
-      category: string;
-      modeOfTransport: string;
-      lrNumber: string;
-      tripId: string;
-    };
-    items?: Array<{
-      selectItem: string;
-      uicInvoiceNo: string;
-      quantity: string;
-    }>;
-  }) {
+  async createVisitor(
+    visitorData: {
+      visitorType: string;
+      frequency: string;
+      visitorVisit?: string;
+      host?: string;
+      tower?: string;
+      visitPurpose?: string;
+      supportCategory?: string;
+      passNumber: string;
+      vehicleNumber: string;
+      visitorName: string;
+      mobileNumber: string;
+      visitorComingFrom: string;
+      remarks: string;
+      expected_at?: string;
+      skipHostApproval: boolean;
+      goodsInwards: boolean;
+      passValidFrom?: string;
+      passValidTo?: string;
+      daysPermitted?: { [key: string]: boolean };
+      capturedPhoto?: string;
+      visitor_documents?: File[];
+      hostName?: string;
+      hostMobile?: string;
+      hostEmail?: string;
+      additionalVisitors?: Array<{ name: string; mobile: string; passNo: string }>;
+      goodsData?: {
+        selectType: string;
+        category: string;
+        modeOfTransport: string;
+        lrNumber: string;
+        tripId: string;
+      };
+      items?: Array<{
+        selectItem: string;
+        uicInvoiceNo: string;
+        quantity: string;
+      }>;
+      parentGkId?: string;
+    },
+    currentUserSiteId: string
+  ) {
     try {
       console.log('🔍 Creating visitor with data:', visitorData);
-      
-      // Get current user account to fetch site_id
-      let currentUserSiteId = '7'; // Default fallback value
-      try {
-        console.log('📡 Fetching current user account details for site_id...');
-        const userAccount = await this.getUserAccount();
-        currentUserSiteId = userAccount.site_id.toString();
-        console.log('✅ Got user site_id:', currentUserSiteId);
-      } catch (accountError) {
-        console.warn('⚠️ Failed to fetch user account, using default site_id:', accountError);
-      }
+      console.log('🏢 Using site_id:', currentUserSiteId);
       
       const formData = new FormData();
       
@@ -1142,7 +1214,19 @@ export const ticketManagementAPI = {
       formData.append('gatekeeper[created_by]', 'Gatekeeper');
       formData.append('gatekeeper[IsDelete]', '0');
       formData.append('gatekeeper[approve]', '0');
+      
+      // Add parent_gk_id if provided from visitor info
+    if (visitorData.parentGkId) {
+      formData.append('gatekeeper[parent_gk_id]', visitorData.parentGkId);
+      console.log('✅ Added parent_gk_id to FormData:', visitorData.parentGkId);
+    } else {
       formData.append('gatekeeper[parent_gk_id]', '');
+      console.log('⚠️ No parent_gk_id provided - using empty string');
+    }
+      
+      // Add resource_id (site_id) to the payload
+      formData.append('gatekeeper[resource_id]', currentUserSiteId);
+      console.log('✅ Added resource_id to FormData:', currentUserSiteId);
       
       // Dynamic fields based on visitor type
       if (visitorData.visitorType === 'support') {
@@ -1163,6 +1247,17 @@ export const ticketManagementAPI = {
       }
       if (visitorData.tower) {
         formData.append('gatekeeper[building_id]', visitorData.tower);
+      }
+      
+      // Host details (when host is "others")
+      if (visitorData.hostName) {
+        formData.append('gatekeeper[visitor_host_name]', visitorData.hostName);
+      }
+      if (visitorData.hostMobile) {
+        formData.append('gatekeeper[visitor_host_mobile]', visitorData.hostMobile);
+      }
+      if (visitorData.hostEmail) {
+        formData.append('gatekeeper[visitor_host_email]', visitorData.hostEmail);
       }
       
       // Basic visitor details
@@ -1223,10 +1318,11 @@ export const ticketManagementAPI = {
       // Additional visitors
       if (visitorData.additionalVisitors && visitorData.additionalVisitors.length > 0) {
         visitorData.additionalVisitors.forEach((visitor, index) => {
-          if (visitor.name && visitor.mobile) {
+          if (visitor.name && visitor.mobile && visitor.passNo) {
             const timestamp = Date.now() + index;
             formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][name]`, visitor.name);
             formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][mobile]`, visitor.mobile);
+            formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][pass_number]`, visitor.passNo);
             formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][_destroy]`, 'false');
           }
         });
@@ -1291,11 +1387,61 @@ export const ticketManagementAPI = {
       } else {
         console.log('⚠️ No photo captured - skipping image upload');
       }
+
+      // Add visitor documents if uploaded (multiple files support)
+      if (visitorData.visitor_documents && visitorData.visitor_documents.length > 0) {
+        try {
+          console.log('📄 Processing visitor documents for upload...');
+          console.log('📋 Documents count:', visitorData.visitor_documents.length);
+          
+          // Process each file
+          visitorData.visitor_documents.forEach((file, index) => {
+            console.log(`📄 Processing file ${index + 1}:`, {
+              name: file.name,
+              size: file.size,
+              type: file.type
+            });
+            
+            // Ensure it's a valid file
+            if (file instanceof File) {
+              // Use the format: gate_pass[attachments][] with proper filename and content-type
+              formData.append('gatekeeper[document][]', file, file.name);
+              console.log(`✅ Document ${index + 1} successfully added to FormData for multipart upload`);
+              console.log(`📤 Document will be sent as: gatekeeper[document][] with filename="${file.name}" and Content-Type: ${file.type}`);
+            } else {
+              console.error(`❌ Invalid file type at index ${index} - not a File instance`);
+              throw new Error(`Invalid file type at index ${index}`);
+            }
+          });
+          
+          console.log(`✅ All ${visitorData.visitor_documents.length} visitor documents processed successfully`);
+        } catch (documentError) {
+          console.error('❌ Error processing visitor documents:', documentError);
+          // Continue without documents if there's an error
+        }
+      } else {
+        console.log('⚠️ No visitor documents uploaded - skipping document upload');
+      }
+      
+      // Log FormData contents for debugging
+      console.log('📋 FormData entries:');
+      for (let [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`  ${key}: [File] ${value.name} (${value.size} bytes, ${value.type})`);
+        } else {
+          console.log(`  ${key}: ${value}`);
+        }
+      }
       
       console.log('🚀 Sending visitor creation request to:', ENDPOINTS.CREATE_VISITOR);
+      console.log('📤 Request will include multipart form data with file attachments');
       
       const response = await apiClient.post(ENDPOINTS.CREATE_VISITOR, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 
+          'Content-Type': 'multipart/form-data'
+        },
+        // Ensure the request timeout is sufficient for file uploads
+        timeout: 60000 // 60 seconds for large files
       });
       
       console.log('✅ Visitor created successfully:', response.data);
@@ -1346,6 +1492,60 @@ export const ticketManagementAPI = {
     } catch (error) {
       console.error('Error fetching recent surveys:', error);
       throw error;
+    }
+  },
+
+  // Fetch tickets by task occurrence ID
+  async getTicketsByTaskOccurrenceId(taskOccurrenceId: string): Promise<any> {
+    try {
+      const response = await apiClient.get(`/pms/admin/complaints.json?q[pms_asset_task_occurrence_id_eq]=${taskOccurrenceId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching tickets by task occurrence ID:', error);
+      throw error;
+    }
+  },
+
+  // Get visitor info by mobile number and site ID
+  async getVisitorInfo(resourceId: string, mobile: string): Promise<{
+    gatekeeper: {
+      id: number;
+      guest_name: string;
+      guest_number: string;
+      guest_vehicle_number: string;
+      visit_purpose: string;
+      otp_verified: number;
+      support_staff_id: number | null;
+      guest_type: string;
+      guest_from: string;
+      delivery_service_provider_id: number | null;
+      support_staff_category_name: string | null;
+      image: string;
+      delivery_service_provider_name: string | null;
+      delivery_service_provider_icon_url: string | null;
+    }
+  } | null> {
+    try {
+      const url = `/pms/visitors/visitor_info.json?resource_id=${resourceId}&mobile=${mobile}&token=${API_CONFIG.TOKEN}`;
+      const response = await apiClient.get(url);
+      console.log('🌐 Making API call to:', url);
+      console.log('📊 API Response status:', response.status);
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = response.data;
+      console.log('📋 API Response data:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Error fetching visitor info:', error);
+      if (error.response) {
+        console.error('📄 Error response:', {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        });
+      }
+      return null;
     }
   },
 };

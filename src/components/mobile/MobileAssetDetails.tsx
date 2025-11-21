@@ -8,6 +8,7 @@ import {
 import axios from "axios";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { saveToken, saveBaseUrl } from "@/utils/auth";
+import { baseClient } from "@/utils/withoutTokenBase";
 import { getStatusButtonColor, formatStatusText } from "@/utils/statusUtils";
 import {
   ArrowLeft,
@@ -150,7 +151,7 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
   const navigate = useNavigate();
   const { assetId } = useParams();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
-  const [assetData, setAssetData] = useState<Asset>(initialAsset);
+  const [assetData, setAssetData] = useState<Asset>(initialAsset || {} as Asset);
   const [loading, setLoading] = useState(false);
   const [availableTabs, setAvailableTabs] = useState<TabConfig[]>([]);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -182,10 +183,15 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
   useEffect(() => {
     const fetchAssetDetails = async () => {
       // Use assetId from URL params if available, otherwise fall back to initialAsset.id
-      const idToUse = assetId || initialAsset.id;
+      const idToUse = assetId || initialAsset?.id;
+
+      console.log("🎯 ASSET DETAILS INITIALIZATION:");
+      console.log("  - assetId from URL:", assetId);
+      console.log("  - initialAsset:", initialAsset);
+      console.log("  - idToUse:", idToUse);
 
       if (!idToUse) {
-        // If no ID, use default tabs
+        console.log("⚠️ No asset ID available - using default tabs");
         setAvailableTabs(getDefaultTabs());
         return;
       }
@@ -198,33 +204,22 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
           throw new Error("Mobile token not found");
         }
 
-        // Temporarily set the mobile token as the main token for API calls
-        saveToken(mobileToken);
+        console.log("🔍 FETCHING ASSET DETAILS:");
+        console.log("  - Asset ID:", idToUse);
+        console.log("  - Token:", mobileToken?.substring(0, 20) + "...");
 
-        // Get base URL and ensure it's saved in the main auth system
-        let baseUrl =
-          sessionStorage.getItem("baseUrl") ||
-          "https://oig-api.gophygital.work";
-        baseUrl = baseUrl.replace(/\/$/, "");
-        if (!baseUrl.startsWith("http")) {
-          baseUrl = `https://${baseUrl}`;
-        }
-        saveBaseUrl(baseUrl);
-
-        const response = await fetch(`${baseUrl}/pms/assets/${idToUse}.json`, {
+        const response = await baseClient.get(`/pms/assets/${idToUse}.json`, {
           headers: {
             Authorization: `Bearer ${mobileToken}`,
-            "Content-Type": "application/json",
           },
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const fetchedAsset = data.asset;
+        const data = response.data;
+        // The asset data might be directly in data or in data.asset
+        const fetchedAsset = data.asset || data;
         setAssetData(fetchedAsset);
+        
+        console.log("📦 ASSET DETAILS FETCHED:", fetchedAsset);
 
         // Determine available tabs based on asset type
         const tabs = getAvailableTabsForAsset(fetchedAsset);
@@ -239,7 +234,7 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
     };
 
     fetchAssetDetails();
-  }, [assetId, initialAsset.id]);
+  }, [assetId, initialAsset]);
 
   // Function to determine available tabs based on asset type
   const getAvailableTabsForAsset = (asset: Asset) => {
@@ -368,7 +363,6 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
         component: DepreciationTab,
       },
       { key: "ticket", label: "Ticket", icon: Ticket, component: TicketTab },
-
       {
         key: "owner-cost",
         label: "Owner Cost",
@@ -415,27 +409,23 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
         throw new Error("Mobile token not found");
       }
 
-      let baseUrl = sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
-      baseUrl = baseUrl.replace(/\/$/, "");
-      if (!baseUrl.startsWith("http")) {
-        baseUrl = `https://${baseUrl}`;
-      }
+      console.log("🔄 UPDATING ASSET STATUS:");
+      console.log("  - Asset ID:", idToUse);
+      console.log("  - New Status:", newStatus);
+      console.log("  - Token:", mobileToken?.substring(0, 20) + "...");
 
-      const response = await fetch(`${baseUrl}/pms/assets/${idToUse}.json`, {
-        method: "PUT",
+      const response = await baseClient.put(`/pms/assets/${idToUse}.json`, {
+        pms_asset: {
+          status: newStatus,
+          breakdown: newStatus === "breakdown" ? "true" : "false"
+        }
+      }, {
         headers: {
           Authorization: `Bearer ${mobileToken}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          pms_asset: {
-            status: newStatus,
-            breakdown: newStatus === "breakdown" ? "true" : "false"
-          }
-        }),
       });
 
-      if (response.ok) {
+      if (response.status >= 200 && response.status < 300) {
         setAssetData(prev => ({
           ...prev,
           status: newStatus,

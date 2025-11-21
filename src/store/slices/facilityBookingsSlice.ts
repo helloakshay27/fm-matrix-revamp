@@ -25,6 +25,7 @@ export interface FacilityBookingDetails {
   payment_method: string;
   facility_name: string;
   created_by_name: string;
+  fac_type: string;
 }
 
 export interface FacilityBookingResponse {
@@ -169,7 +170,7 @@ export const filterBookings = createAsyncThunk(
           },
         }
       );
-      return response.data.facility_bookings;
+      return response.data;
     } catch (error) {
       return rejectWithValue(
         error instanceof Error

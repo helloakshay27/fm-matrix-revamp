@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store/store';
-import { fetchFMUsers, fetchRoles, fetchSuppliers, fetchUnits, FMUser, getUserDetails } from '@/store/slices/fmUserSlice';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { fetchRoles, fetchSuppliers, fetchUnits, getUserDetails } from '@/store/slices/fmUserSlice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +17,6 @@ import { fetchAllowedSites } from '@/store/slices/siteSlice';
 import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
 import { fetchDepartmentData } from '@/store/slices/departmentSlice';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
-import { toast } from 'sonner';
 
 interface FormData {
   firstname: string;

@@ -227,9 +227,9 @@ const EditGateNumberPage = () => {
             render={({ field }) => (
               <Box>
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Project <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <InputLabel shrink>Building <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
-                    label="Project"
+                    label="Building"
                     notched
                     displayEmpty
                     value={field.value !== null && field.value !== undefined ? String(field.value) : ''}

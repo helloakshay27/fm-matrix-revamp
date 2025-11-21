@@ -21,6 +21,7 @@ import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useDebounce } from '@/hooks/useDebounce';
+import { StatsCard } from '@/components/StatsCard';
 
 interface ServiceRecord {
   id: number;
@@ -142,8 +143,16 @@ export const ServiceDashboard = () => {
   const inactiveServicesCount = apiData?.inactive_services_count ?? 0;
 
   const handleAddClick = useCallback(() => navigate('/maintenance/service/add'), [navigate]);
-  const handleAddSchedule = useCallback(() => navigate('/maintenance/schedule/add?type=Service'), [navigate]);
-  const handleImportClick = useCallback(() => {
+const handleAddSchedule = useCallback(() => {
+  console.log("selectedItems:----",selectedItems);
+  
+  if (selectedItems.length > 0) {
+    // Pass selected service IDs as a query param
+    navigate(`/maintenance/schedule/add?type=Service&serviceIds=${selectedItems.join(',')}`);
+  } else {
+    navigate('/maintenance/schedule/add?type=Service');
+  }
+}, [navigate, selectedItems]);  const handleImportClick = useCallback(() => {
     setShowBulkUploadModal(true);
     setShowActionPanel(false);
   }, []);
@@ -292,7 +301,7 @@ export const ServiceDashboard = () => {
           toast.error('Error downloading QR PDF');
         }
       };
-  if (downloadedQRCodes.has(serviceIdStr)) {
+      if (downloadedQRCodes.has(serviceIdStr)) {
         const downloadPromise = new Promise<void>((resolve) => {
           toast.custom((t) => (
             <div className="bg-white p-5 rounded-xl shadow-none w-full max-w-sm border-0 ring-0">
@@ -823,51 +832,30 @@ export const ServiceDashboard = () => {
       )}
 
       <>
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
-          <div
-      className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'total' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
+          <StatsCard
+            title="Total Services"
+            value={totalServicesCount}
+            selected={selectedSummary === 'total'}
             onClick={handleTotalServicesClick}
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-              <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                {totalServicesCount}
-              </div>
-              <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Services</div>
-            </div>
-          </div>
+            icon={<Settings className="w-6 h-6" style={{ color: '#C72030' }} />}
+          />
 
-          <div
-            className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'active' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
+          <StatsCard
+            title="Active Services"
+            value={activeServicesCount}
+            selected={selectedSummary === 'active'}
             onClick={handleActiveServicesClick}
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-              <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                {activeServicesCount}
-              </div>
-              <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active Services</div>
-            </div>
-          </div>
+            icon={<Settings className="w-6 h-6" style={{ color: '#C72030' }} />}
+          />
 
-          <div
-            className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'inactive' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
+          <StatsCard
+            title="Inactive Services"
+            value={inactiveServicesCount}
+            selected={selectedSummary === 'inactive'}
             onClick={handleInactiveServicesClick}
-          >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-              <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                {inactiveServicesCount}
-              </div>
-              <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive Services</div>
-            </div>
-          </div>
+            icon={<Settings className="w-6 h-6" style={{ color: '#C72030' }} />}
+          />
         </div>
 
         {showActionPanel && (

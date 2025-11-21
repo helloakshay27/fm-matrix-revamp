@@ -73,7 +73,11 @@ import {
   FolderTree,
   Wallet,
   Trash,
+  ChartColumnIncreasing,
+  IndianRupee,
+  Circle,
 } from "lucide-react";
+import { template } from "lodash";
 
 const navigationStructure = {
   Settings: {
@@ -348,12 +352,12 @@ const modulesByPackage = {
       href: "/master/user",
       subItems: [
         {
-          name: "FM User",
+          name: "FM Users",
           href: "/master/user/fm-users",
           color: "text-[#1a1a1a]",
         },
         {
-          name: "OCCUPANT USERS",
+          name: "Occupant Users",
           href: "/master/user/occupant-users",
           color: "text-[#1a1a1a]",
         },
@@ -398,6 +402,43 @@ const modulesByPackage = {
       name: "Inventory Type",
       icon: Package,
       href: "/master/inventory-type",
+    },
+    {
+      name: "Template",
+      icon: FileSpreadsheet,
+      href: "/master/communication-template",
+      subItems: [
+        {
+          name: "Communication Template",
+          href: "/master/communication-template",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Root Cause Analysis",
+          href: "/master/template/root-cause-analysis",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Preventive Action",
+          href: "/master/template/preventive-action",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Short-term Impact",
+          href: "/master/template/short-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Long-term Impact",
+          href: "/master/template/long-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Corrective Action",
+          href: "/master/template/corrective-action",
+          color: "text-[#1a1a1a]",
+        },
+      ],
     },
     // {
     //   name: 'Inventory Sub Type',
@@ -571,71 +612,18 @@ const modulesByPackage = {
       icon: UserRoundPen,
       href: "/maintenance/vendor",
     },
-    {
-      name: "M-Safe",
-      icon: User,
-      href: "/maintenance/m-safe",
-      subItems: [
-        {
-          name: "Internal User (FTE)",
-          href: "/maintenance/m-safe/internal",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "External User (NON FTE)",
-          href: "/maintenance/m-safe/external",
-          color: "text-[#1a1a1a]",
-        },
-        { name: "LMC", href: "/maintenance/m-safe/lmc" },
-        { name: "SMT", href: "/maintenance/m-safe/smt" },
-        { name: "Krcc List", href: "/maintenance/m-safe/krcc-list" },
-        { name: "Training List", href: "/maintenance/m-safe/training-list" },
-        {
-          name: "Reportees Reassign",
-          href: "/maintenance/m-safe/reportees-reassign",
-        },
-      ],
-    },
-    {
-      name: "Vi Miles",
-      icon: User,
-      href: "/maintenance/vi-miles",
-      subItems: [
-        {
-          name: "Vehicle Details",
-          href: "/maintenance/vi-miles/vehicle-details",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Vehicle Check In",
-          href: "/maintenance/vi-miles/vehicle-check-in",
-          color: "text-[#1a1a1a]",
-        },
-      ],
-    },
-    {
-      name: "Check Hierarchy Levels",
-      icon: FolderTree,
-      href: "/maintenance/check-hierarchy-levels",
-    },
-    {
-      name: "Employee Deletion History",
-      icon: Trash,
-      href: "/maintenance/employee-deletion-history",
-    },
 
-    {
-      name: "Msafe Report",
-      icon: Download,
-      href: "/maintenance/msafe-report",
-    },
-    {
-      name: "Msafe Detail Report",
-      icon: Download,
-      href: "/maintenance/msafe-detail-report",
-    },
 
-    { name: "PDF Download", icon: Download, href: "/maintenance/pdf-download" },
+    // {
+    //   name: "Msafe Report",
+    //   icon: Download,
+    //   href: "/safety/msafe-report",
+    // },
+    // {
+    //   name: "Msafe Detail Report",
+    //   icon: Download,
+    //   href: "/safety/msafe-detail-report",
+    // },
 
     // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
 
@@ -660,11 +648,74 @@ const modulesByPackage = {
           href: "/safety/permit/pending-approvals",
           color: "text-[#1a1a1a]",
         },
-        // { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
+        { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
       ],
     },
-    { name: "M Safe", icon: Shield, href: "/safety/m-safe" },
-    { name: "Training List", icon: BookOpen, href: "/safety/training-list" },
+
+
+
+
+    {
+      name: "M-Safe",
+      icon: User,
+      href: "/safety/m-safe",
+      subItems: [
+        {
+          name: "Internal User (FTE)",
+          href: "/safety/m-safe/internal",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "External User (NON FTE)",
+          href: "/safety/m-safe/external",
+          color: "text-[#1a1a1a]",
+        },
+        { name: "LMC", href: "/safety/m-safe/lmc" },
+        { name: "SMT", href: "/safety/m-safe/smt" },
+        { name: "Krcc List", href: "/safety/m-safe/krcc-list" },
+        { name: "Training List", href: "/safety/m-safe/training-list" },
+        {
+          name: "Reportees Reassign",
+          href: "/safety/m-safe/reportees-reassign",
+        },
+      ],
+    },
+    {
+      name: 'Report',
+      icon: Download,
+      href: '/safety/report',
+      subItems: [
+        { name: 'Msafe User Report', icon: Download, href: '/safety/report/msafe-report' },
+        { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
+      ],
+    },
+    // {
+    //   name: "Vi Miles",
+    //   icon: User,
+    //   href: "/safety/vi-miles",
+    //   subItems: [
+    //     {
+    //       name: "Vehicle Details",
+    //       href: "/safety/vi-miles/vehicle-details",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //     {
+    //       name: "Vehicle Check In",
+    //       href: "/safety/vi-miles/vehicle-check-in",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //   ],
+    // },
+    {
+      name: "Check Hierarchy Levels",
+      icon: FolderTree,
+      href: "/safety/check-hierarchy-levels",
+    },
+    {
+      name: "Employee Deletion History",
+      icon: Trash,
+      href: "/safety/employee-deletion-history",
+    },
   ],
   Finance: [
     {
@@ -693,6 +744,16 @@ const modulesByPackage = {
         {
           name: "Pending Approvals",
           href: "/finance/pending-approvals",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Deletion Requests",
+          href: "/finance/deletion-requests",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Deleted PRs",
+          href: "/finance/deleted-prs",
           color: "text-[#1a1a1a]",
         },
       ],
@@ -726,13 +787,12 @@ const modulesByPackage = {
       icon: Users,
       subItems: [
         { name: "Customers", href: "/crm/customers" },
-        { name: "FM Users", href: "/crm/fm-users" },
-        { name: "Occupant Users", href: "/crm/occupant-users" },
+        // { name: "FM Users", href: "/crm/fm-users" },
+        // { name: "Occupant Users", href: "/crm/occupant-users" },
       ],
     },
     { name: "Events", icon: Calendar, href: "/crm/events" },
     { name: "Broadcast", icon: Bell, href: "/crm/broadcast" },
-    { name: "Groups", icon: Users, href: "/crm/groups" },
     { name: "Polls", icon: BarChart3, href: "/crm/polls" },
     { name: "Campaign", icon: Target, href: "/crm/campaign" },
     {
@@ -815,7 +875,23 @@ const modulesByPackage = {
   ],
   "Value Added Services": [
     { name: "F&B", icon: Coffee, href: "/vas/fnb" },
-    { name: "Parking", icon: Car, href: "/vas/parking" },
+    {
+      name: "Parking",
+      icon: Car,
+      href: "/vas/parking",
+      subItems: [
+        {
+          name: "Parking Allocation",
+          href: "/vas/parking",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Parking Booking",
+          href: "/vas/parking/site-wise-bookings",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
     { name: "OSR", icon: TreePine, href: "/vas/osr" },
     {
       name: "Space Management",
@@ -894,6 +970,22 @@ const modulesByPackage = {
       name: "Redemption Marketplace",
       icon: Globe,
       href: "/vas/redemonection-marketplace",
+    },
+    {
+      name: "Collaboration",
+      icon: Globe,
+      subItems: [
+        {
+          name: "Channels",
+          href: "/vas/channels",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Tasks",
+          href: "/vas/channels/tasks",
+          color: "text-[#1a1a1a]",
+        },
+      ]
     }
   ],
   "Market Place": [
@@ -1097,7 +1189,6 @@ const modulesByPackage = {
         {
           name: "F&B",
           href: "/settings/vas/fnb/setup",
-          subItems: [{ name: "Setup", href: "/settings/vas/fnb/setup" }],
         },
         {
           name: "MOM",
@@ -1125,8 +1216,7 @@ const modulesByPackage = {
         },
         {
           name: "Booking",
-          href: "/settings/vas/booking",
-          subItems: [{ name: "Setup", href: "/settings/vas/booking/setup" }],
+          href: "/settings/vas/booking/setup",
         },
         {
           name: "Parking Management",
@@ -1253,12 +1343,26 @@ const modulesByPackage = {
           color: "text-[#1a1a1a]",
         },
       ]
-    }
+    },
+    { name: "FM Groups", icon: Users, href: "/settings/groups" },
     // {
     //   name: 'Currency',
     //   icon: Currency,
     //   href: '/settings/currency',
     // }
+
+    {
+      name: "Common Modules",
+      icon: IndianRupee,
+      subItems: [
+        { name: "Currency", href: "/settings/currency" },
+      ]
+    },
+    {
+      icon: Circle,
+      name: "Circle",
+      href: "/safety/m-safe/circle",
+    },
   ],
 };
 
@@ -1350,17 +1454,20 @@ export const StacticSidebar = () => {
 
   const currentModules = modulesByPackage[currentSection] || [];
 
-  const isActiveRoute = (href: string) => {
+  const isActiveRoute = (href: string, mode: "exact" | "prefix" = "exact") => {
     const currentPath = location.pathname;
-    const isActive = currentPath === href || currentPath.startsWith(href + "/");
+    const exactMatch = currentPath === href;
+    const prefixMatch = currentPath.startsWith(href + "/");
+    const isActive = mode === "prefix" ? (exactMatch || prefixMatch) : exactMatch;
 
     // Debug logging for Services
     if (href === "/maintenance/service") {
       console.log("Services route check:", {
         currentPath,
         href,
-        exactMatch: currentPath === href,
-        prefixMatch: currentPath.startsWith(href + "/"),
+        exactMatch,
+        prefixMatch,
+        mode,
         isActive,
       });
     }
@@ -1418,7 +1525,7 @@ export const StacticSidebar = () => {
     const isExpanded = expandedItems.includes(item.name);
     const showDropdowns =
       item.hasDropdowns && item.href && location.pathname === item.href;
-    const isActive = item.href ? isActiveRoute(item.href) : false;
+    const isActive = item.href ? isActiveRoute(item.href, "prefix") : false;
 
     if (hasSubItems) {
       return (
@@ -1457,7 +1564,7 @@ export const StacticSidebar = () => {
                         onClick={() => toggleExpanded(subItem.name)}
                         className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
                       >
-                        {subItem.href && isActiveRoute(subItem.href) && (
+                        {subItem.href && isActiveRoute(subItem.href, "exact") && (
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
                         )}
                         <span>{subItem.name}</span>
@@ -1476,7 +1583,7 @@ export const StacticSidebar = () => {
                               className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || "text-[#1a1a1a]"
                                 }`}
                             >
-                              {isActiveRoute(nestedItem.href) && (
+                              {isActiveRoute(nestedItem.href, "exact") && (
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
                               )}
                               {nestedItem.name}
@@ -1493,7 +1600,7 @@ export const StacticSidebar = () => {
                       className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
                         }`}
                     >
-                      {isActiveRoute(subItem.href) && (
+                      {isActiveRoute(subItem.href, "exact") && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
                       )}
                       {subItem.name}
@@ -1574,7 +1681,7 @@ export const StacticSidebar = () => {
   const CollapsedMenuItem = ({ module, level = 0 }) => {
     const hasSubItems = module.subItems && module.subItems.length > 0;
     const isExpanded = expandedItems.includes(module.name);
-    const active = module.href ? isActiveRoute(module.href) : false;
+    const active = module.href ? isActiveRoute(module.href, "prefix") : false;
 
     return (
       <>
@@ -1631,7 +1738,7 @@ export const StacticSidebar = () => {
     <div
       className={`${isSidebarCollapsed ? "w-16" : "w-64"
         } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
-      style={{ top: "4rem", height: "91vh" }}
+      style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
         <button
@@ -1689,17 +1796,17 @@ export const StacticSidebar = () => {
                       handleNavigation(module.href, currentSection);
                     }
                   }}
-                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
+                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href, "prefix")
                     ? "bg-[#f0e8dc] shadow-inner"
                     : "hover:bg-[#DBC2A9]"
                     }`}
                   title={module.name}
                 >
-                  {isActiveRoute(module.href) && (
+                  {isActiveRoute(module.href, "prefix") && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                   )}
                   <module.icon
-                    className={`w-5 h-5 ${isActiveRoute(module.href)
+                    className={`w-5 h-5 ${isActiveRoute(module.href, "prefix")
                       ? "text-[#C72030]"
                       : "text-[#1a1a1a]"
                       }`}

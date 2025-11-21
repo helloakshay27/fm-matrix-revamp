@@ -17,7 +17,11 @@ import { X, Plus, ArrowLeft, CheckCircle, Upload, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { apiClient } from "@/utils/apiClient";
-import { ticketManagementAPI } from "@/services/ticketManagementAPI";
+import {
+  ticketManagementAPI,
+  CategoryResponse,
+  SubCategoryResponse,
+} from "@/services/ticketManagementAPI";
 import {
   TextField,
   InputAdornment,
@@ -65,14 +69,16 @@ interface Category {
   name: string;
 }
 
-interface CategoryResponse {
-  id: number;
-  name: string;
-  description: string;
-  active: boolean;
-  tag_created_at: string;
-  tag_updated_at: string;
+interface SurveyImage {
+  id?: number;
+  file_name?: string;
+  content_type?: string;
+  file_size?: number;
+  updated_at?: string;
+  url?: string;
 }
+
+
 
 // --- Field Styles for Material-UI Components ---
 const fieldStyles = {
@@ -128,26 +134,35 @@ export const EditSurveyPage = () => {
   const [createTicket, setCreateTicket] = useState(false);
   const [ticketCategory, setTicketCategory] = useState(""); // Store category name for display
   const [ticketCategoryId, setTicketCategoryId] = useState(""); // Store category ID for backend
+  const [ticketSubCategory, setTicketSubCategory] = useState("");
   const [assignTo, setAssignTo] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [ticketCategories, setTicketCategories] = useState<CategoryResponse[]>(
     []
   );
+  const [ticketSubCategories, setTicketSubCategories] = useState<SubCategoryResponse[]>([]);
   const [fmUsers, setFmUsers] = useState<
     { id: number; firstname: string; lastname: string; email?: string }[]
   >([]);
   const [loadingTicketCategories, setLoadingTicketCategories] = useState(false);
+  const [loadingTicketSubCategories, setLoadingTicketSubCategories] = useState(false);
   const [loadingFmUsers, setLoadingFmUsers] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([
     { id: "1", text: "", answerType: "", mandatory: false },
   ]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Destroy IDs tracking for smart deletion
+  const [surveyImage, setSurveyImage] = useState<File | null>(null);
+  const [existingSurveyImage, setExistingSurveyImage] = useState<SurveyImage | null>(null);
   const [destroyQuestionIds, setDestroyQuestionIds] = useState<string[]>([]);
   const [destroyTagIds, setDestroyTagIds] = useState<number[]>([]);
   const [destroyOptionIds, setDestroyOptionIds] = useState<number[]>([]);
   const [destroyIconIds, setDestroyIconIds] = useState<number[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Destroy IDs tracking for smart deletion
+
+  // Emoji and rating constants
+  const EMOJIS = ["😁", "😊", "😐", "😟", "😞"];
+  const RATING_STARS = ["1-star", "2-star", "3-star", "4-star", "5-star"];
 
   useEffect(() => {
     fetchCategories();
@@ -172,6 +187,22 @@ export const EditSurveyPage = () => {
     }
   }, [createTicket]);
 
+  // Load subcategories when category changes
+  const loadTicketSubCategories = useCallback(async (categoryId: number) => {
+    setLoadingTicketSubCategories(true);
+    try {
+      const subcats = await ticketManagementAPI.getSubCategoriesByCategory(categoryId);
+      setTicketSubCategories(subcats);
+      console.log("Ticket subcategories loaded:", subcats);
+      return subcats; // Return the loaded subcategories
+    } catch (error) {
+      console.error("Error loading ticket subcategories:", error);
+      return []; // Return empty array on error
+    } finally {
+      setLoadingTicketSubCategories(false);
+    }
+  }, []);
+
   // Load FM users for assign to dropdown
   const loadFMUsers = useCallback(async () => {
     if (!createTicket) return;
@@ -188,6 +219,16 @@ export const EditSurveyPage = () => {
     }
   }, [createTicket]);
 
+  // Handle category change and load subcategories
+  const handleTicketCategoryChange = (categoryId: string) => {
+    setTicketCategoryId(categoryId);
+    setTicketSubCategory(""); // Reset subcategory when category changes
+    setTicketSubCategories([]); // Clear subcategories
+    if (categoryId) {
+      loadTicketSubCategories(parseInt(categoryId));
+    }
+  };
+
   // Load ticket data when createTicket checkbox is checked
   useEffect(() => {
     if (createTicket) {
@@ -197,7 +238,9 @@ export const EditSurveyPage = () => {
       // Reset selections when unchecked
       setTicketCategory("");
       setTicketCategoryId("");
+      setTicketSubCategory("");
       setAssignTo("");
+      setTicketSubCategories([]);
     }
   }, [createTicket, loadTicketCategories, loadFMUsers]);
 
@@ -239,13 +282,95 @@ export const EditSurveyPage = () => {
 
       if (hasTicketConfig && surveyData.ticket_configs) {
         const ticketConfig = surveyData.ticket_configs;
-        // Set ticket configuration data
-        if (ticketConfig.category_id) {
+        console.log("Processing ticket config:", ticketConfig);
+        
+        // First, load all ticket categories for the dropdowns
+        try {
+          const categoriesResponse = await ticketManagementAPI.getCategories();
+          const allCategories = categoriesResponse.helpdesk_categories || [];
+          setTicketCategories(allCategories);
+          console.log("All ticket categories loaded:", allCategories);
+        } catch (error) {
+          console.error("Error loading ticket categories:", error);
+        }
+
+        // Handle category and subcategory setup
+        // Handle different naming conventions for subcategory ID
+        const subcategoryId = ticketConfig.subcategory_id || ticketConfig.sub_category_id;
+        
+        if (ticketConfig.category_id && subcategoryId) {
+          // Case 1: Both category and subcategory IDs are available
+          console.log("Case 1: Both category and subcategory available");
+          console.log("Using subcategory_id:", subcategoryId, "from field:", ticketConfig.subcategory_id ? 'subcategory_id' : 'sub_category_id');
           setTicketCategoryId(ticketConfig.category_id.toString());
           setTicketCategory(ticketConfig.category || "");
+          
+          // Load subcategories for this category
+          try {
+            const loadedSubcategories = await loadTicketSubCategories(ticketConfig.category_id);
+            console.log("Subcategories loaded for category", ticketConfig.category_id, ":", loadedSubcategories);
+            
+            // Set the subcategory after loading subcategories
+            setTimeout(() => {
+              setTicketSubCategory(subcategoryId.toString());
+              console.log("Set subcategory ID:", subcategoryId);
+            }, 100);
+          } catch (error) {
+            console.error("Error loading subcategories:", error);
+          }
+          
+        } else if (subcategoryId && !ticketConfig.category_id) {
+          // Case 2: Only subcategory ID is available, need to find parent category
+          console.log("Case 2: Only subcategory ID available, finding parent category");
+          console.log("Using subcategory_id for reverse lookup:", subcategoryId);
+          try {
+            const allSubCategoriesResponse = await ticketManagementAPI.getSubCategories();
+            const allSubCategories = allSubCategoriesResponse.sub_categories || allSubCategoriesResponse || [];
+            console.log("All subcategories loaded:", allSubCategories);
+            
+            const matchingSubCategory = allSubCategories.find(
+              (subCat: SubCategoryResponse) => subCat.id === subcategoryId
+            );
+            
+            if (matchingSubCategory && matchingSubCategory.helpdesk_category_id) {
+              console.log("Found parent category:", matchingSubCategory.helpdesk_category_id);
+              setTicketCategoryId(matchingSubCategory.helpdesk_category_id.toString());
+              
+              // Load subcategories for the parent category
+              const loadedSubcats = await loadTicketSubCategories(matchingSubCategory.helpdesk_category_id);
+              
+              // Set subcategory after loading
+              setTimeout(() => {
+                setTicketSubCategory(subcategoryId.toString());
+                console.log("Set subcategory ID from reverse lookup:", subcategoryId);
+                
+                const foundSubcat = loadedSubcats?.find(s => s.id === subcategoryId);
+                console.log("Verified subcategory from reverse lookup:", foundSubcat);
+              }, 100);
+            }
+          } catch (error) {
+            console.error("Error loading subcategories to find parent category:", error);
+          }
+          
+        } else if (ticketConfig.category_id && !subcategoryId) {
+          // Case 3: Only category ID is available
+          console.log("Case 3: Only category ID available");
+          setTicketCategoryId(ticketConfig.category_id.toString());
+          setTicketCategory(ticketConfig.category || "");
+          
+          // Load subcategories for this category
+          try {
+            await loadTicketSubCategories(ticketConfig.category_id);
+          } catch (error) {
+            console.error("Error loading subcategories:", error);
+          }
         }
-        if (ticketConfig.assigned_to_id) {
-          setAssignTo(ticketConfig.assigned_to_id.toString());
+        
+        // Set assigned user if available (handle both naming conventions)
+        const assignedToId = ticketConfig.assigned_to_id || ticketConfig.assignedtoid;
+        if (assignedToId) {
+          setAssignTo(assignedToId.toString());
+          console.log("Set assigned user ID:", assignedToId);
         }
       }
 
@@ -301,6 +426,19 @@ export const EditSurveyPage = () => {
           ? mappedQuestions
           : [{ id: "1", text: "", answerType: "", mandatory: false }]
       );
+
+      // Set existing survey image if available in survey_attachment format
+      if (surveyData.survey_attachment) {
+        setExistingSurveyImage({
+          id: surveyData.survey_attachment.id,
+          file_name: surveyData.survey_attachment.file_name,
+          content_type: surveyData.survey_attachment.content_type,
+          file_size: surveyData.survey_attachment.file_size,
+          updated_at: surveyData.survey_attachment.updated_at,
+          url: surveyData.survey_attachment.url
+        });
+      }
+
       setInitialLoading(false);
     } catch (error) {
       console.error("Error fetching Question data:", error);
@@ -421,13 +559,18 @@ export const EditSurveyPage = () => {
           const updatedQuestion = { ...q, [field]: value };
           if (
             field === "answerType" &&
-            value === "multiple-choice" &&
+            ["multiple-choice", "rating", "emojis"].includes(value as string) &&
             !updatedQuestion.answerOptions
           ) {
             updatedQuestion.answerOptions = [
               { text: "", type: "P" },
               { text: "", type: "P" },
             ];
+          } else if (
+            field === "answerType" &&
+            !["multiple-choice", "rating", "emojis"].includes(value as string)
+          ) {
+            updatedQuestion.answerOptions = undefined;
           }
           if (
             field === "additionalFieldOnNegative" &&
@@ -469,6 +612,12 @@ export const EditSurveyPage = () => {
   };
 
   const handleAddAnswerOption = (questionId: string) => {
+    const question = questions.find(q => q.id === questionId);
+    if (!question) return;
+
+    const currentOptionsCount = question.answerOptions?.length || 0;
+    if (currentOptionsCount >= 5) return; // Limit to 5 options
+
     setQuestions(
       questions.map((q) =>
         q.id === questionId
@@ -712,13 +861,6 @@ export const EditSurveyPage = () => {
         });
         return;
       }
-      // if (!assignTo) {
-      //   toast.error("Validation Error", {
-      //     description: "Please select who to assign the ticket to",
-      //     duration: 3000,
-      //   });
-      //   return;
-      // }
     }
 
     // Validate questions (exclude deleted ones and null/empty ones)
@@ -759,8 +901,8 @@ export const EditSurveyPage = () => {
         return;
       }
       
-      // Check if multiple choice questions have at least one option with text
-      if (question.answerType === "multiple-choice") {
+      // Check if multiple choice, rating, or emojis have at least one option with text
+      if (["multiple-choice", "rating", "emojis"].includes(question.answerType)) {
         if (!question.answerOptions || question.answerOptions.length === 0) {
           toast.error("Validation Error", {
             description: `Please add at least one option for Question ${displayIndex}`,
@@ -818,12 +960,22 @@ export const EditSurveyPage = () => {
       formData.append("snag_checklist[name]", title);
       formData.append("snag_checklist[check_type]", checkType);
 
+      // Add survey image if provided
+      if (surveyImage) {
+        formData.append("snag_checklist[survey_image]", surveyImage);
+      }
+
       // Add ticket creation fields - send create_tickets flag and related data
       formData.append("create_ticket", createTicket ? "true" : "false");
       
       if (createTicket) {
         formData.append("category_name", ticketCategoryId);
-        formData.append("category_type", assignTo);
+        if (ticketSubCategory) {
+          formData.append("sub_category_id", ticketSubCategory);
+        }
+        // Pass 'subcategory' if both category and subcategory are selected, otherwise pass 'category'
+        const categoryType = ticketSubCategory ? 'subcategory' : 'category';
+        formData.append("category_type", categoryType);
       }
 
       // Add destroy IDs for smart deletion
@@ -921,9 +1073,9 @@ export const EditSurveyPage = () => {
           });
         }
 
-        // Add multiple choice options with proper structure
+        // Add multiple choice, rating, and emoji options with proper structure
         if (
-          question.answerType === "multiple-choice" &&
+          ["multiple-choice", "rating", "emojis"].includes(question.answerType) &&
           question.answerOptions
         ) {
           question.answerOptions.forEach((option, optionIndex) => {
@@ -941,9 +1093,6 @@ export const EditSurveyPage = () => {
             );
           });
         }
-
-        // Add generic tags for ticket configuration only (separate from additional fields)
-        // Note: Ticket configuration is now handled at survey level, not question level
       });
 
       console.log(
@@ -1008,8 +1157,6 @@ export const EditSurveyPage = () => {
   const handleProceed = async () => {
     await handleUpdateQuestion();
   };
-
-  const EMOJIS = ["😞", "😟", "😐", "😊", "😁"];
 
   if (initialLoading) {
     return (
@@ -1124,14 +1271,14 @@ export const EditSurveyPage = () => {
                         id="ticketCategory"
                         value={ticketCategoryId}
                         label="Ticket Category"
-                        onChange={(e) => {
-                          const selectedCategoryId = e.target.value;
-                          const selectedCategory = ticketCategories.find(cat => cat.id.toString() === selectedCategoryId);
-                          setTicketCategoryId(selectedCategoryId);
-                          setTicketCategory(selectedCategory?.name || "");
-                        }}
+                        onChange={(e) => handleTicketCategoryChange(e.target.value)}
                         disabled={loadingTicketCategories}
                       >
+                        <MenuItem value="">
+                          {loadingTicketCategories
+                            ? "Loading categories..."
+                            : "Select Ticket Category"}
+                        </MenuItem>
                         {ticketCategories.map((category) => (
                           <MenuItem key={category.id} value={category.id.toString()}>
                             {category.name}
@@ -1142,34 +1289,102 @@ export const EditSurveyPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    {/* <FormControl fullWidth required sx={{
+                    <FormControl fullWidth sx={{
                       ...fieldStyles,
-                      "& .MuiInputLabel-asterisk": { color: "#ef4444" }
                     }}>
-                      <InputLabel id="assign-to-label">
-                       Assign To
+                      <InputLabel id="ticket-subcategory-label">
+                        Ticket Sub Category
                       </InputLabel>
                       <MuiSelect
-                        labelId="assign-to-label"
-                        id="assignTo"
-                        value={assignTo}
-                        label="Assign To"
-                        onChange={(e) => setAssignTo(e.target.value)}
-                        disabled={loadingFmUsers}
+                        labelId="ticket-subcategory-label"
+                        id="ticketSubCategory"
+                        value={ticketSubCategory}
+                        label="Ticket Sub Category"
+                        onChange={(e) => setTicketSubCategory(e.target.value)}
+                        disabled={loadingTicketSubCategories || !ticketCategoryId}
                       >
-                        {fmUsers.map((user) => (
-                          <MenuItem
-                            key={user.id}
-                            value={user.id.toString()}
-                          >
-                         {user.full_name} 
+                        <MenuItem value="">
+                          {loadingTicketSubCategories
+                            ? "Loading subcategories..."
+                            : !ticketCategoryId
+                            ? "Select a category first"
+                            : "Select Ticket Sub Category"}
+                        </MenuItem>
+                        {ticketSubCategories.map((subcat) => (
+                          <MenuItem key={subcat.id} value={subcat.id.toString()}>
+                            {subcat.name}
                           </MenuItem>
                         ))}
                       </MuiSelect>
-                    </FormControl> */}
+                    </FormControl>
                   </div>
                 </div>
               )}
+                 <div className="space-y-2 mt-3">
+                              <label className="text-sm font-medium text-gray-700">
+                                Upload Image
+                              </label>
+                              <div className="flex items-center gap-4 grid grid-cols-3">
+                                <div className="flex-1">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0] || null;
+                                      setSurveyImage(file);
+                                    }}
+                                    className="hidden"
+                                    id="survey-image"
+                                    disabled={isSubmitting}
+                                  />
+                                  <label
+                                    htmlFor="survey-image"
+                                    className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                                      isSubmitting
+                                        ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
+                                        : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
+                                    }`}
+                                  >
+                                    {surveyImage
+                                      ? `Selected: ${surveyImage.name}`
+                                      : "Click to upload survey image"}
+                                  </label>
+                                </div>
+                                {surveyImage && (
+                                  <Button
+                                    onClick={() => setSurveyImage(null)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-gray-400 hover:text-red-500 p-2"
+                                    disabled={isSubmitting}
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                              {surveyImage && (
+                                <div className="mt-2">
+                                  <img
+                                    src={URL.createObjectURL(surveyImage)}
+                                    alt="Survey preview"
+                                    className="max-w-full h-32 object-cover rounded-lg border"
+                                    onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                                  />
+                                </div>
+                              )}
+                              {existingSurveyImage && !surveyImage && (
+                                <div className="mt-2">
+                                  <img
+                                    src={existingSurveyImage.url}
+                                    alt="Existing survey image"
+                                    className="max-w-full h-32 object-cover rounded-lg border"
+                                  />
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Current image: {existingSurveyImage.file_name}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
             </div>
           </CardContent>
         </Card>
@@ -1238,11 +1453,6 @@ export const EditSurveyPage = () => {
                     
                     console.log(`Question ${question.id}: markedForDeletion=${isMarkedForDeletion}, hasValidId=${hasValidId}, hasValidText=${hasValidText}, hasValidAnswerType=${hasValidAnswerType}, isNotNullData=${isNotNullData}`);
                     
-                    // Only show questions that are:
-                    // - NOT marked for deletion
-                    // - Have valid ID
-                    // - Have non-null, non-empty text content
-                    // - Have valid answer type (or are new questions being created)
                     return !isMarkedForDeletion && hasValidId && isNotNullData && (hasValidText || hasValidAnswerType || question.id.startsWith("new_"));
                   });
                   
@@ -1301,133 +1511,98 @@ export const EditSurveyPage = () => {
                             <SelectValue placeholder="Choose Answer Type" />
                           </SelectTrigger>
                           <SelectContent>
-                            {/* <SelectItem value="description">
-                              Description Box
-                            </SelectItem> */}
                             <SelectItem value="multiple-choice">
                               Multiple Choice
                             </SelectItem>
-                            {/* <SelectItem value="input-box">Input Box</SelectItem> */}
                             <SelectItem value="rating">Rating</SelectItem>
                             <SelectItem value="emojis">Emojis</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
-                      {/* Multiple Choice Options */}
-                      {question.answerType === "multiple-choice" && (
-                        <div className="space-y-3">
-                          <Label>Answer Options</Label>
-                          {question.answerOptions?.map(
-                            (option, optionIndex) => (
-                              <div key={optionIndex} className="flex gap-2">
-                                <Input
-                                  value={option.text}
-                                  onChange={(e) =>
-                                    handleAnswerOptionChange(
-                                      question.id!,
-                                      optionIndex,
-                                      e.target.value
-                                    )
-                                  }
-                                  placeholder="Enter option"
-                                  className="flex-1"
-                                />
-                                <Select
-                                  value={option.type}
-                                  onValueChange={(value: "P" | "N") =>
-                                    handleAnswerOptionTypeChange(
-                                      question.id!,
-                                      optionIndex,
-                                      value
-                                    )
-                                  }
-                                >
-                                  <SelectTrigger className="w-20">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="P">P</SelectItem>
-                                    <SelectItem value="N">N</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() =>
-                                    handleRemoveAnswerOption(
-                                      question.id!,
-                                      optionIndex
-                                    )
-                                  }
-                                  className="p-2"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )
-                          )}
+                      {/* Multiple Choice, Rating, and Emoji Options */}
+                      {["multiple-choice", "rating", "emojis"].includes(question.answerType) && (
+                        <div className="space-y-3 pt-2">
+                          <Label className="text-sm font-medium text-gray-700">
+                            {question.answerType === "rating" ? "Rating Options" : 
+                             question.answerType === "emojis" ? "Emoji Options" : 
+                             "Answer Options"}
+                          </Label>
+                          {(question.answerOptions || []).map((option, optionIndex) => (
+                            <div key={optionIndex} className="flex items-center gap-3">
+                              {question.answerType === "emojis" ? (
+                                <div className="flex items-center justify-center w-12 h-12">
+                                  <span className="text-3xl">{EMOJIS[optionIndex]}</span>
+                                </div>
+                              ) : question.answerType === "rating" ? (
+                                <div className="flex items-center justify-center w-28 h-12">
+                                  <span className="text-base">{RATING_STARS[optionIndex]}</span>
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 flex items-center justify-center text-gray-400">
+                                  {optionIndex + 1}
+                                </div>
+                              )}
+                              <TextField
+                                placeholder={
+                                  question.answerType === "rating" ? `Enter rating description` :
+                                  question.answerType === "emojis" ? `Enter description for ${EMOJIS[optionIndex]}` :
+                                  `Option ${optionIndex + 1}`
+                                }
+                                value={option.text}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  handleAnswerOptionChange(question.id!, optionIndex, value);
+                                }}
+                                fullWidth
+                                variant="outlined"
+                                InputProps={{
+                                  sx: { 
+                                    ...fieldStyles, 
+                                    height: "40px",
+                                    backgroundColor: 'white'
+                                  },
+                                }}
+                              />
+                              <Select
+                                value={option.type}
+                                onValueChange={(value: "P" | "N") =>
+                                  handleAnswerOptionTypeChange(
+                                    question.id!,
+                                    optionIndex,
+                                    value
+                                  )
+                                }
+                              >
+                                <SelectTrigger className="w-20">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="P">P</SelectItem>
+                                  <SelectItem value="N">N</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() =>
+                                  handleRemoveAnswerOption(question.id!, optionIndex)
+                                }
+                                className="p-2 text-gray-400 hover:text-red-500"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleAddAnswerOption(question.id!)}
-                            className="p-0 h-auto font-medium"
-                            style={{ color: "#C72030" }}
+                            className="p-0 h-auto font-medium text-red-600 hover:text-red-700 flex items-center"
                           >
                             <Plus className="w-4 h-4 mr-1" />
                             Add Option
                           </Button>
-                        </div>
-                      )}
-
-                      {/* Rating */}
-                      {question.answerType === "rating" && (
-                        <div className="space-y-3">
-                          <Label>Rating Scale</Label>
-                          <div className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg bg-white">
-                            <div className="flex w-full justify-between px-2 text-xs text-gray-500"></div>
-                            <div className="flex items-center gap-9">
-                              {[...Array(5)].map((_, index) => {
-                                const ratingValue = index + 1;
-                                return (
-                                  <Star
-                                    key={ratingValue}
-                                    className={`w-8 h-8 cursor-pointer transition-colors ${
-                                      ratingValue <= (question.rating || 0)
-                                        ? "text-yellow-400 fill-yellow-400"
-                                        : "text-gray-300 hover:text-yellow-300"
-                                    }`}
-                                    onClick={() =>
-                                      handleQuestionChange(
-                                        question.id!,
-                                        "rating",
-                                        ratingValue
-                                      )
-                                    }
-                                  />
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Emojis */}
-                      {question.answerType === "emojis" && (
-                        <div className="space-y-3">
-                          <Label>Select Reaction</Label>
-                          <div className="flex items-center justify-around p-3 border border-gray-200 rounded-lg bg-white">
-                            {EMOJIS.map((emoji) => (
-                              <button
-                                key={emoji}
-                                type="button"
-                                onClick={() => handleQuestionChange(question.id!, 'selectedEmoji', emoji)}
-                                className={`text-3xl p-2 rounded-full transition-transform transform hover:scale-125 ${question.selectedEmoji === emoji ? 'bg-red-100 scale-110' : ''}`}
-                              >
-                                {emoji}
-                              </button>
-                            ))}
-                          </div>
                         </div>
                       )}
 
@@ -1522,7 +1697,7 @@ export const EditSurveyPage = () => {
                                       value={
                                         field.files.length > 0
                                           ? `${field.files.length} file(s) selected`
-                                          : "Choose File: No file chosen"
+                                          : "Choose File"
                                       }
                                       fullWidth
                                       variant="outlined"

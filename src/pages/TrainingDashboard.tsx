@@ -109,11 +109,12 @@ const TrainingDashboard = () => {
     if (!iso) return '—';
     try {
       const d = new Date(iso);
-      // Format DD/MM/YYYY HH:MM (24h)
-      return d.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return '—';
-    }
+      if (isNaN(d.getTime())) return '—';
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    } catch { return '—'; }
   };
 
   // Debounce search input (500ms)
@@ -139,8 +140,10 @@ const TrainingDashboard = () => {
     setError(null);
     try {
   const dialogFilterActive = filterEmail.trim() || filterTrainingName.trim();
-  const effectivePage = page; // honor requested page; we already reset page elsewhere when search/filter changes
-      let url = `https://${baseUrl}/trainings.json?approval=true&page=${effectivePage}`;
+  const effectivePage = page;
+   // honor requested page; we already reset page elsewhere when search/filter changes
+           const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+      let url = `${cleanBaseUrl}/trainings.json?approval=true&page=${effectivePage}`;
       // If dialog filter active, append each provided field separately (no combined OR param)
       if (dialogFilterActive) {
         const params: string[] = [];
@@ -231,11 +234,11 @@ const TrainingDashboard = () => {
               size="sm"
               className="h-8 w-8 p-0"
               title="View user trainings"
-              onClick={() => navigate(`/maintenance/m-safe/training-list/training-user-details/${item.id}`, { state: { row: item } })}
+              onClick={() => navigate(`/safety/m-safe/training-list/training-user-details/${item.id}`, { state: { row: item } })}
             >
               <Eye className="h-4 w-4" />
             </Button>
-            <Button
+            {/* <Button
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0 disabled:opacity-50"
@@ -248,7 +251,7 @@ const TrainingDashboard = () => {
               ) : (
                 <Download className="h-4 w-4" />
               )}
-            </Button>
+            </Button> */}
           </div>
         );
       case 'training_date':
@@ -328,7 +331,7 @@ const TrainingDashboard = () => {
         if (!iso) return '—';
         const d = new Date(iso);
         if (isNaN(d.getTime())) return '—';
-        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`; // date only
       };
       const statusLabel = (status?: string | null) => {
         const s = (status || '').trim().toLowerCase();
@@ -432,9 +435,6 @@ const TrainingDashboard = () => {
       const section = (title: string, bodyHtml: string) => `
         <div style='background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;'>
           <div style='display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f6f4ee;'>
-            <div style='width:32px;height:32px;flex:0 0 auto;display:inline-block;'>
-              <svg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'><circle cx='16' cy='16' r='16' fill='#C72030' /><text x='16' y='16' dy='.35em' fill='#fff' font-family='Arial, sans-serif' font-size='16' font-weight='700' text-anchor='middle'>${title.charAt(0).toUpperCase()}</text></svg>
-            </div>
             <h2 style='margin:0;font-size:16px;font-weight:700;color:#111;'>${title}</h2>
           </div>
           <div style='padding:24px;'>${bodyHtml}</div>
@@ -460,19 +460,15 @@ const TrainingDashboard = () => {
       ]);
 
       const recordCard = (rec: any, index: number) => {
-        const top = `
-          <div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;'>
-            <div style='font-weight:700;color:#111;font-size:14px;'>Training Details ${records.length > 1 ? `(${index + 1})` : ''}</div>
-            <div style='font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;background:#f3f4f6;border:1px solid #e5e7eb;'>${statusLabel(rec?.status)}</div>
-          </div>`;
+        // Removed separate top bar to eliminate whitespace; integrate Status into grid
         const body = `
           <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 32px;'>
             ${label('Training Name', rec?.training_subject_name || '—')}
             ${label('Training Type', rec?.training_type || '—')}
             ${label('Training Date', formatDateTime(rec?.training_date))}
-            ${label('Resource', `${rec?.resource_type || '—'} ${rec?.resource_id ? `#${rec.resource_id}` : ''}`)}
             ${label('Created On', formatDateTime(rec?.created_at))}
             ${label('Updated On', formatDateTime(rec?.updated_at))}
+            ${label('Status', statusLabel(rec?.status))}
           </div>`;
   // Attachments: render images as smaller thumbnails (2-column grid) for compact PDFs
         const atts = Array.isArray(rec?.__enhanced_attachments) ? rec.__enhanced_attachments : (Array.isArray(rec?.training_attachments) ? rec.training_attachments : []);
@@ -480,19 +476,19 @@ const TrainingDashboard = () => {
           ? atts
               .map((a: any) =>
                 isImage(a?.url, a?.doctype)
-      ? `<div style='width:100%;margin:0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;background:#fff;page-break-inside:avoid;'>
-           <img src='${a?.dataUrl || a?.url || ''}' crossOrigin='anonymous' style='width:100%;height:auto;max-height:240px;object-fit:contain;display:block;background:#fff'/>
-                     </div>`
-                  : `<div style='font-size:12px;color:#1f2937;word-break:break-all;'>• ${a?.url || ''}</div>`
+  ? `<div style='width:100%;margin:0;page-break-inside:avoid;padding:4px 0 4px 0;'>
+     <img src='${a?.dataUrl || a?.url || ''}' crossOrigin='anonymous' style='width:auto;max-width:160px;height:auto;max-height:110px;object-fit:contain;display:block;' />
+      </div>`
+                  : `<div style='font-size:12px;color:#1f2937;word-break:break-all;margin:4px 0;'>• ${a?.url || ''}</div>`
               )
               .join('')
           : `<span style='color:#9ca3af;font-size:13px;'>No attachments</span>`;
         const attachments = `
-          <div style='margin-top:12px;'>
-            <div style='font-weight:600;margin-bottom:4px;'>Attachments</div>
-      <div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;'>${attList}</div>
+          <div style='margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;'>
+            <div style='font-weight:600;margin-bottom:6px;'>Attachments</div>
+      <div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;'>${attList}</div>
           </div>`;
-        return section('TRAINING DETAILS', top + body + attachments);
+  return section('TRAINING DETAILS', body + attachments);
       };
 
       container.innerHTML = `
@@ -513,29 +509,26 @@ const TrainingDashboard = () => {
           const recsHtml = records
             .map((rec: any, i: number) => {
               const top = `
-                <div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;'>
-                  <div style='font-weight:700;color:#111;font-size:14px;'>Training Details ${records.length > 1 ? `(${i + 1})` : ''}</div>
-                  <div style='font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;background:#f3f4f6;border:1px solid #e5e7eb;'>${statusLabel(rec?.status)}</div>
-                </div>`;
+                <!-- top removed: status moved into grid to remove whitespace -->`;
               const body = `
                 <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 32px;'>
                   ${label('Training Name', rec?.training_subject_name || '—')}
                   ${label('Training Type', rec?.training_type || '—')}
                   ${label('Training Date', formatDateTime(rec?.training_date))}
-                  ${label('Resource', `${rec?.resource_type || '—'} ${rec?.resource_id ? `#${rec.resource_id}` : ''}`)}
                   ${label('Created On', formatDateTime(rec?.created_at))}
                   ${label('Updated On', formatDateTime(rec?.updated_at))}
+                  ${label('Status', statusLabel(rec?.status))}
                 </div>`;
               const atts = Array.isArray(rec?.training_attachments) ? rec.training_attachments : [];
               const list = atts.length
                 ? atts.map((a: any) => `<div style='font-size:12px;color:#1f2937;word-break:break-all;'>• ${a?.url || ''}</div>`).join('')
                 : `<span style='color:#9ca3af;font-size:13px;'>No attachments</span>`;
               const attachments = `
-                <div style='margin-top:12px;'>
-                  <div style='font-weight:600;margin-bottom:4px;'>Attachments</div>
+                <div style='margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;'>
+                  <div style='font-weight:600;margin-bottom:6px;'>Attachments</div>
                   ${list}
                 </div>`;
-              return section('TRAINING DETAILS', top + body + attachments);
+              return section('TRAINING DETAILS', body + attachments);
             })
             .join('');
 

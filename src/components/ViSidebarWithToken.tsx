@@ -9,37 +9,46 @@ import { saveToken, saveUser, getToken, isAuthenticated } from '../utils/auth';
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
 const modulesByPackage = {
-    Maintenance: [
+    Safety: [
         {
             name: 'M-Safe',
             icon: Users,
-            href: '/maintenance/m-safe',
+            href: '/safety/m-safe',
             subItems: [
-                { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
-                { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' },
-                { name: 'LMC', href: '/maintenance/m-safe/lmc', color: 'text-[#1a1a1a]' },
-                { name: 'SMT', href: '/maintenance/m-safe/smt', color: 'text-[#1a1a1a]' },
-                { name: 'Krcc List', href: '/maintenance/m-safe/krcc-list', color: 'text-[#1a1a1a]' },
-                { name: 'Training List', href: '/maintenance/m-safe/training-list', color: 'text-[#1a1a1a]' },
-                { name: 'External Reportee Reassign', href: '/maintenance/m-safe/reportees-reassign', color: 'text-[#1a1a1a]' },
+                { name: 'Internal User (FTE)', href: '/safety/m-safe/internal', color: 'text-[#1a1a1a]' },
+                { name: 'External User (NON FTE)', href: '/safety/m-safe/external', color: 'text-[#1a1a1a]' },
+                { name: 'LMC', href: '/safety/m-safe/lmc', color: 'text-[#1a1a1a]' },
+                { name: 'SMT', href: '/safety/m-safe/smt', color: 'text-[#1a1a1a]' },
+                { name: 'Krcc List', href: '/safety/m-safe/krcc-list', color: 'text-[#1a1a1a]' },
+                { name: 'Training List', href: '/safety/m-safe/training-list', color: 'text-[#1a1a1a]' },
+                { name: 'External Reportee Reassign', href: '/safety/m-safe/reportees-reassign', color: 'text-[#1a1a1a]' },
+            ],
+        },
+        {
+            name: 'Report',
+            icon: Download,
+            href: '/safety/report',
+            subItems: [
+                { name: 'Msafe User Report', icon: Download, href: '/safety/report/msafe-report' },
+                { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
             ],
         },
         // {
         //     name: 'Vi Miles',
         //     icon: Car,
-        //     href: '/maintenance/vi-miles',
+        //     href: '/safety/vi-miles',
         //     subItems: [
-        //         { name: 'Vehicle Details', href: '/maintenance/vi-miles/vehicle-details', color: 'text-[#1a1a1a]' },
-        //         { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' },
+        //         { name: 'Vehicle Details', href: '/safety/vi-miles/vehicle-details', color: 'text-[#1a1a1a]' },
+        //         { name: 'Vehicle Check In', href: '/safety/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' },
         //     ],
         // },
-        { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/maintenance/check-hierarchy-levels' },
-        { name: 'Employee Deletion History', icon: Trash, href: '/maintenance/employee-deletion-history' },
+        { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/safety/check-hierarchy-levels' },
+        { name: 'Employee Deletion History', icon: Trash, href: '/safety/employee-deletion-history' },
 
 
-        { name: 'Msafe User Report', icon: Download, href: '/maintenance/msafe-report' },
-        { name: 'Msafe Detail Report', icon: Download, href: '/maintenance/msafe-detail-report' },
-        { name: 'Msafe Dashboard Report', icon: ChartColumnIncreasing, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
+        // { name: 'Msafe User Report', icon: Download, href: '/safety/msafe-report' },
+        // { name: 'Msafe Detail Report', icon: Download, href: '/safety/msafe-detail-report' },
+        // { name: 'Msafe Dashboard Report', icon: ChartColumnIncreasing, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
 
     ],
 }
@@ -93,10 +102,10 @@ const ViSidebarWithToken: React.FC = () => {
         setIsLoading(false);
     }, [location.search]);
 
-    // Ensure section shows Maintenance for VI routes (must be before any returns to keep hook order stable)
+    // Ensure section shows Safety for VI routes (must be before any returns to keep hook order stable)
     useEffect(() => {
-        if (location.pathname.startsWith('/maintenance')) {
-            setCurrentSection('Maintenance');
+        if (location.pathname.startsWith('/safety')) {
+            setCurrentSection('Safety');
         }
     }, [location.pathname, setCurrentSection]);
 
@@ -104,6 +113,29 @@ const ViSidebarWithToken: React.FC = () => {
     useEffect(() => {
         if (isSidebarCollapsed) setExpandedItems([]);
     }, [isSidebarCollapsed]);
+
+    // Auto-expand M-Safe on first load only (per browser tab via sessionStorage) when landing under /safety/m-safe
+    useEffect(() => {
+        if (isLoading || !hasValidToken) return;
+        const FLAG_KEY = 'vi_safety_auto_expanded_once';
+        if (!sessionStorage.getItem(FLAG_KEY)) {
+            const p = location.pathname || '';
+            const groupToExpand = p.startsWith('/safety/m-safe') ? 'M-Safe' : null;
+
+            // Ensure the sidebar is open so expansion is visible
+            if (isSidebarCollapsed) {
+                setIsSidebarCollapsed(false);
+            }
+
+            if (groupToExpand) {
+                // Slight defer to allow collapse state to update before expanding (exclusive)
+                setTimeout(() => {
+                    setExpandedItems([groupToExpand]);
+                }, 0);
+            }
+            sessionStorage.setItem(FLAG_KEY, '1');
+        }
+    }, [isLoading, hasValidToken, location.pathname, isSidebarCollapsed, setIsSidebarCollapsed]);
 
     // Don't render sidebar if no valid token
     if (isLoading) {
@@ -148,10 +180,19 @@ const ViSidebarWithToken: React.FC = () => {
         return item.subItems[0]?.href || null;
     };
 
-    const currentModules = modulesByPackage['Maintenance'];
+    const currentModules = Array.isArray(modulesByPackage['Safety']) ? modulesByPackage['Safety'] : [];
 
-    const toggleExpanded = (name: string) =>
-        setExpandedItems((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
+    const toggleExpanded = (name: string, level: number = 0) => {
+        setExpandedItems((prev) => {
+            const isExpanded = prev.includes(name);
+            if (level === 0) {
+                // For top-level groups, keep it exclusive: only one open at a time
+                return isExpanded ? [] : [name];
+            }
+            // For deeper levels (if any), allow independent toggling
+            return isExpanded ? prev.filter((n) => n !== name) : [...prev, name];
+        });
+    };
 
     const isActiveRoute = (href: string) => {
         const p = location.pathname;
@@ -176,7 +217,7 @@ const ViSidebarWithToken: React.FC = () => {
             return (
                 <div key={item.name}>
                     <button
-                        onClick={() => toggleExpanded(item.name)}
+                        onClick={() => toggleExpanded(item.name, level)}
                         className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
                     >
                         <div className="flex items-center gap-3">
@@ -256,14 +297,14 @@ const ViSidebarWithToken: React.FC = () => {
                         className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? 'text-center' : 'tracking-wide'
                             }`}
                     >
-                        {isSidebarCollapsed ? '' : 'Maintenance'}
+                        {isSidebarCollapsed ? '' : 'Safety'}
                     </h3>
                 </div>
 
                 <nav className="space-y-2">
                     {isSidebarCollapsed ? (
                         <div className="flex flex-col items-center space-y-5 pt-4">
-                            {currentModules.map((module) => (
+                            {(Array.isArray(currentModules) ? currentModules : []).map((module) => (
                                 <button
                                     key={module.name}
                                     onClick={() => {
@@ -296,7 +337,7 @@ const ViSidebarWithToken: React.FC = () => {
                             ))}
                         </div>
                     ) : (
-                        currentModules.map((module) => renderItem(module))
+                        (Array.isArray(currentModules) ? currentModules : []).map((module) => renderItem(module))
                     )}
                 </nav>
             </div>

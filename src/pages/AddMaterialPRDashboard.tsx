@@ -73,6 +73,8 @@ export const AddMaterialPRDashboard = () => {
       sacHsnCode: "",
       sacHsnCodeId: "",
       productDescription: "",
+      glAccount: "",
+      taxCode: "",
       each: "",
       quantity: "",
       expectedDate: "",
@@ -207,6 +209,8 @@ export const AddMaterialPRDashboard = () => {
           pms_po_inventories_attributes: items.map((item) => ({
             pms_inventory_id: item.itemDetails,
             quantity: item.quantity,
+            gl_account: item.glAccount,
+            tax_code: item.taxCode,
             rate: item.each,
             total_value: item.amount,
             expected_date: item.expectedDate,
@@ -411,6 +415,8 @@ export const AddMaterialPRDashboard = () => {
         sacHsnCode: "",
         sacHsnCodeId: "",
         productDescription: "",
+        glAccount: "",
+        taxCode: "",
         each: "",
         quantity: "",
         expectedDate: "",
@@ -529,10 +535,11 @@ export const AddMaterialPRDashboard = () => {
         payment_tenure: supplierDetails.paymentTenure,
         related_to: supplierDetails.relatedTo,
         advance_amount: supplierDetails.advanceAmount,
-        ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
         pms_po_inventories_attributes: items.map((item) => ({
           pms_inventory_id: item.itemDetails,
           quantity: item.quantity,
+          gl_account: item.glAccount,
+          tax_code: item.taxCode,
           rate: item.each,
           total_value: item.amount,
           expected_date: item.expectedDate,
@@ -541,6 +548,8 @@ export const AddMaterialPRDashboard = () => {
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
+      ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
+      apply_wbs: wbsSelection === "overall" ? "overall" : "individual",
       attachments: files,
       ...(savedPrId && { slid }),
     };
@@ -711,10 +720,16 @@ export const AddMaterialPRDashboard = () => {
                 label="Retention(%)"
                 name="retention"
                 value={supplierDetails.retention}
-                onChange={handleSupplierChange}
+                onChange={(e) => {
+                  let value = e.target.value;
+
+                  if (/^\d*\.?\d{0,2}$/.test(value)) {
+                    handleSupplierChange(e);
+                  }
+                }}
                 placeholder="Enter Number"
                 fullWidth
-                type="number"
+                type="text"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
@@ -725,10 +740,16 @@ export const AddMaterialPRDashboard = () => {
                 label="TDS(%)"
                 name="tds"
                 value={supplierDetails.tds}
-                onChange={handleSupplierChange}
+                onChange={(e) => {
+                  let value = e.target.value;
+
+                  if (/^\d*\.?\d{0,2}$/.test(value)) {
+                    handleSupplierChange(e);
+                  }
+                }}
                 placeholder="Enter Number"
                 fullWidth
-                type="number"
+                type="text"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
@@ -738,9 +759,15 @@ export const AddMaterialPRDashboard = () => {
               <TextField
                 label="QC(%)"
                 name="qc"
-                type="number"
+                type="text"
                 value={supplierDetails.qc}
-                onChange={handleSupplierChange}
+                onChange={(e) => {
+                  let value = e.target.value;
+
+                  if (/^\d*\.?\d{0,2}$/.test(value)) {
+                    handleSupplierChange(e);
+                  }
+                }}
                 placeholder="Enter number"
                 fullWidth
                 variant="outlined"
@@ -766,9 +793,15 @@ export const AddMaterialPRDashboard = () => {
               <TextField
                 label="Advance Amount"
                 name="advanceAmount"
-                type="number"
+                type="text"
                 value={supplierDetails.advanceAmount}
-                onChange={handleSupplierChange}
+                onChange={(e) => {
+                  let value = e.target.value;
+
+                  if (/^\d*\.?\d{0,2}$/.test(value)) {
+                    handleSupplierChange(e);
+                  }
+                }}
                 placeholder="Enter Number"
                 fullWidth
                 variant="outlined"
@@ -938,10 +971,10 @@ export const AddMaterialPRDashboard = () => {
                   />
 
                   <TextField
-                    label="Expected Date*"
-                    type="date"
-                    value={item.expectedDate}
-                    onChange={(e) => handleItemChange(item.id, "expectedDate", e.target.value)}
+                    label="GL Account"
+                    value={item.glAccount}
+                    onChange={(e) => handleItemChange(item.id, "glAccount", e.target.value)}
+                    placeholder="GL Account"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -950,9 +983,41 @@ export const AddMaterialPRDashboard = () => {
                   />
 
                   <TextField
+                    label="Tax Code"
+                    value={item.taxCode}
+                    onChange={(e) => handleItemChange(item.id, "taxCode", e.target.value)}
+                    placeholder="Tax Code"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
+
+                  <TextField
+                    label="Expected Date*"
+                    type="date"
+                    value={item.expectedDate}
+                    onChange={(e) => handleItemChange(item.id, "expectedDate", e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    inputProps={{
+                      min: new Date().toISOString().split("T")[0],
+                    }}
+                    sx={{ mt: 1 }}
+                  />
+
+                  <TextField
                     label="Rate"
                     value={item.each}
-                    onChange={(e) => handleItemChange(item.id, "each", e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                        handleItemChange(item.id, "each", value);
+                      }
+                    }}
                     placeholder="Enter Number"
                     fullWidth
                     type="number"

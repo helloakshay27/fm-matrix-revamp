@@ -7,6 +7,15 @@ import { apiClient } from '@/utils/apiClient';
 import { API_CONFIG, BASE_URL, TOKEN } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
 
+interface NextEscalation {
+  minutes: number;
+  is_overdue: boolean;
+  users: string[];
+  copy_to: string[];
+  escalation_name: string;
+  escalation_time: string;
+}
+
 interface SelectedTicket {
   id: number;
   ticket_number: string;
@@ -28,11 +37,12 @@ interface SelectedTicket {
   response_escalation: string;
   response_tat: number;
   response_time: string | null;
-  escalation_response_name: string | null;
+  next_response_escalation: NextEscalation | null;
   resolution_escalation: string;
   resolution_tat: number | null;
   resolution_time: string | null;
-  escalation_resolution_name: string | null;
+  next_resolution_escalation: NextEscalation | null;
+  next_executive_escalation: NextEscalation | null;
 }
 
 interface ComplaintStatus {
@@ -121,6 +131,30 @@ const AssignTicketsPage: React.FC = () => {
     navigate('/maintenance/ticket');
   };
 
+  // Helper function to format escalation time in D:H:M format
+  const formatEscalationTime = (escalation: NextEscalation | null | undefined) => {
+    if (!escalation || !escalation.minutes) return '-';
+    
+    const totalMinutes = escalation.minutes;
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+    
+    return `${days}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  // Helper function to format escalation minutes (TAT)
+  const formatEscalationMinutes = (escalation: NextEscalation | null | undefined) => {
+    if (!escalation || !escalation.minutes) return '-';
+    return escalation.minutes.toString();
+  };
+
+  // Helper function to format escalation level name
+  const formatEscalationLevel = (escalation: NextEscalation | null | undefined) => {
+    if (!escalation || !escalation.escalation_name) return '-';
+    return escalation.escalation_name;
+  };
+
   const handleSubmit = async () => {
     if (!selectedStatus && !selectedUser) {
       toast({
@@ -160,10 +194,48 @@ const AssignTicketsPage: React.FC = () => {
       console.log('🔐 Using auth token from API config:', authToken ? 'Token present' : 'Token missing');
       console.log('🌐 Using base URL from API config:', baseUrl);
       
-      const apiCalls = [];
+      // Sequential API calls - first status update, then assignment
+      let statusResult = null;
+      let assignResult = null;
 
-      // If user is selected, call assign API
+      // Step 1: Update status if selected
+      if (selectedStatus) {
+        console.log('🔄 Step 1: Updating status...');
+        const formData = new FormData();
+        complaint_ids.forEach(id => {
+          formData.append('complaint_ids[]', id.toString());
+        });
+        formData.append('issue_status', selectedStatus);
+        
+        console.log('📤 Status API FormData:');
+        for (const [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
+        
+        const statusUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.BULK_UPDATE_STATUS}`;
+        console.log('🎯 Status API URL:', statusUrl);
+        
+        const statusResponse = await fetch(statusUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: formData
+        });
+
+        if (!statusResponse.ok) {
+          const errorText = await statusResponse.text();
+          console.error('❌ Status API error response:', errorText);
+          throw new Error(`Status Update Failed - HTTP ${statusResponse.status}: ${errorText}`);
+        }
+        
+        statusResult = await statusResponse.json();
+        console.log('✅ Status API response:', statusResult);
+      }
+
+      // Step 2: Assign user if selected
       if (selectedUser) {
+        console.log('🔄 Step 2: Assigning user...');
         const formData = new FormData();
         complaint_ids.forEach(id => {
           formData.append('complaint_ids[]', id.toString());
@@ -172,82 +244,32 @@ const AssignTicketsPage: React.FC = () => {
         formData.append('comment', 'Assigned from bulk assignment');
         
         console.log('📤 Assign API FormData:');
-        for (let [key, value] of formData.entries()) {
+        for (const [key, value] of formData.entries()) {
           console.log(key, value);
         }
         
         const assignUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.BULK_ASSIGN_TICKETS}`;
         console.log('🎯 Assign API URL:', assignUrl);
         
-        apiCalls.push(
-          fetch(assignUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${authToken}`,
-            },
-            body: formData
-          })
-            .then(async response => {
-              if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Assign API error response:', errorText);
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
-              }
-              const data = await response.json();
-              console.log('✅ Assign API response:', data);
-              return data;
-            })
-            .catch(error => {
-              console.error('❌ Assign API error:', error);
-              throw error;
-            })
-        );
-      }
-
-      // If status is selected, call status update API
-      if (selectedStatus) {
-        const formData = new FormData();
-        complaint_ids.forEach(id => {
-          formData.append('complaint_ids[]', id.toString());
+        const assignResponse = await fetch(assignUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: formData
         });
-        formData.append('issue_status', selectedStatus);
-        
-        console.log('📤 Status API FormData:');
-        for (let [key, value] of formData.entries()) {
-          console.log(key, value);
+
+        if (!assignResponse.ok) {
+          const errorText = await assignResponse.text();
+          console.error('❌ Assign API error response:', errorText);
+          throw new Error(`Assignment Failed - HTTP ${assignResponse.status}: ${errorText}`);
         }
         
-        const statusUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.BULK_UPDATE_STATUS}`;
-        console.log('🎯 Status API URL:', statusUrl);
-        
-        apiCalls.push(
-          fetch(statusUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${authToken}`,
-            },
-            body: formData
-          })
-            .then(async response => {
-              if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Status API error response:', errorText);
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
-              }
-              const data = await response.json();
-              console.log('✅ Status API response:', data);
-              return data;
-            })
-            .catch(error => {
-              console.error('❌ Status API error:', error);
-              throw error;
-            })
-        );
+        assignResult = await assignResponse.json();
+        console.log('✅ Assign API response:', assignResult);
       }
-
-      // Execute all API calls
-      const results = await Promise.all(apiCalls);
-      console.log('🎉 All API calls completed:', results);
+      
+      console.log('🎉 All API calls completed successfully:', { statusResult, assignResult });
       
       toast({
         title: "Success",
@@ -386,36 +408,48 @@ const AssignTicketsPage: React.FC = () => {
                   <tr key={ticket.id}>
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.ticket_number}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.heading}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.category_type || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.sub_category_type || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.posted_by || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.category_type || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.sub_category_type || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.posted_by || '-'}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{ticket.assigned_to || 'Unassigned'}</td>
                     <td className="px-4 py-3 w-32">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
                         {ticket.issue_status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.priority || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.site_name || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.priority || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.site_name || '-'}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A'}
+                      {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : '-'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.issue_type || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.complaint_mode || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.service_or_asset || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.asset_task_occurrence_id || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.proactive_reactive || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.issue_type || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.complaint_mode || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.service_or_asset || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.asset_task_occurrence_id || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.proactive_reactive || '-'}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {ticket.review_tracking_date ? new Date(ticket.review_tracking_date).toLocaleDateString() : 'N/A'}
+                      {ticket.review_tracking_date ? new Date(ticket.review_tracking_date).toLocaleDateString() : '-'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.response_escalation || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.response_tat || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.response_time || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.escalation_response_name || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.resolution_escalation || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.resolution_tat || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.resolution_time || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.escalation_resolution_name || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.response_escalation || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {formatEscalationMinutes(ticket.next_response_escalation)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {formatEscalationTime(ticket.next_response_escalation)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {formatEscalationLevel(ticket.next_response_escalation)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.resolution_escalation || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {formatEscalationMinutes(ticket.next_resolution_escalation)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {formatEscalationTime(ticket.next_resolution_escalation)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {formatEscalationLevel(ticket.next_resolution_escalation)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

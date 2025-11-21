@@ -628,10 +628,19 @@ export const EditWODashboard: React.FC = () => {
                                 label="Retention(%)"
                                 placeholder="Retention"
                                 value={formData.retention}
-                                onChange={(e) => handleInputChange("retention", e.target.value)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    if (
+                                        value === "" ||
+                                        (/^\d*\.?\d{0,2}$/.test(value) && parseFloat(value) <= 100)
+                                    ) {
+                                        handleInputChange("retention", value);
+                                    }
+                                }}
                                 fullWidth
                                 variant="outlined"
-                                type="number"
+                                type="text"
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
@@ -660,10 +669,19 @@ export const EditWODashboard: React.FC = () => {
                                 label="TDS(%)"
                                 placeholder="TDS"
                                 value={formData.tds}
-                                onChange={(e) => handleInputChange("tds", e.target.value)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    if (
+                                        value === "" ||
+                                        (/^\d*\.?\d{0,2}$/.test(value) && parseFloat(value) <= 100)
+                                    ) {
+                                        handleInputChange("tds", value);
+                                    }
+                                }}
                                 fullWidth
                                 variant="outlined"
-                                type="number"
+                                type="text"
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
@@ -692,10 +710,19 @@ export const EditWODashboard: React.FC = () => {
                                 label="QC(%)"
                                 placeholder="QC"
                                 value={formData.qc}
-                                onChange={(e) => handleInputChange("qc", e.target.value)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    if (
+                                        value === "" ||
+                                        (/^\d*\.?\d{0,2}$/.test(value) && parseFloat(value) <= 100)
+                                    ) {
+                                        handleInputChange("qc", value);
+                                    }
+                                }}
                                 fullWidth
                                 variant="outlined"
-                                type="number"
+                                type="text"
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
@@ -757,12 +784,19 @@ export const EditWODashboard: React.FC = () => {
                                 label="Advance Amount"
                                 placeholder="Advance Amount"
                                 value={formData.advanceAmount}
-                                onChange={(e) =>
-                                    handleInputChange("advanceAmount", e.target.value)
-                                }
+                                onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    if (
+                                        value === "" ||
+                                        (/^\d*\.?\d{0,2}$/.test(value) && parseFloat(value) <= 100)
+                                    ) {
+                                        handleInputChange("advanceAmount", value);
+                                    }
+                                }}
                                 fullWidth
                                 variant="outlined"
-                                type="number"
+                                type="text"
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
@@ -953,6 +987,9 @@ export const EditWODashboard: React.FC = () => {
                                             InputLabelProps={{
                                                 shrink: true,
                                             }}
+                                            inputProps={{
+                                                min: new Date().toISOString().split("T")[0],
+                                            }}
                                             sx={{
                                                 mt: 1,
                                                 "& .MuiInputBase-input": {
@@ -1034,16 +1071,16 @@ export const EditWODashboard: React.FC = () => {
                                         <TextField
                                             label="Rate*"
                                             value={detailsData.rate}
-                                            onChange={(e) =>
-                                                handleDetailsChange(
-                                                    detailsData.id,
-                                                    "rate",
-                                                    e.target.value
-                                                )
-                                            }
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+
+                                                if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                                                    handleDetailsChange(detailsData.id, "rate", value);
+                                                }
+                                            }}
                                             fullWidth
                                             variant="outlined"
-                                            type="number"
+                                            type="text"
                                             InputLabelProps={{
                                                 shrink: true,
                                             }}
@@ -1067,16 +1104,16 @@ export const EditWODashboard: React.FC = () => {
                                         <TextField
                                             label="CGST Rate"
                                             value={detailsData.cgstRate}
-                                            onChange={(e) =>
-                                                handleDetailsChange(
-                                                    detailsData.id,
-                                                    "cgstRate",
-                                                    e.target.value
-                                                )
-                                            }
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+
+                                                if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                                                    handleDetailsChange(detailsData.id, "cgstRate", value);
+                                                }
+                                            }}
                                             fullWidth
                                             variant="outlined"
-                                            type="number"
+                                            type="text"
                                             InputLabelProps={{
                                                 shrink: true,
                                             }}
@@ -1128,16 +1165,16 @@ export const EditWODashboard: React.FC = () => {
                                         <TextField
                                             label="SGST Rate"
                                             value={detailsData.sgstRate}
-                                            onChange={(e) =>
-                                                handleDetailsChange(
-                                                    detailsData.id,
-                                                    "sgstRate",
-                                                    e.target.value
-                                                )
-                                            }
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+
+                                                if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                                                    handleDetailsChange(detailsData.id, "sgstRate", value);
+                                                }
+                                            }}
                                             fullWidth
                                             variant="outlined"
-                                            type="number"
+                                            type="text"
                                             InputLabelProps={{
                                                 shrink: true,
                                             }}
@@ -1189,16 +1226,16 @@ export const EditWODashboard: React.FC = () => {
                                         <TextField
                                             label="IGST Rate"
                                             value={detailsData.igstRate}
-                                            onChange={(e) =>
-                                                handleDetailsChange(
-                                                    detailsData.id,
-                                                    "igstRate",
-                                                    e.target.value
-                                                )
-                                            }
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+
+                                                if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                                                    handleDetailsChange(detailsData.id, "igstRate", value);
+                                                }
+                                            }}
                                             fullWidth
                                             variant="outlined"
-                                            type="number"
+                                            type="text"
                                             InputLabelProps={{
                                                 shrink: true,
                                             }}
@@ -1250,16 +1287,16 @@ export const EditWODashboard: React.FC = () => {
                                         <TextField
                                             label="TCS Rate"
                                             value={detailsData.tcsRate}
-                                            onChange={(e) =>
-                                                handleDetailsChange(
-                                                    detailsData.id,
-                                                    "tcsRate",
-                                                    e.target.value
-                                                )
-                                            }
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+
+                                                if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                                                    handleDetailsChange(detailsData.id, "tcsRate", value);
+                                                }
+                                            }}
                                             fullWidth
                                             variant="outlined"
-                                            type="number"
+                                            type="text"
                                             InputLabelProps={{
                                                 shrink: true,
                                             }}

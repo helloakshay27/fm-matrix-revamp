@@ -60,9 +60,9 @@ export const initializeGlobalMUISelectSearchEnhancer = () => {
       return;
     }
     
-    // Get all option elements
-    const allOptions = Array.from(listbox.querySelectorAll('[role="option"]'));
-    if (allOptions.length === 0) {
+  // Get initial option elements
+  let allOptions = Array.from(listbox.querySelectorAll('[role="option"]'));
+  if (allOptions.length === 0) {
       return;
     }
     
@@ -103,7 +103,8 @@ export const initializeGlobalMUISelectSearchEnhancer = () => {
     // Smooth filtering with requestAnimationFrame
     const performSearch = () => {
       const searchTerm = searchInput.value.toLowerCase().trim();
-      
+      // Re-evaluate options each time so newly fetched items are included
+      allOptions = Array.from(listbox.querySelectorAll('[role="option"]'));
       requestAnimationFrame(() => {
         allOptions.forEach((option) => {
           const optionText = (option.textContent || '').toLowerCase();
@@ -111,6 +112,8 @@ export const initializeGlobalMUISelectSearchEnhancer = () => {
           (option as HTMLElement).style.display = matches ? '' : 'none';
         });
       });
+      // Emit global event so pages can trigger server-side search
+      document.dispatchEvent(new CustomEvent('muiSelectSearch', { detail: { dropdown, searchTerm } }));
     };
     
     // Maintain focus while typing

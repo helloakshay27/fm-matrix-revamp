@@ -28,13 +28,30 @@ export interface MeetingRoomCenterPerformanceRow {
   meeting?: Record<string, any>;
   [key: string]: any;
 }
+const getSelectedSiteId = () => {
+  return localStorage.getItem("selectedSiteId") ; // Default to 2189 if not found
+};
+export const getCurrentSiteId = (): string => {
+  // Try to get site_id from localStorage first
+  const siteId = localStorage.getItem('selectedSiteId');
+  if (siteId) return siteId;
 
+  console.log("siteId default", siteId);
+
+  // Fallback to URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('site_id'); // Default site_id
+};
 export const meetingRoomAnalyticsAPI = {
+
+
   // Single API returns both revenue overview and center performance
   async getMeetingRoomPerformance(fromDate: Date, toDate: Date): Promise<{ revenue_overview: MeetingRoomRevenueOverview | null; center_performance: MeetingRoomCenterPerformanceRow[] }>{
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/api/pms/reports/meeting_room_day_pass_performance?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const siteId = getSelectedSiteId();
+
+    const url = `/api/pms/reports/meeting_room_day_pass_performance?site_id=${siteId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
     const resp = await apiClient.get(url);
     const payload = resp.data;
     const data = payload?.data ?? payload ?? {};
@@ -58,14 +75,16 @@ export const meetingRoomAnalyticsAPI = {
   async getCenterWiseMeetingRoomUtilization(fromDate: Date, toDate: Date): Promise<any> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/api/pms/reports/center_wise_meeting_room_utilization?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const siteId = getSelectedSiteId();
+    const url = `/api/pms/reports/center_wise_meeting_room_utilization?site_id=${siteId}&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
 
   // Quarterly TAT performance by center – Response
   async getResponseTATPerformanceQuarterly(): Promise<Array<{ site: string; responseLast: number; responseCurrent: number }>> {
-    const url = `/api/pms/reports/response_tat_performance_quarterly`;
+    const siteId = getSelectedSiteId();
+    const url = `/api/pms/reports/response_tat_performance_quarterly?site_id=${siteId}`;
     const resp = await apiClient.get(url);
     const payload = resp.data;
     const perf = payload?.data?.performance_data
@@ -100,7 +119,8 @@ export const meetingRoomAnalyticsAPI = {
 
   // Quarterly TAT performance by center – Resolution
   async getResolutionTATPerformanceQuarterly(): Promise<Array<{ site: string; resolutionLast: number; resolutionCurrent: number }>> {
-    const url = `/api/pms/reports/resolution_tat_performance_quarterly`;
+    const siteId = getSelectedSiteId();
+    const url = `/api/pms/reports/resolution_tat_performance_quarterly?site_id=${siteId}`;
     const resp = await apiClient.get(url);
     const payload = resp.data;
     const perf = payload?.data?.performance_data

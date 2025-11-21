@@ -58,7 +58,7 @@ export const AddEventPage = () => {
     const fetchUsers = async () => {
       try {
         const response = await dispatch(fetchFMUsers()).unwrap();
-        setUsers(response.fm_users);
+        setUsers(response.users);
       } catch (error) {
         console.log(error);
         toast.error("Failed to fetch users")
@@ -162,7 +162,7 @@ export const AddEventPage = () => {
       await dispatch(createEvent({ baseUrl, token, data: formDataToSend })).unwrap();
 
       toast.success("Event created successfully");
-      navigate("/crm/events");
+      navigate(-1);
     } catch (error) {
       console.log(error);
       toast.error(error.message || error);
@@ -220,7 +220,7 @@ export const AddEventPage = () => {
       >
         <MuiButton
           startIcon={<ArrowBack />}
-          onClick={() => navigate("/crm/events")}
+          onClick={() => navigate(-1)}
           sx={{
             color: "#666",
             textTransform: "none",
@@ -297,7 +297,7 @@ export const AddEventPage = () => {
                 }}
               >
                 <TextField
-                  label="Title*"
+                  label={<span>Title<span className="text-red-500">*</span></span>}
                   placeholder="Title"
                   fullWidth
                   variant="outlined"
@@ -315,7 +315,7 @@ export const AddEventPage = () => {
                 }}
               >
                 <TextField
-                  label="Venue*"
+                  label={<span>Venue<span className="text-red-500">*</span></span>}
                   placeholder="Enter Venue"
                   fullWidth
                   variant="outlined"
@@ -342,7 +342,7 @@ export const AddEventPage = () => {
                 }}
               >
                 <TextField
-                  label="Start date*"
+                  label={<span>Start date<span className="text-red-500">*</span></span>}
                   type="date"
                   fullWidth
                   variant="outlined"
@@ -362,7 +362,7 @@ export const AddEventPage = () => {
                 }}
               >
                 <TextField
-                  label="End date*"
+                  label={<span>End date<span className="text-red-500">*</span></span>}
                   type="date"
                   fullWidth
                   variant="outlined"
@@ -380,7 +380,7 @@ export const AddEventPage = () => {
                 }}
               >
                 <TextField
-                  label="Start Time*"
+                  label={<span>Start Time<span className="text-red-500">*</span></span>}
                   type="time"
                   fullWidth
                   variant="outlined"
@@ -400,7 +400,7 @@ export const AddEventPage = () => {
                 }}
               >
                 <TextField
-                  label="End Time*"
+                  label={<span>End Time<span className="text-red-500">*</span></span>}
                   type="time"
                   fullWidth
                   variant="outlined"
@@ -428,6 +428,25 @@ export const AddEventPage = () => {
                 }
                 InputLabelProps={{
                   shrink: true,
+                }}
+                sx={{
+                  mt: 1,
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
                 }}
               />
             </Box>
@@ -566,7 +585,7 @@ export const AddEventPage = () => {
                     {
                       users.map((user) => (
                         <MenuItem key={user.id} value={user.id}>
-                          {user.firstname + " " + user.lastname}
+                          {user.full_name}
                         </MenuItem>
                       ))
                     }

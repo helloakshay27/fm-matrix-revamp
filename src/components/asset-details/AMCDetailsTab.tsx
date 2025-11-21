@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, History, FileText } from 'lucide-react';
+import { History, FileText, Info, File } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface AMCDetailsTabProps {
@@ -33,29 +33,31 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
 
           const historyData = Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0
             ? amc.amc_visit_logs.map((visit: any) => ({
-               
-                visitDate: visit.visit_date || '-',
-                technicianName: visit.technician_name || '-',
-                remarks: visit.remark || '-',
-                amcPeriod: visit.amc_period || '-',
-              }))
+
+              visitDate: visit.visit_date || '-',
+              technicianName: visit.technician_name || '-',
+              remarks: visit.remark || '-',
+              amcPeriod: visit.amc_period || '-',
+            }))
             : [];
 
           const logsData = Array.isArray(amc?.logs) && amc.logs.length > 0
             ? amc.logs.flat().map((log: any) => ({
-                text: log.parsed_content || log.log_type || 'Log entry',
-                date: log.created_at
-                  ? new Date(log.created_at).toLocaleString('en-GB')
-                  : '-',
-                performedBy: log.user_name || '-',
-              }))
+              text: log.parsed_content || log.log_type || 'Log entry',
+              date: log.created_at
+                ? new Date(log.created_at).toLocaleString('en-GB')
+                : '-',
+              performedBy: log.user_name || '-',
+            }))
             : [];
 
           return (
             <div key={index} className="space-y-6 border-2 rounded-lg p-6">
               <div className="flex items-center gap-3">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                  <X className="w-4 h-4"style={{ color: "#C72030" }} />
+                  {/* <X className="w-4 h-4"style={{ color: "#C72030" }} /> */}
+                  <File className="w-4 h-4" style={{ color: "#C72030" }} />
+
                 </div>
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A">AMC Details {amcs.length > 1 ? `#${index + 1}` : ''}</h3>
               </div>
@@ -102,7 +104,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                     <span className="text-gray-500 w-24">No. Of Visits</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcData.noOfVisits}</span>
-                    
+
                   </div>
                 </div>
               </div>
@@ -113,7 +115,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                 <div className="bg-white rounded-lg border p-4">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <History className="w-4 h-4 "style={{ color: "#C72030" }} />
+                      <History className="w-4 h-4 " style={{ color: "#C72030" }} />
                     </div>
                     <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Visit History</h3>
                   </div>
@@ -154,7 +156,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                 <div className="bg-white rounded-lg border p-4">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <FileText className="w-4 h-4 "style={{ color: "#C72030" }} />
+                      <FileText className="w-4 h-4 " style={{ color: "#C72030" }} />
                     </div>
                     <h3 className="text-lg font-semibold uppercase text-[#1A1A1A">AMC History</h3>
                   </div>

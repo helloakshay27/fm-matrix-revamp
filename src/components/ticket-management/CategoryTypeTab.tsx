@@ -31,13 +31,16 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 import { toast } from 'sonner';
-import { Edit, Trash2, Upload, Plus, X } from 'lucide-react';
+import ReactSelect from 'react-select';
+import { Label } from "@/components/ui/label";
+import { Edit, Plus, Trash2, Upload, X } from 'lucide-react';
 
 const categorySchema = z.object({
   categoryName: z.string().min(1, 'Category name is required'),
   responseTime: z.string().min(1, 'Response time is required'),
   customerEnabled: z.boolean(),
   siteId: z.string().min(1, 'Site selection is required'),
+  engineerIds: z.array(z.number()).optional(),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -71,6 +74,24 @@ interface CategoryApiResponse {
       created_at: string;
       updated_at: string;
     }>;
+    complaint_worker?: {
+      id: number;
+      society_id: number;
+      category_id: number;
+      assign_to: string[];
+      created_at: string;
+      updated_at: string;
+      assign: string | null;
+      esc_type: string | null;
+      of_phase: string;
+      of_atype: string;
+      site_id: number;
+      issue_type_id: number | null;
+      issue_related_to: string | null;
+      helpdesk_sub_category_id: number | null;
+      cloned_by_id: number | null;
+      cloned_at: string | null;
+    };
   }>;
   statuses: Array<{
     id: number;
@@ -110,6 +131,8 @@ export const CategoryTypeTab: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [faqItems, setFaqItems] = useState<FAQ[]>([{ question: '', answer: '' }]);
   const [vendorEmails, setVendorEmails] = useState<string[]>(['']);
+  const [engineers, setEngineers] = useState<{ id: number; full_name: string }[]>([]);
+  const [selectedEngineers, setSelectedEngineers] = useState<number[]>([]);
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [vendorEmailEnabled, setVendorEmailEnabled] = useState(false);
   const [accountData, setAccountData] = useState<{
@@ -133,6 +156,7 @@ export const CategoryTypeTab: React.FC = () => {
       responseTime: '',
       customerEnabled: false,
       siteId: '',
+      engineerIds: [],
     },
   });
 
@@ -187,6 +211,21 @@ export const CategoryTypeTab: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  // Fetch engineers
+  useEffect(() => {
+    const fetchEngineers = async () => {
+      try {
+        const response = await ticketManagementAPI.getEngineers();
+        const formatted = response?.users?.map((user: { id: number; full_name: string }) => ({ id: user.id, full_name: user.full_name })) || [];
+        setEngineers(formatted);
+      } catch (error) {
+        console.error('Error fetching engineers:', error);
+        toast.error('Failed to fetch engineers');
+      }
+    };
+    fetchEngineers();
   }, []);
 
   useEffect(() => {
@@ -247,11 +286,15 @@ export const CategoryTypeTab: React.FC = () => {
     }
 
     // Get the form data
+    // Get form values
+    const formValues = form.getValues();
+    
     const data: CategoryFormData = {
       categoryName: categoryNameInput.value.trim(),
       responseTime: responseTimeInput.value.trim(),
       customerEnabled: false, // or get from checkbox if needed
       siteId: selectedSite.id.toString(),
+      engineerIds: formValues.engineerIds || [],
     };
 
     // Continue with the rest of the validation and submission logic
@@ -309,6 +352,14 @@ export const CategoryTypeTab: React.FC = () => {
       
       if (iconFile) {
         formData.append('helpdesk_category[icon]', iconFile);
+      }
+
+      // Add selected engineers
+      const selectedEngineers = form.getValues('engineerIds') || [];
+      if (selectedEngineers.length) {
+        selectedEngineers.forEach(engineerId => {
+          formData.append('complaint_worker[assign_to][]', engineerId.toString());
+        });
       }
       
       // FAQ attributes
@@ -436,6 +487,16 @@ export const CategoryTypeTab: React.FC = () => {
       setEditFaqItems([{ question: '', answer: '' }]);
     }
     
+    // Populate assigned engineers if available
+    if (category.complaint_worker?.assign_to) {
+      const engineerIds = category.complaint_worker.assign_to.map(id => parseInt(id));
+      setSelectedEngineers(engineerIds);
+      form.setValue('engineerIds', engineerIds); // Update form state
+    } else {
+      setSelectedEngineers([]);
+      form.setValue('engineerIds', []); // Update form state
+    }
+    
     setEditIconFile(null);
     setEditVendorEmailEnabled(category.category_email?.length > 0);
     setEditVendorEmails(category.category_email?.length > 0 ? category.category_email.map(e => e.email) : ['']);
@@ -511,6 +572,13 @@ export const CategoryTypeTab: React.FC = () => {
       // Add icon if a new one is selected
       if (editIconFile) {
         submitFormData.append('helpdesk_category[icon]', editIconFile);
+      }
+
+      // Add selected engineers
+      if (selectedEngineers.length) {
+        selectedEngineers.forEach(engineerId => {
+          submitFormData.append('complaint_worker[assign_to][]', engineerId.toString());
+        });
       }
       
       // FAQ attributes
@@ -679,6 +747,7 @@ export const CategoryTypeTab: React.FC = () => {
   const columns = [
     { key: 'srno', label: 'S.No.', sortable: false },
     { key: 'name', label: 'Category Type', sortable: true },
+    { key: 'assign_to_names', label: 'Assignee', sortable: false },
     { key: 'tat', label: 'Response Time', sortable: false },
     { key: 'category_email', label: 'Vendor Email', sortable: false },
     { key: 'icon_url', label: 'Icon', sortable: false },
@@ -693,6 +762,18 @@ export const CategoryTypeTab: React.FC = () => {
         return index + 1;
       case 'name':
         return item.name;
+      case 'assign_to_names':
+        if (item.complaint_worker && Array.isArray(item.complaint_worker.assign_to) && engineers.length > 0) {
+          const names = item.complaint_worker.assign_to
+            .map((id: string) => {
+              const engineer = engineers.find(e => e.id === Number(id));
+              return engineer ? engineer.full_name : null;
+            })
+            .filter(Boolean)
+            .join(', ');
+          return names || '--';
+        }
+        return '--';
       case 'tat':
         return item.tat || '--';
       case 'category_email':
@@ -769,7 +850,7 @@ export const CategoryTypeTab: React.FC = () => {
                   name="responseTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Response Time (hours) <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>Response Time (Minutes) <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input type="number" placeholder="Enter response time" {...field} />
                       </FormControl>
@@ -777,6 +858,9 @@ export const CategoryTypeTab: React.FC = () => {
                     </FormItem>
                   )}
                 />
+
+
+                
 
                 <div className="space-y-2">
                   <label className="block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -820,6 +904,76 @@ export const CategoryTypeTab: React.FC = () => {
                           disabled 
                           readOnly
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="engineerIds"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assign Engineers</FormLabel>
+                      <FormControl>
+                        <div className="space-y-3">
+                          <ReactSelect
+                            isMulti
+                            options={engineers.map(engineer => ({
+                              value: engineer.id,
+                              label: engineer.full_name
+                            }))}
+                            onChange={(selected) => {
+                              if (!selected) {
+                                field.onChange([]);
+                                return;
+                              }
+
+                              const newEngineers = selected.map(s => s.value);
+                              field.onChange(newEngineers);
+                            }}
+                            value={engineers
+                              .filter(engineer => field.value?.includes(engineer.id))
+                              .map(engineer => ({
+                                value: engineer.id,
+                                label: engineer.full_name
+                              }))}
+                            className="mt-1"
+                            placeholder="Select engineers..."
+                            noOptionsMessage={() => "No engineers available"}
+                            styles={{
+                              control: (base) => ({
+                                ...base,
+                                minHeight: '40px',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '0px',
+                                boxShadow: 'none',
+                                '&:hover': {
+                                  border: '1px solid #cbd5e1'
+                                }
+                              }),
+                              multiValue: (base) => ({
+                                ...base,
+                                backgroundColor: '#f1f5f9',
+                                borderRadius: '0px'
+                              }),
+                              multiValueLabel: (base) => ({
+                                ...base,
+                                color: '#334155'
+                              }),
+                              multiValueRemove: (base) => ({
+                                ...base,
+                                color: '#64748b',
+                                borderRadius: '0px',
+                                '&:hover': {
+                                  backgroundColor: '#e2e8f0',
+                                  color: '#475569'
+                                }
+                              })
+                            }}
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1134,6 +1288,68 @@ export const CategoryTypeTab: React.FC = () => {
                 </div>
               </div>
 
+              <div className="mt-4">
+                <Label className="text-base font-semibold">Assign Engineers</Label>
+                <div className="mt-2">
+                  <ReactSelect
+                    isMulti
+                    options={engineers.map(engineer => ({
+                      value: engineer.id,
+                      label: engineer.full_name
+                    }))}
+                    onChange={(selected) => {
+                      if (!selected) {
+                        setSelectedEngineers([]);
+                        return;
+                      }
+
+                      const newEngineers = selected.map(s => s.value);
+                      setSelectedEngineers(newEngineers);
+                    }}
+                    value={engineers
+                      .filter(engineer => selectedEngineers.includes(engineer.id))
+                      .map(engineer => ({
+                        value: engineer.id,
+                        label: engineer.full_name
+                      }))}
+                    className="mt-1"
+                    placeholder="Select engineers..."
+                    noOptionsMessage={() => "No engineers available"}
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        minHeight: '40px',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '0px',
+                        boxShadow: 'none',
+                        '&:hover': {
+                          border: '1px solid #cbd5e1'
+                        }
+                      }),
+                      multiValue: (base) => ({
+                        ...base,
+                        backgroundColor: '#f1f5f9',
+                        borderRadius: '0px'
+                      }),
+                      multiValueLabel: (base) => ({
+                        ...base,
+                        color: '#334155'
+                      }),
+                      multiValueRemove: (base) => ({
+                        ...base,
+                        color: '#64748b',
+                        borderRadius: '0px',
+                        '&:hover': {
+                          backgroundColor: '#e2e8f0',
+                          color: '#475569'
+                        }
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+
+
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">FAQs</h3>
@@ -1185,6 +1401,7 @@ export const CategoryTypeTab: React.FC = () => {
                 ))}
               </div>
 
+              
               <div className="flex justify-end pt-4">
                 <Button 
                   onClick={() => handleEditSubmit({})}

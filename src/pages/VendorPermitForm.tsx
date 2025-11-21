@@ -259,7 +259,7 @@ export const VendorPermitForm = () => {
         securityName: '',
         securityDateTime: ''
     });
-
+    const [declarationChecked, setDeclarationChecked] = useState(false);
     // Attachments
     const [attachments, setAttachments] = useState<Attachment[]>([
         { id: '1', name: 'List of people to work', markYesNo: '', file: null },
@@ -272,8 +272,15 @@ export const VendorPermitForm = () => {
         setBasicInfo(prev => ({ ...prev, [field]: value }));
     };
 
+    // Only allow digits for emergencyContactNumber
     const handleDetailedInfoChange = (field: string, value: any) => {
-        setDetailedInfo(prev => ({ ...prev, [field]: value }));
+        if (field === 'emergencyContactNumber') {
+            // Remove non-digit characters and limit to 10 digits
+            const digitsOnly = value.replace(/\D/g, '').slice(0, 10);
+            setDetailedInfo(prev => ({ ...prev, [field]: digitsOnly }));
+        } else {
+            setDetailedInfo(prev => ({ ...prev, [field]: value }));
+        }
     };
 
     const handleUtilityChange = (utility: string, checked: boolean) => {
@@ -331,9 +338,40 @@ export const VendorPermitForm = () => {
     const handleFileUpload = (id: string, file: File) => {
         setAttachments(prev => prev.map(item => item.id === id ? { ...item, file } : item));
     };
+    const validatePhoneNumber = (phone: string): boolean => {
+        return /^\d{10}$/.test(phone);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        // Validate Emergency Contact Number in Detailed Information
+        if (detailedInfo.emergencyContactNumber && !validatePhoneNumber(detailedInfo.emergencyContactNumber)) {
+            toast.error('Emergency Contact Number must be exactly 10 digits.');
+            return;
+        }
+        if (!personsInfo.contractorsSupervisorName.trim()) {
+            toast.error('Contractor\'s Supervisor Name is required.');
+            return;
+        }
+
+        // Validate Contract Supervisor Number in Persons Information
+        if (!personsInfo.contractSupervisorNumber || !validatePhoneNumber(personsInfo.contractSupervisorNumber)) {
+            toast.error('Contract Supervisor Number must be exactly 10 digits.');
+            return;
+        }
+
+        // Validate Manpower Details
+        const hasEmptyAssignTo = manpowerDetails.some(detail => !detail.assignTo.trim());
+        if (hasEmptyAssignTo) {
+            toast.error('Please fill in all Assign To fields.');
+            return;
+        }
+
+        // const invalidEmergencyContact = manpowerDetails.some(detail => !detail.emergencyContact || !validatePhoneNumber(detail.emergencyContact));
+        // if (invalidEmergencyContact) {
+        //     toast.error('All Emergency Contact numbers in Manpower Details must be exactly 10 digits.');
+        //     return;
+        // }
         setLoading(true);
 
         try {
@@ -417,6 +455,11 @@ export const VendorPermitForm = () => {
                     formData.append(`pms_permit_form[${checkpoint.parameters}]`, checkpoint.checked ? 'Req' : 'Not Req');
                 }
             });
+            const hasEmptyAssignTo = manpowerDetails.some(detail => !detail.assignTo.trim());
+            if (hasEmptyAssignTo) {
+                toast.error('Please fill in all Assign To fields.');
+                return;
+            }
 
             formData.append('pms_permit_form[contract_supervisor_name]', personsInfo.contractorsSupervisorName || '');
             formData.append('pms_permit_form[contract_supervisor_number]', personsInfo.contractSupervisorNumber || '');
@@ -431,6 +474,11 @@ export const VendorPermitForm = () => {
                     formData.append(`pms_permit_form[permit_form_external_assignees_attributes][${timestamp}][phone]`, detail.emergencyContact || '');
                 }
             });
+            if (!declarationChecked) {
+                toast.error('Please accept the declaration before submitting the form.');
+                return;
+            }
+            setLoading(true);
 
             // File attachments
             attachments.forEach((attachment) => {
@@ -512,22 +560,22 @@ export const VendorPermitForm = () => {
                         </CardHeader>
                         <CardContent className="p-6 bg-white">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <div className="space-y-2">
+                                {/* <div className="space-y-2">
                                     <Label htmlFor="docNo">Doc No</Label>
                                     <Input id="docNo" disabled />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="rev">Rev</Label>
                                     <Input id="rev" value={basicInfo.rev} onChange={(e) => handleBasicInfoChange('rev', e.target.value)} />
-                                </div>
+                                </div> */}
                                 <div className="space-y-2">
                                     <Label htmlFor="permitRequestedDate">Permit Requested Date</Label>
                                     <Input id="permitRequestedDate" type="date" value={basicInfo.permitRequestedDate} onChange={(e) => handleBasicInfoChange('permitRequestedDate', e.target.value)} disabled />
                                 </div>
-                                <div className="space-y-2">
+                                {/* <div className="space-y-2">
                                     <Label htmlFor="permitIssueDate">Permit Issue Date</Label>
                                     <Input id="permitIssueDate" type="date" value={basicInfo.permitIssueDate} onChange={(e) => handleBasicInfoChange('permitIssueDate', e.target.value)} disabled />
-                                </div>
+                                </div> */}
                                 <div className="space-y-2">
                                     <Label htmlFor="permitId">Permit ID</Label>
                                     <Input id="permitId" value={basicInfo.permitId} onChange={(e) => handleBasicInfoChange('permitId', e.target.value)} disabled />
@@ -650,7 +698,7 @@ export const VendorPermitForm = () => {
                                                 <div className="flex items-center space-x-2">
                                                     <Checkbox id="h2o" checked={detailedInfo.gasTestingConductedFor.h2o}
                                                         onCheckedChange={(checked) => handleGasTestingChange('h2o', checked as boolean)} />
-                                                    <Label htmlFor="h2o">H2O</Label>
+                                                    <Label htmlFor="h2o">H2S</Label>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <Checkbox id="oxygen" checked={detailedInfo.gasTestingConductedFor.oxygen}
@@ -734,7 +782,7 @@ export const VendorPermitForm = () => {
                                                         <Label htmlFor="simultaneous-yes">Yes</Label>
                                                     </div>
                                                     <div className="flex items-center space-x-2">
-                                                        <RadioGroupItem value="No" id="simultaneous-no" />4
+                                                        <RadioGroupItem value="No" id="simultaneous-no" />
                                                         <Label htmlFor="simultaneous-no">No</Label>
                                                     </div>
                                                 </RadioGroup>
@@ -744,12 +792,25 @@ export const VendorPermitForm = () => {
 
                                     <div>
                                         <Label htmlFor="ifYesSpecifyTheOperation">If Yes Specify the Operation</Label>
-                                        <Input
+                                        {/* <Input
                                             id="ifYesSpecifyTheOperation"
                                             value={detailedInfo.ifYesSpecifyTheOperation}
                                             onChange={(e) => handleDetailedInfoChange('ifYesSpecifyTheOperation', e.target.value)}
                                             placeholder="Enter Operation"
+                                        /> */}
+                                        <Input
+                                            id="ifYesSpecifyTheOperation"
+                                            value={detailedInfo.ifYesSpecifyTheOperation}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Allow only letters and spaces
+                                                if (/^[A-Za-z\s]*$/.test(value)) {
+                                                    handleDetailedInfoChange('ifYesSpecifyTheOperation', value);
+                                                }
+                                            }}
+                                            placeholder="Enter Operation"
                                         />
+
                                     </div>
 
                                     <div>
@@ -762,12 +823,12 @@ export const VendorPermitForm = () => {
                                             >
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem value="By Company" id="ppe-company-haz" />
-                                                    <Label htmlFor="ppe-company-haz">by Company</Label>
+                                                    <Label htmlFor="ppe-company-haz">By Company</Label>
                                                     <Label className="text-xs text-gray-500 ml-2">(to be returned back to security)</Label>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <RadioGroupItem value="By Contractor" id="ppe-contractor-haz" />
-                                                    <Label htmlFor="ppe-contractor-haz">by Contractor</Label>
+                                                    <Label htmlFor="ppe-contractor-haz">By Contractor</Label>
                                                 </div>
                                             </RadioGroup>
                                         </div>
@@ -817,16 +878,29 @@ export const VendorPermitForm = () => {
 
                                         <div>
                                             <Label htmlFor="tagOutDetailsElectrical">If Yes, Lock Out Tag Out details</Label>
-                                            <Input
+                                            {/* <Input
                                                 id="tagOutDetailsElectrical"
                                                 value={detailedInfo.tagOutDetailsElectrical}
                                                 onChange={(e) => handleDetailedInfoChange('tagOutDetailsElectrical', e.target.value)}
                                                 placeholder="Enter"
+                                            /> */}
+                                            <Input
+                                                id="tagOutDetailsElectrical"
+                                                value={detailedInfo.tagOutDetailsElectrical}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Allow only letters and spaces
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleDetailedInfoChange('tagOutDetailsElectrical', value);
+                                                    }
+                                                }}
+                                                placeholder="Enter"
                                             />
+
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         <div>
                                             <Label htmlFor="energyIsolationDoneBy">Energy Isolation Done By</Label>
                                             <Input
@@ -846,20 +920,67 @@ export const VendorPermitForm = () => {
                                                 placeholder="Enter"
                                             />
                                         </div>
+                                    </div> */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label htmlFor="energyIsolationDoneBy">Energy Isolation Done By</Label>
+                                            <Input
+                                                id="energyIsolationDoneBy"
+                                                value={detailedInfo.energyIsolationDoneBy}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Allow only letters and spaces
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleDetailedInfoChange('energyIsolationDoneBy', value);
+                                                    }
+                                                }}
+                                                placeholder="Enter"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="energyDeIsolationDoneBy">Energy De-Isolation Done By</Label>
+                                            <Input
+                                                id="energyDeIsolationDoneBy"
+                                                value={detailedInfo.energyDeIsolationDoneBy}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Allow only letters and spaces
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleDetailedInfoChange('energyDeIsolationDoneBy', value);
+                                                    }
+                                                }}
+                                                placeholder="Enter"
+                                            />
+                                        </div>
                                     </div>
 
+
                                     <div className="mt-6">
-                                        <h6 className="text-orange-600 font-semibold mb-4">Vehicle Access to restricted area</h6>
+                                        <h6 className="text-[#C72030] font-semibold mb-4">Vehicle Access to restricted area</h6>
                                         <div>
                                             <Label htmlFor="permissionIsGivenToContractor">
                                                 Permission is given to contractor supervisor to take vehicle(s) of following types
                                             </Label>
-                                            <Input
+                                            {/* <Input
                                                 id="permissionIsGivenToContractor"
                                                 value={detailedInfo.permissionIsGivenToContractor}
                                                 onChange={(e) => handleDetailedInfoChange('permissionIsGivenToContractor', e.target.value)}
                                                 placeholder="Enter"
+                                            /> */}
+                                            <Input
+                                                id="permissionIsGivenToContractor"
+                                                value={detailedInfo.permissionIsGivenToContractor}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Allow only letters and spaces
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleDetailedInfoChange('permissionIsGivenToContractor', value);
+                                                    }
+                                                }}
+                                                placeholder="Enter"
                                             />
+
                                         </div>
                                         <Label className="text-sm text-gray-600 mt-2 block">
                                             To location subject to satisfactory gas testing, spark arrestor with the result recorded below
@@ -931,13 +1052,49 @@ export const VendorPermitForm = () => {
                                     </div>
 
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <div>
+                                        {/* <div>
                                             <Label htmlFor="emergencyContactName">Emergency Contact Name :</Label>
                                             <Input id="emergencyContactName" value={detailedInfo.emergencyContactName} onChange={(e) => handleDetailedInfoChange('emergencyContactName', e.target.value)} placeholder="Enter Emergency Contact Name" />
-                                        </div>
+                                        </div> */}
                                         <div>
+                                            <Label htmlFor="emergencyContactName">Emergency Contact Name :</Label>
+                                            <Input
+                                                id="emergencyContactName"
+                                                value={detailedInfo.emergencyContactName}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.replace(/[^a-zA-Z\s]/g, ""); // allows only letters & spaces
+                                                    handleDetailedInfoChange("emergencyContactName", value);
+                                                }}
+                                                placeholder="Enter Emergency Contact Name"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            {/* <Input
+                                                id="emergencyContactNumber"
+                                                value={detailedInfo.emergencyContactNumber}
+                                                onChange={(e) => handleDetailedInfoChange('emergencyContactNumber', e.target.value)}
+                                                placeholder="Enter Emergency Contact Number"
+                                                inputMode="numeric"
+                                                // pattern="[0-9]{10}"
+                                                maxLength={10}
+                                            /> */}
+
                                             <Label htmlFor="emergencyContactNumber">Emergency Contact Number :</Label>
-                                            <Input id="emergencyContactNumber" value={detailedInfo.emergencyContactNumber} onChange={(e) => handleDetailedInfoChange('emergencyContactNumber', e.target.value)} placeholder="Enter Emergency Contact Number" />
+                                            <Input
+                                                id="emergencyContactNumber"
+                                                type="text"
+                                                value={detailedInfo.emergencyContactNumber || ''}
+                                                onChange={(e) => {
+                                                    const numericValue = e.target.value.replace(/\D/g, ''); // only digits
+                                                    handleDetailedInfoChange('emergencyContactNumber', numericValue.slice(0, 10)); // ensure max 10 digits
+                                                }}
+                                                placeholder="Enter Emergency Contact Number"
+                                                maxLength={10}
+                                            />
+
+
+
                                         </div>
                                     </div>
 
@@ -962,7 +1119,20 @@ export const VendorPermitForm = () => {
 
                                     <div>
                                         <Label htmlFor="ifYesSpecifyName">If 'Yes' Please specify the name :</Label>
-                                        <Input id="ifYesSpecifyName" value={detailedInfo.ifYesSpecifyName} onChange={(e) => handleDetailedInfoChange('ifYesSpecifyName', e.target.value)} />
+                                        {/* <Input id="ifYesSpecifyName" value={detailedInfo.ifYesSpecifyName} onChange={(e) => handleDetailedInfoChange('ifYesSpecifyName', e.target.value)} /> */}
+                                        <Input
+                                            id="ifYesSpecifyName"
+                                            value={detailedInfo.ifYesSpecifyName}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Allow only letters and spaces
+                                                if (/^[A-Za-z\s]*$/.test(value)) {
+                                                    handleDetailedInfoChange('ifYesSpecifyName', value);
+                                                }
+                                            }}
+                                            placeholder="Specify name"
+                                        />
+
                                     </div>
 
                                     <div>
@@ -1097,14 +1267,52 @@ export const VendorPermitForm = () => {
 
                                 {/* Contractor's Supervisor Row */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
+                                    {/* <div>
                                         <Label htmlFor="contractorsSupervisorName">Contractor's Supervisor</Label>
                                         <Input id="contractorsSupervisorName" value={personsInfo.contractorsSupervisorName} onChange={(e) => setPersonsInfo(prev => ({ ...prev, contractorsSupervisorName: e.target.value }))} placeholder="Enter Contract Supervisor Name" />
-                                    </div>
+                                    </div> */}
                                     <div>
+                                        <Label htmlFor="contractorsSupervisorName">Contractor's Supervisor<span className='text-red-500'>*</span></Label>
+                                        <Input
+                                            id="contractorsSupervisorName"
+                                            value={personsInfo.contractorsSupervisorName}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Allow only letters and spaces
+                                                if (/^[A-Za-z\s]*$/.test(value)) {
+                                                    setPersonsInfo((prev) => ({
+                                                        ...prev,
+                                                        contractorsSupervisorName: value,
+                                                    }));
+                                                }
+                                            }}
+                                            placeholder="Enter Contract Supervisor Name"
+                                        />
+                                    </div>
+
+                                    {/* <div>
                                         <Label htmlFor="contractSupervisorNumber">Contact Number</Label>
                                         <Input id="contractSupervisorNumber" value={personsInfo.contractSupervisorNumber} onChange={(e) => setPersonsInfo(prev => ({ ...prev, contractSupervisorNumber: e.target.value }))} placeholder="Enter Contract Supervisor Number" />
+                                    </div> */}
+                                    <div>
+                                        <Label htmlFor="contractSupervisorNumber">Contact Supervisor Number<span className='text-red-500'>*</span></Label>
+                                        <Input
+                                            id="contractSupervisorNumber"
+                                            value={personsInfo.contractSupervisorNumber}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Allow only numbers and max 10 digits
+                                                if (/^\d{0,10}$/.test(value)) {
+                                                    setPersonsInfo((prev) => ({
+                                                        ...prev,
+                                                        contractSupervisorNumber: value,
+                                                    }));
+                                                }
+                                            }}
+                                            placeholder="Enter Contract Supervisor Number"
+                                        />
                                     </div>
+
                                 </div>
 
                                 {/* Permit Issuer Row */}
@@ -1147,16 +1355,54 @@ export const VendorPermitForm = () => {
                                 {manpowerDetails.map((detail) => (
                                     <div key={detail.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
                                         <div>
-                                            <Label htmlFor={`assignTo-${detail.id}`}>Assign To*</Label>
-                                            <Input id={`assignTo-${detail.id}`} value={detail.assignTo} onChange={(e) => handleManpowerChange(detail.id, 'assignTo', e.target.value)} />
+                                            <Label htmlFor={`assignTo-${detail.id}`}>Assign To <span style={{ color: '#C72030' }}>*</span></Label>
+                                            {/* <Input id={`assignTo-${detail.id}`} value={detail.assignTo} onChange={(e) => handleManpowerChange(detail.id, 'assignTo', e.target.value)} /> */}
+                                            <Input
+                                                id={`assignTo-${detail.id}`}
+                                                value={detail.assignTo}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Allow only letters and spaces
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleManpowerChange(detail.id, 'assignTo', value);
+                                                    }
+                                                }}
+                                                placeholder="Enter name"
+                                            />
                                         </div>
+
+
                                         <div>
                                             <Label htmlFor={`designation-${detail.id}`}>Designation</Label>
-                                            <Input id={`designation-${detail.id}`} value={detail.designation} onChange={(e) => handleManpowerChange(detail.id, 'designation', e.target.value)} />
+                                            {/* <Input id={`designation-${detail.id}`} value={detail.designation} onChange={(e) => handleManpowerChange(detail.id, 'designation', e.target.value)} /> */}
+                                            <Input
+                                                id={`designation-${detail.id}`}
+                                                value={detail.designation}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Allow only letters and spaces
+                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                        handleManpowerChange(detail.id, 'designation', value);
+                                                    }
+                                                }}
+                                                placeholder="Enter designation"
+                                            />
+
                                         </div>
                                         <div>
                                             <Label htmlFor={`emergencyContact-${detail.id}`}>Emergency Cont. No.</Label>
-                                            <Input id={`emergencyContact-${detail.id}`} value={detail.emergencyContact} onChange={(e) => handleManpowerChange(detail.id, 'emergencyContact', e.target.value)} />
+                                            <Input
+                                                id={`emergencyContact-${detail.id}`}
+                                                value={detail.emergencyContact}
+                                                onChange={(e) => {
+                                                    // Only allow numbers and max 10 digits
+                                                    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                    handleManpowerChange(detail.id, 'emergencyContact', value);
+                                                }}
+                                                inputMode="numeric"
+                                                maxLength={10}
+                                                placeholder="Enter Emergency Contact Number"
+                                            />
                                         </div>
                                         <div className="flex items-end">
                                             {manpowerDetails.length > 1 && (
@@ -1183,7 +1429,7 @@ export const VendorPermitForm = () => {
                                 DECLARATION
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6 bg-white">
+                        {/* <CardContent className="p-6 bg-white">
                             <p className="text-sm text-gray-700 mb-4">
                                 Declaration - I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analysis JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally & physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Haven Infinite & Norms.
                             </p>
@@ -1203,6 +1449,36 @@ export const VendorPermitForm = () => {
                             </div>
 
 
+                        </CardContent> */}
+                        <CardContent className="p-6 bg-white">
+                            <p className="text-sm text-gray-700 mb-4">
+                                Declaration - I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analysis JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally & physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Defined Norms.
+                            </p>
+                            <div className="flex items-center space-x-2 mb-6">
+                                <Checkbox
+                                    id="declaration-accept"
+                                    checked={declarationChecked}
+                                    onCheckedChange={(checked) => setDeclarationChecked(checked as boolean)}
+                                />
+                                <Label htmlFor="declaration-accept" className="text-sm font-medium text-gray-700 cursor-pointer">
+                                    I accept and declare the above statement to be true
+                                </Label>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <Label>Contractor Supervisor</Label>
+                                    <Input placeholder="Contractor Supervisor" disabled />
+                                </div>
+                                <div>
+                                    <Label>Permit Initiator</Label>
+                                    {/* <Input placeholder="Permit Initiator" disabled /> */}
+                                    <Input value={personsInfo.permitInitiatorName} disabled />
+                                </div>
+                                <div>
+                                    <Label>Permit Issuer</Label>
+                                    <Input value={personsInfo.permitIssuerName} disabled />
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
 

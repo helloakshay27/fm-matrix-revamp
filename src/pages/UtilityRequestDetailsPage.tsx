@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, BarChart3, File, FileChartLine } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
 
@@ -96,7 +96,11 @@ export const UtilityRequestDetailsPage = () => {
         setLoading(true);
         setError(null);
 
-        const baseUrl = localStorage.getItem('baseUrl') || 'https://fm-uat-api.lockated.com';
+        // Remove any 'http://' or 'https://' prefix if it exists in the stored baseUrl
+        let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+        baseUrl = baseUrl.replace(/^(https?:\/\/)/, '');
+        baseUrl = `https://${baseUrl}`; // Ensure we always use https
+
         const token = localStorage.getItem('token');
 
         if (!token) {
@@ -119,20 +123,25 @@ export const UtilityRequestDetailsPage = () => {
         console.log('Utilization details API response:', response.data);
 
         const apiData: ApiUtilizationData = response.data;
-        const entityName = entityMap.get(apiData.entity_id.toString());
 
-        // Map API response to component data structure
+        if (!apiData) {
+          throw new Error('No data received from the API');
+        }
+
+        const entityName = entityMap.get(apiData.entity_id?.toString() || '');
+
+        // Map API response to component data structure with null checks
         const mappedData: DetailedData = {
-          id: apiData.id.toString(),
-          customer: entityName || `Entity ID: ${apiData.entity_id}`,
-          totalConsumption: apiData.total_consumption.toString(),
-          rate: apiData.rate.toString(),
-          readingType: apiData.reading_type,
-          toDate: apiData.to_date,
-          status: apiData.status,
-          amount: apiData.amount.toString(),
+          id: apiData.id?.toString() || '',
+          customer: entityName || `Entity ID: ${apiData.entity_id || 'Unknown'}`,
+          totalConsumption: apiData.total_consumption?.toString() || '0',
+          rate: apiData.rate?.toString() || '0',
+          readingType: apiData.reading_type || '',
+          toDate: apiData.to_date || '',
+          status: apiData.status || 'pending',
+          amount: apiData.amount?.toString() || '0',
           plantDetail: apiData.plant_detail_id?.toString() || '',
-          fromDate: apiData.from_date,
+          fromDate: apiData.from_date || '',
           consumptionDetails: [
             {
               clientName: entityName || `Entity ID: ${apiData.entity_id}`,
@@ -224,12 +233,14 @@ export const UtilityRequestDetailsPage = () => {
         </Button>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className=" mx-auto space-y-6">
         {/* Basic Details Card */}
         <Card className="w-full">
-          <CardHeader className="bg-gray-50 border-b">
+          <CardHeader className="border-b" style={{ backgroundColor: "#f6f4ee" }}>
             <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">B</span>
+              <span className="inline-flex items-center">
+                <File className="w-5 h-5" color='#C72030' />
+              </span>
               <span className="text-[#C72030]">BASIC DETAILS</span>
             </CardTitle>
           </CardHeader>
@@ -289,13 +300,15 @@ export const UtilityRequestDetailsPage = () => {
 
         {/* Consumption Details Card */}
         <Card className="w-full">
-          <CardHeader className="bg-gray-50 border-b">
+          <CardHeader className="border-b" style={{ backgroundColor: "#f6f4ee" }}>
             <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">C</span>
+              <span className="inline-flex items-center">
+                <FileChartLine className="w-5 h-5" color='#C72030' />
+              </span>
               <span className="text-[#C72030]">Consumption Details</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-6">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-100 border-b">

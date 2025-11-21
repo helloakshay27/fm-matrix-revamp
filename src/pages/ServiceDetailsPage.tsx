@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
   Settings,
-  FileText,
   QrCode,
   Box,
   Download,
+  Paperclip,
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AssociateServiceModal } from '@/components/AssociateServiceModal';
@@ -207,9 +207,10 @@ export const ServiceDetailsPage = () => {
   // If loading, show loading state
   if (loading) {
     return (
-      <div className="p-4 sm:p-6">
-        <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading service details...</div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading service details...</p>
         </div>
       </div>
     );
@@ -249,25 +250,49 @@ export const ServiceDetailsPage = () => {
       {/* Top Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
-          <Button
-            variant="ghost"
+          <button
             onClick={() => navigate('/maintenance/service')}
-            className="w-max pl-0"
+            className="flex items-center gap-1 hover:text-gray-800 mb-4 text-base"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Service List
-          </Button>
+          </button>
           <div className="mb-3">
             <h1 className="text-2xl font-bold text-[#1a1a1a] truncate">{details.service_name || 'Service Details'}</h1>
           </div>
         </div>
-       <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
+
           <Button
-            variant="outline"
             onClick={handleEditClick}
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+            variant="outline"
+            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
           >
-            Edit
+            <svg
+              width="21"
+              height="21"
+              viewBox="0 0 21 21"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <mask
+                id="mask0_107_2076"
+                style={{ maskType: "alpha" }}
+                maskUnits="userSpaceOnUse"
+                x="0"
+                y="0"
+                width="21"
+                height="21"
+              >
+                <rect width="21" height="21" fill="#C72030" />
+              </mask>
+              <g mask="url(#mask0_107_2076)">
+                <path
+                  d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
+                  fill="#C72030"
+                />
+              </g>
+            </svg>
           </Button>
           <Button
             onClick={handleAssociateServiceClick}
@@ -282,77 +307,92 @@ export const ServiceDetailsPage = () => {
       {/* Tab Section */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <Tabs defaultValue="location-detail" className="w-full">
-          <TabsList className="flex justify-start flex-nowrap overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg text-sm">
-            <TabsTrigger
-              value="location-detail"
-              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-            >
-              LOCATION DETAIL
-            </TabsTrigger>
-            <TabsTrigger
-              value="documents"
-              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-            >
-              DOCUMENTS
-            </TabsTrigger>
-            <TabsTrigger
-              value="qr-code"
-              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-            >
-              QR CODE
-            </TabsTrigger>
-            <TabsTrigger
-              value="associated-assets"
-              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-            >
-              Associated Assets
-            </TabsTrigger>
+          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
+            {[
+              { label: 'Location Detail', value: 'location-detail' },
+              { label: 'Attachments', value: 'documents' },
+              { label: 'QR Code', value: 'qr-code' },
+              { label: 'Associated Assets', value: 'associated-assets' },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0 text-sm"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
+
           {/* LOCATION DETAIL */}
-          <TabsContent value="location-detail" className="p-4 sm:p-6">
-            <div className="bg-white rounded-lg border">
-              <div className="flex p-4 items-center bg-[#F6F4EE]">
-                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                  <Box className="w-4 h-4" />
+          <TabsContent value="location-detail" className="p-4 sm:p-6 text-[15px]">
+            <div className="bg-white rounded-lg border text-[15px]">
+              <div className="flex p-4 items-center ">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                  <Box className="w-5 h-5 text-[#C72030]" />
                 </div>
-                <h2 className="text-lg font-[700]">LOCATION DETAIL</h2>
+                <h2 className="text-lg font-bold">LOCATION DETAIL</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 border border-[#D9D9D9] bg-[#F6F7F7] p-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 text-[15px] p-4 gap-6">
                 <div className="space-y-3">
-                  <div className="flex text-sm">
-                    <span className="text-gray-600 w-24">Site</span>
-                    <span>: {details.site || '—'}</span>
+                  <div className="flex  ">
+                    <span className="text-gray-500 w-24  ">Site</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.site || '—'}
+                    </span>
                   </div>
-                  <div className="flex text-sm">
-                    <span className="text-gray-600 w-24">Wing</span>
-                    <span>: {details.wing || '—'}</span>
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24  ">Wing</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.wing || '—'}
+                    </span>
                   </div>
-                  <div className="flex text-sm">
-                    <span className="text-gray-600 w-24">Area</span>
-                    <span>: {details.area || '—'}</span>
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24 ">Area</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.area || '—'}
+                    </span>
                   </div>
-                  <div className="flex text-sm">
-                    <span className="text-gray-600 w-24">Created On</span>
-                    <span>: {formatDateTime(details.created_at)}</span>
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24 ">Created On</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {formatDateTime(details.created_at)}
+                    </span>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <div className="flex text-sm">
-                    <span className="text-gray-600 w-24">Building</span>
-                    <span>: {details.building || '—'}</span>
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24 ">Building</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.building || '—'}
+                    </span>
                   </div>
-                  <div className="flex text-sm">
-                    <span className="text-gray-600 w-24">Floor</span>
-                    <span>: {details.floor || '—'}</span>
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24 ">Floor</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.floor || '—'}
+                    </span>
                   </div>
-                  <div className="flex text-sm">
-                    <span className="text-gray-600 w-24">Room</span>
-                    <span>: {details.room || '—'}</span>
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24 ">Room</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.room || '—'}
+                    </span>
                   </div>
-                  <div className="flex text-sm">
-                    <span className="text-gray-600 w-24">Created By</span>
-                    <span>: {details.created_by || '—'}</span>
+                  <div className="flex ">
+                    <span className="text-gray-500 w-24 ">Created By</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {details.created_by || '—'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -360,15 +400,18 @@ export const ServiceDetailsPage = () => {
           </TabsContent>
 
           {/* DOCUMENTS */}
-          <TabsContent value="documents" className="p-4 sm:p-6">
-            <div className="bg-white rounded-lg border">
-              <div className="flex items-center bg-[#F6F4EE] p-4">
-                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                  <FileText className="w-4 h-4" />
+          <TabsContent value="documents" className="p-4 sm:p-6 text-[15px]">
+            <div className="bg-white rounded-lg border text-[15px]">
+              <div className="flex items-center  p-4">
+                {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                  <Paperclip className="w-4 h-4" />
+                </div> */}
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                  <Paperclip className="w-5 h-5 text-[#C72030]" />
                 </div>
-                <h2 className="text-lg font-[700]">DOCUMENTS</h2>
+                <h2 className="text-lg font-bold">ATTACHMENTS</h2>
               </div>
-              <div className="border border-[#D9D9D9] bg-[#F6F7F7]">
+              <div>
                 {details?.documents?.length ? (
                   details.documents.map((doc) => (
                     <div
@@ -387,7 +430,7 @@ export const ServiceDetailsPage = () => {
                             📄
                           </div>
                         )}
-                        <span className="text-sm truncate max-w-[180px]">
+                        <span className="truncate max-w-[180px] font-semibold text-[15px]">
                           {`Document_${doc.id || doc.filename}.${doc.doctype.split('/')[1] || 'file'}`}
                         </span>
                       </div>
@@ -454,20 +497,23 @@ export const ServiceDetailsPage = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="p-3 text-sm text-gray-600">No documents available</div>
+                  <div className="p-3 text-[15px] text-gray-600">No documents available</div>
                 )}
               </div>
             </div>
           </TabsContent>
 
           {/* QR CODE */}
-          <TabsContent value="qr-code" className="p-4 sm:p-6">
-            <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg">
-              <div className="flex items-center mb-4 bg-[#F6F4EE] p-4">
-                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+          <TabsContent value="qr-code" className="p-4 sm:p-6 text-[15px]">
+            <div className="border border-[#D9D9D9] rounded-lg">
+              <div className="flex items-center mb-2  p-4">
+                {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                   <QrCode className="w-4 h-4" />
+                </div> */}
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                  <QrCode className="w-5 h-5 text-[#C72030]" />
                 </div>
-                <h2 className="text-lg font-[700]">QR CODE</h2>
+                <h2 className="text-lg font-bold">QR CODE</h2>
               </div>
               <div className="text-center">
                 {details.qr_code ? (
@@ -530,20 +576,23 @@ export const ServiceDetailsPage = () => {
 
                   </>
                 ) : (
-                  <div className="text-sm text-gray-600">No QR code available</div>
+                  <div className="text-[15px] text-gray-600">No QR code available</div>
                 )}
               </div>
             </div>
           </TabsContent>
 
           {/* ASSOCIATED ASSETS */}
-          <TabsContent value="associated-assets" className="p-4 sm:p-6">
-            <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg">
-              <div className="flex items-center mb-2 bg-[#F6F4EE] p-4">
-                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+          <TabsContent value="associated-assets" className="p-4 sm:p-6 text-[15px]">
+            <div className="border border-[#D9D9D9] rounded-lg">
+              <div className="flex items-center mb-2  p-4">
+                {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                   <Box className="w-4 h-4" />
+                </div> */}
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                  <Box className="w-6 h-6 text-[#C72030]" />
                 </div>
-                <h2 className="text-lg font-[700]">ASSOCIATED ASSETS</h2>
+                <h2 className="text-lg font-bold">ASSOCIATED ASSETS</h2>
               </div>
               <div className="p-4 max-w-5xl mx-auto overflow-x-auto">
                 {assetHierarchy ? (
@@ -551,7 +600,7 @@ export const ServiceDetailsPage = () => {
                     {renderAssetNode(assetHierarchy)}
                   </div>
                 ) : (
-                  <div className="text-sm text-gray-600">No associated assets</div>
+                  <div className="text-[15px] text-gray-600">No associated assets</div>
                 )}
               </div>
             </div>

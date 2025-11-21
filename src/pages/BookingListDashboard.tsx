@@ -1,15 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Plus, Filter, Download, X, Loader2, CalendarIcon } from 'lucide-react';
+import { Eye, Plus, Download, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { TextField, MenuItem, createTheme, ThemeProvider, Dialog, DialogContent, DialogTitle } from '@mui/material';
+import { TextField, MenuItem, createTheme, ThemeProvider, Dialog, DialogContent, FormControl, InputLabel, Select as MuiSelect } from '@mui/material';
 import { ExportByCentreModal } from '@/components/ExportByCentreModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import type { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -17,33 +11,12 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { exportReport, fetchFacilityBookingsData, filterBookings } from '@/store/slices/facilityBookingsSlice';
 import type { BookingData } from '@/services/bookingService';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
 import axios from 'axios';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-
-const exportColumns = [
-  { id: 'selectAll', label: 'Select All' },
-  { id: 'id', label: 'Id' },
-  { id: 'centreName', label: 'Centre Name' },
-  { id: 'bookedBy', label: 'Booked By' },
-  { id: 'bookedFor', label: 'Booked For' },
-  { id: 'companyName', label: 'Company Name' },
-  { id: 'facility', label: 'Facility' },
-  { id: 'scheduledOn', label: 'Scheduled On' },
-  { id: 'slot', label: 'Slot' },
-  { id: 'duration', label: 'Duration (Minutes)' },
-  { id: 'bookingStatus', label: 'Booking Status' },
-  { id: 'perSlotCharge', label: 'Per Slot Charge' },
-  { id: 'amountPaid', label: 'Amount Paid' },
-  { id: 'paymentStatus', label: 'Payment Status' },
-  { id: 'paymentType', label: 'Payment Type' },
-  { id: 'bookedOn', label: 'Booked On' },
-  { id: 'source', label: 'Source' },
-  { id: 'comment', label: 'Comment' },
-];
 
 const enhancedTableColumns: ColumnConfig[] = [
   { key: 'id', label: 'ID', sortable: true, draggable: true },
@@ -125,7 +98,7 @@ const getStatusBadgeVariant = (status: string) => {
     case 'Cancelled':
       return 'destructive';
     case 'Completed':
-      return 'default'; // Custom styling applied for blue
+      return 'default';
     default:
       return 'default';
   }
@@ -153,19 +126,17 @@ const BookingListDashboard = () => {
     scheduledDateRange: '',
     createdOnDateRange: '',
   });
-  const [scheduledDateFrom, setScheduledDateFrom] = useState<Date | undefined>();
-  const [scheduledDateTo, setScheduledDateTo] = useState<Date | undefined>();
-  const [createdOnDateFrom, setCreatedOnDateFrom] = useState<Date | undefined>();
-  const [createdOnDateTo, setCreatedOnDateTo] = useState<Date | undefined>();
-  const [isScheduledDatePickerOpen, setIsScheduledDatePickerOpen] = useState(false);
-  const [isCreatedOnDatePickerOpen, setIsCreatedOnDatePickerOpen] = useState(false);
+  const [scheduledDateFrom, setScheduledDateFrom] = useState<string>('');
+  const [scheduledDateTo, setScheduledDateTo] = useState<string>('');
+  const [createdOnDateFrom, setCreatedOnDateFrom] = useState<string>('');
+  const [createdOnDateTo, setCreatedOnDateTo] = useState<string>('');
+  const [isFiltering, setIsFiltering] = useState(false)
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
     total_pages: 0,
   });
 
-  // Fetch facilities
   useEffect(() => {
     const fetchFacilities = async () => {
       try {
@@ -184,7 +155,6 @@ const BookingListDashboard = () => {
     fetchFacilities();
   }, [baseUrl, token]);
 
-  // Update booking data and pagination when bookings change
   useEffect(() => {
     if (error) {
       setBookingData([]);
@@ -203,7 +173,6 @@ const BookingListDashboard = () => {
     }
   }, [bookings, error]);
 
-  // Fetch bookings data when page changes
   useEffect(() => {
     setIsPageLoading(true);
     dispatch(fetchFacilityBookingsData({ baseUrl, token, pageSize: 10, currentPage: pagination.current_page }))
@@ -214,12 +183,11 @@ const BookingListDashboard = () => {
       });
   }, [dispatch, baseUrl, token]);
 
-  // Handle status change with API call
   const handleStatusChange = async (bookingId: number, newStatus: string) => {
     setStatusUpdating(bookingId);
     try {
       await axios.patch(
-        `https://${baseUrl}/pms/admin/bookings/${bookingId}`,
+        `https://${baseUrl}/pms/admin/facility_bookings/${bookingId}.json`,
         { current_status: newStatus.toLowerCase() },
         {
           headers: {
@@ -241,59 +209,75 @@ const BookingListDashboard = () => {
     }
   };
 
-  const handleScheduledDateRangeSelect = (range: { from?: Date; to?: Date }) => {
-    if (range?.from) {
-      setScheduledDateFrom(range.from);
-    }
-    if (range?.to) {
-      setScheduledDateTo(range.to);
-      if (range.from && range.to) {
-        const formattedRange = `${format(range.from, 'dd/MM/yyyy')} - ${format(range.to, 'dd/MM/yyyy')}`;
-        handleFilterChange('scheduledDateRange', formattedRange);
-        setIsScheduledDatePickerOpen(false);
+  const handleScheduledDateFromChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = event.target.value;
+    setScheduledDateFrom(newValue);
+    if (newValue && scheduledDateTo) {
+      const fromDate = parse(newValue, 'yyyy-MM-dd', new Date());
+      const toDate = parse(scheduledDateTo, 'yyyy-MM-dd', new Date());
+      if (fromDate > toDate) {
+        setScheduledDateTo(newValue);
       }
+      const formattedRange = `${format(fromDate, 'dd/MM/yyyy')} - ${format(toDate, 'dd/MM/yyyy')}`;
+      handleFilterChange('scheduledDateRange', formattedRange);
+    } else {
+      handleFilterChange('scheduledDateRange', '');
     }
   };
 
-  const handleCreatedOnDateRangeSelect = (range: { from?: Date; to?: Date }) => {
-    if (range?.from) {
-      setCreatedOnDateFrom(range.from);
-    }
-    if (range?.to) {
-      setCreatedOnDateTo(range.to);
-      if (range.from && range.to) {
-        const formattedRange = `${format(range.from, 'dd/MM/yyyy')} - ${format(range.to, 'dd/MM/yyyy')}`;
-        handleFilterChange('createdOnDateRange', formattedRange);
-        setIsCreatedOnDatePickerOpen(false);
+  const handleScheduledDateToChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = event.target.value;
+    setScheduledDateTo(newValue);
+    if (scheduledDateFrom && newValue) {
+      const fromDate = parse(scheduledDateFrom, 'yyyy-MM-dd', new Date());
+      const toDate = parse(newValue, 'yyyy-MM-dd', new Date());
+      if (toDate < fromDate) {
+        setScheduledDateFrom(newValue);
       }
+      const formattedRange = `${format(fromDate, 'dd/MM/yyyy')} - ${format(toDate, 'dd/MM/yyyy')}`;
+      handleFilterChange('scheduledDateRange', formattedRange);
+    } else {
+      handleFilterChange('scheduledDateRange', '');
     }
   };
 
-  const getScheduledDateRangeDisplayValue = () => {
-    if (scheduledDateFrom && scheduledDateTo) {
-      return `${format(scheduledDateFrom, 'dd/MM/yyyy')} - ${format(scheduledDateTo, 'dd/MM/yyyy')}`;
+  const handleCreatedOnDateFromChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = event.target.value;
+    setCreatedOnDateFrom(newValue);
+    if (newValue && createdOnDateTo) {
+      const fromDate = parse(newValue, 'yyyy-MM-dd', new Date());
+      const toDate = parse(createdOnDateTo, 'yyyy-MM-dd', new Date());
+      if (fromDate > toDate) {
+        setCreatedOnDateTo(newValue);
+      }
+      const formattedRange = `${format(fromDate, 'dd/MM/yyyy')} - ${format(toDate, 'dd/MM/yyyy')}`;
+      handleFilterChange('createdOnDateRange', formattedRange);
+    } else {
+      handleFilterChange('createdOnDateRange', '');
     }
-    if (scheduledDateFrom) {
-      return format(scheduledDateFrom, 'dd/MM/yyyy');
-    }
-    return filters.scheduledDateRange || 'Select date range';
   };
 
-  const getCreatedOnDateRangeDisplayValue = () => {
-    if (createdOnDateFrom && createdOnDateTo) {
-      return `${format(createdOnDateFrom, 'dd/MM/yyyy')} - ${format(createdOnDateTo, 'dd/MM/yyyy')}`;
+  const handleCreatedOnDateToChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = event.target.value;
+    setCreatedOnDateTo(newValue);
+    if (createdOnDateFrom && newValue) {
+      const fromDate = parse(createdOnDateFrom, 'yyyy-MM-dd', new Date());
+      const toDate = parse(newValue, 'yyyy-MM-dd', new Date());
+      if (toDate < fromDate) {
+        setCreatedOnDateFrom(newValue);
+      }
+      const formattedRange = `${format(fromDate, 'dd/MM/yyyy')} - ${format(toDate, 'dd/MM/yyyy')}`;
+      handleFilterChange('createdOnDateRange', formattedRange);
+    } else {
+      handleFilterChange('createdOnDateRange', '');
     }
-    if (createdOnDateFrom) {
-      return format(createdOnDateFrom, 'dd/MM/yyyy');
-    }
-    return filters.createdOnDateRange || 'Select date range';
   };
 
   const handleApplyFilters = async () => {
-    const formatedScheduleStartDate = scheduledDateFrom ? format(new Date(scheduledDateFrom), "MM/dd/yyyy") : null;
-    const formatedScheduleEndDate = scheduledDateTo ? format(new Date(scheduledDateTo), "MM/dd/yyyy") : null;
-    const formatedCreatedStartDate = createdOnDateFrom ? format(new Date(createdOnDateFrom), "MM/dd/yyyy") : null;
-    const formatedCreatedEndDate = createdOnDateTo ? format(new Date(createdOnDateTo), "MM/dd/yyyy") : null;
+    const formatedScheduleStartDate = scheduledDateFrom ? format(parse(scheduledDateFrom, 'yyyy-MM-dd', new Date()), "MM/dd/yyyy") : null;
+    const formatedScheduleEndDate = scheduledDateTo ? format(parse(scheduledDateTo, 'yyyy-MM-dd', new Date()), "MM/dd/yyyy") : null;
+    const formatedCreatedStartDate = createdOnDateFrom ? format(parse(createdOnDateFrom, 'yyyy-MM-dd', new Date()), "MM/dd/yyyy") : null;
+    const formatedCreatedEndDate = createdOnDateTo ? format(parse(createdOnDateTo, 'yyyy-MM-dd', new Date()), "MM/dd/yyyy") : null;
 
     const filterParams = {
       "q[facility_id_in]": filters.facilityName,
@@ -307,10 +291,10 @@ const BookingListDashboard = () => {
     };
 
     const queryString = new URLSearchParams(filterParams).toString();
-
+    setIsFiltering(true);
     try {
       const response = await dispatch(filterBookings({ baseUrl, token, queryString })).unwrap();
-      const updatedResponse = response.map((item: any) => ({
+      const updatedResponse = response.facility_bookings.map((item: any) => ({
         bookedBy: item.book_by,
         bookedFor: item.book_for || "-",
         bookingStatus: item.current_status,
@@ -325,15 +309,17 @@ const BookingListDashboard = () => {
       }));
       setBookingData(updatedResponse);
       setPagination({
-        current_page: 1,
-        total_count: response.pagination?.total_count || 0,
-        total_pages: response.pagination?.total_pages || 0,
+        current_page: response.pagination.current_page || 1,
+        total_count: response.pagination.total_count || 0,
+        total_pages: response.pagination.total_pages || 0,
       });
       setIsFilterModalOpen(false);
       toast.success('Filters applied successfully');
     } catch (error) {
       console.error('Error applying filters:', error);
       toast.error('Failed to apply filters');
+    } finally {
+      setIsFiltering(false);
     }
   };
 
@@ -344,10 +330,10 @@ const BookingListDashboard = () => {
       scheduledDateRange: '',
       createdOnDateRange: '',
     });
-    setScheduledDateFrom(undefined);
-    setScheduledDateTo(undefined);
-    setCreatedOnDateFrom(undefined);
-    setCreatedOnDateTo(undefined);
+    setScheduledDateFrom('');
+    setScheduledDateTo('');
+    setCreatedOnDateFrom('');
+    setCreatedOnDateTo('');
     setPagination({
       ...pagination,
       current_page: 1,
@@ -363,7 +349,6 @@ const BookingListDashboard = () => {
     } else {
       navigate('/vas/booking/add');
     }
-    // navigate('/vas/booking/add');
   };
 
   const handlePageChange = async (page: number) => {
@@ -372,9 +357,75 @@ const BookingListDashboard = () => {
       ...prev,
       current_page: page,
     }));
+
     try {
-      await dispatch(fetchFacilityBookingsData({ baseUrl, token, pageSize: 10, currentPage: page })).unwrap();
+      // Check if any filters are applied
+      const areFiltersApplied =
+        filters.facilityName ||
+        filters.status ||
+        scheduledDateFrom ||
+        scheduledDateTo ||
+        createdOnDateFrom ||
+        createdOnDateTo;
+
+      if (areFiltersApplied) {
+        // Format dates for filterBookings if needed
+        const formatedScheduleStartDate = scheduledDateFrom
+          ? format(parse(scheduledDateFrom, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy')
+          : null;
+        const formatedScheduleEndDate = scheduledDateTo
+          ? format(parse(scheduledDateTo, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy')
+          : null;
+        const formatedCreatedStartDate = createdOnDateFrom
+          ? format(parse(createdOnDateFrom, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy')
+          : null;
+        const formatedCreatedEndDate = createdOnDateTo
+          ? format(parse(createdOnDateTo, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy')
+          : null;
+
+        // Construct filter parameters, including page for pagination
+        const filterParams = {
+          page: page.toString(),
+          "q[facility_id_in]": filters.facilityName,
+          "q[current_status_cont]": filters.status,
+          ...(formatedCreatedStartDate && formatedCreatedEndDate && {
+            "q[date_range]": `${formatedCreatedStartDate} - ${formatedCreatedEndDate}`,
+          }),
+          ...(formatedScheduleStartDate && formatedScheduleEndDate && {
+            "q[date_range1]": `${formatedScheduleStartDate} - ${formatedScheduleEndDate}`,
+          }),
+        };
+
+        const queryString = new URLSearchParams(filterParams).toString();
+
+        // Call filterBookings with the constructed query string
+        const response = await dispatch(filterBookings({ baseUrl, token, queryString })).unwrap();
+        const updatedResponse = response.facility_bookings.map((item: any) => ({
+          bookedBy: item.book_by,
+          bookedFor: item.book_for || '-',
+          bookingStatus: item.current_status,
+          companyName: item.company_name,
+          createdOn: item.created_at.split(' ')[0],
+          facility: item.facility_name,
+          facilityType: item.fac_type,
+          id: item.id,
+          scheduledDate: item.startdate.split('T')[0],
+          scheduledTime: item.show_schedule_24_hour,
+          source: item.source,
+        }));
+
+        setBookingData(updatedResponse);
+        setPagination({
+          current_page: response.pagination.current_page || page,
+          total_count: response.pagination.total_count || 0,
+          total_pages: response.pagination.total_pages || 0,
+        });
+      } else {
+        // Call fetchFacilityBookingsData if no filters are applied
+        await dispatch(fetchFacilityBookingsData({ baseUrl, token, pageSize: 10, currentPage: page })).unwrap();
+      }
     } catch (error) {
+      console.error('Error fetching bookings for page change:', error);
       toast.error('Failed to fetch bookings');
     } finally {
       setIsPageLoading(false);
@@ -524,12 +575,31 @@ const BookingListDashboard = () => {
                 </Badge>
               </SelectValue>
             </SelectTrigger>
-            {/* <SelectContent>
-              <SelectItem value="Confirmed">Confirmed</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Cancelled">Cancelled</SelectItem>
-              <SelectItem value="Completed">Completed</SelectItem>
-            </SelectContent> */}
+
+            {item.facilityType === "Request" && (
+              <SelectContent>
+                <SelectItem value="Pending">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#F4C790]" />
+                    Pending
+                  </div>
+                </SelectItem>
+
+                <SelectItem value="Confirmed">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#A3E4DB]" />
+                    Confirmed
+                  </div>
+                </SelectItem>
+
+                <SelectItem value="Cancelled">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#E4626F]" />
+                    Cancelled
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            )}
           </Select>
         );
       default:
@@ -596,7 +666,7 @@ const BookingListDashboard = () => {
   ];
 
   return (
-    <div className="p-[30px] space-y-6">
+    <div className="space-y-6">
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
           <p>Error loading bookings: {error}</p>
@@ -662,8 +732,8 @@ const BookingListDashboard = () => {
         </Pagination>
       </div>
 
-      <Dialog open={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)}>
-        <DialogContent className="sm:max-w-md [&>button]:hidden">
+      <Dialog open={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} maxWidth="sm" fullWidth>
+        <DialogContent className="[&>button]:hidden">
           <ThemeProvider theme={muiTheme}>
             <div>
               <div className="flex flex-row items-center justify-between space-y-0 pb-4">
@@ -680,171 +750,87 @@ const BookingListDashboard = () => {
 
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <TextField
-                    select
-                    label="Facility Name"
-                    value={filters.facilityName}
-                    onChange={(e) => handleFilterChange('facilityName', e.target.value)}
-                    variant="outlined"
-                    fullWidth
-                    InputLabelProps={{ shrink: true }}
-                  >
-                    <MenuItem value="">Select Facility</MenuItem>
-                    {facilities.map((facility) => (
-                      <MenuItem key={facility.id} value={facility.id}>
-                        {facility.fac_name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Facility Name</InputLabel>
+                    <MuiSelect
+                      label="Facility Name"
+                      value={filters.facilityName}
+                      onChange={(e) => handleFilterChange('facilityName', e.target.value)}
+                      displayEmpty
+                      variant="outlined"
+                      fullWidth
+                    >
+                      <MenuItem value="">Select Facility</MenuItem>
+                      {facilities.map((facility) => (
+                        <MenuItem key={facility.id} value={facility.id}>
+                          {facility.fac_name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
 
-                  <TextField
-                    select
-                    label="Status"
-                    value={filters.status}
-                    onChange={(e) => handleFilterChange('status', e.target.value)}
-                    variant="outlined"
-                    fullWidth
-                    InputLabelProps={{ shrink: true }}
-                  >
-                    <MenuItem value="">Select Status</MenuItem>
-                    <MenuItem value="confirmed">Confirmed</MenuItem>
-                    <MenuItem value="pending">Pending</MenuItem>
-                    <MenuItem value="cancelled">Cancelled</MenuItem>
-                    <MenuItem value="completed">Completed</MenuItem>
-                  </TextField>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Status</InputLabel>
+                    <MuiSelect
+                      label="Status"
+                      value={filters.status}
+                      onChange={(e) => handleFilterChange('status', e.target.value)}
+                      displayEmpty
+                      variant="outlined"
+                      fullWidth
+                    >
+                      <MenuItem value="">Select Status</MenuItem>
+                      <MenuItem value="confirmed">Confirmed</MenuItem>
+                      <MenuItem value="pending">Pending</MenuItem>
+                      <MenuItem value="cancelled">Cancelled</MenuItem>
+                      <MenuItem value="completed">Completed</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex-1">
-                    <Popover open={isScheduledDatePickerOpen} onOpenChange={setIsScheduledDatePickerOpen}>
-                      <PopoverTrigger asChild>
-                        <div className="relative">
-                          <TextField
-                            fullWidth
-                            label="Booked Scheduled Date"
-                            placeholder="Select date range"
-                            value={getScheduledDateRangeDisplayValue()}
-                            variant="outlined"
-                            InputLabelProps={{ shrink: true }}
-                            InputProps={{
-                              readOnly: true,
-                              endAdornment: <CalendarIcon className="h-4 w-4 text-gray-400" />,
-                            }}
-                            onClick={() => setIsScheduledDatePickerOpen(true)}
-                            style={{ cursor: 'pointer' }}
-                          />
-                        </div>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto top-[50%] p-0 bg-white border shadow-lg z-[1500]" align="start">
-                        <div className="p-4">
-                          <Calendar
-                            mode="range"
-                            selected={{ from: scheduledDateFrom, to: scheduledDateTo }}
-                            onSelect={handleScheduledDateRangeSelect}
-                            numberOfMonths={2}
-                            className={cn('pointer-events-auto')}
-                          />
-                          <div className="flex justify-between items-center pt-4 border-t">
-                            <span className="text-sm text-gray-600">
-                              {getScheduledDateRangeDisplayValue()}
-                            </span>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setScheduledDateFrom(undefined);
-                                  setScheduledDateTo(undefined);
-                                  handleFilterChange('scheduledDateRange', '');
-                                  setIsScheduledDatePickerOpen(false);
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  if (scheduledDateFrom && scheduledDateTo) {
-                                    const formattedRange = `${format(scheduledDateFrom, 'dd/MM/yyyy')} - ${format(scheduledDateTo, 'dd/MM/yyyy')}`;
-                                    handleFilterChange('scheduledDateRange', formattedRange);
-                                  }
-                                  setIsScheduledDatePickerOpen(false);
-                                }}
-                                className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
-                              >
-                                Apply
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <TextField
+                      label="Booked Scheduled Date From"
+                      type="date"
+                      value={scheduledDateFrom}
+                      onChange={handleScheduledDateFromChange}
+                      variant="outlined"
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
+                    <span className="text-gray-500">–</span>
+                    <TextField
+                      label="Booked Scheduled Date To"
+                      type="date"
+                      value={scheduledDateTo}
+                      onChange={handleScheduledDateToChange}
+                      variant="outlined"
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
                   </div>
 
-                  <div className="flex-1">
-                    <Popover open={isCreatedOnDatePickerOpen} onOpenChange={setIsCreatedOnDatePickerOpen}>
-                      <PopoverTrigger asChild>
-                        <div className="relative">
-                          <TextField
-                            fullWidth
-                            label="Created On"
-                            placeholder="Select date range"
-                            value={getCreatedOnDateRangeDisplayValue()}
-                            variant="outlined"
-                            InputLabelProps={{ shrink: true }}
-                            InputProps={{
-                              readOnly: true,
-                              endAdornment: <CalendarIcon className="h-4 w-4 text-gray-400" />,
-                            }}
-                            onClick={() => setIsCreatedOnDatePickerOpen(true)}
-                            style={{ cursor: 'pointer' }}
-                          />
-                        </div>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-white border shadow-lg z-[1500]" align="start" sideOffset={4}>
-                        <div className="p-4">
-                          <Calendar
-                            mode="range"
-                            selected={{ from: createdOnDateFrom, to: createdOnDateTo }}
-                            onSelect={handleCreatedOnDateRangeSelect}
-                            numberOfMonths={2}
-                            className={cn('pointer-events-auto')}
-                          />
-                          <div className="flex justify-between items-center pt-4 border-t">
-                            <span className="text-sm text-gray-600">
-                              {getCreatedOnDateRangeDisplayValue()}
-                            </span>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setCreatedOnDateFrom(undefined);
-                                  setCreatedOnDateTo(undefined);
-                                  handleFilterChange('createdOnDateRange', '');
-                                  setIsCreatedOnDatePickerOpen(false);
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  if (createdOnDateFrom && createdOnDateTo) {
-                                    const formattedRange = `${format(createdOnDateFrom, 'dd/MM/yyyy')} - ${format(createdOnDateTo, 'dd/MM/yyyy')}`;
-                                    handleFilterChange('createdOnDateRange', formattedRange);
-                                  }
-                                  setIsCreatedOnDatePickerOpen(false);
-                                }}
-                                className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
-                              >
-                                Apply
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                  <div className="flex items-center gap-3">
+                    <TextField
+                      label="Created On From"
+                      type="date"
+                      value={createdOnDateFrom}
+                      onChange={handleCreatedOnDateFromChange}
+                      variant="outlined"
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
+                    <span className="text-gray-500">–</span>
+                    <TextField
+                      label="Created On To"
+                      type="date"
+                      value={createdOnDateTo}
+                      onChange={handleCreatedOnDateToChange}
+                      variant="outlined"
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
                   </div>
                 </div>
               </div>
@@ -853,6 +839,7 @@ const BookingListDashboard = () => {
                 <Button
                   onClick={handleApplyFilters}
                   className="flex-1 bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
+                  disabled={isFiltering}
                 >
                   Apply
                 </Button>

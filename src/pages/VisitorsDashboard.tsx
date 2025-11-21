@@ -29,20 +29,20 @@ import { toast } from 'sonner';
 
 // Get current site ID dynamically from localStorage
 const getCurrentSiteId = (): number => {
-  const siteId = localStorage.getItem('selectedSiteId') || 
-                localStorage.getItem('currentSiteId') ||
-                localStorage.getItem('site_id') || 
-                localStorage.getItem('siteId');
-  
+  const siteId = localStorage.getItem('selectedSiteId') ||
+    localStorage.getItem('currentSiteId') ||
+    localStorage.getItem('site_id') ||
+    localStorage.getItem('siteId');
+
   if (!siteId) {
     const urlParams = new URLSearchParams(window.location.search);
     const urlSiteId = urlParams.get('site_id');
     if (urlSiteId) return parseInt(urlSiteId);
-    
+
     console.warn('Site ID not found in localStorage or URL, using default: 2189');
     return 2189;
   }
-  
+
   return parseInt(siteId);
 };
 
@@ -647,8 +647,17 @@ export const VisitorsDashboard = () => {
         return visitor.guest_name || '--';
       case 'guest_from':
         return visitor.guest_from || '--';
-      case 'primary_host':
-        return visitor.primary_host || '--';
+      case 'primary_host': {
+        let host = '--';
+        console.log(visitor)
+        if (visitor.visitor_host_name && visitor.visitor_host_name.trim() !== "" && visitor.visitor_host_name !== 'null') {
+          host = visitor.visitor_host_name;
+        } else if (visitor.primary_host && visitor.primary_host.trim() !== "" && visitor.primary_host !== 'null') {
+          host = visitor.primary_host;
+        }
+
+        return host;
+      }
       case 'visit_purpose':
         return visitor.visit_purpose || '--';
       case 'created_at_formatted':
@@ -656,8 +665,8 @@ export const VisitorsDashboard = () => {
       case 'status':
         return (
           <Badge className={`${visitor.status === 'Approved' ? 'bg-green-100 text-green-800' :
-              visitor.status === 'Pending' ? 'bg-orange-100 text-orange-800' :
-                'bg-red-100 text-red-800'
+            visitor.status === 'Pending' ? 'bg-orange-100 text-orange-800' :
+              'bg-red-100 text-red-800'
             }`}>
             {visitor.status}
           </Badge>
@@ -667,8 +676,8 @@ export const VisitorsDashboard = () => {
           <div className="flex gap-2">
             <Button
               className={`px-3 py-1 text-xs rounded ${disabledOTPButtons[visitor.id]
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-orange-500 hover:bg-orange-600'
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-orange-500 hover:bg-orange-600'
                 } text-white`}
               onClick={() => handleResendOTP(visitor.id)}
               disabled={disabledOTPButtons[visitor.id]}
@@ -713,20 +722,29 @@ export const VisitorsDashboard = () => {
         return <span className="font-medium">{visitor.guest_name || '--'}</span>;
       case 'guest_from':
         return visitor.guest_from || '--';
-      case 'primary_host':
-        return visitor.primary_host || '--';
+      case 'primary_host': {
+        let host = '--';
+        console.log(visitor)
+        if (visitor.visitor_host_name && visitor.visitor_host_name.trim() !== "" && visitor.visitor_host_name !== 'null') {
+          host = visitor.visitor_host_name;
+        } else if (visitor.primary_host && visitor.primary_host.trim() !== "" && visitor.primary_host !== 'null') {
+          host = visitor.primary_host;
+        }
+
+        return host;
+      }
       case 'visit_purpose':
         return visitor.visit_purpose || '--';
       case 'status':
         return (
           <span
             className={`px-2 py-1 text-xs rounded-full font-medium ${visitor.status === 'Expected'
-                ? 'bg-yellow-100 text-yellow-800'
-                : visitor.status === 'Checked In'
-                  ? 'bg-green-100 text-green-800'
-                  : visitor.status === 'Checked Out'
-                    ? 'bg-gray-100 text-gray-800'
-                    : 'bg-blue-100 text-blue-800'
+              ? 'bg-yellow-100 text-yellow-800'
+              : visitor.status === 'Checked In'
+                ? 'bg-green-100 text-green-800'
+                : visitor.status === 'Checked Out'
+                  ? 'bg-gray-100 text-gray-800'
+                  : 'bg-blue-100 text-blue-800'
               }`}
           >
             {visitor.status || 'Unknown'}
@@ -800,8 +818,8 @@ export const VisitorsDashboard = () => {
       case 'status':
         return (
           <Badge className={`${visitor.status === 'Approved' ? 'bg-green-100 text-green-800' :
-              visitor.status === 'Pending' ? 'bg-orange-100 text-orange-800' :
-                'bg-red-100 text-red-800'
+            visitor.status === 'Pending' ? 'bg-orange-100 text-orange-800' :
+              'bg-red-100 text-red-800'
             }`}>
             {visitor.status}
           </Badge>
@@ -851,8 +869,16 @@ export const VisitorsDashboard = () => {
         );
       case 'guest_name':
         return visitor.guest_name || '--';
-      case 'primary_host':
-        return visitor.primary_host || '--';
+      case 'primary_host': {
+        let host = '--';
+        if (visitor.visitor_host_name && visitor.visitor_host_name.trim() !== "" && visitor.visitor_host_name !== 'null') {
+          host = visitor.visitor_host_name;
+        } else if (visitor.primary_host && visitor.primary_host.trim() !== "" && visitor.primary_host !== 'null') {
+          host = visitor.primary_host;
+        }
+
+        return host;
+      }
       case 'guest_from':
         return visitor.guest_from || '--';
       case 'visit_purpose':
@@ -860,8 +886,8 @@ export const VisitorsDashboard = () => {
       case 'visitor_type':
         return (
           <Badge className={`${visitor.visitor_type === 'unexpected' ? 'bg-red-100 text-red-800' :
-              visitor.visitor_type === 'expected' ? 'bg-green-100 text-green-800' :
-                'bg-gray-100 text-gray-800'
+            visitor.visitor_type === 'expected' ? 'bg-green-100 text-green-800' :
+              'bg-gray-100 text-gray-800'
             }`}>
             {visitor.visitor_type ? visitor.visitor_type.charAt(0).toUpperCase() + visitor.visitor_type.slice(1) : '--'}
           </Badge>
@@ -873,8 +899,8 @@ export const VisitorsDashboard = () => {
       case 'status':
         return (
           <Badge className={`${visitor.status === 'Approved' ? 'bg-green-100 text-green-800' :
-              visitor.status === 'Pending' ? 'bg-orange-100 text-orange-800' :
-                'bg-red-100 text-red-800'
+            visitor.status === 'Pending' ? 'bg-orange-100 text-orange-800' :
+              'bg-red-100 text-red-800'
             }`}>
             {visitor.status}
           </Badge>
@@ -883,7 +909,7 @@ export const VisitorsDashboard = () => {
         return (
           <div className="flex items-center justify-center gap-2">
             <div title="View visitor details" className="p-1 hover:bg-gray-100 rounded transition-colors">
-              <Eye 
+              <Eye
                 className="w-4 h-4 cursor-pointer text-gray-600 hover:text-[#C72030] hover:scale-110 transition-all duration-200"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -986,7 +1012,7 @@ export const VisitorsDashboard = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       console.log('🔍 Debounced search triggered with term:', searchTerm);
-      
+
       if (mainTab === 'visitor') {
         if (visitorSubTab === 'history') {
           console.log('📞 Calling fetchVisitorHistory with search term:', searchTerm);
@@ -1013,7 +1039,7 @@ export const VisitorsDashboard = () => {
   const handleSearch = () => {
     console.log('🔍 Manual search triggered for:', searchTerm);
     console.log('📍 Current tab state - mainTab:', mainTab, 'visitorSubTab:', visitorSubTab, 'activeVisitorType:', activeVisitorType);
-    
+
     // Trigger immediate search
     if (mainTab === 'visitor') {
       if (visitorSubTab === 'history') {
@@ -1099,17 +1125,12 @@ export const VisitorsDashboard = () => {
   };
 
   // Get selected visitor objects for the selection panel
-  const selectedVisitorObjects = visitorHistoryData.filter(visitor => 
+  const selectedVisitorObjects = visitorHistoryData.filter(visitor =>
     selectedVisitors.includes(visitor.id)
   );
 
   const handleCheckOut = async (visitorId: number) => {
     try {
-      console.log('Checking out visitor:', visitorId);
-
-      // Show loading toast
-      toast.info('Processing checkout...');
-
       // Construct the API URL using the visitor ID
       const url = getFullUrl(`/pms/admin/visitors/marked_out_visitors.json`);
       const options = getAuthenticatedFetchOptions();
@@ -1134,9 +1155,6 @@ export const VisitorsDashboard = () => {
         },
         body: JSON.stringify(requestBody)
       };
-
-      console.log('🚀 Calling checkout API:', url);
-      console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
 
       const response = await fetch(url, requestOptions);
 
@@ -1379,18 +1397,18 @@ export const VisitorsDashboard = () => {
 
   const handleExport = async () => {
     console.log('VisitorsDashboard - Export clicked');
-    
+
     // Show loading toast with infinite duration
     const loadingToastId = toast.loading("Preparing export file...", {
       duration: Infinity, // Keep it visible until we dismiss it
     });
-    
+
     try {
       console.log('📥 Exporting visitor history data');
-      
+
       // Build the export URL using the configured endpoint
       const exportUrl = getFullUrl(ENDPOINTS.VISITOR_HISTORY_EXPORT);
-      
+
       console.log('📥 Export URL:', exportUrl);
 
       // Make the API call to get the Excel file
@@ -1404,53 +1422,53 @@ export const VisitorsDashboard = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ Export API error response:', errorText);
-        
+
         if (response.status === 401) {
           console.error('401 Authentication failed during export - invalid or expired token');
           throw new Error('Authentication failed. Please login again.');
         }
-        
+
         throw new Error(`Export failed: ${response.status} ${response.statusText}`);
       }
 
       // Get the file blob
       const blob = await response.blob();
-      
+
       // Create download link
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      
+
       // Generate filename with timestamp
       const timestamp = new Date().toISOString().slice(0, 10);
       link.download = `visitor_history_${timestamp}.xlsx`;
-      
+
       // Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Clean up the blob URL
       window.URL.revokeObjectURL(downloadUrl);
-      
+
       console.log('✅ Export completed successfully');
-      
+
       // Dismiss loading toast and show success
       toast.dismiss(loadingToastId);
       toast.success('Visitor history exported successfully!');
-      
+
     } catch (error) {
       console.error('❌ Export failed:', error);
-      
+
       // Dismiss loading toast and show error
       toast.dismiss(loadingToastId);
-      
+
       // Handle authentication errors specifically
       if (error instanceof Error && error.message.includes('Authentication failed')) {
         toast.error("Your session has expired. Please login again.");
         return;
       }
-      
+
       toast.error(`Failed to export visitor history: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -1836,7 +1854,7 @@ export const VisitorsDashboard = () => {
               }}
               enableSelection={true}
               selectedItems={selectedVisitors.map(id => id.toString())}
-              onSelectItem={(visitorIdString: string, checked: boolean) => 
+              onSelectItem={(visitorIdString: string, checked: boolean) =>
                 handleSelectVisitor(parseInt(visitorIdString), checked)
               }
               onSelectAll={handleSelectAll}
@@ -1934,6 +1952,7 @@ export const VisitorsDashboard = () => {
 
       {/* Visitor Selection Panel */}
       <VisitorSelectionPanel
+        fetchVisitorHistory={fetchVisitorHistory}
         selectedVisitors={selectedVisitors}
         selectedVisitorObjects={selectedVisitorObjects}
         onCheckOut={handleBulkCheckOut}

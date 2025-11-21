@@ -85,6 +85,7 @@ export const fetchOccupantUsers = createAsyncThunk(
     perPage,
     firstname_cont = "",
     lastname_cont = "",
+    mobile_cont = "",
     email_cont = "",
     lock_user_permission_status_eq = "",
     entity_id_eq = "",
@@ -95,6 +96,7 @@ export const fetchOccupantUsers = createAsyncThunk(
     perPage: number;
     firstname_cont?: string;
     lastname_cont?: string;
+    mobile_cont?: string;
     email_cont?: string;
     lock_user_permission_status_eq?: string;
     entity_id_eq?: string;
@@ -105,6 +107,7 @@ export const fetchOccupantUsers = createAsyncThunk(
       "q[lock_user_permission_status_eq]": lock_user_permission_status_eq,
       "q[firstname_cont]": firstname_cont,
       "q[lastname_cont]": lastname_cont,
+      "q[mobile_cont]": mobile_cont,
       "q[email_cont]": email_cont,
       "q[entity_id_eq]": entity_id_eq,
       "q[search_all_fields_cont]": search_all_fields_cont,
@@ -121,7 +124,7 @@ export const fetchOccupantUsers = createAsyncThunk(
         id: user.id,
         company: user.company,
         name: `${user.firstname} ${user.lastname}`,
-        mobile: `${user.country_code} ${user.mobile}`,
+        mobile: `${user.mobile}`,
         email: user.email,
         gender: user.gender,
         department: user.department?.department_name,

@@ -69,13 +69,6 @@ import {
 } from "@/components/ui/dialog";
 import { AddCustomFieldModal } from "@/components/AddCustomFieldModal";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocationData } from "@/hooks/useLocationData";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
@@ -266,6 +259,8 @@ const AssetImageUpload = ({
 };
 
 const AddAssetPage = () => {
+  const currency = (typeof window !== 'undefined' && window.localStorage.getItem('currency')) || 'INR';
+  const currencySymbol = (typeof window !== 'undefined' && window.localStorage.getItem('currencySymbol')) || '';
   const navigate = useNavigate();
 
   // Location data hook
@@ -289,11 +284,11 @@ const AddAssetPage = () => {
   const [expandedSections, setExpandedSections] = useState({
     location: true,
     asset: true,
-    // Toggle-controlled sections must be closed by default
-    warranty: false,
+    // IT Assets Details is now always available (no toggle)
+    warranty: true,
     meterCategory: false,
     consumption: true,
-    nonConsumption: false,
+    nonConsumption: true,
     assetAllocation: true,
     assetLoaned: false,
     amcDetails: true,
@@ -455,10 +450,8 @@ const AddAssetPage = () => {
   );
   const [subGroupsLoading, setSubGroupsLoading] = useState(false);
 
-  const [itAssetsToggle, setItAssetsToggle] = useState(false);
   const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
   const [assetLoanedToggle, setAssetLoanedToggle] = useState(false);
-  const [depreciationToggle, setDepreciationToggle] = useState(false);
   const [meterCategoryType, setMeterCategoryType] = useState("");
   const [subCategoryType, setSubCategoryType] = useState("");
   const [meterType, setMeterType] = useState("");
@@ -531,13 +524,14 @@ const AddAssetPage = () => {
     parent_meter_id: "",
     is_meter: false,
     asset_loaned: false,
-    depreciation_applicable: false,
+    depreciation_applicable: true,
     useful_life: "",
     purchase_cost: "",
     purchased_on: "",
     warranty: "",
     warranty_period: "",
     warranty_expiry: "",
+    expiry_date: "",
     depreciation_applicable_for: "",
     indiv_group: "",
     similar_product_type: "",
@@ -571,6 +565,7 @@ const AddAssetPage = () => {
       payment_term: "",
       no_of_visits: "",
       amc_cost: "",
+      visit_frequency: "",
     },
     asset_manuals: [],
     asset_insurances: [],
@@ -1117,7 +1112,17 @@ const AddAssetPage = () => {
         newLocation.area = "";
         newLocation.floor = "";
         newLocation.room = "";
-        if (value) fetchBuildings(parseInt(value));
+        // Fetch buildings for the selected site - pass site ID to API
+        if (value) {
+          const siteId = parseInt(value);
+          if (siteId) {
+            // Call fetchBuildings with site ID to get buildings for that site
+            fetchBuildings(siteId);
+          }
+        } else {
+          // Clear buildings if no site is selected
+          fetchBuildings(0);
+        }
       } else if (field === "building") {
         newLocation.wing = "";
         newLocation.area = "";
@@ -1464,6 +1469,90 @@ const AddAssetPage = () => {
       }
     }
 
+    // Purchase cost validation - clear depreciation fields if purchase cost is removed
+    if (field === "purchase_cost") {
+      if (!value || parseFloat(value) <= 0) {
+        // Clear depreciation fields when purchase cost is removed or zero
+        setFormData((prev) => ({
+          ...prev,
+          useful_life: "",
+          salvage_value: "",
+          depreciation_rate: "",
+        }));
+        toast.info("Depreciation Fields Cleared", {
+          description: "Depreciation fields have been cleared since purchase cost is not available.",
+          duration: 3000,
+        });
+      } else {
+        // Check if salvage value equals purchase cost
+        if (formData.salvage_value && parseFloat(formData.salvage_value) === parseFloat(value)) {
+          toast.error("Invalid Purchase Cost", {
+            description: "Purchase Cost cannot be equal to Salvage Value.",
+            duration: 4000,
+          });
+          return; // Don't update the field if validation fails
+        }
+
+        // Check if salvage value is greater than purchase cost
+        if (formData.salvage_value && parseFloat(formData.salvage_value) > parseFloat(value)) {
+          toast.error("Invalid Purchase Cost", {
+            description: "Purchase Cost cannot be less than Salvage Value.",
+            duration: 4000,
+          });
+          return; // Don't update the field if validation fails
+        }
+      }
+    }
+
+    // Salvage value validation - ensure it's not equal to or greater than purchase cost
+    if (field === "salvage_value" && value) {
+      if (!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0) {
+        toast.error("Purchase Cost Required", {
+          description: "Please enter Purchase Cost before setting Salvage Value.",
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      }
+
+      if (parseFloat(value) === parseFloat(formData.purchase_cost)) {
+        toast.error("Invalid Salvage Value", {
+          description: "Salvage Value cannot be equal to Purchase Cost.",
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      }
+
+      if (parseFloat(value) > parseFloat(formData.purchase_cost)) {
+        toast.error("Invalid Salvage Value", {
+          description: "Salvage Value cannot be greater than Purchase Cost.",
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      }
+    }
+
+    // Depreciation rate validation - ensure purchase cost is available
+    if (field === "depreciation_rate" && value) {
+      if (!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0) {
+        toast.error("Purchase Cost Required", {
+          description: "Please enter Purchase Cost before setting Depreciation Rate.",
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      }
+    }
+
+    // Useful life validation - ensure purchase cost is available
+    if (field === "useful_life" && value) {
+      if (!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0) {
+        toast.error("Purchase Cost Required", {
+          description: "Please enter Purchase Cost before setting Useful Life.",
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      }
+    }
+
     // Warranty date validation - ensure warranty expiry is not before purchase date
     if (field === "warranty_expiry" && value) {
       const purchaseDate = new Date(formData.purchased_on);
@@ -1760,7 +1849,7 @@ const AddAssetPage = () => {
             field_name: field.name,
             field_value: field.value,
             group_name: sectionKey,
-            field_description: field.name,
+            field_description: "custom_field",
             _destroy: false,
           });
         } else {
@@ -1779,7 +1868,7 @@ const AddAssetPage = () => {
             field_name: field.name,
             field_value: field.value,
             group_name: sectionKey,
-            field_description: field.name,
+            field_description: "custom_field",
             _destroy: false,
           });
         } else {
@@ -1814,14 +1903,6 @@ const AddAssetPage = () => {
     return extraFields;
   };
 
-  const handleItAssetsToggleChange = (checked) => {
-    setItAssetsToggle(checked);
-    handleFieldChange("it_asset", checked);
-    setExpandedSections((prev) => ({
-      ...prev,
-      warranty: checked ? true : false,
-    }));
-  };
   const handleMeterDetailsToggleChange = (checked) => {
     setMeterDetailsToggle(checked);
     handleFieldChange("is_meter", checked);
@@ -1836,14 +1917,6 @@ const AddAssetPage = () => {
     setExpandedSections((prev) => ({
       ...prev,
       assetLoaned: checked ? true : false,
-    }));
-  };
-  const handleDepreciationToggleChange = (checked) => {
-    setDepreciationToggle(checked);
-    handleFieldChange("depreciation_applicable", checked);
-    setExpandedSections((prev) => ({
-      ...prev,
-      nonConsumption: checked ? true : false,
     }));
   };
 
@@ -1974,6 +2047,45 @@ const AddAssetPage = () => {
       setSelectedParentMeterId("");
     }
   }, [meterType]);
+
+  // Auto-select first site when sites are loaded
+  useEffect(() => {
+    if (sites && sites.length > 0 && !selectedLocation.site) {
+      const firstSite = sites[0];
+      setSelectedLocation(prev => ({
+        ...prev,
+        site: firstSite.id.toString()
+      }));
+      handleFieldChange("pms_site_id", firstSite.id.toString());
+    }
+  }, [sites, selectedLocation.site]);
+
+  // Sync formData.pms_site_id to selectedLocation.site when formData changes (for pre-selected sites)
+  useEffect(() => {
+    if (formData.pms_site_id && formData.pms_site_id !== selectedLocation.site) {
+      setSelectedLocation(prev => ({
+        ...prev,
+        site: formData.pms_site_id
+      }));
+    }
+  }, [formData.pms_site_id]);
+
+  // Fetch buildings when site is selected (for both auto-selection, manual selection, and pre-selected from formData)
+  useEffect(() => {
+    // Priority: selectedLocation.site, then formData.pms_site_id
+    const siteIdToUse = selectedLocation.site || formData.pms_site_id;
+    
+    if (siteIdToUse) {
+      const siteId = parseInt(siteIdToUse);
+      if (siteId) {
+        // Fetch buildings for the selected site - pass site ID to API
+        fetchBuildings(siteId);
+      }
+    } else {
+      // Clear buildings if no site is selected
+      fetchBuildings(0);
+    }
+  }, [selectedLocation.site, formData.pms_site_id]);
 
   // Fetch parent meters function
   const fetchParentMeters = async () => {
@@ -2325,12 +2437,9 @@ const AddAssetPage = () => {
     }
   };
   const toggleSection = (section) => {
-    // Map section to its toggle (if any)
+    // Map section to its toggle (if any) - warranty section (IT Assets) and nonConsumption (Depreciation) no longer have toggles
     const toggleMap = {
-      warranty: itAssetsToggle,
-      meterCategory: meterDetailsToggle,
       assetLoaned: assetLoanedToggle,
-      nonConsumption: depreciationToggle,
     };
 
     // If section has a toggle and it's disabled, do not open/collapse
@@ -2361,7 +2470,7 @@ const AddAssetPage = () => {
     const baseValidationRules = {
       baseFields: ["name", "asset_code"],
       groupFields: ["pms_asset_group_id", "pms_asset_sub_group_id"],
-      purchaseFields: ["purchase_cost", "purchased_on"],
+      // purchaseFields: ["purchase_cost", "purchased_on"], // Made optional
       // datesFields: ['commisioning_date'],
     };
 
@@ -2369,25 +2478,24 @@ const AddAssetPage = () => {
       Land: {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: [],
+        // warrantyFields: [],
         categorySpecificFields: ["land_type", "location", "area"],
       },
       Building: {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: [],
+        // warrantyFields: [],
         categorySpecificFields: ["building_type", "location", "built_up_area"],
       },
       "Leasehold Improvement": {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: [],
+        // warrantyFields: [],
         categorySpecificFields: ["improvement_description", "location_site"],
       },
       Vehicle: {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [
           "vehicle_type",
           "make_model",
@@ -2397,31 +2505,30 @@ const AddAssetPage = () => {
       "Furniture & Fixtures": {
         ...baseValidationRules,
         locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "IT Equipment": {
         ...baseValidationRules,
         locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: [],
         categorySpecificFields: [],
       },
       "Machinery & Equipment": {
         ...baseValidationRules,
         locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "Tools & Instruments": {
         ...baseValidationRules,
         locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       Meter: {
         ...baseValidationRules,
         locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
     };
@@ -2477,8 +2584,8 @@ const AddAssetPage = () => {
         return checkFieldsCompleted(rules.purchaseFields || []);
       case "dates":
         return checkFieldsCompleted(rules.datesFields || []);
-      case "warranty":
-        return checkFieldsCompleted(rules.warrantyFields || []);
+      // case "warranty":
+      //   return checkFieldsCompleted(rules.warrantyFields || []);
       default:
         return false;
     }
@@ -2648,7 +2755,7 @@ const AddAssetPage = () => {
       // Common required fields across all categories
       baseFields: ["name"], // Asset name is always required
       // groupFields: ['pms_asset_group_id', 'pms_asset_sub_group_id'], // Group and subgroup always required
-      // purchaseFields: ['purchase_cost', 'purchased_on'], // Purchase details always required
+      // purchaseFields: ['purchase_cost', 'purchased_on'], // Purchase details made optional
       // datesFields: ['commisioning_date'], // Commissioning date always required
     };
 
@@ -2657,7 +2764,7 @@ const AddAssetPage = () => {
       Land: {
         ...baseValidationRules,
         locationFields: [], // Land doesn't require location selection as it IS a location
-        warrantyFields: [], // Land typically doesn't have warranty
+        // warrantyFields: [], // Land typically doesn't have warranty
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Land
           // 'land_type', // From Basic Identification (required: true)
@@ -2668,7 +2775,7 @@ const AddAssetPage = () => {
       Building: {
         ...baseValidationRules,
         locationFields: [], // Buildings are locations themselves
-        warrantyFields: [], // Buildings typically don't have warranty expiry
+        // warrantyFields: [], // Buildings typically don't have warranty expiry
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Building
           "building_type", // From Basic Identification (required: true)
@@ -2679,7 +2786,7 @@ const AddAssetPage = () => {
       "Leasehold Improvement": {
         ...baseValidationRules,
         locationFields: [], // Improvements are tied to specific leased properties
-        warrantyFields: [], // Improvements typically don't have warranty expiry
+        // warrantyFields: [], // Improvements typically don't have warranty expiry
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Leasehold Improvement
           "improvement_description", // From Basic Identification (required: true)
@@ -2689,7 +2796,7 @@ const AddAssetPage = () => {
       Vehicle: {
         ...baseValidationRules,
         locationFields: [], // Vehicles are mobile, don't require fixed location
-        warrantyFields: ["warranty_expiry"], // Vehicles typically have warranty
+        // warrantyFields: ["warranty_expiry"], // Vehicles typically have warranty
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Vehicle
           "vehicle_type", // From Basic Identification (required: true)
@@ -2700,31 +2807,30 @@ const AddAssetPage = () => {
       "Furniture & Fixtures": {
         ...baseValidationRules,
         locationFields: ["site", "building"], // Furniture needs location
-        warrantyFields: ["warranty_expiry"], // Furniture typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "IT Equipment": {
         ...baseValidationRules,
         locationFields: ["site", "building"], // IT Equipment needs location
-        warrantyFields: ["warranty_expiry"], // IT Equipment typically has warranty
+        // warrantyFields: ["warranty_expiry"], // IT Equipment typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "Machinery & Equipment": {
         ...baseValidationRules,
         locationFields: ["site", "building"], // Machinery needs location
-        warrantyFields: ["warranty_expiry"], // Machinery typically has warranty
+        // warrantyFields: ["warranty_expiry"], // Machinery typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "Tools & Instruments": {
         ...baseValidationRules,
         locationFields: ["site", "building"], // Tools need location
-        warrantyFields: ["warranty_expiry"], // Tools typically have warranty
+        // warrantyFields: ["warranty_expiry"], // Tools typically have warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       Meter: {
         ...baseValidationRules,
         locationFields: ["site", "building"], // Meters need location
-        warrantyFields: ["warranty_expiry"], // Meters typically have warranty
+        // warrantyFields: ["warranty_expiry"], // Meters typically have warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
     };
@@ -2747,8 +2853,8 @@ const AddAssetPage = () => {
       asset_code: "Asset Code",
       pms_asset_group_id: "Group",
       pms_asset_sub_group_id: "Subgroup",
-      purchase_cost: "Purchase Cost",
-      purchased_on: "Purchase Date",
+      // purchase_cost: "Purchase Cost", // Made optional - removed from validation
+      // purchased_on: "Purchase Date", // Made optional - removed from validation
       commisioning_date: "Commissioning Date",
       warranty_expiry: "Warranty Expiry Date",
 
@@ -2875,18 +2981,18 @@ const AddAssetPage = () => {
     }
 
     // 6. Validate warranty fields (category-specific)
-    for (const field of currentCategoryRules.warrantyFields || []) {
-      if (!formData[field]) {
-        const fieldDisplayName =
-          fieldDisplayNames[field] ||
-          field.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-        toast.error(`${fieldDisplayName} Required`, {
-          description: `Please select the ${fieldDisplayName.toLowerCase()} for ${selectedAssetCategory}.`,
-          duration: 4000,
-        });
-        return [`${fieldDisplayName} is required for ${selectedAssetCategory}`];
-      }
-    }
+    // for (const field of currentCategoryRules.warrantyFields || []) {
+    //   if (!formData[field]) {
+    //     const fieldDisplayName =
+    //       fieldDisplayNames[field] ||
+    //       field.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    //     toast.error(`${fieldDisplayName} Required`, {
+    //       description: `Please select the ${fieldDisplayName.toLowerCase()} for ${selectedAssetCategory}.`,
+    //       duration: 4000,
+    //     });
+    //     return [`${fieldDisplayName} is required for ${selectedAssetCategory}`];
+    //   }
+    // }
 
     // 7. Validate category-specific required fields from assetFieldsConfig
     for (const fieldName of currentCategoryRules.categorySpecificFields || []) {
@@ -2901,8 +3007,16 @@ const AddAssetPage = () => {
       }
     }
 
-    // Asset Loaned validation (if applicable toggle is on)
-    if (assetLoanedToggle) {
+    // Asset Loaned validation (only for categories that support Asset Loaned)
+    const categoriesWithAssetLoaned = [
+      "Furniture & Fixtures",
+      "IT Equipment",
+      "Machinery & Equipment",
+      "Meter",
+      "Tools & Instruments"
+    ];
+
+    if (categoriesWithAssetLoaned.includes(selectedAssetCategory) && assetLoanedToggle) {
       if (!selectedLoanedVendorId) {
         toast.error("Vendor Required for Asset Loaned", {
           description: "Please select a vendor since Asset Loaned is enabled.",
@@ -2929,12 +3043,23 @@ const AddAssetPage = () => {
       }
     }
 
-    // Depreciation validation (if applicable toggle is on)
-    if (depreciationToggle) {
+    // Depreciation validation - only validate depreciation fields if purchase cost is entered
+    // and only for asset categories that have useful life fields
+    const categoriesWithUsefulLife = [
+      // "Leasehold Improvement",
+      "Furniture & Fixtures", 
+      "IT Equipment",
+      "Machinery & Equipment",
+      "Meter",
+      "Tools & Instruments"
+    ];
+    
+    if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0 && 
+        categoriesWithUsefulLife.includes(selectedAssetCategory)) {
       if (!formData.useful_life) {
         toast.error("Useful Life Required", {
           description:
-            "Please enter the useful life since Depreciation is enabled.",
+            "Please enter the useful life for depreciation calculation when purchase cost is provided.",
           duration: 4000,
         });
         return ["Useful Life is required for Depreciation"];
@@ -2943,7 +3068,7 @@ const AddAssetPage = () => {
       if (!formData.salvage_value) {
         toast.error("Salvage Value Required", {
           description:
-            "Please enter the salvage value since Depreciation is enabled.",
+            "Please enter the salvage value for depreciation calculation when purchase cost is provided.",
           duration: 4000,
         });
         return ["Salvage Value is required for Depreciation"];
@@ -2952,16 +3077,34 @@ const AddAssetPage = () => {
       if (!formData.depreciation_rate) {
         toast.error("Depreciation Rate Required", {
           description:
-            "Please enter the depreciation rate since Depreciation is enabled.",
+            "Please enter the depreciation rate for depreciation calculation when purchase cost is provided.",
           duration: 4000,
         });
         return ["Depreciation Rate is required for Depreciation"];
       }
+
+      // Validate Purchase Cost is not equal to Salvage Value
+      if (parseFloat(formData.purchase_cost) === parseFloat(formData.salvage_value)) {
+        toast.error("Invalid Salvage Value", {
+          description: "Purchase Cost cannot be equal to Salvage Value.",
+          duration: 4000,
+        });
+        return ["Purchase Cost cannot be equal to Salvage Value"];
+      }
+
+      // Validate Salvage Value is not greater than Purchase Cost
+      if (parseFloat(formData.salvage_value) > parseFloat(formData.purchase_cost)) {
+        toast.error("Invalid Salvage Value", {
+          description: "Salvage Value cannot be greater than Purchase Cost.",
+          duration: 4000,
+        });
+        return ["Salvage Value cannot be greater than Purchase Cost"];
+      }
     }
 
     // Meter Details validation (if applicable toggle is on)
-    // IT Assets Details validation (if applicable toggle is on)
-    if (itAssetsToggle) {
+    // IT Assets Details validation for IT Equipment
+    if (selectedAssetCategory === "IT Equipment") {
       // System Details required fields
       const systemFields = [
         { key: "os", label: "OS" },
@@ -2994,7 +3137,6 @@ const AddAssetPage = () => {
       }
     }
     if (
-      meterDetailsToggle &&
       meterType === "SubMeter" &&
       !selectedParentMeterId
     ) {
@@ -3088,13 +3230,10 @@ const AddAssetPage = () => {
 
   const handleSaveAndShow = () => {
     setSubmitting(true);
-    // Validate mandatory fields one by one
     const validationErrors = validateMandatoryFields();
     setValidationErrors(validationErrors);
 
     if (validationErrors.length > 0) {
-      // Since we're showing individual toasts in validateMandatoryFields,
-      // we just need to scroll to the first error field and return
       setTimeout(() => {
         const firstErrorField = document.querySelector(
           ".MuiTextField-root .Mui-error input, .MuiFormControl-root .Mui-error, input:invalid"
@@ -3157,6 +3296,7 @@ const AddAssetPage = () => {
         commisioning_date: formData.commisioning_date,
         purchased_on: formData.purchased_on,
         warranty_expiry: formData.warranty_expiry,
+        expiry_date: formData.expiry_date,
 
         // Asset grouping
         pms_asset_group_id: formData.pms_asset_group_id,
@@ -3174,7 +3314,7 @@ const AddAssetPage = () => {
         it_meter: formData.it_meter,
         is_meter: formData.is_meter,
         asset_loaned: formData.asset_loaned,
-        depreciation_applicable: formData.depreciation_applicable,
+        depreciation_applicable: true,
 
         // Meter fields
         meter_tag_type: formData.meter_tag_type,
@@ -3700,6 +3840,7 @@ const AddAssetPage = () => {
         commisioning_date: formData.commisioning_date,
         purchased_on: formData.purchased_on,
         warranty_expiry: formData.warranty_expiry,
+        expiry_date: formData.expiry_date,
 
         // Asset grouping
         pms_asset_group_id: formData.pms_asset_group_id,
@@ -3717,7 +3858,7 @@ const AddAssetPage = () => {
         it_meter: formData.it_meter,
         is_meter: formData.is_meter,
         asset_loaned: formData.asset_loaned,
-        depreciation_applicable: formData.depreciation_applicable,
+        depreciation_applicable: true,
         it_asset_eq: selectedAssetCategory === "IT Equipment",
 
         // Meter fields
@@ -4184,6 +4325,21 @@ const AddAssetPage = () => {
                     "basicIdentification",
                     "Asset Category"
                   );
+
+                  // Reset Asset Loaned toggle for categories that don't support it
+                  const categoriesWithAssetLoaned = [
+                    "Furniture & Fixtures",
+                    "IT Equipment",
+                    "Machinery & Equipment",
+                    "Meter",
+                    "Tools & Instruments"
+                  ];
+
+                  if (!categoriesWithAssetLoaned.includes(category)) {
+                    setAssetLoanedToggle(false);
+                    handleFieldChange("asset_loaned", false);
+                  }
+
                   // Reset form data when category changes
                   setFormData((prevData) => ({
                     ...prevData,
@@ -4297,27 +4453,7 @@ const AddAssetPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <TextField
-                      label="Asset Id/Code"
-                      placeholder="Enter unique identifier"
-                      variant="outlined"
-                      fullWidth
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: { xs: "36px", md: "45px" },
-                        },
-                      }}
-                      onChange={(e) => {
-                        handleFieldChange("asset_number", e.target.value);
-                        handleExtraFieldChange(
-                          "asset_number",
-                          e.target.value,
-                          "text",
-                          "basicIdentification",
-                          "Asset Id/Code"
-                        );
-                      }}
-                    />
+
                     <TextField
                       label={
                         <span>
@@ -4340,6 +4476,27 @@ const AddAssetPage = () => {
                           "text",
                           "basicIdentification",
                           "Asset Name"
+                        );
+                      }}
+                    />
+                    <TextField
+                      label="Asset Id/Code"
+                      placeholder="Enter unique identifier"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(e) => {
+                        handleFieldChange("asset_number", e.target.value);
+                        handleExtraFieldChange(
+                          "asset_number",
+                          e.target.value,
+                          "text",
+                          "basicIdentification",
+                          "Asset Id/Code"
                         );
                       }}
                     />
@@ -4704,7 +4861,7 @@ const AddAssetPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          defaultValue="inr"
+                          defaultValue={(currency && currency.toLowerCase()) || "inr"}
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "currency",
@@ -4715,11 +4872,11 @@ const AddAssetPage = () => {
                             )
                           }
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
-                        label="Acquisition Cost"
+                        label={`Acquisition Cost (${currency})`}
                         placeholder="Enter cost"
                         variant="outlined"
                         type="number"
@@ -4741,14 +4898,14 @@ const AddAssetPage = () => {
                       />
                     </div>
                     <TextField
-                      label="Current Market Value (OMR)"
+                      label={`Current Market Value (${currency})`}
                       placeholder="Enter current value"
                       variant="outlined"
                       type="number"
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            {localStorage.getItem("currency")}
+                            {currencySymbol || currency}
                           </InputAdornment>
                         ),
                       }}
@@ -4969,8 +5126,22 @@ const AddAssetPage = () => {
                     multiline
                     rows={4}
                     sx={{
+                      mt: 1,
                       "& .MuiOutlinedInput-root": {
-                        // height: { xs: '36px', md: '45px' }
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
                       },
                     }}
                     // onChange={e => handleFieldChange('remarks', e.target.value)}
@@ -5104,6 +5275,25 @@ const AddAssetPage = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <TextField
+                      label={
+                        <span>
+                          Asset Name <span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
+                      placeholder="e.g., Flooring, IT Cabling"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(e) =>
+                        handleFieldChange("name", e.target.value)
+                      }
+                    />
+
+                    <TextField
                       label="Asset ID / Code"
                       placeholder="Enter alphanumeric code"
                       variant="outlined"
@@ -5124,20 +5314,7 @@ const AddAssetPage = () => {
                         );
                       }}
                     />
-                    <TextField
-                      label="Asset Name"
-                      placeholder="e.g., Flooring, IT Cabling"
-                      variant="outlined"
-                      fullWidth
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: { xs: "36px", md: "45px" },
-                        },
-                      }}
-                      onChange={(e) =>
-                        handleFieldChange("name", e.target.value)
-                      }
-                    />
+
 
                     {/* Custom Fields */}
                     {(customFields.leaseholdBasicId || []).map((field) => (
@@ -5223,34 +5400,26 @@ const AddAssetPage = () => {
                         handleFieldChange("location_site", value);
                       }}
                     />
-                    <FormControl
+                    <TextField
+                      label="Leased Property ID"
+                      placeholder="Enter leased property ID"
+                      variant="outlined"
                       fullWidth
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           height: { xs: "36px", md: "45px" },
                         },
                       }}
-                    >
-                      <InputLabel>Leased Property ID</InputLabel>
-                      <MuiSelect
-                        label="Leased Property ID"
-                        defaultValue=""
-                        onChange={(e) =>
-                          handleExtraFieldChange(
-                            "leased_property_id",
-                            (e.target as HTMLInputElement).value,
-                            "select",
-                            "leaseholdLocationAssoc",
-                            "Leased Property ID"
-                          )
-                        }
-                      >
-                        <MenuItem value="">Select Property</MenuItem>
-                        <MenuItem value="Property 001">Property 001</MenuItem>
-                        <MenuItem value="Property 002">Property 002</MenuItem>
-                        <MenuItem value="Property 003">Property 003</MenuItem>
-                      </MuiSelect>
-                    </FormControl>
+                      onChange={(e) =>
+                        handleExtraFieldChange(
+                          "leased_property_id",
+                          e.target.value,
+                          "text",
+                          "leaseholdLocationAssoc",
+                          "Leased Property ID"
+                        )
+                      }
+                    />
                     {/* <TextField
                     label="Ownership Type"
                     value="Lessee"
@@ -5500,7 +5669,7 @@ const AddAssetPage = () => {
                     />
 
                     <TextField
-                      label="Improvement Cost (INR)"
+                      label={`Improvement Cost (${currency})`}
                       placeholder="Enter cost"
                       variant="outlined"
                       fullWidth
@@ -5508,7 +5677,7 @@ const AddAssetPage = () => {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            {localStorage.getItem("currency")}
+                            {currencySymbol || currency}
                           </InputAdornment>
                         ),
                       }}
@@ -5699,7 +5868,7 @@ const AddAssetPage = () => {
                       }}
                     />
                     <TextField
-                      label="Current Book Value (OMR)"
+                      label={`Current Book Value (${currency})`}
                       placeholder="Enter value"
                       variant="outlined"
                       fullWidth
@@ -5707,7 +5876,7 @@ const AddAssetPage = () => {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            {localStorage.getItem("currency")}
+                            {currencySymbol || currency}
                           </InputAdornment>
                         ),
                       }}
@@ -6019,7 +6188,7 @@ const AddAssetPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormControl
+                    {/* <FormControl
                       fullWidth
                       sx={{
                         "& .MuiOutlinedInput-root": {},
@@ -6047,7 +6216,7 @@ const AddAssetPage = () => {
                         <MenuItem value="Maintenance">Maintenance</MenuItem>
                         <MenuItem value="IT Department">IT Department</MenuItem>
                       </MuiSelect>
-                    </FormControl>
+                    </FormControl> */}
                     <div className="md:col-span-2">
                       <TextField
                         label="Remarks / Notes"
@@ -6057,7 +6226,22 @@ const AddAssetPage = () => {
                         multiline
                         rows={4}
                         sx={{
-                          "& .MuiOutlinedInput-root": {},
+                          "& .MuiOutlinedInput-root": {
+                            height: "auto !important",
+                            padding: "2px !important",
+                            display: "flex",
+                          },
+                          "& .MuiInputBase-input[aria-hidden='true']": {
+                            flex: 0,
+                            width: 0,
+                            height: 0,
+                            padding: "0 !important",
+                            margin: 0,
+                            display: "none",
+                          },
+                          "& .MuiInputBase-input": {
+                            resize: "none !important",
+                          },
                         }}
                         onChange={(e) =>
                           handleExtraFieldChange(
@@ -6157,6 +6341,172 @@ const AddAssetPage = () => {
           </LocalizationProvider>
         )}
 
+        {/* Asset Allocation for Leasehold Improvement */}
+        {selectedAssetCategory === "Leasehold Improvement" && (
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div
+              onClick={() => toggleSection("assetAllocation")}
+              className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+            >
+              <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+                <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                </span>
+                ASSET ALLOCATION
+              </div>
+              {expandedSections.assetAllocation ? (
+                <ChevronUp className="w-5 h-5" />
+              ) : (
+                <ChevronDown className="w-5 h-5" />
+              )}
+            </div>
+            {expandedSections.assetAllocation && (
+              <div className="p-4 sm:p-6">
+                <div className="space-y-6">
+                  {/* Based On Section */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-4 block">
+                      Based On
+                    </label>
+                    <div className="flex gap-8">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="allocation-department"
+                          name="allocationBasedOn"
+                          value="department"
+                          checked={allocationBasedOn === "department"}
+                          onChange={(e) => {
+                            setAllocationBasedOn(e.target.value);
+                            // Clear selection when switching
+                            setSelectedDepartmentId("");
+                            setSelectedUserId("");
+                            handleSingleFieldChange("allocation_ids", "");
+                          }}
+                          className="w-4 h-4 text-[#C72030] border-gray-300"
+                          style={{
+                            accentColor: "#C72030",
+                          }}
+                        />
+                        <label
+                          htmlFor="allocation-department"
+                          className="text-sm"
+                        >
+                          Department
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="allocation-users"
+                          name="allocationBasedOn"
+                          value="users"
+                          checked={allocationBasedOn === "users"}
+                          onChange={(e) => {
+                            setAllocationBasedOn(e.target.value);
+                            // Clear selection when switching
+                            setSelectedDepartmentId("");
+                            setSelectedUserId("");
+                            handleSingleFieldChange("allocation_ids", "");
+                          }}
+                          className="w-4 h-4 text-[#C72030] border-gray-300"
+                          style={{
+                            accentColor: "#C72030",
+                          }}
+                        />
+                        <label htmlFor="allocation-users" className="text-sm">
+                          Users
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Department/Users Selection */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{
+                        minWidth: 120,
+                      }}
+                    >
+                      <InputLabel id="allocation-select-label" shrink>
+                        {allocationBasedOn === "department"
+                          ? "Department"
+                          : "Users"}
+                      </InputLabel>
+                      <MuiSelect
+                        labelId="allocation-select-label"
+                        label={
+                          allocationBasedOn === "department"
+                            ? "Department"
+                            : "Users"
+                        }
+                        displayEmpty
+                        value={
+                          allocationBasedOn === "department"
+                            ? selectedDepartmentId
+                            : selectedUserId
+                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (allocationBasedOn === "department") {
+                            setSelectedDepartmentId(value);
+                            handleSingleFieldChange("allocation_ids", value);
+                            handleFieldChange(
+                              "allocation_type",
+                              "department"
+                            );
+                          } else {
+                            setSelectedUserId(value);
+                            handleSingleFieldChange("allocation_ids", value);
+                            handleFieldChange("allocation_type", "users");
+                          }
+                        }}
+                        sx={fieldStyles}
+                        disabled={
+                          allocationBasedOn === "department"
+                            ? departmentsLoading
+                            : usersLoading
+                        }
+                      >
+                        <MenuItem value="">
+                          <em>
+                            {allocationBasedOn === "department"
+                              ? departmentsLoading
+                                ? "Loading departments..."
+                                : "Select Department"
+                              : usersLoading
+                                ? "Loading users..."
+                                : "Select User"}
+                          </em>
+                        </MenuItem>
+                        {allocationBasedOn === "department"
+                          ? departments.map((department) => (
+                            <MenuItem
+                              key={department.id}
+                              value={department.id.toString()}
+                            >
+                              {department.department_name}
+                            </MenuItem>
+                          ))
+                          : users.map((user) => (
+                            <MenuItem
+                              key={user.id}
+                              value={user.id.toString()}
+                            >
+                              {user.full_name}
+                            </MenuItem>
+                          ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Vehicle Asset Details - Show when Vehicle is selected */}
         {selectedAssetCategory === "Vehicle" && (
           <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -6182,6 +6532,20 @@ const AddAssetPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <TextField
+                      label={
+                        <span>
+                          Asset Name <span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
+                      placeholder="Name "
+                      variant="outlined"
+                      fullWidth
+                      value={formData.name || ""}
+                      sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}
+                      onChange={(e) => handleFieldChange("name", e.target.value)}
+                    />
                     <TextField
                       label="Asset ID / Code"
                       placeholder="System-generated or manually entered"
@@ -6199,15 +6563,7 @@ const AddAssetPage = () => {
                         );
                       }}
                     />
-                    <TextField
-                      label="Asset Name"
-                      placeholder="Name "
-                      variant="outlined"
-                      fullWidth
-                      value={formData.name || ""}
-                      sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}
-                      onChange={(e) => handleFieldChange("name", e.target.value)}
-                    />
+
                     <FormControl fullWidth sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}>
                       <InputLabel>Vehicle Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
                       <MuiSelect
@@ -6729,7 +7085,7 @@ const AddAssetPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          defaultValue="inr"
+                          defaultValue={(currency && currency.toLowerCase()) || "inr"}
                           onChange={(e) => {
                             handleExtraFieldChange(
                               "currency",
@@ -6740,7 +7096,7 @@ const AddAssetPage = () => {
                             );
                           }}
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -6935,7 +7291,7 @@ const AddAssetPage = () => {
                       }
                     />
                     <TextField
-                      label="Current Book Value (OMR)"
+                      label={`Current Book Value (${currency})`}
                       placeholder="Calculated or manually entered"
                       variant="outlined"
                       fullWidth
@@ -6943,7 +7299,7 @@ const AddAssetPage = () => {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            {localStorage.getItem("currency")}
+                            {currencySymbol || currency}
                           </InputAdornment>
                         ),
                       }}
@@ -7487,7 +7843,20 @@ const AddAssetPage = () => {
                     rows={4}
                     sx={{
                       "& .MuiOutlinedInput-root": {
-                        // height: { xs: '80px', md: '100px' }
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
                       },
                     }}
                     onChange={(e) =>
@@ -7621,6 +7990,21 @@ const AddAssetPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <TextField
+                     label={<span>Asset Name <span style={{ color: '#C72030' }}>*</span></span>}
+                     
+                      placeholder="Enter name"
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(e) =>
+                        handleFieldChange("name", e.target.value)
+                      }
+                    />
                     <TextField
                       label="Asset ID / Code"
                       placeholder="Enter unique identifier"
@@ -7642,20 +8026,7 @@ const AddAssetPage = () => {
                         );
                       }}
                     />
-                    <TextField
-                      label="Asset Name"
-                      placeholder="Enter building name"
-                      variant="outlined"
-                      fullWidth
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: { xs: "36px", md: "45px" },
-                        },
-                      }}
-                      onChange={(e) =>
-                        handleFieldChange("name", e.target.value)
-                      }
-                    />
+
                     <FormControl
                       fullWidth
                       sx={{
@@ -7686,6 +8057,32 @@ const AddAssetPage = () => {
                         <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
                       </MuiSelect>
                     </FormControl>
+                    {
+                      extraFormFields.building_type?.value === 'Other (Manual Entry)' && (
+                        <TextField
+                          label="Other Building Type"
+                          placeholder="Enter other building type"
+                          variant="outlined"
+                          fullWidth
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: { xs: "36px", md: "45px" },
+                            },
+                          }}
+                          onChange={(e) =>
+                            handleExtraFieldChange(
+                              "other_building_type",
+                              e.target.value,
+                              "text",
+                              "buildingBasicId",
+                              "Other Building Type"
+                            )
+                          }
+                        />
+                      )
+                    }
+
+
 
                     {/* Custom Fields */}
                     {(customFields.buildingBasicId || []).map((field) => (
@@ -7908,6 +8305,31 @@ const AddAssetPage = () => {
                         <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
                       </MuiSelect>
                     </FormControl>
+                    {
+                      extraFormFields.construction_type?.value === 'Other (Manual Entry)' && (
+                        <TextField
+                          label="Other Construction Type"
+                          placeholder="Enter other construction type"
+                          variant="outlined"
+                          fullWidth
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: { xs: "36px", md: "45px" },
+                            },
+                          }}
+                          onChange={(e) =>
+                            handleExtraFieldChange(
+                              "other_construction_type",
+                              e.target.value,
+                              "text",
+                              "buildingConstruction",
+                              "Other Construction Type"
+                            )
+                          }
+                        />
+                      )
+                    }
+
                     <TextField
                       label="Number of Floors"
                       placeholder="e.g., G + 3 = 4"
@@ -8149,7 +8571,7 @@ const AddAssetPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          defaultValue="inr"
+                          defaultValue={(currency && currency.toLowerCase()) || "inr"}
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "acquisition_currency",
@@ -8160,7 +8582,7 @@ const AddAssetPage = () => {
                             )
                           }
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -8234,7 +8656,7 @@ const AddAssetPage = () => {
                             )
                           }
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -8282,11 +8704,11 @@ const AddAssetPage = () => {
                             )
                           }
                         >
-                          <MenuItem value="inr">OMR</MenuItem>
+                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
-                        label="Current Market Value"
+                        label={`Current Market Value (${currency})`}
                         placeholder="Enter market value"
                         variant="outlined"
                         type="number"
@@ -8393,6 +8815,31 @@ const AddAssetPage = () => {
                         <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
                       </MuiSelect>
                     </FormControl>
+                    {
+                      extraFormFields.building_use?.value === 'Other (Manual Entry)' && (
+                        <TextField
+                          label="Other Building Use"
+                          placeholder="Enter other building use"
+                          variant="outlined"
+                          fullWidth
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: { xs: "36px", md: "45px" },
+                            },
+                          }}
+                          onChange={(e) =>
+                            handleExtraFieldChange(
+                              "other_building_use",
+                              e.target.value,
+                              "text",
+                              "usage_and_compliance",
+                              "Other Building Use"
+                            )
+                          }
+
+                        />
+                      )
+                    }
                     <FormControl
                       fullWidth
                       sx={{
@@ -8441,7 +8888,7 @@ const AddAssetPage = () => {
                         )
                       }
                     />
-                    <FormControl
+                    {/* <FormControl
                       fullWidth
                       sx={{
                         "& .MuiOutlinedInput-root": {
@@ -8470,7 +8917,31 @@ const AddAssetPage = () => {
                           Last Updated Date Option
                         </MenuItem>
                       </MuiSelect>
-                    </FormControl>
+                    </FormControl> */}
+                    <TextField
+                      label="Structural Safety Certificate"
+                      placeholder="Enter Structural Safety Certificate"
+                      variant="outlined"
+                      fullWidth
+                      type="date"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(e) =>
+                        handleExtraFieldChange(
+                          "structural_safety_certificate",
+                          (e.target as HTMLInputElement).value,
+                          "date",
+                          "usage_and_compliance",
+                          "Structural Safety Certificate"
+                        )
+                      }
+
+                    />
+
+
                     <FormControl
                       fullWidth
                       sx={{
@@ -8500,6 +8971,32 @@ const AddAssetPage = () => {
                         <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
                       </MuiSelect>
                     </FormControl>
+
+                    {
+                      extraFormFields.utility_connections?.value === 'Other (Manual Entry)' && (
+                        <TextField
+                          label="Other Utility Connection"
+                          placeholder="Enter other utility connection"
+                          variant="outlined"
+                          fullWidth
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: { xs: "36px", md: "45px" },
+                            },
+                          }}
+                          onChange={(e) =>
+                            handleExtraFieldChange(
+                              "other_utility_connection",
+                              e.target.value,
+                              "text",
+                              "usage_and_compliance",
+                              "Other Utility Connection"
+                            )
+                          }
+                        />
+                      )
+
+                    }
 
                     {/* Custom Fields */}
                     {(customFields.buildingUsage || []).map((field) => (
@@ -8682,7 +9179,22 @@ const AddAssetPage = () => {
                     multiline
                     rows={4}
                     sx={{
-                      "& .MuiOutlinedInput-root": {},
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
                     }}
                     onChange={(e) =>
                       handleExtraFieldChange(
@@ -9034,7 +9546,7 @@ const AddAssetPage = () => {
                         }}
                       >
                         <InputLabel id="vendor-select-label" shrink>
-                          Vendor Name<span style={{ color: '#C72030' }}>*</span>
+                          Vendor Name
                         </InputLabel>
                         <MuiSelect
                           labelId="vendor-select-label"
@@ -9540,35 +10052,6 @@ const AddAssetPage = () => {
                       IT ASSETS DETAILS
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">
-                          If Applicable
-                        </span>
-                        <div
-                          className="relative inline-block w-12 h-6"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            id="it-assets-toggle"
-                            checked={itAssetsToggle}
-                            onChange={(e) =>
-                              handleItAssetsToggleChange(e.target.checked)
-                            }
-                          />
-                          <label
-                            htmlFor="it-assets-toggle"
-                            className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${itAssetsToggle ? "bg-green-400" : "bg-gray-300"
-                              }`}
-                          >
-                            <span
-                              className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${itAssetsToggle ? "translate-x-6" : "translate-x-1"
-                                }`}
-                            ></span>
-                          </label>
-                        </div>
-                      </div>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -9591,16 +10074,13 @@ const AddAssetPage = () => {
                     </div>
                   </div>
                   {expandedSections.warranty && (
-                    <div
-                      className={`p-4 sm:p-6 ${!itAssetsToggle ? "opacity-50 pointer-events-none" : ""
-                        }`}
-                    >
+                    <div className="p-4 sm:p-6">
                       {/* System Details */}
                       <div className="mb-6">
                         <h3
                           className="font-semibold mb-4"
                           style={{
-                            color: itAssetsToggle ? "#C72030" : "#9CA3AF",
+                            color: "#C72030",
                           }}
                         >
                           SYSTEM DETAILS
@@ -9620,7 +10100,6 @@ const AddAssetPage = () => {
                                 e.target.value
                               )
                             }
-                            disabled={!itAssetsToggle}
                             InputLabelProps={{
                               shrink: true,
                             }}
@@ -9643,7 +10122,6 @@ const AddAssetPage = () => {
                                 e.target.value
                               )
                             }
-                            disabled={!itAssetsToggle}
                             InputLabelProps={{
                               shrink: true,
                             }}
@@ -9665,7 +10143,6 @@ const AddAssetPage = () => {
                                 e.target.value
                               )
                             }
-                            disabled={!itAssetsToggle}
                             InputLabelProps={{
                               shrink: true,
                             }}
@@ -9800,7 +10277,6 @@ const AddAssetPage = () => {
                                 e.target.value
                               )
                             }
-                            disabled={!itAssetsToggle}
                             InputLabelProps={{
                               shrink: true,
                             }}
@@ -9822,7 +10298,6 @@ const AddAssetPage = () => {
                                 e.target.value
                               )
                             }
-                            disabled={!itAssetsToggle}
                             InputLabelProps={{
                               shrink: true,
                             }}
@@ -9844,7 +10319,6 @@ const AddAssetPage = () => {
                                 e.target.value
                               )
                             }
-                            disabled={!itAssetsToggle}
                             InputLabelProps={{
                               shrink: true,
                             }}
@@ -9915,39 +10389,6 @@ const AddAssetPage = () => {
                         METER DETAILS
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600">
-                            If Applicable
-                          </span>
-                          <div
-                            className="relative inline-block w-12 h-6"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <input
-                              type="checkbox"
-                              className="sr-only peer"
-                              id="meter-details-toggle"
-                              checked={meterDetailsToggle}
-                              onChange={(e) =>
-                                handleMeterDetailsToggleChange(e.target.checked)
-                              }
-                            />
-                            <label
-                              htmlFor="meter-details-toggle"
-                              className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${meterDetailsToggle
-                                ? "bg-green-400"
-                                : "bg-gray-300"
-                                }`}
-                            >
-                              <span
-                                className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${meterDetailsToggle
-                                  ? "translate-x-6"
-                                  : "translate-x-1"
-                                  }`}
-                              ></span>
-                            </label>
-                          </div>
-                        </div>
                         {expandedSections.meterCategory ? (
                           <ChevronUp className="w-5 h-5" />
                         ) : (
@@ -9956,12 +10397,7 @@ const AddAssetPage = () => {
                       </div>
                     </div>
                     {expandedSections.meterCategory && (
-                      <div
-                        className={`p-4 sm:p-6 ${!meterDetailsToggle
-                          ? "opacity-50 pointer-events-none"
-                          : ""
-                          }`}
-                      >
+                      <div className="p-4 sm:p-6">
                         {/* Meter Type */}
                         <div className="mb-6">
                           <div className="flex items-center gap-4 mb-4">
@@ -9983,7 +10419,6 @@ const AddAssetPage = () => {
                                       e.target.value
                                     );
                                   }}
-                                  disabled={!meterDetailsToggle}
                                   className="w-4 h-4 text-[#C72030] border-gray-300"
                                   style={{
                                     accentColor: "#C72030",
@@ -9991,8 +10426,7 @@ const AddAssetPage = () => {
                                 />
                                 <label
                                   htmlFor="meter-type-parent"
-                                  className={`text-sm ${!meterDetailsToggle ? "text-gray-400" : ""
-                                    }`}
+                                  className="text-sm"
                                 >
                                   Parent
                                 </label>
@@ -10011,7 +10445,6 @@ const AddAssetPage = () => {
                                       e.target.value
                                     );
                                   }}
-                                  disabled={!meterDetailsToggle}
                                   className="w-4 h-4 text-[#C72030] border-gray-300"
                                   style={{
                                     accentColor: "#C72030",
@@ -10019,8 +10452,7 @@ const AddAssetPage = () => {
                                 />
                                 <label
                                   htmlFor="meter-type-sub"
-                                  className={`text-sm ${!meterDetailsToggle ? "text-gray-400" : ""
-                                    }`}
+                                  className="text-sm"
                                 >
                                   Sub
                                 </label>
@@ -10035,34 +10467,40 @@ const AddAssetPage = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Parent Meter <span style={{ color: '#C72030' }}>*</span>
                             </label>
-                            <Select
-                              value={selectedParentMeterId}
-                              onValueChange={(value) => {
-                                setSelectedParentMeterId(value);
-                                handleFieldChange("parent_meter_id", value);
-                              }}
-                              disabled={parentMeterLoading || !meterDetailsToggle}
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue
-                                  placeholder={
-                                    parentMeterLoading
+                            <FormControl fullWidth>
+                              <InputLabel>Parent Meter</InputLabel>
+                              <MuiSelect
+                                label="Parent Meter"
+                                value={selectedParentMeterId}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setSelectedParentMeterId(value);
+                                  handleFieldChange("parent_meter_id", value);
+                                }}
+                                disabled={parentMeterLoading}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    height: "45px",
+                                  },
+                                }}
+                              >
+                                <MenuItem value="">
+                                  <em>
+                                    {parentMeterLoading
                                       ? "Loading..."
-                                      : "Select Parent Meter"
-                                  }
-                                />
-                              </SelectTrigger>
-                              <SelectContent>
+                                      : "Select Parent Meter"}
+                                  </em>
+                                </MenuItem>
                                 {parentMeters.map((meter) => (
-                                  <SelectItem
+                                  <MenuItem
                                     key={meter.id}
                                     value={meter.id.toString()}
                                   >
                                     {meter.name}
-                                  </SelectItem>
+                                  </MenuItem>
                                 ))}
-                              </SelectContent>
-                            </Select>
+                              </MuiSelect>
+                            </FormControl>
                           </div>
                         )}
 
@@ -10447,13 +10885,9 @@ const AddAssetPage = () => {
                 </div>
                 {expandedSections.consumption && (
                   <div className="p-4 sm:p-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                       <TextField
-                        label={
-                          <span>
-                            Purchase Cost<span style={{ color: '#C72030' }}>*</span>
-                          </span>
-                        }
+                        label="Purchase Cost"
                         placeholder="Enter cost"
                         name="purchaseCost"
                         fullWidth
@@ -10470,11 +10904,7 @@ const AddAssetPage = () => {
                         }
                       />
                       <TextField
-                        label={
-                          <span>
-                            Purchase Date<span style={{ color: '#C72030' }}>*</span>
-                          </span>
-                        }
+                        label="Purchase Date"
                         placeholder="dd/mm/yyyy"
                         name="purchaseDate"
                         type="date"
@@ -10494,11 +10924,7 @@ const AddAssetPage = () => {
                         }
                       />
                       <TextField
-                        label={
-                          <span>
-                            Commissioning Date<span style={{ color: '#C72030' }}>*</span>
-                          </span>
-                        }
+                        label="Commissioning Date"
                         placeholder="dd/mm/yyyy"
                         name="commisioning_date"
                         type="date"
@@ -10515,11 +10941,7 @@ const AddAssetPage = () => {
                         }
                       />
                       <TextField
-                        label={
-                          <span>
-                            Warranty Expires On<span style={{ color: '#C72030' }}>*</span>
-                          </span>
-                        }
+                        label="Warranty Expires On"
                         placeholder="dd/mm/yyyy"
                         name="warrantyExpiresOn"
                         type="date"
@@ -10533,6 +10955,23 @@ const AddAssetPage = () => {
                         }}
                         onChange={(e) =>
                           handleFieldChange("warranty_expiry", e.target.value)
+                        }
+                      />
+                      <TextField
+                        label="Expiry Date"
+                        placeholder="dd/mm/yyyy"
+                        name="expiryDate"
+                        type="date"
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        InputProps={{
+                          sx: fieldStyles,
+                        }}
+                        onChange={(e) =>
+                          handleFieldChange("expiry_date", e.target.value)
                         }
                       />
                       <div>
@@ -10668,45 +11107,6 @@ const AddAssetPage = () => {
                     DEPRECIATION RULE
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openCustomFieldModal('depreciationRule');
-                    }}
-                    className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Custom Field
-                  </button> */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">If Applicable</span>
-                      <div
-                        className="relative inline-block w-12 h-6"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          id="depreciation-toggle"
-                          checked={depreciationToggle}
-                          onChange={(e) =>
-                            handleDepreciationToggleChange(e.target.checked)
-                          }
-                        />
-                        <label
-                          htmlFor="depreciation-toggle"
-                          className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${depreciationToggle ? "bg-green-400" : "bg-gray-300"
-                            }`}
-                        >
-                          <span
-                            className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${depreciationToggle
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                              }`}
-                          ></span>
-                        </label>
-                      </div>
-                    </div>
                     {expandedSections.nonConsumption ? (
                       <ChevronUp className="w-5 h-5" />
                     ) : (
@@ -10715,19 +11115,11 @@ const AddAssetPage = () => {
                   </div>
                 </div>
                 {expandedSections.nonConsumption && (
-                  <div
-                    className={`p-4 sm:p-6 ${!depreciationToggle ? "opacity-50 pointer-events-none" : ""
-                      }`}
-                  >
+                  <div className="p-4 sm:p-6">
                     <div className="space-y-6">
                       {/* Method Section */}
                       <div>
-                        <label
-                          className={`text-sm font-medium mb-4 block ${!depreciationToggle
-                            ? "text-gray-400"
-                            : "text-gray-700"
-                            }`}
-                        >
+                        <label className="text-sm font-medium mb-4 block text-gray-700">
                           Method
                         </label>
                         <div className="flex gap-8">
@@ -10737,7 +11129,6 @@ const AddAssetPage = () => {
                               id="straight-line"
                               name="depreciationMethod"
                               value="straight_line"
-                              disabled={!depreciationToggle}
                               className="w-4 h-4 text-[#C72030] border-gray-300"
                               style={{
                                 accentColor: "#C72030",
@@ -10751,8 +11142,7 @@ const AddAssetPage = () => {
                             />
                             <label
                               htmlFor="straight-line"
-                              className={`text-sm ${!depreciationToggle ? "text-gray-400" : ""
-                                }`}
+                              className="text-sm"
                             >
                               Straight Line
                             </label>
@@ -10763,7 +11153,6 @@ const AddAssetPage = () => {
                               id="wdv"
                               name="depreciationMethod"
                               value="wdv"
-                              disabled={!depreciationToggle}
                               className="w-4 h-4 text-[#C72030] border-gray-300"
                               style={{
                                 accentColor: "#C72030",
@@ -10777,8 +11166,7 @@ const AddAssetPage = () => {
                             />
                             <label
                               htmlFor="wdv"
-                              className={`text-sm ${!depreciationToggle ? "text-gray-400" : ""
-                                }`}
+                              className="text-sm"
                             >
                               WDV
                             </label>
@@ -10791,13 +11179,14 @@ const AddAssetPage = () => {
                         <TextField
                           label={
                             <span>
-                              Useful Life (Years){depreciationToggle && <span style={{ color: '#C72030' }}>*</span>}
+                              Useful Life (Years)<span style={{ color: '#C72030' }}>*</span>
                             </span>
                           }
                           placeholder="Enter years"
                           variant="outlined"
                           fullWidth
                           type="number"
+                          disabled={!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0}
                           sx={{
                             "& .MuiOutlinedInput-root": {
                               height: { xs: "36px", md: "45px" },
@@ -10815,6 +11204,7 @@ const AddAssetPage = () => {
                               }
                             },
                           }}
+                          value={formData.useful_life || ''}
                           onChange={(e) => {
                             const value = Math.max(0, Number(e.target.value)); // auto-correct to 0 if negative
 
@@ -10823,12 +11213,10 @@ const AddAssetPage = () => {
                         />
 
                         <TextField
-                          required={
-                            depreciationToggle && !!formData.depreciation_method
-                          }
+                          required={!!formData.depreciation_method}
                           label={
                             <span>
-                              Salvage Value{depreciationToggle && <span style={{ color: '#C72030' }}>*</span>}
+                              Salvage Value{formData.depreciation_method && <span style={{ color: '#C72030' }}>*</span>}
                             </span>
                           }
                           placeholder="Enter Value"
@@ -10836,7 +11224,7 @@ const AddAssetPage = () => {
                           fullWidth
                           variant="outlined"
                           type="number"
-                          disabled={!depreciationToggle}
+                          disabled={!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0}
                           InputLabelProps={{
                             shrink: true,
                           }}
@@ -10856,32 +11244,31 @@ const AddAssetPage = () => {
                             },
                           }}
                           error={
-                            depreciationToggle &&
                             !!formData.depreciation_method &&
                             !formData.salvage_value
                           }
                           helperText={
-                            depreciationToggle &&
-                              !!formData.depreciation_method &&
+                            !!formData.depreciation_method &&
                               !formData.salvage_value
                               ? "Required"
-                              : ""
+                              : (!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0)
+                                ? "Purchase Cost required first"
+                                : ""
                           }
+                          value={formData.salvage_value || ''}
                           onChange={(e) =>
                             handleFieldChange("salvage_value", e.target.value)
                           }
                         />
                         <TextField
-                          required={
-                            depreciationToggle && !!formData.depreciation_method
-                          }
+                          required={!!formData.depreciation_method}
                           label="Depreciation Rate"
                           placeholder="Enter Value"
                           name="depreciationRate"
                           fullWidth
                           type="number"
                           variant="outlined"
-                          disabled={!depreciationToggle}
+                          disabled={!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0}
                           InputLabelProps={{
                             shrink: true,
                           }}
@@ -10889,17 +11276,18 @@ const AddAssetPage = () => {
                             sx: fieldStyles,
                           }}
                           error={
-                            depreciationToggle &&
                             !!formData.depreciation_method &&
                             !formData.depreciation_rate
                           }
                           helperText={
-                            depreciationToggle &&
-                              !!formData.depreciation_method &&
+                            !!formData.depreciation_method &&
                               !formData.depreciation_rate
                               ? "Required"
-                              : ""
+                              : (!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0)
+                                ? "Purchase Cost required first"
+                                : ""
                           }
+                          value={formData.depreciation_rate || ''}
                           onChange={(e) =>
                             handleFieldChange("depreciation_rate", e.target.value)
                           }
@@ -10973,7 +11361,6 @@ const AddAssetPage = () => {
                                       id="individual-asset"
                                       name="similar_product_type"
                                       value="individual"
-                                      disabled={!depreciationToggle}
                                       className="w-4 h-4 text-[#C72030] border-gray-300"
                                       style={{
                                         accentColor: "#C72030",
@@ -10987,10 +11374,7 @@ const AddAssetPage = () => {
                                     />
                                     <label
                                       htmlFor="individual-asset"
-                                      className={`text-sm font-medium ${!depreciationToggle
-                                        ? "text-gray-400"
-                                        : "text-gray-700"
-                                        }`}
+                                      className="text-sm font-medium text-gray-700"
                                     >
                                       Individual Asset
                                     </label>
@@ -11003,7 +11387,6 @@ const AddAssetPage = () => {
                                       id="group-asset"
                                       name="similar_product_type"
                                       value="group"
-                                      disabled={!depreciationToggle}
                                       className="w-4 h-4 text-[#C72030] border-gray-300"
                                       style={{
                                         accentColor: "#C72030",
@@ -11017,10 +11400,7 @@ const AddAssetPage = () => {
                                     />
                                     <label
                                       htmlFor="group-asset"
-                                      className={`text-sm font-medium ${!depreciationToggle
-                                        ? "text-gray-400"
-                                        : "text-gray-700"
-                                        }`}
+                                      className="text-sm font-medium text-gray-700"
                                     >
                                       Asset Group
                                     </label>
@@ -11036,38 +11416,44 @@ const AddAssetPage = () => {
                                   Select Assets{" "}
                                   <span className="text-red-500">*</span>
                                 </label>
-                                <Select
-                                  value=""
-                                  onValueChange={(value) => {
-                                    // Handle multiple selection
-                                    const currentAssets = formData.selected_asset_ids || [];
-                                    if (!currentAssets.includes(value)) {
-                                      const newAssets = [...currentAssets, value];
-                                      handleFieldChange("selected_asset_ids", newAssets);
-                                    }
-                                  }}
-                                  disabled={!depreciationToggle || assetsLoading}
-                                >
-                                  <SelectTrigger className="w-full h-[45px] bg-white">
-                                    <SelectValue
-                                      placeholder={
-                                        assetsLoading
-                                          ? "Loading assets..."
-                                          : "Select assets"
+                                <FormControl fullWidth>
+                                  <InputLabel>Select Assets</InputLabel>
+                                  <MuiSelect
+                                    label="Select Assets"
+                                    value=""
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      // Handle multiple selection
+                                      const currentAssets = formData.selected_asset_ids || [];
+                                      if (!currentAssets.includes(value)) {
+                                        const newAssets = [...currentAssets, value];
+                                        handleFieldChange("selected_asset_ids", newAssets);
                                       }
-                                    />
-                                  </SelectTrigger>
-                                  <SelectContent>
+                                    }}
+                                    disabled={assetsLoading}
+                                    sx={{
+                                      "& .MuiOutlinedInput-root": {
+                                        height: "45px",
+                                      },
+                                    }}
+                                  >
+                                    <MenuItem value="">
+                                      <em>
+                                        {assetsLoading
+                                          ? "Loading assets..."
+                                          : "Select assets"}
+                                      </em>
+                                    </MenuItem>
                                     {assets.map((asset) => (
-                                      <SelectItem
+                                      <MenuItem
                                         key={asset.id}
                                         value={asset.id.toString()}
                                       >
                                         {asset.name}
-                                      </SelectItem>
+                                      </MenuItem>
                                     ))}
-                                  </SelectContent>
-                                </Select>
+                                  </MuiSelect>
+                                </FormControl>
 
                                 {/* Display selected assets */}
                                 {formData.selected_asset_ids && formData.selected_asset_ids.length > 0 && (
@@ -11109,84 +11495,93 @@ const AddAssetPage = () => {
                                       Select Group{" "}
                                       <span className="text-red-500">*</span>
                                     </label>
-                                    <Select
-                                      value={formData.selected_group_id || ""}
-                                      onValueChange={(value) => {
-                                        handleFieldChange(
-                                          "selected_group_id",
-                                          value
-                                        );
-                                        handleFieldChange(
-                                          "selected_sub_group_id",
-                                          ""
-                                        ); // Reset sub group
-                                        fetchSubGroups(value);
-                                      }}
-                                      disabled={
-                                        !depreciationToggle || groupsLoading
-                                      }
-                                    >
-                                      <SelectTrigger className="w-full h-[45px] bg-white">
-                                        <SelectValue
-                                          placeholder={
-                                            groupsLoading
+                                    <FormControl fullWidth>
+                                      <InputLabel>Select Group</InputLabel>
+                                      <MuiSelect
+                                        label="Select Group"
+                                        value={formData.selected_group_id || ""}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          handleFieldChange(
+                                            "selected_group_id",
+                                            value
+                                          );
+                                          handleFieldChange(
+                                            "selected_sub_group_id",
+                                            ""
+                                          ); // Reset sub group
+                                          fetchSubGroups(value);
+                                        }}
+                                        disabled={groupsLoading}
+                                        sx={{
+                                          "& .MuiOutlinedInput-root": {
+                                            height: "45px",
+                                          },
+                                        }}
+                                      >
+                                        <MenuItem value="">
+                                          <em>
+                                            {groupsLoading
                                               ? "Loading groups..."
-                                              : "Select a group"
-                                          }
-                                        />
-                                      </SelectTrigger>
-                                      <SelectContent>
+                                              : "Select a group"}
+                                          </em>
+                                        </MenuItem>
                                         {groups.map((group) => (
-                                          <SelectItem
+                                          <MenuItem
                                             key={group.id}
                                             value={group.id.toString()}
                                           >
                                             {group.name}
-                                          </SelectItem>
+                                          </MenuItem>
                                         ))}
-                                      </SelectContent>
-                                    </Select>
+                                      </MuiSelect>
+                                    </FormControl>
                                   </div>
                                   <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                       Select Sub Group
                                     </label>
-                                    <Select
-                                      value={formData.selected_sub_group_id || ""}
-                                      onValueChange={(value) =>
-                                        handleFieldChange(
-                                          "selected_sub_group_id",
-                                          value
-                                        )
-                                      }
-                                      disabled={
-                                        !depreciationToggle ||
-                                        !formData.selected_group_id ||
-                                        subGroupsLoading
-                                      }
-                                    >
-                                      <SelectTrigger className="w-full h-[45px] bg-white">
-                                        <SelectValue
-                                          placeholder={
-                                            !formData.selected_group_id
+                                    <FormControl fullWidth>
+                                      <InputLabel>Select Sub Group</InputLabel>
+                                      <MuiSelect
+                                        label="Select Sub Group"
+                                        value={formData.selected_sub_group_id || ""}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          handleFieldChange(
+                                            "selected_sub_group_id",
+                                            value
+                                          );
+                                        }}
+                                        disabled={
+                                          !formData.selected_group_id ||
+                                          subGroupsLoading
+                                        }
+                                        sx={{
+                                          "& .MuiOutlinedInput-root": {
+                                            height: "45px",
+                                          },
+                                        }}
+                                      >
+                                        <MenuItem value="">
+                                          <em>
+                                            {!formData.selected_group_id
                                               ? "Select group first"
                                               : subGroupsLoading
                                                 ? "Loading sub groups..."
-                                                : "Select a sub group"
-                                          }
-                                        />
-                                      </SelectTrigger>
-                                      <SelectContent>
+                                                : "Select a sub group"}
+                                          </em>
+                                        </MenuItem>
                                         {subGroups.map((subGroup) => (
-                                          <SelectItem
+                                          <MenuItem
                                             key={subGroup.id}
                                             value={subGroup.id.toString()}
                                           >
                                             {subGroup.name}
-                                          </SelectItem>
+                                          </MenuItem>
                                         ))}
-                                      </SelectContent>
-                                    </Select>
+                                      </MuiSelect>
+                                    </FormControl>
                                   </div>
                                 </div>
                               </div>
@@ -11325,7 +11720,6 @@ const AddAssetPage = () => {
                             {allocationBasedOn === "department"
                               ? "Department"
                               : "Users"}
-                            <span style={{ color: '#C72030' }}>*</span>
                           </InputLabel>
                           <MuiSelect
                             labelId="allocation-select-label"
@@ -11579,8 +11973,8 @@ const AddAssetPage = () => {
                 {expandedSections.amcDetails && (
                   <div className="p-4 sm:p-6">
                     <div className="space-y-6">
-                      {/* First Row - Vendor, Start Date, End Date, First Service, Payment Terms, No. of Visits */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                      {/* First Row - Vendor, Start Date, End Date, First Service, Payment Terms, No. of Visits, Visit Frequency */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
                         <FormControl
                           fullWidth
                           variant="outlined"
@@ -11814,6 +12208,39 @@ const AddAssetPage = () => {
                             }
                           }}
                         />
+
+                        <FormControl
+                          fullWidth
+                          variant="outlined"
+                          sx={{
+                            minWidth: 120,
+                          }}
+                        >
+                          <InputLabel id="visit-frequency-select-label" shrink>
+                            Visit Frequency
+                          </InputLabel>
+                          <MuiSelect
+                            labelId="visit-frequency-select-label"
+                            label="Visit Frequency"
+                            value={formData.amc_detail.visit_frequency}
+                            sx={fieldStyles}
+                            onChange={(e) =>
+                              handleNestedFieldChange(
+                                "amc_detail",
+                                "visit_frequency",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <MenuItem value="">
+                              <em>Select Frequency</em>
+                            </MenuItem>
+                            <MenuItem value="monthly">Monthly</MenuItem>
+                            <MenuItem value="quarterly">Quarterly</MenuItem>
+                            <MenuItem value="semi_annually">Semi Annually</MenuItem>
+                            <MenuItem value="annually">Annually</MenuItem>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
 
                       {/* Second Row - AMC Cost */}
@@ -12271,7 +12698,7 @@ const AddAssetPage = () => {
           <button
             onClick={handleSaveAndShow}
             className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md   text-sm sm:text-base"
-            disabled={submitting}
+            // disabled={submitting}
           >
             Save & Show Details
           </button>

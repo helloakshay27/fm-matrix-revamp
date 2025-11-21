@@ -38,6 +38,10 @@ import {
   OutlinedInput,
   SelectChangeEvent,
   Autocomplete,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Settings,
@@ -95,7 +99,7 @@ const RedButton = styled(MuiButton)(({ theme }) => ({
 }));
 
 const DraftButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#f6f4ee',
+  backgroundColor: '#e7e3d9',
   color: '#C72030',
   borderRadius: 0,
   textTransform: 'none',
@@ -103,7 +107,7 @@ const DraftButton = styled(MuiButton)(({ theme }) => ({
   fontFamily: 'Work Sans, sans-serif',
   fontWeight: 500,
   '&:hover': {
-    backgroundColor: '#f0ebe0',
+    backgroundColor: '#d9d5c9',
   },
 }));
 
@@ -231,6 +235,7 @@ export const AddSchedulePage = () => {
 
     // Schedule Setup
     checklistType: 'Individual',
+    checkInPhotograph: 'inactive', // 'active' or 'inactive'
     asset: [],
     service: [],
     assetGroup: '',
@@ -363,14 +368,32 @@ export const AddSchedulePage = () => {
   const [fieldErrors, setFieldErrors] = useState<{ [fieldName: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // LocalStorage keys
+  // Add draft modal state
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [hasSavedDraft, setHasSavedDraft] = useState(false);
+
+  // Determine schedule type from URL
+  const getScheduleTypeFromUrl = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeParam = urlParams.get('type');
+    const validScheduleTypes = ['Asset', 'Service'];
+
+    if (validScheduleTypes.includes(typeParam)) {
+      return typeParam;
+    }
+    return 'Asset'; // default
+  };
+
+  const currentScheduleType = getScheduleTypeFromUrl();
+
+  // LocalStorage keys - separate for Asset and Service
   const STORAGE_KEYS = {
-    FORM_DATA: 'addSchedule_formData',
-    QUESTION_SECTIONS: 'addSchedule_questionSections',
-    TIME_SETUP_DATA: 'addSchedule_timeSetupData',
-    ACTIVE_STEP: 'addSchedule_activeStep',
-    COMPLETED_STEPS: 'addSchedule_completedSteps',
-    ATTACHMENTS: 'addSchedule_attachments'
+    FORM_DATA: `addSchedule_${currentScheduleType}_formData`,
+    QUESTION_SECTIONS: `addSchedule_${currentScheduleType}_questionSections`,
+    TIME_SETUP_DATA: `addSchedule_${currentScheduleType}_timeSetupData`,
+    ACTIVE_STEP: `addSchedule_${currentScheduleType}_activeStep`,
+    COMPLETED_STEPS: `addSchedule_${currentScheduleType}_completedSteps`,
+    ATTACHMENTS: `addSchedule_${currentScheduleType}_attachments`
   };
 
   // Save to localStorage
@@ -534,144 +557,124 @@ export const AddSchedulePage = () => {
     });
   };
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const serviceIdsParam = urlParams.get('serviceIds');
+    // Only run if scheduleFor is Service and serviceIdsParam exists
+    if (formData.scheduleFor === 'Service' && serviceIdsParam) {
+      const ids = serviceIdsParam.split(',').map(id => id.trim()).filter(Boolean);
+      setFormData(prev => ({
+        ...prev,
+        service: ids
+      }));
+      console.log('prev selected Id', ids);
+    }
+  }, [formData.scheduleFor]);
+
   // Initialize component with localStorage data or clear current step if refreshed on that step
   useEffect(() => {
-    // Always clear local storage and reset to basic configuration if page is refreshed or browser back button is clicked
-    const resetState = () => {
+    // Check if there's a saved draft for the current schedule type
+    const savedActiveStep = loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP);
+    const savedFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
+    const savedQuestionSections = loadFromLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS);
+    const savedTimeSetupData = loadFromLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA);
+    const savedCompletedSteps = loadFromLocalStorage(STORAGE_KEYS.COMPLETED_STEPS);
+    const savedAttachments = loadFromLocalStorage(STORAGE_KEYS.ATTACHMENTS);
+
+    // If there's a saved draft for this schedule type, show modal
+    if (savedActiveStep !== null || savedFormData !== null) {
+      setHasSavedDraft(true);
+      setShowDraftModal(true);
+    }
+
+    // Only reset if browser back/forward is used
+    const handlePopState = () => {
       clearAllFromLocalStorage();
-      setActiveStep(0);
-      setCompletedSteps([]);
-      setFormData({
-        type: 'PPM',
-        scheduleFor: 'Asset',
-        activityName: '',
-        description: '',
-        checklistType: 'Individual',
-        asset: [],
-        service: [],
-        assetGroup: '',
-        assetSubGroup: [],
-        assignTo: '',
-        assignToType: 'user',
-        selectedUsers: [],
-        selectedGroups: [],
-        backupAssignee: '',
-        planDuration: '',
-        planDurationValue: '',
-        emailTriggerRule: '',
-        scanType: '',
-        category: '',
-        submissionTime: '',
-        submissionTimeValue: '',
-        supervisors: '',
-        lockOverdueTask: '',
-        frequency: '',
-        graceTime: '',
-        graceTimeValue: '',
-        endAt: '',
-        supplier: '',
-        startFrom: '',
-        mappings: [],
-        selectedTemplate: '',
-        ticketLevel: 'checklist',
-        ticketAssignedTo: '',
-        ticketCategory: '',
-      });
-      setQuestionSections([
-        {
-          id: '1',
-          title: 'Questions',
-          autoTicket: false,
-          ticketLevel: 'checklist',
-          ticketAssignedTo: '',
-          ticketCategory: '',
-          tasks: [
-            {
-              id: '1',
-              group: '',
-              subGroup: '',
-              task: '',
-              inputType: '',
-              mandatory: false,
-              helpText: false,
-              helpTextValue: '',
-              helpTextAttachments: [],
-              autoTicket: false,
-              weightage: '',
-              rating: false,
-              reading: false,
-              dropdownValues: [{ label: '', type: 'positive' }],
-              radioValues: [{ label: '', type: 'positive' }],
-              checkboxValues: [''],
-              checkboxSelectedStates: [false],
-              optionsInputsValues: ['']
-            }
-          ]
-        }
-      ]);
-      setTimeSetupData({
-        hourMode: 'specific',
-        minuteMode: 'specific',
-        dayMode: 'weekdays',
-        monthMode: 'all',
-        selectedHours: ['12'],
-        selectedMinutes: ['00'],
-        selectedWeekdays: [],
-        selectedDays: [],
-        selectedMonths: [],
-        betweenMinuteStart: '00',
-        betweenMinuteEnd: '59',
-        betweenMonthStart: 'January',
-        betweenMonthEnd: 'December'
-      });
-      setAttachments([]);
+      window.location.reload();
     };
 
-    // Reset state on mount
-    resetState();
-
     // Listen for browser back/forward navigation
-    window.addEventListener('popstate', resetState);
-
-    // Optionally, listen for page reload (F5, Ctrl+R)
-    window.addEventListener('beforeunload', resetState);
+    window.addEventListener('popstate', handlePopState);
 
     // Cleanup listeners on unmount
     return () => {
-      window.removeEventListener('popstate', resetState);
-      window.removeEventListener('beforeunload', resetState);
+      window.removeEventListener('popstate', handlePopState);
     };
   }, []);
 
-  // Save form data to localStorage whenever it changes
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.FORM_DATA, formData);
-  }, [formData]);
+  // NOTE: Removed automatic localStorage saving on state changes
+  // Data is now only saved to localStorage when "Save to Draft" button is clicked
+  // This allows data to stay in state for form submission without persisting prematurely
 
-  // Save question sections to localStorage whenever they change
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS, questionSections);
-  }, [questionSections]);
+  // Handler for continuing with draft
+  const handleContinueWithDraft = () => {
+    const savedActiveStep = loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP);
+    const savedFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
+    const savedQuestionSections = loadFromLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS);
+    const savedTimeSetupData = loadFromLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA);
+    const savedCompletedSteps = loadFromLocalStorage(STORAGE_KEYS.COMPLETED_STEPS);
+    const savedAttachments = loadFromLocalStorage(STORAGE_KEYS.ATTACHMENTS);
 
-  // Save time setup data to localStorage whenever it changes
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA, timeSetupData);
-  }, [timeSetupData]);
+    // Restore active step
+    if (savedActiveStep !== null && typeof savedActiveStep === 'number') {
+      setActiveStep(savedActiveStep);
+    }
 
-  // Save active step to localStorage whenever it changes
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep);
-  }, [activeStep]);
+    // Restore form data
+    if (savedFormData) {
+      setFormData(savedFormData);
+    }
 
-  // Save completed steps to localStorage whenever they change
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.COMPLETED_STEPS, completedSteps);
-  }, [completedSteps]);
+    // Restore question sections
+    if (savedQuestionSections && Array.isArray(savedQuestionSections)) {
+      setQuestionSections(savedQuestionSections);
+    }
 
-  // Save attachments to localStorage whenever they change
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.ATTACHMENTS, attachments);
-  }, [attachments]);
+    // Restore time setup data
+    if (savedTimeSetupData) {
+      setTimeSetupData(savedTimeSetupData);
+    }
+
+    // Restore completed steps
+    if (savedCompletedSteps && Array.isArray(savedCompletedSteps)) {
+      setCompletedSteps(savedCompletedSteps);
+    }
+
+    // Restore attachments
+    if (savedAttachments && Array.isArray(savedAttachments)) {
+      setAttachments(savedAttachments);
+    }
+
+    setShowDraftModal(false);
+
+    // Show a message that draft was restored
+    toast.info("Draft restored! Continue from where you left off.", {
+      position: 'top-right',
+      duration: 3000,
+      style: {
+        background: '#fff',
+        color: 'black',
+        border: 'none',
+      },
+    });
+  };
+
+  // Handler for starting fresh
+  const handleStartFresh = () => {
+    clearAllFromLocalStorage();
+    setShowDraftModal(false);
+    setHasSavedDraft(false);
+
+    toast.info("Starting fresh! Previous draft has been cleared.", {
+      position: 'top-right',
+      duration: 3000,
+      style: {
+        background: '#fff',
+        color: 'black',
+        border: 'none',
+      },
+    });
+  };
 
   // Load data on component mount
   useEffect(() => {
@@ -1839,19 +1842,64 @@ export const AddSchedulePage = () => {
 
 
   const handleSave = async () => {
+    // For Question Setup (step 2), validate first
+    if (activeStep === 2) {
+      const errors = validateQuestionSetup();
+      if (errors.length > 0) {
+        toast.error(
+          <div style={{ textAlign: 'left' }}>
+            <b>Validation Errors:</b>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {errors.map((err, idx) => (
+                <li key={idx} style={{ fontSize: 13 }}>{err}</li>
+              ))}
+            </ul>
+          </div>,
+          {
+            position: 'top-right',
+            duration: 5000,
+            style: {
+              background: '#fff',
+              color: 'black',
+              border: 'none',
+              minWidth: 320
+            },
+          }
+        );
+        return;
+      }
+    }
 
-    // Validate current step first
-    if (!validateCurrentStep()) {
-      toast.error("Please fill all required fields before proceeding.", {
-        position: 'top-right',
-        duration: 4000,
-        style: {
-          background: '#fff',
-          color: 'black',
-          border: 'none',
-        },
-      });
-      return;
+    // For Time Setup (step 3), validate first
+    if (activeStep === 3) {
+      if (!validateCurrentStep()) {
+        toast.error("Please fill all required fields before proceeding.", {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: 'black',
+            border: 'none',
+          },
+        });
+        return;
+      }
+    }
+
+    // For Mapping (step 4), validate current step first
+    if (activeStep === 4) {
+      if (!validateCurrentStep()) {
+        toast.error("Please fill all required fields before proceeding.", {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: 'black',
+            border: 'none',
+          },
+        });
+        return;
+      }
     }
 
     // Show success message for the current step completion
@@ -2159,7 +2207,7 @@ export const AddSchedulePage = () => {
           duration: 4000,
           style: {
             background: '#fff',
-            color:'black',
+            color: 'black',
             border: 'none',
           },
         });
@@ -2214,9 +2262,6 @@ export const AddSchedulePage = () => {
     }
     if (!formData.activityName.trim()) {
       errors['activityName'] = 'Activity Name is required';
-    }
-    if (!formData.description.trim()) {
-      errors['description'] = 'Description is required';
     }
 
     // Update field errors
@@ -2357,15 +2402,19 @@ export const AddSchedulePage = () => {
             errors[`section_${sectionIndex}_task_${taskIndex}_inputType`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have an input type selected`;
           }
           // Group and SubGroup are mandatory
-          if (!task.group || !task.group.trim()) {
-            errors[`section_${sectionIndex}_task_${taskIndex}_group`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a group selected`;
-          }
-          if (!task.subGroup || !task.subGroup.trim()) {
-            errors[`section_${sectionIndex}_task_${taskIndex}_subGroup`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a sub-group selected`;
-          }
+          // if (!task.group || !task.group.trim()) {
+          //   errors[`section_${sectionIndex}_task_${taskIndex}_group`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a group selected`;
+          // }
+          // if (!task.subGroup || !task.subGroup.trim()) {
+          //   errors[`section_${sectionIndex}_task_${taskIndex}_subGroup`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a sub-group selected`;
+          // }
           // Help text is optional, but if enabled, value is required
           if (task.helpText && (!task.helpTextValue || !task.helpTextValue.trim())) {
             errors[`section_${sectionIndex}_task_${taskIndex}_helpTextValue`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} help text value is required when help text is enabled`;
+          }
+          // Help text attachment validation - if help text is enabled, attachment is required
+          if (task.helpText && (!task.helpTextAttachments || task.helpTextAttachments.length === 0)) {
+            errors[`section_${sectionIndex}_task_${taskIndex}_helpTextAttachment`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have at least one help text attachment when help text is enabled`;
           }
           // Validate input type specific values
           if (task.inputType === 'dropdown' && task.dropdownValues.some(val => !val.label || !val.label.trim())) {
@@ -2591,6 +2640,181 @@ export const AddSchedulePage = () => {
       setCompletedSteps(completedSteps.filter(step => step < newActiveStep));
       setActiveStep(newActiveStep);
     }
+  };
+
+  // Proceed to Save: Validates current section and moves to next section
+  const handleProceedToSave = () => {
+    // Don't use this for Mapping step (last step)
+    if (activeStep >= steps.length - 1) {
+      return;
+    }
+
+    // Validate current step
+    if (activeStep === 2) {
+      // For Question Setup step, show all field errors in toast
+      const errors = validateQuestionSetup();
+      if (errors.length > 0) {
+        toast.error(
+          <div style={{ textAlign: 'left' }}>
+            <b>Validation Errors:</b>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {errors.map((err, idx) => (
+                <li key={idx} style={{ fontSize: 13 }}>{err}</li>
+              ))}
+            </ul>
+          </div>,
+          {
+            position: 'top-right',
+            duration: 5000,
+            style: {
+              background: '#fff',
+              color: 'black',
+              border: 'none',
+              minWidth: 320
+            },
+          }
+        );
+        return;
+      }
+    } else {
+      if (!validateCurrentStep()) {
+        toast.error("Please fill all required fields before proceeding.", {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: 'black',
+            border: 'none',
+          },
+        });
+        return;
+      }
+    }
+
+    // Mark current step as completed
+    if (!completedSteps.includes(activeStep)) {
+      setCompletedSteps([...completedSteps, activeStep]);
+    }
+
+    // Show success message for the completed step
+    const stepMessages = {
+      0: "Basic Configuration completed successfully!",
+      1: "Schedule Setup completed successfully!",
+      2: "Question Setup completed successfully!",
+      3: "Time Setup completed successfully!"
+    };
+
+    const currentStepMessage = stepMessages[activeStep as keyof typeof stepMessages];
+    if (currentStepMessage) {
+      toast.success(currentStepMessage, {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#fff',
+          color: 'black',
+          border: 'none',
+        },
+      });
+    }
+
+    // Move to next step (data will only be submitted when Save is clicked on last step)
+    setActiveStep(activeStep + 1);
+    setEditingStep(null);
+
+    // Scroll to top for better UX
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+
+  // Save to Draft: Saves current progress to localStorage
+  // For steps 0-2: Validates, saves to localStorage, and moves to next section
+  // For step 3 (Time Setup): Saves to localStorage and navigates to schedule list
+  const handleSaveToDraft = () => {
+    // Don't use this for Mapping step (last step) - mapping step only has Submit button
+    if (activeStep >= steps.length - 1) {
+      return;
+    }
+
+    // Validate current step first
+    if (activeStep === 2) {
+      const errors = validateQuestionSetup();
+      if (errors.length > 0) {
+        // Show all errors in a single toast
+        const errorMessage = errors.join('\n');
+        toast.error(errorMessage, {
+          position: 'top-right',
+          duration: 6000,
+          style: {
+            background: '#fff',
+            color: 'black',
+            border: 'none',
+            whiteSpace: 'pre-line'
+          },
+        });
+        return;
+      }
+    } else {
+      if (!validateCurrentStep()) {
+        toast.error("Please fill all required fields before proceeding.", {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: 'black',
+            border: 'none',
+          },
+        });
+        return;
+      }
+    }
+
+    // Save ALL current state to localStorage
+    saveToLocalStorage(STORAGE_KEYS.FORM_DATA, formData);
+    saveToLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS, questionSections);
+    saveToLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA, timeSetupData);
+
+    // For Time Setup (step 3), save current step so user returns to Time Setup
+    // For other steps (0-2), save next step to move forward
+    if (activeStep === 3) {
+      saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep); // Save current step (Time Setup)
+    } else {
+      saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep + 1); // Save next step
+    }
+
+    saveToLocalStorage(STORAGE_KEYS.COMPLETED_STEPS, [...completedSteps, activeStep]);
+    saveToLocalStorage(STORAGE_KEYS.ATTACHMENTS, attachments);
+
+    // Mark current step as completed
+    if (!completedSteps.includes(activeStep)) {
+      setCompletedSteps([...completedSteps, activeStep]);
+    }
+
+    // Show success message
+    toast.success("Progress saved to draft successfully!", {
+      position: 'top-right',
+      duration: 4000,
+      style: {
+        background: '#fff',
+        color: 'black',
+        border: 'none',
+      },
+    });
+
+    // For Time Setup (step 3), navigate to schedule list instead of moving to next step
+    if (activeStep === 3) {
+      navigate('/maintenance/schedule');
+      return;
+    }
+
+    // For other steps (0-2), move to next step
+    setActiveStep(activeStep + 1);
+    setEditingStep(null);
+
+    // Scroll to top for better UX
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleStepClick = (step: number) => {
@@ -2874,6 +3098,7 @@ export const AddSchedulePage = () => {
         submission_time_type: formData.submissionTime || "",
         submission_time_value: formData.submissionTimeValue || "",
         supplier_id: formData.supplier || "",
+        before_after_enabled: formData.checkInPhotograph === 'active',
         // Add attachments from basic configuration step
         attachments: attachments.map(attachment => ({
           filename: attachment.name,
@@ -3073,7 +3298,7 @@ export const AddSchedulePage = () => {
               disabled={stepIndex < activeStep && editingStep !== stepIndex}
               label={
                 <span style={{ fontSize: '16px' }}>
-                  Description <span style={{ color: "red" }}>*</span>
+                  Description
                 </span>
               }
               placeholder="Enter Description/SOP"
@@ -3261,391 +3486,588 @@ export const AddSchedulePage = () => {
                 Schedule Setup
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 3 }}>
               {
-                formData.scheduleFor === 'Asset' && (<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  Checklist Type
-                </Typography>)}
-              {stepIndex < activeStep && (
-                <MuiButton
-                  variant="outlined"
-                  size="small"
-                  startIcon={<Edit />}
-                  onClick={() => handleStepClick(stepIndex)}
-                  sx={{
-                    color: '#C72030',
-                    borderColor: '#C72030',
-                    fontSize: '12px',
-                    padding: '4px 12px',
-                    minWidth: 'auto',
-                    '&:hover': {
-                      borderColor: '#C72030',
-                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                    }
-                  }}
-                >
-                  Edit
-                </MuiButton>
-              )}
-            </Box>
-            <Box sx={{ mb: 3 }}>
-              {
-                formData.scheduleFor === 'Asset' && (<RadioGroup
-                  row
-                  value={formData.checklistType}
-                  onChange={(e) => handleChecklistTypeChange(e.target.value)}
-                >
-                  <FormControlLabel
-                    value="Individual"
-                    control={
-                      <Radio
-                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                      />
-                    }
-                    label="Individual"
-                  />
+                formData.scheduleFor === 'Asset' && (
+                  <Box>
 
-                  <FormControlLabel
-                    value="Asset Group"
-                    control={
-                      <Radio
-                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                      />
-                    }
-                    label="Asset Group"
-                  />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      Checklist Type
+                    </Typography>
+                    <Box sx={{ mb: 3 }}>
+                      {
+                        formData.scheduleFor === 'Asset' && (<RadioGroup
+                          row
+                          value={formData.checklistType}
+                          onChange={(e) => handleChecklistTypeChange(e.target.value)}
+                        >
+                          <FormControlLabel
+                            value="Individual"
+                            control={
+                              <Radio
+                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                              />
+                            }
+                            label="Individual"
+                          />
 
-                  {/* <FormControlLabel 
+                          <FormControlLabel
+                            value="Asset Group"
+                            control={
+                              <Radio
+                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                              />
+                            }
+                            label="Asset Group"
+                          />
+
+                          {/* <FormControlLabel 
                     value="Branching" 
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
                     label="Branching" 
                   /> */}
-                </RadioGroup>)}
-            </Box>
+                        </RadioGroup>)}
+                    </Box>
+                  </Box>
+                )}
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-              {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
-              {formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && (
-                <Box>
-                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Select Assets <span style={{ color: 'red' }}>*</span></InputLabel>
-                    <Select
-                      multiple
-                      label="Select Assets"
-                      notched
-                      displayEmpty
-                      value={formData.asset}
-                      onChange={e => handleAutocompleteChange('asset', assets.filter(asset => e.target.value.includes(asset.id.toString())))}
-                      renderValue={(selected) => {
-                        if (!selected || selected.length === 0) {
-                          return <span style={{ color: '#aaa' }}>Select Assets</span>;
-                        }
-                        return assets
-                          .filter(asset => selected.includes(asset.id.toString()))
-                          .map(asset => asset.name)
-                          .join(', ');
-                      }}
-                      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.assets}
-                    >
-                      <MenuItem value="">Select Assets</MenuItem>
-                      {assets && assets.map((option) => (
-                        <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  {loading.assets && (
-                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                      Loading assets...
-                    </Typography>
-                  )}
-                </Box>
-              )}
-
-              {/* Service Dropdown - Show when scheduleFor is Service */}
-              {formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' && (
-                <Box>
-                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Select Services <span style={{ color: 'red' }}>*</span></InputLabel>
-                    <Select
-                      multiple
-                      label="Select Services"
-                      notched
-                      displayEmpty
-                      value={formData.service}
-                      onChange={e => handleAutocompleteChange('service', services.filter(service => e.target.value.includes(service.id.toString())))}
-                      renderValue={(selected) =>
-                        !selected || selected.length === 0
-                          ? <span style={{ color: '#aaa' }}>Select Services</span>
-                          : services
-                            .filter(service => selected.includes(service.id.toString()))
-                            .map(service => service.service_name)
-                            .join(', ')
+              {/* Right side - Check-in with before/after photograph */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'end', alignItems: formData.scheduleFor === 'Asset' ? 'end' : 'start', gap: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  Check-in with before/after photograph
+                </Typography>
+                <RadioGroup
+                  style={{ marginTop: '-18px', marginRight: '-12px' }}
+                  row
+                  value={formData.checkInPhotograph || 'inactive'}
+                  onChange={(e) => setFormData({ ...formData, checkInPhotograph: e.target.value })}
+                >
+                  <FormControlLabel
+                    value="active"
+                    control={
+                      <Radio
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      />
+                    }
+                    label="Active"
+                  />
+                  <FormControlLabel
+                    value="inactive"
+                    control={
+                      <Radio
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      />
+                    }
+                    label="Inactive"
+                  />
+                </RadioGroup>
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      fontSize: '12px',
+                      padding: '4px 12px',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
                       }
-                      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.services}
-                    >
-                      <MenuItem value="" disabled>Select Services</MenuItem>
-                      {services && services.map((option) => (
-                        <MenuItem key={option.id} value={option.id.toString()}>{option.service_name}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  {loading.services && (
-                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                      Loading services...
-                    </Typography>
-                  )}
-                </Box>
-              )}
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
+              </Box>
 
-              {/* Conditional Asset Group Dropdown - Show for Asset Group and when scheduleFor is Asset */}
-              {formData.scheduleFor === 'Asset' && formData.checklistType === 'Asset Group' && (
-                <>
-                  <Box>
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Asset Group <span style={{ color: 'red' }}>*</span></InputLabel>
+            </Box>
+            <Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+                {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
+                {formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && (
+                  <Box sx={{ minWidth: 0 }}>
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{
+                        '& .MuiInputBase-root': {
+                          ...fieldStyles,
+                          minWidth: 0, // allow the control to shrink inside the grid column
+                        },
+                      }}
+                    >
+                      <InputLabel shrink>
+                        Select Assets <span style={{ color: 'red' }}>*</span>
+                      </InputLabel>
+
                       <Select
-                        label="Asset Group"
+                        multiple
+                        label="Select Assets"
                         notched
                         displayEmpty
-                        value={formData.assetGroup}
-                        onChange={e => handleAssetGroupChange(e.target.value)}
-                        disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.groups}
+                        value={formData.asset}
+                        onChange={e => handleAutocompleteChange('asset', assets.filter(asset => e.target.value.includes(asset.id.toString())))}
+                        renderValue={(selected) => {
+                          if (!selected || selected.length === 0) {
+                            return <span style={{ color: '#aaa' }}>Select Assets</span>;
+                          }
+                          const names = assets
+                            .filter(asset => selected.includes(asset.id.toString()))
+                            .map(asset => asset.name)
+                            .join(', ');
+                          return (
+                            <span
+                              title={names}
+                              style={{
+                                display: 'inline-block',
+                                maxWidth: '100%',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}
+                            >
+                              {names}
+                            </span>
+                          );
+                        }}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.assets}
+                        sx={{
+                          minWidth: 0,
+                          width: '100%',
+                          maxWidth: '100%',
+                          '& .MuiSelect-select': {
+                            display: 'block',
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            style: {
+                              minWidth: 200,
+                              maxWidth: 520,
+                              width: 'auto'
+                            }
+                          }
+                        }}
                       >
-                        <MenuItem value="">Select Asset Group</MenuItem>
-                        {assetGroups && assetGroups.map((option) => (
+                        <MenuItem value="">Select Assets</MenuItem>
+                        {assets && assets.map((option) => (
                           <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
                         ))}
                       </Select>
                     </FormControl>
-                    {loading.groups && (
+
+                    {loading.assets && (
                       <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                        Loading asset groups...
+                        Loading assets...
                       </Typography>
                     )}
                   </Box>
+                )}
 
-                  {/* Asset Sub-Group Dropdown - Show when Asset Group is selected */}
-                  {selectedAssetGroup && (
-                    <FormControl fullWidth>
-                      <InputLabel>
-                        Select Asset Sub-Groups <span style={{ color: 'red' }}>*</span>
+                {/* Service Dropdown - Show when scheduleFor is Service */}
+                {formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' && (
+                  // Example for Service Dropdown
+                  <Box >
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{
+                        '& .MuiInputBase-root': {
+                          ...fieldStyles,
+                          width: '100%',
+                          maxWidth: 340, // <-- Set a fixed max width for the input
+                        },
+                      }}
+                    >
+                      <InputLabel shrink>Select Services <span style={{ color: 'red' }}>*</span></InputLabel>
+                      <Select
+                        multiple
+                        label="Select Services"
+                        notched
+                        displayEmpty
+                        value={formData.service}
+                        onChange={e => handleAutocompleteChange('service', services.filter(service => e.target.value.includes(service.id.toString())))}
+                        renderValue={(selected) => {
+                          const names = services
+                            .filter(service => selected.includes(service.id.toString()))
+                            .map(service => service.service_name)
+                            .join(', ');
+                          return (
+                            <span
+                              style={{
+                                display: 'block',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                maxWidth: 320, // <-- Match the input width for ellipsis
+                              }}
+                              title={names}
+                            >
+                              {selected.length === 0 ? 'Select Services' : names}
+                            </span>
+                          );
+                        }}
+                        sx={{
+                          width: '100%',
+                          maxWidth: 340, // <-- Match the FormControl
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            style: {
+                              width: 340, // <-- Match the input width for dropdown menu
+                            },
+                          },
+                        }}
+                      >
+                        <MenuItem value="" disabled>Select Services</MenuItem>
+                        {services && services.map((option) => (
+                          <MenuItem key={option.id} value={option.id.toString()}>{option.service_name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                )}
+
+                {/* Conditional Asset Group Dropdown - Show for Asset Group and when scheduleFor is Asset */}
+                {formData.scheduleFor === 'Asset' && formData.checklistType === 'Asset Group' && (
+                  <>
+                    <Box>
+                      <FormControl
+                        fullWidth
+                        variant="outlined"
+                        sx={{
+                          '& .MuiInputBase-root': {
+                            ...fieldStyles,
+                            width: '100%',
+                            maxWidth: 340, // <-- Set a fixed max width for the input
+                          },
+                        }}
+                      >
+                        <InputLabel shrink>Select Assets <span style={{ color: 'red' }}>*</span></InputLabel>
+                        <Select
+                          multiple
+                          label="Select Assets"
+                          notched
+                          displayEmpty
+                          value={formData.asset}
+                          onChange={e => handleAutocompleteChange('asset', assets.filter(asset => e.target.value.includes(asset.id.toString())))}
+                          renderValue={(selected) => {
+                            const names = assets
+                              .filter(asset => selected.includes(asset.id.toString()))
+                              .map(asset => asset.name)
+                              .join(', ');
+                            return (
+                              <span
+                                style={{
+                                  display: 'block',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  maxWidth: 320, // <-- Match the input width for ellipsis
+                                }}
+                                title={names}
+                              >
+                                {selected.length === 0 ? 'Select Assets' : names}
+                              </span>
+                            );
+                          }}
+                          sx={{
+                            width: '100%',
+                            maxWidth: 340, // <-- Match the FormControl
+                          }}
+                          MenuProps={{
+                            PaperProps: {
+                              style: {
+                                width: 340, // <-- Match the input width for dropdown menu
+                              },
+                            },
+                          }}
+                        >
+                          <MenuItem value="" disabled>Select Assets</MenuItem>
+                          {assets && assets.map((option) => (
+                            <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      {loading.groups && (
+                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                          Loading asset groups...
+                        </Typography>
+                      )}
+                    </Box>
+
+                    {/* Asset Sub-Group Dropdown - Show when Asset Group is selected */}
+                    {selectedAssetGroup && (
+                      <FormControl fullWidth>
+                        <InputLabel>
+                          Select Asset Sub-Groups <span style={{ color: 'red' }}>*</span>
+                        </InputLabel>
+                        <Select
+                          multiple
+                          value={formData.assetSubGroup}
+                          onChange={(e) => handleMultiSelectChange('assetSubGroup', e)}
+                          input={<OutlinedInput label="Select Asset Sub-Groups" />}
+                          renderValue={(selected) => (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {selected.map((value) => {
+                                const subGroup = assetSubGroups?.find(sg => sg.id.toString() === value);
+                                return (
+                                  <Chip key={value} label={subGroup?.name || value} size="small" />
+                                );
+                              })}
+                            </Box>
+                          )}
+                          disabled={loading.subGroups}
+                        >
+                          {assetSubGroups && assetSubGroups.map((subGroup) => (
+                            <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
+                              {subGroup.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                        {loading.subGroups && (
+                          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                            Loading sub-groups...
+                          </Typography>
+                        )}
+                      </FormControl>
+                    )}
+                  </>
+                )}
+
+                {/* Assign To Type Selection */}
+                <Box>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Assign To <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <Select
+                      label="Assign To"
+                      notched
+                      displayEmpty
+                      value={formData.assignToType}
+                      onChange={e => setFormData({ ...formData, assignToType: e.target.value, selectedUsers: [], selectedGroups: [] })}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    >
+                      <MenuItem value="">Select Assign To</MenuItem>
+                      <MenuItem value="user">User</MenuItem>
+                      <MenuItem value="group">Group</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                {/* Multi-select Users - Show when assignToType is 'user' */}
+                {formData.assignToType === 'user' && (
+                  <Box sx={{ minWidth: 0 }}>
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{
+                        '& .MuiInputBase-root': fieldStyles,
+                        minWidth: 0,        // allow shrink inside grid column
+                        maxWidth: '100%',
+                      }}
+                    >
+                      <InputLabel shrink>
+                        Select Users <span style={{ color: 'red' }}>*</span>
                       </InputLabel>
                       <Select
                         multiple
-                        value={formData.assetSubGroup}
-                        onChange={(e) => handleMultiSelectChange('assetSubGroup', e)}
-                        input={<OutlinedInput label="Select Asset Sub-Groups" />}
-                        renderValue={(selected) => (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {selected.map((value) => {
-                              const subGroup = assetSubGroups?.find(sg => sg.id.toString() === value);
-                              return (
-                                <Chip key={value} label={subGroup?.name || value} size="small" />
-                              );
-                            })}
-                          </Box>
-                        )}
-                        disabled={loading.subGroups}
+                        label="Select Users"
+                        notched
+                        displayEmpty
+                        value={formData.selectedUsers}
+                        onChange={e => handleAutocompleteChange('selectedUsers', users.filter(user => e.target.value.includes(user.id.toString())))}
+                        renderValue={(selected) => {
+                          if (!selected || selected.length === 0) {
+                            return <span style={{ color: '#aaa' }}>Select Users</span>;
+                          }
+                          const names = users
+                            .filter(user => selected.includes(user.id.toString()))
+                            .map(user => user.full_name)
+                            .join(', ');
+                          return (
+                            <span
+                              title={names}
+                              style={{
+                                display: 'inline-block',
+                                maxWidth: '100%',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}
+                            >
+                              {names}
+                            </span>
+                          );
+                        }}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
+                        sx={{
+                          minWidth: 0,
+                          maxWidth: '100%',
+                          width: '100%',
+                          // ensure the internal select element truncates instead of forcing width
+                          '& .MuiSelect-select': {
+                            display: 'block',
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }
+                        }}
+                        MenuProps={{
+                          PaperProps: { style: { minWidth: 200, maxWidth: 520, width: 'auto' } }
+                        }}
                       >
-                        {assetSubGroups && assetSubGroups.map((subGroup) => (
-                          <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
-                            {subGroup.name}
-                          </MenuItem>
+                        <MenuItem value="">Select Users</MenuItem>
+                        {users && users.map((option) => (
+                          <MenuItem key={option.id} value={option.id.toString()}>{option.full_name}</MenuItem>
                         ))}
                       </Select>
-                      {loading.subGroups && (
-                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                          Loading sub-groups...
-                        </Typography>
-                      )}
                     </FormControl>
-                  )}
-                </>
-              )}
+                  </Box>
+                )}
 
-              {/* Assign To Type Selection */}
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Assign To <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    label="Assign To"
-                    notched
-                    displayEmpty
-                    value={formData.assignToType}
-                    onChange={e => setFormData({ ...formData, assignToType: e.target.value, selectedUsers: [], selectedGroups: [] })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Assign To</MenuItem>
-                    <MenuItem value="user">User</MenuItem>
-                    <MenuItem value="group">Group</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-
-              {/* Multi-select Users - Show when assignToType is 'user' */}
-              {formData.assignToType === 'user' && (
-                <Box>
+                {/* Multi-select Groups - Show when assignToType is 'group' */}
+                {formData.assignToType === 'group' && (
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Select Users <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <InputLabel shrink>Select Groups <span style={{ color: 'red' }}>*</span></InputLabel>
                     <Select
                       multiple
-                      label="Select Users"
+                      label="Select Groups"
                       notched
                       displayEmpty
-                      value={formData.selectedUsers}
-                      onChange={e => handleAutocompleteChange('selectedUsers', users.filter(user => e.target.value.includes(user.id.toString())))}
+                      value={formData.selectedGroups}
+                      onChange={(e) => handleMultiSelectChange('selectedGroups', e)}
                       renderValue={(selected) => {
                         if (!selected || selected.length === 0) {
-                          return <span style={{ color: '#aaa' }}>Select Users</span>;
+                          return <span style={{ color: '#aaa' }}>Select Groups</span>;
                         }
-                        return users
-                          .filter(user => selected.includes(user.id.toString()))
-                          .map(user => user.full_name)
+                        return groups
+                          .filter(group => selected.includes(group.id.toString()))
+                          .map(group => group.name)
                           .join(', ');
                       }}
-                      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
+                      disabled={loading.groups}
                     >
-                      <MenuItem value="">Select Users</MenuItem>
+                      <MenuItem value="">Select Groups</MenuItem>
+                      {groups.map((group) => (
+                        <MenuItem key={group.id} value={group.id.toString()}>
+                          {group.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {loading.groups && (
+                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                        Loading groups...
+                      </Typography>
+                    )}
+                  </FormControl>
+                )}
+
+                <Box>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Backup Assignee <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <Select
+                      label="Backup Assignee"
+                      notched
+                      displayEmpty
+                      value={formData.backupAssignee}
+                      onChange={e => setFormData({ ...formData, backupAssignee: e.target.value })}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    >
+                      <MenuItem value="">Select Backup Assignee</MenuItem>
                       {users && users.map((option) => (
                         <MenuItem key={option.id} value={option.id.toString()}>{option.full_name}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>
-                </Box>
-              )}
-
-              {/* Multi-select Groups - Show when assignToType is 'group' */}
-              {formData.assignToType === 'group' && (
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Select Groups <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    multiple
-                    label="Select Groups"
-                    notched
-                    displayEmpty
-                    value={formData.selectedGroups}
-                    onChange={(e) => handleMultiSelectChange('selectedGroups', e)}
-                    renderValue={(selected) => {
-                      if (!selected || selected.length === 0) {
-                        return <span style={{ color: '#aaa' }}>Select Groups</span>;
-                      }
-                      return groups
-                        .filter(group => selected.includes(group.id.toString()))
-                        .map(group => group.name)
-                        .join(', ');
-                    }}
-                    disabled={loading.groups}
-                  >
-                    <MenuItem value="">Select Groups</MenuItem>
-                    {groups.map((group) => (
-                      <MenuItem key={group.id} value={group.id.toString()}>
-                        {group.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {loading.groups && (
+                  {loading.users && (
                     <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                      Loading groups...
+                      Loading users...
                     </Typography>
                   )}
-                </FormControl>
-              )}
+                </Box>
 
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Backup Assignee <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    label="Backup Assignee"
-                    notched
-                    displayEmpty
-                    value={formData.backupAssignee}
-                    onChange={e => setFormData({ ...formData, backupAssignee: e.target.value })}
+                {/* Plan Duration with conditional input */}
+                <Box>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Plan Duration <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <Select
+                      label="Plan Duration"
+                      notched
+                      displayEmpty
+                      value={formData.planDuration}
+                      onChange={e => setFormData({ ...formData, planDuration: e.target.value, planDurationValue: '' })}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    >
+                      <MenuItem value="">Select Plan Duration</MenuItem>
+                      <MenuItem value="minutes">Minutes</MenuItem>
+                      <MenuItem value="hour">Hour</MenuItem>
+                      <MenuItem value="day">Day</MenuItem>
+                      <MenuItem value="week">Week</MenuItem>
+                      <MenuItem value="month">Month</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                {/* Plan Duration Value Input - Show when duration type is selected */}
+                {needsValueInput(formData.planDuration) && (
+                  <TextField
                     disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Backup Assignee</MenuItem>
-                    {users && users.map((option) => (
-                      <MenuItem key={option.id} value={option.id.toString()}>{option.full_name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {loading.users && (
-                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                    Loading users...
-                  </Typography>
+
+                    label={<span>Plan Duration ({formData.planDuration}) <span style={{ color: 'red' }}>*</span></span>}
+                    type="number"
+                    fullWidth
+                    value={formData.planDurationValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (Number(value) < 0) return;
+                      setFormData({ ...formData, planDurationValue: value });
+                    }}
+                    placeholder={`Enter number of ${formData.planDuration}`}
+                    inputProps={{
+                      min: 0,
+                      onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                    }}
+                  />
                 )}
-              </Box>
 
-              {/* Plan Duration with conditional input */}
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Plan Duration <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    label="Plan Duration"
-                    notched
-                    displayEmpty
-                    value={formData.planDuration}
-                    onChange={e => setFormData({ ...formData, planDuration: e.target.value, planDurationValue: '' })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Plan Duration</MenuItem>
-                    <MenuItem value="minutes">Minutes</MenuItem>
-                    <MenuItem value="hour">Hour</MenuItem>
-                    <MenuItem value="day">Day</MenuItem>
-                    <MenuItem value="week">Week</MenuItem>
-                    <MenuItem value="month">Month</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
+                <Box>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Email Trigger Rule</InputLabel>
+                    <Select
+                      label="Email Trigger Rule"
+                      notched
+                      displayEmpty
+                      value={formData.emailTriggerRule}
+                      onChange={e => setFormData({ ...formData, emailTriggerRule: e.target.value })}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.emailRules}
+                    >
+                      <MenuItem value="">Select Email Trigger Rule</MenuItem>
+                      {emailRules.map(rule => (
+                        <MenuItem key={rule.id} value={rule.id.toString()}>{rule.rule_name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  {loading.emailRules && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Loading email rules...
+                    </Typography>
+                  )}
+                </Box>
 
-              {/* Plan Duration Value Input - Show when duration type is selected */}
-              {needsValueInput(formData.planDuration) && (
-                <TextField
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
-
-                  label={<span>Plan Duration ({formData.planDuration}) <span style={{ color: 'red' }}>*</span></span>}
-                  type="number"
-                  fullWidth
-                  value={formData.planDurationValue}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (Number(value) < 0) return;
-                    setFormData({ ...formData, planDurationValue: value });
-                  }}
-                  placeholder={`Enter number of ${formData.planDuration}`}
-                  inputProps={{
-                    min: 0,
-                    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
-                  }}
-                />
-              )}
-
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Email Trigger Rule</InputLabel>
-                  <Select
-                    label="Email Trigger Rule"
-                    notched
-                    displayEmpty
-                    value={formData.emailTriggerRule}
-                    onChange={e => setFormData({ ...formData, emailTriggerRule: e.target.value })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.emailRules}
-                  >
-                    <MenuItem value="">Select Email Trigger Rule</MenuItem>
-                    {emailRules.map(rule => (
-                      <MenuItem key={rule.id} value={rule.id.toString()}>{rule.rule_name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {loading.emailRules && (
-                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                    Loading email rules...
-                  </Typography>
-                )}
-              </Box>
-
-              {/* <Box>
+                {/* <Box>
                 <Autocomplete
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
@@ -3676,110 +4098,110 @@ export const AddSchedulePage = () => {
                 />
               </Box> */}
 
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Category <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    label="Category"
-                    notched
-                    displayEmpty
-                    value={formData.category}
-                    onChange={e => setFormData({ ...formData, category: e.target.value })}
+                <Box>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Category <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <Select
+                      label="Category"
+                      notched
+                      displayEmpty
+                      value={formData.category}
+                      onChange={e => setFormData({ ...formData, category: e.target.value })}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    >
+                      <MenuItem value="">Select Category</MenuItem>
+                      <MenuItem value="Technical">Technical</MenuItem>
+                      <MenuItem value="Non Technical">Non-Technical</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                {/* Submission Time with conditional input */}
+                <Box>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Submission Time</InputLabel>
+                    <Select
+                      label="Submission Time"
+                      notched
+                      displayEmpty
+                      value={formData.submissionTime}
+                      onChange={e => setFormData({ ...formData, submissionTime: e.target.value, submissionTimeValue: '' })}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    >
+                      <MenuItem value="">Select Submission Time</MenuItem>
+                      <MenuItem value="minutes">Minutes</MenuItem>
+                      <MenuItem value="hour">Hour</MenuItem>
+                      <MenuItem value="day">Day</MenuItem>
+                      <MenuItem value="week">Week</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                {/* Submission Time Value Input - Show when time type is selected */}
+                {needsValueInput(formData.submissionTime) && (
+                  <TextField
                     disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Category</MenuItem>
-                    <MenuItem value="Technical">Technical</MenuItem>
-                    <MenuItem value="Non Technical">Non-Technical</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
 
-              {/* Submission Time with conditional input */}
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Submission Time</InputLabel>
-                  <Select
-                    label="Submission Time"
-                    notched
-                    displayEmpty
-                    value={formData.submissionTime}
-                    onChange={e => setFormData({ ...formData, submissionTime: e.target.value, submissionTimeValue: '' })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Submission Time</MenuItem>
-                    <MenuItem value="minutes">Minutes</MenuItem>
-                    <MenuItem value="hour">Hour</MenuItem>
-                    <MenuItem value="day">Day</MenuItem>
-                    <MenuItem value="week">Week</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-
-              {/* Submission Time Value Input - Show when time type is selected */}
-              {needsValueInput(formData.submissionTime) && (
-                <TextField
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
-
-                  label={<span>Submission Time ({formData.submissionTime}) <span style={{ color: 'red' }}>*</span></span>}
-                  type="number"
-                  fullWidth
-                  value={formData.submissionTimeValue}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (Number(value) < 0) return;
-                    setFormData({ ...formData, submissionTimeValue: value });
-                  }}
-                  inputProps={{
-                    min: 0,
-                    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
-                  }}
-                  placeholder={`Enter number of ${formData.submissionTime}`}
-                />
-              )}
-
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Supervisors </InputLabel>
-                  <Select
-                    label="Supervisors"
-                    notched
-                    displayEmpty
-                    value={formData.supervisors}
-                    onChange={e => setFormData({ ...formData, supervisors: e.target.value })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
-                  >
-                    <MenuItem value="">Select Supervisors</MenuItem>
-                    {users && users.map(user => (
-                      <MenuItem key={user.id} value={user.id.toString()}>{user.full_name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {loading.users && (
-                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                    Loading users...
-                  </Typography>
+                    label={<span>Submission Time ({formData.submissionTime}) <span style={{ color: 'red' }}>*</span></span>}
+                    type="number"
+                    fullWidth
+                    value={formData.submissionTimeValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (Number(value) < 0) return;
+                      setFormData({ ...formData, submissionTimeValue: value });
+                    }}
+                    inputProps={{
+                      min: 0,
+                      onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                    }}
+                    placeholder={`Enter number of ${formData.submissionTime}`}
+                  />
                 )}
-              </Box>
 
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Lock Overdue Task <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    label="Lock Overdue Task"
-                    notched
-                    displayEmpty
-                    value={formData.lockOverdueTask}
-                    onChange={e => setFormData({ ...formData, lockOverdueTask: e.target.value })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Lock Status</MenuItem>
-                    <MenuItem value="true">Yes</MenuItem>
-                    <MenuItem value="false">No</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
+                <Box>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Supervisors </InputLabel>
+                    <Select
+                      label="Supervisors"
+                      notched
+                      displayEmpty
+                      value={formData.supervisors}
+                      onChange={e => setFormData({ ...formData, supervisors: e.target.value })}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
+                    >
+                      <MenuItem value="">Select Supervisors</MenuItem>
+                      {users && users.map(user => (
+                        <MenuItem key={user.id} value={user.id.toString()}>{user.full_name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  {loading.users && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Loading users...
+                    </Typography>
+                  )}
+                </Box>
 
-              {/* <Box>
+                <Box>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Lock Overdue Task <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <Select
+                      label="Lock Overdue Task"
+                      notched
+                      displayEmpty
+                      value={formData.lockOverdueTask}
+                      onChange={e => setFormData({ ...formData, lockOverdueTask: e.target.value })}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    >
+                      <MenuItem value="">Select Lock Status</MenuItem>
+                      <MenuItem value="true">Yes</MenuItem>
+                      <MenuItem value="false">No</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                {/* <Box>
                 <Autocomplete
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
@@ -3822,131 +4244,132 @@ export const AddSchedulePage = () => {
                 />
               </Box> */}
 
-              {/* Grace Time with conditional input */}
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Grace Time <span style={{ color: 'red' }}>*</span></InputLabel>
-                  <Select
-                    label="Grace Time"
-                    notched
-                    displayEmpty
-                    value={formData.graceTime}
-                    onChange={e => setFormData({ ...formData, graceTime: e.target.value, graceTimeValue: '' })}
+                {/* Grace Time with conditional input */}
+                <Box>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Grace Time <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <Select
+                      label="Grace Time"
+                      notched
+                      displayEmpty
+                      value={formData.graceTime}
+                      onChange={e => setFormData({ ...formData, graceTime: e.target.value, graceTimeValue: '' })}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    >
+                      <MenuItem value="">Select Grace Time</MenuItem>
+                      <MenuItem value="minutes">Minutes</MenuItem>
+                      <MenuItem value="hour">Hour</MenuItem>
+                      <MenuItem value="day">Day</MenuItem>
+                      <MenuItem value="week">Week</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                {/* Grace Time Value Input - Show when time type is selected */}
+                {needsValueInput(formData.graceTime) && (
+                  <TextField
                     disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  >
-                    <MenuItem value="">Select Grace Time</MenuItem>
-                    <MenuItem value="minutes">Minutes</MenuItem>
-                    <MenuItem value="hour">Hour</MenuItem>
-                    <MenuItem value="day">Day</MenuItem>
-                    <MenuItem value="week">Week</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-
-              {/* Grace Time Value Input - Show when time type is selected */}
-              {needsValueInput(formData.graceTime) && (
-                <TextField
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  label={
-                    <span>
-                      Grace Time ({formData.graceTime}) <span style={{ color: 'red' }}>*</span>
-                    </span>
-                  }
-                  type="number"
-                  fullWidth
-                  value={formData.graceTimeValue}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (Number(value) < 0) return;
-                    setFormData({ ...formData, graceTimeValue: value });
-                  }}
-                  inputProps={{
-                    min: 0,
-                    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
-                  }}
-                  placeholder={`Enter number of ${formData.graceTime}`}
-                />
-              )}
-
-              <Box>
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Supplier </InputLabel>
-                  <Select
-                    label="Supplier"
-                    notched
-                    displayEmpty
-                    value={formData.supplier}
-                    onChange={e => setFormData({ ...formData, supplier: e.target.value })}
-                    disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.suppliers}
-                  >
-                    <MenuItem value="">Select Supplier</MenuItem>
-                    {suppliers && suppliers.map(supplier => (
-                      <MenuItem key={supplier.id} value={supplier.id.toString()}>{supplier.name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {loading.suppliers && (
-                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                    Loading suppliers...
-                  </Typography>
+                    label={
+                      <span>
+                        Grace Time ({formData.graceTime}) <span style={{ color: 'red' }}>*</span>
+                      </span>
+                    }
+                    type="number"
+                    fullWidth
+                    value={formData.graceTimeValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (Number(value) < 0) return;
+                      setFormData({ ...formData, graceTimeValue: value });
+                    }}
+                    inputProps={{
+                      min: 0,
+                      onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                    }}
+                    placeholder={`Enter number of ${formData.graceTime}`}
+                  />
                 )}
-              </Box>
 
-              <Box>
-                <TextField
-                  label={
-                    <span>
-                      Start Date <span style={{ color: 'red' }}>*</span>
-                    </span>
-                  }
-                  id="startFrom"
-                  type="date"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.startFrom}
-                  onChange={e => setFormData({ ...formData, startFrom: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  sx={{ mt: 1 }}
-                  placeholder="Select Start Date"
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  inputProps={{
-                    max: formData.endAt || undefined,
-                  }}
-                  error={Boolean(fieldErrors.startFrom)}
-                  helperText={fieldErrors.startFrom}
-                />
-              </Box>
+                <Box>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Supplier </InputLabel>
+                    <Select
+                      label="Supplier"
+                      notched
+                      displayEmpty
+                      value={formData.supplier}
+                      onChange={e => setFormData({ ...formData, supplier: e.target.value })}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.suppliers}
+                    >
+                      <MenuItem value="">Select Supplier</MenuItem>
+                      {suppliers && suppliers.map(supplier => (
+                        <MenuItem key={supplier.id} value={supplier.id.toString()}>{supplier.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  {loading.suppliers && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Loading suppliers...
+                    </Typography>
+                  )}
+                </Box>
 
-              <Box>
-                <TextField
-                  label={
-                    <span>
-                      End Date <span style={{ color: 'red' }}>*</span>
-                    </span>
-                  }
-                  id="endAt"
-                  type="date"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.endAt}
-                  onChange={e => setFormData({ ...formData, endAt: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  sx={{ mt: 1 }}
-                  placeholder="Select End Date"
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                  inputProps={{
-                    min: formData.startFrom || undefined,
-                  }}
-                  error={Boolean(fieldErrors.endAt) || (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom)}
-                  helperText={
-                    fieldErrors.endAt ||
-                    (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom
-                      ? "End date cannot be before start date"
-                      : "")
-                  }
-                />
+                <Box>
+                  <TextField
+                    label={
+                      <span>
+                        Start Date <span style={{ color: 'red' }}>*</span>
+                      </span>
+                    }
+                    id="startFrom"
+                    type="date"
+                    fullWidth
+                    variant="outlined"
+                    value={formData.startFrom}
+                    onChange={e => setFormData({ ...formData, startFrom: e.target.value })}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                    placeholder="Select Start Date"
+                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    inputProps={{
+                      max: formData.endAt || undefined,
+                    }}
+                    error={Boolean(fieldErrors.startFrom)}
+                    helperText={fieldErrors.startFrom}
+                  />
+                </Box>
+
+                <Box>
+                  <TextField
+                    label={
+                      <span>
+                        End Date <span style={{ color: 'red' }}>*</span>
+                      </span>
+                    }
+                    id="endAt"
+                    type="date"
+                    fullWidth
+                    variant="outlined"
+                    value={formData.endAt}
+                    onChange={e => setFormData({ ...formData, endAt: e.target.value })}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                    placeholder="Select End Date"
+                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    inputProps={{
+                      min: formData.startFrom || undefined,
+                    }}
+                    error={Boolean(fieldErrors.endAt) || (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom)}
+                    helperText={
+                      fieldErrors.endAt ||
+                      (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom
+                        ? "End date cannot be before start date"
+                        : "")
+                    }
+                  />
+                </Box>
               </Box>
             </Box>
           </SectionCard>
@@ -5367,33 +5790,48 @@ export const AddSchedulePage = () => {
     <div className="flex gap-4">
       {activeStep < steps.length - 1 ? (
         <>
-          {activeStep === 3 ? ( // Time Setup step
-            <button
-              onClick={handleSave}
-              disabled={isSubmitting}
-              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif' }}
-            >
-              {isSubmitting ? 'Saving...' : 'Save & Continue'}
-            </button>
+          {activeStep === 3 ? ( // Time Setup step - has Save button to submit and move to Mapping
+            <>
+              <DraftButton
+                onClick={handleSaveToDraft}
+                disabled={isSubmitting}
+              >
+                Save to Draft
+              </DraftButton>
+              <RedButton
+                onClick={handleSave}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Saving...' : 'Save'}
+              </RedButton>
+            </>
           ) : (
-            <button
-              onClick={handleNext}
-              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif' }}
-            >
-              Next
-            </button>
+            <>
+              <DraftButton
+                onClick={handleSaveToDraft}
+                disabled={isSubmitting}
+              >
+                Save to Draft
+              </DraftButton>
+              <RedButton
+                onClick={handleProceedToSave}
+                disabled={isSubmitting}
+              >
+                Proceed to Save
+              </RedButton>
+            </>
           )}
         </>
       ) : (
-        <button
-          onClick={handleFinish}
-          className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-          style={{ fontFamily: 'Work Sans, sans-serif' }}
-        >
-          Finish
-        </button>
+        // Mapping section (last step) - has Submit button only
+        <>
+          <RedButton
+            onClick={handleSave}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </RedButton>
+        </>
       )}
     </div>
   </div>
@@ -5504,7 +5942,21 @@ export const AddSchedulePage = () => {
           <span>{'>'}</span>
           <span className="text-gray-900 font-medium">Create New Schedule</span>
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">ADD SCHEDULE</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">ADD SCHEDULE</h1>
+          {/* {(loadFromLocalStorage(STORAGE_KEYS.FORM_DATA) || loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP)) && (
+  <DraftButton
+    variant="outlined"
+    size="small"
+    onClick={() => {
+      clearAllFromLocalStorage();
+      window.location.reload();
+    }}
+  >
+    Start Fresh
+  </DraftButton>
+)} */}
+        </div>
       </div>
 
       {/* Custom Stepper - Bordered Box Design */}
@@ -5573,55 +6025,114 @@ export const AddSchedulePage = () => {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
-        <div>
-          {activeStep > 0 && (
-            <button
-              onClick={handleBack}
-              className="border border-[#C72030] text-[#C72030] px-6 py-2 rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
-            >
-              Back
-            </button>
-          )}
-        </div>
+      <div className="flex justify-center items-center mt-6 pt-4 sm:pt-6">
 
         <div className="flex gap-4">
           {activeStep < steps.length - 1 ? (
             <>
-              {activeStep === 3 ? ( // Time Setup step
-                <button
-                  onClick={handleSave}
-                  disabled={isSubmitting}
-                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-                  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
-                >
-                  {isSubmitting ? 'Saving...' : 'Save & Continue'}
-                </button>
+              {activeStep === 3 ? ( // Time Setup step - has Save button to submit and move to Mapping
+                <Box className="flex gap-4">
+                  <DraftButton
+                    onClick={handleSaveToDraft}
+                    disabled={isSubmitting}
+                  >
+                    Save to Draft
+                  </DraftButton>
+                  <DraftButton
+                    onClick={handleSave}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit'}
+                  </DraftButton>
+                </Box>
               ) : (
-                <button
-                  onClick={handleNext}
-                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-                  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
-                >
-                  Next
-                </button>
+                <Box className="flex gap-4">
+                  <DraftButton
+                    onClick={handleProceedToSave}
+                    disabled={isSubmitting}
+                  >
+                    Proceed to Save
+                  </DraftButton>
+                  <DraftButton
+                    onClick={handleSaveToDraft}
+                    disabled={isSubmitting}
+                  >
+                    Save to Draft
+                  </DraftButton>
+                </Box>
               )}
             </>
           ) : (
-            <button
-              onClick={handleFinish}
-              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
-            >
-              Finish
-            </button>
+            // Mapping section (last step) - has Submit button only
+            <Box className="flex gap-4">
+              <DraftButton
+                onClick={handleSave}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit'}
+              </DraftButton>
+            </Box>
           )}
         </div>
       </div>
 
       {/* Completed Sections */}
       {renderCompletedSections()}
+
+      {/* Draft Modal */}
+      <Dialog
+        open={showDraftModal}
+        onClose={() => { }} // Prevent closing by clicking outside
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          style: {
+            borderRadius: 0,
+            fontFamily: 'Work Sans, sans-serif',
+          }
+        }}
+      >
+        <DialogTitle
+          style={{
+            backgroundColor: '#C72030',
+            color: 'white',
+            fontFamily: 'Work Sans, sans-serif',
+            fontWeight: 600,
+            fontSize: '18px',
+            padding: '16px 24px',
+          }}
+        >
+          {currentScheduleType} Schedule Draft Found
+        </DialogTitle>
+        <DialogContent style={{ padding: '24px' }}>
+          <Typography
+            style={{
+              fontFamily: 'Work Sans, sans-serif',
+              fontSize: '14px',
+              color: '#333',
+              marginTop: '8px',
+            }}
+          >
+            We found a saved draft for <strong>{currentScheduleType} schedule</strong> from your previous session. Would you like to continue with the saved draft or start fresh?
+          </Typography>
+        </DialogContent>
+        <DialogActions style={{ padding: '16px 24px', gap: '12px' }}>
+          <DraftButton
+            onClick={handleStartFresh}
+            style={{
+              backgroundColor: '#f5f5f5',
+              color: '#666',
+            }}
+          >
+            Start Fresh
+          </DraftButton>
+          <RedButton
+            onClick={handleContinueWithDraft}
+          >
+            Continue with Draft
+          </RedButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 

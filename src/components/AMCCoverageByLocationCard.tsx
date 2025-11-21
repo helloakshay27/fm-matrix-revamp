@@ -7,14 +7,32 @@ import { AMCLocationCoverageNode } from '@/services/amcAnalyticsAPI';
 interface AMCCoverageByLocationCardProps {
   data: AMCLocationCoverageNode[] | null;
   onDownload: () => Promise<void>;
+  colorPalette?: {
+    primary: string;
+    secondary: string;
+    tertiary: string;
+    primaryLight: string;
+    secondaryLight: string;
+    tertiaryLight: string;
+  };
+  headerClassName?: string;
 }
 
 interface ExpandedNodes {
   [key: string]: boolean;
 }
 
-export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLocationCardProps) {
+export function AMCCoverageByLocationCard({ data, onDownload, colorPalette, headerClassName }: AMCCoverageByLocationCardProps) {
   const [expandedNodes, setExpandedNodes] = useState<ExpandedNodes>({});
+
+  const palette = colorPalette || {
+    primary: '#C4B99D',
+    secondary: '#DAD6CA',
+    tertiary: '#D5DBDB',
+    primaryLight: '#DDD4C4',
+    secondaryLight: '#E8E5DD',
+    tertiaryLight: '#E5E9E9',
+  };
 
   const toggleNode = (nodeId: string) => {
     setExpandedNodes(prev => ({
@@ -28,13 +46,13 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
     const l = String(level || '').toLowerCase();
     switch (l) {
       case 'site':
-        return <Building2 className="w-4 h-4 text-blue-600" />;
+        return <Building2 className="w-4 h-4" style={{ color: palette.primaryLight }} />;
       case 'building':
-        return <Home className="w-4 h-4 text-green-600" />;
+        return <Home className="w-4 h-4" style={{ color: palette.primary }} />;
       case 'floor':
-        return <Map className="w-4 h-4 text-purple-600" />;
+        return <Map className="w-4 h-4" style={{ color: palette.secondary }} />;
       default:
-        return <MapPin className="w-4 h-4 text-gray-600" />;
+        return <MapPin className="w-4 h-4" style={{ color: palette.tertiary }} />;
     }
   };
 
@@ -117,13 +135,15 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
   const totalAssets = (Array.isArray(data) ? data : []).reduce((sum, location: any) => sum + Number(location?.total ?? 0), 0);
   const totalAssetsUnderAMC = (Array.isArray(data) ? data : []).reduce((sum, location: any) => sum + Number(location?.covered ?? 0), 0);
   const overallCoverage = totalAssets > 0 ? (totalAssetsUnderAMC / totalAssets) * 100 : 0;
-
+ 
   return (
-    <Card className="h-full flex flex-col">
+    <>
+   
+    <Card className="h-full flex flex-col height-full coverage-card">
       <CardHeader className="flex-shrink-0 pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-blue-600" />
+          <CardTitle className={`text-lg font-semibold flex items-center gap-2 ${headerClassName || 'text-[#1A1A1A]'}`}> 
+            <MapPin className="w-5 h-5" style={{ color: palette.tertiary }} />
             Coverage by Location
           </CardTitle>
           <Button
@@ -134,44 +154,39 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
             data-download-button
           >
             <Download className="w-4 h-4" />
-            
           </Button>
         </div>
       </CardHeader>
-      
       <CardContent className="flex-1 flex flex-col overflow-hidden">
         {/* Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-blue-50 p-3 rounded-lg">
+          <div className="p-3 rounded-lg" style={{ background: palette.primaryLight }}>
             <div className="flex items-center gap-2 mb-1">
-              <Building2 className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">Locations</span>
+              <Building2 className="w-4 h-4" style={{ color: palette.primaryLight }} />
+              <span className="text-sm font-medium text-[#1A1A1A]">Locations</span>
             </div>
-            <div className="text-2xl font-bold text-blue-900">{totalLocations}</div>
+            <div className="text-2xl font-bold text-[#1A1A1A]">{totalLocations}</div>
           </div>
-          
-          <div className="bg-gray-50 p-3 rounded-lg">
+          <div className="p-3 rounded-lg" style={{ background: palette.primary }}>
             <div className="flex items-center gap-2 mb-1">
-              <Home className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-800">Total Assets</span>
+              <Home className="w-4 h-4" style={{ color: palette.primary }} />
+              <span className="text-sm font-medium text-[#1A1A1A]">Total Assets</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{totalAssets}</div>
+            <div className="text-2xl font-bold text-[#1A1A1A]">{totalAssets}</div>
           </div>
-          
-          <div className="bg-green-50 p-3 rounded-lg">
+          <div className="p-3 rounded-lg" style={{ background: palette.tertiary }}>
             <div className="flex items-center gap-2 mb-1">
-              <MapPin className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">Under AMC</span>
+              <MapPin className="w-4 h-4" style={{ color: palette.tertiary }} />
+              <span className="text-sm font-medium text-[#1A1A1A]">Under AMC</span>
             </div>
-            <div className="text-2xl font-bold text-green-900">{totalAssetsUnderAMC}</div>
+            <div className="text-2xl font-bold text-[#1A1A1A]">{totalAssetsUnderAMC}</div>
           </div>
-          
-          <div className="bg-purple-50 p-3 rounded-lg">
+          <div className="p-3 rounded-lg" style={{ background: palette.secondary }}>
             <div className="flex items-center gap-2 mb-1">
-              <Map className="w-4 h-4 text-purple-600" />
-              <span className="text-sm font-medium text-purple-800">Coverage</span>
+              <Map className="w-4 h-4" style={{ color: palette.secondary }} />
+              <span className="text-sm font-medium text-[#1A1A1A]">Coverage</span>
             </div>
-            <div className="text-2xl font-bold text-purple-900">{overallCoverage.toFixed(1)}%</div>
+            <div className="text-2xl font-bold text-[#1A1A1A]">{overallCoverage.toFixed(1)}%</div>
           </div>
         </div>
 
@@ -197,7 +212,7 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
         </div>
 
         {/* Location Tree */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto" style={{ height: '400px' }}>
           {!data || (Array.isArray(data) ? data.length === 0 : false) ? (
             <div className="flex items-center justify-center h-32">
               <div className="text-center">
@@ -206,7 +221,7 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
               </div>
             </div>
           ) : (
-            <div className="h-full overflow-auto">
+            <div className="space-y-2">
               {(() => {
                 const list = Array.isArray(data) ? data : (data ? [data as any] : []);
                 return list.map((location, idx) => (
@@ -220,5 +235,6 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
         </div>
       </CardContent>
     </Card>
+    </>
   );
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileChartLine } from 'lucide-react';
 import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent, CircularProgress } from '@mui/material';
 
 interface UtilizationFormData {
@@ -375,11 +375,13 @@ export const AddUtilityRequestPage = () => {
       </div>
 
       {/* Form Card */}
-      <Card className="max-w-4xl mx-auto">
+      <Card className="mx-auto">
         <CardHeader className="bg-[#f6f4ee] border-b">
           <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
-            Compile Utilizations
+            <span className="inline-flex items-center">
+              <FileChartLine className="w-5 h-5" color='#C72030' />
+            </span>
+            <span className="text-[#C72030]">Compile Utilizations</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-8">

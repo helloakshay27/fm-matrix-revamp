@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, User, QrCode, ClipboardList, Edit, ChevronUp, ChevronDown, LucideIcon } from 'lucide-react';
+import { ArrowLeft, User, QrCode, ClipboardList, Edit, ChevronUp, ChevronDown, LucideIcon, FileText, File, FileSpreadsheet, Eye, Download, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
-import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, ENDPOINTS } from '@/config/apiConfig';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
 // Types
 interface AdditionalVisitor {
@@ -15,6 +16,7 @@ interface AdditionalVisitor {
     name: string;
     mobile: string;
     gatekeeper_id: number;
+    pass_number?: string;
   };
 }
 
@@ -44,6 +46,8 @@ interface VisitorData {
   checkin_time?: string;
   checkout_time?: string;
   expected_at?: string;
+  guest_entry_time?: string;
+  master_exit_time?: string;
   image?: string;
   pass_number?: string;
   guest_type?: string;
@@ -67,9 +71,15 @@ interface VisitorData {
   otp_string?: string;
   additional_visitors?: AdditionalVisitor[];
   item_movements?: ItemMovement[];
-  visitor_documents?: unknown[];
+  visitor_documents?: Array<{
+    id: number;
+    document_url: string;
+  }>;
   pass_days?: string[];
   pass_valid?: boolean;
+  visitor_host_name?: string;
+  visitor_host_mobile?: string;
+  visitor_host_email?: string;
 }
 
 export const VisitorDetailsPage = () => {
@@ -79,6 +89,10 @@ export const VisitorDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [disabledOTPButtons, setDisabledOTPButtons] = useState<Record<number, boolean>>({});
+
+  // State for document modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
 
   // Helper function to check if value has data
   const hasData = (value: string | undefined | null): boolean => {
@@ -91,6 +105,7 @@ export const VisitorDetailsPage = () => {
     additionalVisitors: true,
     goodsInwardInfo: true,
     passInformation: true,
+    governmentId: true,
     qrCode: true,
   });
 
@@ -148,34 +163,27 @@ export const VisitorDetailsPage = () => {
     if (!visitorData || !id) return;
 
     try {
-      console.log('Resending OTP for visitor:', id);
-
-      // Show loading toast
-      toast.info('Sending OTP...');
-
-      // Disable the button
       setDisabledOTPButtons(prev => ({ ...prev, [visitorData.id]: true }));
 
       // Construct the API URL using the resend OTP endpoint
-      const url = getFullUrl('/pms/admin/visitors/resend_otp.json');
+      const url = getFullUrl(ENDPOINTS.RESEND_OTP);
       const options = getAuthenticatedFetchOptions();
 
       // Add query parameter for visitor ID
       const urlWithParams = new URL(url);
       urlWithParams.searchParams.append('id', id.toString());
-
-      console.log('🚀 Calling resend OTP API:', urlWithParams.toString());
+      if (API_CONFIG.TOKEN) {
+        urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+      }
 
       const response = await fetch(urlWithParams.toString(), options);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error Response:', errorText);
         throw new Error(`Failed to resend OTP: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('✅ OTP sent successfully:', data);
 
       // Show success toast
       toast.success('OTP sent successfully!');
@@ -247,29 +255,37 @@ export const VisitorDetailsPage = () => {
     }
   };
 
+  function getLocalISOString() {
+    const now = new Date();
+    const offsetMs = now.getTimezoneOffset() * 60 * 1000; // offset in ms
+    const localTime = new Date(now - offsetMs);
+    const iso = localTime.toISOString().slice(0, 19);
+
+    const offset = -now.getTimezoneOffset();
+    const sign = offset >= 0 ? '+' : '-';
+    const pad = n => String(Math.floor(Math.abs(n))).padStart(2, '0');
+    const hours = pad(offset / 60);
+    const minutes = pad(offset % 60);
+
+    return `${iso}${sign}${hours}:${minutes}`;
+  }
+
+
   const handleCheckIn = async () => {
     if (!visitorData || !id) return;
 
     try {
-      console.log('Checking in visitor:', id);
-
-      // Show loading toast
-      toast.info('Processing check-in...');
-
-      // Construct the API URL using the visitor ID
       const url = getFullUrl(`/pms/visitors/${id}.json`);
       const options = getAuthenticatedFetchOptions();
 
-      // Create request body for check-in with current timestamp
       const requestBody = {
         gatekeeper: {
-          guest_entry_time: new Date().toISOString().slice(0, 19) + "+05:30", // Format: 2025-08-22T19:07:37+05:30
+          guest_entry_time: getLocalISOString(),
           entry_gate_id: "",
           status: "checked_in"
         }
       };
 
-      // Set the request method to PUT and add the request body
       const requestOptions = {
         ...options,
         method: 'PUT',
@@ -280,19 +296,14 @@ export const VisitorDetailsPage = () => {
         body: JSON.stringify(requestBody)
       };
 
-      console.log('🚀 Calling check-in API:', url);
-      console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
-
       const response = await fetch(url, requestOptions);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error Response:', errorText);
         throw new Error(`Failed to check-in visitor: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('✅ Visitor checked in successfully:', data);
 
       // Show success toast
       toast.success('Visitor checked in successfully!');
@@ -310,13 +321,7 @@ export const VisitorDetailsPage = () => {
     if (!visitorData || !id) return;
 
     try {
-      console.log('Checking out visitor:', id);
-
-      // Show loading toast
-      toast.info('Processing checkout...');
-
-      // Construct the API URL using the visitor ID
-      const url = getFullUrl(`/pms/visitors/${id}.json`);
+      const url = getFullUrl(`/pms/admin/visitors/marked_out_visitors.json`);
       const options = getAuthenticatedFetchOptions();
 
       // Create request body for checkout with current timestamp
@@ -324,7 +329,8 @@ export const VisitorDetailsPage = () => {
         gatekeeper: {
           guest_exit_time: new Date().toISOString().slice(0, 19) + "+05:30", // Format: 2025-08-22T19:07:37+05:30
           exit_gate_id: "",
-          status: "checked_out"
+          status: "checked_out",
+          gatekeeper_ids: id
         }
       };
 
@@ -339,9 +345,6 @@ export const VisitorDetailsPage = () => {
         body: JSON.stringify(requestBody)
       };
 
-      console.log('🚀 Calling checkout API:', url);
-      console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
-
       const response = await fetch(url, requestOptions);
 
       if (!response.ok) {
@@ -351,7 +354,6 @@ export const VisitorDetailsPage = () => {
       }
 
       const data = await response.json();
-      console.log('✅ Visitor checked out successfully:', data);
 
       // Show success toast
       toast.success('Visitor checked out successfully!');
@@ -401,17 +403,16 @@ export const VisitorDetailsPage = () => {
     children: React.ReactNode;
     hasData?: boolean;
   }) => (
-    <div className="border-2 rounded-lg mb-6">
+    <div className="bg-transparent border-none shadow-none rounded-lg mb-6">
       <div
         onClick={onToggle}
-        className="flex items-center justify-between cursor-pointer p-6"
-        style={{ backgroundColor: 'rgb(246 244 238)' }}
+        className="figma-card-header flex items-center justify-between cursor-pointer"
       >
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-            <Icon className="w-4 h-4" style={{ color: "#C72030" }} />
+          <div className="figma-card-icon-wrapper">
+            <Icon className="figma-card-icon" />
           </div>
-          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+          <h3 className="figma-card-title uppercase">
             {title}
           </h3>
         </div>
@@ -423,10 +424,7 @@ export const VisitorDetailsPage = () => {
         </div>
       </div>
       {isExpanded && (
-        <div
-          className="p-6"
-          style={{ backgroundColor: 'rgb(246 247 247)' }}
-        >
+        <div className="figma-card-content">
           {children}
         </div>
       )}
@@ -454,8 +452,8 @@ export const VisitorDetailsPage = () => {
                 {(visitorData.vstatus === 'Pending' || visitorData.approve === 0) && (
                   <Button
                     className={`px-3 py-2 text-sm rounded ${disabledOTPButtons[visitorData.id]
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-orange-500 hover:bg-orange-600'
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-orange-500 hover:bg-orange-600'
                       } text-white`}
                     onClick={handleResendOTP}
                     disabled={disabledOTPButtons[visitorData.id]}
@@ -475,19 +473,26 @@ export const VisitorDetailsPage = () => {
                 )}
 
                 {/* Check In Button - Show for approved visitors who haven't checked in */}
-                {(visitorData.vstatus === 'Approved' && !visitorData.check_in) && (
+                {(visitorData.vstatus === 'Approved' && !visitorData.guest_entry_time) ? (
                   <Button
-                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 text-sm rounded"
+                    className="bg-green-500 hover:bg-green-600 !text-white px-3 py-2 text-sm rounded"
                     onClick={handleCheckIn}
                   >
                     Check In
                   </Button>
-                )}
+                ) : visitorData.vstatus === 'Approved' && visitorData.guest_entry_time && !visitorData.master_exit_time ? (
+                  <Button
+                    className="bg-green-500 hover:bg-green-600 !text-white px-3 py-2 text-sm rounded"
+                    onClick={handleCheckOut}
+                  >
+                    Check Out
+                  </Button>
+                ) : <></>}
 
                 {/* Check Out Button - Show for checked-in visitors who haven't checked out */}
                 {(visitorData.vstatus === 'Approved' && visitorData.check_in && !visitorData.check_out) && (
                   <Button
-                    className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-2 text-sm rounded"
+                    className="bg-[#F97316] hover:bg-[#F97316]/90 !text-white px-3 py-2 text-sm rounded"
                     onClick={handleCheckOut}
                   >
                     Check Out
@@ -540,6 +545,27 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.guest_name}</span>
               </div>
             )}
+            {hasData(visitorData.visitor_host_name) && (
+              <div className="flex items-start">
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Host Name</span>
+                <span className="text-gray-500 mx-3">:</span>
+                <span className="text-gray-900 font-semibold flex-1">{visitorData.visitor_host_name}</span>
+              </div>
+            )}
+            {hasData(visitorData.visitor_host_mobile) && (
+              <div className="flex items-start">
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Host Mobile</span>
+                <span className="text-gray-500 mx-3">:</span>
+                <span className="text-gray-900 font-semibold flex-1">{visitorData.visitor_host_mobile}</span>
+              </div>
+            )}
+            {hasData(visitorData.visitor_host_email) && (
+              <div className="flex items-start">
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Host Email</span>
+                <span className="text-gray-500 mx-3">:</span>
+                <span className="text-gray-900 font-semibold flex-1">{visitorData.visitor_host_email}</span>
+              </div>
+            )}
 
             {hasData(visitorData.vstatus) && (
               <div className="flex items-start">
@@ -547,8 +573,8 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
                   <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${visitorData.vstatus === 'Approved' ? 'bg-green-100 text-green-700' :
-                      visitorData.vstatus === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
+                    visitorData.vstatus === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-red-100 text-red-700'
                     }`}>
                     {visitorData.vstatus}
                   </Badge>
@@ -594,8 +620,8 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
                   <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${visitorData.visitor_type === 'unexpected' ? 'bg-red-100 text-red-700' :
-                      visitorData.visitor_type === 'expected' ? 'bg-green-100 text-green-700' :
-                        'bg-gray-100 text-gray-700'
+                    visitorData.visitor_type === 'expected' ? 'bg-green-100 text-green-700' :
+                      'bg-gray-100 text-gray-700'
                     }`}>
                     {visitorData.visitor_type ? visitorData.visitor_type.charAt(0).toUpperCase() + visitorData.visitor_type.slice(1) : '--'}
                   </Badge>
@@ -707,6 +733,13 @@ export const VisitorDetailsPage = () => {
                     <span className="text-gray-900 font-semibold flex-1">{visitor.additional_visitor.mobile}</span>
                   </div>
                 )}
+                {hasData(visitor.additional_visitor.pass_number) && (
+                  <div className="flex items-start">
+                    <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Pass Number</span>
+                    <span className="text-gray-500 mx-3">:</span>
+                    <span className="text-gray-900 font-semibold flex-1">{visitor.additional_visitor.pass_number}</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -744,7 +777,7 @@ export const VisitorDetailsPage = () => {
                     )}
                   </div>
                 </div>
-                
+
                 {movement.item_movement.item_details && movement.item_movement.item_details.length > 0 && (
                   <div>
                     <h5 className="font-medium text-gray-600 mb-3">Item Details:</h5>
@@ -864,7 +897,107 @@ export const VisitorDetailsPage = () => {
         </div>
       </ExpandableSection>
 
-      {/* Section 5: QR Code */}
+      {/* Section 5: Government ID */}
+      <ExpandableSection
+        title="GOVERNMENT ID"
+        icon={CreditCard}
+        isExpanded={expandedSections.governmentId}
+        onToggle={() => toggleSection('governmentId')}
+        hasData={Array.isArray(visitorData.visitor_documents) && visitorData.visitor_documents.length > 0}
+      >
+        {Array.isArray(visitorData.visitor_documents) && visitorData.visitor_documents.length > 0 ? (
+          <div className="flex items-center flex-wrap gap-4">
+            {visitorData.visitor_documents.map((document: any) => {
+              const url = document.document_url;
+              const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+              const isPdf = /\.pdf$/i.test(url);
+              const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+              const isWord = /\.(doc|docx)$/i.test(url);
+              const isDownloadable = isPdf || isExcel || isWord;
+
+              return (
+                <div
+                  key={document.id}
+                  className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                >
+                  {isImage ? (
+                    <>
+                      <button
+                        className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                        title="View"
+                        onClick={() => {
+                          setSelectedDoc({
+                            ...document,
+                            url,
+                            type: 'image'
+                          });
+                          setIsModalOpen(true);
+                        }}
+                        type="button"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <img
+                        src={url}
+                        alt={`Document_${document.id}`}
+                        className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                        onClick={() => {
+                          setSelectedDoc({
+                            ...document,
+                            url,
+                            type: 'image'
+                          });
+                          setIsModalOpen(true);
+                        }}
+                      />
+                    </>
+                  ) : isPdf ? (
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                  ) : isExcel ? (
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                      <FileSpreadsheet className="w-6 h-6" />
+                    </div>
+                  ) : isWord ? (
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                  ) : (
+                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                      <File className="w-6 h-6" />
+                    </div>
+                  )}
+                  <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                    {url.split('/').pop() || `Document_${document.id}`}
+                  </span>
+                  {isDownloadable && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                      onClick={() => {
+                        setSelectedDoc({
+                          ...document,
+                          url,
+                          type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
+                        });
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-8">No government ID documents found</p>
+        )}
+      </ExpandableSection>
+
+      {/* Section 6: QR Code */}
       <ExpandableSection
         title="QR CODE"
         icon={QrCode}
@@ -880,6 +1013,14 @@ export const VisitorDetailsPage = () => {
           <p className="text-gray-500 text-center py-8">No QR code available</p>
         )}
       </ExpandableSection>
+
+      {/* Attachment Preview Modal */}
+      <AttachmentPreviewModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };

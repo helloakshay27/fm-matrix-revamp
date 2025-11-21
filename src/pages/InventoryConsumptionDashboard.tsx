@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import bio from '@/assets/bio.png';
 
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchInventoryConsumptionHistory } from '@/store/slices/inventoryConsumptionSlice';
@@ -192,10 +193,21 @@ const InventoryConsumptionDashboard = () => {
     const value = item[columnKey];
     if (columnKey === 'action') {
       return (
-        <div className="flex gap-2 justify-center">
+        <div className="flex gap-2 justify-center items-center">
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100" onClick={() => handleViewItem(item)} title="View Details">
             <Eye className="w-4 h-4 text-gray-600" />
           </Button>
+          {item.green_product && (
+            <img
+              src={bio}
+              alt="Eco-friendly"
+              className="w-4 h-4"
+              style={{
+                filter: "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
+              }}
+              title="Eco-friendly Product"
+            />
+          )}
         </div>
       );
     }
