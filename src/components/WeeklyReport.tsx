@@ -31,8 +31,8 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
     const brcPct = breachedPctOverride !== undefined ? breachedPctOverride : brcPctCalc;
     const baseData = React.useMemo(
         () => [
-            { name: 'Achieved', value: achieved, color: '#DBC2A9' },
-            { name: 'Breached', value: breached, color: '#8B7355' }
+        { name: 'Achieved', value: achieved, color: '#DBC2A9' },
+        { name: 'Breached', value: breached, color: '#8B7355' }
         ],
         [achieved, breached]
     );
