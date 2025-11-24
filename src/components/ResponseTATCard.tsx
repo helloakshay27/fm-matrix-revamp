@@ -83,9 +83,21 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
         <CardHeader className="relative z-0">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-bold text-[#C72030]">Response & Resolution TAT</CardTitle>
-            <Download 
-              className="w-5 h-5 text-[#C72030] cursor-pointer" 
-              onClick={handleDownload}
+            <Download
+              data-no-drag="true"
+              className="w-5 h-5 text-[#000000] hover:text-[#333333] cursor-pointer transition-colors z-50"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDownload();
+              }}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              style={{ pointerEvents: 'auto' }}
             />
           </div>
         </CardHeader>
@@ -170,9 +182,21 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
       <CardHeader className="relative z-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold text-[#C72030]">Response & Resolution TAT</CardTitle>
-          <Download 
-            className={`w-5 h-5 text-[#C72030] cursor-pointer ${isDownloading ? 'opacity-50' : ''}`}
-            onClick={handleDownload}
+          <Download
+            data-no-drag="true"
+            className={`w-5 h-5 text-[#000000] hover:text-[#333333] cursor-pointer transition-colors z-50 ${isDownloading ? 'opacity-50' : ''}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
           />
         </div>
       </CardHeader>

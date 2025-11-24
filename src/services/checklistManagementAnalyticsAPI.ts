@@ -79,6 +79,31 @@ const checklistManagementAnalyticsAPI = {
     }));
     return { categories, siteRows };
   },
+
+  async downloadSiteWiseChecklist(fromDate: Date, toDate: Date): Promise<void> {
+    const start = fmt(fromDate);
+    const end = fmt(toDate);
+    const url = `/export_site_wise_checklist/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    
+    const response = await apiClient.get(url, {
+      responseType: 'blob',
+    });
+    
+    // Create a blob from the response
+    const blob = new Blob([response.data], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    
+    // Create a download link and trigger it
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `site_wise_checklist_${start}_to_${end}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  },
 };
 
 export default checklistManagementAnalyticsAPI;

@@ -1,4 +1,4 @@
-// new comment //
+// unifiedselector   // new comment //
 import React, { useState } from "react";
 import {
   ChevronDown,
@@ -34,7 +34,6 @@ interface SelectedAnalytic {
     | "helpdesk"
     | "asset_management"
     | "inventory_management"
-    | "consumables_overview"
     | "parking_management"
     | "visitor_management"
     | "checklist_management"
@@ -341,33 +340,33 @@ const executiveAnalyticsOptions = {
     ],
   },
 
-  // inventory_management: {
-  //   icon: Package,
-  //   label: "Inventory Management",
-  //   color: "#F59E0B",
-  //   options: [
-  //     {
-  //       id: "inv_overview_summary",
-  //       endpoint: "inventory_overview_summary",
-  //       label: "Overview Summary",
-  //     },
-  //     {
-  //       id: "inv_overstock_top10",
-  //       endpoint: "inventory_overstock_top10",
-  //       label: "Overstock Analysis – Top 10 Items",
-  //     },
-  //      {
-  //       id: "consumables_top_center",
-  //       endpoint: "top_consumables_center",
-  //       label: "Top Consumables – Centre-wise Overview",
-  //     },
-  //     {
-  //       id: "consumables_value_quarterly",
-  //       endpoint: "consumable_inventory_value_quarterly",
-  //       label: "Consumable Inventory Value – Comparison",
-  //     },
-  //   ],
-  // },
+  inventory_management: {
+    icon: Package,
+    label: "Inventory Management",
+    color: "#F59E0B",
+    options: [
+      {
+        id: "inv_overview_summary",
+        endpoint: "inventory_overview_summary",
+        label: "Overview Summary",
+      },
+      {
+        id: "inv_overstock_top10",
+        endpoint: "inventory_overstock_top10",
+        label: "Overstock Analysis – Top 10 Items",
+      },
+       {
+        id: "consumables_top_center",
+        endpoint: "top_consumables_center",
+        label: "Top Consumables – Centre-wise Overview",
+      },
+      {
+        id: "consumables_value_quarterly",
+        endpoint: "consumable_inventory_value_quarterly",
+        label: "Consumable Inventory Value – Comparison",
+      },
+    ],
+  },
 
  
   checklist_management: {
@@ -627,3 +626,4 @@ export const UnifiedAnalyticsSelector: React.FC<
     </Popover>
   );
 };
+

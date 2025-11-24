@@ -55,8 +55,20 @@ export const TicketAgingMatrixCard: React.FC<TicketAgingMatrixCardProps> = ({
             Tickets Ageing Matrix
           </CardTitle>
           <Download
-            className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors"
-            onClick={handleDownload}
+            data-no-drag="true"
+            className="w-5 h-5 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
           />
         </div>
       </CardHeader>

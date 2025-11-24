@@ -65,8 +65,20 @@ export const CategoryWiseProactiveReactiveCard: React.FC<CategoryWiseProactiveRe
             Category Wise Proactive / Reactives
           </CardTitle>
           <Download
-            className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors"
-            onClick={handleDownload}
+            data-no-drag="true"
+            className="w-5 h-5 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
           />
         </div>
       </CardHeader>
