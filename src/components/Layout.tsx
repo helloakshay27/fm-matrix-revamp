@@ -32,11 +32,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Get current domain for backward compatibility
   const hostname = window.location.hostname;
   const isOmanSite = hostname.includes("oig.gophygital.work");
-  const isViSite = hostname.includes("vi-web.gophygital.work") || hostname.includes("localhost:5174");
+  const isViSite =
+    hostname.includes("vi-web.gophygital.work") ||
+    hostname.includes("localhost:5174");
 
   // Get layout configuration based on company ID
   const layoutConfig = getLayoutByCompanyId(
-    selectedCompany?.id === 199 ? selectedCompany.id : null
+    selectedCompany?.id === 85 || selectedCompany?.id === 199
+      ? selectedCompany.id
+      : null
   );
 
   // Layout behavior:
@@ -52,7 +56,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const hasTokenParam = urlParams.has("access_token");
     const storedToken = localStorage.getItem("token");
     const hasToken = hasTokenParam || storedToken;
-    
+
     // Domain-based logic takes precedence for backward compatibility
     if (isOmanSite) {
       return <OmanSidebar />;
@@ -62,7 +66,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (isViSite && hasToken) {
       return <ViSidebarWithToken />;
     }
-    
+
     if (isViSite) {
       return <ViSidebar />;
     }
@@ -115,26 +119,26 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-    useEffect(() => {
+  useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const access_token = urlParams.get("access_token");
     const company_id = urlParams.get("company_id");
     const user_id = urlParams.get("user_id");
 
-    console.log('Layout Token Check:', { 
-      access_token: access_token ? 'Present' : 'Missing', 
-      company_id, 
+    console.log("Layout Token Check:", {
+      access_token: access_token ? "Present" : "Missing",
+      company_id,
       user_id,
-      currentPath: location.pathname 
+      currentPath: location.pathname,
     });
 
     // If token is present in URL, store it immediately for authentication
     if (access_token) {
-      console.log('Storing token from URL parameters');
-      
+      console.log("Storing token from URL parameters");
+
       // Save token using auth utility
       saveToken(access_token);
-      
+
       // Save base URL for API calls (detect from current hostname)
       const hostname = window.location.hostname;
       if (hostname.includes("vi-web.gophygital.work")) {
@@ -142,33 +146,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       } else if (hostname.includes("localhost")) {
         saveBaseUrl("live-api.gophygital.work/"); // Default for local development
       }
-      
+
       // Store company and user data
       if (company_id) {
         localStorage.setItem("selectedCompanyId", String(company_id));
       }
-      
+
       if (user_id) {
         localStorage.setItem("user_id", String(user_id));
-        
+
         // Create a user object for VI token access
         const viUser = {
           id: parseInt(user_id),
-          email: '', // VI access might not have email
-          firstname: 'VI',
-          lastname: 'User',
+          email: "", // VI access might not have email
+          firstname: "VI",
+          lastname: "User",
           access_token: access_token,
-          user_type: 'vi_token_user'
+          user_type: "vi_token_user",
         };
         saveUser(viUser);
-        
-        console.log('VI User created and stored:', viUser);
+
+        console.log("VI User created and stored:", viUser);
       }
     }
   }, [location.search]);
-
-
-
 
   return (
     <div
@@ -176,11 +177,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       style={{ backgroundColor: layoutConfig.theme?.backgroundColor }}
     >
       {/* Content protection for specified domains */}
-      <ProtectionLayer 
+      <ProtectionLayer
         enabled={true}
-        allowedDomains={['vi-web.gophygital.work']}
+        allowedDomains={["vi-web.gophygital.work"]}
       />
-      
+
       <Header />
       {renderSidebar()}
       {renderDynamicHeader()}
