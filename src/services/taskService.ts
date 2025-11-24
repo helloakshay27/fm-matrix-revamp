@@ -20,6 +20,11 @@ export interface TaskOccurrence {
   before_after_enabled?: string; // Before/After photo enabled status
   backup_assigned_user?: string; // Backup assigned user name
   checklist_responses?: any[]; // Checklist responses from API
+  checklist_response_attachments?: Array<{
+    id: number;
+    filename: string;
+    url: string;
+  }>; // Checklist response attachments
   task_details: {
     id: number;
     task_name: string;
@@ -212,6 +217,8 @@ export const taskService = {
         bef_sub_attachment: data.bef_sub_attachment,
         aft_sub_attachment: data.aft_sub_attachment,
         before_after_enabled: data.steps === 3 ? "Yes" : "No",
+        checklist_response_attachments:
+          data.checklist_response_attachments || [],
         task_details: {
           id: data.id,
           task_name: data.checklist || "N/A",
@@ -225,43 +232,47 @@ export const taskService = {
           created_on: data.created_at || "N/A",
           created_by: data.assigned_to_name?.split(",")[0]?.trim() || "N/A",
           backup_assigned_user: data.backup_assigned_user || data.performed_by,
-          location: data.location ? {
-            // If location object exists in API, use it
-            site: data.location.site || data.site_name || "NA",
-            building: data.location.building || "NA",
-            wing: data.location.wing || "NA",
-            floor: data.location.floor || "NA",
-            area: data.location.area || "NA",
-            room: data.location.room || "NA",
-            full_location: data.asset_path || "N/A",
-          } : {
-            // If location is null, parse from asset_path
-            site: (() => {
-              const match = data.asset_path?.match(/Site\s*-\s*([^/]+)/i);
-              return match ? match[1].trim() : data.site_name || "NA";
-            })(),
-            building: (() => {
-              const match = data.asset_path?.match(/Building\s*-\s*([^/]+)/i);
-              return match ? match[1].trim() : "NA";
-            })(),
-            wing: (() => {
-              const match = data.asset_path?.match(/Wing\s*-\s*([^/]+)/i);
-              return match ? match[1].trim() : "NA";
-            })(),
-            floor: (() => {
-              const match = data.asset_path?.match(/Floor\s*-\s*([^/]+)/i);
-              return match ? match[1].trim() : "NA";
-            })(),
-            area: (() => {
-              const match = data.asset_path?.match(/Area\s*-\s*([^/]+)/i);
-              return match ? match[1].trim() : "NA";
-            })(),
-            room: (() => {
-              const match = data.asset_path?.match(/Room\s*-\s*([^/]+)/i);
-              return match ? match[1].trim() : "NA";
-            })(),
-            full_location: data.asset_path || "N/A",
-          },
+          location: data.location
+            ? {
+                // If location object exists in API, use it
+                site: data.location.site || data.site_name || "NA",
+                building: data.location.building || "NA",
+                wing: data.location.wing || "NA",
+                floor: data.location.floor || "NA",
+                area: data.location.area || "NA",
+                room: data.location.room || "NA",
+                full_location: data.asset_path || "N/A",
+              }
+            : {
+                // If location is null, parse from asset_path
+                site: (() => {
+                  const match = data.asset_path?.match(/Site\s*-\s*([^/]+)/i);
+                  return match ? match[1].trim() : data.site_name || "NA";
+                })(),
+                building: (() => {
+                  const match = data.asset_path?.match(
+                    /Building\s*-\s*([^/]+)/i
+                  );
+                  return match ? match[1].trim() : "NA";
+                })(),
+                wing: (() => {
+                  const match = data.asset_path?.match(/Wing\s*-\s*([^/]+)/i);
+                  return match ? match[1].trim() : "NA";
+                })(),
+                floor: (() => {
+                  const match = data.asset_path?.match(/Floor\s*-\s*([^/]+)/i);
+                  return match ? match[1].trim() : "NA";
+                })(),
+                area: (() => {
+                  const match = data.asset_path?.match(/Area\s*-\s*([^/]+)/i);
+                  return match ? match[1].trim() : "NA";
+                })(),
+                room: (() => {
+                  const match = data.asset_path?.match(/Room\s*-\s*([^/]+)/i);
+                  return match ? match[1].trim() : "NA";
+                })(),
+                full_location: data.asset_path || "N/A",
+              },
           status: {
             value: data.task_status || "Unknown",
             label_class: data.task_status?.toLowerCase() || "unknown",
@@ -407,15 +418,15 @@ export const taskService = {
       const queryParams: any = {};
 
       console.log("Params for export:", params);
-      
+
       // Set type parameter
       queryParams["type"] = params?.status?.toLowerCase() || "open";
-      
+
       // Only add task_status_eq if status is NOT "Closed"
       if (params?.status && params.status.toLowerCase() !== "closed") {
         queryParams["task_status_eq"] = params.status;
       }
-      
+
       // Add other parameters
       if (params) {
         Object.entries(params).forEach(([key, value]) => {
@@ -427,7 +438,7 @@ export const taskService = {
           }
         });
       }
-      
+
       console.log("Export query params:", queryParams);
 
       const response = await apiClient.get("/pms/users/scheduled_tasks.xlsx", {
