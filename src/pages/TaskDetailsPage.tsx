@@ -241,26 +241,11 @@ export const TaskDetailsPage = () => {
           bef_sub_attachment: rawDetails.bef_sub_attachment,
           aft_sub_attachment: rawDetails.aft_sub_attachment,
           // Map response attachments (handle both array and object formats)
-          response_attachments: (() => {
-            if (!rawDetails.response_attachments) return [];
-            
-            // If it's already an array, return it
-            if (Array.isArray(rawDetails.response_attachments)) {
-              return rawDetails.response_attachments;
-            }
-            
-            // If it's an object with numeric keys, convert to array
-            if (typeof rawDetails.response_attachments === 'object') {
-              return Object.keys(rawDetails.response_attachments)
-                .filter(key => !isNaN(Number(key))) // Only numeric keys
-                .map(key => rawDetails.response_attachments[key])
-                .filter(url => typeof url === 'string' && url.trim() !== ''); // Only valid URLs
-            }
-            
-            return [];
-          })(),
+
           // Map checklist questions
           checklist_questions: rawDetails.checklist_questions || [],
+          checklist_response_attachments:
+            rawDetails.checklist_response_attachments || [],
           // Map actions based on status
           actions: {
             can_submit_task: [
@@ -347,46 +332,49 @@ export const TaskDetailsPage = () => {
               ticketResponse.complaints.length > 0
             ) {
               // Map ALL tickets from the response
-              const allTickets = ticketResponse.complaints.map((ticket: any) => ({
-                id: ticket.id,
-                ticket_number: ticket.ticket_number,
-                heading: ticket.heading,
-                category_type: ticket.category_type,
-                sub_category_type: ticket.sub_category_type,
-                posted_by: ticket.posted_by,
-                is_flagged: ticket.is_flagged,
-                is_golden_ticket: ticket.is_golden_ticket,
-                priority: ticket.priority,
-                issue_status: ticket.issue_status,
-                department_name: ticket.department_name,
-                assigned_to: ticket.backup_assigned_user || ticket.assigned_to,
-                created_at: ticket.created_at,
-                updated_at: ticket.updated_at,
-                building_name: ticket.building_name,
-                floor_name: ticket.floor_name,
-                site_name: ticket.site_name,
-                pms_site_name: ticket.pms_site_name,
-                complaint_type: ticket.complaint_type,
-                issue_type: ticket.issue_type,
-                color_code: ticket.color_code,
-                updated_by: ticket.updated_by,
-                priority_status: ticket.priority_status,
-                effective_priority: ticket.effective_priority,
-                schedule_type: ticket.schedule_type,
-                service_or_asset: ticket.service_or_asset,
-                asset_or_service_name: ticket.asset_or_service_name,
-                response_escalation: ticket.response_escalation,
-                resolution_escalation: ticket.resolution_escalation,
-                response_tat: ticket.response_tat,
-                resolution_tat: ticket.resolution_tat,
-                escalation_response_name: ticket.escalation_response_name,
-                escalation_resolution_name: ticket.escalation_resolution_name,
-                status: ticket.status,
-                unit_name: ticket.unit_name,
-                complaint_logs: ticket.complaint_logs || [],
-                documents: ticket.documents || [],
-                faqs: ticket.faqs || [],
-              }));
+              const allTickets = ticketResponse.complaints.map(
+                (ticket: any) => ({
+                  id: ticket.id,
+                  ticket_number: ticket.ticket_number,
+                  heading: ticket.heading,
+                  category_type: ticket.category_type,
+                  sub_category_type: ticket.sub_category_type,
+                  posted_by: ticket.posted_by,
+                  is_flagged: ticket.is_flagged,
+                  is_golden_ticket: ticket.is_golden_ticket,
+                  priority: ticket.priority,
+                  issue_status: ticket.issue_status,
+                  department_name: ticket.department_name,
+                  assigned_to:
+                    ticket.backup_assigned_user || ticket.assigned_to,
+                  created_at: ticket.created_at,
+                  updated_at: ticket.updated_at,
+                  building_name: ticket.building_name,
+                  floor_name: ticket.floor_name,
+                  site_name: ticket.site_name,
+                  pms_site_name: ticket.pms_site_name,
+                  complaint_type: ticket.complaint_type,
+                  issue_type: ticket.issue_type,
+                  color_code: ticket.color_code,
+                  updated_by: ticket.updated_by,
+                  priority_status: ticket.priority_status,
+                  effective_priority: ticket.effective_priority,
+                  schedule_type: ticket.schedule_type,
+                  service_or_asset: ticket.service_or_asset,
+                  asset_or_service_name: ticket.asset_or_service_name,
+                  response_escalation: ticket.response_escalation,
+                  resolution_escalation: ticket.resolution_escalation,
+                  response_tat: ticket.response_tat,
+                  resolution_tat: ticket.resolution_tat,
+                  escalation_response_name: ticket.escalation_response_name,
+                  escalation_resolution_name: ticket.escalation_resolution_name,
+                  status: ticket.status,
+                  unit_name: ticket.unit_name,
+                  complaint_logs: ticket.complaint_logs || [],
+                  documents: ticket.documents || [],
+                  faqs: ticket.faqs || [],
+                })
+              );
               setTicketData(allTickets);
             } else {
               console.log(
@@ -879,7 +867,6 @@ export const TaskDetailsPage = () => {
       defaultVisible: true,
     },
     { key: "score", label: "Score", sortable: true, defaultVisible: true },
-   
   ];
 
   // Ticket table columns configuration
@@ -948,8 +935,8 @@ export const TaskDetailsPage = () => {
     switch (columnKey) {
       case "helpText":
         return (
-          <span 
-            className="text-xs cursor-help truncate max-w-[200px] block" 
+          <span
+            className="text-xs cursor-help truncate max-w-[200px] block"
             title={item.helpText}
           >
             {item.helpText}
@@ -957,27 +944,30 @@ export const TaskDetailsPage = () => {
         );
       case "activities":
         return (
-          <span 
-            className="text-xs cursor-help truncate max-w-[200px] block" 
+          <span
+            className="text-xs cursor-help truncate max-w-[200px] block"
             title={item.activities}
           >
             {item.activities}
           </span>
         );
-      case "input":
-        const inputText = Array.isArray(item.input) ? item.input.join(", ") : item.input;
+      case "input": {
+        const inputText = Array.isArray(item.input)
+          ? item.input.join(", ")
+          : item.input;
         return (
-          <span 
-            className="text-xs cursor-help truncate max-w-[200px] block" 
+          <span
+            className="text-xs cursor-help truncate max-w-[200px] block"
             title={inputText}
           >
             {inputText}
           </span>
         );
+      }
       case "comments":
         return (
-          <span 
-            className="text-xs cursor-help truncate max-w-[200px] block" 
+          <span
+            className="text-xs cursor-help truncate max-w-[200px] block"
             title={item.comments}
           >
             {item.comments}
@@ -1107,10 +1097,10 @@ export const TaskDetailsPage = () => {
                 item.priority === "P1"
                   ? "bg-red-100 text-red-700"
                   : item.priority === "P2"
-                  ? "bg-yellow-100 text-yellow-700"
-                  : item.priority === "P3"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-gray-100 text-gray-700"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : item.priority === "P3"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-700"
               }`}
             >
               {item.priority || "N/A"}
@@ -1237,12 +1227,7 @@ export const TaskDetailsPage = () => {
                   taskDetails?.task_details?.status?.value?.toLowerCase();
 
                 // If status is open, in progress, scheduled, or work in progress - show Task Reschedule and Submit Task
-                if (
-                  [
-                    "open",
-                   
-                  ].includes(status)
-                ) {
+                if (["open"].includes(status)) {
                   return (
                     <>
                       {(taskDetails?.actions?.can_reschedule ||
@@ -1340,7 +1325,6 @@ export const TaskDetailsPage = () => {
                         Submit Task
                       </Button>
                     )}
-               
                   </>
                 );
               })()}
@@ -1351,7 +1335,7 @@ export const TaskDetailsPage = () => {
         {/* Main Content */}
         <div className="space-y-6">
           {/* Pre-Post Inspection Info - Conditional rendering based on steps and before_after_enabled */}
-          {taskDetails?.steps == 3 && taskDetails?.task_status== "Closed" && (
+          {taskDetails?.steps == 3 && taskDetails?.task_status == "Closed" && (
             <Card className="w-full bg-transparent shadow-none border-none">
               <div className="figma-card-header">
                 <div className="flex items-center gap-3">
@@ -1367,9 +1351,9 @@ export const TaskDetailsPage = () => {
                     <h4 className="text-base font-semibold text-gray-900 mb-3">
                       Before
                     </h4>
-                    <div 
+                    <div
                       className="bg-gray-100 rounded-lg flex items-center justify-center border overflow-hidden"
-                      style={{ width: '175.165px', height: '175.165px' }}
+                      style={{ width: "175.165px", height: "175.165px" }}
                     >
                       {getBeforeImageUrl() ? (
                         <img
@@ -1381,9 +1365,7 @@ export const TaskDetailsPage = () => {
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                           <div className="text-sm font-medium">BEFORE</div>
-                          <div className="text-sm mt-1">
-                            No Image Available
-                          </div>
+                          <div className="text-sm mt-1">No Image Available</div>
                         </div>
                       )}
                     </div>
@@ -1392,9 +1374,9 @@ export const TaskDetailsPage = () => {
                     <h4 className="text-base font-semibold text-gray-900 mb-3">
                       After
                     </h4>
-                    <div 
+                    <div
                       className="bg-gray-100 rounded-lg flex items-center justify-center border overflow-hidden"
-                      style={{ width: '175.165px', height: '175.165px' }}
+                      style={{ width: "175.165px", height: "175.165px" }}
                     >
                       {getAfterImageUrl() ? (
                         <img
@@ -1406,9 +1388,7 @@ export const TaskDetailsPage = () => {
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                           <div className="text-sm font-medium">AFTER</div>
-                          <div className="text-sm mt-1">
-                            No Image Available
-                          </div>
+                          <div className="text-sm mt-1">No Image Available</div>
                         </div>
                       )}
                     </div>
@@ -1693,8 +1673,7 @@ export const TaskDetailsPage = () => {
                       fontSize: "14px",
                     }}
                   >
-                    {taskDetails?.task_details?.assigned_to ||
-                      "N/A"}
+                    {taskDetails?.task_details?.assigned_to || "N/A"}
                   </span>
                 </div>
                 <div className="task-info-row">
@@ -1744,7 +1723,10 @@ export const TaskDetailsPage = () => {
                       className={getStatusColor(
                         taskDetails?.task_details?.status?.value || ""
                       )}
-                      title={taskDetails?.task_details?.status?.display_name || "Unknown"}
+                      title={
+                        taskDetails?.task_details?.status?.display_name ||
+                        "Unknown"
+                      }
                     >
                       {taskDetails?.task_details?.status?.display_name ||
                         "Unknown"}
@@ -1883,12 +1865,31 @@ export const TaskDetailsPage = () => {
 
                 <div className="flex justify-between items-start relative z-1">
                   {[
-                    { label: "Site", value: taskDetails?.task_details?.location?.site || "-" },
-                    { label: "Building", value: taskDetails?.task_details?.location?.building || "-" },
-                    { label: "Wing", value: taskDetails?.task_details?.location?.wing || "-" },
-                    { label: "Floor", value: taskDetails?.task_details?.location?.floor || "-" },
-                    { label: "Area", value: taskDetails?.task_details?.location?.area || "-" },
-                    { label: "Room", value: taskDetails?.task_details?.location?.room || "-" },
+                    {
+                      label: "Site",
+                      value: taskDetails?.task_details?.location?.site || "-",
+                    },
+                    {
+                      label: "Building",
+                      value:
+                        taskDetails?.task_details?.location?.building || "-",
+                    },
+                    {
+                      label: "Wing",
+                      value: taskDetails?.task_details?.location?.wing || "-",
+                    },
+                    {
+                      label: "Floor",
+                      value: taskDetails?.task_details?.location?.floor || "-",
+                    },
+                    {
+                      label: "Area",
+                      value: taskDetails?.task_details?.location?.area || "-",
+                    },
+                    {
+                      label: "Room",
+                      value: taskDetails?.task_details?.location?.room || "-",
+                    },
                   ].map((item, index) => (
                     <div
                       key={`location-${index}`}
@@ -1968,19 +1969,30 @@ export const TaskDetailsPage = () => {
           {/* Attachments - Show only for closed/completed/partially closed status */}
           {(() => {
             const status =
-              taskDetails?.task_details?.status?.value?.toLowerCase() || 
-              taskDetails?.task_status?.toLowerCase() || "";
-            const responseAttachments = (taskDetails as any)?.response_attachments || [];
-            
+              taskDetails?.task_details?.status?.value?.toLowerCase() ||
+              taskDetails?.task_status?.toLowerCase() ||
+              "";
+            const checklistResponseAttachments =
+              taskDetails?.checklist_response_attachments || [];
+
             // Debug logging
             console.log("🎨 Attachments Section Debug:");
             console.log("- Status:", status);
-            console.log("- Response Attachments:", responseAttachments);
-            console.log("- Attachments Count:", responseAttachments.length);
-            
+            console.log(
+              "- Response Attachments (raw):",
+              checklistResponseAttachments
+            );
+            console.log(
+              "- Attachments Count:",
+              checklistResponseAttachments.length
+            );
+            console.log(
+              "- First attachment structure:",
+              checklistResponseAttachments[0]
+            );
+
             return (
-               ["closed", "completed", "partially closed"].includes(status) && 
-              responseAttachments.length > 0 && (
+              ["closed", "completed", "partially closed"].includes(status) && (
                 <Card className="w-full bg-transparent shadow-none border-none">
                   <div className="figma-card-header">
                     <div className="flex items-center gap-3">
@@ -1989,50 +2001,69 @@ export const TaskDetailsPage = () => {
                       </div>
                       <h3 className="figma-card-title">Attachments</h3>
                       <Badge className="ml-2 bg-blue-100 text-blue-700">
-                        {responseAttachments.length} {responseAttachments.length === 1 ? 'file' : 'files'}
+                        {checklistResponseAttachments.length}{" "}
+                        {checklistResponseAttachments.length === 1
+                          ? "file"
+                          : "files"}
                       </Badge>
                     </div>
                   </div>
                   <div className="figma-card-content">
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {responseAttachments.map((url: string, index: number) => (
-                        <div 
-                          key={index} 
-                          className="group relative border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-200"
-                        >
-                          <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block"
-                          >
-                            <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
-                              <img
-                                src={url}
-                                alt={`Attachment ${index + 1}`}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = `data:image/svg+xml;base64,${btoa(`
-                                    <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-                                      <rect width="100%" height="100%" fill="#f3f4f6"/>
-                                      <text x="50%" y="50%" font-family="Arial" font-size="14" fill="#9ca3af" text-anchor="middle" dy=".3em">Attachment ${index + 1}</text>
-                                    </svg>
-                                  `)}`;
-                                }}
-                              />
+                      {checklistResponseAttachments.map(
+                        (attachment: any, index: number) => {
+                          // Extract URL from attachment object (could be {id, filename, url} or just a string)
+                          const attachmentUrl =
+                            typeof attachment === "string"
+                              ? attachment
+                              : attachment?.url;
+                          const attachmentFilename =
+                            typeof attachment === "string"
+                              ? `Attachment ${index + 1}`
+                              : attachment?.filename ||
+                                `Attachment ${index + 1}`;
+
+                          return (
+                            <div
+                              key={attachment?.id || index}
+                              className="group relative border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-200"
+                            >
+                              <a
+                                href={attachmentUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block"
+                              >
+                                <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                                  <img
+                                    src={attachmentUrl}
+                                    alt={attachmentFilename}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                    onError={(e) => {
+                                      const target =
+                                        e.target as HTMLImageElement;
+                                      target.src = `data:image/svg+xml;base64,${btoa(`
+                                      <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+                                        <rect width="100%" height="100%" fill="#f3f4f6"/>
+                                        <text x="50%" y="50%" font-family="Arial" font-size="14" fill="#9ca3af" text-anchor="middle" dy=".3em">${attachmentFilename}</text>
+                                      </svg>
+                                    `)}`;
+                                    }}
+                                  />
+                                </div>
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
+                                  <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                                </div>
+                              </a>
+                              <div className="p-2 bg-white border-t border-gray-200">
+                                <p className="text-xs text-gray-600 font-medium truncate">
+                                  {attachmentFilename}
+                                </p>
+                              </div>
                             </div>
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
-                              <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                            </div>
-                          </a>
-                          <div className="p-2 bg-white border-t border-gray-200">
-                            <p className="text-xs text-gray-600 font-medium truncate">
-                              Attachment {index + 1}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                          );
+                        }
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -2136,11 +2167,11 @@ export const TaskDetailsPage = () => {
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ 
+                  InputProps={{
                     sx: fieldStyles,
-                    inputProps: { 
-                      min: new Date().toISOString().split("T")[0] 
-                    }
+                    inputProps: {
+                      min: new Date().toISOString().split("T")[0],
+                    },
                   }}
                   sx={{ mt: 1 }}
                   required
