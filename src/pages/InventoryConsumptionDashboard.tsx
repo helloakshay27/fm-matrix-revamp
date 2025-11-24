@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
-import { Eye, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Eye, X, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import bio from '@/assets/bio.png';
@@ -181,11 +181,12 @@ const InventoryConsumptionDashboard = () => {
 
   // Define table columns for expanded view (API response)
   const expandedColumns: ColumnConfig[] = [
-    { key: 'action', label: 'Action', sortable: false, draggable: false },
-    { key: 'name', label: 'Name', sortable: true, draggable: false },
-    { key: 'quantity', label: 'Content Quantity', sortable: true, draggable: false },
+    { key: 'action', label: 'Action', sortable: false, draggable: false, defaultVisible: true },
+    { key: 'name', label: 'Name', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'quantity', label: 'Content Quantity', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'cost', label: 'Cost', sortable: true, draggable: false, defaultVisible: true },
     { key: 'consumption', label: 'Consumed', sortable: true, draggable: false, defaultVisible: true },
-    { key: 'total_cost', label: 'Amount', sortable: true, draggable: false },
+    { key: 'total_cost', label: 'Amount', sortable: true, draggable: false, defaultVisible: true },
   ];
 
   // Render cell content for expanded table
@@ -212,7 +213,20 @@ const InventoryConsumptionDashboard = () => {
       );
     }
     if (columnKey === 'cost') {
-      return <span className="font-semibold text-green-600">{value !== null ? `₹${value}` : '-'}</span>;
+      // Handle different possible cost field names
+      const costValue = item.cost !== undefined && item.cost !== null 
+        ? item.cost 
+        : item.unit_cost !== undefined && item.unit_cost !== null
+        ? item.unit_cost
+        : item.price !== undefined && item.price !== null
+        ? item.price
+        : null;
+      
+      if (costValue === null || costValue === undefined) {
+        console.warn('Cost value missing for item:', item); // Debug logging
+      }
+      
+      return <span className="font-semibold text-green-600">{costValue !== null && costValue !== undefined ? `₹${costValue}` : '-'}</span>;
     }
     if (columnKey === 'name') {
       return <span className="font-medium text-gray-900">{value}</span>;
@@ -232,7 +246,10 @@ const InventoryConsumptionDashboard = () => {
     }
     setExpandedMonth(month);
     // If already loaded, don't fetch again
-    if (monthData[month] && monthData[month].inventories) return;
+    if (monthData[month] && monthData[month].inventories && monthData[month].inventories.length > 0) {
+      console.log(`Data already loaded for ${month}, skipping fetch`);
+      return;
+    }
     // Fetch data for this month
     setMonthData((prev) => ({ ...prev, [month]: { loading: true, inventories: [], total_cost: null } }));
     try {
@@ -240,11 +257,21 @@ const InventoryConsumptionDashboard = () => {
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
       const url = `https://${baseUrl}/pms/inventories/inventory_consumption_history.json?q[created_at_gteq]=${start}&q[created_at_lteq]=${end}`;
-      console.log(`API Request URL: ${url}`); // Log the exact URL
+      console.log(`🔍 FETCHING DATA FOR ${month}:`);
+      console.log(`  - Date Range: ${start} to ${end}`);
+      console.log(`  - API Request URL: ${url}`);
+      
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log(`API Response for ${month}:`, response.data); // Log the response data
+      
+      console.log(`✅ API Response for ${month}:`, response.data);
+      console.log(`  - Total inventories count: ${response.data.inventories?.length || 0}`);
+      if (response.data.inventories && response.data.inventories.length > 0) {
+        console.log(`  - First inventory item:`, response.data.inventories[0]);
+        console.log(`  - Has cost field: ${'cost' in response.data.inventories[0]}`);
+      }
+      
       setMonthData((prev) => ({
         ...prev,
         [month]: {
@@ -253,8 +280,21 @@ const InventoryConsumptionDashboard = () => {
           total_cost: response.data.total_cost || null,
         },
       }));
+      // If API returned items that include `cost`, clear any persisted per-month column visibility
+      // so the table falls back to the default visibility (which enables `cost` by default).
+      try {
+        const firstItem = response.data.inventories && response.data.inventories.length > 0 ? response.data.inventories[0] : null;
+        if (firstItem && ('cost' in firstItem)) {
+          const storageKeyName = `consumption-table-${month}`;
+          localStorage.removeItem(`${storageKeyName}-columns`);
+          localStorage.removeItem(`${storageKeyName}-column-order`);
+          console.log(`Cleared persisted column visibility for ${storageKeyName} because API returned cost field.`);
+        }
+      } catch (err) {
+        console.warn('Failed to reset column visibility for month after fetch:', err);
+      }
     } catch (error) {
-      console.error(`Error fetching data for ${month}:`, error);
+      console.error(`❌ Error fetching data for ${month}:`, error);
       setMonthData((prev) => ({ ...prev, [month]: { loading: false, inventories: [], total_cost: null } }));
     }
   };
@@ -268,6 +308,54 @@ const InventoryConsumptionDashboard = () => {
   };
 
   const currentMonth = getCurrentMonth();
+
+  // Function to force refresh data for a month
+  const refreshMonthData = async (month: string) => {
+    console.log(`🔄 Force refreshing data for ${month}`);
+    // Clear existing data
+    setMonthData((prev) => ({ ...prev, [month]: { loading: true, inventories: [], total_cost: null } }));
+    
+    try {
+      const { start, end } = getMonthDateRange(month);
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const url = `https://${baseUrl}/pms/inventories/inventory_consumption_history.json?q[created_at_gteq]=${start}&q[created_at_lteq]=${end}`;
+      console.log(`🔍 FORCE REFRESH FOR ${month}:`);
+      console.log(`  - Date Range: ${start} to ${end}`);
+      console.log(`  - API URL: ${url}`);
+      
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      console.log(`✅ Refreshed data for ${month}:`, response.data);
+      console.log(`  - Count: ${response.data.inventories?.length || 0}`);
+      
+      setMonthData((prev) => ({
+        ...prev,
+        [month]: {
+          loading: false,
+          inventories: response.data.inventories || [],
+          total_cost: response.data.total_cost || null,
+        },
+      }));
+      // If API returned items with `cost`, reset persisted column visibility so defaults show the Cost column
+      try {
+        const firstItem = response.data.inventories && response.data.inventories.length > 0 ? response.data.inventories[0] : null;
+        if (firstItem && ('cost' in firstItem)) {
+          const storageKeyName = `consumption-table-${month}`;
+          localStorage.removeItem(`${storageKeyName}-columns`);
+          localStorage.removeItem(`${storageKeyName}-column-order`);
+          console.log(`Cleared persisted column visibility for ${storageKeyName} after manual refresh.`);
+        }
+      } catch (err) {
+        console.warn('Failed to reset column visibility for month after refresh:', err);
+      }
+    } catch (error) {
+      console.error(`❌ Error refreshing ${month}:`, error);
+      setMonthData((prev) => ({ ...prev, [month]: { loading: false, inventories: [], total_cost: null } }));
+    }
+  };
 
   // Navigate to view page
   // Pass id, start_date, end_date to the view page
@@ -354,6 +442,20 @@ const InventoryConsumptionDashboard = () => {
                 <span className="text-xl font-bold text-red-600">
                   {`${localStorage.getItem('currency')}${monthlyCosts[m.month] ?? 0}`}
                 </span>
+                {expandedMonth === m.month && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 w-8 p-0 hover:bg-gray-200"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      refreshMonthData(m.month);
+                    }}
+                    title="Refresh data"
+                  >
+                    <RefreshCw className="w-4 h-4 text-gray-600" />
+                  </Button>
+                )}
                 {expandedMonth === m.month ? (
                   <ChevronUp className="w-5 h-5 text-gray-400" />
                 ) : (
