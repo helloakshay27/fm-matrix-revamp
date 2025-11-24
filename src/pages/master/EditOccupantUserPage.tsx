@@ -46,6 +46,7 @@ export const EditOccupantUserPage: React.FC = () => {
   const [departmentsLoading, setDepartmentsLoading] = useState(false);
   const [departmentsError, setDepartmentsError] = useState<string | null>(null);
   const [userCategories, setUserCategories] = useState([])
+  const [lockId, setLockId] = useState<number | undefined>();
 
   const fetchUserCategories = async () => {
     try {
@@ -114,6 +115,8 @@ export const EditOccupantUserPage: React.FC = () => {
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const u = resp.data?.user || resp.data || {};
         const lup = u.lock_user_permission || {};
+        
+        setLockId(lup?.id);
 
         const accessLevel = lup.access_level || '';
         const accessTo: string[] = Array.isArray(lup.access_to) ? lup.access_to.map((v: any) => String(v)) : [];
@@ -202,6 +205,7 @@ export const EditOccupantUserPage: React.FC = () => {
           registration_source: 'Web',
           lock_user_permissions_attributes: [
             {
+              id: lockId,
               account_id: accountId,
               employee_id: formData.employeeId,
               designation: formData.designation,
