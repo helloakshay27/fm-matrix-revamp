@@ -2639,14 +2639,46 @@ export const Dashboard = () => {
           case "inventory_overstock_top10": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <OverstockTop10ItemsCard data={rawData} />
+                <OverstockTop10ItemsCard 
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await inventoryManagementAnalyticsAPI.downloadInventoryOverstockReport(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
               </SortableChartItem>
             );
           }
           case "top_consumables_center":
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <TopConsumablesCenterOverviewCard data={rawData} />
+                <TopConsumablesCenterOverviewCard 
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await inventoryManagementAnalyticsAPI.downloadCenterWiseConsumables(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
               </SortableChartItem>
             );
           case "consumable_inventory_value_quarterly":
@@ -2663,6 +2695,25 @@ export const Dashboard = () => {
                       ? { startDate: dateRange.from!, endDate: dateRange.to! }
                       : undefined
                   }
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error("Please select a date range first");
+                      return;
+                    }
+                    toast.loading("Preparing download...");
+                    try {
+                      await inventoryManagementAnalyticsAPI.downloadConsumableInventoryComparison(
+                        dateRange.from,
+                        dateRange.to
+                      );
+                      toast.dismiss();
+                      toast.success("Download completed successfully");
+                    } catch (error) {
+                      toast.dismiss();
+                      toast.error("Failed to download report");
+                      console.error("Download error:", error);
+                    }
+                  }}
                 />
               </SortableChartItem>
             );

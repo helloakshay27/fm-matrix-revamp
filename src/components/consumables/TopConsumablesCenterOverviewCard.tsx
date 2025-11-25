@@ -1,11 +1,13 @@
 import React, { useMemo } from 'react';
+import { Download } from 'lucide-react';
 
 type Props = {
   data: any;
+  onDownload?: () => void;
 };
 
 // Builds a top-10 consumables table across sites
-const TopConsumablesCenterOverviewCard: React.FC<Props> = ({ data }) => {
+const TopConsumablesCenterOverviewCard: React.FC<Props> = ({ data, onDownload }) => {
   const rows = useMemo(() => {
     const root = data?.data?.center_wise_consumables
       ?? data?.center_wise_consumables
@@ -38,7 +40,38 @@ const TopConsumablesCenterOverviewCard: React.FC<Props> = ({ data }) => {
 
   return (
     <div className="bg-white border rounded-lg shadow p-4">
-      <h3 className="text-lg font-semibold mb-3">Top Consumables – Centre-wise Overview</h3>
+      <div className="flex items-center justify-between gap-4 mb-3 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3">
+        <h3
+          className="flex-1"
+          style={{
+            fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+            fontWeight: 600,
+            fontSize: '16px',
+            lineHeight: '100%',
+            letterSpacing: '0%'
+          }}
+        >
+          Top Consumables – Centre-wise Overview
+        </h3>
+        {onDownload && (
+          <Download
+            data-no-drag="true"
+            className="w-5 h-5 flex-shrink-0 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
+          />
+        )}
+      </div>
       {headers.length === 0 ? (
         <div className="text-sm text-gray-500">No data</div>
       ) : (
@@ -67,6 +100,16 @@ const TopConsumablesCenterOverviewCard: React.FC<Props> = ({ data }) => {
           </table>
         </div>
       )}
+      
+      {/* Note section */}
+      <div className="mt-4 p-3 rounded-md">
+        <p className="text-xs text-gray-700">
+          <span className="font-semibold">Note:</span> This table highlights the top 10 consumable rate used across each centre, helping to monitor usage patterns and manage inventory more effectively.
+        </p>
+        <p className="text-xs text-gray-700 mt-2">
+          <span className="font-semibold">Formula:</span> Total consumable × (Average Sqft (1000) / Site Sqft)
+        </p>
+      </div>
     </div>
   );
 };
