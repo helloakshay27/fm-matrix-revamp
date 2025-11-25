@@ -2,6 +2,7 @@ import ChatAttachments from "@/components/ChatAttachments";
 import Chats from "@/components/Chats";
 import ChatTasks from "@/components/ChatTasks";
 import { useLayout } from "@/contexts/LayoutContext";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchConversation, fetchConversationMessages, sendMessage } from "@/store/slices/channelSlice";
 import { emojis } from "@/utils/emojies";
@@ -12,13 +13,16 @@ import { toast } from "sonner";
 
 const DMConversation = () => {
     const { id } = useParams();
-    const navigate = useNavigate();
     const { isSidebarCollapsed } = useLayout();
+    const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+    const currentUser = JSON.parse(localStorage.getItem("user"));
     const paperclipRef = useRef(null);
     const emojiPickerRef = useRef(null);
+    const isUserInitiatedScroll = useRef(false);
+    const bottomRef = useRef(null);
 
     const [activeTab, setActiveTab] = useState("chat");
     const [input, setInput] = useState("");
@@ -26,12 +30,31 @@ const DMConversation = () => {
     const [attachments, setAttachments] = useState([]);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [replyingTo, setReplyingTo] = useState(null);
+    const [isSubscribed, setIsSubscribed] = useState(false);
     const [conversation, setConversation] = useState({
         receiver_name: "",
         recipient_id: "",
         sender_name: "",
         sender_id: "",
     });
+
+    const { manager: webSocketManager, connect } = useWebSocket();
+
+    useEffect(() => {
+        console.log('🔌 WebSocket connection effect running');
+
+        if (token) {
+            console.log('✅ Token available, connecting...');
+            connect(token, `wss://${baseUrl}/cable`);
+        } else {
+            console.error('❌ No token available for WebSocket connection');
+        }
+
+        return () => {
+            console.log('🧹 Cleaning up WebSocket subscriptions');
+            webSocketManager.unsubscribeFromConversation(id);
+        };
+    }, [token, connect]);
 
     const fetchData = async () => {
         try {
@@ -58,14 +81,14 @@ const DMConversation = () => {
         fetchMessages();
     }, [id]);
 
-    useEffect(() => {
-        if (activeTab === "chat") {
-            const interval = setInterval(() => {
-                fetchMessages();
-            }, 5000);
-            return () => clearInterval(interval);
-        }
-    }, [activeTab, id]);
+    // useEffect(() => {
+    //     if (activeTab === "chat") {
+    //         const interval = setInterval(() => {
+    //             fetchMessages();
+    //         }, 5000);
+    //         return () => clearInterval(interval);
+    //     }
+    // }, [activeTab, id]);
 
     // Close emoji picker when clicking outside
     useEffect(() => {
@@ -78,6 +101,12 @@ const DMConversation = () => {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        if (bottomRef.current && !isUserInitiatedScroll.current) {
+            bottomRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages]);
 
     const handleFileChange = (e) => {
         const selectedFiles = Array.from(e.target.files);
@@ -127,6 +156,59 @@ const DMConversation = () => {
             toast.error(error);
         }
     };
+
+    useEffect(() => {
+        const subscriptionTimer = setTimeout(() => {
+            const sub = webSocketManager.subscribeToConversation(id, {
+                onConnected: () => {
+                    console.log('🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!');
+                    setIsSubscribed(true);
+                    toast.success('Real-time chat connected!', { duration: 2000 });
+                },
+                onNewMessage: (message) => {
+                    if (message.user_id === currentUser.id) {
+                        return;
+                    }
+
+                    setMessages((prev) => {
+                        const exists = prev.some(msg => msg.id === message.id);
+                        if (exists) return prev;
+                        return [message, ...prev];
+                    });
+
+                    if (!("Notification" in window)) {
+                        toast.error("Not supported");
+                        return;
+                    }
+
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            const notification = new Notification("New message", {
+                                body: message.body
+                            });
+
+                            notification.onclick = () => {
+                                window.focus();
+                            };
+                        }
+                    });
+
+                    isUserInitiatedScroll.current = false;
+                },
+                onDisconnected: () => {
+                    console.log('❌ Chat subscription disconnected');
+                    setIsSubscribed(false);
+                    toast.error('Real-time chat disconnected');
+                }
+            });
+            console.log('📋 Subscription object:', sub);
+        }, 2000); // Wait 2 seconds for connection to establish
+
+        return () => {
+            console.log('⏰ Clearing subscription timer');
+            clearTimeout(subscriptionTimer);
+        };
+    }, [id, isSubscribed, webSocketManager, currentUser.id]);
 
     return (
         <div
@@ -179,7 +261,7 @@ const DMConversation = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto">
-                {activeTab === "chat" && id && <Chats messages={messages} onReply={handleReply} />}
+                {activeTab === "chat" && id && <Chats messages={messages} onReply={handleReply} bottomRef={bottomRef} />}
                 {activeTab === "task" && <ChatTasks />}
                 {activeTab === "attachments" && <ChatAttachments />}
             </div>

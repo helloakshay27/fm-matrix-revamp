@@ -36,8 +36,25 @@ export const createProjectTask = createAsyncThunk(
     }
 )
 
+export const fetchUserAvailability = createAsyncThunk('fetchUserAvailability', async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(`${baseUrl}/users/${id}/daily_task_load_report.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        const message = error.response?.data?.error || error.error || 'Failed to fetch user availability'
+        return rejectWithValue(message)
+    }
+})
+
 const fetchProjectTasksSlice = createApiSlice("fetchProjectTasks", fetchProjectTasks)
 const createProjectTaskSlice = createApiSlice("createProjectTask", createProjectTask)
+const fetchUserAvailabilitySlice = createApiSlice("fetchUserAvailability", fetchUserAvailability)
 
 export const fetchProjectTasksReducer = fetchProjectTasksSlice.reducer
 export const createProjectTaskReducer = createProjectTaskSlice.reducer
+export const fetchUserAvailabilityReducer = fetchUserAvailabilitySlice.reducer
