@@ -1203,8 +1203,26 @@ export const TicketDashboard = () => {
   );
   const formatDate = (dateString: string) => {
     if (!dateString) return '--';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB');
+    try {
+      // Parse the ISO string to extract date and time parts directly
+      // Format: "2025-11-19T12:01:19.000+04:00"
+      const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+      if (match) {
+        const [, year, month, day, hours, minutes, seconds] = match;
+        return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+      }
+      // Fallback to Date object if regex doesn't match
+      const date = new Date(dateString);
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      const h = String(date.getHours()).padStart(2, '0');
+      const min = String(date.getMinutes()).padStart(2, '0');
+      const sec = String(date.getSeconds()).padStart(2, '0');
+      return `${d}/${m}/${y}, ${h}:${min}:${sec}`;
+    } catch (error) {
+      return dateString;
+    }
   };
 
   // Helper function to format escalation data
