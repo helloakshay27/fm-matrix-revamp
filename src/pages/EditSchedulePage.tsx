@@ -47,7 +47,7 @@ import {
   Close,
 } from '@mui/icons-material';
 import { Cog } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from "sonner";
 import { MappingStep } from '@/components/schedule/MappingStep';
 import { TimeSetupStep } from '@/components/schedule/TimeSetupStep';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
@@ -2727,7 +2727,7 @@ export const EditSchedulePage = () => {
               </FormControl>
               
               {/* Display selected groups as chips */}
-              {formData.selectedGroups && formData.selectedGroups.length > 0 && (
+              {/* {formData.selectedGroups && formData.selectedGroups.length > 0 && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
                     Selected Groups:
@@ -2754,7 +2754,7 @@ export const EditSchedulePage = () => {
                     })}
                   </Box>
                 </Box>
-              )}
+              )} */}
               
             </Box>
           )}
