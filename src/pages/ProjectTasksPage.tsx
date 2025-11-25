@@ -3,12 +3,21 @@ import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
 import { createProjectTask, fetchProjectTasks } from "@/store/slices/projectTasksSlice";
-import { Edit, Eye, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Edit, Eye, Plus, X } from "lucide-react";
+import { useEffect, useState, forwardRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { MenuItem, Select, TextField } from "@mui/material";
+import { MenuItem, Select, TextField, Dialog, DialogContent, Slide } from "@mui/material";
+import { TransitionProps } from "@mui/material/transitions";
 import { toast } from "sonner";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
+
+const Transition = forwardRef(function Transition(
+    props: TransitionProps & { children: React.ReactElement },
+    ref: React.Ref<unknown>
+) {
+    return <Slide direction="left" ref={ref} {...props} />;
+});
 
 const columns: ColumnConfig[] = [
     {
@@ -93,8 +102,7 @@ const ProjectTasksPage = () => {
 
     const [tasks, setTasks] = useState([])
     const [users, setUsers] = useState([])
-    const [openDialog, setOpenDialog] = useState(false);
-    const [openFormDialog, setOpenFormDialog] = useState(false);
+    const [openTaskModal, setOpenTaskModal] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -120,7 +128,12 @@ const ProjectTasksPage = () => {
     }, [])
 
     const handleOpenDialog = () => {
-        setOpenDialog(true);
+        setOpenTaskModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setOpenTaskModal(false);
+        fetchData();
     };
 
     const handleSubmit = async (data) => {
@@ -147,10 +160,21 @@ const ProjectTasksPage = () => {
 
     const renderActions = (item: any) => (
         <div className="flex items-center justify-center gap-2">
-            <Button size="sm" variant="ghost" className="p-1" onClick={() => navigate(`${item.id}`)}>
+            <Button
+                size="sm"
+                variant="ghost"
+                className="p-1"
+                onClick={() => navigate(`/projects/${id}/milestones/${mid}/tasks/${item.id}`)}
+                title="View Task Details"
+            >
                 <Eye className="w-4 h-4" />
             </Button>
-            <Button size="sm" variant="ghost" className="p-1">
+            <Button
+                size="sm"
+                variant="ghost"
+                className="p-1"
+                title="Edit Task"
+            >
                 <Edit className="w-4 h-4" />
             </Button>
         </div>
@@ -311,6 +335,42 @@ const ProjectTasksPage = () => {
                 renderEditableCell={renderEditableCell}
                 newRowPlaceholder="Click to add new task"
             />
+
+            {/* Task Create Modal with Animation */}
+            <Dialog
+                open={openTaskModal}
+                onClose={handleCloseModal}
+                TransitionComponent={Transition}
+                maxWidth={false}
+            >
+                <DialogContent
+                    className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                    style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+                    sx={{
+                        padding: "0 !important",
+                        "& .MuiDialogContent-root": {
+                            padding: "0 !important",
+                            overflow: "auto",
+                        }
+                    }}
+                >
+                    <div className="sticky top-0 bg-white z-10">
+                        <h3 className="text-[14px] font-medium text-center mt-8">Create Project Task</h3>
+                        <X
+                            className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
+                            onClick={handleCloseModal}
+                        />
+                        <hr className="border border-[#E95420] mt-4" />
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto">
+                        <ProjectTaskCreateModal
+                            isEdit={false}
+                            onCloseModal={handleCloseModal}
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

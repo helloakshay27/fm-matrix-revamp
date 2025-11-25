@@ -70,12 +70,43 @@ export const changeProjectStatus = createAsyncThunk(
     }
 )
 
+export const removeTagFromProject = createAsyncThunk('removeTagFromProject', async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
+    try {
+        const response = await axios.delete(`https://${baseUrl}/task_tags/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        return rejectWithValue(error);
+    }
+})
+
+export const removeUserFromProject = createAsyncThunk('removeUserFromProject', async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }) => {
+    try {
+        const response = await axios.delete(`https://${baseUrl}/task_users/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        console.log(error)
+        return error.response.data
+    }
+})
+
 const fetchProjectsSlice = createApiSlice("fetchProjects", fetchProjects);
 const createProjectSlice = createApiSlice("createProject", createProject);
 const fetchProjectByIdSlice = createApiSlice("fetchProjectById", fetchProjectById);
 const changeProjectStatusSlice = createApiSlice("changeProjectStatus", changeProjectStatus);
+const removeTagFromProjectSlice = createApiSlice("removeTagFromProject", removeTagFromProject);
 
 export const fetchProjectsReducer = fetchProjectsSlice.reducer;
 export const createProjectReducer = createProjectSlice.reducer;
 export const fetchProjectByIdReducer = fetchProjectByIdSlice.reducer;
 export const changeProjectStatusReducer = changeProjectStatusSlice.reducer;
+export const removeTagFromProjectReducer = removeTagFromProjectSlice.reducer;

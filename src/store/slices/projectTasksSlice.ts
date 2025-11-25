@@ -36,9 +36,40 @@ export const createProjectTask = createAsyncThunk(
     }
 )
 
+export const editProjectTask = createAsyncThunk(
+    "editProjectTask",
+    async ({ token, baseUrl, id, data }: { token: string, baseUrl: string, id: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/task_managements/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const fetchProjectTasksById = createAsyncThunk('fetchProjectTasksById', async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(`https://${baseUrl}/task_managements/${id}.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+        return response.data;
+    }
+    catch (error) {
+        return rejectWithValue(error);
+    }
+})
+
 export const fetchUserAvailability = createAsyncThunk('fetchUserAvailability', async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${baseUrl}/users/${id}/daily_task_load_report.json`, {
+        const response = await axios.get(`https://${baseUrl}/users/${id}/daily_task_load_report.json`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -51,10 +82,30 @@ export const fetchUserAvailability = createAsyncThunk('fetchUserAvailability', a
     }
 })
 
+export const fetchTargetDateTasks = createAsyncThunk('fetchTargetDateTasks', async ({ baseUrl, token, id, date }: { baseUrl: string, token: string, id: string, date: string }, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(`https://${baseUrl}/task_managements/filtered_tasks.json?allocation_date=${date}&responsible_person_id=${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        return rejectWithValue(error);
+    }
+})
+
 const fetchProjectTasksSlice = createApiSlice("fetchProjectTasks", fetchProjectTasks)
 const createProjectTaskSlice = createApiSlice("createProjectTask", createProjectTask)
+const fetchProjectTasksByIdSlice = createApiSlice("fetchProjectTasksById", fetchProjectTasksById)
 const fetchUserAvailabilitySlice = createApiSlice("fetchUserAvailability", fetchUserAvailability)
+const fetchTargetDateTasksSlice = createApiSlice("fetchTargetDateTasks", fetchTargetDateTasks)
+const editProjectTaskSlice = createApiSlice("editProjectTask", editProjectTask)
 
 export const fetchProjectTasksReducer = fetchProjectTasksSlice.reducer
 export const createProjectTaskReducer = createProjectTaskSlice.reducer
+export const fetchProjectTasksByIdReducer = fetchProjectTasksByIdSlice.reducer
 export const fetchUserAvailabilityReducer = fetchUserAvailabilitySlice.reducer
+export const fetchTargetDateTasksReducer = fetchTargetDateTasksSlice.reducer
+export const editProjectTaskReducer = editProjectTaskSlice.reducer
