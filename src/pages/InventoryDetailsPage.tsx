@@ -533,6 +533,17 @@ export const InventoryDetailsPage = () => {
     return enumd;
   };
 
+  // Generic display helper: format numbers and known keys consistently
+  const display = (key: string, val: any): string => {
+    if (val === null || val === undefined || val === '') return '—';
+    // For numbers, keep commas (formatValue handles common numeric keys)
+    try {
+      return formatValue(key, String(val));
+    } catch {
+      return String(val);
+    }
+  };
+
   const toggleRow = (rowId: number) => {
     setExpandedRows(prev => ({ ...prev, [rowId]: !prev[rowId] }));
   };
@@ -708,7 +719,7 @@ export const InventoryDetailsPage = () => {
                   <span className="text-gray-500 w-24">Min Stock Level</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.min_stock_level || '—'}
+                    {display('min_stock_level', (inventoryData as any)?.min_stock_level)}
                   </span>
                 </div>
                 <div className="flex text-sm">
@@ -718,7 +729,7 @@ export const InventoryDetailsPage = () => {
                     {inventoryData?.inventory_type ? getInventoryType(inventoryData.inventory_type) : '—'}
                   </span>
                 </div>
-                <div className="flex text-sm">
+                {/* <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Type Name</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
@@ -731,7 +742,7 @@ export const InventoryDetailsPage = () => {
                   <span className="text-gray-900 font-medium">
                     {(inventoryData as any)?.inventory_sub_type_name || '—'}
                   </span>
-                </div>
+                </div> */}
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Criticality</span>
                   <span className="text-gray-500 mx-2">:</span>
@@ -757,21 +768,21 @@ export const InventoryDetailsPage = () => {
                   <span className="text-gray-500 w-24">Quantity</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.quantity || '—'}
+                    {display('quantity', (inventoryData as any)?.quantity)}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">SGST Rate</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.sgst_rate || '—'}
+                    {display('sgst_rate', (inventoryData as any)?.sgst_rate)}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">IGST Rate</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.igst_rate || '—'}
+                    {display('igst_rate', (inventoryData as any)?.igst_rate)}
                   </span>
                 </div>
                 <div className="flex text-sm">
@@ -799,14 +810,14 @@ export const InventoryDetailsPage = () => {
                   <span className="text-gray-500 w-24">Max Stock Level</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.max_stock_level || '—'}
+                    {display('max_stock_level', (inventoryData as any)?.max_stock_level)}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">Min. Order Level</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.min_order_level || '—'}
+                    {display('min_order_level', (inventoryData as any)?.min_order_level)}
                   </span>
                 </div>
                 <div className="flex text-sm">
@@ -820,14 +831,35 @@ export const InventoryDetailsPage = () => {
                   <span className="text-gray-500 w-24">Cost</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.cost || 'NA'}
+                    {((inventoryData as any)?.cost === null || (inventoryData as any)?.cost === undefined) ? 'NA' : display('cost', (inventoryData as any)?.cost)}
+                  </span>
+                </div>
+                <div className="flex text-sm">
+                  <span className="text-gray-500 w-24">Tax Category</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {(inventoryData as any)?.tax_category ?? '—'}
+                  </span>
+                </div>
+                <div className="flex text-sm">
+                  <span className="text-gray-500 w-24">Category Code</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {(inventoryData as any)?.category_code ?? '—'}
+                  </span>
+                </div>
+                <div className="flex text-sm">
+                  <span className="text-gray-500 w-24">SAP Plant Code</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {(inventoryData as any)?.sap_plant_code ?? '—'}
                   </span>
                 </div>
                 <div className="flex text-sm">
                   <span className="text-gray-500 w-24">CGST Rate</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.cgst_rate || '—'}
+                    {display('cgst_rate', (inventoryData as any)?.cgst_rate)}
                   </span>
                 </div>
                 <div className="flex text-sm">
@@ -873,7 +905,7 @@ export const InventoryDetailsPage = () => {
                   <span className="text-gray-500 w-24">Total (Including Tax)</span>
                   <span className="text-gray-500 mx-2">:</span>
                   <span className="text-gray-900 font-medium">
-                    {inventoryData?.total_including_tax}
+                    {display('total_including_tax', (inventoryData as any)?.total_including_tax)}
                   </span>
                 </div>
               </div>

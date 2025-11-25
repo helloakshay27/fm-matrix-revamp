@@ -214,27 +214,45 @@ const InventoryConsumptionDashboard = () => {
     }
     if (columnKey === 'cost') {
       // Handle different possible cost field names
-      const costValue = item.cost !== undefined && item.cost !== null 
-        ? item.cost 
+      const costValue = item.cost !== undefined && item.cost !== null
+        ? item.cost
         : item.unit_cost !== undefined && item.unit_cost !== null
-        ? item.unit_cost
-        : item.price !== undefined && item.price !== null
-        ? item.price
-        : null;
-      
+          ? item.unit_cost
+          : item.price !== undefined && item.price !== null
+            ? item.price
+            : null;
+
       if (costValue === null || costValue === undefined) {
         console.warn('Cost value missing for item:', item); // Debug logging
       }
-      
-      return <span className="font-semibold text-green-600">{costValue !== null && costValue !== undefined ? `₹${costValue}` : '-'}</span>;
+
+      return <span className="font-semibold text-green-600">{costValue !== null && costValue !== undefined ? `₹${formatNumber(costValue)}` : '-'}</span>;
     }
     if (columnKey === 'name') {
       return <span className="font-medium text-gray-900">{value}</span>;
+    }
+    if (columnKey === 'quantity' || columnKey === 'consumption') {
+      return <span className="text-gray-700">{value !== null && value !== undefined ? formatNumber(value) : '-'}</span>;
+    }
+    if (columnKey === 'total_cost') {
+      return <span className="font-semibold text-red-600">{value !== null && value !== undefined ? `₹${formatNumber(value)}` : '-'}</span>;
     }
     if (columnKey === 'criticality') {
       return <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">{value}</span>;
     }
     return <span className="text-gray-700">{value !== null && value !== undefined ? value : '-'}</span>;
+  };
+
+  // Format numbers in Indian grouping (1,000 -> 1,000 ; 100000 -> 1,00,000)
+  const formatNumber = (n: any) => {
+    if (n === null || n === undefined || n === '') return '-';
+    const num = Number(String(n).replace(/[^0-9.-]/g, ''));
+    if (Number.isNaN(num)) return String(n);
+    try {
+      return new Intl.NumberFormat('en-IN').format(num);
+    } catch {
+      return num.toLocaleString();
+    }
   };
 
   // Toggle month expansion and fetch data if needed
@@ -260,18 +278,18 @@ const InventoryConsumptionDashboard = () => {
       console.log(`🔍 FETCHING DATA FOR ${month}:`);
       console.log(`  - Date Range: ${start} to ${end}`);
       console.log(`  - API Request URL: ${url}`);
-      
+
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       console.log(`✅ API Response for ${month}:`, response.data);
       console.log(`  - Total inventories count: ${response.data.inventories?.length || 0}`);
       if (response.data.inventories && response.data.inventories.length > 0) {
         console.log(`  - First inventory item:`, response.data.inventories[0]);
         console.log(`  - Has cost field: ${'cost' in response.data.inventories[0]}`);
       }
-      
+
       setMonthData((prev) => ({
         ...prev,
         [month]: {
@@ -314,7 +332,7 @@ const InventoryConsumptionDashboard = () => {
     console.log(`🔄 Force refreshing data for ${month}`);
     // Clear existing data
     setMonthData((prev) => ({ ...prev, [month]: { loading: true, inventories: [], total_cost: null } }));
-    
+
     try {
       const { start, end } = getMonthDateRange(month);
       const baseUrl = localStorage.getItem('baseUrl');
@@ -323,14 +341,14 @@ const InventoryConsumptionDashboard = () => {
       console.log(`🔍 FORCE REFRESH FOR ${month}:`);
       console.log(`  - Date Range: ${start} to ${end}`);
       console.log(`  - API URL: ${url}`);
-      
+
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       console.log(`✅ Refreshed data for ${month}:`, response.data);
       console.log(`  - Count: ${response.data.inventories?.length || 0}`);
-      
+
       setMonthData((prev) => ({
         ...prev,
         [month]: {
@@ -440,7 +458,7 @@ const InventoryConsumptionDashboard = () => {
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-xl font-bold text-red-600">
-                  {`${localStorage.getItem('currency')}${monthlyCosts[m.month] ?? 0}`}
+                  {`${localStorage.getItem('currency')}${formatNumber(monthlyCosts[m.month] ?? 0)}`}
                 </span>
                 {expandedMonth === m.month && (
                   <Button

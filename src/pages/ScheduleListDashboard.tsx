@@ -355,7 +355,19 @@ export const ScheduleListDashboard = () => {
     }
     setDeactivateModal({ open: false, scheduleId: null });
   };
-  const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
+  const handleEditSchedule = (item: any) => {
+    // Use custom_form_code from the table row if present, fallback to lookup
+    let formCode = item.custom_form_code;
+    if (!formCode && customFormsData?.custom_forms) {
+      const customForm = customFormsData.custom_forms.find((form: any) => form.id?.toString() === item.id?.toString());
+      formCode = customForm?.custom_form_code;
+    }
+    if (!item.id || !formCode) {
+      toast.error('Invalid schedule ID or missing form code.');
+      return;
+    }
+    navigate(`/maintenance/schedule/edit/${item.id}`, { state: { customFormCode: formCode } });
+  };
   const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
   const handleViewSchedule = (item: any) => {
     // Use custom_form_code from the table row if present, fallback to lookup
@@ -444,9 +456,9 @@ export const ScheduleListDashboard = () => {
     if (columnKey === 'actions') {
       return (
         <div className="flex gap-1">
-          {/* <Button v`ariant="ghost" size="sm" onClick={() => handleEditSchedule(item.id)}>
+          <Button variant="ghost" size="sm" onClick={() => handleEditSchedule(item)}>
             <Edit className="w-4 h-4" />
-          </Button>` */}
+          </Button>
           {/* <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item.id)}>
             <Copy className="w-4 h-4" />
           </Button> */}

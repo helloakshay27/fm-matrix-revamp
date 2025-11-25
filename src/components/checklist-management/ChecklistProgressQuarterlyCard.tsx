@@ -1,6 +1,7 @@
 import React from 'react';
 import { getPeriodLabels } from '@/lib/periodLabel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Download } from 'lucide-react';
 
 export type ChecklistProgressDetailRow = {
   site_name: string;
@@ -40,6 +41,7 @@ export interface ChecklistProgressQuarterlyCardProps {
   rows: ChecklistProgressDetailRow[];
   loading?: boolean;
   dateRange?: { startDate: Date; endDate: Date };
+  onDownload?: () => void;
 }
 
 const fmtPct = (v: number) => {
@@ -62,13 +64,34 @@ export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterly
   rows,
   loading = false,
   dateRange,
+  onDownload,
 }) => {
   const { periodUnit } = getPeriodLabels(dateRange?.startDate ?? new Date(), dateRange?.endDate ?? new Date());
   const computedTitle = title ?? `Checklist Progress Status`;
   return (
     <Card className="border border-gray-300">
       <CardHeader className="py-4">
-        <CardTitle className="text-base font-semibold">{computedTitle}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold flex-1">{computedTitle}</CardTitle>
+          {onDownload && (
+            <Download
+              data-no-drag="true"
+              className="w-5 h-5 cursor-pointer text-[#000000] hover:text-[#333333] transition-colors z-50 flex-shrink-0"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDownload();
+              }}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              style={{ pointerEvents: 'auto' }}
+            />
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

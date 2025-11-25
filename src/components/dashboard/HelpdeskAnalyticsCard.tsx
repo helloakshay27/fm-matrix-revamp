@@ -21,6 +21,7 @@ interface HelpdeskAnalyticsCardProps {
     startDate: Date;
     endDate: Date;
   };
+  onDownload?: () => void;
 }
 
 // Helper function to get period labels
@@ -89,6 +90,7 @@ export const HelpdeskAnalyticsCard: React.FC<HelpdeskAnalyticsCardProps> = ({
   data,
   type,
   dateRange,
+  onDownload,
 }) => {
   const { lastLabel, currentLabel, periodUnit } = useMemo(() => {
     // Check if API provides period information
@@ -211,15 +213,24 @@ export const HelpdeskAnalyticsCard: React.FC<HelpdeskAnalyticsCardProps> = ({
         <CardTitle className="text-lg font-semibold text-analytics-text">
           {chartTitle}
         </CardTitle>
-        {/* <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleDownload}
-          className="hover:bg-analytics-secondary/50"
-          data-download-button
-        >
-          <Download className="w-4 h-4" />
-        </Button> */}
+        {onDownload && (
+          <Download
+            data-no-drag="true"
+            className="w-5 h-5 cursor-pointer text-[#000000] hover:text-[#333333] transition-colors z-50"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
+          />
+        )}
       </CardHeader>
 
       <CardContent className="flex-1 pt-4">

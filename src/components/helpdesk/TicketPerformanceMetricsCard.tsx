@@ -1,6 +1,10 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { Download } from 'lucide-react';
 
-interface Props { data: any }
+interface Props { 
+  data: any;
+  onDownload?: () => void;
+}
 
 // Helpers copied from PDF mapping, simplified
 const normalizeAgingBucket = (key: string): string => {
@@ -51,7 +55,7 @@ const displayPercent = (p: any): string => {
 
 const getTextColor = () => 'text-black';
 
-export const TicketPerformanceMetricsCard: React.FC<Props> = ({ data }) => {
+export const TicketPerformanceMetricsCard: React.FC<Props> = ({ data, onDownload }) => {
   const apiMetrics = data?.data?.metrics ?? data?.metrics ?? [];
 
   // refs and state to measure positions so axes can be drawn to meet exactly at origin
@@ -117,14 +121,38 @@ export const TicketPerformanceMetricsCard: React.FC<Props> = ({ data }) => {
 
   return (
     <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
-      <h3   className="mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3"
-        style={{
-          fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
-          fontWeight: 600,
-          fontSize: '16px',
-          lineHeight: '100%',
-          letterSpacing: '0%'
-        }}>Ticket Performance Metrics by Category – Volume, Closure Rate & Ageing</h3>
+      <div className="flex items-center justify-between gap-4 mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3">
+        <h3
+          className="flex-1"
+          style={{
+            fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+            fontWeight: 600,
+            fontSize: '16px',
+            lineHeight: '100%',
+            letterSpacing: '0%'
+          }}
+        >
+          Ticket Performance Metrics by Category – Volume, Closure Rate & Ageing
+        </h3>
+        {onDownload && (
+          <Download
+            data-no-drag="true"
+            className="w-5 h-5 flex-shrink-0 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
+          />
+        )}
+      </div>
       <div className="flex items-center justify-between gap-4 flex-wrap text-sm mb-3">
         <div className="flex items-center gap-1">
           <span>% of tickets raised by category</span>

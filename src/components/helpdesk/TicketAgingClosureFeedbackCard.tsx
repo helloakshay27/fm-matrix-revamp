@@ -1,6 +1,11 @@
 import React, { useMemo } from 'react';
+import { Download } from 'lucide-react';
 
-interface Props { agingClosureData: any; feedbackData: any }
+interface Props { 
+  agingClosureData: any; 
+  feedbackData: any;
+  onDownload?: () => void;
+}
 
 // Normalize various possible ageing bucket keys to canonical labels used in PDF: "0-10", "11-20", "21-30", "31-40", "40+"
 const getAgingBuckets = (aging: any) => ({
@@ -11,7 +16,7 @@ const getAgingBuckets = (aging: any) => ({
   '40+': aging?.['40+_days'] ?? aging?.['40_plus'] ?? aging?.['40+'] ?? aging?.['40_and_above'] ?? '-',
 });
 
-export const TicketAgingClosureFeedbackCard: React.FC<Props> = ({ agingClosureData, feedbackData }) => {
+export const TicketAgingClosureFeedbackCard: React.FC<Props> = ({ agingClosureData, feedbackData, onDownload }) => {
   // Prefer new API shape: { data: { centers: [...] } }
   const centers = useMemo(() => {
     const root = agingClosureData?.data ?? agingClosureData ?? {};
@@ -74,18 +79,38 @@ export const TicketAgingClosureFeedbackCard: React.FC<Props> = ({ agingClosureDa
 
   return (
     <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
-      <h3
-        className="mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3"
-        style={{
-          fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
-          fontWeight: 600,
-          fontSize: '16px',
-          lineHeight: '100%',
-          letterSpacing: '0%'
-        }}
-      >
-        Ticket Ageing, Closure Efficiency & Feedback Overview by Center
-      </h3>
+      <div className="flex items-center justify-between gap-4 mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3">
+        <h3
+          className="flex-1"
+          style={{
+            fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+            fontWeight: 600,
+            fontSize: '16px',
+            lineHeight: '100%',
+            letterSpacing: '0%'
+          }}
+        >
+          Ticket Ageing, Closure Efficiency & Feedback Overview by Center
+        </h3>
+        {onDownload && (
+          <Download
+            data-no-drag="true"
+            className="w-5 h-5 flex-shrink-0 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
+          />
+        )}
+      </div>
       <table className="min-w-full border-collapse text-sm text-center">
         <thead className="bg-[#ded9cd] text-[#b62527] font-semibold">
           <tr className="border-t border-gray-200 border-b border-gray-200">

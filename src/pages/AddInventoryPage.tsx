@@ -144,7 +144,7 @@ export const AddInventoryPage = () => {
               ? (data as any).plants
               : [];
         setPlants(arr);
-      } catch {/* ignore */}
+      } catch {/* ignore */ }
     };
     loadPlants();
   }, []);
@@ -215,7 +215,7 @@ export const AddInventoryPage = () => {
       case 'minStockLevel':
         // Clear any existing error first
         newErrors.minStockLevel = '';
-        
+
         // Basic validation
         if (!value) {
           newErrors.minStockLevel = 'Min Stock Level is required';
@@ -228,7 +228,7 @@ export const AddInventoryPage = () => {
             newErrors.minStockLevel = 'Min Stock Level cannot be greater than Max Stock Level';
           }
         }
-        
+
         // Clear maxStockLevel error if it exists and the relationship is now valid
         if (value && currentFormData.maxStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.maxStockLevel)) {
           if (parseFloat(value) <= parseFloat(currentFormData.maxStockLevel)) {
@@ -239,7 +239,7 @@ export const AddInventoryPage = () => {
       case 'maxStockLevel':
         // Clear any existing error first
         newErrors.maxStockLevel = '';
-        
+
         // Basic validation
         if (!value) {
           newErrors.maxStockLevel = 'Max Stock Level is required';
@@ -252,7 +252,7 @@ export const AddInventoryPage = () => {
             newErrors.maxStockLevel = 'Max Stock Level cannot be less than Min Stock Level';
           }
         }
-        
+
         // Clear minStockLevel error if it exists and the relationship is now valid
         if (value && currentFormData.minStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.minStockLevel)) {
           if (parseFloat(currentFormData.minStockLevel) <= parseFloat(value)) {
@@ -263,7 +263,7 @@ export const AddInventoryPage = () => {
       case 'minOrderLevel':
         // First, clear any existing error for this field
         newErrors.minOrderLevel = '';
-        
+
         // Basic validation
         if (value && !isValidPositiveNumber(value)) {
           newErrors.minOrderLevel = 'Min Order Level must be a valid number';
@@ -450,9 +450,9 @@ export const AddInventoryPage = () => {
         max_stock_level: parseInt(formData.maxStockLevel) || 0,
         min_stock_level: formData.minStockLevel,
         min_order_level: formData.minOrderLevel,
-  // New master fields
-  pms_inventory_type_id: invTypeId ? parseInt(invTypeId, 10) : null,
-  pms_inventory_sub_type_id: invSubTypeId ? parseInt(invSubTypeId, 10) : null,
+        // New master fields
+        pms_inventory_type_id: invTypeId ? parseInt(invTypeId, 10) : null,
+        pms_inventory_sub_type_id: invSubTypeId ? parseInt(invSubTypeId, 10) : null,
         green_product: ecoFriendly ? 1 : 0,
         // New fields in payload
         sap_plant_code: formData.plantCode || null, // send plant NAME per requirement
@@ -606,7 +606,7 @@ export const AddInventoryPage = () => {
 
   // Fetch Inventory Types on mount
   useEffect(() => {
-  const fetchInventoryTypes = async () => {
+    const fetchInventoryTypes = async () => {
       setInvTypeLoading(true);
       try {
         const res = await fetch(getFullUrl('/pms/inventory_types/autocomplete.json'), {
@@ -617,15 +617,15 @@ export const AddInventoryPage = () => {
         });
         if (!res.ok) throw new Error('Failed to load inventory types');
         const data = await res.json();
-    let arr: any[] = [];
-    if (Array.isArray(data)) arr = data;
-    else if (Array.isArray(data?.inventory_types)) arr = data.inventory_types;
-    else if (Array.isArray(data?.item_types)) arr = data.item_types;
-    else if (Array.isArray(data?.data)) arr = data.data;
-    else if (Array.isArray(data?.items)) arr = data.items;
-    else if (Array.isArray(data?.inventory_types?.data)) arr = data.inventory_types.data;
-    else if (Array.isArray(data?.item_types?.data)) arr = data.item_types.data;
-    else if (Array.isArray(data?.payload)) arr = data.payload;
+        let arr: any[] = [];
+        if (Array.isArray(data)) arr = data;
+        else if (Array.isArray(data?.inventory_types)) arr = data.inventory_types;
+        else if (Array.isArray(data?.item_types)) arr = data.item_types;
+        else if (Array.isArray(data?.data)) arr = data.data;
+        else if (Array.isArray(data?.items)) arr = data.items;
+        else if (Array.isArray(data?.inventory_types?.data)) arr = data.inventory_types.data;
+        else if (Array.isArray(data?.item_types?.data)) arr = data.item_types.data;
+        else if (Array.isArray(data?.payload)) arr = data.payload;
         setInvTypeOptions(arr);
       } catch (e) {
         console.error('Error fetching inventory types', e);
@@ -639,7 +639,7 @@ export const AddInventoryPage = () => {
 
   // Fetch Inventory Sub Types when type changes
   useEffect(() => {
-  const fetchSubTypes = async () => {
+    const fetchSubTypes = async () => {
       if (!invTypeId) { setInvSubTypeOptions([]); setInvSubTypeId(''); return; }
       setInvSubTypeLoading(true);
       try {
@@ -652,17 +652,17 @@ export const AddInventoryPage = () => {
         });
         if (!res.ok) throw new Error('Failed to load inventory sub types');
         const data = await res.json();
-  let arr: any[] = [];
-  if (Array.isArray(data)) arr = data;
-  else if (Array.isArray(data?.inventory_sub_types)) arr = data.inventory_sub_types;
-  else if (Array.isArray(data?.item_sub_types)) arr = data.item_sub_types;
-  else if (Array.isArray(data?.item_categories)) arr = data.item_categories;
-  else if (Array.isArray(data?.sub_types)) arr = data.sub_types;
-  else if (Array.isArray(data?.data)) arr = data.data;
-  else if (Array.isArray(data?.items)) arr = data.items;
-  else if (Array.isArray(data?.inventory_sub_types?.data)) arr = data.inventory_sub_types.data;
-  else if (Array.isArray(data?.item_sub_types?.data)) arr = data.item_sub_types.data;
-  else if (Array.isArray(data?.item_categories?.data)) arr = data.item_categories.data;
+        let arr: any[] = [];
+        if (Array.isArray(data)) arr = data;
+        else if (Array.isArray(data?.inventory_sub_types)) arr = data.inventory_sub_types;
+        else if (Array.isArray(data?.item_sub_types)) arr = data.item_sub_types;
+        else if (Array.isArray(data?.item_categories)) arr = data.item_categories;
+        else if (Array.isArray(data?.sub_types)) arr = data.sub_types;
+        else if (Array.isArray(data?.data)) arr = data.data;
+        else if (Array.isArray(data?.items)) arr = data.items;
+        else if (Array.isArray(data?.inventory_sub_types?.data)) arr = data.inventory_sub_types.data;
+        else if (Array.isArray(data?.item_sub_types?.data)) arr = data.item_sub_types.data;
+        else if (Array.isArray(data?.item_categories?.data)) arr = data.item_categories.data;
         setInvSubTypeOptions(arr);
       } catch (e) {
         console.error('Error fetching inventory sub types', e);
@@ -735,7 +735,7 @@ export const AddInventoryPage = () => {
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         {/* Inventory Details Section */}
-        <div className="border-b border-[#D9D9D9] bg-[#F6F7F7]">
+        <div className="border-b bg-white rounded-lg border border-gray-200 shadow-sm">
           <button
             onClick={() => setInventoryDetailsExpanded(!inventoryDetailsExpanded)}
             className="w-full flex items-center justify-between p-4 text-left bg-[#F6F4EE] mb-3"
@@ -955,7 +955,7 @@ export const AddInventoryPage = () => {
                   />
                 </div>
 
-                
+
               </div>
 
               {/* Form Grid - Second Row */}
@@ -1240,12 +1240,12 @@ export const AddInventoryPage = () => {
         </div>
 
         {/* Tax Details Section */}
-        <div className="border-b border-[#D9D9D9] bg-[#F6F7F7]">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <button
             onClick={() => setTaxDetailsExpanded(!taxDetailsExpanded)}
             className="w-full flex items-center justify-between p-4 text-left bg-[#F6F4EE] mb-4"
           >
-            <div className="flex items-center gap-3 ">
+            <div className="flex items-center gap-3  ">
               <div className="w-8 h8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
                 2
               </div>
@@ -1371,7 +1371,7 @@ export const AddInventoryPage = () => {
         </div>
 
         {/* Submit Button */}
-        <div className="p-6 border-b border-[#D9D9D9] bg-[#F6F7F7]">
+        <div className="p-6 bg-white   ">
           <Button
             onClick={handleSubmit}
             disabled={submitting}

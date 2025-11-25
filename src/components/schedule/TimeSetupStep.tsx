@@ -46,6 +46,7 @@ interface TimeSetupStepProps {
   disabled?: boolean;
   onEdit?: () => void;
   hideTitle?: boolean;
+  isEditPage?: boolean;
 }
 
 export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
@@ -58,6 +59,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
   disabled = false,
   onEdit,
   hideTitle = false,
+  isEditPage = false,
 }) => {
   // Use props data instead of local state
   const {
@@ -136,7 +138,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
             <h2 className="text-xl font-semibold text-[#C72030]" style={{ textTransform: 'uppercase' }}>Time Setup</h2>
           </div>
         )}
-        {disabled && (
+        {disabled && !isEditPage && (
           <MuiButton
             variant="outlined"
             size="small"

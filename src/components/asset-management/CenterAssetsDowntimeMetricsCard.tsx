@@ -1,17 +1,41 @@
 import React from 'react';
+import { Download } from 'lucide-react';
 
-interface Props { data: any }
+interface Props { 
+  data: any;
+  onDownload?: () => void;
+}
 
 // Center Wise – Assets And Downtime Metrics
-const CenterAssetsDowntimeMetricsCard: React.FC<Props> = ({ data }) => {
+const CenterAssetsDowntimeMetricsCard: React.FC<Props> = ({ data, onDownload }) => {
   const root = data?.data ?? data ?? {};
   const rows: any[] = Array.isArray(root.center_metrics) ? root.center_metrics : [];
 
   return (
     <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
-      <h3 className="font-semibold text-base mb-4">Center Wise – Assets And Downtime Metrics</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-base flex-1">Site Wise – Assets And Downtime Metrics</h3>
+        {onDownload && (
+          <Download
+            data-no-drag="true"
+            className="w-5 h-5 cursor-pointer text-[#000000] hover:text-[#333333] transition-colors z-50 flex-shrink-0"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
+          />
+        )}
+      </div>
       <table className="min-w-[800px] w-full text-sm border">
-        <thead className="bg-[#DAD6C9] text-[#C72030]">
+  <thead className="bg-[#DAD6C9] text-[#C72030] text-xs">
           <tr>
             <th rowSpan={2} className="border px-2 py-2 text-left">Site Name</th>
             <th rowSpan={2} className="border px-2 py-2">Total No. of Assets</th>

@@ -2,7 +2,7 @@ import { set } from 'lodash';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, Typography } from "@mui/material";
-import { PieChart, Pie, Cell, ResponsiveContainer, LabelList, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { DEFAULT_LOGO_CODE } from "@/assets/default-logo-code";
 import { OIG_LOGO_CODE } from "@/assets/pdf/oig-logo-code";
 import { VI_LOGO_CODE } from "@/assets/vi-logo-code";
@@ -135,7 +135,8 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
             <div className="bg-[#F6F4EE] rounded-sm px-6 sm:px-8 py-4 sm:py-5 print:px-5 print:py-3">
                 <div className="w-full h-[260px] sm:h-[320px] print:h-[320px] tat-pie-container" style={{ overflow: 'visible' }}>
                     <ResponsiveContainer width="100%" height="100%">
-                        <PieChart margin={isPrinting ? { top: 0, right: 0, bottom: 0, left: 0 } : { top: 12, right: 12, bottom: 12, left: 12 }}>
+                        {/* Provide extra margin so outer labels have space and are not clipped */}
+                        <PieChart margin={isPrinting ? { top: 12, right: 48, bottom: 12, left: 48 } : { top: 20, right: 36, bottom: 20, left: 36 }}>
                             <Pie
                                 data={pieData}
                                 dataKey="value"
@@ -148,7 +149,9 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
                                 cy="50%"
                                 labelLine={false}
                                 label={({ cx, cy, midAngle, percent, index }) => {
-                                    const radius = outerRadiusValue + 24;
+                                    // use a smaller offset for the label radius so text remains within chart bounds
+                                    const labelOffset = isPrinting ? 32 : 12;
+                                    const radius = outerRadiusValue + labelOffset;
                                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
                                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
                                     const alignRight = x > cx;
@@ -178,7 +181,7 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
                                         style={{ cursor: isPrinting ? 'default' : 'pointer', outline: 'none' }}
                                     />
                                 ))}
-                                <LabelList position="inside" content={renderInnerLabel} />
+                                {/* inner percent label removed to avoid a small clipped white text in the corner */}
                             </Pie>
                         </PieChart>
                     </ResponsiveContainer>

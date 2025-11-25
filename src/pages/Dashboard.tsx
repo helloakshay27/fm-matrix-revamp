@@ -133,7 +133,6 @@ interface SelectedAnalytic {
     | "helpdesk"
     | "asset_management"
     | "inventory_management"
-    | "consumables_overview"
     | "parking_management"
     | "visitor_management"
     | "checklist_management"
@@ -154,7 +153,6 @@ interface DashboardData {
   helpdesk?: any;
   asset_management?: any;
   inventory_management?: any;
-  consumables_overview?: any;
   parking_management?: any;
   visitor_management?: any;
   checklist_management?: any;
@@ -363,19 +361,37 @@ const SortableChartItem = ({
   // Handle pointer down to prevent drag on button/icon clicks
   const handlePointerDown = (e: React.PointerEvent) => {
     const target = e.target as HTMLElement;
+    
+    // Check if the click is on an element marked as non-draggable
+    if (target.closest("[data-no-drag]")) {
+      // Don't start dragging - just return without calling listeners
+      return;
+    }
+    
     // Check if the click is on a button, icon, or download element
+    // Check for lucide-react Download icon or any clickable SVG/button
     if (
       target.closest("button") ||
       target.closest("[data-download]") ||
-      target.closest("svg") ||
-      target.tagName === "BUTTON" ||
-      target.tagName === "SVG" ||
       target.closest(".download-btn") ||
-      target.closest("[data-download-button]")
+      target.closest("[data-download-button]") ||
+      target.tagName === "BUTTON"
     ) {
-      e.stopPropagation();
+      // Don't start dragging - just return without calling listeners
       return;
     }
+    
+    // Special handling for SVG icons - check if it's inside a clickable area
+    if (target.tagName === "SVG" || target.closest("svg")) {
+      const svg = target.tagName === "SVG" ? target : target.closest("svg");
+      // Check if the SVG has a cursor-pointer class (indicating it's clickable)
+      if (svg?.classList.contains("cursor-pointer") || 
+          svg?.parentElement?.classList.contains("cursor-pointer")) {
+        // Don't start dragging - just return without calling listeners
+        return;
+      }
+    }
+    
     // For other elements, proceed with drag
     if (listeners?.onPointerDown) {
       listeners.onPointerDown(e);
@@ -1352,35 +1368,6 @@ export const Dashboard = () => {
                     )
                   );
                   break;
-              }
-            }
-            break;
-          case "consumables_overview":
-            for (const analytic of analytics) {
-              const cachedOk =
-                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
-                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
-              if (cachedOk) {
-                promises.push(
-                  Promise.resolve(
-                    (dashboardData as any)[module][analytic.endpoint]
-                  )
-                );
-                continue;
-              }
-              const failedSameRange =
-                (lastFailedKey as any)?.[module]?.[analytic.endpoint] ===
-                  dateKey &&
-                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ??
-                  null) != null;
-              if (failedSameRange) {
-                promises.push(Promise.reject(SKIP_RETRY));
-                continue;
-              }
-              toLoad[module] = toLoad[module] || {};
-              toLoad[module][analytic.endpoint] = true;
-              switch (analytic.endpoint) {
                 case "top_consumables_center":
                   promises.push(
                     inventoryManagementAnalyticsAPI.getCenterWiseConsumables(
@@ -1593,6 +1580,12 @@ export const Dashboard = () => {
           : {};
         for (const analytic of analytics) {
           const result = results[resultIndex++];
+          if (!result) {
+            console.error(`Missing result for ${module}.${analytic.endpoint}`);
+            moduleData[analytic.endpoint] = null;
+            moduleErrs[analytic.endpoint] = "No result returned from API";
+            continue;
+          }
           if (result.status === "fulfilled") {
             console.log(
               `Successfully fetched ${module}.${analytic.endpoint}:`,
@@ -2535,28 +2528,92 @@ export const Dashboard = () => {
           case "center_assets_downtime": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <CenterAssetsDowntimeMetricsCard data={rawData} />
+                <CenterAssetsDowntimeMetricsCard 
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await assetManagementAnalyticsAPI.downloadAssetOverview(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
               </SortableChartItem>
             );
           }
           case "highest_maintenance_assets": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <HighestMaintenanceAssetsCard data={rawData} />
+                <HighestMaintenanceAssetsCard 
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await assetManagementAnalyticsAPI.downloadAssetOverview(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
               </SortableChartItem>
             );
           }
           case "amc_contract_summary": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <AmcContractSummaryCard data={rawData} />
+                <AmcContractSummaryCard 
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await assetManagementAnalyticsAPI.downloadAmcOverview(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
               </SortableChartItem>
             );
           }
           case "amc_contract_expiry_90": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <AmcExpiringContractsCard data={rawData} />
+                <AmcExpiringContractsCard 
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await assetManagementAnalyticsAPI.downloadAmcOverview(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
               </SortableChartItem>
             );
           }
@@ -2586,11 +2643,6 @@ export const Dashboard = () => {
               </SortableChartItem>
             );
           }
-          default:
-            return null;
-        }
-      case "consumables_overview":
-        switch (analytic.endpoint) {
           case "top_consumables_center":
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
@@ -2659,6 +2711,20 @@ export const Dashboard = () => {
                       ? { startDate: dateRange.from!, endDate: dateRange.to! }
                       : undefined
                   }
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await checklistManagementAnalyticsAPI.downloadSiteWiseChecklist(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
                 />
               </SortableChartItem>
             );
@@ -2670,6 +2736,20 @@ export const Dashboard = () => {
                 <TopOverdueChecklistsCenterwiseCard
                   title={analytic.title}
                   matrix={matrix}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await checklistManagementAnalyticsAPI.downloadSiteWiseChecklist(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
                 />
               </SortableChartItem>
             );
@@ -2697,6 +2777,20 @@ export const Dashboard = () => {
                 <TicketAgingClosureFeedbackCard
                   agingClosureData={agingClosureData}
                   feedbackData={feedbackData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await helpdeskAnalyticsAPI.downloadTicketAgingClosureEfficiency(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
                 />
               </SortableChartItem>
             );
@@ -2704,7 +2798,23 @@ export const Dashboard = () => {
           case "ticket_performance_metrics": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <TicketPerformanceMetricsCard data={rawData} />
+                <TicketPerformanceMetricsCard 
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await helpdeskAnalyticsAPI.downloadTicketPerformanceMetrics(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
               </SortableChartItem>
             );
           }
@@ -2718,7 +2828,23 @@ export const Dashboard = () => {
           case "customer_rating_overview": {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <CustomerRatingOverviewCard data={rawData} />
+                <CustomerRatingOverviewCard 
+                  data={rawData}
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await helpdeskAnalyticsAPI.downloadCustomerExperienceFeedback(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
+                />
               </SortableChartItem>
             );
           }
@@ -2737,6 +2863,20 @@ export const Dashboard = () => {
                         }
                       : undefined
                   }
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await helpdeskAnalyticsAPI.downloadTATPerformanceQuarterly(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
                 />
               </SortableChartItem>
             );
@@ -2756,6 +2896,20 @@ export const Dashboard = () => {
                         }
                       : undefined
                   }
+                  onDownload={async () => {
+                    if (!dateRange?.from || !dateRange?.to) {
+                      toast.error('Please select a date range');
+                      return;
+                    }
+                    try {
+                      toast.info('Preparing download...');
+                      await helpdeskAnalyticsAPI.downloadTATPerformanceQuarterly(dateRange.from, dateRange.to);
+                      toast.success('Download completed successfully');
+                    } catch (error) {
+                      console.error('Download failed:', error);
+                      toast.error('Failed to download data');
+                    }
+                  }}
                 />
               </SortableChartItem>
             );

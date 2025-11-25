@@ -738,13 +738,52 @@ export const TicketDetailsPage = () => {
     setCostRows(prev => prev.length > 1 ? prev.slice(0, -1) : prev);
   };
 
-  const formatLogDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  // Display timestamps - extract date and time from ISO format
+  const formatLogDate = (d: string) => d ? d.split('T')[0] : '';
+  const formatLogTime = (d: string) => {
+    if (!d) return '';
+    try {
+      const date = new Date(d);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      // Extract time directly from API timestamp without conversion
+      const timePart = d.split('T')[1]?.split('.')[0] || '';
+      return `${day}/${month}/${year}, ${timePart}`;
+    } catch {
+      return d;
+    }
+  };
 
-  const formatLogTime = (d: string) =>
-    new Date(d).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-      .replace(' ', '')
-      .toUpperCase();
+  // Format date for logs card display as "19 Nov 2025"
+  const formatLogCardDate = (d: string) => {
+    if (!d) return '';
+    try {
+      const date = new Date(d);
+      const day = date.getDate();
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const month = monthNames[date.getMonth()];
+      const year = date.getFullYear();
+      return `${day} ${month} ${year}`;
+    } catch {
+      return d.split('T')[0];
+    }
+  };
+
+  // Format time for logs card (just the time part)
+  const formatLogCardTime = (d: string) => {
+    if (!d) return '';
+    try {
+      const date = new Date(d);
+      let hours = date.getHours();
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      return `${hours}:${minutes}${ampm}`;
+    } catch {
+      return d.split('T')[1]?.split('.')[0] || '';
+    }
+  };
 
   // Helper function to check if value has data
   const hasData = (value) => {
@@ -4005,11 +4044,9 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                 const day = String(date.getDate()).padStart(2, '0');
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const year = date.getFullYear();
-                let hours = date.getHours();
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                const ampm = hours >= 12 ? 'PM' : 'AM';
-                hours = hours % 12 || 12;
-                return `${day}/${month}/${year}, ${hours}:${minutes}${ampm}`;
+                // Extract time directly from API timestamp
+                const timePart = ticketData.updated_at.split('T')[1]?.split('.')[0] || '';
+                return `${day}/${month}/${year}, ${timePart}`;
               })() : "-"}
             </div>
           </div>
@@ -7739,8 +7776,8 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                                 <div className="space-y-6">
                                   {sorted.map((log, i) => {
                                     const isLast = i === sorted.length - 1;
-                                    const currentDate = formatLogDate(log.created_at);
-                                    const previousDate = i > 0 ? formatLogDate(sorted[i - 1].created_at) : null;
+                                    const currentDate = formatLogCardDate(log.created_at);
+                                    const previousDate = i > 0 ? formatLogCardDate(sorted[i - 1].created_at) : null;
                                     const showDate = currentDate !== previousDate;
 
                                     return (
@@ -10658,8 +10695,8 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                                 <div className="space-y-6">
                                   {sorted.map((log, i) => {
                                     const isLast = i === sorted.length - 1;
-                                    const currentDate = formatLogDate(log.created_at);
-                                    const previousDate = i > 0 ? formatLogDate(sorted[i - 1].created_at) : null;
+                                    const currentDate = formatLogCardDate(log.created_at);
+                                    const previousDate = i > 0 ? formatLogCardDate(sorted[i - 1].created_at) : null;
                                     const showDate = currentDate !== previousDate;
 
                                     return (
@@ -11607,7 +11644,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                     {complaintLogs.map((log, index) => (
                       <TableRow key={log.id || index}>
                         <TableCell className="font-medium text-sm">
-                          {new Date(log.created_at).toLocaleString()}
+                          {log.created_at ? formatLogTime(log.created_at) : ''}
                         </TableCell>
                         <TableCell>
                           <Badge className="bg-blue-100 text-blue-700 text-xs">

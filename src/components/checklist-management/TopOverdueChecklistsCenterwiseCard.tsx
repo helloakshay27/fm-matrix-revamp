@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Download } from 'lucide-react';
 
 export type TopOverdueChecklistMatrix = {
   categories: string[];
@@ -13,6 +14,7 @@ export interface TopOverdueChecklistsCenterwiseCardProps {
   title?: string;
   matrix: TopOverdueChecklistMatrix;
   loading?: boolean;
+  onDownload?: () => void;
 }
 
 const fmtPct = (n: number) => `${Number(n || 0).toFixed(0)}%`;
@@ -21,6 +23,7 @@ export const TopOverdueChecklistsCenterwiseCard: React.FC<TopOverdueChecklistsCe
   title = 'Top 10 Overdue Checklists – Center-wise Contribution Comparison',
   matrix,
   loading = false,
+  onDownload,
 }) => {
   const categories = Array.isArray(matrix?.categories) ? matrix.categories : [];
   const rows = Array.isArray(matrix?.siteRows) ? matrix.siteRows : [];
@@ -28,7 +31,27 @@ export const TopOverdueChecklistsCenterwiseCard: React.FC<TopOverdueChecklistsCe
   return (
     <Card className="border border-gray-300">
       <CardHeader className="py-4">
-        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold flex-1">{title}</CardTitle>
+          {onDownload && (
+            <Download
+              data-no-drag="true"
+              className="w-5 h-5 cursor-pointer text-[#000000] hover:text-[#333333] transition-colors z-50 flex-shrink-0"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDownload();
+              }}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              style={{ pointerEvents: 'auto' }}
+            />
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

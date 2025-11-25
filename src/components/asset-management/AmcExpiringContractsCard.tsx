@@ -167,10 +167,13 @@ import React, { useState } from 'react';
 import { Download } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
-interface Props { data: any }
+interface Props { 
+  data: any;
+  onDownload?: () => void;
+}
 
 // Combined AMC Overview Card (Summary + Expiring Contracts)
-const AmcExpiringContractsCard: React.FC<Props> = ({ data }) => {
+const AmcExpiringContractsCard: React.FC<Props> = ({ data, onDownload }) => {
   const [activeTab, setActiveTab] = useState<string>('90days');
 
   const root = data ?? {};
@@ -287,9 +290,24 @@ const AmcExpiringContractsCard: React.FC<Props> = ({ data }) => {
               <h3 className="font-semibold text-sm text-[#C72030]">
                 AMC Contract Summary – {tab.label}
               </h3>
-              <button className="p-2 hover:bg-gray-100 rounded-md transition-colors">
-                <Download className="w-4 h-4 text-[#C72030]" />
-              </button>
+              {onDownload && (
+                <Download
+                  data-no-drag="true"
+                  className="w-5 h-5 cursor-pointer text-[#000000] hover:text-[#333333] transition-colors z-50"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDownload();
+                  }}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                  }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                  }}
+                  style={{ pointerEvents: 'auto' }}
+                />
+              )}
             </div>
 
             {/* Table with scrollable body, only one scrollbar */}

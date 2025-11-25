@@ -69,9 +69,21 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-bold text-[#1A1A1A]">Resolution TAT Report</CardTitle>
-            <Download 
-              className="w-5 h-5 text-[#C72030] cursor-pointer" 
-              onClick={handleDownload}
+            <Download
+              data-no-drag="true"
+              className="w-5 h-5 text-[#000000] hover:text-[#333333] cursor-pointer transition-colors z-50"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDownload();
+              }}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+              style={{ pointerEvents: 'auto' }}
             />
           </div>
         </CardHeader>
@@ -98,9 +110,21 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold text-[#1A1A1A]">Resolution TAT Report</CardTitle>
-          <Download 
-            className={`w-5 h-5 text-[#C72030] cursor-pointer ${isDownloading ? 'opacity-50' : ''}`}
-            onClick={handleDownload}
+          <Download
+            data-no-drag="true"
+            className={`w-5 h-5 text-[#000000] hover:text-[#333333] cursor-pointer transition-colors z-50 ${isDownloading ? 'opacity-50' : ''}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
           />
         </div>
       </CardHeader>
