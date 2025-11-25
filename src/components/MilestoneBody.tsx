@@ -97,6 +97,8 @@ const ganttStyles = `
     }
 `;
 
+declare let gantt: any;
+
 // Add styles to document head
 if (typeof document !== 'undefined') {
     const styleSheet = document.createElement("style");

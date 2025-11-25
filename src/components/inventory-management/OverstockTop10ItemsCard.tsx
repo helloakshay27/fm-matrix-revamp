@@ -1,7 +1,9 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { Download } from 'lucide-react';
 
 type Props = {
   data: any;
+  onDownload?: () => void;
 };
 
 const normalizeSiteKey = (name: string) => {
@@ -35,7 +37,7 @@ const Block = ({ capitalText, stock }: { capitalText: string; stock: number | st
   </div>
 );
 
-const OverstockTop10ItemsCard: React.FC<Props> = ({ data }) => {
+const OverstockTop10ItemsCard: React.FC<Props> = ({ data, onDownload }) => {
   const inv = useMemo(() => data?.data?.inventory_overstock_report ?? data?.inventory_overstock_report ?? null, [data]);
   const legacy = useMemo(() => data?.data?.overstock_top_items_by_site ?? data?.overstock_top_items_by_site ?? null, [data]);
 
@@ -135,16 +137,38 @@ const OverstockTop10ItemsCard: React.FC<Props> = ({ data }) => {
 
   return (
     <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
-      <h3 className="mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3"
-        style={{
-          fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
-          fontWeight: 600,
-          fontSize: '16px',
-          lineHeight: '100%',
-          letterSpacing: '0%'
-        }}>
-        Inventory Management – Overstock Analysis: Top 10 Items
-      </h3>
+      <div className="flex items-center justify-between gap-4 mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3">
+        <h3
+          className="flex-1"
+          style={{
+            fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+            fontWeight: 600,
+            fontSize: '16px',
+            lineHeight: '100%',
+            letterSpacing: '0%'
+          }}
+        >
+          Overstock Analysis: Top 10 Items
+        </h3>
+        {onDownload && (
+          <Download
+            data-no-drag="true"
+            className="w-5 h-5 flex-shrink-0 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
+          />
+        )}
+      </div>
 
       {grid.sites.length === 0 ? (
         <div className="text-sm text-gray-500 mt-4">No data</div>

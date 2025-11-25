@@ -785,6 +785,7 @@ import { ProjectsDashboard } from "./pages/ProjectsDashboard";
 import ProjectDetailsPage from "./pages/ProjectDetailsPage";
 import ProjectMilestones from "./pages/ProjectMilestones";
 import ProjectTasksPage from "./pages/ProjectTasksPage";
+import ProjectTaskDetailsPage from "./pages/ProjectTaskDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2310,6 +2311,10 @@ function App() {
                   <Route
                     path="/maintenance/projects/:id/milestones/:mid/tasks"
                     element={<ProjectTasksPage />}
+                  />
+                  <Route
+                    path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
+                    element={<ProjectTaskDetailsPage />}
                   />
 
                   {/* Utility Routes */}

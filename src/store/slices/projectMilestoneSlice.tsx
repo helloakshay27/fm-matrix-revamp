@@ -36,8 +36,26 @@ export const fetchMilestones = createAsyncThunk(
     }
 )
 
+export const fetchMilestoneById = createAsyncThunk(
+    "fetchMilestoneById",
+    async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/milestones/${id}.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            return rejectWithValue(error)
+        }
+    }
+)
+
 const createMilestoneSlice = createApiSlice("createMilestone", createMilestone);
 const fetchMilestonesSlice = createApiSlice("fetchMilestones", fetchMilestones);
+const fetchMilestoneByIdSlice = createApiSlice("fetchMilestoneById", fetchMilestoneById);
 
 export const createMilestoneReducer = createMilestoneSlice.reducer;
 export const fetchMilestonesReducer = fetchMilestonesSlice.reducer;
+export const fetchMilestoneByIdReducer = fetchMilestoneByIdSlice.reducer;
