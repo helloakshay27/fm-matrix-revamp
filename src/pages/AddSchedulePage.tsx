@@ -3046,6 +3046,9 @@ export const AddSchedulePage = () => {
     // Get assigned people IDs
     const peopleAssignedIds = formData.assignToType === 'user' ? formData.selectedUsers : [];
 
+    // Get assigned group IDs
+    const groupAssignedIds = formData.assignToType === 'group' ? formData.selectedGroups : [];
+
     // Build dynamic cron fields
     const cronExpression = buildCronExpression();
 
@@ -3135,6 +3138,7 @@ export const AddSchedulePage = () => {
       },
       backup_assigned_to_id: formData.backupAssignee || "",
       people_assigned_to_ids: peopleAssignedIds,
+      usergroup_ids: groupAssignedIds,
       ppm_rule_ids: formData.emailTriggerRule ? [formData.emailTriggerRule] : [],
       amc_rule_ids: [""],
       // Dynamic time setup fields from TimeSetupStep component
