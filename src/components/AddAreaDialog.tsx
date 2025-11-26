@@ -40,7 +40,7 @@ export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialog
 
   const fetchBuildings = async () => {
     try {
-      const response = await apiClient.get('/buildings.json');
+      const response = await apiClient.get('/buildings.json?order=name');
       setBuildings(response.data || []);
     } catch (error) {
       console.error('Error fetching buildings:', error);
@@ -50,7 +50,7 @@ export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialog
 
   const fetchWings = async () => {
     try {
-      const response = await apiClient.get('/pms/wings.json');
+      const response = await apiClient.get(`/pms/wings.json?building_id=${selectedBuilding}`);
       setWings(response.data.wings || []);
     } catch (error) {
       console.error('Error fetching wings:', error);

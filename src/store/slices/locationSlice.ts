@@ -165,7 +165,7 @@ export const fetchSites = createAsyncThunk(
 export const fetchBuildings = createAsyncThunk(
   'location/fetchBuildings',
   async () => {
-    const response = await apiClient.get('/buildings.json');
+    const response = await apiClient.get('/buildings.json?order=name');
     return response.data;
   }
 );
