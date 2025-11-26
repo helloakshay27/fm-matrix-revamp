@@ -1364,6 +1364,7 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
 
         <div className="flex items-center gap-2">
+          {rightActions}
           {!hideTableSearch && (onSearchChange || !externalSearchTerm || enableGlobalSearch) && (
             customSearchInput ? (
               <div className="relative max-w-sm">
@@ -1427,8 +1428,6 @@ export function EnhancedTable<T extends Record<string, any>>({
               <Download className="w-4 h-4" />
             </Button>
           )}
-
-          {rightActions}
         </div>
       </div>
 

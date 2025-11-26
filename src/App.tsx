@@ -797,7 +797,7 @@ import ProjectTasksPage from "./pages/ProjectTasksPage";
 import ProjectTaskDetailsPage from "./pages/ProjectTaskDetailsPage";
 import { SprintDashboard } from "./pages/SprintDashboard";
 import SprintDetailsPage from "./pages/SprintDetailsPage";
-// import MilestoneDetailsPage from "./pages/MilestoneDetailsPage";
+import MilestoneDetailsPage from "./pages/MilestoneDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2338,7 +2338,7 @@ function App() {
                     element={<ProjectTaskDetailsPage />}
                   />
 
-                   <Route
+                  <Route
                     path="/maintenance/sprint"
                     element={<SprintDashboard />}
                   />
@@ -2347,10 +2347,10 @@ function App() {
                     element={<SprintDetailsPage />}
                   />
 
-                  {/* <Route
-  path="/maintenance/projects/:projectId/milestones/:id"
-  element={<MilestoneDetailsPage />}
-/> */}
+                  <Route
+                    path="/maintenance/projects/:projectId/milestones/:id"
+                    element={<MilestoneDetailsPage />}
+                  />
 
                   {/* Utility Routes */}
                   <Route

@@ -66,7 +66,7 @@ import { createAmenityReducer, editAmenityReducer, fetchAmenityByIdReducer, fetc
 import { createCompanyPartnerReducers, editCompanyPartnerReducer, fetchCompanyPartnersReducer } from './slices/companyPartnerSlice'
 import { createChatTaskReducer, createConversationReducer, createGroupReducer, deleteChatTaskReducer, fetchChannelTaskDetailsReducer, fetchConversationMessagesReducer, fetchConversationReducer, fetchConversationsReducer, fetchGroupConversationReducer, fetchGroupsReducer, removeUserFromGroupReducer, sendMessageReducer, updateChatTaskReducer, updateMessageReducer } from './slices/channelSlice'
 import { createCircleReducer, fetchCircleListReducer, updateCircleReducer } from './slices/msafeCircleSlice'
-import { changeProjectStatusReducer, createProjectReducer, fetchProjectByIdReducer, fetchProjectsReducer } from './slices/projectManagementSlice'
+import { changeProjectStatusReducer, createProjectReducer, fetchProjectByIdReducer, fetchProjectsReducer, filterProjectsReducer } from './slices/projectManagementSlice'
 import { createMilestoneReducer, fetchMilestoneByIdReducer, fetchMilestonesReducer } from './slices/projectMilestoneSlice'
 import { createProjectTeamReducer, fetchProjectTeamByIdReducer, fetchProjectTeamsReducer, updateProjectTeamReducer } from './slices/projectTeamsSlice'
 import { createProjectTypesReducer, fetchProjectTypesReducer, updateProjectTypesReducer } from './slices/projectTypeSlice'
@@ -339,6 +339,7 @@ export const store = configureStore({
     createProject: createProjectReducer,
     changeProjectStatus: changeProjectStatusReducer,
     fetchProjectById: fetchProjectByIdReducer,
+    filterProjects: filterProjectsReducer,
 
     // Project Milestone
     createMilestone: createMilestoneReducer,
