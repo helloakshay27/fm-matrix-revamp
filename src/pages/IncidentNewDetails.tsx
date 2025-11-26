@@ -267,21 +267,18 @@ export const IncidentNewDetails = () => {
         <React.Fragment key={step.number}>
           <div className="flex flex-col items-center flex-1">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                currentStep >= step.number
+              className={`w-32 h-10 flex items-center justify-center text-sm font-semibold border border-gray-300 rounded-md ${
+                currentStep === step.number
                   ? 'bg-[#BF213E] text-white'
-                  : 'bg-gray-300 text-gray-600'
+                  : 'bg-white text-gray-600'
               }`}
             >
-              {step.number}
+              {step.label}
             </div>
-            <span className="text-xs mt-1 text-gray-600">{step.label}</span>
           </div>
           {index < steps.length - 1 && (
             <div
-              className={`h-0.5 flex-1 ${
-                currentStep > step.number ? 'bg-[#BF213E]' : 'bg-gray-300'
-              }`}
+              className="flex-1 border-t border-dashed border-gray-300"
               style={{ marginBottom: '20px' }}
             />
           )}
@@ -293,102 +290,98 @@ export const IncidentNewDetails = () => {
   // Report Step Component
   const ReportStep = () => (
     <div className="p-4 space-y-4">
-      {/* Time Selection */}
-      <div className="flex items-center gap-2 bg-[#F5E6D3] p-3 rounded">
-        <span className="text-sm font-medium">Select Incident Over Time</span>
-        <Input 
-          type="text" 
-          placeholder="HH:MM" 
-          className="w-20 h-8 text-center bg-white"
-        />
-        <Clock className="w-4 h-4 ml-auto" />
+      <div className="bg-white shadow-md rounded-md p-6">
+        <h3 className="text-lg font-semibold text-[#BF213E] mb-4">Report</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col">
+            <label className="text-sm font-medium mb-2">Reported By</label>
+            <div className="border border-gray-300 rounded-md p-2">{incidentData.reportedBy}</div>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-medium mb-2">Occurred On</label>
+            <div className="border border-gray-300 rounded-md p-2">{incidentData.occurredOn}</div>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-medium mb-2">Reported On</label>
+            <div className="border border-gray-300 rounded-md p-2">{incidentData.reportedOn}</div>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-medium mb-2">Severity</label>
+            <div className="border border-gray-300 rounded-md p-2">{incidentData.severity}</div>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-medium mb-2">Support Required</label>
+            <div className="border border-gray-300 rounded-md p-2">{incidentData.supportRequired}</div>
+          </div>
+        </div>
       </div>
 
-      {/* Report Details */}
-      <div className="bg-[#F5E6D3] p-4 rounded space-y-3">
-        <h3 className="font-semibold text-base">Report</h3>
-        
-        <div className="grid grid-cols-2 gap-y-2 text-sm">
-          <div className="text-gray-600">Reported By</div>
-          <div className="font-medium">: {incidentData.reportedBy}</div>
-          
-          <div className="text-gray-600">Occurred on</div>
-          <div className="font-medium">: {incidentData.occurredOn}</div>
-          
-          <div className="text-gray-600">Reported on</div>
-          <div className="font-medium">: {incidentData.reportedOn}</div>
-          
-          <div className="text-gray-600">Severity of Incident</div>
-          <div className="font-medium">: {incidentData.severity}</div>
-          
-          <div className="text-gray-600">Support Required</div>
-          <div className="font-medium">: {incidentData.supportRequired}</div>
-        </div>
-
-        {/* Categories */}
-        {incidentData.categories.map((cat, idx) => (
-          <div key={idx} className="space-y-2 mt-3">
-            <div className="grid grid-cols-2 gap-y-2 text-sm">
-              <div className="text-gray-600">{idx + 1}. Category</div>
-              <div className="flex items-center gap-2 font-medium">
-                : <span className="text-lg">{cat.icon}</span> {cat.name}
-              </div>
-              
-              <div className="text-gray-600">Sub Category</div>
-              <div className="font-medium">: {cat.subCategory}</div>
-              
-              <div className="text-gray-600">Sub Category 2</div>
-              <div className="font-medium">: {cat.subCategory2}</div>
-              
-              <div className="text-gray-600">Sub Category 3</div>
-              <div className="font-medium">: {cat.subCategory3}</div>
+      {/* Categories */}
+      {incidentData.categories.map((cat, idx) => (
+        <div key={idx} className="bg-white shadow-md rounded-md p-6 mt-4">
+          <h3 className="text-lg font-semibold text-[#BF213E] mb-4">Category {idx + 1}</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-2">Category</label>
+              <div className="border border-gray-300 rounded-md p-2">{cat.name}</div>
             </div>
-          </div>
-        ))}
-
-        {/* Description */}
-        <div className="mt-4">
-          <label className="text-sm text-gray-600 block mb-2">Description:</label>
-          <div className="bg-white p-3 rounded border text-sm">
-            {incidentData.description}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-2">Sub Category</label>
+              <div className="border border-gray-300 rounded-md p-2">{cat.subCategory}</div>
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-2">Sub Category 2</label>
+              <div className="border border-gray-300 rounded-md p-2">{cat.subCategory2}</div>
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-2">Sub Category 3</label>
+              <div className="border border-gray-300 rounded-md p-2">{cat.subCategory3}</div>
+            </div>
           </div>
         </div>
+      ))}
 
-        {/* Attachments */}
-        <div className="mt-4">
-          <label className="text-sm text-gray-600 block mb-2">Attachments:</label>
-          <div className="flex gap-2">
-            {incidentData.attachments.map((att) => (
-              <div key={att.id} className="w-20 h-20 bg-gray-200 rounded overflow-hidden">
-                <img src={att.url} alt={att.name} className="w-full h-full object-cover" />
-              </div>
-            ))}
-          </div>
+      {/* Description */}
+      <div className="bg-white shadow-md rounded-md p-6 mt-4">
+        <h3 className="text-lg font-semibold text-[#BF213E] mb-4">Description</h3>
+        <div className="border border-gray-300 rounded-md p-4">{incidentData.description}</div>
+      </div>
+
+      {/* Attachments */}
+      <div className="bg-white shadow-md rounded-md p-6 mt-4">
+        <h3 className="text-lg font-semibold text-[#BF213E] mb-4">Attachments</h3>
+        <div className="flex gap-4">
+          {incidentData.attachments.map((att) => (
+            <div key={att.id} className="w-20 h-20 bg-gray-200 rounded overflow-hidden">
+              <img src={att.url} alt={att.name} className="w-full h-full object-cover" />
+            </div>
+          ))}
         </div>
+      </div>
 
-        {/* Location Details */}
-        <div className="mt-4 bg-white p-3 rounded space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="font-medium">Building:</span>
-            <span>{incidentData.location.building}</span>
+      {/* Location Details */}
+      <div className="bg-white shadow-md rounded-md p-6 mt-4">
+        <h3 className="text-lg font-semibold text-[#BF213E] mb-4">Location Details</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col">
+            <label className="text-sm font-medium mb-2">Building</label>
+            <div className="border border-gray-300 rounded-md p-2">{incidentData.location.building}</div>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="font-medium">Area:</span>
-            <span>{incidentData.location.area}</span>
+          <div className="flex flex-col">
+            <label className="text-sm font-medium mb-2">Area</label>
+            <div className="border border-gray-300 rounded-md p-2">{incidentData.location.area}</div>
           </div>
-          <div className="grid grid-cols-3 gap-4 text-sm">
-            <div>
-              <div className="font-medium">Wing:</div>
-              <div>{incidentData.location.wing}</div>
-            </div>
-            <div>
-              <div className="font-medium">Floor:</div>
-              <div>{incidentData.location.floor}</div>
-            </div>
-            <div>
-              <div className="font-medium">Room:</div>
-              <div>{incidentData.location.room}</div>
-            </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-medium mb-2">Wing</label>
+            <div className="border border-gray-300 rounded-md p-2">{incidentData.location.wing}</div>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-medium mb-2">Floor</label>
+            <div className="border border-gray-300 rounded-md p-2">{incidentData.location.floor}</div>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-medium mb-2">Room</label>
+            <div className="border border-gray-300 rounded-md p-2">{incidentData.location.room}</div>
           </div>
         </div>
       </div>
