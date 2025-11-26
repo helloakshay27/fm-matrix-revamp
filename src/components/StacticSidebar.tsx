@@ -977,6 +977,23 @@ const modulesByPackage = {
       href: "/vas/redemonection-marketplace",
     },
     {
+      name: "Mailroom",
+      icon: Mail,
+      href: "/vas/mailroom",
+      subItems: [
+        {
+          name: "Inbound",
+          href: "/vas/mailroom/inbound",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Outbound",
+          href: "/vas/mailroom/outbound",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
       name: "Collaboration",
       icon: Globe,
       subItems: [

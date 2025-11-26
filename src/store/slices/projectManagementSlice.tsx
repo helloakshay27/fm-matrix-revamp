@@ -99,14 +99,37 @@ export const removeUserFromProject = createAsyncThunk('removeUserFromProject', a
     }
 })
 
+export const filterProjects = createAsyncThunk(
+    'filterProjects',
+    async ({ baseUrl, token, filters }: { baseUrl: string, token: string, filters: any }, { rejectWithValue }) => {
+        try {
+            const params = new URLSearchParams(filters).toString();
+            const response = await axios.get(
+                `https://${baseUrl}/project_managements.json?${params}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error);
+        }
+    }
+);
+
 const fetchProjectsSlice = createApiSlice("fetchProjects", fetchProjects);
 const createProjectSlice = createApiSlice("createProject", createProject);
 const fetchProjectByIdSlice = createApiSlice("fetchProjectById", fetchProjectById);
 const changeProjectStatusSlice = createApiSlice("changeProjectStatus", changeProjectStatus);
 const removeTagFromProjectSlice = createApiSlice("removeTagFromProject", removeTagFromProject);
+const filterProjectsSlice = createApiSlice("filterProjects", filterProjects);
 
 export const fetchProjectsReducer = fetchProjectsSlice.reducer;
 export const createProjectReducer = createProjectSlice.reducer;
 export const fetchProjectByIdReducer = fetchProjectByIdSlice.reducer;
 export const changeProjectStatusReducer = changeProjectStatusSlice.reducer;
 export const removeTagFromProjectReducer = removeTagFromProjectSlice.reducer;
+export const filterProjectsReducer = filterProjectsSlice.reducer;

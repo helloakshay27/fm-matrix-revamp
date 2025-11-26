@@ -250,12 +250,10 @@ export const AddBookingSetupPage = () => {
 
       if (slot.startTime.hour !== "00") {
         if (
-          slot.breakTimeStart.hour === "00" ||
-          slot.breakTimeEnd.hour === "00" ||
           slot.endTime.hour === "00"
         ) {
           toast.error(
-            `Slot ${index + 1}: All subsequent time fields must be selected when Start Time is set`
+            `Slot ${index + 1}: End Time must be selected when Start Time is set`
           );
           return false;
         }

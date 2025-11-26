@@ -2,7 +2,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { createProject, fetchProjects } from "@/store/slices/projectManagementSlice";
+import { createProject, fetchProjects, filterProjects } from "@/store/slices/projectManagementSlice";
 import { MenuItem, Select, TextField } from "@mui/material";
 import {
   ChartNoAxesColumn,
@@ -21,6 +21,7 @@ import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
 import { toast } from "sonner";
 import AddProjectModal from "@/components/AddProjectModal";
 import ProjectCreateModal from "@/components/ProjectCreateModal";
+import ProjectManagementKanban from "@/components/ProjectManagementKanban";
 
 const columns: ColumnConfig[] = [
   {
@@ -108,7 +109,10 @@ const transformedProjects = (projects: any) => {
       id: project.id,
       title: project.title,
       status: project.status
-        ? project.status.charAt(0).toUpperCase() + project.status.slice(1)
+        ? project.status
+          .split("_")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ")
         : "",
       type: project.project_type_name,
       manager: project.project_owner_name,
@@ -127,16 +131,45 @@ const transformedProjects = (projects: any) => {
   });
 };
 
+const STATUS_OPTIONS = [
+  {
+    value: "all",
+    label: "All"
+  },
+  {
+    value: "active",
+    label: "Active"
+  },
+  {
+    value: "in_progress",
+    label: "In Progress"
+  },
+  {
+    value: "completed",
+    label: "Completed"
+  },
+  {
+    value: "on_hold",
+    label: "On Hold"
+  },
+  {
+    value: "overdue",
+    label: "Overdue"
+  }
+]
+
 export const ProjectsDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
+  const [selectedFilterOption, setSelectedFilterOption] = useState("all")
   const [projects, setProjects] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [openFormDialog, setOpenFormDialog] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [openStatusOptions, setOpenStatusOptions] = useState(false)
   const [selectedView, setSelectedView] = useState("List");
   const [projectTypes, setProjectTypes] = useState([]);
   const [owners, setOwners] = useState([])
@@ -145,8 +178,12 @@ export const ProjectsDashboard = () => {
 
   const fetchData = async () => {
     try {
+      let filters = {};
+      if (selectedFilterOption !== "all") {
+        filters["q[status_eq]"] = selectedFilterOption;
+      }
       const response = await dispatch(
-        fetchProjects({ token, baseUrl })
+        filterProjects({ token, baseUrl, filters })
       ).unwrap();
       setProjects(transformedProjects(response));
     } catch (error) {
@@ -157,7 +194,7 @@ export const ProjectsDashboard = () => {
 
   useEffect(() => {
     fetchData();
-  }, [dispatch, token, baseUrl]);
+  }, [dispatch, token, baseUrl, selectedFilterOption]);
 
   const getOwners = async () => {
     try {
@@ -417,55 +454,187 @@ export const ProjectsDashboard = () => {
   }
 
   const rightActions = (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
-      >
-        <span className="text-red-600 font-medium flex items-center gap-2">
-          {selectedView === "Kanban" ? (
-            <ChartNoAxesColumn className="w-4 h-4 rotate-180 text-red-600" />
-          ) : (
-            <List className="w-4 h-4 text-red-600" />
-          )}
-          {selectedView}
-        </span>
-        <ChevronDown className="w-4 h-4 text-gray-600" />
-      </button>
+    <div className="flex items-center">
+      <div className="relative">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+        >
+          <span className="text-[#C72030] font-medium flex items-center gap-2">
+            {selectedView === "Kanban" ? (
+              <ChartNoAxesColumn className="w-4 h-4 rotate-180 text-[#C72030]" />
+            ) : (
+              <List className="w-4 h-4 text-[#C72030]" />
+            )}
+            {selectedView}
+          </span>
+          <ChevronDown className="w-4 h-4 text-gray-600" />
+        </button>
 
-      {isOpen && (
-        <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
-          <div className="py-2">
-            <button
-              onClick={() => {
-                setSelectedView("Kanban");
-                setIsOpen(false);
-              }}
-              className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
-            >
-              <div className="w-4 flex justify-center">
-                <ChartNoAxesColumn className="rotate-180 text-[#C72030]" />
-              </div>
-              <span className="text-gray-700">Kanban</span>
-            </button>
+        {isOpen && (
+          <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+            <div className="py-2">
+              <button
+                onClick={() => {
+                  setSelectedView("Kanban");
+                  setIsOpen(false);
+                }}
+                className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+              >
+                <div className="w-4 flex justify-center">
+                  <ChartNoAxesColumn className="rotate-180 text-[#C72030]" />
+                </div>
+                <span className="text-gray-700">Kanban</span>
+              </button>
 
-            <button
-              onClick={() => {
-                setSelectedView("List");
-                setIsOpen(false);
-              }}
-              className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
-            >
-              <div className="w-4 flex justify-center">
-                <List className="w-4 h-4 text-red-600" />
-              </div>
-              <span className="text-gray-700">List</span>
-            </button>
+              <button
+                onClick={() => {
+                  setSelectedView("List");
+                  setIsOpen(false);
+                }}
+                className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+              >
+                <div className="w-4 flex justify-center">
+                  <List className="w-4 h-4 text-[#C72030]" />
+                </div>
+                <span className="text-gray-700">List</span>
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+      <div className="relative">
+        <button
+          onClick={() => setOpenStatusOptions(!openStatusOptions)}
+          className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+        >
+          <span className="text-[#C72030] font-medium flex items-center gap-2">
+            {STATUS_OPTIONS.find((option) => option.value === selectedFilterOption)?.label || "All"}
+          </span>
+          <ChevronDown className="w-4 h-4 text-gray-600" />
+        </button>
+
+        {openStatusOptions && (
+          <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+            <div className="py-2">
+              {
+                STATUS_OPTIONS.map((option) => (
+                  <button
+                    onClick={() => {
+                      setSelectedFilterOption(option.value);
+                      setOpenStatusOptions(false);
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                  >
+                    <span className="text-gray-700">{option.label}</span>
+                  </button>
+                ))
+              }
+            </div>
+          </div>
+        )}
+      </div>
+
     </div>
   );
+
+  if (selectedView === "Kanban") {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-between">
+          <Button
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={handleOpenDialog}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+          <div className="flex items-center">
+            <div className="relative">
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+              >
+                <span className="text-[#C72030] font-medium flex items-center gap-2">
+                  {selectedView === "Kanban" ? (
+                    <ChartNoAxesColumn className="w-4 h-4 rotate-180 text-[#C72030]" />
+                  ) : (
+                    <List className="w-4 h-4 text-[#C72030]" />
+                  )}
+                  {selectedView}
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-600" />
+              </button>
+
+              {isOpen && (
+                <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                  <div className="py-2">
+                    <button
+                      onClick={() => {
+                        setSelectedView("Kanban");
+                        setIsOpen(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                    >
+                      <div className="w-4 flex justify-center">
+                        <ChartNoAxesColumn className="rotate-180 text-[#C72030]" />
+                      </div>
+                      <span className="text-gray-700">Kanban</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedView("List");
+                        setIsOpen(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                    >
+                      <div className="w-4 flex justify-center">
+                        <List className="w-4 h-4 text-[#C72030]" />
+                      </div>
+                      <span className="text-gray-700">List</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="relative">
+              <button
+                onClick={() => setOpenStatusOptions(!openStatusOptions)}
+                className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+              >
+                <span className="text-[#C72030] font-medium flex items-center gap-2">
+                  {STATUS_OPTIONS.find((option) => option.value === selectedFilterOption)?.label || "All"}
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-600" />
+              </button>
+
+              {openStatusOptions && (
+                <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                  <div className="py-2">
+                    {
+                      STATUS_OPTIONS.map((option) => (
+                        <button
+                          onClick={() => {
+                            setSelectedFilterOption(option.value);
+                            setOpenStatusOptions(false);
+                          }}
+                          className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                        >
+                          <span className="text-gray-700">{option.label}</span>
+                        </button>
+                      ))
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <ProjectManagementKanban />
+      </div>
+    )
+  }
 
   return (
     <div className="p-6">

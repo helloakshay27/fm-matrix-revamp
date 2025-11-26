@@ -85,6 +85,9 @@ import { EditInventoryPage } from "./pages/EditInventoryPage";
 import InventoryConsumptionDashboard from "./pages/InventoryConsumptionDashboard";
 import InventoryConsumptionViewPage from "./pages/InventoryConsumptionViewPage";
 import EcoFriendlyListPage from "./pages/EcoFriendlyListPage";
+import { NewInboundPage } from "./pages/NewInboundPage";
+import { NewOutboundPage } from "./pages/NewOutboundPage";
+import { OutboundListPage } from "./pages/OutboundListPage";
 
 // Import Task pages
 import { ScheduledTaskDashboard } from "./pages/maintenance/ScheduledTaskDashboard";
@@ -241,6 +244,10 @@ import { EditStaffPage } from "./pages/EditStaffPage";
 
 // Import Add Staff page
 import { AddStaffPage } from "./pages/AddStaffPage";
+
+// Import Mailroom pages
+import { InboundListPage } from "./pages/InboundListPage";
+import { InboundDetailPage } from "./pages/InboundDetailPage";
 
 import { FnBRestaurantDashboard } from "./pages/FnBRestaurantDashboard";
 import { FnBRestaurantDetailsPage } from "./pages/FnBRestaurantDetailsPage";
@@ -634,6 +641,7 @@ import { EscalationMatrixPage } from "./pages/maintenance/EscalationMatrixPage";
 // Import Setup pages
 import { PermitSetupDashboard } from "./pages/PermitSetupDashboard";
 import { IncidentSetupDashboard } from "./pages/IncidentSetupDashboard";
+import { IncidentNewDetails } from "./pages/IncidentNewDetails";
 
 // Import Holiday Calendar page
 import { HolidayCalendarPage as SettingsHolidayCalendarPage } from "./pages/settings/HolidayCalendarPage";
@@ -789,7 +797,7 @@ import ProjectTasksPage from "./pages/ProjectTasksPage";
 import ProjectTaskDetailsPage from "./pages/ProjectTaskDetailsPage";
 import { SprintDashboard } from "./pages/SprintDashboard";
 import SprintDetailsPage from "./pages/SprintDetailsPage";
-// import MilestoneDetailsPage from "./pages/MilestoneDetailsPage";
+import MilestoneDetailsPage from "./pages/MilestoneDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1644,6 +1652,10 @@ function App() {
                     element={<IncidentDetailsPage />}
                   />
                   <Route
+                    path="/safety/incident/new-details"
+                    element={<IncidentNewDetails />}
+                  />
+                  <Route
                     path="/safety/incident/edit/:id"
                     element={<EditIncidentDetailsPage />}
                   />
@@ -2326,7 +2338,7 @@ function App() {
                     element={<ProjectTaskDetailsPage />}
                   />
 
-                   <Route
+                  <Route
                     path="/maintenance/sprint"
                     element={<SprintDashboard />}
                   />
@@ -2335,10 +2347,10 @@ function App() {
                     element={<SprintDetailsPage />}
                   />
 
-                  {/* <Route
-  path="/maintenance/projects/:projectId/milestones/:id"
-  element={<MilestoneDetailsPage />}
-/> */}
+                  <Route
+                    path="/maintenance/projects/:projectId/milestones/:id"
+                    element={<MilestoneDetailsPage />}
+                  />
 
                   {/* Utility Routes */}
                   <Route
@@ -2621,6 +2633,16 @@ function App() {
                     element={<RVehiclesOutDashboard />}
                   />
                   {/* Value Added Services Routes */}
+
+                  <Route
+                    path="/mail-inbounds-create"
+                    element={
+
+
+                      <NewInboundPage />
+
+                    }
+                  />
                   <Route
                     path="/vas/fnb"
                     element={<RestaurantOrdersTable needPadding={true} />}
@@ -2641,6 +2663,28 @@ function App() {
                   <Route
                     path="/vas/fnb/discounts"
                     element={<FnBDiscountsPage />}
+                  />
+
+                  {/* Mailroom Routes */}
+                  <Route
+                    path="/vas/mailroom/inbound"
+                    element={<InboundListPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/inbound/create"
+                    element={<NewInboundPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/inbound/:id"
+                    element={<InboundDetailPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/outbound"
+                    element={<OutboundListPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/outbound/create"
+                    element={<NewOutboundPage />}
                   />
                   <Route path="/vas/parking" element={<ParkingDashboard />} />
                   <Route
@@ -3504,6 +3548,8 @@ function App() {
                 />
                 {/* QR Test Route */}
                 <Route path="/qr-test" element={<QRTestPage />} />
+
+                {/* Mail Inbound Routes */}
               </Routes>
               <Toaster />
               <SonnerToaster
