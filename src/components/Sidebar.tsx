@@ -355,7 +355,6 @@ const modulesByPackage = {
           name: "FM User",
           href: "/master/user/fm-users",
           color: "text-[#1a1a1a]",
-
         },
         {
           name: "OCCUPANT USERS",
@@ -385,9 +384,9 @@ const modulesByPackage = {
       href: "/master/material-ebom",
     },
     {
-      name: 'Gate Number',
+      name: "Gate Number",
       icon: DoorOpen,
-      href: '/master/gate-number'
+      href: "/master/gate-number",
     },
     // {
     //   name: 'Gate Pass Type',
@@ -657,7 +656,11 @@ const modulesByPackage = {
         },
       ],
     },
-    { name: 'Employee Deletion History', icon: Trash, href: '/maintenance/employee-deletion-history' },
+    {
+      name: "Employee Deletion History",
+      icon: Trash,
+      href: "/maintenance/employee-deletion-history",
+    },
 
     {
       name: "Msafe Report",
@@ -1350,434 +1353,217 @@ export const Sidebar = () => {
   };
 
   // Smart dynamic permission check using actual API response
-  const checkPermission = React.useCallback((checkItem: any) => {
-    // If no user role data, show all items
-    if (!userRole) {
-      return true;
-    }
+  const checkPermission = React.useCallback(
+    (checkItem: any) => {
+      // If no user role data, show all items
+      if (!userRole) {
+        console.log("akshay_sidebar_filter: No user role, showing all items");
+        return true;
+      }
 
-    // Extract active functions from the API response
-    const activeFunctions = [];
+      // Extract active functions from the API response (only from active modules)
+      const activeFunctions = [];
+      const allFunctionNames = [];
+      const allActionNames = [];
 
-    // Check if we have the new flat structure (activeFunctions)
-    if (userRole.activeFunctions && Array.isArray(userRole.activeFunctions)) {
-      activeFunctions.push(...userRole.activeFunctions);
-    }
+      // Process lock_modules structure - IGNORE module_active, only check function_active
+      if (userRole.lock_modules && Array.isArray(userRole.lock_modules)) {
+        userRole.lock_modules.forEach((module) => {
+          // Process ALL modules regardless of module_active status
+          if (module.lock_functions && Array.isArray(module.lock_functions)) {
+            module.lock_functions.forEach((func) => {
+              // Only check if the individual function is active
+              if (func.function_active === 1) {
+                activeFunctions.push({
+                  functionName: func.function_name,
+                  actionName: func.action_name,
+                  moduleName: module.module_name,
+                });
 
-    // Also check the old lock_modules structure as fallback
-    if (userRole.lock_modules && Array.isArray(userRole.lock_modules)) {
-      userRole.lock_modules.forEach(module => {
-        if (module.module_active && module.lock_functions) {
-          module.lock_functions.forEach(func => {
-            if (func.function_active) {
-              activeFunctions.push({
-                functionName: func.function_name,
-                actionName: func.function_name.toLowerCase().replace(/\s+/g, '_')
-              });
-            }
-          });
+                // Collect all function names and action names for matching
+                allFunctionNames.push(func.function_name.toLowerCase());
+                if (func.action_name) {
+                  allActionNames.push(func.action_name.toLowerCase());
+                }
+              }
+            });
+          }
+        });
+      }
+
+      console.log(
+        "akshay_sidebar_filter: Active functions extracted (IGNORING module_active):",
+        {
+          activeFunctions,
+          allFunctionNames,
+          allActionNames,
+          checkingItem: checkItem.name,
+          totalModulesProcessed: userRole.lock_modules?.length || 0,
+          note: "Filtering based ONLY on function_active, module_active is IGNORED",
         }
-      });
-    }
+      );
 
-    // If no active functions found, show all items
-    if (activeFunctions.length === 0) {
-      return true;
-    }
-
-    // Function to create search variants for matching
-    const createSearchVariants = (name: string): string[] => {
-      const variants = new Set([name]);
-      const normalized = name.toLowerCase();
-
-      variants.add(normalized);
-      variants.add(normalized.replace(/\s+/g, '_'));
-      variants.add(normalized.replace(/\s+/g, '-'));
-      variants.add(normalized.replace(/\s+/g, ''));
-      variants.add(normalized.replace(/_/g, ' '));
-      variants.add(normalized.replace(/_/g, '-'));
-      variants.add(normalized.replace(/-/g, ' '));
-      variants.add(normalized.replace(/-/g, '_'));
-
-      return Array.from(variants);
-    };
-
-    // Create mapping of sidebar item names to their potential function matches
-    const sidebarMappings = {
-      // Main Categories
-      'broadcast': ['broadcast', 'pms_notices'],
-      'ticket': ['tickets', 'ticket', 'pms_complaints', 'pms_helpdesk_categories'],
-      'msafe': ['msafe', 'pms_msafe', 'pms_safety', 'pmssafety'],
-      'm-safe': ['msafe', 'pms_msafe', 'pms_safety', 'pmssafety'],
-      'm safe': ['msafe', 'pms_msafe', 'pms_safety', 'pmssafety'],
-      'task': ['task', 'tasks', 'pms_tasks'],
-      'tasks': ['task', 'tasks', 'pms_tasks'],
-      'schedule': ['schedule', 'pms_schedule'],
-      'soft services': ['service', 'services', 'pms_services'],
-      'service': ['service', 'services', 'pms_services'],
-      'services': ['service', 'services', 'pms_services'],
-      'assets': ['asset', 'assets', 'pms_assets'],
-      'inventory': ['inventory', 'pms_inventories'],
-      'inventory master': ['inventory', 'pms_inventories'],
-      'inventory consumption': ['consumption', 'pms_consumption'],
-      'amc': ['amc', 'pms_asset_amcs'],
-      'attendance': ['attendance', 'pms_attendances'],
-      'vendor': ['supplier', 'pms_supplier', 'vendor audit', 'vendor_audit'],
-      'supplier': ['supplier', 'pms_supplier'],
-
-      // Master Data
-      'location master': ['account', 'pms_setup'],
-      'user master': ['user & roles', 'pms_user_roles', 'occupant users', 'pms_occupant_users'],
-      'fm user': ['user & roles', 'pms_user_roles'],
-      'occupant users': ['occupant users', 'pms_occupant_users'],
-      'checklist master': ['master checklist', 'pms_master_checklist'],
-      'address master': ['addresses', 'pms_billing_addresses'],
-      'unit master (by default)': ['pms_setup'],
-      'material master -> ebom': ['materials', 'pms_materials'],
-      'gate number': ['gate', 'gate_number'],
-
-      // Building/Location Elements
-      'account': ['account', 'accounts', 'pms_accounts', 'pms_setup'],
-      'building': ['building', 'buildings'],
-      'wing': ['wing', 'wings'],
-      'area': ['area', 'areas'],
-      'floor': ['floor', 'floors'],
-      'unit': ['unit', 'units'],
-      'room': ['room', 'rooms'],
-
-      // Transitioning
-      'hoto': ['hoto'],
-      'snagging': ['snagging'],
-      'user snag': ['snagging'],
-      'my snags': ['snagging'],
-      'design insight': ['design insight', 'pms_design_inputs'],
-      'fitout': ['fitout'],
-      'fitout setup': ['fitout'],
-      'fitout request': ['fitout'],
-      'fitout checklist': ['fitout'],
-      'fitout violation': ['fitout'],
-
-      // Audit
-      'audit': ['operational audit', 'operational_audits', 'vendor audit', 'vendor_audit'],
-      'operational': ['operational audit', 'operational_audits'],
-      'operational audit': ['operational audit', 'operational_audits'],
-      'vendor audit': ['vendor audit', 'vendor_audit'],
-      'scheduled': ['schedule', 'pms_schedule'],
-      'conducted': ['conducted'],
-      'master checklists': ['master checklist', 'pms_master_checklist'],
-
-      // Waste Management
-      'waste': ['waste generation', 'waste_generation'],
-      'waste generation': ['waste generation', 'waste_generation'],
-
-      // Survey
-      'survey': ['survey'],
-      'survey list': ['survey'],
-      'survey mapping': ['survey'],
-      'response': ['survey'],
-
-      // M-Safe specific
-      'internal user (fte)': ['msafe', 'pms_msafe'],
-      'external user (non fte)': ['non fte users', 'non_fte_users'],
-      'lmc': ['line manager check', 'line_manager_check'],
-      'smt': ['senior management tour', 'senior_manager_tour'],
-      'krcc list': ['krcc list', 'krcc_list', 'krcc'],
-      'training list': ['training list', 'training_list', 'pms_training'],
-      'reportees reassign': ['reportees reassign'],
-
-      // Vi Miles
-      'vi miles': ['vi miles', 'vi_miles'],
-      'vehicle details': ['vi miles', 'vi_miles'],
-      'vehicle check in': ['vi miles', 'vi_miles'],
-
-      // Reports
-      'employee deletion history': ['employee deletion history'],
-      'msafe report': ['download msafe report', 'download_msafe_report'],
-      'msafe detail report': ['download msafe detailed report', 'download_msafe_detailed_report'],
-
-      // Safety
-      'incident': ['pms incidents', 'pms_incidents'],
-      'permit': ['permits', 'cus_permits'],
-      'pending approvals': ['pending approvals', 'pending_approvals'],
-      'training': ['training', 'training_list', 'pms_training'],
-
-      // Finance/Procurement
-      'procurement': ['po', 'pms_purchase_orders', 'wo', 'pms_work_orders'],
-      'pr/ sr': ['procurement'],
-      'material pr': ['po', 'pms_purchase_orders'],
-      'service pr': ['wo', 'pms_work_orders'],
-      'po/wo': ['po', 'pms_purchase_orders', 'wo', 'pms_work_orders'],
-      'po': ['po', 'pms_purchase_orders'],
-      'wo': ['wo', 'pms_work_orders'],
-      'grn/ srn': ['grn', 'pms_grns', 'srns', 'pms_srns'],
-      'grn': ['grn', 'pms_grns'],
-      'srns': ['srns', 'pms_srns'],
-      'auto saved pr': ['po', 'pms_purchase_orders'],
-      'invoices': ['wo invoices', 'pms_work_order_invoices'],
-      'wo invoices': ['wo invoices', 'pms_work_order_invoices'],
-      'bill booking': ['bill', 'pms_bills'],
-      'bill': ['bill', 'pms_bills'],
-      'accounting': ['accounts', 'pms_accounts'],
-      'cost center': ['accounts', 'pms_accounts'],
-      'budgeting': ['accounts', 'pms_accounts'],
-      'wbs': ['wbs'],
-
-      // CRM
-      'lead': ['lead'],
-      'opportunity': ['opportunity'],
-      'crm': ['customers'],
-      'customers': ['customers'],
-      'fm users': ['user & roles', 'pms_user_roles'],
-      'events': ['events', 'pms_events'],
-      'groups': ['groups'],
-      'polls': ['polls'],
-      'campaign': ['campaign'],
-
-      // Utility
-      'energy': ['meters', 'pms_energy'],
-      'meters': ['meters', 'pms_energy'],
-      'water': ['water', 'pms_water'],
-      'stp': ['stp', 'pms_stp'],
-      'daily readings': ['daily readings', 'daily_readings'],
-      'utility request': ['utility request', 'utility_request'],
-      'utility consumption': ['utility consumption', 'utility_consumption'],
-      'ev consumption': ['ev consumption', 'ev_consumption'],
-      'solar generator': ['solar generator', 'solar_generators'],
-
-      // Security
-      'gate pass': ['gate pass'],
-      'inwards': ['gate pass'],
-      'outwards': ['gate pass'],
-      'visitor': ['visitors', 'pms_visitors'],
-      'visitors': ['visitors', 'pms_visitors'],
-      'staff': ['staffs', 'pms_staffs'],
-      'staffs': ['staffs', 'pms_staffs'],
-      'vehicle': ['r vehicles', 'pms_rvehicles', 'g vehicles', 'pms_gvehicles'],
-      'r vehicles': ['r vehicles', 'pms_rvehicles'],
-      'g vehicles': ['g vehicles', 'pms_gvehicles'],
-      'all': ['r vehicles', 'pms_rvehicles'],
-      'history': ['r vehicles', 'pms_rvehicles'],
-      'patrolling': ['patrolling', 'pms_patrolling'],
-
-      // Value Added Services
-      'f&b': ['fnb'],
-      'parking': ['parking', 'cus_parkings'],
-      'osr': ['osr'],
-      'space management': ['space'],
-      'space': ['space'],
-      'bookings': ['booking'],
-      'seat requests': ['seat requests'],
-      'setup': ['setup'],
-      'seat type': ['seat type'],
-      'seat setup': ['seat setup'],
-      'shift': ['shift'],
-      'roster': ['roster'],
-      'employees': ['employees'],
-      'check in margin': ['check in margin'],
-      'roster calendar': ['roster calendar'],
-      'export': ['export', 'pms_export'],
-      'booking': ['booking'],
-      'redemption marketplace': ['marketplace'],
-
-      // Market Place
-      'marketplace_all': ['marketplace'],
-      'installed': ['marketplace'],
-      'updates': ['marketplace'],
-
-      // Settings
-      'general': ['general'],
-      'holiday calendar': ['holiday calendar'],
-      'about': ['about'],
-      'language': ['language'],
-      'company logo upload': ['company logo'],
-      'report setup': ['report setup'],
-      'notification setup': ['notification setup'],
-      'lock module': ['lock module'],
-      'lock function': ['lock function'],
-      'lock sub function': ['lock sub function'],
-      'roles (raci)': ['user roles', 'pms_user_roles'],
-      'user roles': ['user roles', 'pms_user_roles'],
-      'department': ['department'],
-      'role': ['role'],
-      'approval matrix': ['approval matrix'],
-      'maintenance': ['maintenance'],
-      'asset setup': ['asset setup'],
-      'asset group & sub group': ['asset groups', 'pms_asset_groups'],
-      'checklist setup': ['checklist setup'],
-      'checklist group & sub group': ['checklist setup'],
-      'email rule': ['email rule', 'pms_email_rule_setup'],
-      'task escalation': ['task escalation'],
-      'ticket management': ['ticket management'],
-      'escalation matrix': ['escalation matrix'],
-      'cost approval': ['cost approval'],
-      'inventory management': ['inventory management'],
-      'sac/hsn code': ['sac/hsn setup', 'pms_hsns'],
-      'permit setup': ['permit setup'],
-      'incident setup': ['incident setup'],
-      'waste management': ['waste management'],
-      'design insight setup': ['design insight setup'],
-      'finance': ['finance'],
-      'wallet setup': ['wallet setup'],
-      'security': ['security'],
-      'visitor management': ['visitor management'],
-      'visiting purpose': ['visiting purpose'],
-      'support staff': ['support staff'],
-      'materials type': ['materials type'],
-      'items name': ['items name'],
-      'value added services': ['value added services'],
-      'mom': ['mom details', 'mom_details'],
-      'client tag setup': ['client tag setup'],
-      'product tag setup': ['product tag setup'],
-      'parking management': ['parking management'],
-      'parking category': ['parking category'],
-      'slot configuration': ['slot configuration'],
-      'time slot setup': ['time slot setup'],
-
-      // Additional mappings from your list
-      'local travel module': ['local travel module', 'ltm'],
-      'krcc': ['krcc', 'krcc_list'],
-      'approve krcc': ['approve krcc', 'approve_krcc'],
-      'vi register user': ['vi register user', 'vi_register_user'],
-      'vi deregister user': ['vi deregister user', 'vi_deregister_user'],
-      'goods in out': ['goods in out', 'goods_in_out'],
-      'documents': ['documents', 'pms_documents'],
-      'materials': ['materials', 'pms_materials'],
-      'meter types': ['meter types', 'pms_meter_types'],
-      'fm groups': ['fm groups', 'pms_usergroups'],
-      'addresses': ['addresses', 'pms_billing_addresses'],
-      'reports': ['reports', 'pms_complaint_reports'],
-      'business directory': ['business directory', 'pms_business_directories'],
-      'po approval': ['po approval', 'pms_purchase_orders_approval'],
-      'accounts': ['accounts', 'pms_accounts'],
-      'bi reports': ['bi reports', 'pms_bi_reports'],
-      'dashboard': ['dashboard', 'pms_dashboard', 'ceo dashboard', 'pms_ceo_dashboard'],
-      'tracing': ['tracing', 'pms_tracings'],
-      'consumption': ['consumption', 'pms_consumption'],
-      'restaurants': ['restaurants', 'pms_restaurants'],
-      'my ledgers': ['my ledgers', 'pms_my_ledgers'],
-      'letter of indent': ['letter of indent', 'pms_loi'],
-      'engineering reports': ['engineering reports', 'pms_engineering_reports'],
-      'ceo dashboard': ['ceo dashboard', 'pms_ceo_dashboard'],
-      'pms design inputs': ['pms design inputs', 'pms_design_inputs'],
-      'task management': ['task management', 'task_management'],
-      'quikgate report': ['quikgate report', 'quikgate_report'],
-      'customer bills': ['customer bills', 'customer_bills'],
-      'my bills': ['my bills', 'my_bills'],
-      'project management': ['project management', 'project_management'],
-      'pms incidents': ['pms incidents', 'pms_incidents'],
-      'site dashboard': ['site dashboard', 'site_dashboard'],
-      'stepathone dashboard': ['stepathone dashboard', 'stepathone_dashboard'],
-      'transport': ['transport'],
-      'gdn': ['gdn'],
-      'gdn dispatch': ['gdn dispatch', 'gdn_dispatch'],
-      'permit extend': ['permit extend', 'permit_extend'],
-      'line manager chec': ['line manager chec', 'line_manager_check'],
-      'senior management tour': ['senior management tour', 'senior_manager_tour'],
-      'customer parkings': ['customer parkings', 'cus_parkings'],
-      'customer wallet': ['customer wallet', 'customer_wallet'],
-      'site banner': ['site banner', 'site_banners'],
-      'testimonials': ['testimonials', 'testimonial'],
-      'group and channel config': ['group and channel config', 'group_and_chanel_config'],
-      'resume permit': ['resume permit', 'permit_resume'],
-      'non fte users': ['non fte users', 'non_fte_users'],
-      'download msafe report': ['download msafe report', 'download_msafe_report'],
-      'download msafe detailed report': ['download msafe detailed report', 'download_msafe_detailed_report'],
-      'vi msafe dashboard': ['vi msafe dashboard', 'vi_msafe_dashboard'],
-      'vi miles dashboard': ['vi miles dashboard', 'vi_miles_dashboard'],
-
-
-
-      'pms usergroups': ['pms usergroups', 'fm groups'],
-      'pms occupant users': ['pms occupant users', 'occupant users'],
-      'pms user roles': ['pms user roles', 'user & roles', 'user roles'],
-      'pms_setup': ['pms_setup', 'account', 'location master', 'unit master (by default)'],
-      'pms_billing_addresses': ['pms_billing_addresses', 'addresses', 'address master'],
-      'pms_materials': ['pms_materials', 'materials', 'material master -> ebom'],
-      'pms_master_checklist': ['pms_master_checklist', 'master checklist', 'checklist master'],
-      'pms_energy': ['pms_energy', 'energy', 'meters'],
-      'pms_meter_types': ['pms_meter_types', 'meter types'],
-      'pms_water': ['pms_water', 'water'],
-      'pms_stp': ['pms_stp', 'stp'],
-      'pms_daily_readings': ['pms_daily_readings', 'daily readings'],
-      'pms_solar_generators': ['pms_solar_generators', 'solar generator'],
-      'pms_tracings': ['pms_tracings', 'tracing'],
-      'pms_services': ['pms_services', 'service', 'services', 'soft services'],
-      'pms_tasks': ['pms_tasks', 'task', 'tasks'],
-      'pms_accounts': ['pms_accounts', 'account', 'accounts', 'cost center', 'budgeting'],
-      'pms_assets': ['pms_assets', 'asset', 'assets'],
-      'pms_asset_amcs': ['pms_asset_amcs', 'amc'],
-      'pms_attendances': ['pms_attendances', 'attendance'],
-      'pms_supplier': ['pms_supplier', 'supplier', 'vendor'],
-      'pms_complaints': ['pms_complaints', 'ticket', 'tickets'],
-      'pms_complaint_reports': ['pms_complaint_reports', 'reports'],
-      'pms_documents': ['pms_documents', 'documents'],
-      'pms_purchase_orders': ['pms_purchase_orders', 'po', 'purchase orders'],
-      'pms_purchase_orders_approval': ['pms_purchase_orders_approval', 'po approval'],
-      'pms_work_orders': ['pms_work_orders', 'wo', 'work orders'],
-      'pms_grns': ['pms_grns', 'grn'],
-      'pms_srns': ['pms_srns', 'srns'],
-      'pms_work_order_invoices': ['pms_work_order_invoices', 'wo invoices'],
-      'pms_bills': ['pms_bills', 'bill'],
-      'pms_budget_heads': ['pms_budget_heads', 'budget heads'],
-      'pms_wbs': ['pms_wbs', 'wbs'],
-      'pms_events': ['pms_events', 'events'],
-      'pms_leads': ['pms_leads', 'lead'],
-      'pms_opportunities': ['pms_opportunities', 'opportunity'],
-      'pms_customers': ['pms_customers', 'customers'],
-      'pms_groups': ['pms_groups', 'groups'],
-      'pms_polls': ['pms_polls', 'polls'],
-      'pms_campaigns': ['pms_campaigns', 'campaign'],
-      'pms_visitors': ['pms_visitors', 'visitors', 'visitor'],
-      'pms_staffs': ['pms_staffs', 'staffs', 'staff'],
-      'pms_rvehicles': ['pms_rvehicles', 'r vehicles'],
-      'pms_gvehicles': ['pms_gvehicles', 'g vehicles'],
-      'pms_patrolling': ['pms_patrolling', 'patrolling'],
-      'pms_occupant_users': ['pms_occupant_users', 'occupant users'],
-      'pms_msafe': ['pms_msafe', 'msafe', 'm-safe', 'm safe'],
-      'pms_safety': ['pms_safety', 'safety'],
-      'pms_incidents': ['pms_incidents', 'incident'],
-      'cus_permits': ['cus_permits', 'permit'],
-      'cus_parkings': ['cus_parkings', 'parking', 'customer parkings'],
-      'customer_wallet': ['customer_wallet', 'customer wallet'],
-      'pms_training': ['pms_training', 'training', 'training list'],
-      'pms_design_inputs': ['pms_design_inputs', 'design insight', 'design insights'],
-      'pms_asset_groups': ['pms_asset_groups', 'asset groups', 'asset group & sub group'],
-      'pms_email_rule_setup': ['pms_email_rule_setup', 'email rule setup'],
-    };
-    // Get the item name for checking
-    const itemNameLower = checkItem.name.toLowerCase();
-
-    // Find potential matches for this sidebar item
-    let potentialMatches = sidebarMappings[itemNameLower] || [];
-
-    // Also add the item name itself as a potential match
-    potentialMatches.push(...createSearchVariants(checkItem.name));
-
-    // Check if any active function matches this sidebar item
-    const hasPermission = activeFunctions.some(activeFunc => {
-      const funcVariants = createSearchVariants(activeFunc.functionName);
-      const actionVariants = createSearchVariants(activeFunc.actionName);
-
-      return potentialMatches.some(match => {
-        const matchVariants = createSearchVariants(match);
-        return (
-          funcVariants.some(fv => matchVariants.some(mv =>
-            fv.includes(mv) || mv.includes(fv) || fv === mv
-          )) ||
-          actionVariants.some(av => matchVariants.some(mv =>
-            av.includes(mv) || mv.includes(av) || av === mv
-          ))
+      // If no active functions found, hide all items
+      if (activeFunctions.length === 0) {
+        console.log(
+          "akshay_sidebar_filter: No active functions found, hiding item:",
+          checkItem.name
         );
+        return false;
+      }
+
+      // Function to create search variants for matching
+      const createSearchVariants = (name: string): string[] => {
+        const variants = new Set([name]);
+        const normalized = name.toLowerCase();
+
+        variants.add(normalized);
+        variants.add(normalized.replace(/\s+/g, "_"));
+        variants.add(normalized.replace(/\s+/g, "-"));
+        variants.add(normalized.replace(/\s+/g, ""));
+        variants.add(normalized.replace(/_/g, " "));
+        variants.add(normalized.replace(/_/g, "-"));
+        variants.add(normalized.replace(/-/g, " "));
+        variants.add(normalized.replace(/-/g, "_"));
+
+        return Array.from(variants);
+      };
+
+      // Direct mapping from sidebar item names to their expected API function names
+      const sidebarToApiFunctionMapping = {
+        // Main Categories - Direct function name matching
+        broadcast: ["broadcast", "pms_notices"],
+        ticket: [
+          "tickets",
+          "ticket",
+          "pms_complaints",
+          "pms_helpdesk_categories",
+        ],
+        msafe: ["msafe", "pms_msafe", "pms_safety", "pmssafety", "m safe"],
+        "m-safe": ["msafe", "pms_msafe", "pms_safety", "pmssafety", "m safe"],
+        "m safe": ["msafe", "pms_msafe", "pms_safety", "pmssafety", "m safe"],
+        task: ["task", "tasks", "pms_tasks"],
+        tasks: ["task", "tasks", "pms_tasks"],
+        schedule: ["schedule", "pms_schedule"],
+        "soft services": ["service", "services", "pms_services"],
+        service: ["service", "services", "pms_services"],
+        services: ["service", "services", "pms_services"],
+        assets: ["asset", "assets", "pms_assets"],
+        inventory: ["inventory", "pms_inventories"],
+        "inventory master": ["inventory", "pms_inventories"],
+        "inventory consumption": ["consumption", "pms_consumption"],
+        amc: ["amc", "pms_asset_amcs"],
+        attendance: ["attendance", "pms_attendances"],
+        vendor: ["supplier", "pms_supplier", "vendor audit", "vendor_audit"],
+        supplier: ["supplier", "pms_supplier"],
+
+        // Add more direct mappings as needed...
+        // Safety specific
+        incident: ["incident", "pms_incidents"],
+        permit: ["permit", "permits", "cus_permits"],
+
+        // Finance/Procurement
+        po: ["po", "pms_purchase_orders"],
+        wo: ["wo", "pms_work_orders"],
+        grn: ["grn", "pms_grns"],
+
+        // And so on for other categories...
+      };
+
+      // Get the item name for checking
+      const itemNameLower = checkItem.name.toLowerCase();
+      const itemVariants = createSearchVariants(checkItem.name);
+
+      console.log("akshay_sidebar_filter: Checking item variants:", {
+        itemName: checkItem.name,
+        itemVariants,
       });
-    });
 
-    // If item has no specific mapping and no href, show it (likely a parent category)
-    if (!checkItem.href && potentialMatches.length <= createSearchVariants(checkItem.name).length) {
-      return true;
-    }
+      // Check if this sidebar item matches any active function
+      const hasDirectMatch = activeFunctions.some((activeFunc) => {
+        const funcNameLower = activeFunc.functionName.toLowerCase();
+        const actionNameLower = activeFunc.actionName
+          ? activeFunc.actionName.toLowerCase()
+          : "";
 
-    return hasPermission;
-  }, [userRole]);
+        // Direct function name match
+        const functionNameMatch = itemVariants.some(
+          (variant) =>
+            variant === funcNameLower ||
+            funcNameLower.includes(variant) ||
+            variant.includes(funcNameLower)
+        );
+
+        // Direct action name match
+        const actionNameMatch =
+          actionNameLower &&
+          itemVariants.some(
+            (variant) =>
+              variant === actionNameLower ||
+              actionNameLower.includes(variant) ||
+              variant.includes(actionNameLower)
+          );
+
+        if (functionNameMatch || actionNameMatch) {
+          console.log("akshay_sidebar_filter: Direct match found:", {
+            sidebarItem: checkItem.name,
+            matchedFunction: activeFunc.functionName,
+            matchedAction: activeFunc.actionName,
+            matchType: functionNameMatch ? "function_name" : "action_name",
+          });
+          return true;
+        }
+
+        return false;
+      });
+
+      // If direct match found, return true
+      if (hasDirectMatch) {
+        return true;
+      }
+
+      // Fallback to mapping-based check
+      const potentialMatches = sidebarToApiFunctionMapping[itemNameLower] || [];
+
+      const hasMappingMatch = activeFunctions.some((activeFunc) => {
+        return potentialMatches.some((match) => {
+          const matchLower = match.toLowerCase();
+          return (
+            activeFunc.functionName.toLowerCase().includes(matchLower) ||
+            (activeFunc.actionName &&
+              activeFunc.actionName.toLowerCase().includes(matchLower)) ||
+            matchLower.includes(activeFunc.functionName.toLowerCase()) ||
+            (activeFunc.actionName &&
+              matchLower.includes(activeFunc.actionName.toLowerCase()))
+          );
+        });
+      });
+
+      if (hasMappingMatch) {
+        console.log(
+          "akshay_sidebar_filter: Mapping match found for:",
+          checkItem.name
+        );
+        return true;
+      }
+
+      // If item has no specific mapping and no href, show it (likely a parent category)
+      if (!checkItem.href && potentialMatches.length === 0) {
+        console.log(
+          "akshay_sidebar_filter: Showing parent category:",
+          checkItem.name
+        );
+        return true;
+      }
+
+      console.log(
+        "akshay_sidebar_filter: No match found, hiding item:",
+        checkItem.name
+      );
+      return false;
+    },
+    [userRole]
+  );
 
   // Filter modules based on user permissions
   const filteredModulesByPackage = React.useMemo(() => {
@@ -1804,12 +1590,16 @@ export const Sidebar = () => {
 
     // Debug output for filtered results
     console.log("🎯 Sidebar Filtering Results:");
-    Object.entries(filtered).forEach(([sectionName, items]: [string, any[]]) => {
-      console.log(`📦 ${sectionName}: ${items.length} items`);
-      items.forEach(item => {
-        console.log(`  ✅ ${item.name}${item.subItems && item.subItems.length > 0 ? ` (${item.subItems.length} sub-items)` : ''}`);
-      });
-    });
+    Object.entries(filtered).forEach(
+      ([sectionName, items]: [string, any[]]) => {
+        console.log(`📦 ${sectionName}: ${items.length} items`);
+        items.forEach((item) => {
+          console.log(
+            `  ✅ ${item.name}${item.subItems && item.subItems.length > 0 ? ` (${item.subItems.length} sub-items)` : ""}`
+          );
+        });
+      }
+    );
 
     return filtered;
   }, [modulesByPackage, userRole, checkPermission]);
@@ -1938,24 +1728,39 @@ export const Sidebar = () => {
 
       // Check for new flat structure
       if (userRole.activeFunctions) {
-        console.log("📋 Active Functions (new structure):", userRole.activeFunctions.slice(0, 5), userRole.activeFunctions.length > 5 ? `... and ${userRole.activeFunctions.length - 5} more` : '');
+        console.log(
+          "📋 Active Functions (new structure):",
+          userRole.activeFunctions.slice(0, 5),
+          userRole.activeFunctions.length > 5
+            ? `... and ${userRole.activeFunctions.length - 5} more`
+            : ""
+        );
       }
 
       // Check for old lock_modules structure
       if (userRole.lock_modules) {
-        console.log("📦 Lock Modules (old structure):");
+        console.log(
+          "📦 Lock Modules (processing ALL modules, ignoring module_active):"
+        );
         userRole.lock_modules.forEach((module, idx) => {
-          if (idx < 3) { // Show first 3 modules
-            console.log(`  - ${module.module_name} (active: ${module.module_active})`);
+          if (idx < 3) {
+            // Show first 3 modules
+            console.log(
+              `  - ${module.module_name} (module_active: ${module.module_active} - IGNORED)`
+            );
             if (module.lock_functions && module.lock_functions.length > 0) {
-              module.lock_functions.slice(0, 2).forEach(func => {
-                console.log(`    - ${func.function_name} (active: ${func.function_active})`);
+              module.lock_functions.slice(0, 2).forEach((func) => {
+                console.log(
+                  `    - ${func.function_name} (function_active: ${func.function_active}) ${func.function_active === 1 ? "✅ INCLUDED" : "❌ EXCLUDED"}`
+                );
               });
             }
           }
         });
         if (userRole.lock_modules.length > 3) {
-          console.log(`  ... and ${userRole.lock_modules.length - 3} more modules`);
+          console.log(
+            `  ... and ${userRole.lock_modules.length - 3} more modules`
+          );
         }
       }
     }
@@ -1972,7 +1777,6 @@ export const Sidebar = () => {
     // console.log("userRole:", JSON.stringify({ userRole }, null, 2));
     // console.log("hasPermissionForPath:", JSON.stringify({ hasPermissionForPath }, null, 2));
     // console.log("permissionsLoading:", JSON.stringify({ permissionsLoading }, null, 2));
-
   }, [currentSection, location.pathname]);
 
   const renderMenuItem = (item: any, level: number = 0) => {
@@ -2054,8 +1858,9 @@ export const Sidebar = () => {
                                   onClick={() =>
                                     handleNavigation(nestedItem.href)
                                   }
-                                  className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || "text-[#1a1a1a]"
-                                    }`}
+                                  className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
+                                    nestedItem.color || "text-[#1a1a1a]"
+                                  }`}
                                 >
                                   {isActiveRoute(nestedItem.href) && (
                                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -2072,8 +1877,9 @@ export const Sidebar = () => {
                         onClick={() =>
                           handleNavigation(subItem.href, currentSection)
                         }
-                        className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
-                          }`}
+                        className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+                          subItem.color || "text-[#1a1a1a]"
+                        }`}
                       >
                         {isActiveRoute(subItem.href) && (
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -2096,8 +1902,9 @@ export const Sidebar = () => {
           onClick={() =>
             item.href && handleNavigation(item.href, currentSection)
           }
-          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
-            }`}
+          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+            item.color || "text-[#1a1a1a]"
+          }`}
         >
           {level === 0 && (
             <>
@@ -2176,10 +1983,11 @@ export const Sidebar = () => {
               handleNavigation(module.href, currentSection);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+            active || isExpanded
               ? "bg-[#f0e8dc] shadow-inner"
               : "hover:bg-[#DBC2A9]"
-            }`}
+          }`}
           title={module.name}
         >
           {(active || isExpanded) && (
@@ -2187,13 +1995,15 @@ export const Sidebar = () => {
           )}
           {level === 0 ? (
             <module.icon
-              className={`w-5 h-5 ${active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
-                }`}
+              className={`w-5 h-5 ${
+                active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
+              }`}
             />
           ) : (
             <div
-              className={`w-${3 - level} h-${3 - level
-                } rounded-full bg-[#1a1a1a]`}
+              className={`w-${3 - level} h-${
+                3 - level
+              } rounded-full bg-[#1a1a1a]`}
             ></div>
           )}
         </button>
@@ -2212,8 +2022,9 @@ export const Sidebar = () => {
 
   return (
     <div
-      className={`${isSidebarCollapsed ? "w-16" : "w-64"
-        } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${
+        isSidebarCollapsed ? "w-16" : "w-64"
+      } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: "4rem", height: "91vh" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -2235,8 +2046,9 @@ export const Sidebar = () => {
         {currentSection && (
           <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
             <h3
-              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
-                }`}
+              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${
+                isSidebarCollapsed ? "text-center" : "tracking-wide"
+              }`}
             >
               {isSidebarCollapsed ? "" : currentSection}
             </h3>
@@ -2278,20 +2090,22 @@ export const Sidebar = () => {
                       handleNavigation(module.href, currentSection);
                     }
                   }}
-                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
+                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+                    isActiveRoute(module.href)
                       ? "bg-[#f0e8dc] shadow-inner"
                       : "hover:bg-[#DBC2A9]"
-                    }`}
+                  }`}
                   title={module.name}
                 >
                   {isActiveRoute(module.href) && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                   )}
                   <module.icon
-                    className={`w-5 h-5 ${isActiveRoute(module.href)
+                    className={`w-5 h-5 ${
+                      isActiveRoute(module.href)
                         ? "text-[#C72030]"
                         : "text-[#1a1a1a]"
-                      }`}
+                    }`}
                   />
                 </button>
               ))}
