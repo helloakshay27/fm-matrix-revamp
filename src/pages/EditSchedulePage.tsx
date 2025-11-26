@@ -939,7 +939,8 @@ export const EditSchedulePage = () => {
       if (data.asset_task.cron_expression) {
         const cronParts = data.asset_task.cron_expression.split(' ');
         if (cronParts.length >= 5) {
-          const minutes = cronParts[0] !== '*' ? cronParts[0].split(',') : ['00'];
+          const minuteString = cronParts[0] !== '*' ? cronParts[0] : '';
+          const minutes = minuteString ? minuteString.split(',') : ['00'];
           const hours = cronParts[1] !== '*' ? cronParts[1].split(',') : ['12'];
           const days = cronParts[2] !== '*' ? cronParts[2].split(',') : [];
           const monthString = cronParts[3] !== '*' ? cronParts[3] : '';
@@ -979,20 +980,42 @@ export const EditSchedulePage = () => {
             }
           }
 
+          // Handle minute ranges and specific minutes
+          let minuteMode = 'all';
+          let minutesList: string[] = [];
+          let betweenMinuteStart = '00';
+          let betweenMinuteEnd = '59';
+
+          if (minuteString && minuteString !== '*') {
+            // Check if it's a range (contains a hyphen)
+            if (minuteString.includes('-')) {
+              const [start, end] = minuteString.split('-');
+              minuteMode = 'between';
+              betweenMinuteStart = start.padStart(2, '0');
+              betweenMinuteEnd = end.padStart(2, '0');
+            } else {
+              // Specific minutes selected (comma-separated)
+              minuteMode = 'specific';
+              minutesList = minutes;
+            }
+          }
+
           // Determine day mode based on data
           const dayMode = days.length > 0 ? 'specific' : (weekdays.length > 0 ? 'weekdays' : 'weekdays');
 
           setTimeSetupData(prev => ({
             ...prev,
             hourMode: hours.length > 0 ? 'specific' : 'all',
-            minuteMode: minutes.length > 0 ? 'specific' : 'all',
+            minuteMode: minuteMode,
             dayMode: dayMode,
             monthMode: monthMode,
-            selectedMinutes: minutes,
+            selectedMinutes: minutesList,
             selectedHours: hours,
             selectedDays: days,
             selectedMonths: months,
             selectedWeekdays: weekdays,
+            betweenMinuteStart: betweenMinuteStart,
+            betweenMinuteEnd: betweenMinuteEnd,
             betweenMonthStart: betweenMonthStart,
             betweenMonthEnd: betweenMonthEnd
           }));
@@ -3771,7 +3794,7 @@ export const EditSchedulePage = () => {
       </Box>
 
       {/* Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
         <CancelButton
           onClick={() => navigate('/maintenance/schedule')}
         >
@@ -3781,7 +3804,7 @@ export const EditSchedulePage = () => {
         <RedButton
           onClick={handleUpdateSchedule}
           disabled={isSubmitting}
-          startIcon={isSubmitting ? <LinearProgress size={20} /> : <Save />}
+          // startIcon={isSubmitting ? <LinearProgress size={20} /> : <Save />}
         >
           {isSubmitting ? 'Updating...' : 'Update Schedule'}
         </RedButton>
