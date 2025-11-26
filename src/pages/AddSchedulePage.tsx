@@ -6031,54 +6031,51 @@ export const AddSchedulePage = () => {
 
       {/* Navigation Buttons */}
       <div className="flex justify-center items-center mt-6 pt-4 sm:pt-6">
-
-        <div className="flex gap-4">
-          {activeStep < steps.length - 1 ? (
-            <>
-              {activeStep === 3 ? ( // Time Setup step - has Save button to submit and move to Mapping
-                <Box className="flex gap-4">
-                  <DraftButton
-                    onClick={handleSaveToDraft}
-                    disabled={isSubmitting}
-                  >
-                    Save to Draft
-                  </DraftButton>
-                  <DraftButton
-                    onClick={handleSave}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Submit'}
-                  </DraftButton>
-                </Box>
-              ) : (
-                <Box className="flex gap-4">
-                  <DraftButton
-                    onClick={handleProceedToSave}
-                    disabled={isSubmitting}
-                  >
-                    Proceed to Save
-                  </DraftButton>
-                  <DraftButton
-                    onClick={handleSaveToDraft}
-                    disabled={isSubmitting}
-                  >
-                    Save to Draft
-                  </DraftButton>
-                </Box>
-              )}
-            </>
-          ) : (
-            // Mapping section (last step) - has Submit button only
-            <Box className="flex gap-4">
-              <DraftButton
-                onClick={handleSave}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit'}
-              </DraftButton>
-            </Box>
-          )}
-        </div>
+        {activeStep < steps.length - 1 ? (
+          <>
+            {activeStep === 3 ? ( // Time Setup step - has Save button to submit and move to Mapping
+              <div className="flex justify-center gap-4">
+                <DraftButton
+                  onClick={handleSaveToDraft}
+                  disabled={isSubmitting}
+                >
+                  Save to Draft
+                </DraftButton>
+                <DraftButton
+                  onClick={handleSave}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit'}
+                </DraftButton>
+              </div>
+            ) : (
+              <div className="flex justify-center gap-4">
+                <DraftButton
+                  onClick={handleProceedToSave}
+                  disabled={isSubmitting}
+                >
+                  Proceed to Save
+                </DraftButton>
+                <DraftButton
+                  onClick={handleSaveToDraft}
+                  disabled={isSubmitting}
+                >
+                  Save to Draft
+                </DraftButton>
+              </div>
+            )}
+          </>
+        ) : (
+          // Mapping section (last step) - has Submit button only
+          <div className="flex justify-center gap-4">
+            <DraftButton
+              onClick={handleSave}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit'}
+            </DraftButton>
+          </div>
+        )}
       </div>
 
       {/* Completed Sections */}

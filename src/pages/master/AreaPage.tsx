@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Edit, Trash2, Plus, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
+import { Edit, Trash2, Plus, ChevronLeft, ChevronRight, Check, X, Download, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useToast } from "@/components/ui/use-toast"
 import {
@@ -40,25 +40,24 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { apiClient } from "@/utils/apiClient";
-import { ImportDataModal } from '@/components/ImportDataModal';
-import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { AddAreaDialog } from '@/components/AddAreaDialog';
 
 export const AreaPage = () => {
   const [areas, setAreas] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedArea, setSelectedArea] = useState<any | null>(null);
   const [name, setName] = useState('');
   const [buildingId, setBuildingId] = useState('');
   const [wingId, setWingId] = useState('');
   const [active, setActive] = useState(true);
-  const [isImporting, setIsImporting] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [buildings, setBuildings] = useState<any[]>([]);
   const [wings, setWings] = useState<any[]>([]);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImportingFile, setIsImportingFile] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -142,6 +141,94 @@ export const AreaPage = () => {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem('token') || '';
+      let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+      baseUrl = baseUrl.replace(/^https?:\/\//, '');
+      const templateUrl = `https://${baseUrl}/assets/area.xlsx`;
+      
+      const response = await fetch(templateUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download template');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'area.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Template downloaded successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to download template');
+    }
+  };
+
+  const handleImportAreas = async () => {
+    if (!importFile) return;
+
+    setIsImportingFile(true);
+    try {
+      const formData = new FormData();
+      formData.append('pms_area[file]', importFile);
+      
+      const token = localStorage.getItem('token') || '';
+      let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+      baseUrl = baseUrl.replace(/^https?:\/\//, '');
+      const apiUrl = `https://${baseUrl}/pms/account_setups/area_import.json?token=${token}`;
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to import areas');
+      }
+
+      toast.success('Areas imported successfully');
+      setShowImportDialog(false);
+      setImportFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      fetchAreas();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to import areas');
+    } finally {
+      setIsImportingFile(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'text/csv'
+      ];
+      
+      if (validTypes.includes(file.type) || file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) {
+        setImportFile(file);
+      } else {
+        toast.error('Please select a valid Excel or CSV file');
+        event.target.value = '';
+      }
+    }
+  };
+
   const handleEdit = (area: any) => {
     setSelectedArea(area);
     setName(area.name);
@@ -155,86 +242,6 @@ export const AreaPage = () => {
     }
     
     setIsEditModalOpen(true);
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      console.log('File selected:', file.name);
-    }
-  };
-
-  const handleImportAreas = async () => {
-    if (!selectedFile) {
-      toast.error('Please select a file to import');
-      return;
-    }
-
-    setIsImporting(true);
-    console.log('Starting area import process for file:', selectedFile.name);
-
-    try {
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('type', 'areas');
-
-      // Make API call to import areas
-      const response = await apiClient.post('/pms/areas/bulk_import', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      if (response.data.success) {
-        toast.success('Areas imported successfully');
-        setSelectedFile(null);
-        setIsImportModalOpen(false);
-        await fetchAreas(); // Refresh the areas list
-      } else {
-        toast.error(response.data.message || 'Import failed');
-      }
-    } catch (error) {
-      console.error('Import error:', error);
-      toast.error('Failed to import areas. Please check the file format.');
-    } finally {
-      setIsImporting(false);
-    }
-  };
-
-  const handleDownloadSampleFormat = () => {
-    console.log('Downloading sample format for areas...');
-
-    // Create sample CSV data for areas
-    const sampleData = [
-      ['Area Name', 'Building ID', 'Wing ID', 'Status'],
-      ['Reception Area', '1', '1', 'active'],
-      ['Conference Room', '1', '2', 'active'],
-      ['Lobby', '2', '3', 'active'],
-      ['Storage Room', '2', '4', 'inactive']
-    ];
-
-    // Convert to CSV format
-    const csvContent = sampleData.map(row =>
-      row.map(cell => `"${cell}"`).join(',')
-    ).join('\n');
-
-    // Create and download the file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'areas_sample_format.csv');
-    link.style.visibility = 'hidden';
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
-    toast.success('Sample format downloaded successfully');
   };
 
   const handleUpdateArea = async () => {
@@ -309,21 +316,82 @@ export const AreaPage = () => {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">AREA</h1>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleDownloadTemplate}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download Sample Format
+              </Button>
+
+              <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Import Areas
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Import Areas</DialogTitle>
+                    <button
+                      className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                      onClick={() => setShowImportDialog(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Select Excel or CSV file
+                      </label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".xlsx,.xls,.csv"
+                        onChange={handleFileSelect}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      {importFile && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          Selected: {importFile.name}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowImportDialog(false);
+                          setImportFile(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleImportAreas}
+                        disabled={!importFile || isImportingFile}
+                      >
+                        {isImportingFile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Import
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               <Button
                 onClick={() => setIsAddModalOpen(true)}
                 className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Add Area
-              </Button>
-
-              <Button 
-                onClick={() => setIsImportModalOpen(true)} 
-                className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Import
               </Button>
             </div>
           </div>
@@ -580,111 +648,6 @@ export const AreaPage = () => {
           onOpenChange={setIsAddModalOpen}
           onAreaAdded={fetchAreas}
         />
-
-        {/* Import Modal */}
-        <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Import Areas</DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              {/* File Upload Area */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <input
-                  type="file"
-                  accept=".csv,.xlsx,.xls"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="area-file-upload"
-                />
-                <label htmlFor="area-file-upload" className="cursor-pointer">
-                  <div className="text-gray-600">
-                    <span className="text-[#C72030] font-medium">Choose File</span>
-                    <p className="text-sm mt-1">
-                      {selectedFile ? selectedFile.name : 'No file chosen'}
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 pt-4">
-                <Button
-                  onClick={handleDownloadSampleFormat}
-                  variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-                  disabled={isImporting}
-                >
-                  Sample Format
-                </Button>
-                <Button
-                  onClick={handleImportAreas}
-                  className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
-                  disabled={!selectedFile || isImporting}
-                >
-                  {isImporting ? 'Importing...' : 'Import'}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Add Area Dialog */}
-        <AddAreaDialog
-          open={isAddModalOpen}
-          onOpenChange={setIsAddModalOpen}
-          onAreaAdded={fetchAreas}
-        />
-
-        {/* Import Modal */}
-        <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Import Areas</DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              {/* File Upload Area */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <input
-                  type="file"
-                  accept=".csv,.xlsx,.xls"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  id="area-file-upload"
-                />
-                <label htmlFor="area-file-upload" className="cursor-pointer">
-                  <div className="text-gray-600">
-                    <span className="text-[#C72030] font-medium">Choose File</span>
-                    <p className="text-sm mt-1">
-                      {selectedFile ? selectedFile.name : 'No file chosen'}
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 pt-4">
-                <Button
-                  onClick={handleDownloadSampleFormat}
-                  variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-                  disabled={isImporting}
-                >
-                  Sample Format
-                </Button>
-                <Button
-                  onClick={handleImportAreas}
-                  className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
-                  disabled={!selectedFile || isImporting}
-                >
-                  {isImporting ? 'Importing...' : 'Import'}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

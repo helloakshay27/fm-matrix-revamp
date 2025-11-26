@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Square, Plus, X, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Edit, Square, Plus, X, ChevronLeft, ChevronRight, Check, Download, Upload, Loader2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { 
   fetchBuildings, 
@@ -33,6 +33,10 @@ export const UnitPage = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<any>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -172,6 +176,94 @@ export const UnitPage = () => {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem('token') || '';
+      let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+      baseUrl = baseUrl.replace(/^https?:\/\//, '');
+      const templateUrl = `https://${baseUrl}/assets/unit.xlsx`;
+      
+      const response = await fetch(templateUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download template');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'unit.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Template downloaded successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to download template');
+    }
+  };
+
+  const handleImportUnits = async () => {
+    if (!importFile) return;
+
+    setIsImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('pms_unit[file]', importFile);
+      
+      const token = localStorage.getItem('token') || '';
+      let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+      baseUrl = baseUrl.replace(/^https?:\/\//, '');
+      const apiUrl = `https://${baseUrl}/pms/account_setups/unit_import.json?token=${token}`;
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to import units');
+      }
+
+      toast.success('Units imported successfully');
+      setShowImportDialog(false);
+      setImportFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      dispatch(fetchAllUnits());
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to import units');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'text/csv'
+      ];
+      
+      if (validTypes.includes(file.type) || file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) {
+        setImportFile(file);
+      } else {
+        toast.error('Please select a valid Excel or CSV file');
+        event.target.value = '';
+      }
+    }
+  };
+
   const handleAddUnit = async () => {
     if (newUnit.building && newUnit.wing && newUnit.area && newUnit.floor && newUnit.unitName.trim()) {
       try {
@@ -282,15 +374,85 @@ export const UnitPage = () => {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">UNIT</h1>
             
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
-                >
-                  <Square className="w-4 h-4" />
-                  Add Unit
-                </Button>
-              </DialogTrigger>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleDownloadTemplate}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download Sample Format
+              </Button>
+
+              <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Import Units
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Import Units</DialogTitle>
+                    <button
+                      className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                      onClick={() => setShowImportDialog(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Select Excel or CSV file
+                      </label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".xlsx,.xls,.csv"
+                        onChange={handleFileSelect}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      {importFile && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          Selected: {importFile.name}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowImportDialog(false);
+                          setImportFile(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleImportUnits}
+                        disabled={!importFile || isImporting}
+                      >
+                        {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Import
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Unit
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader className="flex flex-row items-center justify-between pb-0">
                   <DialogTitle className="flex items-center gap-2">
@@ -427,20 +589,24 @@ export const UnitPage = () => {
                   </div> */}
                 </div>
                 
-                <div className="flex gap-2 pt-4">
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setIsAddDialogOpen(false);
+                      setNewUnit({ building: '', wing: '', area: '', floor: '', unitName: '', areaSize: '' });
+                    }}
+                    className="border-gray-300"
+                  >
+                    Cancel
+                  </Button>
                   <Button onClick={handleAddUnit} className="bg-[#C72030] hover:bg-[#B01E2E] text-white">
                     Submit
-                  </Button>
-                  <Button variant="outline" className="border-gray-300">
-                    Sample Format
-                  </Button>
-                  <Button variant="outline" className="border-gray-300 flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Import
                   </Button>
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
 
           {/* Search Controls */}
