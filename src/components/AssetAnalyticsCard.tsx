@@ -235,7 +235,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                       size="sm"
                       className="w-8 h-8 p-0"
                     >
-                      <Info className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
+                      <Info className="w-5 h-5 !text-[#000000]" style={{ color: '#000000' }} />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-gray-900 text-white border-gray-700">
@@ -247,15 +247,22 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
               </TooltipProvider>
             )}
             {onDownload && title !== "Asset Status" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onDownload}
-                className="w-8 h-8 p-0"
-                data-download="true"
-              >
-                <Download className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
-              </Button>
+              <Download
+                data-no-drag="true"
+                className="w-5 h-5 flex-shrink-0 cursor-pointer text-black hover:text-gray-700 transition-colors z-50"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDownload();
+                }}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                }}
+                style={{ pointerEvents: 'auto' }}
+              />
             )}
           </div>
         </div>
