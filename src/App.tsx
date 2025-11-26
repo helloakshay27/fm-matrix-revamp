@@ -88,6 +88,7 @@ import EcoFriendlyListPage from "./pages/EcoFriendlyListPage";
 import { NewInboundPage } from "./pages/NewInboundPage";
 import { NewOutboundPage } from "./pages/NewOutboundPage";
 import { OutboundListPage } from "./pages/OutboundListPage";
+import { OutboundDetailPage } from "./pages/OutboundDetailPage";
 
 // Import Task pages
 import { ScheduledTaskDashboard } from "./pages/maintenance/ScheduledTaskDashboard";
@@ -2685,6 +2686,10 @@ function App() {
                   <Route
                     path="/vas/mailroom/outbound/create"
                     element={<NewOutboundPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/outbound/:id"
+                    element={<OutboundDetailPage />}
                   />
                   <Route path="/vas/parking" element={<ParkingDashboard />} />
                   <Route

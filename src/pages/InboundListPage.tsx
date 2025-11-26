@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Eye, Plus, X } from "lucide-react";
@@ -20,8 +20,18 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { getFullUrl, getAuthHeader, API_CONFIG } from '@/config/apiConfig';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationPrevious,
+    PaginationNext,
+    PaginationLink,
+    PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 interface InboundMail {
     id: number;
@@ -74,6 +84,12 @@ const formatStatus = (status?: string) => {
     return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
+const formatDateForApi = (dateString: string) => {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+};
+
 const mapInboundRecord = (item: any): InboundMail => ({
     id: item.id,
     vendorName: item.delivery_vendor?.name || item.vendor_name || '-',
@@ -103,11 +119,11 @@ const mapInboundRecord = (item: any): InboundMail => ({
     receivedBy: item.received_by || item.recieved_by || item.received_by_name || '-',
     status: formatStatus(item.status),
     ageing:
-        item.ageing !== undefined
+        (item.ageing !== undefined && item.ageing !== null)
             ? String(item.ageing)
-            : item.aging !== undefined
+            : (item.aging !== undefined && item.aging !== null)
                 ? String(item.aging)
-                : '',
+                : '-',
     collectedOn: formatDate(item.collected_on),
     collectedBy: item.collected_by || item.collected_by_name || '',
     image: item.attachments?.[0]?.document_url || item.attachments?.[0]?.document?.url,
@@ -119,6 +135,10 @@ export const InboundListPage = () => {
     const [inboundMails, setInboundMails] = useState<InboundMail[]>([]);
     const [showActionPanel, setShowActionPanel] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const PER_PAGE = 10;
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalRecords, setTotalRecords] = useState(0);
 
     // Filter modal state
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -127,11 +147,39 @@ export const InboundListPage = () => {
     const [filterReceivedOn, setFilterReceivedOn] = useState('');
     const [filterCollectedOn, setFilterCollectedOn] = useState('');
 
+    // Applied filters (only update when Apply is clicked)
+    const [appliedFilterStatus, setAppliedFilterStatus] = useState('');
+    const [appliedFilterVendor, setAppliedFilterVendor] = useState('');
+    const [appliedFilterReceivedOn, setAppliedFilterReceivedOn] = useState('');
+    const [appliedFilterCollectedOn, setAppliedFilterCollectedOn] = useState('');
+
+    // Vendors from API
+    const [vendors, setVendors] = useState<Array<{ id: number; name: string }>>([]);
+    const [isLoadingVendors, setIsLoadingVendors] = useState(false);
+
     useEffect(() => {
         const fetchInboundMails = async () => {
             setLoading(true);
             try {
-                const response = await fetch(getFullUrl(MAIL_INBOUND_LIST_ENDPOINT), {
+                const queryParams = new URLSearchParams({
+                    page: currentPage.toString(),
+                    per_page: PER_PAGE.toString(),
+                });
+
+                if (appliedFilterStatus) {
+                    queryParams.append('q[status_eq]', appliedFilterStatus.toLowerCase());
+                }
+                if (appliedFilterVendor) {
+                    queryParams.append('q[delivery_vendor_id_eq]', appliedFilterVendor);
+                }
+                if (appliedFilterReceivedOn) {
+                    queryParams.append('q[receive_date_eq]', formatDateForApi(appliedFilterReceivedOn));
+                }
+                if (appliedFilterCollectedOn) {
+                    queryParams.append('q[collected_on_eq]', formatDateForApi(appliedFilterCollectedOn));
+                }
+
+                const response = await fetch(`${getFullUrl(MAIL_INBOUND_LIST_ENDPOINT)}?${queryParams.toString()}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': getAuthHeader(),
@@ -152,6 +200,27 @@ export const InboundListPage = () => {
 
                 const mapped = records.map(mapInboundRecord);
                 setInboundMails(mapped);
+
+                const paginationInfo =
+                    data?.meta?.pagination ||
+                    data?.pagination ||
+                    data?.meta ||
+                    {};
+
+                const totalCount =
+                    paginationInfo.total_entries ??
+                    paginationInfo.total_count ??
+                    paginationInfo.total ??
+                    paginationInfo.count ??
+                    data?.total_count ??
+                    (currentPage - 1) * PER_PAGE + mapped.length;
+
+                const derivedTotalPages =
+                    paginationInfo.total_pages ??
+                    Math.max(1, Math.ceil(totalCount / PER_PAGE));
+
+                setTotalRecords(totalCount);
+                setTotalPages(derivedTotalPages);
             } catch (error) {
                 console.error('Error fetching inbound mails:', error);
                 toast({
@@ -164,7 +233,43 @@ export const InboundListPage = () => {
             }
         };
         fetchInboundMails();
-    }, [toast]);
+    }, [toast, currentPage, appliedFilterStatus, appliedFilterVendor, appliedFilterReceivedOn, appliedFilterCollectedOn]);
+
+    // Fetch vendors when filter modal opens
+    useEffect(() => {
+        const fetchVendors = async () => {
+            if (!isFilterModalOpen) return;
+
+            setIsLoadingVendors(true);
+            try {
+                const response = await fetch(getFullUrl(API_CONFIG.ENDPOINTS.DELIVERY_VENDORS), {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': getAuthHeader(),
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch vendors');
+                }
+
+                const data = await response.json();
+                setVendors(data.delivery_vendors || data || []);
+            } catch (error) {
+                console.error('Error fetching vendors:', error);
+                toast({
+                    title: 'Error',
+                    description: 'Failed to load vendors',
+                    variant: 'destructive',
+                });
+            } finally {
+                setIsLoadingVendors(false);
+            }
+        };
+
+        fetchVendors();
+    }, [isFilterModalOpen, toast]);
 
     const statusOptions = useMemo(() => {
         const uniqueStatuses = new Set(
@@ -208,23 +313,35 @@ export const InboundListPage = () => {
     }, [inboundMails]);
 
     const filteredInboundMails = useMemo(() => {
-        return inboundMails.filter(mail => {
-            const matchesStatus = filterStatus
-                ? mail.status.toLowerCase() === filterStatus.toLowerCase()
-                : true;
-            const matchesVendor = filterVendor
-                ? mail.vendorName.toLowerCase() === filterVendor.toLowerCase()
-                : true;
-            const matchesReceivedOn = filterReceivedOn
-                ? mail.receivedOn === filterReceivedOn
-                : true;
-            const matchesCollectedOn = filterCollectedOn
-                ? mail.collectedOn === filterCollectedOn
-                : true;
+        return inboundMails;
+    }, [inboundMails]);
 
-            return matchesStatus && matchesVendor && matchesReceivedOn && matchesCollectedOn;
-        });
-    }, [inboundMails, filterStatus, filterVendor, filterReceivedOn, filterCollectedOn]);
+    const pageNumbers = useMemo(() => {
+        const pages = new Set<number>();
+        const addPage = (page: number) => {
+            if (page >= 1 && page <= totalPages) {
+                pages.add(page);
+            }
+        };
+
+        addPage(1);
+        addPage(totalPages);
+        addPage(currentPage - 1);
+        addPage(currentPage);
+        addPage(currentPage + 1);
+
+        return Array.from(pages).sort((a, b) => a - b);
+    }, [currentPage, totalPages]);
+
+    const handlePageChange = (page: number) => {
+        if (page < 1 || page > totalPages || page === currentPage) return;
+        setCurrentPage(page);
+    };
+
+    const startRecord =
+        totalRecords === 0 ? 0 : (currentPage - 1) * PER_PAGE + 1;
+    const endRecord =
+        totalRecords === 0 ? 0 : startRecord + filteredInboundMails.length - 1;
 
     const handleViewInbound = (id: number) => {
         // Navigate to view/edit page
@@ -364,6 +481,10 @@ export const InboundListPage = () => {
     };
 
     const handleApplyFilters = () => {
+        setAppliedFilterStatus(filterStatus);
+        setAppliedFilterVendor(filterVendor);
+        setAppliedFilterReceivedOn(filterReceivedOn);
+        setAppliedFilterCollectedOn(filterCollectedOn);
         setIsFilterModalOpen(false);
     };
 
@@ -372,6 +493,10 @@ export const InboundListPage = () => {
         setFilterVendor('');
         setFilterReceivedOn('');
         setFilterCollectedOn('');
+        setAppliedFilterStatus('');
+        setAppliedFilterVendor('');
+        setAppliedFilterReceivedOn('');
+        setAppliedFilterCollectedOn('');
     };
 
     const leftActions = (
@@ -406,9 +531,64 @@ export const InboundListPage = () => {
                 enableSearch={true}
                 enableSelection={false}
                 hideTableExport={true}
-                pagination={true}
-                pageSize={10}
             />
+
+            {totalPages > 1 && (
+                <div className="mt-6 flex flex-col items-center gap-2">
+                    <span className="text-sm text-gray-600">
+                        Showing {startRecord}-{Math.max(startRecord, endRecord)} of {totalRecords}
+                    </span>
+                    <Pagination>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handlePageChange(currentPage - 1);
+                                    }}
+                                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                                />
+                            </PaginationItem>
+                            {pageNumbers.map((page, index) => {
+                                const prevPage = pageNumbers[index - 1];
+                                const needsEllipsis = prevPage && page - prevPage > 1;
+                                return (
+                                    <Fragment key={page}>
+                                        {needsEllipsis && (
+                                            <PaginationItem key={`ellipsis-${page}`}>
+                                                <PaginationEllipsis />
+                                            </PaginationItem>
+                                        )}
+                                        <PaginationItem>
+                                            <PaginationLink
+                                                href="#"
+                                                isActive={page === currentPage}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handlePageChange(page);
+                                                }}
+                                            >
+                                                {page}
+                                            </PaginationLink>
+                                        </PaginationItem>
+                                    </Fragment>
+                                );
+                            })}
+                            <PaginationItem>
+                                <PaginationNext
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handlePageChange(currentPage + 1);
+                                    }}
+                                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                </div>
+            )}
 
             {/* Filter Modal */}
             <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
@@ -455,13 +635,17 @@ export const InboundListPage = () => {
                                 </Label>
                                 <Select value={filterVendor} onValueChange={setFilterVendor}>
                                     <SelectTrigger id="vendor" className="w-full">
-                                        <SelectValue placeholder="Select Vendor" />
+                                        <SelectValue placeholder={isLoadingVendors ? 'Loading vendors...' : 'Select Vendor'} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {vendorOptions.length ? (
-                                            vendorOptions.map((vendor) => (
-                                                <SelectItem key={vendor} value={vendor}>
-                                                    {vendor}
+                                        {isLoadingVendors ? (
+                                            <SelectItem value="loading" disabled>
+                                                Loading vendors...
+                                            </SelectItem>
+                                        ) : vendors.length ? (
+                                            vendors.map((vendor) => (
+                                                <SelectItem key={vendor.id} value={vendor.id.toString()}>
+                                                    {vendor.name}
                                                 </SelectItem>
                                             ))
                                         ) : (
@@ -476,47 +660,25 @@ export const InboundListPage = () => {
                                 <Label htmlFor="receivedOn" className="text-sm font-medium">
                                     Received On
                                 </Label>
-                                <Select value={filterReceivedOn} onValueChange={setFilterReceivedOn}>
-                                    <SelectTrigger id="receivedOn" className="w-full">
-                                        <SelectValue placeholder="Select Received On" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {receivedDateOptions.length ? (
-                                            receivedDateOptions.map((date) => (
-                                                <SelectItem key={date} value={date}>
-                                                    {date}
-                                                </SelectItem>
-                                            ))
-                                        ) : (
-                                            <SelectItem value="no-received-date" disabled>
-                                                No dates available
-                                            </SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
+                                <Input
+                                    id="receivedOn"
+                                    type="date"
+                                    value={filterReceivedOn}
+                                    onChange={(e) => setFilterReceivedOn(e.target.value)}
+                                    className="w-full"
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="collectedOn" className="text-sm font-medium">
                                     Collected On
                                 </Label>
-                                <Select value={filterCollectedOn} onValueChange={setFilterCollectedOn}>
-                                    <SelectTrigger id="collectedOn" className="w-full">
-                                        <SelectValue placeholder="Select Received On" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {collectedDateOptions.length ? (
-                                            collectedDateOptions.map((date) => (
-                                                <SelectItem key={date} value={date}>
-                                                    {date}
-                                                </SelectItem>
-                                            ))
-                                        ) : (
-                                            <SelectItem value="no-collected-date" disabled>
-                                                No dates available
-                                            </SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
+                                <Input
+                                    id="collectedOn"
+                                    type="date"
+                                    value={filterCollectedOn}
+                                    onChange={(e) => setFilterCollectedOn(e.target.value)}
+                                    className="w-full"
+                                />
                             </div>
                         </div>
                     </div>
