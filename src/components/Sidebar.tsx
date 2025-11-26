@@ -1042,12 +1042,12 @@ const modulesByPackage = {
       subItems: [
         {
           name: "Inbound",
-          href: "/mail-inbounds-create",
+          href: "/vas/mailroom/inbound",
           color: "text-[#1a1a1a]",
         },
         {
           name: "Outbound",
-          href: "/mail-outbounds-create",
+          href: "/vas/mailroom/outbound",
           color: "text-[#1a1a1a]",
         },
       ],

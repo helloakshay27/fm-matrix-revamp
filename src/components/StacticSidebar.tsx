@@ -988,7 +988,7 @@ const modulesByPackage = {
         },
         {
           name: "Outbound",
-          href: "/mail-outbounds-create",
+          href: "/vas/mailroom/outbound",
           color: "text-[#1a1a1a]",
         },
       ],

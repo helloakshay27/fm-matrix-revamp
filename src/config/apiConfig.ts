@@ -251,6 +251,10 @@ export const API_CONFIG = {
     VEHICLE_DETAILS: '/vehicle_details/vehicle_detail_list.json',
     // LTM list endpoint
     LTM_LIST: '/vehicle_histories/ltm_list.json',
+    // Delivery vendors endpoint
+    DELIVERY_VENDORS: '/pms/admin/delivery_vendors.json',
+    // Mail inbound states endpoint
+    MAIL_INBOUND_STATES: '/pms/admin/mail_inbounds/state_list.json',
   },
 } as const
 

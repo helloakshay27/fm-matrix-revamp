@@ -2,7 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Package, User, FileText, Paperclip, ChevronUp, ChevronDown, LucideIcon, X, Check } from 'lucide-react';
+import {
+    ArrowLeft,
+    Package,
+    User,
+    FileText,
+    Paperclip,
+    ChevronUp,
+    ChevronDown,
+    LucideIcon,
+    X,
+    Check,
+    Download,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import {
     Dialog,
@@ -19,6 +31,64 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+
+const formatDate = (value?: string | null) => {
+    if (!value) return 'NA';
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        });
+    }
+
+    const sanitized = value.replace(/-/g, '/');
+    const parts = sanitized.split('/');
+    if (parts.length === 3) {
+        if (parts[0].length === 4) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+    }
+
+    return value;
+};
+
+const formatStatus = (status?: string) => {
+    if (!status) return 'Pending';
+    const normalized = status.trim().toLowerCase();
+    if (normalized === 'collected') return 'Collected';
+    if (normalized === 'pending') return 'Pending';
+    if (normalized === 'overdue') return 'Overdue';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+const buildAddress = (detail: Record<string, any>) => {
+    const parts = [
+        detail.sender_address,
+        detail.sender_address1,
+        detail.city,
+        detail.state?.name || detail.state,
+        detail.pincode,
+    ].filter(Boolean);
+    return parts.length ? parts.join(', ') : detail.address || 'NA';
+};
+
+interface InboundAttachment {
+    id: number | string;
+    url: string;
+    name: string;
+    fileType?: 'image' | 'pdf' | 'excel' | 'word' | 'other';
+}
+
+interface InboundLog {
+    id: number | string;
+    message: string;
+    timestamp: string;
+    status?: string;
+}
 
 interface InboundMail {
     id: number;
@@ -42,12 +112,20 @@ interface InboundMail {
     mobile: string;
     address: string;
     image?: string;
-    attachments?: Array<{
-        id: number;
-        url: string;
-        name: string;
-    }>;
+    attachments?: InboundAttachment[];
+    logs?: InboundLog[];
 }
+
+const MAIL_INBOUND_DETAIL_ENDPOINT = (recordId: string | number) => `/pms/admin/mail_inbounds/${recordId}.json`;
+
+const getAttachmentType = (url?: string, contentType?: string) => {
+    const source = (contentType || url || '').toLowerCase();
+    if (source.match(/(jpg|jpeg|png|gif|bmp|svg|webp|image)/)) return 'image';
+    if (source.includes('pdf')) return 'pdf';
+    if (source.match(/(xls|xlsx|csv|excel)/)) return 'excel';
+    if (source.match(/(doc|docx|word)/)) return 'word';
+    return 'other';
+};
 
 export const InboundDetailPage = () => {
     const { id } = useParams<{ id: string }>();
@@ -97,33 +175,88 @@ export const InboundDetailPage = () => {
 
             try {
                 setLoading(true);
-                // TODO: Replace with actual API call
-                // Simulating API call with mock data
-                const mockData: InboundMail = {
-                    id: 779,
-                    vendorName: 'Bluedart',
-                    recipientName: 'Test1 Login1',
-                    unit: '',
-                    entity: '',
-                    type: 'Mail',
-                    department: 'Admin',
-                    sender: 'Vinayak',
-                    company: 'Heaven',
-                    receivedOn: '16/04/2025',
-                    receivedBy: 'Vinayak Mane',
-                    status: 'Overdue',
-                    ageing: '223 days',
-                    collectedOn: 'NA',
-                    collectedBy: 'NA',
-                    delegatedTo: 'NA',
-                    delegatePackageReason: 'NA',
-                    awbNumber: '?',
-                    mobile: '9876543456',
-                    address: 'test , Mumbai, Maharashtra, 400017',
-                    attachments: []
+                setError(null);
+
+                const response = await fetch(getFullUrl(MAIL_INBOUND_DETAIL_ENDPOINT(id)), {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': getAuthHeader(),
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch inbound details');
+                }
+
+                const data = await response.json();
+                const detail = data?.mail_inbound || data;
+
+                if (!detail || !detail.id) {
+                    throw new Error('Inbound detail not available');
+                }
+
+                const attachments: InboundAttachment[] = (detail.attachments || []).map((attachment: any) => {
+                    const url =
+                        attachment.document_url ||
+                        attachment.document?.url ||
+                        attachment.url ||
+                        attachment.attachment_url ||
+                        '';
+                    const name =
+                        attachment.name ||
+                        attachment.filename ||
+                        attachment.document_file_name ||
+                        attachment.document_name ||
+                        `Attachment ${attachment.id || attachment.document_id || attachment.attachfile_id || 'file'}`;
+                    const attachmentId =
+                        attachment.attachfile_id ||
+                        attachment.document_id ||
+                        attachment.attachment_id ||
+                        attachment.id ||
+                        attachment.document?.id;
+
+                    return {
+                        id: attachmentId,
+                        url,
+                        name,
+                        fileType: getAttachmentType(url, attachment.content_type || attachment.document_content_type),
+                    };
+                });
+
+                const logs: InboundLog[] = (detail.mail_inbound_logs || detail.logs || []).map((log: any, index: number) => ({
+                    id: log.id || index,
+                    message: log.message || log.description || log.status || 'Status update',
+                    timestamp: formatDate(log.created_at || log.timestamp),
+                    status: log.status || log.event_type,
+                }));
+
+                const mapped: InboundMail = {
+                    id: detail.id,
+                    vendorName: detail.delivery_vendor?.name || detail.vendor_name || '-',
+                    recipientName: detail.user?.full_name || detail.recipient_name || '-',
+                    unit: detail.unit || detail.unit_name || '-',
+                    entity: detail.entity || detail.entity_name || detail.resource_type || '-',
+                    type: detail.mail_items?.[0]?.item_type || detail.item_type || '-',
+                    department: detail.department || detail.department_name || '-',
+                    sender: detail.sender_name || '-',
+                    company: detail.sender_company || '-',
+                    receivedOn: formatDate(detail.receive_date),
+                    receivedBy: detail.received_by || detail.received_by_name || '-',
+                    status: formatStatus(detail.status),
+                    ageing: detail.ageing_display || (detail.ageing ? `${detail.ageing} days` : 'NA'),
+                    collectedOn: detail.collected_on ? formatDate(detail.collected_on) : 'Not collected',
+                    collectedBy: detail.collected_by || detail.collected_by_name || 'NA',
+                    delegatedTo: detail.delegated_to_user?.full_name || detail.delegated_to || 'NA',
+                    delegatePackageReason: detail.delegate_reason || detail.delegatePackageReason || 'NA',
+                    awbNumber: detail.awb_number || '-',
+                    mobile: detail.sender_mobile || '-',
+                    address: buildAddress(detail),
+                    attachments,
+                    logs,
                 };
 
-                setInboundData(mockData);
+                setInboundData(mapped);
             } catch (err) {
                 setError('Failed to fetch inbound details');
                 console.error('Error fetching inbound details:', err);
@@ -142,6 +275,47 @@ export const InboundDetailPage = () => {
 
     const handleAddAttachments = () => {
         setIsAttachmentModalOpen(true);
+    };
+
+    const handleDownloadAttachment = async (attachment: InboundAttachment) => {
+        const attachmentId = attachment.id;
+
+        if (!attachmentId) {
+            if (attachment.url) {
+                window.open(attachment.url, '_blank');
+            } else {
+                toast.error('Attachment not available');
+            }
+            return;
+        }
+
+        try {
+            const fileUrl = getFullUrl(`/attachfiles/${attachmentId}?show_file=true`);
+            const response = await fetch(fileUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': getAuthHeader(),
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Download failed');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = attachment.name || `attachment-${attachmentId}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Attachment download error:', error);
+            toast.error('Unable to download attachment');
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -424,25 +598,31 @@ export const InboundDetailPage = () => {
                 icon={FileText}
                 isExpanded={expandedSections.logs}
                 onToggle={() => toggleSection('logs')}
+                hasData={Boolean(inboundData.logs && inboundData.logs.length)}
             >
-                <div className="space-y-4">
-                    <div className="bg-[#FFF9F0] border-l-4 border-[#F97316] p-4 rounded">
-                        <div className="flex items-start gap-3">
-                            <div className="flex-1">
-                                <p className="text-sm text-gray-700">Package is marked as Overdue.</p>
-                                <p className="text-xs text-gray-500 mt-1">17 Apr, 2025, 3:00 PM</p>
+                {inboundData.logs && inboundData.logs.length ? (
+                    <div className="space-y-4">
+                        {inboundData.logs.map((log) => (
+                            <div
+                                key={log.id}
+                                className={`p-4 rounded border-l-4 ${
+                                    log.status?.toLowerCase() === 'overdue'
+                                        ? 'bg-[#FFF9F0] border-[#F97316]'
+                                        : 'bg-[#F0F9FF] border-[#3B82F6]'
+                                }`}
+                            >
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-1">
+                                        <p className="text-sm text-gray-700">{log.message}</p>
+                                        <p className="text-xs text-gray-500 mt-1">{log.timestamp}</p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        ))}
                     </div>
-                    <div className="bg-[#F0F9FF] border-l-4 border-[#3B82F6] p-4 rounded">
-                        <div className="flex items-start gap-3">
-                            <div className="flex-1">
-                                <p className="text-sm text-gray-700">Vinayak Mane created an inbound package successfully.</p>
-                                <p className="text-xs text-gray-500 mt-1">16 Apr, 2025, 2:58 PM</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                ) : (
+                    <div className="text-sm text-gray-500">No logs available.</div>
+                )}
             </ExpandableSection>
 
             {/* Attachments Section */}
@@ -454,19 +634,54 @@ export const InboundDetailPage = () => {
                 hasData={inboundData.attachments && inboundData.attachments.length > 0}
             >
                 {inboundData.attachments && inboundData.attachments.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {inboundData.attachments.map((attachment) => (
-                            <div key={attachment.id} className="border rounded-lg p-4 flex items-center gap-3">
-                                <FileText className="w-8 h-8 text-gray-400" />
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-gray-900">{attachment.name}</p>
+                    <div className="flex flex-wrap gap-4">
+                                    {inboundData.attachments.map((attachment) => {
+                                        const isImage = attachment.fileType === 'image';
+                                        const isPdf = attachment.fileType === 'pdf';
+                                        const isExcel = attachment.fileType === 'excel';
+                                        const isWord = attachment.fileType === 'word';
+
+                            return (
+                                <div
+                                    key={attachment.id}
+                                    className="relative flex flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-sm"
+                                >
+                                                <div
+                                                    className={`w-14 h-14 flex items-center justify-center border rounded-md bg-white mb-2 ${
+                                                        isPdf
+                                                            ? 'text-red-600'
+                                                            : isExcel
+                                                                ? 'text-green-600'
+                                                                : isWord
+                                                                    ? 'text-blue-600'
+                                                                    : isImage
+                                                                        ? 'text-yellow-600'
+                                                                        : 'text-gray-600'
+                                                    }`}
+                                                >
+                                                    <FileText className="w-6 h-6" />
+                                                </div>
+
+                                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                    {attachment.name}
+                                                </span>
+
+                                                <Button
+                                                    type="button"
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="absolute top-2 right-2 h-6 w-6 p-0 text-gray-600 hover:text-black"
+                                                    onClick={() => handleDownloadAttachment(attachment)}
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </Button>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="text-center py-8">
-                        <p className="text-sm text-gray-500">1 Attachment</p>
+                        <p className="text-sm text-gray-500">No attachments available</p>
                         <div className="mt-4 border rounded-lg p-8 inline-block">
                             <FileText className="w-16 h-16 text-gray-300 mx-auto" />
                         </div>
@@ -615,6 +830,7 @@ export const InboundDetailPage = () => {
                     </div>
                 </DialogContent>
             </Dialog>
+
         </div>
     );
 };

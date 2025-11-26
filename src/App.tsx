@@ -86,6 +86,8 @@ import InventoryConsumptionDashboard from "./pages/InventoryConsumptionDashboard
 import InventoryConsumptionViewPage from "./pages/InventoryConsumptionViewPage";
 import EcoFriendlyListPage from "./pages/EcoFriendlyListPage";
 import { NewInboundPage } from "./pages/NewInboundPage";
+import { NewOutboundPage } from "./pages/NewOutboundPage";
+import { OutboundListPage } from "./pages/OutboundListPage";
 
 // Import Task pages
 import { ScheduledTaskDashboard } from "./pages/maintenance/ScheduledTaskDashboard";
@@ -2670,6 +2672,14 @@ function App() {
                   <Route
                     path="/vas/mailroom/inbound/:id"
                     element={<InboundDetailPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/outbound"
+                    element={<OutboundListPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/outbound/create"
+                    element={<NewOutboundPage />}
                   />
                   <Route path="/vas/parking" element={<ParkingDashboard />} />
                   <Route

@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Eye, Plus, Filter, X } from "lucide-react";
+import { Eye, Plus, X } from "lucide-react";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
@@ -20,6 +20,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 interface InboundMail {
     id: number;
@@ -40,8 +42,80 @@ interface InboundMail {
     image?: string;
 }
 
+const MAIL_INBOUND_LIST_ENDPOINT = '/pms/admin/mail_inbounds.json';
+
+const formatDate = (value?: string | null) => {
+    if (!value) return '';
+
+    const isoDate = new Date(value);
+    if (!Number.isNaN(isoDate.getTime())) {
+        return isoDate.toLocaleDateString('en-GB');
+    }
+
+    const sanitized = value.replace(/-/g, '/');
+    const parts = sanitized.split('/');
+
+    if (parts.length === 3) {
+        if (parts[0].length === 4) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+    }
+
+    return value;
+};
+
+const formatStatus = (status?: string) => {
+    if (!status) return 'Pending';
+    const normalized = status.trim().toLowerCase();
+    if (normalized === 'collected') return 'Collected';
+    if (normalized === 'pending') return 'Pending';
+    if (normalized === 'overdue') return 'Overdue';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+const mapInboundRecord = (item: any): InboundMail => ({
+    id: item.id,
+    vendorName: item.delivery_vendor?.name || item.vendor_name || '-',
+    recipientName: item.user?.full_name || item.recipient_name || '-',
+    unit:
+        item.unit ||
+        item.unit_name ||
+        item.unit_label ||
+        item.unit_number ||
+        '-',
+    entity:
+        item.entity ||
+        item.entity_name ||
+        item.entity_label ||
+        item.resource_type ||
+        '-',
+    type:
+        item.type ||
+        item.mail_items?.[0]?.item_type ||
+        item.item_type ||
+        item.packages_with_quantity?.split(' ')?.slice(1)?.join(' ') ||
+        '-',
+    department: item.department || item.department_name || '-',
+    sender: item.sender_name || '-',
+    company: item.sender_company || '-',
+    receivedOn: formatDate(item.receive_date || item.recieved_on),
+    receivedBy: item.received_by || item.recieved_by || item.received_by_name || '-',
+    status: formatStatus(item.status),
+    ageing:
+        item.ageing !== undefined
+            ? String(item.ageing)
+            : item.aging !== undefined
+                ? String(item.aging)
+                : '',
+    collectedOn: formatDate(item.collected_on),
+    collectedBy: item.collected_by || item.collected_by_name || '',
+    image: item.attachments?.[0]?.document_url || item.attachments?.[0]?.document?.url,
+});
+
 export const InboundListPage = () => {
     const navigate = useNavigate();
+    const { toast } = useToast();
     const [inboundMails, setInboundMails] = useState<InboundMail[]>([]);
     const [showActionPanel, setShowActionPanel] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -53,113 +127,104 @@ export const InboundListPage = () => {
     const [filterReceivedOn, setFilterReceivedOn] = useState('');
     const [filterCollectedOn, setFilterCollectedOn] = useState('');
 
-    // Mock data - Replace with actual API call
     useEffect(() => {
         const fetchInboundMails = async () => {
             setLoading(true);
             try {
-                // Simulating API call
-                const mockData: InboundMail[] = [
-                    {
-                        id: 780,
-                        vendorName: "Magic Enterprise",
-                        recipientName: "Sony Bhoite",
-                        unit: "Unit A",
-                        entity: "Entity 1",
-                        type: "Mail",
-                        department: "Function 3",
-                        sender: "Vinayak",
-                        company: "Test",
-                        receivedOn: "16/04/2025",
-                        receivedBy: "Vinayak Mane",
-                        status: "Collected",
-                        ageing: "",
-                        collectedOn: "16/04/2025",
-                        collectedBy: "Vinayak Mane",
-                        image: ""
+                const response = await fetch(getFullUrl(MAIL_INBOUND_LIST_ENDPOINT), {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': getAuthHeader(),
+                        'Content-Type': 'application/json',
                     },
-                    {
-                        id: 779,
-                        vendorName: "Bluedart",
-                        recipientName: "Adhip Shetty",
-                        unit: "Unit B",
-                        entity: "Entity 2",
-                        type: "Mail",
-                        department: "Operations",
-                        sender: "Vinayak",
-                        company: "Heaven",
-                        receivedOn: "16/04/2025",
-                        receivedBy: "Vinayak Mane",
-                        status: "Overdue",
-                        ageing: "58",
-                        collectedOn: "",
-                        collectedBy: "",
-                        image: ""
-                    },
-                    {
-                        id: 737,
-                        vendorName: "Bluedart",
-                        recipientName: "Vinayak Mane",
-                        unit: "Unit A",
-                        entity: "Entity 1",
-                        type: "Mail",
-                        department: "Function 1",
-                        sender: "Utsed",
-                        company: "test",
-                        receivedOn: "28/03/2025",
-                        receivedBy: "Vinayak Mane",
-                        status: "Collected",
-                        ageing: "",
-                        collectedOn: "28/03/2025",
-                        collectedBy: "Vinayak Mane",
-                        image: ""
-                    },
-                    {
-                        id: 736,
-                        vendorName: "Bluedart",
-                        recipientName: "Vinayak Mane",
-                        unit: "Unit C",
-                        entity: "Entity 3",
-                        type: "Mail",
-                        department: "Function 1",
-                        sender: "Netra",
-                        company: "1234567bhargd",
-                        receivedOn: "20/03/2025",
-                        receivedBy: "Vinayak Mane",
-                        status: "Collected",
-                        ageing: "",
-                        collectedOn: "28/03/2025",
-                        collectedBy: "Vinayak Mane",
-                        image: ""
-                    },
-                    {
-                        id: 735,
-                        vendorName: "Prathmesh",
-                        recipientName: "Vinayak Mane",
-                        unit: "Unit A",
-                        entity: "Entity 1",
-                        type: "Consumer Goods",
-                        department: "Function 1",
-                        sender: "Sony",
-                        company: "Locktaad",
-                        receivedOn: "27/03/2025",
-                        receivedBy: "Vinayak Mane",
-                        status: "Collected",
-                        ageing: "",
-                        collectedOn: "27/03/2025",
-                        collectedBy: "Vinayak Mane",
-                        image: ""
-                    }
-                ];
-                setInboundMails(mockData);
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch inbound mails');
+                }
+
+                const data = await response.json();
+                const records = Array.isArray(data?.mail_inbounds)
+                    ? data.mail_inbounds
+                    : Array.isArray(data)
+                        ? data
+                        : data?.data || [];
+
+                const mapped = records.map(mapInboundRecord);
+                setInboundMails(mapped);
             } catch (error) {
                 console.error('Error fetching inbound mails:', error);
+                toast({
+                    title: 'Error',
+                    description: 'Failed to load inbound mails',
+                    variant: 'destructive',
+                });
             } finally {
                 setLoading(false);
             }
         };
         fetchInboundMails();
-    }, []);
+    }, [toast]);
+
+    const statusOptions = useMemo(() => {
+        const uniqueStatuses = new Set(
+            inboundMails
+                .map(mail => mail.status)
+                .filter((status): status is string => Boolean(status))
+        );
+
+        if (!uniqueStatuses.size) {
+            ['Collected', 'Overdue', 'Pending'].forEach(status => uniqueStatuses.add(status));
+        }
+
+        return Array.from(uniqueStatuses);
+    }, [inboundMails]);
+
+    const vendorOptions = useMemo(() => {
+        const uniqueVendors = new Set(
+            inboundMails
+                .map(mail => mail.vendorName)
+                .filter((vendor): vendor is string => Boolean(vendor && vendor !== '-'))
+        );
+        return Array.from(uniqueVendors);
+    }, [inboundMails]);
+
+    const receivedDateOptions = useMemo(() => {
+        const uniqueDates = new Set(
+            inboundMails
+                .map(mail => mail.receivedOn)
+                .filter((date): date is string => Boolean(date))
+        );
+        return Array.from(uniqueDates);
+    }, [inboundMails]);
+
+    const collectedDateOptions = useMemo(() => {
+        const uniqueDates = new Set(
+            inboundMails
+                .map(mail => mail.collectedOn)
+                .filter((date): date is string => Boolean(date))
+        );
+        return Array.from(uniqueDates);
+    }, [inboundMails]);
+
+    const filteredInboundMails = useMemo(() => {
+        return inboundMails.filter(mail => {
+            const matchesStatus = filterStatus
+                ? mail.status.toLowerCase() === filterStatus.toLowerCase()
+                : true;
+            const matchesVendor = filterVendor
+                ? mail.vendorName.toLowerCase() === filterVendor.toLowerCase()
+                : true;
+            const matchesReceivedOn = filterReceivedOn
+                ? mail.receivedOn === filterReceivedOn
+                : true;
+            const matchesCollectedOn = filterCollectedOn
+                ? mail.collectedOn === filterCollectedOn
+                : true;
+
+            return matchesStatus && matchesVendor && matchesReceivedOn && matchesCollectedOn;
+        });
+    }, [inboundMails, filterStatus, filterVendor, filterReceivedOn, filterCollectedOn]);
 
     const handleViewInbound = (id: number) => {
         // Navigate to view/edit page
@@ -291,25 +356,14 @@ export const InboundListPage = () => {
             );
         }
 
-        if (columnKey === 'ageing' && item.ageing) {
-            return (
-                <Badge variant="outline" className="text-red-600 border-red-600">
-                    {item.ageing}
-                </Badge>
-            );
+        if (columnKey === 'ageing') {
+            return item.ageing || '';
         }
 
         return item[columnKey as keyof InboundMail]?.toString() || '';
     };
 
     const handleApplyFilters = () => {
-        // TODO: Implement filter logic
-        console.log('Applying filters:', {
-            status: filterStatus,
-            vendor: filterVendor,
-            receivedOn: filterReceivedOn,
-            collectedOn: filterCollectedOn
-        });
         setIsFilterModalOpen(false);
     };
 
@@ -341,7 +395,7 @@ export const InboundListPage = () => {
 
             <EnhancedTable
                 loading={loading}
-                data={inboundMails}
+                data={filteredInboundMails}
                 columns={columns}
                 renderCell={renderCell}
                 onFilterClick={() => setIsFilterModalOpen(true)}
@@ -381,9 +435,17 @@ export const InboundListPage = () => {
                                         <SelectValue placeholder="Select Status" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="collected">Collected</SelectItem>
-                                        <SelectItem value="overdue">Overdue</SelectItem>
-                                        <SelectItem value="pending">Pending</SelectItem>
+                                        {statusOptions.length ? (
+                                            statusOptions.map((status) => (
+                                                <SelectItem key={status} value={status}>
+                                                    {status}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <SelectItem value="no-status" disabled>
+                                                No statuses available
+                                            </SelectItem>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -396,9 +458,17 @@ export const InboundListPage = () => {
                                         <SelectValue placeholder="Select Vendor" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="bluedart">Bluedart</SelectItem>
-                                        <SelectItem value="magic">Magic Enterprise</SelectItem>
-                                        <SelectItem value="prathmesh">Prathmesh</SelectItem>
+                                        {vendorOptions.length ? (
+                                            vendorOptions.map((vendor) => (
+                                                <SelectItem key={vendor} value={vendor}>
+                                                    {vendor}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <SelectItem value="no-vendor" disabled>
+                                                No vendors available
+                                            </SelectItem>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -411,10 +481,17 @@ export const InboundListPage = () => {
                                         <SelectValue placeholder="Select Received On" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="today">Today</SelectItem>
-                                        <SelectItem value="yesterday">Yesterday</SelectItem>
-                                        <SelectItem value="last7days">Last 7 Days</SelectItem>
-                                        <SelectItem value="last30days">Last 30 Days</SelectItem>
+                                        {receivedDateOptions.length ? (
+                                            receivedDateOptions.map((date) => (
+                                                <SelectItem key={date} value={date}>
+                                                    {date}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <SelectItem value="no-received-date" disabled>
+                                                No dates available
+                                            </SelectItem>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -427,10 +504,17 @@ export const InboundListPage = () => {
                                         <SelectValue placeholder="Select Received On" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="today">Today</SelectItem>
-                                        <SelectItem value="yesterday">Yesterday</SelectItem>
-                                        <SelectItem value="last7days">Last 7 Days</SelectItem>
-                                        <SelectItem value="last30days">Last 30 Days</SelectItem>
+                                        {collectedDateOptions.length ? (
+                                            collectedDateOptions.map((date) => (
+                                                <SelectItem key={date} value={date}>
+                                                    {date}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <SelectItem value="no-collected-date" disabled>
+                                                No dates available
+                                            </SelectItem>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>

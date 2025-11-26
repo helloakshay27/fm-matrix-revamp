@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Upload, Settings, Package, X } from 'lucide-react';
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 interface FormData {
     vendor: string;
@@ -32,8 +33,20 @@ interface PackageData {
     city: string;
     pincode: string;
     type: string;
+    otherType: string;
     attachments: File[];
 }
+
+interface PackageValidationErrors {
+    recipient?: string;
+    sender?: string;
+    companyAddressLine1?: string;
+    type?: string;
+    otherType?: string;
+    attachments?: string;
+}
+
+const MAIL_INBOUND_ENDPOINT = '/pms/admin/mail_inbounds.json';
 
 export const NewInboundPage = () => {
     const navigate = useNavigate();
@@ -58,6 +71,7 @@ export const NewInboundPage = () => {
             city: '',
             pincode: '',
             type: '',
+            otherType: '',
             attachments: []
         }
     ]);
@@ -67,16 +81,167 @@ export const NewInboundPage = () => {
     const [isAddVendorModalOpen, setIsAddVendorModalOpen] = useState(false);
     const [vendorName, setVendorName] = useState('');
     const [trackUrl, setTrackUrl] = useState('');
+    const [vendors, setVendors] = useState<Array<{ id: number; name: string }>>([]);
+    const [isLoadingVendors, setIsLoadingVendors] = useState(false);
+    const [recipients, setRecipients] = useState<Array<{ id: number; full_name: string; resource_id?: number; resource_type?: string }>>([]);
+    const [isLoadingRecipients, setIsLoadingRecipients] = useState(false);
+    const [statesList, setStatesList] = useState<Array<{ id: number; name: string }>>([]);
+    const [isLoadingStates, setIsLoadingStates] = useState(false);
+    const [packageErrors, setPackageErrors] = useState<Record<number, PackageValidationErrors>>({});
+
+    // Fetch vendors on component mount
+    useEffect(() => {
+        fetchVendors();
+        fetchRecipients();
+        fetchStates();
+    }, []);
+
+    const formatDateToDDMMYYYY = (value: string) => {
+        if (!value) return '';
+        const [year, month, day] = value.split('-');
+        if (!year || !month || !day) return value;
+        return `${day}/${month}/${year}`;
+    };
+
+    const sanitizeText = (value: string) => value?.trim() || '';
+
+    const getSelectedSiteId = () => {
+        if (typeof window === 'undefined') return '';
+        return localStorage.getItem('selectedSiteId') || '';
+    };
+
+    const clearPackageFieldError = (packageId: number, field: keyof PackageValidationErrors) => {
+        setPackageErrors(prev => {
+            if (!prev[packageId] || !prev[packageId][field]) {
+                return prev;
+            }
+
+            const updatedPackageErrors = { ...prev[packageId] };
+            delete updatedPackageErrors[field];
+
+            const nextErrors = { ...prev };
+            if (Object.keys(updatedPackageErrors).length === 0) {
+                const { [packageId]: _removed, ...rest } = nextErrors;
+                return rest;
+            }
+
+            nextErrors[packageId] = updatedPackageErrors;
+            return nextErrors;
+        });
+    };
+
+    const fetchVendors = async () => {
+        setIsLoadingVendors(true);
+        try {
+            const response = await fetch(getFullUrl(API_CONFIG.ENDPOINTS.DELIVERY_VENDORS), {
+                method: 'GET',
+                headers: {
+                    'Authorization': getAuthHeader(),
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch vendors');
+            }
+
+            const data = await response.json();
+            // Assuming the API returns an array of vendors with id and name
+            setVendors(data.delivery_vendors || data || []);
+        } catch (error) {
+            console.error('Error fetching vendors:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to load vendors',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsLoadingVendors(false);
+        }
+    };
+
+    const fetchRecipients = async () => {
+        setIsLoadingRecipients(true);
+        try {
+            const response = await fetch(getFullUrl(API_CONFIG.ENDPOINTS.ESCALATION_USERS), {
+                method: 'GET',
+                headers: {
+                    'Authorization': getAuthHeader(),
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch recipients');
+            }
+
+            const data = await response.json();
+            // Assuming the API returns an array of users
+            setRecipients(data.users || data || []);
+        } catch (error) {
+            console.error('Error fetching recipients:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to load recipients',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsLoadingRecipients(false);
+        }
+    };
+
+    const fetchStates = async () => {
+        setIsLoadingStates(true);
+        try {
+            const response = await fetch(getFullUrl(API_CONFIG.ENDPOINTS.MAIL_INBOUND_STATES), {
+                method: 'GET',
+                headers: {
+                    'Authorization': getAuthHeader(),
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch states');
+            }
+
+            const data = await response.json();
+            // Assuming the API returns an array of state names
+            setStatesList(data.states || data || []);
+        } catch (error) {
+            console.error('Error fetching states:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to load states',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsLoadingStates(false);
+        }
+    };
 
     const handleInputChange = (field: keyof FormData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         setErrors(prev => ({ ...prev, [field]: '' }));
     };
 
-    const handlePackageInputChange = (packageId: number, field: keyof Omit<PackageData, 'id'>, value: string) => {
+    const handlePackageInputChange = (
+        packageId: number,
+        field: keyof Omit<PackageData, 'id' | 'attachments'>,
+        value: string
+    ) => {
         setPackages(prev => prev.map(pkg =>
             pkg.id === packageId ? { ...pkg, [field]: value } : pkg
         ));
+
+        const errorFields: Array<keyof PackageValidationErrors> = ['recipient', 'sender', 'companyAddressLine1', 'type', 'otherType'];
+        if (errorFields.includes(field as keyof PackageValidationErrors)) {
+            clearPackageFieldError(packageId, field as keyof PackageValidationErrors);
+        }
+
+        if (field === 'type' && value !== 'Others') {
+            clearPackageFieldError(packageId, 'otherType');
+        }
     };
 
     const handleFileUpload = (packageId: number, files: FileList | null) => {
@@ -84,12 +249,14 @@ export const NewInboundPage = () => {
             setPackages(prev => prev.map(pkg =>
                 pkg.id === packageId ? { ...pkg, attachments: Array.from(files) } : pkg
             ));
+            clearPackageFieldError(packageId, 'attachments');
         }
     };
 
     const handleAddPackage = () => {
+        const newId = packages.length ? Math.max(...packages.map(p => p.id)) + 1 : 1;
         const newPackage: PackageData = {
-            id: Math.max(...packages.map(p => p.id)) + 1,
+            id: newId,
             recipient: '',
             sender: '',
             mobile: '',
@@ -101,6 +268,7 @@ export const NewInboundPage = () => {
             city: '',
             pincode: '',
             type: '',
+            otherType: '',
             attachments: []
         };
         setPackages(prev => [...prev, newPackage]);
@@ -109,6 +277,11 @@ export const NewInboundPage = () => {
     const handleRemovePackage = (packageId: number) => {
         if (packages.length > 1) {
             setPackages(prev => prev.filter(pkg => pkg.id !== packageId));
+            setPackageErrors(prev => {
+                if (!prev[packageId]) return prev;
+                const { [packageId]: _removed, ...rest } = prev;
+                return rest;
+            });
         } else {
             toast({
                 title: 'Error',
@@ -120,45 +293,109 @@ export const NewInboundPage = () => {
 
     const validateForm = () => {
         const newErrors: Partial<Record<keyof FormData, string>> = {};
+        const newPackageErrors: Record<number, PackageValidationErrors> = {};
 
         if (!formData.vendor) newErrors.vendor = 'Vendor is required';
         if (!formData.dateOfReceiving) newErrors.dateOfReceiving = 'Date of Receiving is required';
 
-        // Validate at least one package with required fields
-        const hasValidPackage = packages.some(pkg =>
-            pkg.recipient && pkg.sender && pkg.companyAddressLine1 && pkg.type
-        );
+        packages.forEach(pkg => {
+            const errorsForPackage: PackageValidationErrors = {};
 
-        if (!hasValidPackage) {
-            toast({
-                title: 'Error',
-                description: 'At least one package must have Recipient, Sender, Address Line 1, and Type filled',
-                variant: 'destructive',
-            });
-            return false;
-        }
+            if (!pkg.recipient) errorsForPackage.recipient = 'Recipient is required';
+            if (!pkg.sender.trim()) errorsForPackage.sender = 'Sender is required';
+            if (!pkg.companyAddressLine1.trim()) errorsForPackage.companyAddressLine1 = 'Address Line 1 is required';
+            if (!pkg.type) errorsForPackage.type = 'Type is required';
+            if (pkg.type === 'Others' && !pkg.otherType.trim()) {
+                errorsForPackage.otherType = 'Please specify the type';
+            }
+            if (!pkg.attachments.length) {
+                errorsForPackage.attachments = 'At least one attachment is required';
+            }
+
+            if (Object.keys(errorsForPackage).length > 0) {
+                newPackageErrors[pkg.id] = errorsForPackage;
+            }
+        });
+
+        const hasErrors = Object.keys(newErrors).length > 0 || Object.keys(newPackageErrors).length > 0;
 
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        setPackageErrors(newPackageErrors);
+
+        if (hasErrors) {
+            toast({
+                title: 'Error',
+                description: 'Please fill all required fields highlighted in red',
+                variant: 'destructive',
+            });
+        }
+
+        return !hasErrors;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!validateForm()) {
-            toast({
-                title: 'Error',
-                description: 'Please fill all required fields',
-                variant: 'destructive',
-            });
             return;
         }
 
         setIsSubmitting(true);
 
         try {
-            // TODO: Implement API call to submit inbound data
-            console.log('Submitting inbound data:', { ...formData, packages });
+            const formattedDate = formatDateToDDMMYYYY(formData.dateOfReceiving);
+            const payload = new FormData();
+            const selectedSiteId = getSelectedSiteId();
+
+            payload.append('delivery_vendor_id', formData.vendor);
+            payload.append('receive_date', formattedDate);
+
+            packages.forEach((pkg, index) => {
+                const recipientDetails = recipients.find(recipient => recipient.id.toString() === pkg.recipient);
+                const baseKey = `user[mail_inbounds_attributes][${index}]`;
+                const itemType = pkg.type === 'Others' ? pkg.otherType : pkg.type;
+                const normalizedItemType = sanitizeText(itemType);
+
+                payload.append(`${baseKey}[delivery_vendor_id]`, formData.vendor);
+                payload.append(`${baseKey}[receive_date]`, formattedDate);
+
+                if (selectedSiteId) {
+                    payload.append(`${baseKey}[resource_id]`, selectedSiteId);
+                }
+                payload.append(`${baseKey}[resource_type]`, recipientDetails?.resource_type || 'Pms::Site');
+                payload.append(`${baseKey}[user_id]`, pkg.recipient);
+                payload.append(`${baseKey}[sender_name]`, sanitizeText(pkg.sender));
+                payload.append(`${baseKey}[sender_mobile]`, sanitizeText(pkg.mobile));
+                payload.append(`${baseKey}[awb_number]`, sanitizeText(pkg.awbNumber));
+                payload.append(`${baseKey}[sender_company]`, sanitizeText(pkg.company));
+                payload.append(`${baseKey}[sender_address]`, sanitizeText(pkg.companyAddressLine1));
+                payload.append(`${baseKey}[sender_address1]`, sanitizeText(pkg.companyAddressLine2));
+                payload.append(`${baseKey}[spree_state_id]`, pkg.state);
+                payload.append(`${baseKey}[city]`, sanitizeText(pkg.city));
+                payload.append(`${baseKey}[pincode]`, sanitizeText(pkg.pincode));
+
+                payload.append(`${baseKey}[mail_items_attributes][0][quantity]`, '1');
+                payload.append(`${baseKey}[mail_items_attributes][0][item_type]`, normalizedItemType);
+
+                pkg.attachments.forEach((file, attachmentIndex) => {
+                    payload.append(`${baseKey}[attachments_attributes][${attachmentIndex}][document]`, file);
+                });
+            });
+
+            const response = await fetch(getFullUrl(MAIL_INBOUND_ENDPOINT), {
+                method: 'POST',
+                headers: {
+                    'Authorization': getAuthHeader(),
+                },
+                body: payload,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to create inbound');
+            }
+
+            await response.json().catch(() => ({}));
 
             toast({
                 title: 'Success',
@@ -166,11 +403,11 @@ export const NewInboundPage = () => {
             });
 
             // Navigate back or to inbound list
-            navigate('/vas/mailroom/inbound');
+            // navigate('/vas/mailroom/inbound');
         } catch (error) {
             toast({
                 title: 'Error',
-                description: 'Failed to create inbound',
+                description: error instanceof Error ? error.message : 'Failed to create inbound',
                 variant: 'destructive',
             });
         } finally {
@@ -178,7 +415,7 @@ export const NewInboundPage = () => {
         }
     };
 
-    const handleSubmitVendor = () => {
+    const handleSubmitVendor = async () => {
         if (!vendorName.trim()) {
             toast({
                 title: 'Error',
@@ -188,18 +425,48 @@ export const NewInboundPage = () => {
             return;
         }
 
-        // TODO: Implement API call to add vendor
-        console.log('Adding vendor:', { name: vendorName, trackUrl });
+        try {
+            const payload = {
+                delivery_vendor: {
+                    name: vendorName,
+                    track_url: trackUrl
+                }
+            };
 
-        toast({
-            title: 'Success',
-            description: 'Vendor added successfully',
-        });
+            const response = await fetch(getFullUrl(API_CONFIG.ENDPOINTS.DELIVERY_VENDORS), {
+                method: 'POST',
+                headers: {
+                    'Authorization': getAuthHeader(),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
 
-        // Close modal and reset fields
-        setIsAddVendorModalOpen(false);
-        setVendorName('');
-        setTrackUrl('');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to add vendor');
+            }
+
+            toast({
+                title: 'Success',
+                description: 'Vendor added successfully',
+            });
+
+            // Refresh vendor list
+            await fetchVendors();
+
+            // Close modal and reset fields
+            setIsAddVendorModalOpen(false);
+            setVendorName('');
+            setTrackUrl('');
+        } catch (error) {
+            console.error('Error adding vendor:', error);
+            toast({
+                title: 'Error',
+                description: error instanceof Error ? error.message : 'Failed to add vendor',
+                variant: 'destructive',
+            });
+        }
     };
 
     const fieldStyles = {
@@ -218,14 +485,6 @@ export const NewInboundPage = () => {
             '&.Mui-focused': { color: '#C72030' },
         },
     };
-
-    const states = [
-        'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
-        'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
-        'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
-        'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
-        'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
-    ];
 
     return (
         <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
@@ -285,13 +544,16 @@ export const NewInboundPage = () => {
                                             value={formData.vendor}
                                             onChange={e => handleInputChange('vendor', e.target.value)}
                                             sx={fieldStyles}
+                                            disabled={isLoadingVendors}
                                         >
                                             <MenuItem value="">
-                                                <em>Select Vendor</em>
+                                                <em>{isLoadingVendors ? 'Loading vendors...' : 'Select Vendor'}</em>
                                             </MenuItem>
-                                            <MenuItem value="vendor1">Vendor 1</MenuItem>
-                                            <MenuItem value="vendor2">Vendor 2</MenuItem>
-                                            <MenuItem value="vendor3">Vendor 3</MenuItem>
+                                            {vendors.map((vendor) => (
+                                                <MenuItem key={vendor.id} value={vendor.id.toString()}>
+                                                    {vendor.name}
+                                                </MenuItem>
+                                            ))}
                                         </MuiSelect>
                                         {errors.vendor && <FormHelperText>{errors.vendor}</FormHelperText>}
                                     </FormControl>
@@ -374,7 +636,7 @@ export const NewInboundPage = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                     {/* Recipient */}
                                     <div>
-                                        <FormControl fullWidth variant="outlined">
+                                        <FormControl fullWidth variant="outlined" error={!!packageErrors[pkg.id]?.recipient}>
                                             <InputLabel shrink>
                                                 Recipient <span style={{ color: '#C72030' }}>*</span>
                                             </InputLabel>
@@ -384,13 +646,20 @@ export const NewInboundPage = () => {
                                                 value={pkg.recipient}
                                                 onChange={e => handlePackageInputChange(pkg.id, 'recipient', e.target.value)}
                                                 sx={fieldStyles}
+                                                disabled={isLoadingRecipients}
                                             >
                                                 <MenuItem value="">
-                                                    <em>Select Recipient</em>
+                                                    <em>{isLoadingRecipients ? 'Loading recipients...' : 'Select Recipient'}</em>
                                                 </MenuItem>
-                                                <MenuItem value="recipient1">Recipient 1</MenuItem>
-                                                <MenuItem value="recipient2">Recipient 2</MenuItem>
+                                                {recipients.map((recipient) => (
+                                                    <MenuItem key={recipient.id} value={recipient.id.toString()}>
+                                                        {recipient.full_name}
+                                                    </MenuItem>
+                                                ))}
                                             </MuiSelect>
+                                            {packageErrors[pkg.id]?.recipient && (
+                                                <FormHelperText>{packageErrors[pkg.id]?.recipient}</FormHelperText>
+                                            )}
                                         </FormControl>
                                     </div>
 
@@ -408,6 +677,8 @@ export const NewInboundPage = () => {
                                             onChange={e => handlePackageInputChange(pkg.id, 'sender', e.target.value)}
                                             InputLabelProps={{ shrink: true }}
                                             InputProps={{ sx: fieldStyles }}
+                                            error={!!packageErrors[pkg.id]?.sender}
+                                            helperText={packageErrors[pkg.id]?.sender}
                                         />
                                     </div>
 
@@ -464,6 +735,8 @@ export const NewInboundPage = () => {
                                             onChange={e => handlePackageInputChange(pkg.id, 'companyAddressLine1', e.target.value)}
                                             InputLabelProps={{ shrink: true }}
                                             InputProps={{ sx: fieldStyles }}
+                                            error={!!packageErrors[pkg.id]?.companyAddressLine1}
+                                            helperText={packageErrors[pkg.id]?.companyAddressLine1}
                                         />
                                     </div>
 
@@ -490,13 +763,14 @@ export const NewInboundPage = () => {
                                                 value={pkg.state}
                                                 onChange={e => handlePackageInputChange(pkg.id, 'state', e.target.value)}
                                                 sx={fieldStyles}
+                                                disabled={isLoadingStates}
                                             >
                                                 <MenuItem value="">
-                                                    <em>Select State</em>
+                                                    <em>{isLoadingStates ? 'Loading states...' : 'Select State'}</em>
                                                 </MenuItem>
-                                                {states.map(state => (
-                                                    <MenuItem key={state} value={state}>
-                                                        {state}
+                                                {statesList.map(state => (
+                                                    <MenuItem key={state.id} value={state.id.toString()}>
+                                                        {state.name}
                                                     </MenuItem>
                                                 ))}
                                             </MuiSelect>
@@ -531,7 +805,7 @@ export const NewInboundPage = () => {
 
                                     {/* Type */}
                                     <div>
-                                        <FormControl fullWidth variant="outlined">
+                                        <FormControl fullWidth variant="outlined" error={!!packageErrors[pkg.id]?.type}>
                                             <InputLabel shrink>
                                                 Type <span style={{ color: '#C72030' }}>*</span>
                                             </InputLabel>
@@ -545,11 +819,33 @@ export const NewInboundPage = () => {
                                                 <MenuItem value="">
                                                     <em>Select Type</em>
                                                 </MenuItem>
-                                                <MenuItem value="type1">Type 1</MenuItem>
-                                                <MenuItem value="type2">Type 2</MenuItem>
-                                                <MenuItem value="type3">Type 3</MenuItem>
+                                                <MenuItem value="Mail">Mail</MenuItem>
+                                                <MenuItem value="Consumer Goods">Consumer Goods</MenuItem>
+                                                <MenuItem value="Pallet Shipments">Pallet Shipments</MenuItem>
+                                                <MenuItem value="Legal Documents">Legal Documents</MenuItem>
+                                                <MenuItem value="Financial Documents">Financial Documents</MenuItem>
+                                                <MenuItem value="Others">Others</MenuItem>
                                             </MuiSelect>
+                                            {packageErrors[pkg.id]?.type && (
+                                                <FormHelperText>{packageErrors[pkg.id]?.type}</FormHelperText>
+                                            )}
                                         </FormControl>
+
+                                        {/* Other Type Input - Shows when "Others" is selected */}
+                                        {pkg.type === 'Others' && (
+                                            <TextField
+                                                fullWidth
+                                                label="Specify Other Type"
+                                                placeholder="Enter Type"
+                                                value={pkg.otherType}
+                                                onChange={e => handlePackageInputChange(pkg.id, 'otherType', e.target.value)}
+                                                InputLabelProps={{ shrink: true }}
+                                                InputProps={{ sx: fieldStyles }}
+                                                className="mt-2"
+                                                error={!!packageErrors[pkg.id]?.otherType}
+                                                helperText={packageErrors[pkg.id]?.otherType}
+                                            />
+                                        )}
                                     </div>
 
                                     {/* Attachments */}
@@ -580,6 +876,11 @@ export const NewInboundPage = () => {
                                                         : 'No file chosen'}
                                                 </span>
                                             </div>
+                                            {packageErrors[pkg.id]?.attachments && (
+                                                <p className="text-sm text-red-500 mt-2 text-left">
+                                                    {packageErrors[pkg.id]?.attachments}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
