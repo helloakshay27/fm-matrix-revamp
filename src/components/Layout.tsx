@@ -83,7 +83,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       case "vi":
         return <ViSidebar />;
       case "static":
-        return <Sidebar />;
+        return <StacticSidebar />;
       case "default":
       default:
         return <Sidebar />;
@@ -112,7 +112,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       case "vi":
         return <ViDynamicHeader />;
       case "static":
-        return <DynamicHeader />;
+        return <StaticDynamicHeader />;
       case "default":
       default:
         return <DynamicHeader />;
