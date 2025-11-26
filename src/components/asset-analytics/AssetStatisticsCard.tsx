@@ -190,11 +190,17 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({
     disabled?: boolean
   ) => {
     if (!handler) return null;
-  return (
-          <Button
-            variant="ghost"
-            size="sm"
+    return (
+      <Download
+        data-no-drag="true"
+        className={`w-5 h-5 flex-shrink-0 cursor-pointer transition-all z-50 ${
+          disabled 
+            ? 'text-gray-400 cursor-not-allowed' 
+            : 'text-black hover:text-gray-700 opacity-0 group-hover:opacity-100'
+        }`}
         onClick={async (e) => {
+          if (disabled) return;
+          e.preventDefault();
           e.stopPropagation();
           try {
             await handler();
@@ -202,12 +208,15 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({
             console.error("Failed to download asset statistics metric:", error);
           }
         }}
-        className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-white/50 transition-opacity"
-        title="Download data"
-        disabled={disabled}
-          >
-        <Download className="w-4 h-4 text-[#C72030]" />
-          </Button>
+        onPointerDown={(e) => {
+          e.stopPropagation();
+        }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+        }}
+        style={{ pointerEvents: disabled ? 'none' : 'auto' }}
+        title={disabled ? 'No data to download' : 'Download data'}
+      />
     );
   };
 
