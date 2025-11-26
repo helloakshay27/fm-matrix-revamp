@@ -75,7 +75,7 @@ export const AreaPage = () => {
 
   const fetchBuildings = async () => {
     try {
-      const response = await apiClient.get('/buildings.json');
+      const response = await apiClient.get('/buildings.json?order=name');
       setBuildings(response.data);
     } catch (error) {
       console.error('Error fetching buildings:', error);
