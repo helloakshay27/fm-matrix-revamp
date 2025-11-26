@@ -26,7 +26,7 @@ interface EVConsumptionData {
 }
 
 interface FilterData {
-  dateRange?: DateRange;
+  dateRange?: DateRange | string;
 }
 
 const UtilityEVConsumptionDashboard = () => {
@@ -164,17 +164,30 @@ const UtilityEVConsumptionDashboard = () => {
       }
       
       // Add date range filter if provided
-      if (filters?.dateRange?.from && filters?.dateRange?.to) {
-        const fromDate = format(filters.dateRange.from, 'yyyy-MM-dd');
-        const toDate = format(filters.dateRange.to, 'yyyy-MM-dd');
-        const dateRangeQuery = `${fromDate}..${toDate}`;
-        urlWithParams.searchParams.append('q[date_range]', dateRangeQuery);
-        console.log('� Adding date range filter:', dateRangeQuery);
-      } else if (filters?.dateRange?.from) {
-        // Single date selected
-        const singleDate = format(filters.dateRange.from, 'yyyy-MM-dd');
-        urlWithParams.searchParams.append('q[date_range]', singleDate);
-        console.log('📅 Adding single date filter:', singleDate);
+      if (filters?.dateRange) {
+        if (typeof filters.dateRange === 'string') {
+          // String format: DD/MM/YYYY - DD/MM/YYYY, convert to MM/DD/YYYY - MM/DD/YYYY
+          const [fromDateStr, toDateStr] = filters.dateRange.split(' - ');
+          if (fromDateStr && toDateStr) {
+            const [fromDay, fromMonth, fromYear] = fromDateStr.trim().split('/');
+            const [toDay, toMonth, toYear] = toDateStr.trim().split('/');
+            const dateRangeQuery = `${fromMonth}/${fromDay}/${fromYear} - ${toMonth}/${toDay}/${toYear}`;
+            urlWithParams.searchParams.append('q[date_range]', dateRangeQuery);
+            console.log('📅 Adding date range filter:', dateRangeQuery);
+          }
+        } else if (filters.dateRange.from && filters.dateRange.to) {
+          // DateRange object format
+          const fromDate = format(filters.dateRange.from, 'MM/dd/yyyy');
+          const toDate = format(filters.dateRange.to, 'MM/dd/yyyy');
+          const dateRangeQuery = `${fromDate} - ${toDate}`;
+          urlWithParams.searchParams.append('q[date_range]', dateRangeQuery);
+          console.log('📅 Adding date range filter:', dateRangeQuery);
+        } else if (filters.dateRange.from) {
+          // Single date selected
+          const singleDate = format(filters.dateRange.from, 'MM/dd/yyyy');
+          urlWithParams.searchParams.append('q[date_range]', singleDate);
+          console.log('📅 Adding single date filter:', singleDate);
+        }
       }
       
       console.log('�📡 API URL with params:', urlWithParams.toString());
@@ -246,16 +259,30 @@ const UtilityEVConsumptionDashboard = () => {
       }
       
       // Add current filters to export
-      if (appliedFilters?.dateRange?.from && appliedFilters?.dateRange?.to) {
-        const fromDate = format(appliedFilters.dateRange.from, 'yyyy-MM-dd');
-        const toDate = format(appliedFilters.dateRange.to, 'yyyy-MM-dd');
-        const dateRangeQuery = `${fromDate}..${toDate}`;
-        urlWithParams.searchParams.append('q[date_range]', dateRangeQuery);
-        console.log('📅 Adding date range filter to export:', dateRangeQuery);
-      } else if (appliedFilters?.dateRange?.from) {
-        const singleDate = format(appliedFilters.dateRange.from, 'yyyy-MM-dd');
-        urlWithParams.searchParams.append('q[date_range]', singleDate);
-        console.log('📅 Adding single date filter to export:', singleDate);
+      if (appliedFilters?.dateRange) {
+        if (typeof appliedFilters.dateRange === 'string') {
+          // String format: DD/MM/YYYY - DD/MM/YYYY, convert to MM/DD/YYYY - MM/DD/YYYY
+          const [fromDateStr, toDateStr] = appliedFilters.dateRange.split(' - ');
+          if (fromDateStr && toDateStr) {
+            const [fromDay, fromMonth, fromYear] = fromDateStr.trim().split('/');
+            const [toDay, toMonth, toYear] = toDateStr.trim().split('/');
+            const dateRangeQuery = `${fromMonth}/${fromDay}/${fromYear} - ${toMonth}/${toDay}/${toYear}`;
+            urlWithParams.searchParams.append('q[date_range]', dateRangeQuery);
+            console.log('📅 Adding date range filter to export:', dateRangeQuery);
+          }
+        } else if (appliedFilters.dateRange.from && appliedFilters.dateRange.to) {
+          // DateRange object format
+          const fromDate = format(appliedFilters.dateRange.from, 'MM/dd/yyyy');
+          const toDate = format(appliedFilters.dateRange.to, 'MM/dd/yyyy');
+          const dateRangeQuery = `${fromDate} - ${toDate}`;
+          urlWithParams.searchParams.append('q[date_range]', dateRangeQuery);
+          console.log('📅 Adding date range filter to export:', dateRangeQuery);
+        } else if (appliedFilters.dateRange.from) {
+          // Single date
+          const singleDate = format(appliedFilters.dateRange.from, 'MM/dd/yyyy');
+          urlWithParams.searchParams.append('q[date_range]', singleDate);
+          console.log('📅 Adding single date filter to export:', singleDate);
+        }
       }
       
       const options = getAuthenticatedFetchOptions();
@@ -345,12 +372,12 @@ const UtilityEVConsumptionDashboard = () => {
             }
             rightActions={
               <div className="flex items-center gap-2">
-                <Button 
+                <Button
+                  variant="outline"
+                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
                   onClick={() => setIsFilterOpen(true)}
-                  className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
                 >
                   <Filter className="w-4 h-4" />
-                  Filters
                 </Button>
                 <ColumnVisibilityDropdown
                   columns={dropdownColumns}
