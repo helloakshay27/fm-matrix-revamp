@@ -323,19 +323,141 @@ export const NewOutboundPage = () => {
     return true;
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const formatDateToDDMMYYYY = (dateString: string): string => {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
+  const getSelectedSiteId = (): string => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('selectedSiteId') || '';
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!validateForm()) return;
+
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      toast({
-        title: 'Outbound saved',
-        description: 'This is currently a frontend-only flow.',
+    try {
+      const formattedDate = formatDateToDDMMYYYY(formData.dateOfSending);
+      const siteId = getSelectedSiteId();
+
+      // Build mail_outbounds_attributes array from packages
+      const mailOutboundsAttributes = packages.map((pkg) => {
+        const sender = senders.find((s) => s.id.toString() === pkg.senderId);
+
+        // Build mail_items_attributes
+        const mailItemsAttributes = [{
+          quantity: '1',
+          item_type: pkg.type,
+        }];
+
+        // Build attachments_attributes using FormData
+        const attachmentsData = pkg.attachments.map(() => ({
+          document: 'FILE_UPLOAD_REQUIRED', // Will be replaced with actual file in FormData
+        }));
+
+        return {
+          delivery_vendor_id: formData.vendor,
+          receive_date: formattedDate,
+          resource_id: siteId,
+          resource_type: 'Pms::Site',
+          user_id: pkg.senderId,
+          sender_name: sender?.full_name || pkg.recipientName,
+          sender_mobile: pkg.recipientMobile || '',
+          awb_number: pkg.awbNumber || '',
+          sender_company: '', // Not in form, leaving empty
+          sender_address: pkg.addressLine1,
+          sender_address1: pkg.addressLine2 || '',
+          spree_state_id: pkg.state,
+          city: pkg.city,
+          pincode: pkg.pincode,
+          mail_items_attributes: mailItemsAttributes,
+          attachments_attributes: attachmentsData,
+        };
       });
-      setIsSubmitting(false);
+
+      // Build the complete payload
+      const payload = {
+        delivery_vendor_id: formData.vendor,
+        receive_date: formattedDate,
+        user: {
+          mail_outbounds_attributes: mailOutboundsAttributes,
+        },
+      };
+
+      // Create FormData for file upload
+      const formDataPayload = new FormData();
+
+      // Add the JSON payload as a stringified field or construct it differently
+      // Based on Rails conventions, we'll construct it properly
+      formDataPayload.append('delivery_vendor_id', formData.vendor);
+      formDataPayload.append('receive_date', formattedDate);
+
+      packages.forEach((pkg, pkgIndex) => {
+        const sender = senders.find((s) => s.id.toString() === pkg.senderId);
+
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][delivery_vendor_id]`, formData.vendor);
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][receive_date]`, formattedDate);
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][resource_id]`, siteId);
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][resource_type]`, 'Pms::Site');
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][user_id]`, pkg.senderId);
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][sender_name]`, sender?.full_name || pkg.recipientName);
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][sender_mobile]`, pkg.recipientMobile || '');
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][awb_number]`, pkg.awbNumber || '');
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][sender_company]`, '');
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][sender_address]`, pkg.addressLine1);
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][sender_address1]`, pkg.addressLine2 || '');
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][spree_state_id]`, pkg.state);
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][city]`, pkg.city);
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][pincode]`, pkg.pincode);
+
+        // Add mail items
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][mail_items_attributes][0][quantity]`, '1');
+        formDataPayload.append(`user[mail_outbounds_attributes][${pkgIndex}][mail_items_attributes][0][item_type]`, pkg.type);
+
+        // Add attachments
+        pkg.attachments.forEach((file, fileIndex) => {
+          formDataPayload.append(
+            `user[mail_outbounds_attributes][${pkgIndex}][attachments_attributes][${fileIndex}][document]`,
+            file
+          );
+        });
+      });
+
+      const response = await fetch(getFullUrl('/pms/admin/mail_outbounds.json'), {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+        body: formDataPayload,
+      });
+
+      const responseData = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const errorMessage = responseData?.message || responseData?.error || 'Failed to create outbound mail';
+        throw new Error(errorMessage);
+      }
+
+      toast({
+        title: 'Success',
+        description: responseData?.message || 'Outbound mail created successfully',
+      });
+
       navigate('/vas/mailroom/outbound');
-    }, 600);
+    } catch (error) {
+      console.error('Outbound submission failed:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to create outbound mail',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
