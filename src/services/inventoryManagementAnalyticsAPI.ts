@@ -30,6 +30,69 @@ export const inventoryManagementAnalyticsAPI = {
     const resp = await apiClient.get(url);
     return resp.data;
   },
+  async downloadInventoryOverstockReport(fromDate: Date, toDate: Date): Promise<Blob> {
+    const start = fmt(fromDate);
+    const end = fmt(toDate);
+    const url = `/export_inventory_overstock_report/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resp = await apiClient.get(url, {
+      responseType: 'blob',
+    });
+    
+    // Create blob and trigger download
+    const blob = new Blob([resp.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `inventory_overstock_report_${start}_to_${end}.xlsx`;
+    link.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    
+    return blob;
+  },
+  async downloadCenterWiseConsumables(fromDate: Date, toDate: Date): Promise<Blob> {
+    const start = fmt(fromDate);
+    const end = fmt(toDate);
+    const url = `/export_center_wise_consumables/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resp = await apiClient.get(url, {
+      responseType: 'blob',
+    });
+    
+    // Create blob and trigger download
+    const blob = new Blob([resp.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `center_wise_consumables_${start}_to_${end}.xlsx`;
+    link.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    
+    return blob;
+  },
+  async downloadConsumableInventoryComparison(fromDate: Date, toDate: Date): Promise<Blob> {
+    const start = fmt(fromDate);
+    const end = fmt(toDate);
+    const url = `/export_consumable_inventory_comparison/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resp = await apiClient.get(url, {
+      responseType: 'blob',
+    });
+    
+    // Create blob and trigger download
+    const blob = new Blob([resp.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `consumable_inventory_comparison_${start}_to_${end}.xlsx`;
+    link.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    
+    return blob;
+  },
 };
 
 export default inventoryManagementAnalyticsAPI;

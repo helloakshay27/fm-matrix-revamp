@@ -617,6 +617,11 @@ const modulesByPackage = {
     //   name: 'Projects & Tasks',
     //   icon: Briefcase,
     //   href: "/maintenance/projects"
+    // },
+    // {
+    //   name: 'Sprint',
+    //   icon: Briefcase,
+    //   href: "/maintenance/sprint"
     // }
 
 

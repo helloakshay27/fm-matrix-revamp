@@ -136,6 +136,7 @@ import { ScheduleListDashboard } from "./pages/ScheduleListDashboard";
 import { AddSchedulePage } from "./pages/AddSchedulePage";
 import { ScheduleExportPage } from "./pages/ScheduleExportPage";
 import { EditSchedulePage } from "./pages/EditSchedulePage";
+import CloneSchedulePage from "./pages/CloneSchedulePage";
 import { CopySchedulePage } from "./pages/CopySchedulePage";
 import { ViewSchedulePage } from "./pages/ViewSchedulePage";
 
@@ -785,6 +786,10 @@ import { ProjectsDashboard } from "./pages/ProjectsDashboard";
 import ProjectDetailsPage from "./pages/ProjectDetailsPage";
 import ProjectMilestones from "./pages/ProjectMilestones";
 import ProjectTasksPage from "./pages/ProjectTasksPage";
+import ProjectTaskDetailsPage from "./pages/ProjectTaskDetailsPage";
+import { SprintDashboard } from "./pages/SprintDashboard";
+import SprintDetailsPage from "./pages/SprintDetailsPage";
+// import MilestoneDetailsPage from "./pages/MilestoneDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2274,6 +2279,11 @@ function App() {
                     element={<EditSchedulePage />}
                   />
                   <Route
+                    path="/maintenance/schedule/clone/:id"
+                    element={<CloneSchedulePage />}
+                  />
+
+                  <Route
                     path="/maintenance/schedule/copy/:id"
                     element={<CopySchedulePage />}
                   />
@@ -2311,6 +2321,24 @@ function App() {
                     path="/maintenance/projects/:id/milestones/:mid/tasks"
                     element={<ProjectTasksPage />}
                   />
+                  <Route
+                    path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
+                    element={<ProjectTaskDetailsPage />}
+                  />
+
+                   <Route
+                    path="/maintenance/sprint"
+                    element={<SprintDashboard />}
+                  />
+                  <Route
+                    path="/maintenance/sprint/details/:id"
+                    element={<SprintDetailsPage />}
+                  />
+
+                  {/* <Route
+  path="/maintenance/projects/:projectId/milestones/:id"
+  element={<MilestoneDetailsPage />}
+/> */}
 
                   {/* Utility Routes */}
                   <Route

@@ -284,7 +284,7 @@ interface ApiResponseData {
   email_rules: any[];
 }
 
-export const EditSchedulePage = () => {
+export const CloneSchedulePage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
@@ -879,7 +879,14 @@ export const EditSchedulePage = () => {
 
       // Set attachments if any
       if (data.custom_form.attachments && data.custom_form.attachments.length > 0) {
-        setAttachments(data.custom_form.attachments);
+        const mappedAttachments = data.custom_form.attachments.map((attachment: any) => ({
+          id: attachment.id?.toString() || `attachment_${Date.now()}`,
+          name: attachment.file_name || attachment.name || 'Unknown file',
+          url: attachment.url || '',
+          content: '', // Base64 content not provided in API response
+          content_type: attachment.content_type || 'application/octet-stream'
+        }));
+        setAttachments(mappedAttachments);
       }
 
       // Map question sections from content
@@ -1154,11 +1161,11 @@ export const EditSchedulePage = () => {
     }
   };
 
-  const handleUpdateSchedule = async () => {
-    console.log('handleUpdateSchedule called');
+  const handleCloneSchedule = async () => {
+    console.log('handleCloneSchedule called');
     
     if (!customFormCode) {
-      toast.error('Custom form code is required for updating');
+      toast.error('Custom form code is required for cloning');
       return;
     }
 
@@ -1189,13 +1196,16 @@ export const EditSchedulePage = () => {
       // Build the API payload
       const payload = buildAPIPayload();
       
-      console.log('Update payload:', payload);
+      // Modify activity name to indicate it's a clone
+      payload.pms_custom_form.form_name = `${formData.activityName}`;
       
-      // Make PUT API call to update the schedule
+      console.log('Clone payload:', payload);
+      
+      // Make POST API call to create a new schedule
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}/pms/custom_forms/${id}/edit_checklist.json?access_token=${API_CONFIG.TOKEN}`,
+        `${API_CONFIG.BASE_URL}/pms/custom_forms?access_token=${API_CONFIG.TOKEN}`,
         {
-          method: 'PATCH',
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -1209,16 +1219,16 @@ export const EditSchedulePage = () => {
       }
 
       const result = await response.json();
-      console.log('Update response:', result);
+      console.log('Clone response:', result);
 
-      toast.success('Schedule updated successfully');
+      toast.success('Schedule cloned successfully');
       navigate('/maintenance/schedule');
     } catch (error) {
-      console.error('Error updating schedule:', error);
+      console.error('Error cloning schedule:', error);
       if (error instanceof Error) {
-        toast.error(`Failed to update schedule: ${error.message}`);
+        toast.error(`Failed to clone schedule: ${error.message}`);
       } else {
-        toast.error('Failed to update schedule');
+        toast.error('Failed to clone schedule');
       }
     } finally {
       setIsSubmitting(false);
@@ -1646,45 +1656,41 @@ export const EditSchedulePage = () => {
     // Get assigned group IDs
     const groupAssignedIds = formData.assignToType === 'group' ? formData.selectedGroups : [];
 
-    // Build dynamic cron fields - only if editTiming is enabled
-    let cronExpression = "0 12 * * 1-5"; // Default cron
+    // Build dynamic cron fields
+    const cronExpression = buildCronExpression();
+
+    // Build minute cron field
     let cronMinute = "off";
     let cronMinuteSpecificSpecific = "";
+    if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes.length > 0) {
+      cronMinute = "on";
+      cronMinuteSpecificSpecific = timeSetupData.selectedMinutes.join(',');
+    }
+
+    // Build hour cron field
     let cronHour = "off";
     let cronHourSpecificSpecific = "";
+    if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours.length > 0) {
+      cronHour = "on";
+      cronHourSpecificSpecific = timeSetupData.selectedHours.join(',');
+    }
+
+    // Build day cron field
     let cronDay = "off";
+    if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length > 0) {
+      cronDay = "on";
+    } else if (timeSetupData.dayMode === 'specific' && timeSetupData.selectedDays.length > 0) {
+      cronDay = "on";
+    }
+
+    // Build month cron field
     let cronMonth = "off";
-
-    if (editTiming) {
-      cronExpression = buildCronExpression();
-
-      // Build minute cron field
-      if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes.length > 0) {
-        cronMinute = "specificMinute";
-        cronMinuteSpecificSpecific = timeSetupData.selectedMinutes.join(',');
-      }
-
-      // Build hour cron field
-      if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours.length > 0) {
-        cronHour = "specificHour";
-        cronHourSpecificSpecific = timeSetupData.selectedHours.join(',');
-      }
-
-      // Build day cron field
-      if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length > 0) {
-        cronDay = "everyWeekDay";
-      } else if (timeSetupData.dayMode === 'specific' && timeSetupData.selectedDays.length > 0) {
-        cronDay = "specificDate";
-      }
-
-      // Build month cron field
-      if (timeSetupData.monthMode === 'specific' && timeSetupData.selectedMonths.length > 0) {
-        cronMonth = "specificMonth";
-      } else if (timeSetupData.monthMode === 'between') {
-        cronMonth = "betweenMonth";
-      } else if (timeSetupData.monthMode === 'all') {
-        cronMonth = "everyMonth";
-      }
+    if (timeSetupData.monthMode === 'specific' && timeSetupData.selectedMonths.length > 0) {
+      cronMonth = "on";
+    } else if (timeSetupData.monthMode === 'between') {
+      cronMonth = "on";
+    } else if (timeSetupData.monthMode === 'all') {
+      cronMonth = "on";
     }
 
     return {
@@ -1743,7 +1749,6 @@ export const EditSchedulePage = () => {
       usergroup_ids: groupAssignedIds,
       ppm_rule_ids: formData.emailTriggerRule ? [formData.emailTriggerRule] : [],
       amc_rule_ids: [""],
-      training_rule_ids: [""],
       // Dynamic time setup fields from TimeSetupStep component
       cronMinute: cronMinute,
       cronMinuteSpecificSpecific: cronMinuteSpecificSpecific,
@@ -1752,8 +1757,6 @@ export const EditSchedulePage = () => {
       cronDay: cronDay,
       cronMonth: cronMonth,
       cron_expression: cronExpression,
-      check_box_time: editTiming,
-      // expholder: ""
     };
   };
 
@@ -2171,33 +2174,22 @@ export const EditSchedulePage = () => {
   const renderBasicConfiguration = () => (
     <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
       {/* Header with icon and title */}
-      <Box sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{
-            backgroundColor: '#C72030',
-            borderRadius: '50%',
-            width: '32px',
-            height: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '2'
-          }}>
-            <Cog size={16} color="white" />
-          </Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030', textTransform: 'uppercase' }}>
-            Basic Configuration
-          </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{
+          backgroundColor: '#C72030',
+          borderRadius: '50%',
+          width: '32px',
+          height: '32px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '2'
+        }}>
+          <Cog size={16} color="white" />
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" sx={{ color: '#666' }}>
-            Schedule For: <strong>{formData.scheduleFor}</strong>
-          </Typography>
-        </Box>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030', textTransform: 'uppercase' }}>
+          Basic Configuration
+        </Typography>
       </Box>
 
       {/* Type section */}
@@ -2246,6 +2238,38 @@ export const EditSchedulePage = () => {
               />
             }
             label="Routine"
+          />
+        </RadioGroup>
+      </Box>
+
+      {/* Schedule For section */}
+      <Box sx={{ my: 3 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+          Schedule For <span style={{ color: '#C72030' }}>*</span>
+        </Typography>
+        <RadioGroup
+          row
+          value={formData.scheduleFor}
+          onChange={(e) => updateFormData('scheduleFor', e.target.value)}
+          sx={{ mb: 2 }}
+        >
+          <FormControlLabel
+            value="Asset"
+            control={
+              <Radio
+                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+              />
+            }
+            label="Asset"
+          />
+          <FormControlLabel
+            value="Service"
+            control={
+              <Radio
+                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+              />
+            }
+            label="Service"
           />
         </RadioGroup>
       </Box>
@@ -2300,7 +2324,8 @@ export const EditSchedulePage = () => {
           }}>
             {attachments.map((attachment) => {
               // Check if the file is an image by extension or mime type if available
-              const isImage = attachment.name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
+              const fileName = attachment.name || attachment.file_name || '';
+              const isImage = fileName.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
               return (
                 <Box
                   key={attachment.id}
@@ -2343,7 +2368,7 @@ export const EditSchedulePage = () => {
                   {isImage && attachment.url ? (
                     <img
                       src={attachment.url}
-                      alt={attachment.name}
+                      alt={fileName}
                       style={{
                         maxWidth: '100px',
                         maxHeight: '100px',
@@ -2367,7 +2392,7 @@ export const EditSchedulePage = () => {
                         width: '100%',
                       }}
                     >
-                      {attachment.name}
+                      {fileName}
                     </Typography>
                   )}
                 </Box>
@@ -3656,10 +3681,10 @@ export const EditSchedulePage = () => {
             {sectionIndex < questionSections.length - 1 && <hr className="my-6 border-t border-gray-200" />}
           </div>
         </div>
-      ))}
+    ))}
     </div>
   );
-      console.log("timeSetupData:--", timeSetupData);
+      console.log("timeSetupData:--", apiData?.asset_task?.cron_expression, timeSetupData);
       console.log("editTiming:--", editTiming);
 
   const renderTimeSetup = () => (
@@ -3758,7 +3783,7 @@ export const EditSchedulePage = () => {
     <Box sx={{ p: 3, maxWidth: '100%', margin: '0 auto' }}>
       {/* Header */}
       <Typography variant="h4" sx={{ mb: 4, fontWeight: 600, color: '#1a1a1a' }}>
-        Edit Schedule
+        Clone Schedule
       </Typography>
 
       {/* All Sections in Card Layout */}
@@ -3779,15 +3804,14 @@ export const EditSchedulePage = () => {
         </CancelButton>
 
         <RedButton
-          onClick={handleUpdateSchedule}
+          onClick={handleCloneSchedule}
           disabled={isSubmitting}
-          startIcon={isSubmitting ? <LinearProgress size={20} /> : <Save />}
         >
-          {isSubmitting ? 'Updating...' : 'Update Schedule'}
+          {isSubmitting ? 'Cloning...' : 'Clone Schedule'}
         </RedButton>
       </Box>
     </Box>
   );
 };
 
-
+export default CloneSchedulePage;

@@ -67,11 +67,11 @@ import { createCompanyPartnerReducers, editCompanyPartnerReducer, fetchCompanyPa
 import { createChatTaskReducer, createConversationReducer, createGroupReducer, deleteChatTaskReducer, fetchChannelTaskDetailsReducer, fetchConversationMessagesReducer, fetchConversationReducer, fetchConversationsReducer, fetchGroupConversationReducer, fetchGroupsReducer, removeUserFromGroupReducer, sendMessageReducer, updateChatTaskReducer, updateMessageReducer } from './slices/channelSlice'
 import { createCircleReducer, fetchCircleListReducer, updateCircleReducer } from './slices/msafeCircleSlice'
 import { changeProjectStatusReducer, createProjectReducer, fetchProjectByIdReducer, fetchProjectsReducer } from './slices/projectManagementSlice'
-import { createMilestoneReducer, fetchMilestonesReducer } from './slices/projectMilestoneSlice'
+import { createMilestoneReducer, fetchMilestoneByIdReducer, fetchMilestonesReducer } from './slices/projectMilestoneSlice'
 import { createProjectTeamReducer, fetchProjectTeamByIdReducer, fetchProjectTeamsReducer, updateProjectTeamReducer } from './slices/projectTeamsSlice'
 import { createProjectTypesReducer, fetchProjectTypesReducer, updateProjectTypesReducer } from './slices/projectTypeSlice'
 import { createProjectsTagsReducer, fetchProjectsTagsReducer, updateProjectsTagsReducer } from './slices/projectTagSlice'
-import { createProjectTaskReducer, fetchProjectTasksReducer } from './slices/projectTasksSlice'
+import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer } from './slices/projectTasksSlice'
 
 export const store = configureStore({
   reducer: {
@@ -343,10 +343,15 @@ export const store = configureStore({
     // Project Milestone
     createMilestone: createMilestoneReducer,
     fetchMilestones: fetchMilestonesReducer,
+    fetchMilestoneById: fetchMilestoneByIdReducer,
 
     // Project Tasks
     fetchProjectTasks: fetchProjectTasksReducer,
     createProjectTask: createProjectTaskReducer,
+    fetchProjectTasksById: fetchProjectTasksByIdReducer,
+    fetchUserAvailability: fetchUserAvailabilityReducer,
+    fetchTargetDateTasks: fetchTargetDateTasksReducer,
+    editProjectTask: editProjectTaskReducer,
 
     // Project Team
     fetchProjectTeams: fetchProjectTeamsReducer,

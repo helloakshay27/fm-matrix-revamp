@@ -27,13 +27,12 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createChatTask, sendMessage, updateMessage } from "@/store/slices/channelSlice";
 import { useParams } from "react-router-dom";
 
-const Chats = ({ messages, onReply }) => {
+const Chats = ({ messages, onReply, bottomRef }) => {
     const { id } = useParams();
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
     const currentUserId = localStorage.getItem("userId");
-    const bottomRef = useRef(null);
     const messageRefs = useRef({});
 
     const { data: conversations } = useAppSelector(state => state.fetchConversations)

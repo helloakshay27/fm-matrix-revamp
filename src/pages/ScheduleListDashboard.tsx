@@ -368,7 +368,19 @@ export const ScheduleListDashboard = () => {
     }
     navigate(`/maintenance/schedule/edit/${item.id}`, { state: { customFormCode: formCode } });
   };
-  const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
+  const handleCopySchedule = (item: any) => {
+    // Use custom_form_code from the table row if present, fallback to lookup
+    let formCode = item.custom_form_code;
+    if (!formCode && customFormsData?.custom_forms) {
+      const customForm = customFormsData.custom_forms.find((form: any) => form.id?.toString() === item.id?.toString());
+      formCode = customForm?.custom_form_code;
+    }
+    if (!item.id || !formCode) {
+      toast.error('Invalid schedule ID or missing form code.');
+      return;
+    }
+    navigate(`/maintenance/schedule/clone/${item.id}`, { state: { customFormCode: formCode } });
+  };
   const handleViewSchedule = (item: any) => {
     // Use custom_form_code from the table row if present, fallback to lookup
     let formCode = item.custom_form_code;
@@ -456,13 +468,13 @@ export const ScheduleListDashboard = () => {
     if (columnKey === 'actions') {
       return (
         <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => handleEditSchedule(item)}>
+          <Button variant="ghost" size="sm" onClick={() => handleEditSchedule(item)} title="Edit Schedule">
             <Edit className="w-4 h-4" />
           </Button>
-          {/* <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item.id)}>
+          <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item)} title="Clone Schedule">
             <Copy className="w-4 h-4" />
-          </Button> */}
-          <Button variant="ghost" size="sm" onClick={() => handleViewSchedule(item)}>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleViewSchedule(item)} title="View Schedule">
             <Eye className="w-4 h-4" />
           </Button>
         </div>
