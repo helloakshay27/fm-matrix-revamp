@@ -239,8 +239,10 @@ export const IncidentSetupDashboard = () => {
   const [rcaCategories, setRcaCategories] = useState([]);
   const [substandardActCategories, setSubstandardActCategories] = useState([]);
   const [substandardConditionCategories, setSubstandardConditionCategories] = useState([]);
+  const [preventiveActions, setPreventiveActions] = useState([]);
+  const [correctiveActions, setCorrectiveActions] = useState([]);
   const [escalateToUsersList, setEscalateToUsersList] = useState([]);
-  const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category', 'Substandard Act', 'Substandard Condition'];
+  const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category', 'Substandard Act', 'Substandard Condition', 'Preventive Action', 'Corrective Action'];
 
 
 
@@ -471,6 +473,50 @@ export const IncidentSetupDashboard = () => {
     }
   };
 
+  // Fetch PreventiveAction data from API
+  const fetchPreventiveActions = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const preventiveActionTypes = (result.data || [])
+          .filter(item => item.tag_type === 'PreventiveAction')
+          .map(item => ({ id: item.id, name: item.name }));
+        setPreventiveActions(preventiveActionTypes);
+      } else {
+        console.error('Failed to fetch Preventive Action categories');
+      }
+    } catch (error) {
+      console.error('Error fetching Preventive Action categories:', error);
+    }
+  };
+
+  // Fetch CorrectiveAction data from API
+  const fetchCorrectiveActions = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const correctiveActionTypes = (result.data || [])
+          .filter(item => item.tag_type === 'CorrectiveAction')
+          .map(item => ({ id: item.id, name: item.name }));
+        setCorrectiveActions(correctiveActionTypes);
+      } else {
+        console.error('Failed to fetch Corrective Action categories');
+      }
+    } catch (error) {
+      console.error('Error fetching Corrective Action categories:', error);
+    }
+  };
+
   // Fetch PropertyDamageCategory data from API
   const fetchPropertyDamageCategories = async () => {
     try {
@@ -638,6 +684,10 @@ export const IncidentSetupDashboard = () => {
       fetchSubstandardActCategories();
     } else if (selectedCategory === 'Substandard Condition') {
       fetchSubstandardConditionCategories();
+    } else if (selectedCategory === 'Preventive Action') {
+      fetchPreventiveActions();
+    } else if (selectedCategory === 'Corrective Action') {
+      fetchCorrectiveActions();
     } else if (selectedCategory === 'Escalations') {
       fetchIncidenceLevels();
       fetchEscalateToUsers();
@@ -696,6 +746,10 @@ export const IncidentSetupDashboard = () => {
       } else if (selectedCategory === 'Substandard Act') {
         if (!categoryName.trim()) return false;
       } else if (selectedCategory === 'Substandard Condition') {
+        if (!categoryName.trim()) return false;
+      } else if (selectedCategory === 'Preventive Action') {
+        if (!categoryName.trim()) return false;
+      } else if (selectedCategory === 'Corrective Action') {
         if (!categoryName.trim()) return false;
       }
       return true;
@@ -1311,6 +1365,72 @@ export const IncidentSetupDashboard = () => {
           toast.error('An error occurred while adding the Substandard Condition.');
         }
       }
+    } else if (selectedCategory === 'Preventive Action') {
+      // API integration for PreventiveAction
+      if (categoryName.trim()) {
+        try {
+          const body = {
+            incidence_tag: {
+              tag_type: 'PreventiveAction',
+              active: true,
+              name: categoryName
+            }
+          };
+          const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(body)
+          });
+          if (response.ok) {
+            await fetchPreventiveActions();
+            setCategoryName('');
+            toast.success('Preventive Action added successfully!');
+          } else {
+            const errorText = await response.text();
+            console.error('Failed to add preventive action:', response.status, errorText);
+            toast.error('Failed to add preventive action. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error adding preventive action:', error);
+          toast.error('An error occurred while adding the preventive action.');
+        }
+      }
+    } else if (selectedCategory === 'Corrective Action') {
+      // API integration for CorrectiveAction
+      if (categoryName.trim()) {
+        try {
+          const body = {
+            incidence_tag: {
+              tag_type: 'CorrectiveAction',
+              active: true,
+              name: categoryName
+            }
+          };
+          const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(body)
+          });
+          if (response.ok) {
+            await fetchCorrectiveActions();
+            setCategoryName('');
+            toast.success('Corrective Action added successfully!');
+          } else {
+            const errorText = await response.text();
+            console.error('Failed to add corrective action:', response.status, errorText);
+            toast.error('Failed to add corrective action. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error adding corrective action:', error);
+          toast.error('An error occurred while adding the corrective action.');
+        }
+      }
     }
 
     setCategoryName('');
@@ -1380,7 +1500,7 @@ export const IncidentSetupDashboard = () => {
         users: '',
         id: ""
       });
-    } else if (type === 'Who got injured' || type === 'Property Damage Category' || type === 'RCA Category' || type === 'Category') {
+    } else if (type === 'Who got injured' || type === 'Property Damage Category' || type === 'RCA Category' || type === 'Category' || type === 'Preventive Action' || type === 'Corrective Action') {
       setEditFormData({
         category: '',
         subCategory: '',
@@ -1833,6 +1953,62 @@ export const IncidentSetupDashboard = () => {
         toast.error('An error occurred while updating the Substandard Condition.');
         return;
       }
+    } else if (editingItem?.type === 'Preventive Action') {
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            incidence_tag: {
+              name: editFormData.name
+            }
+          })
+        });
+
+        if (response.ok) {
+          await fetchPreventiveActions();
+          toast.success('Preventive Action updated successfully!');
+        } else {
+          const errorText = await response.text();
+          console.error('Failed to update preventive action:', response.status, errorText);
+          toast.error('Failed to update preventive action. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error updating Preventive Action:', error);
+        toast.error('An error occurred while updating the Preventive Action.');
+        return;
+      }
+    } else if (editingItem?.type === 'Corrective Action') {
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            incidence_tag: {
+              name: editFormData.name
+            }
+          })
+        });
+
+        if (response.ok) {
+          await fetchCorrectiveActions();
+          toast.success('Corrective Action updated successfully!');
+        } else {
+          const errorText = await response.text();
+          console.error('Failed to update corrective action:', response.status, errorText);
+          toast.error('Failed to update corrective action. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error updating Corrective Action:', error);
+        toast.error('An error occurred while updating the Corrective Action.');
+        return;
+      }
     } else if (editingItem?.type === 'Escalations') {
       try {
         const response = await fetch(`${baseUrl}/pms/update_escalation.json`, {
@@ -2054,6 +2230,8 @@ export const IncidentSetupDashboard = () => {
       else if (type === 'RCA Category') fetchFn = fetchRCACategories;
       else if (type === 'Substandard Act') fetchFn = fetchSubstandardActCategories;
       else if (type === 'Substandard Condition') fetchFn = fetchSubstandardConditionCategories;
+      else if (type === 'Preventive Action') fetchFn = fetchPreventiveActions;
+      else if (type === 'Corrective Action') fetchFn = fetchCorrectiveActions;
 
       // Only use local state for types that are not stored in backend
       if (fetchFn) {
@@ -2171,12 +2349,8 @@ export const IncidentSetupDashboard = () => {
                         onChange={(e) => {
                           const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
                           setEscalateToUsers(value);
-                          // Update editFormData.users for consistency
-                          const userNames = value.map(userId => {
-                            const user = escalateToUsersList.find(u => String(u.id) === String(userId));
-                            return user ? user.full_name : userId;
-                          }).join(', ');
-                          setEditFormData({ ...editFormData, users: value });
+                          // Update editFormData.users for consistency (convert array to any for type compatibility)
+                          setEditFormData({ ...editFormData, users: value as any });
                         }}
                         input={<OutlinedInput label="Escalate To Users" />}
                         renderValue={(selected) => {
@@ -2921,21 +3095,23 @@ export const IncidentSetupDashboard = () => {
                         onChange={e => setCategoryName(e.target.value)}
                         placeholder={
                           selectedCategory === 'Category' ? 'Please add category' :
-                          selectedCategory === 'Sub Category' ? 'Please add sub category name' :
-                          selectedCategory === 'Sub Sub Category' ? 'Please add sub sub category name' :
-                          selectedCategory === 'Sub Sub Sub Category' ? 'Please add sub sub sub category name' :
-                          selectedCategory === 'Secondary Category' ? 'Please add secondary category' :
-                          selectedCategory === 'Secondary Sub Category' ? 'Please add secondary sub category name' :
-                          selectedCategory === 'Secondary Sub Sub Category' ? 'Please add secondary sub sub category name' :
-                          selectedCategory === 'Secondary Sub Sub Sub Category' ? 'Please add secondary sub sub sub category name' :
-                          selectedCategory === 'Incidence status' ? 'Please add incidence status' :
-                          selectedCategory === 'Incidence level' ? 'Please add incidence level' :
-                          selectedCategory === 'Who got injured' ? 'Please add injured type' :
-                          selectedCategory === 'Property Damage Category' ? 'Please add property damage category' :
-                          selectedCategory === 'RCA Category' ? 'Please add RCA category' :
-                          selectedCategory === 'Substandard Act' ? 'Please add substandard act' :
-                          selectedCategory === 'Substandard Condition' ? 'Please add substandard condition' :
-                          'Enter name'
+                            selectedCategory === 'Sub Category' ? 'Please add sub category name' :
+                              selectedCategory === 'Sub Sub Category' ? 'Please add sub sub category name' :
+                                selectedCategory === 'Sub Sub Sub Category' ? 'Please add sub sub sub category name' :
+                                  selectedCategory === 'Secondary Category' ? 'Please add secondary category' :
+                                    selectedCategory === 'Secondary Sub Category' ? 'Please add secondary sub category name' :
+                                      selectedCategory === 'Secondary Sub Sub Category' ? 'Please add secondary sub sub category name' :
+                                        selectedCategory === 'Secondary Sub Sub Sub Category' ? 'Please add secondary sub sub sub category name' :
+                                          selectedCategory === 'Incidence status' ? 'Please add incidence status' :
+                                            selectedCategory === 'Incidence level' ? 'Please add incidence level' :
+                                              selectedCategory === 'Who got injured' ? 'Please add injured type' :
+                                                selectedCategory === 'Property Damage Category' ? 'Please add property damage category' :
+                                                  selectedCategory === 'RCA Category' ? 'Please add RCA category' :
+                                                    selectedCategory === 'Substandard Act' ? 'Please add substandard act' :
+                                                      selectedCategory === 'Substandard Condition' ? 'Please add substandard condition' :
+                                                        selectedCategory === 'Preventive Action' ? 'Please add preventive action' :
+                                                          selectedCategory === 'Corrective Action' ? 'Please add corrective action' :
+                                                            'Enter name'
                         }
                         variant="outlined"
                         size="small"
@@ -3157,6 +3333,34 @@ export const IncidentSetupDashboard = () => {
                                   <Edit className="w-4 h-4" />
                                 </Button>
                                 <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Substandard Condition')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Preventive Action' ? preventiveActions.map(item => (
+                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Preventive Action')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Preventive Action')}>
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) : selectedCategory === 'Corrective Action' ? correctiveActions.map(item => (
+                          <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Corrective Action')}>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Corrective Action')}>
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
