@@ -231,12 +231,41 @@ export const InboundDetailPage = () => {
                 };
             });
 
-            const logs: InboundLog[] = (detail.mail_inbound_logs || detail.logs || []).map((log: any, index: number) => ({
-                id: log.id || index,
-                message: log.message || log.description || log.status || 'Status update',
-                timestamp: formatDate(log.created_at || log.timestamp),
-                status: log.status || log.event_type,
-            }));
+            const logs: InboundLog[] = [];
+
+            // Add creation log if available
+            if (detail.creation_log) {
+                logs.push({
+                    id: 'creation',
+                    message: detail.creation_log.message,
+                    timestamp: detail.creation_log.date,
+                    status: 'created'
+                });
+            }
+
+            // Add other logs
+            if (detail.logs_text && Array.isArray(detail.logs_text)) {
+                detail.logs_text.forEach((log: any) => {
+                    logs.push({
+                        id: log.id,
+                        message: log.message,
+                        timestamp: log.date,
+                        status: 'updated'
+                    });
+                });
+            }
+
+            // Fallback for older API structure if needed
+            if (logs.length === 0 && (detail.mail_inbound_logs || detail.logs)) {
+                (detail.mail_inbound_logs || detail.logs).forEach((log: any, index: number) => {
+                    logs.push({
+                        id: log.id || index,
+                        message: log.message || log.description || log.status || 'Status update',
+                        timestamp: formatDate(log.created_at || log.timestamp),
+                        status: log.status || log.event_type,
+                    });
+                });
+            }
 
             const mapped: InboundMail = {
                 id: detail.id,
@@ -815,19 +844,9 @@ export const InboundDetailPage = () => {
                 {inboundData.logs && inboundData.logs.length ? (
                     <div className="space-y-4">
                         {inboundData.logs.map((log) => (
-                            <div
-                                key={log.id}
-                                className={`p-4 rounded border-l-4 ${log.status?.toLowerCase() === 'overdue'
-                                    ? 'bg-[#FFF9F0] border-[#F97316]'
-                                    : 'bg-[#F0F9FF] border-[#3B82F6]'
-                                    }`}
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className="flex-1">
-                                        <p className="text-sm text-gray-700">{log.message}</p>
-                                        <p className="text-xs text-gray-500 mt-1">{log.timestamp}</p>
-                                    </div>
-                                </div>
+                            <div key={log.id} className="flex flex-col gap-1">
+                                <p className="text-sm text-[#1a1a1a]">{log.message}</p>
+                                <p className="text-xs text-gray-500">{log.timestamp}</p>
                             </div>
                         ))}
                     </div>

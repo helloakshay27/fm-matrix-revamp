@@ -493,7 +493,7 @@ export const NewInboundPage = () => {
                 <div className="mb-6">
                     <Button
                         variant="ghost"
-                        onClick={() => navigate('/inventory/inbound')}
+                        onClick={() => navigate('/vas/mailroom/inbound')}
                         className="mb-4 flex items-center gap-1 hover:text-gray-800"
                     >
                         <ArrowLeft className="w-4 h-4" />

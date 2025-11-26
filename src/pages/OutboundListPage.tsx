@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -20,8 +20,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { getAuthHeader, getFullUrl } from '@/config/apiConfig';
+import { getAuthHeader, getFullUrl, API_CONFIG } from '@/config/apiConfig';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 interface OutboundMail {
   id: number;
@@ -36,7 +46,8 @@ interface OutboundMail {
   statusType: string;
 }
 
-const OUTBOUND_ENDPOINT = '/pms/admin/mail_inbounds.json';
+const OUTBOUND_ENDPOINT = '/pms/admin/mail_outbounds.json';
+const PER_PAGE = 10;
 
 const formatDate = (value?: string | null) => {
   if (!value) return '';
@@ -80,7 +91,7 @@ const mapOutboundRecord = (item: any): OutboundMail => ({
     item.packages_with_quantity?.split(' ')?.slice(1)?.join(' ') ||
     '-',
   dateOfSending: formatDate(
-    item.date_of_sending || item.send_date || item.receive_date || item.recieved_on,
+    item.sending_date || item.date_of_sending || item.send_date || item.receive_date,
   ),
   statusType: formatStatus(item.status),
 });
@@ -93,16 +104,66 @@ export const OutboundListPage = () => {
   const [loading, setLoading] = useState(false);
   const [showActionPanel, setShowActionPanel] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
   const [filterVendor, setFilterVendor] = useState('');
   const [filterSender, setFilterSender] = useState('');
+  const [filterCreatedDateFrom, setFilterCreatedDateFrom] = useState('');
+  const [filterCreatedDateTo, setFilterCreatedDateTo] = useState('');
+
+  // Applied filters (only update when Apply is clicked)
+  const [appliedFilterStatus, setAppliedFilterStatus] = useState('');
+  const [appliedFilterVendor, setAppliedFilterVendor] = useState('');
+  const [appliedFilterSender, setAppliedFilterSender] = useState('');
+  const [appliedFilterCreatedDateFrom, setAppliedFilterCreatedDateFrom] = useState('');
+  const [appliedFilterCreatedDateTo, setAppliedFilterCreatedDateTo] = useState('');
+
+  // API data for filters
+  const [vendors, setVendors] = useState<Array<{ id: number; name: string }>>([]);
+  const [senders, setSenders] = useState<Array<{ id: number; full_name: string }>>([]);
+  const [isLoadingVendors, setIsLoadingVendors] = useState(false);
+  const [isLoadingSenders, setIsLoadingSenders] = useState(false);
+
+  const formatDateForApi = (dateString: string): string => {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
 
   useEffect(() => {
     const fetchOutboundMails = async () => {
       setLoading(true);
       try {
-        const response = await fetch(getFullUrl(OUTBOUND_ENDPOINT), {
+        const queryParams = new URLSearchParams({
+          page: currentPage.toString(),
+          per_page: PER_PAGE.toString(),
+        });
+
+        if (appliedFilterStatus) {
+          queryParams.append('q[status_eq]', appliedFilterStatus.toLowerCase());
+        }
+        if (appliedFilterSender) {
+          queryParams.append('q[user_id_eq]', appliedFilterSender);
+        }
+        if (appliedFilterVendor) {
+          queryParams.append('q[delivery_vendor_id_eq]', appliedFilterVendor);
+        }
+        if (appliedFilterCreatedDateFrom && appliedFilterCreatedDateTo) {
+          const fromDate = formatDateForApi(appliedFilterCreatedDateFrom);
+          const toDate = formatDateForApi(appliedFilterCreatedDateTo);
+          queryParams.append('q[date_range]', `${fromDate} - ${toDate}`);
+        }
+
+        const url = queryParams.toString()
+          ? `${getFullUrl(OUTBOUND_ENDPOINT)}?${queryParams.toString()}`
+          : getFullUrl(OUTBOUND_ENDPOINT);
+
+        const response = await fetch(url, {
           method: 'GET',
           headers: {
             Authorization: getAuthHeader(),
@@ -113,13 +174,34 @@ export const OutboundListPage = () => {
         if (!response.ok) throw new Error('Failed to fetch outbound mails');
 
         const data = await response.json();
-        const records = Array.isArray(data?.mail_inbounds)
-          ? data.mail_inbounds
+        const records = Array.isArray(data?.mail_outbounds)
+          ? data.mail_outbounds
           : Array.isArray(data)
             ? data
             : data?.data || [];
 
         setOutboundMails(records.map(mapOutboundRecord));
+
+        const paginationInfo =
+          data?.meta?.pagination ||
+          data?.pagination ||
+          data?.meta ||
+          {};
+
+        const totalCount =
+          paginationInfo.total_entries ??
+          paginationInfo.total_count ??
+          paginationInfo.total ??
+          paginationInfo.count ??
+          data?.total_count ??
+          (currentPage - 1) * PER_PAGE + records.length;
+
+        const derivedTotalPages =
+          paginationInfo.total_pages ??
+          Math.max(1, Math.ceil(totalCount / PER_PAGE));
+
+        setTotalRecords(totalCount);
+        setTotalPages(derivedTotalPages);
       } catch (error) {
         console.error(error);
         toast({
@@ -133,45 +215,90 @@ export const OutboundListPage = () => {
     };
 
     fetchOutboundMails();
-  }, [toast]);
+  }, [toast, currentPage, appliedFilterStatus, appliedFilterSender, appliedFilterVendor, appliedFilterCreatedDateFrom, appliedFilterCreatedDateTo]);
 
-  const statusOptions = useMemo(() => {
-    const uniqueStatuses = new Set(
-      outboundMails.map((mail) => mail.statusType).filter(Boolean),
-    );
-    if (!uniqueStatuses.size) ['Collected', 'Overdue', 'Pending'].forEach((s) => uniqueStatuses.add(s));
-    return Array.from(uniqueStatuses);
-  }, [outboundMails]);
+  // Fetch vendors and senders when filter modal opens
+  useEffect(() => {
+    const fetchFilterData = async () => {
+      if (!isFilterModalOpen) return;
 
-  const vendorOptions = useMemo(() => {
-    const uniqueVendors = new Set(
-      outboundMails.map((mail) => mail.courierVendor).filter((vendor) => vendor && vendor !== '-'),
-    );
-    return Array.from(uniqueVendors);
-  }, [outboundMails]);
+      // Fetch vendors
+      setIsLoadingVendors(true);
+      try {
+        const vendorResponse = await fetch(getFullUrl(API_CONFIG.ENDPOINTS.DELIVERY_VENDORS), {
+          method: 'GET',
+          headers: {
+            'Authorization': getAuthHeader(),
+            'Content-Type': 'application/json',
+          },
+        });
 
-  const senderOptions = useMemo(() => {
-    const uniqueSenders = new Set(
-      outboundMails.map((mail) => mail.senderName).filter((sender) => sender && sender !== '-'),
-    );
-    return Array.from(uniqueSenders);
-  }, [outboundMails]);
+        if (vendorResponse.ok) {
+          const vendorData = await vendorResponse.json();
+          setVendors(vendorData.delivery_vendors || vendorData || []);
+        }
+      } catch (error) {
+        console.error('Error fetching vendors:', error);
+      } finally {
+        setIsLoadingVendors(false);
+      }
+
+      // Fetch senders
+      setIsLoadingSenders(true);
+      try {
+        const senderResponse = await fetch(getFullUrl(API_CONFIG.ENDPOINTS.ESCALATION_USERS), {
+          method: 'GET',
+          headers: {
+            'Authorization': getAuthHeader(),
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (senderResponse.ok) {
+          const senderData = await senderResponse.json();
+          setSenders(senderData.users || senderData || []);
+        }
+      } catch (error) {
+        console.error('Error fetching senders:', error);
+      } finally {
+        setIsLoadingSenders(false);
+      }
+    };
+
+    fetchFilterData();
+  }, [isFilterModalOpen]);
+
+  // Hardcoded status options
+  const statusOptions = ['Sent', 'In Transit', 'Delivered', 'Overdue'];
 
   const filteredOutboundMails = useMemo(() => {
-    return outboundMails.filter((mail) => {
-      const statusMatch = filterStatus ? mail.statusType === filterStatus : true;
-      const vendorMatch = filterVendor
-        ? mail.courierVendor.toLowerCase() === filterVendor.toLowerCase()
-        : true;
-      const senderMatch = filterSender
-        ? mail.senderName.toLowerCase() === filterSender.toLowerCase()
-        : true;
-      return statusMatch && vendorMatch && senderMatch;
-    });
-  }, [outboundMails, filterStatus, filterVendor, filterSender]);
+    return outboundMails;
+  }, [outboundMails]);
+
+  const pageNumbers = useMemo(() => {
+    const pages = new Set<number>();
+    // Always show first page
+    pages.add(1);
+    // Always show last page
+    if (totalPages > 1) pages.add(totalPages);
+    // Show current page and neighbors
+    for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+      if (i > 1 && i < totalPages) pages.add(i);
+    }
+    return Array.from(pages).sort((a, b) => a - b);
+  }, [currentPage, totalPages]);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const startRecord = (currentPage - 1) * PER_PAGE + 1;
+  const endRecord = Math.min(currentPage * PER_PAGE, totalRecords);
 
   const handleViewOutbound = (id: number) => {
-    navigate(`/vas/mailroom/inbound/${id}`);
+    navigate(`/vas/mailroom/outbound/${id}`);
   };
 
   const columns: ColumnConfig[] = [
@@ -221,11 +348,27 @@ export const OutboundListPage = () => {
     </Button>
   );
 
-  const handleApplyFilters = () => setIsFilterModalOpen(false);
+  const handleApplyFilters = () => {
+    setCurrentPage(1); // Reset to first page on filter apply
+    setAppliedFilterStatus(filterStatus);
+    setAppliedFilterVendor(filterVendor);
+    setAppliedFilterSender(filterSender);
+    setAppliedFilterCreatedDateFrom(filterCreatedDateFrom);
+    setAppliedFilterCreatedDateTo(filterCreatedDateTo);
+    setIsFilterModalOpen(false);
+  };
   const handleResetFilters = () => {
+    setCurrentPage(1); // Reset to first page on filter reset
     setFilterStatus('');
     setFilterSender('');
     setFilterVendor('');
+    setFilterCreatedDateFrom('');
+    setFilterCreatedDateTo('');
+    setAppliedFilterStatus('');
+    setAppliedFilterSender('');
+    setAppliedFilterVendor('');
+    setAppliedFilterCreatedDateFrom('');
+    setAppliedFilterCreatedDateTo('');
   };
 
   return (
@@ -250,9 +393,66 @@ export const OutboundListPage = () => {
         enableSearch
         enableSelection={false}
         hideTableExport
-        pagination
-        pageSize={10}
+        
+        pagination={false} // Disable internal pagination of EnhancedTable since we use custom external pagination
       />
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex flex-col items-center gap-2">
+          <span className="text-sm text-gray-600">
+            Showing {startRecord}-{Math.max(startRecord, endRecord)} of {totalRecords}
+          </span>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(currentPage - 1);
+                  }}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+              {pageNumbers.map((page, index) => {
+                const prevPage = pageNumbers[index - 1];
+                const needsEllipsis = prevPage && page - prevPage > 1;
+                return (
+                  <Fragment key={page}>
+                    {needsEllipsis && (
+                      <PaginationItem key={`ellipsis-${page}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+                    <PaginationItem>
+                      <PaginationLink
+                        href="#"
+                        isActive={page === currentPage}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePageChange(page);
+                        }}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </Fragment>
+                );
+              })}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(currentPage + 1);
+                  }}
+                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
         <DialogContent className="sm:max-w-[600px]">
@@ -267,8 +467,8 @@ export const OutboundListPage = () => {
             </button>
           </DialogHeader>
           <div className="py-4">
-            <h3 className="text-sm font-semibold text-[#C72030] mb-4">Outbound Details</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <h3 className="text-sm font-semibold text-[#C72030] mb-4">Select Status</h3>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="status" className="text-sm font-medium">
                   Status
@@ -294,17 +494,21 @@ export const OutboundListPage = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="sender" className="text-sm font-medium">
-                  Sender
+                  Select Sender
                 </Label>
                 <Select value={filterSender} onValueChange={setFilterSender}>
                   <SelectTrigger id="sender" className="w-full">
-                    <SelectValue placeholder="Select Sender" />
+                    <SelectValue placeholder={isLoadingSenders ? 'Loading senders...' : 'Select Sender'} />
                   </SelectTrigger>
                   <SelectContent>
-                    {senderOptions.length ? (
-                      senderOptions.map((sender) => (
-                        <SelectItem key={sender} value={sender}>
-                          {sender}
+                    {isLoadingSenders ? (
+                      <SelectItem value="loading" disabled>
+                        Loading senders...
+                      </SelectItem>
+                    ) : senders.length ? (
+                      senders.map((sender) => (
+                        <SelectItem key={sender.id} value={sender.id.toString()}>
+                          {sender.full_name}
                         </SelectItem>
                       ))
                     ) : (
@@ -317,17 +521,21 @@ export const OutboundListPage = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="vendor" className="text-sm font-medium">
-                  Courier Vendor
+                  Select Vendor
                 </Label>
                 <Select value={filterVendor} onValueChange={setFilterVendor}>
                   <SelectTrigger id="vendor" className="w-full">
-                    <SelectValue placeholder="Select Vendor" />
+                    <SelectValue placeholder={isLoadingVendors ? 'Loading vendors...' : 'Select Vendor'} />
                   </SelectTrigger>
                   <SelectContent>
-                    {vendorOptions.length ? (
-                      vendorOptions.map((vendor) => (
-                        <SelectItem key={vendor} value={vendor}>
-                          {vendor}
+                    {isLoadingVendors ? (
+                      <SelectItem value="loading" disabled>
+                        Loading vendors...
+                      </SelectItem>
+                    ) : vendors.length ? (
+                      vendors.map((vendor) => (
+                        <SelectItem key={vendor.id} value={vendor.id.toString()}>
+                          {vendor.name}
                         </SelectItem>
                       ))
                     ) : (
@@ -337,6 +545,35 @@ export const OutboundListPage = () => {
                     )}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2 col-span-2">
+                <Label className="text-sm font-medium">
+                  Created Date
+                </Label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <Input
+                      id="createdDateFrom"
+                      type="date"
+                      placeholder="From Date"
+                      value={filterCreatedDateFrom}
+                      onChange={(e) => setFilterCreatedDateFrom(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  <span className="text-gray-500">-</span>
+                  <div className="flex-1">
+                    <Input
+                      id="createdDateTo"
+                      type="date"
+                      placeholder="To Date"
+                      value={filterCreatedDateTo}
+                      onChange={(e) => setFilterCreatedDateTo(e.target.value)}
+                      className="w-full"
+                      min={filterCreatedDateFrom}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
