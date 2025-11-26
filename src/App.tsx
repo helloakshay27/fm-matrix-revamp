@@ -641,6 +641,7 @@ import { EscalationMatrixPage } from "./pages/maintenance/EscalationMatrixPage";
 // Import Setup pages
 import { PermitSetupDashboard } from "./pages/PermitSetupDashboard";
 import { IncidentSetupDashboard } from "./pages/IncidentSetupDashboard";
+import { IncidentNewDetails } from "./pages/IncidentNewDetails";
 
 // Import Holiday Calendar page
 import { HolidayCalendarPage as SettingsHolidayCalendarPage } from "./pages/settings/HolidayCalendarPage";
@@ -1649,6 +1650,10 @@ function App() {
                   <Route
                     path="/safety/incident/:id"
                     element={<IncidentDetailsPage />}
+                  />
+                  <Route
+                    path="/safety/incident/new-details"
+                    element={<IncidentNewDetails />}
                   />
                   <Route
                     path="/safety/incident/edit/:id"
