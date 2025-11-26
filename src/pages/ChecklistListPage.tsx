@@ -35,6 +35,14 @@ export const ChecklistListPage = () => {
 
   // Transform the data
   const checklists = checklistData ? transformChecklistData(checklistData) : [];
+  
+  // Debug: Log the transformed data
+  // useEffect(() => {
+  //   if (checklists.length > 0) {
+  //     console.log('First checklist item:', checklists[0]);
+  //     console.log('All checklist keys:', Object.keys(checklists[0]));
+  //   }
+  // }, [checklists]);
 
   const handleAddChecklist = () => {
     navigate('/master/checklist-master/add');
@@ -147,6 +155,11 @@ export const ChecklistListPage = () => {
       sortable: true
     },
     {
+      key: 'scheduleType',
+      label: 'Type',
+      sortable: true
+    },
+    {
       key: 'scheduledFor',
       label: 'Scheduled For',
       sortable: true
@@ -237,8 +250,7 @@ export const ChecklistListPage = () => {
           open={showImportModal}
           onOpenChange={setShowImportModal}
           title="Bulk Upload Checklist"
-          context="checklist_master"
-          onDownloadSample={handleDownloadSampleFormat}
+          context="custom_forms"
         />
       </div>
     </div>
