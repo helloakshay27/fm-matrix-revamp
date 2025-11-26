@@ -136,6 +136,7 @@ import { ScheduleListDashboard } from "./pages/ScheduleListDashboard";
 import { AddSchedulePage } from "./pages/AddSchedulePage";
 import { ScheduleExportPage } from "./pages/ScheduleExportPage";
 import { EditSchedulePage } from "./pages/EditSchedulePage";
+import CloneSchedulePage from "./pages/CloneSchedulePage";
 import { CopySchedulePage } from "./pages/CopySchedulePage";
 import { ViewSchedulePage } from "./pages/ViewSchedulePage";
 
@@ -2274,6 +2275,11 @@ function App() {
                     path="/maintenance/schedule/edit/:id"
                     element={<EditSchedulePage />}
                   />
+                  <Route
+                    path="/maintenance/schedule/clone/:id"
+                    element={<CloneSchedulePage />}
+                  />
+
                   <Route
                     path="/maintenance/schedule/copy/:id"
                     element={<CopySchedulePage />}
