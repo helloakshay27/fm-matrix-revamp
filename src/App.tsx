@@ -85,6 +85,7 @@ import { EditInventoryPage } from "./pages/EditInventoryPage";
 import InventoryConsumptionDashboard from "./pages/InventoryConsumptionDashboard";
 import InventoryConsumptionViewPage from "./pages/InventoryConsumptionViewPage";
 import EcoFriendlyListPage from "./pages/EcoFriendlyListPage";
+import { NewInboundPage } from "./pages/NewInboundPage";
 
 // Import Task pages
 import { ScheduledTaskDashboard } from "./pages/maintenance/ScheduledTaskDashboard";
@@ -240,6 +241,10 @@ import { EditStaffPage } from "./pages/EditStaffPage";
 
 // Import Add Staff page
 import { AddStaffPage } from "./pages/AddStaffPage";
+
+// Import Mailroom pages
+import { InboundListPage } from "./pages/InboundListPage";
+import { InboundDetailPage } from "./pages/InboundDetailPage";
 
 import { FnBRestaurantDashboard } from "./pages/FnBRestaurantDashboard";
 import { FnBRestaurantDetailsPage } from "./pages/FnBRestaurantDetailsPage";
@@ -2598,6 +2603,16 @@ function App() {
                     element={<RVehiclesOutDashboard />}
                   />
                   {/* Value Added Services Routes */}
+
+                  <Route
+                    path="/mail-inbounds-create"
+                    element={
+
+
+                      <NewInboundPage />
+
+                    }
+                  />
                   <Route
                     path="/vas/fnb"
                     element={<RestaurantOrdersTable needPadding={true} />}
@@ -2618,6 +2633,20 @@ function App() {
                   <Route
                     path="/vas/fnb/discounts"
                     element={<FnBDiscountsPage />}
+                  />
+
+                  {/* Mailroom Routes */}
+                  <Route
+                    path="/vas/mailroom/inbound"
+                    element={<InboundListPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/inbound/create"
+                    element={<NewInboundPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/inbound/:id"
+                    element={<InboundDetailPage />}
                   />
                   <Route path="/vas/parking" element={<ParkingDashboard />} />
                   <Route
@@ -3481,6 +3510,8 @@ function App() {
                 />
                 {/* QR Test Route */}
                 <Route path="/qr-test" element={<QRTestPage />} />
+
+                {/* Mail Inbound Routes */}
               </Routes>
               <Toaster />
               <SonnerToaster

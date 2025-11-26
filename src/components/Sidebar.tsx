@@ -281,7 +281,7 @@ const navigationStructure = {
             name: "Support Staff",
             href: "/settings/visitor-management/support-staff",
           },
-           {
+          {
             name: "Icons",
             href: "/settings/visitor-management/icons",
           },
@@ -355,7 +355,7 @@ const modulesByPackage = {
           name: "FM User",
           href: "/master/user/fm-users",
           color: "text-[#1a1a1a]",
-       
+
         },
         {
           name: "OCCUPANT USERS",
@@ -385,25 +385,25 @@ const modulesByPackage = {
       href: "/master/material-ebom",
     },
     {
-        name: 'Gate Number',
-        icon: DoorOpen,
-        href: '/master/gate-number'
-      },
-      // {
-      //   name: 'Gate Pass Type',
-      //   icon: Ticket,
-      //   href: '/master/gate-pass-type'
-      // }
-      // {
-      //   name: 'Inventory Type',
-      //   icon: Package,
-      //   href: '/master/inventory-type'
-      // },
-      // {
-      //   name: 'Inventory Sub Type',
-      //   icon: PackagePlus,
-      //   href: '/master/inventory-sub-type'
-      // },
+      name: 'Gate Number',
+      icon: DoorOpen,
+      href: '/master/gate-number'
+    },
+    // {
+    //   name: 'Gate Pass Type',
+    //   icon: Ticket,
+    //   href: '/master/gate-pass-type'
+    // }
+    // {
+    //   name: 'Inventory Type',
+    //   icon: Package,
+    //   href: '/master/inventory-type'
+    // },
+    // {
+    //   name: 'Inventory Sub Type',
+    //   icon: PackagePlus,
+    //   href: '/master/inventory-sub-type'
+    // },
   ],
   Transitioning: [
     { name: "HOTO", icon: FileText, href: "/transitioning/hoto" },
@@ -657,7 +657,7 @@ const modulesByPackage = {
         },
       ],
     },
-            { name: 'Employee Deletion History', icon: Trash, href: '/maintenance/employee-deletion-history' },
+    { name: 'Employee Deletion History', icon: Trash, href: '/maintenance/employee-deletion-history' },
 
     {
       name: "Msafe Report",
@@ -1036,6 +1036,23 @@ const modulesByPackage = {
       // ]
     },
     {
+      name: "Mailroom",
+      icon: Mail,
+      href: "/vas/mailroom",
+      subItems: [
+        {
+          name: "Inbound",
+          href: "/mail-inbounds-create",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Outbound",
+          href: "/mail-outbounds-create",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
       name: "Redemption Marketplace",
       icon: Globe,
       href: "/vas/redemonection-marketplace",
@@ -1318,7 +1335,7 @@ export const Sidebar = () => {
     if (!item.subItems || item.subItems.length === 0) {
       return item.href || null;
     }
-    
+
     // Check if any sub-item has further sub-items
     for (const subItem of item.subItems) {
       if (subItem.subItems && subItem.subItems.length > 0) {
@@ -1327,7 +1344,7 @@ export const Sidebar = () => {
         if (deepest) return deepest;
       }
     }
-    
+
     // If no deeper items, return the first sub-item's href
     return item.subItems[0]?.href || null;
   };
@@ -1341,12 +1358,12 @@ export const Sidebar = () => {
 
     // Extract active functions from the API response
     const activeFunctions = [];
-    
+
     // Check if we have the new flat structure (activeFunctions)
     if (userRole.activeFunctions && Array.isArray(userRole.activeFunctions)) {
       activeFunctions.push(...userRole.activeFunctions);
     }
-    
+
     // Also check the old lock_modules structure as fallback
     if (userRole.lock_modules && Array.isArray(userRole.lock_modules)) {
       userRole.lock_modules.forEach(module => {
@@ -1372,7 +1389,7 @@ export const Sidebar = () => {
     const createSearchVariants = (name: string): string[] => {
       const variants = new Set([name]);
       const normalized = name.toLowerCase();
-      
+
       variants.add(normalized);
       variants.add(normalized.replace(/\s+/g, '_'));
       variants.add(normalized.replace(/\s+/g, '-'));
@@ -1381,7 +1398,7 @@ export const Sidebar = () => {
       variants.add(normalized.replace(/_/g, '-'));
       variants.add(normalized.replace(/-/g, ' '));
       variants.add(normalized.replace(/-/g, '_'));
-      
+
       return Array.from(variants);
     };
 
@@ -1407,7 +1424,7 @@ export const Sidebar = () => {
       'attendance': ['attendance', 'pms_attendances'],
       'vendor': ['supplier', 'pms_supplier', 'vendor audit', 'vendor_audit'],
       'supplier': ['supplier', 'pms_supplier'],
-      
+
       // Master Data
       'location master': ['account', 'pms_setup'],
       'user master': ['user & roles', 'pms_user_roles', 'occupant users', 'pms_occupant_users'],
@@ -1418,7 +1435,7 @@ export const Sidebar = () => {
       'unit master (by default)': ['pms_setup'],
       'material master -> ebom': ['materials', 'pms_materials'],
       'gate number': ['gate', 'gate_number'],
-      
+
       // Building/Location Elements
       'account': ['account', 'accounts', 'pms_accounts', 'pms_setup'],
       'building': ['building', 'buildings'],
@@ -1427,7 +1444,7 @@ export const Sidebar = () => {
       'floor': ['floor', 'floors'],
       'unit': ['unit', 'units'],
       'room': ['room', 'rooms'],
-      
+
       // Transitioning
       'hoto': ['hoto'],
       'snagging': ['snagging'],
@@ -1439,7 +1456,7 @@ export const Sidebar = () => {
       'fitout request': ['fitout'],
       'fitout checklist': ['fitout'],
       'fitout violation': ['fitout'],
-      
+
       // Audit
       'audit': ['operational audit', 'operational_audits', 'vendor audit', 'vendor_audit'],
       'operational': ['operational audit', 'operational_audits'],
@@ -1448,17 +1465,17 @@ export const Sidebar = () => {
       'scheduled': ['schedule', 'pms_schedule'],
       'conducted': ['conducted'],
       'master checklists': ['master checklist', 'pms_master_checklist'],
-      
+
       // Waste Management
       'waste': ['waste generation', 'waste_generation'],
       'waste generation': ['waste generation', 'waste_generation'],
-      
+
       // Survey
       'survey': ['survey'],
       'survey list': ['survey'],
       'survey mapping': ['survey'],
       'response': ['survey'],
-      
+
       // M-Safe specific
       'internal user (fte)': ['msafe', 'pms_msafe'],
       'external user (non fte)': ['non fte users', 'non_fte_users'],
@@ -1467,23 +1484,23 @@ export const Sidebar = () => {
       'krcc list': ['krcc list', 'krcc_list', 'krcc'],
       'training list': ['training list', 'training_list', 'pms_training'],
       'reportees reassign': ['reportees reassign'],
-      
+
       // Vi Miles
       'vi miles': ['vi miles', 'vi_miles'],
       'vehicle details': ['vi miles', 'vi_miles'],
       'vehicle check in': ['vi miles', 'vi_miles'],
-      
+
       // Reports
       'employee deletion history': ['employee deletion history'],
       'msafe report': ['download msafe report', 'download_msafe_report'],
       'msafe detail report': ['download msafe detailed report', 'download_msafe_detailed_report'],
-      
+
       // Safety
       'incident': ['pms incidents', 'pms_incidents'],
       'permit': ['permits', 'cus_permits'],
       'pending approvals': ['pending approvals', 'pending_approvals'],
       'training': ['training', 'training_list', 'pms_training'],
-      
+
       // Finance/Procurement
       'procurement': ['po', 'pms_purchase_orders', 'wo', 'pms_work_orders'],
       'pr/ sr': ['procurement'],
@@ -1504,7 +1521,7 @@ export const Sidebar = () => {
       'cost center': ['accounts', 'pms_accounts'],
       'budgeting': ['accounts', 'pms_accounts'],
       'wbs': ['wbs'],
-      
+
       // CRM
       'lead': ['lead'],
       'opportunity': ['opportunity'],
@@ -1515,7 +1532,7 @@ export const Sidebar = () => {
       'groups': ['groups'],
       'polls': ['polls'],
       'campaign': ['campaign'],
-      
+
       // Utility
       'energy': ['meters', 'pms_energy'],
       'meters': ['meters', 'pms_energy'],
@@ -1526,7 +1543,7 @@ export const Sidebar = () => {
       'utility consumption': ['utility consumption', 'utility_consumption'],
       'ev consumption': ['ev consumption', 'ev_consumption'],
       'solar generator': ['solar generator', 'solar_generators'],
-      
+
       // Security
       'gate pass': ['gate pass'],
       'inwards': ['gate pass'],
@@ -1541,7 +1558,7 @@ export const Sidebar = () => {
       'all': ['r vehicles', 'pms_rvehicles'],
       'history': ['r vehicles', 'pms_rvehicles'],
       'patrolling': ['patrolling', 'pms_patrolling'],
-      
+
       // Value Added Services
       'f&b': ['fnb'],
       'parking': ['parking', 'cus_parkings'],
@@ -1561,12 +1578,12 @@ export const Sidebar = () => {
       'export': ['export', 'pms_export'],
       'booking': ['booking'],
       'redemption marketplace': ['marketplace'],
-      
+
       // Market Place
       'marketplace_all': ['marketplace'],
       'installed': ['marketplace'],
       'updates': ['marketplace'],
-      
+
       // Settings
       'general': ['general'],
       'holiday calendar': ['holiday calendar'],
@@ -1615,7 +1632,7 @@ export const Sidebar = () => {
       'parking category': ['parking category'],
       'slot configuration': ['slot configuration'],
       'time slot setup': ['time slot setup'],
-      
+
       // Additional mappings from your list
       'local travel module': ['local travel module', 'ltm'],
       'krcc': ['krcc', 'krcc_list'],
@@ -1729,10 +1746,10 @@ export const Sidebar = () => {
     };
     // Get the item name for checking
     const itemNameLower = checkItem.name.toLowerCase();
-    
+
     // Find potential matches for this sidebar item
     let potentialMatches = sidebarMappings[itemNameLower] || [];
-    
+
     // Also add the item name itself as a potential match
     potentialMatches.push(...createSearchVariants(checkItem.name));
 
@@ -1740,14 +1757,14 @@ export const Sidebar = () => {
     const hasPermission = activeFunctions.some(activeFunc => {
       const funcVariants = createSearchVariants(activeFunc.functionName);
       const actionVariants = createSearchVariants(activeFunc.actionName);
-      
+
       return potentialMatches.some(match => {
         const matchVariants = createSearchVariants(match);
         return (
-          funcVariants.some(fv => matchVariants.some(mv => 
+          funcVariants.some(fv => matchVariants.some(mv =>
             fv.includes(mv) || mv.includes(fv) || fv === mv
           )) ||
-          actionVariants.some(av => matchVariants.some(mv => 
+          actionVariants.some(av => matchVariants.some(mv =>
             av.includes(mv) || mv.includes(av) || av === mv
           ))
         );
@@ -1768,10 +1785,10 @@ export const Sidebar = () => {
       console.log("📊 Available sidebar sections: ALL (no user role)");
       return modulesByPackage;
     }
-    
+
     // Convert object to format that can be filtered
     const filtered = {};
-    
+
     Object.entries(modulesByPackage).forEach(([sectionName, items]) => {
       const filteredItems = items
         .map((item) => ({
@@ -1779,12 +1796,12 @@ export const Sidebar = () => {
           subItems: item.subItems ? item.subItems.filter(checkPermission) : [],
         }))
         .filter(checkPermission);
-        
+
       if (filteredItems.length > 0) {
         filtered[sectionName] = filteredItems;
       }
     });
-    
+
     // Debug output for filtered results
     console.log("🎯 Sidebar Filtering Results:");
     Object.entries(filtered).forEach(([sectionName, items]: [string, any[]]) => {
@@ -1793,7 +1810,7 @@ export const Sidebar = () => {
         console.log(`  ✅ ${item.name}${item.subItems && item.subItems.length > 0 ? ` (${item.subItems.length} sub-items)` : ''}`);
       });
     });
-    
+
     return filtered;
   }, [modulesByPackage, userRole, checkPermission]);
 
@@ -1914,16 +1931,16 @@ export const Sidebar = () => {
       // Update expanded items state with only the active path
       setExpandedItems(itemsToExpand);
     }
-    
+
     // Debug logging for API response structure
     if (userRole) {
       console.log("🔍 User Role API Response Structure:");
-      
+
       // Check for new flat structure
       if (userRole.activeFunctions) {
         console.log("📋 Active Functions (new structure):", userRole.activeFunctions.slice(0, 5), userRole.activeFunctions.length > 5 ? `... and ${userRole.activeFunctions.length - 5} more` : '');
       }
-      
+
       // Check for old lock_modules structure
       if (userRole.lock_modules) {
         console.log("📦 Lock Modules (old structure):");
@@ -1942,7 +1959,7 @@ export const Sidebar = () => {
         }
       }
     }
-    
+
     // Debug logs (commented out to reduce console noise)
     // console.log("currentSection:", JSON.stringify({ currentSection }, null, 2));
     // console.log("itemsToExpand:", JSON.stringify({ itemsToExpand }, null, 2));
@@ -2037,9 +2054,8 @@ export const Sidebar = () => {
                                   onClick={() =>
                                     handleNavigation(nestedItem.href)
                                   }
-                                  className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
-                                    nestedItem.color || "text-[#1a1a1a]"
-                                  }`}
+                                  className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || "text-[#1a1a1a]"
+                                    }`}
                                 >
                                   {isActiveRoute(nestedItem.href) && (
                                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -2056,9 +2072,8 @@ export const Sidebar = () => {
                         onClick={() =>
                           handleNavigation(subItem.href, currentSection)
                         }
-                        className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
-                          subItem.color || "text-[#1a1a1a]"
-                        }`}
+                        className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
+                          }`}
                       >
                         {isActiveRoute(subItem.href) && (
                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -2081,9 +2096,8 @@ export const Sidebar = () => {
           onClick={() =>
             item.href && handleNavigation(item.href, currentSection)
           }
-          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
-            item.color || "text-[#1a1a1a]"
-          }`}
+          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
+            }`}
         >
           {level === 0 && (
             <>
@@ -2162,11 +2176,10 @@ export const Sidebar = () => {
               handleNavigation(module.href, currentSection);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-            active || isExpanded
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
               ? "bg-[#f0e8dc] shadow-inner"
               : "hover:bg-[#DBC2A9]"
-          }`}
+            }`}
           title={module.name}
         >
           {(active || isExpanded) && (
@@ -2174,15 +2187,13 @@ export const Sidebar = () => {
           )}
           {level === 0 ? (
             <module.icon
-              className={`w-5 h-5 ${
-                active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
-              }`}
+              className={`w-5 h-5 ${active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
+                }`}
             />
           ) : (
             <div
-              className={`w-${3 - level} h-${
-                3 - level
-              } rounded-full bg-[#1a1a1a]`}
+              className={`w-${3 - level} h-${3 - level
+                } rounded-full bg-[#1a1a1a]`}
             ></div>
           )}
         </button>
@@ -2201,9 +2212,8 @@ export const Sidebar = () => {
 
   return (
     <div
-      className={`${
-        isSidebarCollapsed ? "w-16" : "w-64"
-      } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${isSidebarCollapsed ? "w-16" : "w-64"
+        } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
       style={{ top: "4rem", height: "91vh" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -2225,9 +2235,8 @@ export const Sidebar = () => {
         {currentSection && (
           <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
             <h3
-              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${
-                isSidebarCollapsed ? "text-center" : "tracking-wide"
-              }`}
+              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
+                }`}
             >
               {isSidebarCollapsed ? "" : currentSection}
             </h3>
@@ -2269,22 +2278,20 @@ export const Sidebar = () => {
                       handleNavigation(module.href, currentSection);
                     }
                   }}
-                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-                    isActiveRoute(module.href)
+                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
                       ? "bg-[#f0e8dc] shadow-inner"
                       : "hover:bg-[#DBC2A9]"
-                  }`}
+                    }`}
                   title={module.name}
                 >
                   {isActiveRoute(module.href) && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                   )}
                   <module.icon
-                    className={`w-5 h-5 ${
-                      isActiveRoute(module.href)
+                    className={`w-5 h-5 ${isActiveRoute(module.href)
                         ? "text-[#C72030]"
                         : "text-[#1a1a1a]"
-                    }`}
+                      }`}
                   />
                 </button>
               ))}
