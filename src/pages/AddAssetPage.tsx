@@ -578,6 +578,14 @@ const AddAssetPage = () => {
     },
   });
 
+  useEffect(() => {
+    if (formData.critical === undefined || formData.critical === null) {
+      setCriticalStatus("");
+      return;
+    }
+    setCriticalStatus(formData.critical.toString());
+  }, [formData.critical]);
+
   const [itAssetDetails, setItAssetDetails] = useState({
     system_details: {
       os: "",
@@ -4281,6 +4289,57 @@ const AddAssetPage = () => {
       },
     },
   };
+
+  const renderCriticalField = () => (
+    <div>
+      <label className="text-sm font-medium text-[#C72030] mb-2 block">
+        Critical
+      </label>
+      <div className="flex gap-6">
+        <div className="flex items-center space-x-2">
+          <input
+            type="radio"
+            id="critical-yes"
+            name="critical"
+            value="1"
+            checked={criticalStatus === "1"}
+            onChange={(e) => {
+              setCriticalStatus(e.target.value);
+              handleFieldChange("critical", e.target.value);
+            }}
+            className="w-4 h-4 text-[#C72030] border-gray-300"
+            style={{
+              accentColor: "#C72030",
+            }}
+          />
+          <label htmlFor="critical-yes" className="text-sm">
+            Yes
+          </label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="radio"
+            id="critical-no"
+            name="critical"
+            value="0"
+            checked={criticalStatus === "0"}
+            onChange={(e) => {
+              setCriticalStatus(e.target.value);
+              handleFieldChange("critical", e.target.value);
+            }}
+            className="w-4 h-4 text-[#C72030] border-gray-300"
+            style={{
+              accentColor: "#C72030",
+            }}
+          />
+          <label htmlFor="critical-no" className="text-sm">
+            No
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
       {/* Header */}
@@ -4530,6 +4589,9 @@ const AddAssetPage = () => {
                         <MenuItem value="Special Use">Special Use</MenuItem>
                       </MuiSelect>
                     </FormControl>
+                    <div className="md:col-span-2">
+                      {renderCriticalField()}
+                    </div>
                     {/* Custom Fields */}
                     {(customFields.basicIdentification || []).map((field) => (
                       <div key={field.id} className="relative">
@@ -5314,6 +5376,10 @@ const AddAssetPage = () => {
                         );
                       }}
                     />
+
+                    <div className="md:col-span-2">
+                      {renderCriticalField()}
+                    </div>
 
 
                     {/* Custom Fields */}
@@ -6666,6 +6732,10 @@ const AddAssetPage = () => {
                           </label>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      {renderCriticalField()}
                     </div>
 
                     {/* Custom Fields */}
@@ -8082,7 +8152,9 @@ const AddAssetPage = () => {
                       )
                     }
 
-
+                    <div className="md:col-span-2">
+                      {renderCriticalField()}
+                    </div>
 
                     {/* Custom Fields */}
                     {(customFields.buildingBasicId || []).map((field) => (
@@ -9631,53 +9703,7 @@ const AddAssetPage = () => {
                             </div>
                           </div>
                         </div>
-                        <div>
-                          <label className="text-sm font-medium text-[#C72030] mb-2 block">
-                            Critical
-                          </label>
-                          <div className="flex gap-6">
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="radio"
-                                id="critical-yes"
-                                name="critical"
-                                value="1"
-                                checked={criticalStatus === "1"}
-                                onChange={(e) => {
-                                  setCriticalStatus(e.target.value);
-                                  handleFieldChange("critical", e.target.value);
-                                }}
-                                className="w-4 h-4 text-[#C72030] border-gray-300"
-                                style={{
-                                  accentColor: "#C72030",
-                                }}
-                              />
-                              <label htmlFor="critical-yes" className="text-sm">
-                                Yes
-                              </label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="radio"
-                                id="critical-no"
-                                name="critical"
-                                value="0"
-                                checked={criticalStatus === "0"}
-                                onChange={(e) => {
-                                  setCriticalStatus(e.target.value);
-                                  handleFieldChange("critical", e.target.value);
-                                }}
-                                className="w-4 h-4 text-[#C72030] border-gray-300"
-                                style={{
-                                  accentColor: "#C72030",
-                                }}
-                              />
-                              <label htmlFor="critical-no" className="text-sm">
-                                No
-                              </label>
-                            </div>
-                          </div>
-                        </div>
+                        {renderCriticalField()}
                       </div>
                     </div>
 

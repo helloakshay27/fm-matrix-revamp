@@ -9,16 +9,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 
-interface StatusBadgeProps {
+export interface StatusBadgeProps {
   status: string;
   assetId: string | number;
   onStatusUpdate?: () => void; // Callback to refresh data
+  disabled?: boolean;
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({
   status,
   assetId,
-  onStatusUpdate
+  onStatusUpdate,
+  disabled = false
 }) => {
   const [currentStatus, setCurrentStatus] = useState<string>(status);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -126,6 +128,20 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       setIsUpdating(false);
     }
   };
+
+  if (disabled) {
+    return (
+    <Button
+        variant="ghost"
+        className={`${getStatusColor(
+          currentStatus
+        )} inline-flex items-center justify-center text-xs px-2 py-2 rounded-sm font-medium w-32 text-center h-auto opacity-60 cursor-not-allowed`}
+        disabled
+      >
+        {formatStatusLabel(currentStatus)}
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

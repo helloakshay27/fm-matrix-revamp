@@ -596,3 +596,4 @@ export const OutboundListPage = () => {
 
 export default OutboundListPage;
 
+

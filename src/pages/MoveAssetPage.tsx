@@ -170,7 +170,7 @@ export const MoveAssetPage: React.FC = () => {
           description: "Assets moved successfully!",
           variant: "default",
         });
-        navigate("/maintenance/asset");
+        navigate("/maintenance/asset", { state: { refreshAssets: true } });
       } else {
         toast({
           title: "Asset Movement Failed",
