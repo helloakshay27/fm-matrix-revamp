@@ -2,44 +2,34 @@ import { ArrowLeftToLine } from "lucide-react";
 import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 
-const KanbanBoard = ({ color, add, title, count = 0, children, className, onDrop }) => {
+const KanbanBoard = ({ color, add, title, count = 0, children, className, onDrop }: { color: string, add: boolean, title: string, count?: number, children?: React.ReactNode, className?: string, onDrop?: (data: any, status: string) => void }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
-    const { setNodeRef } = useDroppable({
+    const columnStatus = title.toLowerCase().replace(/\s+/g, "_");
+
+    const { setNodeRef, isOver } = useDroppable({
         id: `kanban-${title.toLowerCase().replace(/\s+/g, "-")}`,
         data: {
-            title: title.toLowerCase().replace(/\s+/g, "_"),
+            title: columnStatus,
             type: "KANBAN_COLUMN"
         }
     });
 
-    const handleDrop = (event) => {
-        if (onDrop) {
-            const dropItem = {
-                type: event.active.data.current?.type || "TASK",
-                id: event.active.id,
-                fromTaskId: event.active.data.current?.fromTaskId
-            };
-            const formattedTitle = title.toLowerCase().replace(/\s+/g, "_");
-            onDrop(dropItem, formattedTitle);
-        }
-    };
-
     return (
         <div
             ref={setNodeRef}
-            className={`bg-[#DEE6E8] h-full rounded-md px-2 py-3 flex flex-col gap-4 transition-all duration-200 ${className}`}
-            style={
-                window.location.pathname === '/sprint'
-                    ? { minWidth: isCollapsed ? '4rem' : '250px', maxWidth: !isCollapsed && "250px" }
-                    : { minWidth: isCollapsed && "4rem", maxWidth: !isCollapsed && "20%" }
-            }
+            className={`bg-[#DEE6E8] h-full ${isCollapsed ? "min-w-[4rem]" : "min-w-[250px]"} rounded-[5px] px-2 py-3 flex flex-col gap-4 transition-all duration-200 ${isOver ? "ring-2 ring-blue-500 bg-blue-50" : ""} ${className}`}
+        // style={
+        //     window.location.pathname === '/sprint'
+        //         ? { minWidth: isCollapsed ? '4rem' : '250px', maxWidth: !isCollapsed && "250px" }
+        //         : { minWidth: isCollapsed && "4rem", maxWidth: !isCollapsed && "20%" }
+        // }
         >
             <div
                 className={`w-full relative transition-transform duration-200 ${isCollapsed ? "rotate-90" : "rotate-0"}`}
             >
                 <h3
-                    className={`text-white py-2 px-4 rounded-md text-xs w-max z-10 transition-all duration-200 ${isCollapsed ? "absolute top-[-15px] left-[60px]" : "static"
+                    className={`text-white py-2 px-4 rounded-[5px] text-xs w-max z-10 transition-all duration-200 ${isCollapsed ? "absolute top-[-15px] left-[60px]" : "static"
                         }`}
                     style={{ backgroundColor: color }}
                 >

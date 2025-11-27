@@ -258,18 +258,18 @@ export const AddBookingSetupPage = () => {
           return false;
         }
 
-        if (breakStartHour < startHour) {
-          toast.error(
-            `Slot ${index + 1}: Break Time Start hour must be greater than or equal to Start Time hour`
-          );
-          return false;
-        }
-        if (breakEndHour < startHour) {
-          toast.error(
-            `Slot ${index + 1}: Break Time End hour must be greater than or equal to Start Time hour`
-          );
-          return false;
-        }
+        // if (breakStartHour < startHour) {
+        //   toast.error(
+        //     `Slot ${index + 1}: Break Time Start hour must be greater than or equal to Start Time hour`
+        //   );
+        //   return false;
+        // }
+        // if (breakEndHour < startHour) {
+        //   toast.error(
+        //     `Slot ${index + 1}: Break Time End hour must be greater than or equal to Start Time hour`
+        //   );
+        //   return false;
+        // }
         if (endHour < startHour) {
           toast.error(
             `Slot ${index + 1}: End Time hour must be greater than or equal to Start Time hour`

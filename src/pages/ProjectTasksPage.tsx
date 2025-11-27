@@ -137,14 +137,16 @@ const ProjectTasksPage = () => {
     };
 
     const handleSubmit = async (data) => {
+        console.log(data)
         const payload = {
             task_management: {
                 title: data.title,
-                start_date: data.start_date,
-                end_date: data.end_date,
+                expected_start_date: data.start_date,
+                target_date: data.end_date,
                 status: data.status,
                 priority: data.priority,
                 active: true,
+                responsible_person_id: data.responsible,
                 ...(id && { project_type_id: id })
             }
         }
@@ -164,7 +166,7 @@ const ProjectTasksPage = () => {
                 size="sm"
                 variant="ghost"
                 className="p-1"
-                onClick={() => navigate(`/projects/${id}/milestones/${mid}/tasks/${item.id}`)}
+                onClick={() => navigate(`/maintenance/projects/${id}/milestones/${mid}/tasks/${item.id}`)}
                 title="View Task Details"
             >
                 <Eye className="w-4 h-4" />
