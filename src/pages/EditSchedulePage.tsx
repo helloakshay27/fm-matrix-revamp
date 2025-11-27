@@ -671,6 +671,15 @@ export const EditSchedulePage = () => {
     initialize();
   }, [id, customFormCode]);
 
+  // Handle createNew toggle changes - clear template data when disabled
+  useEffect(() => {
+    if (!createNew) {
+      // Clear template selection and reset questionSections to default
+      updateFormData('selectedTemplate', '');
+      loadTemplateData('');
+    }
+  }, [createNew]);
+
   // Handle name-to-ID mapping after both API data and dropdown data are loaded
   useEffect(() => {
     if (apiData && users.length > 0 && categories.length > 0 && groups.length > 0) {
@@ -965,11 +974,11 @@ export const EditSchedulePage = () => {
           const monthString = cronParts[3] !== '*' ? cronParts[3] : '';
           const weekdays = cronParts[4] !== '*' ? cronParts[4].split(',').map(d => {
             const dayMap: { [key: string]: string } = {
-              '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday',
-              '4': 'Thursday', '5': 'Friday', '6': 'Saturday'
+              '1': 'Sunday', '2': 'Monday', '3': 'Tuesday', '4': 'Wednesday',
+              '5': 'Thursday', '6': 'Friday', '7': 'Saturday'
             };
             return dayMap[d] || d;
-          }) : [];
+          }).filter((day, index, array) => array.indexOf(day) === index) : [];
 
           // Convert numeric months to month names for UI
           const monthMap: { [key: string]: string } = {
@@ -1626,7 +1635,7 @@ export const EditSchedulePage = () => {
           subtype: "",
           required: task.mandatory ? "true" : "false",
           is_reading: task.reading ? "true" : "false",
-          hint: task.helpTextValue || "",
+          hint: task.helpText ? (task.helpTextValue || "") : "",
           values: values,
           weightage: task.weightage || "",
           rating_enabled: task.rating ? "true" : "false"
@@ -1636,30 +1645,43 @@ export const EditSchedulePage = () => {
 
     // Build custom_form object
     const customForm: any = {};
-    let taskCounter = 1; // Counter for individual tasks with help text attachments
+    let contentIndex = 1; // Track position in content array
     
     questionSections.forEach((section) => {
-      // Get tasks with help text attachments
-      const sectionTasks = section.tasks.filter(task => task.task.trim());
-      const helpTextTasks = sectionTasks.filter(task => task.helpText);
-      
-      helpTextTasks.forEach(task => {
-        // Validation: All helpText tasks must have helpTextValue and helpTextAttachments
-        if (!task.helpTextValue || !task.helpTextValue.trim()) {
-          throw new Error('Please enter Help Text for all tasks where Help Text is checked.');
-        }
-        if (!task.helpTextAttachments || task.helpTextAttachments.length === 0) {
-          throw new Error('Please attach a help file for all tasks where Help Text is checked.');
+      section.tasks.filter(task => task.task.trim()).forEach(task => {
+        // If this task has help text and attachments, add them with correct index
+        if (task.helpText) {
+          // Validation: All helpText tasks must have helpTextValue and helpTextAttachments
+          if (!task.helpTextValue || !task.helpTextValue.trim()) {
+            throw new Error('Please enter Help Text for all tasks where Help Text is checked.');
+          }
+          if (!task.helpTextAttachments || task.helpTextAttachments.length === 0) {
+            throw new Error('Please attach a help file for all tasks where Help Text is checked.');
+          }
+          
+          // Create individual question_for_{contentIndex} for each task with help text
+          customForm[`question_for_${contentIndex}`] = task.helpTextAttachments.map(attachment => {
+            // Handle both existing attachments (with URLs) and new attachments (with base64 content)
+            if (attachment.url && !attachment.content.startsWith('data:')) {
+              // Existing attachment from API - preserve as URL reference
+              return {
+                filename: attachment.name,
+                content: attachment.url, // Use URL for existing attachments
+                content_type: attachment.content_type,
+                attachment_id: attachment.id // Include ID for existing attachments
+              };
+            } else {
+              // New attachment with base64 content
+              return {
+                filename: attachment.name,
+                content: attachment.content,
+                content_type: attachment.content_type
+              };
+            }
+          });
         }
         
-        // Create individual question_for_{taskCounter} for each task with help text
-        customForm[`question_for_${taskCounter}`] = task.helpTextAttachments.map(attachment => ({
-          filename: attachment.name,
-          content: attachment.content,
-          content_type: attachment.content_type
-        }));
-        
-        taskCounter++;
+        contentIndex++;
       });
     });
 
@@ -3144,7 +3166,14 @@ export const EditSchedulePage = () => {
               <input
                 type="checkbox"
                 checked={createNew}
-                onChange={(e) => setCreateNew(e.target.checked)}
+                onChange={(e) => {
+                  const isChecked = e.target.checked;
+                  setCreateNew(isChecked);
+                  // If disabling createNew, clear template data immediately
+                  if (!isChecked) {
+                    updateFormData('selectedTemplate', '');
+                  }
+                }}
                 className="sr-only"
               />
               <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${createNew ? 'translate-x-6' : 'translate-x-1'}`}></span>
@@ -3831,7 +3860,7 @@ export const EditSchedulePage = () => {
       </Box>
 
       {/* Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
         <CancelButton
           onClick={() => navigate('/maintenance/schedule')}
         >
@@ -3841,7 +3870,7 @@ export const EditSchedulePage = () => {
         <RedButton
           onClick={handleUpdateSchedule}
           disabled={isSubmitting}
-          startIcon={isSubmitting ? <LinearProgress size={20} /> : <Save />}
+          // startIcon={isSubmitting ? <LinearProgress size={20} /> : <Save />}
         >
           {isSubmitting ? 'Updating...' : 'Update Schedule'}
         </RedButton>

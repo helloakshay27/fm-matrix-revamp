@@ -157,6 +157,9 @@ export const InboundListPage = () => {
     const [vendors, setVendors] = useState<Array<{ id: number; name: string }>>([]);
     const [isLoadingVendors, setIsLoadingVendors] = useState(false);
 
+    // Search state
+    const [searchQuery, setSearchQuery] = useState('');
+
     useEffect(() => {
         const fetchInboundMails = async () => {
             setLoading(true);
@@ -177,6 +180,9 @@ export const InboundListPage = () => {
                 }
                 if (appliedFilterCollectedOn) {
                     queryParams.append('q[collected_on_eq]', formatDateForApi(appliedFilterCollectedOn));
+                }
+                if (searchQuery) {
+                    queryParams.append('q[search_all_fields_cont]', searchQuery);
                 }
 
                 const response = await fetch(`${getFullUrl(MAIL_INBOUND_LIST_ENDPOINT)}?${queryParams.toString()}`, {
@@ -233,7 +239,7 @@ export const InboundListPage = () => {
             }
         };
         fetchInboundMails();
-    }, [toast, currentPage, appliedFilterStatus, appliedFilterVendor, appliedFilterReceivedOn, appliedFilterCollectedOn]);
+    }, [toast, currentPage, appliedFilterStatus, appliedFilterVendor, appliedFilterReceivedOn, appliedFilterCollectedOn, searchQuery]);
 
     // Fetch vendors when filter modal opens
     useEffect(() => {
@@ -524,6 +530,10 @@ export const InboundListPage = () => {
                 columns={columns}
                 renderCell={renderCell}
                 onFilterClick={() => setIsFilterModalOpen(true)}
+                onSearch={(query) => {
+                    setSearchQuery(query);
+                    setCurrentPage(1); // Reset to first page on search
+                }}
                 storageKey="inbound-mail-table"
                 className="min-w-full"
                 emptyMessage="No inbound mails available"
