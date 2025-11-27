@@ -201,12 +201,17 @@ export interface Order {
 
 export const restaurantApi = {
   // Get restaurants by site ID
-  async getRestaurantsBySite(siteId: string | number): Promise<RestaurantsBySiteResponse> {
+  async getRestaurantsBySite(siteId: string | number, facilityId?: string | number): Promise<RestaurantsBySiteResponse> {
     try {
+      const params: { site_id: string | number; facility_id?: string | number } = { site_id: siteId };
+      if (facilityId) {
+        params.facility_id = facilityId;
+      }
+      
       const response = await baseClient.get(
         `/pms/admin/restaurants/get_restaurants_by_site.json?skp_dr=true`,
         {
-          params: { site_id: siteId }
+          params
         }
       );
       return response.data;
