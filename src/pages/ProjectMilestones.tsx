@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import MilestoneBody from '../components/MilestoneBody'
-import { ChartNoAxesColumn, ChevronDown, List, Plus } from 'lucide-react'
+import { ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, List, Plus } from 'lucide-react'
 import AddMilestoneModal from '@/components/AddMilestoneModal'
 import { useEffect, useState } from 'react'
 import { useAppDispatch } from '@/store/hooks'
@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 const ProjectMilestones = () => {
     const dispatch = useAppDispatch();
 
-    const [selectedView, setSelectedView] = useState("List");
+    const [selectedView, setSelectedView] = useState("Gantt");
     const [isOpen, setIsOpen] = useState(false);
     const [openDialog, setOpenDialog] = useState(false)
     const [owners, setOwners] = useState([])
@@ -30,8 +30,8 @@ const ProjectMilestones = () => {
     }, [])
 
     return (
-        <div className='py-6 relative'>
-            <div className='flex items-center justify-between p-4 absolute'>
+        <div className='py-6'>
+            <div className='flex items-center justify-between p-4'>
                 <Button
                     className="bg-[#C72030] hover:bg-[#A01020] text-white"
                     onClick={() => setOpenDialog(true)}
@@ -47,6 +47,8 @@ const ProjectMilestones = () => {
                         <span className="text-[#C72030] font-medium flex items-center gap-2">
                             {selectedView === "Kanban" ? (
                                 <ChartNoAxesColumn className="w-4 h-4 rotate-180 text-[#C72030]" />
+                            ) : selectedView === "Gantt" ? (
+                                <ChartNoAxesGantt className="w-4 h-4 rotate-180 text-[#C72030]" />
                             ) : (
                                 <List className="w-4 h-4 text-[#C72030]" />
                             )}
@@ -58,6 +60,18 @@ const ProjectMilestones = () => {
                     {isOpen && (
                         <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
                             <div className="py-2">
+                                <button
+                                    onClick={() => {
+                                        setSelectedView("Gantt");
+                                        setIsOpen(false);
+                                    }}
+                                    className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                                >
+                                    <div className="w-4 flex justify-center">
+                                        <ChartNoAxesGantt className="rotate-180 text-[#C72030]" />
+                                    </div>
+                                    <span className="text-gray-700">Gantt</span>
+                                </button>
                                 <button
                                     onClick={() => {
                                         setSelectedView("Kanban");
