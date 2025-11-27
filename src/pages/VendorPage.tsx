@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, Eye } from 'lucide-react';
+import { Plus, Eye, Upload, X, Loader2 } from 'lucide-react';
 import { vendorService } from '@/services/vendorService';
 import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 interface Vendor {
   id: number;
   company_name: string;
@@ -41,6 +43,9 @@ export const VendorPage = () => {
   const [isSearching, setIsSearching] = useState(false);
 
   const [showActionPanel, setShowActionPanel] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   const fetchVendors = useCallback(async (page: number, search: string) => {
     setLoading(true);
@@ -90,11 +95,113 @@ export const VendorPage = () => {
   
   const handleAddVendor = () => navigate('/maintenance/vendor/add');
   const handleViewVendor = (id: number) => navigate(`/maintenance/vendor/view/${id}`);
-  const handleImport = () => { console.log("Import action triggered"); toast.info("Import functionality not yet implemented."); };
-  const handleExport = () => { console.log("Export action triggered"); toast.info("Export functionality not yet implemented."); };
-  const handleDownloadSample = () => { console.log("Download sample action triggered"); toast.info("Download sample functionality not yet implemented."); };
-  const handleClearSelection = () => { setShowActionPanel(false); };
+  
+  const handleImport = () => {
+    setShowImportModal(true);
+  };
 
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const validTypes = ['.xlsx', '.xls', '.csv'];
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+      
+      if (validTypes.includes(fileExtension)) {
+        setSelectedFile(file);
+      } else {
+        toast.error('Please select a valid file format (CSV, Excel .xlsx, .xls)');
+        event.target.value = '';
+      }
+    }
+  };
+
+  const handleImportSubmit = async () => {
+    if (!selectedFile) {
+      toast.error('Please select a file to import');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('supplier_file', selectedFile);
+
+    setIsImporting(true);
+
+    try {
+      toast.loading('Importing suppliers...', { id: 'import-loading' });
+      
+      const response = await fetch(getFullUrl('/pms/assets/supplier_import.json'), {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': getAuthHeader()
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Import failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      toast.dismiss('import-loading');
+      
+      console.log('Import API Response:', result);
+      
+      // Check for different possible success indicators
+      if (result.success === true || result.status === 'success' || response.status === 200) {
+        toast.success(result.message || 'Suppliers imported successfully!');
+        // Refresh the vendor list to show imported data
+        fetchVendors(currentPage, searchTerm);
+        setShowImportModal(false);
+        setSelectedFile(null);
+      } else {
+        toast.error(result.message || result.error || 'Import failed');
+      }
+    } catch (error) {
+      toast.dismiss('import-loading');
+      console.error('Import error:', error);
+      toast.error('Failed to import suppliers. Please try again.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleDownloadSample = () => {
+    // Create a temporary anchor element to trigger download
+    const link = document.createElement('a');
+    link.href = getFullUrl('/assets/supplier.xlsx');
+    link.download = 'supplier_sample_format.xlsx';
+    link.style.display = 'none';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success('Sample format downloaded successfully');
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      const validTypes = ['.xlsx', '.xls', '.csv'];
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+      
+      if (validTypes.includes(fileExtension)) {
+        setSelectedFile(file);
+      } else {
+        toast.error('Please select a valid file format (CSV, Excel .xlsx, .xls)');
+      }
+    }
+  };
+  const handleExport = () => { console.log("Export action triggered"); toast.info("Export functionality not yet implemented."); };
+  const handleClearSelection = () => { setShowActionPanel(false); };
+  console.log("vendors:---", vendors);
+  
   const columns = [
     { key: 'actions', label: 'Action', sortable: false },
     { key: 'id', label: 'ID', sortable: true },
@@ -125,23 +232,23 @@ export const VendorPage = () => {
         if (Array.isArray(types) && types.length > 0) {
           return types.join(', ');
         }
-        return 'N/A';
+        return '-';
       case 'ext_business_partner_code':
-        return item.ext_business_partner_code ?? 'N/A';
+        return item.ext_business_partner_code ?? '-';
       case 'gstin_number':
-        return item.gstin_number ?? 'N/A';
+        return item.gstin_number ?? '-';
       case 'pan_number':
-        return item.pan_number ?? 'N/A';
+        return item.pan_number ?? '-';
       case 'po_outstandings':
-        return item.financial_summary?.po_outstanding_amount ?? 'N/A';
+        return item.financial_summary?.po_outstanding_amount ?? '-';
       case 'wo_outstandings':
-        return item.financial_summary?.wo_outstanding_amount ?? 'N/A';
+        return item.financial_summary?.wo_outstanding_amount ?? '-';
       case 'average_rating':
-        return item.average_rating ?? 'N/A';
+        return item.average_rating ?? '-';
       case 'signed_on_contract':
-        return item.signed_on_contract ? new Date(item.signed_on_contract).toLocaleDateString() : 'N/A';
+        return item.signed_on_contract ? new Date(item.signed_on_contract).toLocaleDateString() : '-';
       case 'kyc_end_in_days':
-        if (!item.re_kyc_date) return 'N/A';
+        if (!item.re_kyc_date) return '-';
         const endDate = new Date(item.re_kyc_date);
         const today = new Date();
         const diffTime = endDate.getTime() - today.getTime();
@@ -170,8 +277,6 @@ export const VendorPage = () => {
         <SelectionPanel
           onAdd={handleAddVendor}
           onImport={handleImport}
-          onExport={handleExport}
-          onDownloadSample={handleDownloadSample}
           onClearSelection={handleClearSelection}
         />
       )}
@@ -187,7 +292,7 @@ export const VendorPage = () => {
             storageKey="vendors-table"
             enableGlobalSearch={true}
             onGlobalSearch={handleGlobalSearch}
-            searchPlaceholder="Search by company name..."
+            searchPlaceholder="Search vendors (company, code, GST, PAN, email, mobile)..."
             leftActions={renderCustomActions()}
             loading={isSearching || loading}
             loadingMessage={isSearching ? "Searching vendors..." : "Loading vendors..."}
@@ -245,6 +350,69 @@ export const VendorPage = () => {
       <div className="w-full">
         {renderListTab()}
       </div>
+
+      {/* Import Modal */}
+      <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">Bulk Upload</DialogTitle>
+            <Button variant="ghost" size="sm" onClick={() => setShowImportModal(false)} className="p-1">
+              <X className="w-4 h-4 text-red-500" />
+            </Button>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div 
+              className="border-2 border-dashed border-red-700 rounded-lg p-8 text-center"
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+            >
+              <Upload className="w-8 h-8 mx-auto mb-2 text-red-700" />
+              <p className="text-sm mb-2">
+                <span className="text-gray-600">Drag & Drop or </span>
+                <label className="text-red-700 cursor-pointer font-medium">
+                  Choose File
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </label>
+              </p>
+              <p className="text-xs text-gray-500">Supports: CSV, Excel (.xlsx, .xls)</p>
+              {selectedFile && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm font-medium text-green-700">Selected file:</p>
+                  <p className="text-xs text-green-600">{selectedFile.name}</p>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={handleDownloadSample}
+                className="text-red-700 border-red-700 hover:bg-red-50"
+              >
+                Download Sample Format
+              </Button>
+              <Button 
+                onClick={handleImportSubmit}
+                disabled={!selectedFile || isImporting}
+                className="bg-red-700 text-white hover:bg-red-800 disabled:opacity-50"
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  'Import'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
