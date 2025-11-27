@@ -14,13 +14,27 @@ export const vendorService = {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Handle 422 Unprocessable Entity (validation errors)
+        if (response.status === 422) {
+          const error = new Error('Validation failed');
+          (error as any).status = 422;
+          (error as any).validationErrors = errorData;
+          throw error;
+        }
+        
         throw new Error(errorData.message || 'Failed to create vendor');
       }
 
       return await response.json();
     } catch (error: any) {
       console.error('Error creating vendor:', error);
-      toast.error(error.message || 'An unknown error occurred');
+      
+      // Don't show toast for 422 errors, let the component handle them
+      if (error.status !== 422) {
+        toast.error(error.message || 'An unknown error occurred');
+      }
+      
       throw error;
     }
   },
@@ -30,7 +44,8 @@ export const vendorService = {
       const params = new URLSearchParams();
       params.append('page', page.toString());
       if (searchQuery) {
-        params.append('q[company_name_cont]', searchQuery);
+        // Search across multiple fields for comprehensive search
+        params.append('q[company_name_or_ext_business_partner_code_or_gstin_number_or_pan_number_or_email_or_mobile1_cont]', searchQuery);
       }
 
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/suppliers.json?${params.toString()}`, {
