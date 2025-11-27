@@ -377,10 +377,6 @@ export const AddSchedulePage = () => {
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
 
-  // Add activity name validation state
-  const [isValidatingActivityName, setIsValidatingActivityName] = useState(false);
-  const [activityNameValidationResult, setActivityNameValidationResult] = useState<boolean | null>(null);
-
   // Determine schedule type from URL
   const getScheduleTypeFromUrl = () => {
     const urlParams = new URLSearchParams(window.location.search);
