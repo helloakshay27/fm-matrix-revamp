@@ -66,7 +66,7 @@ export const EditExternalUserPage = () => {
     .replace(/[^A-Za-z0-9\s]/g, '') // remove non alphanumeric & non-space
     .replace(/\s+/g, ' ')            // collapse whitespace
     .trim();                          // trim ends
-  const isValidName = (v: string) => /^[A-Za-z0-9 ]{2,}$/.test(v); // allow spaces between words
+  const isValidName = (v: string) => /^[A-Za-z0-9 ]+$/.test(v); // allow spaces between words
 
   // Email format validator
   const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(val).trim());
@@ -86,21 +86,17 @@ export const EditExternalUserPage = () => {
   };
 
   const handleChange = (field: string, value: any) => {
-    if (field === 'firstname') {
+    if (field === 'firstname' || field === 'lastname') {
       const cleaned = sanitizeName(String(value));
       setFormData((prev: any) => ({ ...prev, [field]: cleaned }));
       setFieldErrors(prev => ({
         ...prev,
-        [field]: cleaned.length === 0 ? 'First Name is required'
-          : cleaned.length < 2 ? 'First Name must be at least 2 characters'
-          : !isValidName(cleaned) ? 'First Name must contain only letters, numbers, or spaces'
+        [field]: cleaned.length === 0 ? (field === 'firstname' ? 'First Name is required' : 'Last Name is required')
+          : (field === 'firstname' && cleaned.length < 2) ? 'First Name must be at least 2 characters'
+          : (field === 'lastname' && cleaned.length < 1) ? 'Last Name must be at least 1 character'
+          : !isValidName(cleaned) ? (field === 'firstname' ? 'First Name must contain only letters, numbers, or spaces' : 'Last Name must contain only letters, numbers, or spaces')
           : ''
       }));
-      return;
-    }
-    if (field === 'lastname') {
-      const cleaned = sanitizeName(String(value));
-      setFormData((prev: any) => ({ ...prev, [field]: cleaned }));
       return;
     }
     if (field === 'mobile') {
@@ -141,6 +137,7 @@ export const EditExternalUserPage = () => {
     const errors: Record<string, string> = {};
     const requiredFields: Array<[string, string]> = [
       ['firstname', 'First Name'],
+      ['lastname', 'Last Name'],
       ['email', 'Email'],
       ['mobile', 'Mobile'],
       ['ext_company_name', 'Company Name'],
@@ -172,6 +169,14 @@ export const EditExternalUserPage = () => {
       } else if (!/^[A-Za-z0-9 ]+$/.test(fn)) {
         // Allow internal spaces (e.g., "Vinayak T") but block other characters
         errors.firstname = errors.firstname || 'First Name must contain only letters, numbers, or spaces';
+      }
+    }
+    if (!isEmpty(formData.lastname)) {
+      const ln = String(formData.lastname);
+      if (ln.length < 1) {
+        errors.lastname = errors.lastname || 'Last Name must be at least 1 character';
+      } else if (!/^[A-Za-z0-9 ]+$/.test(ln)) {
+        errors.lastname = errors.lastname || 'Last Name must contain only letters, numbers, or spaces';
       }
     }
     if (!isEmpty(formData.mobile) && !isValidMobile(formData.mobile)) {
@@ -586,7 +591,7 @@ export const EditExternalUserPage = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <TextField label={<>First Name<span style={{ color: '#C72030' }}>*</span></>} value={formData.firstname} onChange={e => handleChange('firstname', e.target.value)} size="small" fullWidth error={!!fieldErrors.firstname} helperText={fieldErrors.firstname || ''} />
-            <TextField label="Last Name" value={formData.lastname} onChange={e => handleChange('lastname', e.target.value)} size="small" fullWidth error={!!fieldErrors.lastname} helperText={fieldErrors.lastname || ''} />
+            <TextField label={<>Last Name<span style={{ color: '#C72030' }}>*</span></>} value={formData.lastname} onChange={e => handleChange('lastname', e.target.value)} size="small" fullWidth error={!!fieldErrors.lastname} helperText={fieldErrors.lastname || ''} />
             <TextField
               label={<>Email<span style={{ color: '#C72030' }}>*</span></>}
               type="email"
