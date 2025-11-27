@@ -631,7 +631,27 @@ export const ProjectsDashboard = () => {
             </div>
           </div>
         </div>
+
         <ProjectManagementKanban />
+
+        <AddProjectModal
+          openDialog={openDialog}
+          handleCloseDialog={handleCloseDialog}
+          setOpenFormDialog={setOpenFormDialog}
+        />
+
+        <ProjectCreateModal
+          openDialog={openFormDialog}
+          handleCloseDialog={() => {
+            setOpenFormDialog(false);
+            setOpenDialog(false);
+          }}
+          owners={owners}
+          projectTypes={projectTypes}
+          tags={tags}
+          teams={teams}
+          fetchProjects={fetchData}
+        />
       </div>
     )
   }
