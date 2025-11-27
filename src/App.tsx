@@ -799,6 +799,7 @@ import ProjectTaskDetailsPage from "./pages/ProjectTaskDetailsPage";
 import { SprintDashboard } from "./pages/SprintDashboard";
 import SprintDetailsPage from "./pages/SprintDetailsPage";
 import MilestoneDetailsPage from "./pages/MilestoneDetailsPage";
+import ProjectTaskDetails from "./pages/ProjectTaskDetails";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2335,10 +2336,13 @@ function App() {
                     element={<ProjectTasksPage />}
                   />
                   <Route
-                    path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
-                    element={<ProjectTaskDetailsPage />}
+                  //   path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
+                  //   element={<ProjectTaskDetailsPage />}
+                  // />
+                  //   <Route
+                    path="/maintenance/projects/:id/milestones/:mid/tasks/:taskId"
+                    element={<ProjectTaskDetails />}
                   />
-
                   <Route
                     path="/maintenance/sprint"
                     element={<SprintDashboard />}

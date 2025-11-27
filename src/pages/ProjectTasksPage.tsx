@@ -164,7 +164,7 @@ const ProjectTasksPage = () => {
                 size="sm"
                 variant="ghost"
                 className="p-1"
-                onClick={() => navigate(`/projects/${id}/milestones/${mid}/tasks/${item.id}`)}
+                onClick={() => navigate(`/maintenance/projects/${id}/milestones/${mid}/tasks/${item.id}`)}
                 title="View Task Details"
             >
                 <Eye className="w-4 h-4" />
