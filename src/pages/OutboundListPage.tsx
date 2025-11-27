@@ -129,6 +129,9 @@ export const OutboundListPage = () => {
   const [isLoadingVendors, setIsLoadingVendors] = useState(false);
   const [isLoadingSenders, setIsLoadingSenders] = useState(false);
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+
   const formatDateForApi = (dateString: string): string => {
     if (!dateString) return '';
     const [year, month, day] = dateString.split('-');
@@ -157,6 +160,9 @@ export const OutboundListPage = () => {
           const fromDate = formatDateForApi(appliedFilterCreatedDateFrom);
           const toDate = formatDateForApi(appliedFilterCreatedDateTo);
           queryParams.append('q[date_range]', `${fromDate} - ${toDate}`);
+        }
+        if (searchQuery) {
+          queryParams.append('q[search_all_fields_cont]', searchQuery);
         }
 
         const url = queryParams.toString()
@@ -215,7 +221,7 @@ export const OutboundListPage = () => {
     };
 
     fetchOutboundMails();
-  }, [toast, currentPage, appliedFilterStatus, appliedFilterSender, appliedFilterVendor, appliedFilterCreatedDateFrom, appliedFilterCreatedDateTo]);
+  }, [toast, currentPage, appliedFilterStatus, appliedFilterSender, appliedFilterVendor, appliedFilterCreatedDateFrom, appliedFilterCreatedDateTo, searchQuery]);
 
   // Fetch vendors and senders when filter modal opens
   useEffect(() => {
@@ -386,6 +392,10 @@ export const OutboundListPage = () => {
         columns={columns}
         renderCell={renderCell}
         onFilterClick={() => setIsFilterModalOpen(true)}
+        onSearch={(query) => {
+          setSearchQuery(query);
+          setCurrentPage(1); // Reset to first page on search
+        }}
         storageKey="outbound-mail-table"
         className="min-w-full"
         emptyMessage="No outbound mails available"
@@ -393,7 +403,7 @@ export const OutboundListPage = () => {
         enableSearch
         enableSelection={false}
         hideTableExport
-        
+
         pagination={false} // Disable internal pagination of EnhancedTable since we use custom external pagination
       />
 

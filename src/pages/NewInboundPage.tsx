@@ -40,6 +40,7 @@ interface PackageData {
 interface PackageValidationErrors {
     recipient?: string;
     sender?: string;
+    mobile?: string;
     companyAddressLine1?: string;
     type?: string;
     otherType?: string;
@@ -104,6 +105,8 @@ export const NewInboundPage = () => {
     };
 
     const sanitizeText = (value: string) => value?.trim() || '';
+const MOBILE_NUMBER_REGEX = /^\d{10}$/;
+const isValidMobileNumber = (value: string) => MOBILE_NUMBER_REGEX.test(value);
 
     const getSelectedSiteId = () => {
         if (typeof window === 'undefined') return '';
@@ -230,13 +233,25 @@ export const NewInboundPage = () => {
         field: keyof Omit<PackageData, 'id' | 'attachments'>,
         value: string
     ) => {
+        let updatedValue = value;
+
+        if (field === 'mobile') {
+            updatedValue = value.replace(/\D/g, '').slice(0, 10);
+        }
+
         setPackages(prev => prev.map(pkg =>
-            pkg.id === packageId ? { ...pkg, [field]: value } : pkg
+            pkg.id === packageId ? { ...pkg, [field]: updatedValue } : pkg
         ));
 
-        const errorFields: Array<keyof PackageValidationErrors> = ['recipient', 'sender', 'companyAddressLine1', 'type', 'otherType'];
+        const errorFields: Array<keyof PackageValidationErrors> = ['recipient', 'sender', 'mobile', 'companyAddressLine1', 'type', 'otherType'];
         if (errorFields.includes(field as keyof PackageValidationErrors)) {
-            clearPackageFieldError(packageId, field as keyof PackageValidationErrors);
+            if (field === 'mobile') {
+                if (isValidMobileNumber(updatedValue)) {
+                    clearPackageFieldError(packageId, 'mobile');
+                }
+            } else {
+                clearPackageFieldError(packageId, field as keyof PackageValidationErrors);
+            }
         }
 
         if (field === 'type' && value !== 'Others') {
@@ -303,6 +318,9 @@ export const NewInboundPage = () => {
 
             if (!pkg.recipient) errorsForPackage.recipient = 'Recipient is required';
             if (!pkg.sender.trim()) errorsForPackage.sender = 'Sender is required';
+            if (!isValidMobileNumber(pkg.mobile)) {
+                errorsForPackage.mobile = 'Enter a valid 10-digit mobile number';
+            }
             if (!pkg.companyAddressLine1.trim()) errorsForPackage.companyAddressLine1 = 'Address Line 1 is required';
             if (!pkg.type) errorsForPackage.type = 'Type is required';
             if (pkg.type === 'Others' && !pkg.otherType.trim()) {
@@ -692,6 +710,9 @@ export const NewInboundPage = () => {
                                             onChange={e => handlePackageInputChange(pkg.id, 'mobile', e.target.value)}
                                             InputLabelProps={{ shrink: true }}
                                             InputProps={{ sx: fieldStyles }}
+                                            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 10 }}
+                                            error={!!packageErrors[pkg.id]?.mobile}
+                                            helperText={packageErrors[pkg.id]?.mobile}
                                         />
                                     </div>
 
