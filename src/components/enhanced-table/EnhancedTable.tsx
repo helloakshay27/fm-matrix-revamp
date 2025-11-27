@@ -126,6 +126,7 @@
 //   searchStatus?: string;
 //   disableClientSearch?: boolean;
 //   loadingMessage?: string;
+//   rowClassName?: (item: T) => string;
 // }
 
 // export function EnhancedTable<T extends Record<string, any>>({
@@ -172,6 +173,7 @@
 //   searchStatus,
 //   disableClientSearch = false,
 //   loadingMessage = "Loading...",
+//   rowClassName,
 // }: EnhancedTableProps<T>) {
 //   const [internalSearchTerm, setInternalSearchTerm] = useState('');
 //   const [searchInput, setSearchInput] = useState('');
@@ -897,6 +899,8 @@ interface EnhancedTableProps<T> {
   searchStatus?: string;
   disableClientSearch?: boolean;
   loadingMessage?: string;
+  rowClassName?: (item: T) => string;
+  isRowDisabled?: (item: T) => boolean;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -947,6 +951,8 @@ export function EnhancedTable<T extends Record<string, any>>({
   searchStatus,
   disableClientSearch = false,
   loadingMessage = "Loading...",
+  rowClassName,
+  isRowDisabled,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -1170,8 +1176,14 @@ export function EnhancedTable<T extends Record<string, any>>({
   const columnIds = visibleColumns.map(col => col.key).filter(key => key !== '__checkbox__');
 
   // Check if all visible items are selected
-  const isAllSelected = selectable && sortedData.length > 0 &&
-    sortedData.every(item => selectedItems.includes(getItemId(item)));
+  const selectableRows = selectable
+    ? sortedData.filter((item) => !(isRowDisabled?.(item)))
+    : sortedData;
+
+  const hasSelectableRows = selectableRows.length > 0;
+
+  const isAllSelected = selectable && hasSelectableRows &&
+    selectableRows.every(item => selectedItems.includes(getItemId(item)));
 
   // Check if some (but not all) items are selected
   const isIndeterminate = selectable && selectedItems.length > 0 && !isAllSelected;
@@ -1456,6 +1468,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                             checked={isAllSelected}
                             onCheckedChange={handleSelectAllChange}
                             aria-label={selectAllLabel}
+                            disabled={!hasSelectableRows}
                             {...(isIndeterminate && { 'data-state': 'indeterminate' })}
                           />
                         </div>
@@ -1599,6 +1612,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                 {!loading && sortedData.map((item, index) => {
                   const itemId = getItemId(item);
                   const isSelected = selectedItems.includes(itemId);
+                  const rowDisabled = !!isRowDisabled?.(item);
 
                   return (
                     <TableRow
@@ -1606,9 +1620,14 @@ export function EnhancedTable<T extends Record<string, any>>({
                       className={cn(
                         onRowClick && "cursor-pointer",
                         "hover:bg-gray-50",
-                        isSelected && "bg-blue-50"
+                        !rowDisabled && isSelected && "bg-blue-50",
+                        rowClassName?.(item)
                       )}
-                      onClick={(e) => handleRowClick(item, e)}
+                      onClick={(e) => {
+                        if (rowDisabled) return;
+                        handleRowClick(item, e);
+                      }}
+                      aria-disabled={rowDisabled}
                     >
                       {renderActions && (
                         <TableCell className="p-4 text-center w-16 min-w-16" data-actions>
@@ -1621,8 +1640,12 @@ export function EnhancedTable<T extends Record<string, any>>({
                         <TableCell className="p-4 w-12 min-w-12 text-center" data-checkbox>
                           <div className="flex justify-center">
                             <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
+                              checked={!rowDisabled && isSelected}
+                              disabled={rowDisabled}
+                              onCheckedChange={(checked) => {
+                                if (rowDisabled) return;
+                                handleSelectItemChange(itemId, !!checked);
+                              }}
                               aria-label={`Select row ${index + 1}`}
                               onClick={(e) => e.stopPropagation()}
                             />

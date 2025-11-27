@@ -457,9 +457,11 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
+              if (asset.disabled) return;
               onViewAsset(asset.id);
             }}
             className="p-1 h-8 w-8"
+            disabled={asset.disabled}
           >
             <Eye className="w-4 h-4" />
           </Button>
@@ -486,6 +488,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
             status={asset.status}
             assetId={asset.id}
             onStatusUpdate={onRefreshData}
+            disabled={asset.disabled}
           />
         );
       case "siteName":
@@ -682,6 +685,11 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     setShowActionPanel(true);
   };
 
+  const getRowClassName = (asset: Asset) =>
+    asset.disabled ? "bg-gray-100 text-gray-500 opacity-60 cursor-not-allowed" : "";
+
+  const isRowDisabled = (asset: Asset) => !!asset.disabled;
+
   return (
     <>
       {showActionPanel && (
@@ -712,6 +720,8 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         onSearchChange={onSearch}
         handleExport={handleExcelExport}
         loading={loading}
+        rowClassName={getRowClassName}
+        isRowDisabled={isRowDisabled}
         key={`asset-table-${availableCustomFields.length}`} // Force re-render when custom fields change
         leftActions={
           shouldShow("assets", "add") ? (

@@ -1085,7 +1085,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
@@ -1222,6 +1222,7 @@ const SortableChartItem = ({
 
 export const AssetDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
 
   // Redux state
@@ -1303,6 +1304,15 @@ export const AssetDashboard = () => {
   // Use search hook
   const { assets: searchedAssets, loading: searchLoading, error: searchError, pagination: searchPagination, searchAssets } =
     useAssetSearch();
+
+  useEffect(() => {
+    const refreshFlag = (location.state as { refreshAssets?: boolean } | null)?.refreshAssets;
+    if (refreshFlag) {
+      setCurrentPage(1);
+      dispatch(fetchAssetsData({ page: 1 }));
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, dispatch, navigate]);
 
   // Function to format date for API
   const formatDateForAPI = (date: Date) => {
@@ -1417,6 +1427,7 @@ export const AssetDashboard = () => {
     commisioning_date: asset.commisioning_date || '',
     warranty: asset.warranty || '',
     amc: asset.amc || '',
+    disabled: !!asset.disabled,
     ...availableCustomFields.reduce((acc, field) => {
       const coreKeysToSkip = new Set([
         'id', 'name', 'asset_number', 'status', 'site_name',
@@ -1480,6 +1491,7 @@ export const AssetDashboard = () => {
     commisioning_date: asset.commisioning_date || '',
     warranty: asset.warranty || '',
     amc: asset.amc || '',
+    disabled: !!asset.disabled,
     ...availableCustomFields.reduce((acc, field) => {
       const coreKeysToSkip = new Set([
         'id', 'name', 'asset_number', 'status', 'site_name',
@@ -1634,13 +1646,20 @@ export const AssetDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedAssets(displayAssets.map((asset) => asset.id));
-    } else {
-      setSelectedAssets([]);
+      const enabledAssetIds = displayAssets
+        .filter((asset) => !asset.disabled)
+        .map((asset) => asset.id);
+      setSelectedAssets(enabledAssetIds);
+      return;
     }
+    setSelectedAssets([]);
   };
 
   const handleSelectAsset = (assetId: string, checked: boolean) => {
+    const targetAsset = displayAssets.find((asset) => asset.id === assetId);
+    if (targetAsset?.disabled) {
+      return;
+    }
     if (checked) {
       setSelectedAssets((prev) => [...prev, assetId]);
     } else {
@@ -1811,6 +1830,7 @@ export const AssetDashboard = () => {
             </div>
           ) : (
             <>
+              {/* @ts-ignore - API stats object uses snake_case fields */}
               <AssetStats stats={data} onCardClick={handleStatCardClick} />
 
               <div className="relative">
