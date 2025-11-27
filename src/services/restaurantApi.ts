@@ -198,17 +198,31 @@ export interface Order {
   note?: string;
   createdAt: string;
 }
-
+// console.log("restaurantApi file loaded",facilityId)
 export const restaurantApi = {
   // Get restaurants by site ID
-  async getRestaurantsBySite(siteId: string | number): Promise<RestaurantsBySiteResponse> {
+  async getRestaurantsBySite(siteId: string | number, facilityId?: string | number): Promise<RestaurantsBySiteResponse> {
     try {
+      console.log("🏢 getRestaurantsBySite called with:", { siteId, facilityId });
+      
+      const params: { site_id: string | number; facility_id?: string | number } = { site_id: siteId };
+      if (facilityId) {
+        params.facility_id = facilityId;
+        console.log("✅ facility_id added to params:", facilityId);
+      } else {
+        console.log("⚠️ No facility_id provided");
+      }
+      
+      console.log("📡 API Request params:", params);
+      
       const response = await baseClient.get(
         `/pms/admin/restaurants/get_restaurants_by_site.json?skp_dr=true`,
         {
-          params: { site_id: siteId }
+          params
         }
       );
+      
+      console.log("📥 API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching restaurants by site:", error);
@@ -424,9 +438,13 @@ export const restaurantApi = {
   // Get facility setup by facility ID
   async getFacilitySetup(facilityId: string): Promise<FacilityResponse> {
     try {
+      console.log("🏢 getFacilitySetup called with facilityId:", facilityId);
+      
       const response = await baseClient.get(
         `/pms/admin/facility_setups/${facilityId}.json?skp_dr=true`
       );
+      
+      console.log("📥 Facility Setup Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching facility setup:", error);
