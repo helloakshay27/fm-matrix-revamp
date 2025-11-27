@@ -22,6 +22,7 @@ const GroupConversation = () => {
     const mentionDropdownRef = useRef(null);
     const modalRef = useRef(null);
     const emojiPickerRef = useRef(null);
+    const bottomRef = useRef(null);
 
     const [activeTab, setActiveTab] = useState("chat");
     const [input, setInput] = useState("");
@@ -395,7 +396,7 @@ const GroupConversation = () => {
             )}
 
             <div className="flex-1 overflow-y-auto">
-                {activeTab === "chat" && id && <Chats messages={messages} onReply={handleReply} />}
+                {activeTab === "chat" && id && <Chats messages={messages} onReply={handleReply} bottomRef={bottomRef} />}
                 {activeTab === "task" && <ChatTasks />}
                 {activeTab === "attachments" && <ChatAttachments />}
             </div>
