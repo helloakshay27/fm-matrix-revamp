@@ -1653,7 +1653,7 @@ function App() {
                     element={<IncidentDetailsPage />}
                   />
                   <Route
-                    path="/safety/incident/new-details"
+                    path="/safety/incident/new-details/:id"
                     element={<IncidentNewDetails />}
                   />
                   <Route

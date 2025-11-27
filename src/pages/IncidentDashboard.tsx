@@ -1737,7 +1737,8 @@ export const IncidentDashboard = () => {
   };
 
   const handleViewIncident = (incidentId: string) => {
-    navigate(`/safety/incident/${incidentId}`);
+    // navigate(`/safety/incident/${incidentId}`);
+    navigate(`/safety/incident/new-details/${incidentId}`);
   };
 
   const handleExport = async () => {
