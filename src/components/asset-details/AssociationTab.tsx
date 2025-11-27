@@ -151,14 +151,27 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
 
   if (!show) return null;
 
-  const filteredAssets = assets.filter((asset) =>
-    asset.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredAssets = assets.filter((asset) => {
+    if (!normalizedSearch) return true;
+    const candidates = [
+      asset.name,
+      asset.asset_number,
+      asset.asset_group,
+      (asset as any).asset_group_name,
+      asset.asset_sub_group,
+      (asset as any).asset_sub_group_name,
+      asset.meter_tag_type,
+    ];
+    return candidates.some((value) =>
+      value?.toString().toLowerCase().includes(normalizedSearch)
+    );
+  });
 
 
   return (
     <Dialog open={show} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-6xl max-h-[90vh] overflow-auto">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="text-lg font-semibold">
             Associate Asset - {assetName}
@@ -172,7 +185,7 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
           </button>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex flex-col h-full">
           {/* Search */}
           <div className="flex justify-end">
             <div className="relative">
@@ -190,8 +203,8 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
           </div>
 
           {/* Assets Table */}
-          <form onSubmit={handleSubmit}>
-            <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 min-h-0 overflow-y-auto border border-gray-200 rounded-lg">
               <table className="w-full table-auto">
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>
