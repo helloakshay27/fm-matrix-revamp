@@ -48,6 +48,7 @@ import {
 } from '@mui/icons-material';
 import { Cog } from 'lucide-react';
 import { toast } from "sonner";
+import { validateActivityName, validateActivityNameDebounced } from '@/utils/scheduleValidation';
 import { MappingStep } from '@/components/schedule/MappingStep';
 import { TimeSetupStep } from '@/components/schedule/TimeSetupStep';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
@@ -423,6 +424,11 @@ export const EditSchedulePage = () => {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ [fieldName: string]: string }>({});
+  
+  // Add activity name validation state
+  const [isValidatingActivityName, setIsValidatingActivityName] = useState(false);
+  const [activityNameValidationResult, setActivityNameValidationResult] = useState<boolean | null>(null);
+  
   const [loadingStates, setLoadingStates] = useState({
     taskGroups: false,
     taskSubGroups: false,
@@ -833,7 +839,7 @@ export const EditSchedulePage = () => {
         checklistType: 'Individual',
         checkInPhotograph: data.custom_form.before_after_enabled ? 'active' : 'inactive',
         asset: data.asset_task.assets?.map(asset => asset.id.toString()) || [],
-        service: data.asset_task.services?.map(service => service.id) || [],
+        service: data.asset_task.services?.map(service => service.id.toString()) || [],
         assetGroup: '',
         assetSubGroup: [],
         assignTo: data.asset_task.assignment_type === 'people' ? 'user' : 'group',
@@ -933,6 +939,20 @@ export const EditSchedulePage = () => {
           }))
         }];
         setQuestionSections(mappedSections);
+        
+        // Auto-load sub-groups for tasks that have group values
+        const uniqueGroupIds = [...new Set(
+          data.custom_form.content
+            .filter(item => item.group_id && item.group_id.trim() !== '')
+            .map(item => item.group_id)
+        )];
+        
+        if (uniqueGroupIds.length > 0) {
+          console.log('Auto-loading sub-groups for groups:', uniqueGroupIds);
+          uniqueGroupIds.forEach(groupId => {
+            loadTaskSubGroups(groupId);
+          });
+        }
       }
 
       // Parse cron expression for time setup
@@ -1164,8 +1184,8 @@ export const EditSchedulePage = () => {
 
     console.log('Starting validation...');
     console.log('Current questionSections:', questionSections);
-    // Validate all steps before submission
-    const basicErrors = validateBasicConfiguration();
+    // Validate all steps before submission - make basic validation async
+    const basicErrors = await validateBasicConfiguration();
     const scheduleErrors = validateScheduleSetup();
     const questionErrors = validateQuestionSetup();
     const timeValid = validateTimeSetup();
@@ -1226,13 +1246,20 @@ export const EditSchedulePage = () => {
   };
 
   // Validation functions for each section - field-level errors like AddSchedulePage
-  const validateBasicConfiguration = (): string[] => {
+  const validateBasicConfiguration = async (): Promise<string[]> => {
     const errors: string[] = [];
     const newFieldErrors: { [fieldName: string]: string } = {};
 
     if (!formData.activityName.trim()) {
       errors.push('Activity Name is required');
       newFieldErrors.activityName = 'Activity Name is required';
+    } else {
+      // Check for duplicate activity names, excluding current schedule
+      const isUnique = await validateActivityName(formData.activityName, id);
+      if (!isUnique) {
+        errors.push('Activity name already exists');
+        newFieldErrors.activityName = 'Activity name already exists';
+      }
     }
 
     if (!formData.type) {
@@ -2255,10 +2282,43 @@ export const EditSchedulePage = () => {
         placeholder="Enter Activity Name"
         fullWidth
         value={formData.activityName}
-        onChange={(e) => updateFormData('activityName', e.target.value)}
-        sx={{ mb: 3 }}
+        onChange={async (e) => {
+          const value = e.target.value;
+          updateFormData('activityName', value);
+          
+          // Clear previous validation result and errors
+          setActivityNameValidationResult(null);
+          setFieldErrors(prev => {
+            const { activityName, ...rest } = prev;
+            return rest;
+          });
+          
+          // Real-time validation with debouncing
+          if (value.trim().length > 2) {
+            setIsValidatingActivityName(true);
+            try {
+              await validateActivityNameDebounced(value.trim(), id);
+            } catch (error) {
+              console.error('Activity name validation error:', error);
+            } finally {
+              setIsValidatingActivityName(false);
+            }
+          }
+        }}
+        sx={{ 
+          mb: 3,
+          '& .MuiFormHelperText-root': {
+            color: fieldErrors.activityName ? '#d32f2f' : 
+                   (isValidatingActivityName ? '#ed6c02' : 
+                    (activityNameValidationResult === true ? '#2e7d32' : 'rgba(0, 0, 0, 0.6)'))
+          }
+        }}
         error={!!fieldErrors.activityName}
-        helperText={fieldErrors.activityName}
+        helperText={
+          fieldErrors.activityName || 
+          (isValidatingActivityName ? 'Checking availability...' : 
+           (activityNameValidationResult === true ? '✓ Activity name is available' : ''))
+        }
       />
 
       <TextField
@@ -2623,7 +2683,7 @@ export const EditSchedulePage = () => {
                 >
                   <MenuItem value="">Select Services</MenuItem>
                   {Array.isArray(services) && services.map((service) => (
-                    <MenuItem key={service.id} value={service.id.toString()}>{service.service_name} ({service.service_code || 'No Code'})</MenuItem>
+                    <MenuItem key={service.id} value={service.id.toString()}>{service.service_name}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
