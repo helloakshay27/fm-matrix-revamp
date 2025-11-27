@@ -86,16 +86,21 @@ export const EditExternalUserPage = () => {
   };
 
   const handleChange = (field: string, value: any) => {
-    if (field === 'firstname' || field === 'lastname') {
+    if (field === 'firstname') {
       const cleaned = sanitizeName(String(value));
       setFormData((prev: any) => ({ ...prev, [field]: cleaned }));
       setFieldErrors(prev => ({
         ...prev,
-        [field]: cleaned.length === 0 ? (field === 'firstname' ? 'First Name is required' : 'Last Name is required')
-          : cleaned.length < 2 ? (field === 'firstname' ? 'First Name must be at least 2 characters' : 'Last Name must be at least 2 characters')
-          : !isValidName(cleaned) ? (field === 'firstname' ? 'First Name must contain only letters, numbers, or spaces' : 'Last Name must contain only letters, numbers, or spaces')
+        [field]: cleaned.length === 0 ? 'First Name is required'
+          : cleaned.length < 2 ? 'First Name must be at least 2 characters'
+          : !isValidName(cleaned) ? 'First Name must contain only letters, numbers, or spaces'
           : ''
       }));
+      return;
+    }
+    if (field === 'lastname') {
+      const cleaned = sanitizeName(String(value));
+      setFormData((prev: any) => ({ ...prev, [field]: cleaned }));
       return;
     }
     if (field === 'mobile') {
@@ -136,7 +141,6 @@ export const EditExternalUserPage = () => {
     const errors: Record<string, string> = {};
     const requiredFields: Array<[string, string]> = [
       ['firstname', 'First Name'],
-      ['lastname', 'Last Name'],
       ['email', 'Email'],
       ['mobile', 'Mobile'],
       ['ext_company_name', 'Company Name'],
@@ -168,14 +172,6 @@ export const EditExternalUserPage = () => {
       } else if (!/^[A-Za-z0-9 ]+$/.test(fn)) {
         // Allow internal spaces (e.g., "Vinayak T") but block other characters
         errors.firstname = errors.firstname || 'First Name must contain only letters, numbers, or spaces';
-      }
-    }
-    if (!isEmpty(formData.lastname)) {
-      const ln = String(formData.lastname);
-      if (ln.length < 2) {
-        errors.lastname = errors.lastname || 'Last Name must be at least 2 characters';
-      } else if (!/^[A-Za-z0-9 ]+$/.test(ln)) {
-        errors.lastname = errors.lastname || 'Last Name must contain only letters, numbers, or spaces';
       }
     }
     if (!isEmpty(formData.mobile) && !isValidMobile(formData.mobile)) {
@@ -257,7 +253,7 @@ export const EditExternalUserPage = () => {
       };
       const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
       const url = `${cleanBaseUrl}/pms/users/${idForUpdate}/update_vi_user`;
-      await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${cleanBaseUrl}/pms/users/${idForUpdate}/update_vi_user`, payload, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('External user updated');
       navigate(`/safety/m-safe/external/user/${idForUpdate}`, { state: { user: { ...originalUser, ...formData } } });
     } catch (e: any) {
@@ -590,7 +586,7 @@ export const EditExternalUserPage = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <TextField label={<>First Name<span style={{ color: '#C72030' }}>*</span></>} value={formData.firstname} onChange={e => handleChange('firstname', e.target.value)} size="small" fullWidth error={!!fieldErrors.firstname} helperText={fieldErrors.firstname || ''} />
-            <TextField label={<>Last Name<span style={{ color: '#C72030' }}>*</span></>} value={formData.lastname} onChange={e => handleChange('lastname', e.target.value)} size="small" fullWidth error={!!fieldErrors.lastname} helperText={fieldErrors.lastname || ''} />
+            <TextField label="Last Name" value={formData.lastname} onChange={e => handleChange('lastname', e.target.value)} size="small" fullWidth error={!!fieldErrors.lastname} helperText={fieldErrors.lastname || ''} />
             <TextField
               label={<>Email<span style={{ color: '#C72030' }}>*</span></>}
               type="email"
