@@ -52,6 +52,7 @@ import {
   ArrowBack
 } from '@mui/icons-material';
 import { Cog, ArrowLeft } from 'lucide-react';
+import { validateActivityName, validateActivityNameDebounced } from '@/utils/scheduleValidation';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -368,9 +369,17 @@ export const AddSchedulePage = () => {
   const [fieldErrors, setFieldErrors] = useState<{ [fieldName: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Add activity name validation state
+  const [isValidatingActivityName, setIsValidatingActivityName] = useState(false);
+  const [activityNameValidationResult, setActivityNameValidationResult] = useState<boolean | null>(null);
+
   // Add draft modal state
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
+
+  // Add activity name validation state
+  const [isValidatingActivityName, setIsValidatingActivityName] = useState(false);
+  const [activityNameValidationResult, setActivityNameValidationResult] = useState<boolean | null>(null);
 
   // Determine schedule type from URL
   const getScheduleTypeFromUrl = () => {
@@ -2254,7 +2263,7 @@ export const AddSchedulePage = () => {
   };
 
   // Validation functions for each section - updated for field-level errors
-  const validateBasicConfiguration = (): string[] => {
+  const validateBasicConfiguration = async (): Promise<string[]> => {
     const errors: { [key: string]: string } = {};
 
     if (!formData.type) {
@@ -2262,6 +2271,12 @@ export const AddSchedulePage = () => {
     }
     if (!formData.activityName.trim()) {
       errors['activityName'] = 'Activity Name is required';
+    } else {
+      // Check for duplicate activity names
+      const isUnique = await validateActivityName(formData.activityName);
+      if (!isUnique) {
+        errors['activityName'] = 'Activity name already exists';
+      }
     }
 
     // Update field errors
@@ -2488,7 +2503,7 @@ export const AddSchedulePage = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const validateCurrentStep = (): boolean => {
+  const validateCurrentStep = async (): Promise<boolean> => {
     // Clear existing field errors for current step
     setFieldErrors(prev => {
       const clearedErrors = { ...prev };
@@ -2503,7 +2518,8 @@ export const AddSchedulePage = () => {
 
     switch (activeStep) {
       case 0:
-        isValid = validateBasicConfiguration().length === 0;
+        const basicErrors = await validateBasicConfiguration();
+        isValid = basicErrors.length === 0;
         break;
       case 1:
         isValid = validateScheduleSetup().length === 0;
@@ -2553,7 +2569,7 @@ export const AddSchedulePage = () => {
     return true;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     // For Question Setup step, show all field errors in toast
     if (activeStep === 2) {
       const errors = validateQuestionSetup();
@@ -2581,7 +2597,7 @@ export const AddSchedulePage = () => {
         return;
       }
     } else {
-      if (!validateCurrentStep()) {
+      if (!(await validateCurrentStep())) {
         toast.error("Please fill all required fields before proceeding.", {
           position: 'top-right',
           duration: 4000,
@@ -2643,7 +2659,7 @@ export const AddSchedulePage = () => {
   };
 
   // Proceed to Save: Validates current section and moves to next section
-  const handleProceedToSave = () => {
+  const handleProceedToSave = async () => {
     // Don't use this for Mapping step (last step)
     if (activeStep >= steps.length - 1) {
       return;
@@ -2677,7 +2693,7 @@ export const AddSchedulePage = () => {
         return;
       }
     } else {
-      if (!validateCurrentStep()) {
+      if (!(await validateCurrentStep())) {
         toast.error("Please fill all required fields before proceeding.", {
           position: 'top-right',
           duration: 4000,
@@ -2730,7 +2746,7 @@ export const AddSchedulePage = () => {
   // Save to Draft: Saves current progress to localStorage
   // For steps 0-2: Validates, saves to localStorage, and moves to next section
   // For step 3 (Time Setup): Saves to localStorage and navigates to schedule list
-  const handleSaveToDraft = () => {
+  const handleSaveToDraft = async () => {
     // Don't use this for Mapping step (last step) - mapping step only has Submit button
     if (activeStep >= steps.length - 1) {
       return;
@@ -2755,7 +2771,7 @@ export const AddSchedulePage = () => {
         return;
       }
     } else {
-      if (!validateCurrentStep()) {
+      if (!(await validateCurrentStep())) {
         toast.error("Please fill all required fields before proceeding.", {
           position: 'top-right',
           duration: 4000,
@@ -3295,8 +3311,43 @@ export const AddSchedulePage = () => {
               placeholder="Enter Activity Name"
               fullWidth
               value={formData.activityName}
-              onChange={(e) => setFormData({ ...formData, activityName: e.target.value })}
-              sx={{ mb: 3 }}
+              onChange={async (e) => {
+                const value = e.target.value;
+                setFormData({ ...formData, activityName: value });
+                
+                // Clear previous validation result and errors
+                setActivityNameValidationResult(null);
+                setFieldErrors(prev => {
+                  const { activityName, ...rest } = prev;
+                  return rest;
+                });
+                
+                // Real-time validation with debouncing
+                if (value.trim().length > 2) {
+                  setIsValidatingActivityName(true);
+                  try {
+                    await validateActivityNameDebounced(value.trim());
+                  } catch (error) {
+                    console.error('Activity name validation error:', error);
+                  } finally {
+                    setIsValidatingActivityName(false);
+                  }
+                }
+              }}
+              error={!!fieldErrors.activityName}
+              helperText={
+                fieldErrors.activityName || 
+                (isValidatingActivityName ? 'Checking availability...' : 
+                 (activityNameValidationResult === true ? '✓ Activity name is available' : ''))
+              }
+              sx={{ 
+                mb: 3,
+                '& .MuiFormHelperText-root': {
+                  color: fieldErrors.activityName ? '#d32f2f' : 
+                         (isValidatingActivityName ? '#ed6c02' : 
+                          (activityNameValidationResult === true ? '#2e7d32' : 'rgba(0, 0, 0, 0.6)'))
+                }
+              }}
             />
 
             <TextField

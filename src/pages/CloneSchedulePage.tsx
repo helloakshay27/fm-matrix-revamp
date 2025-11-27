@@ -48,6 +48,7 @@ import {
 } from '@mui/icons-material';
 import { Cog } from 'lucide-react';
 import { toast } from "sonner";
+import { validateActivityName, validateActivityNameDebounced } from '@/utils/scheduleValidation';
 import { MappingStep } from '@/components/schedule/MappingStep';
 import { TimeSetupStep } from '@/components/schedule/TimeSetupStep';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
@@ -423,6 +424,11 @@ export const CloneSchedulePage = () => {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ [fieldName: string]: string }>({});
+  
+  // Add activity name validation state
+  const [isValidatingActivityName, setIsValidatingActivityName] = useState(false);
+  const [activityNameValidationResult, setActivityNameValidationResult] = useState<boolean | null>(null);
+  
   const [loadingStates, setLoadingStates] = useState({
     taskGroups: false,
     taskSubGroups: false,
@@ -446,7 +452,7 @@ export const CloneSchedulePage = () => {
       if (usersResponse.ok) {
         const usersData = await usersResponse.json();
         console.log('Users API response:', usersData);
-        
+
         // Handle different possible response structures
         let usersArray = [];
         if (usersData.users && Array.isArray(usersData.users)) {
@@ -456,14 +462,14 @@ export const CloneSchedulePage = () => {
         } else if (usersData.data && Array.isArray(usersData.data)) {
           usersArray = usersData.data;
         }
-        
+
         // Ensure users have required properties
         const formattedUsers = usersArray.map((user: any) => ({
           id: user.id || user.user_id || user.ID,
           name: user.name || user.user_name || user.full_name || user.display_name || `User ${user.id}`,
           email: user.email || user.user_email || user.email_address || ''
         }));
-        
+
         console.log('Formatted users:', formattedUsers);
         setUsers(formattedUsers);
       } else {
@@ -670,7 +676,7 @@ export const CloneSchedulePage = () => {
     if (apiData && users.length > 0 && categories.length > 0 && groups.length > 0) {
       // Handle ticket assignment mapping - try to find ID from name if name is provided
       if (apiData.custom_form.task_assigner_name && !apiData.custom_form.task_assigner_id) {
-        const matchingUser = users.find(user => 
+        const matchingUser = users.find(user =>
           user.name === apiData.custom_form.task_assigner_name
         );
         if (matchingUser) {
@@ -680,7 +686,7 @@ export const CloneSchedulePage = () => {
 
       // Handle category mapping - try to find ID from name if name is provided
       if (apiData.custom_form.helpdesk_category_name && !apiData.custom_form.helpdesk_category_id) {
-        const matchingCategory = categories.find(category => 
+        const matchingCategory = categories.find(category =>
           category.name === apiData.custom_form.helpdesk_category_name
         );
         if (matchingCategory) {
@@ -692,14 +698,14 @@ export const CloneSchedulePage = () => {
       if (apiData.asset_task.group_name && apiData.asset_task.assignment_type === 'group') {
         const groupNames = apiData.asset_task.group_name.split(',').map(name => name.trim());
         const matchingGroupIds = [];
-        
+
         groupNames.forEach(groupName => {
           const matchingGroup = groups.find(group => group.name === groupName);
           if (matchingGroup) {
             matchingGroupIds.push(matchingGroup.id.toString());
           }
         });
-        
+
         if (matchingGroupIds.length > 0) {
           console.log('Mapped group names to IDs:', groupNames, '->', matchingGroupIds);
           setFormData(prev => ({ ...prev, selectedGroups: matchingGroupIds }));
@@ -767,7 +773,7 @@ export const CloneSchedulePage = () => {
 
         // Validate selectedUsers against users
         if (users.length > 0 && prev.selectedUsers && prev.selectedUsers.length > 0) {
-          const validUsers = prev.selectedUsers.filter(userId => 
+          const validUsers = prev.selectedUsers.filter(userId =>
             users.some(user => user.id.toString() === userId.toString())
           );
           if (validUsers.length !== prev.selectedUsers.length) {
@@ -779,7 +785,7 @@ export const CloneSchedulePage = () => {
 
         // Validate selectedGroups against groups
         if (groups.length > 0 && prev.selectedGroups && prev.selectedGroups.length > 0) {
-          const validGroups = prev.selectedGroups.filter(groupId => 
+          const validGroups = prev.selectedGroups.filter(groupId =>
             groups.some(group => group.id.toString() === groupId.toString())
           );
           if (validGroups.length !== prev.selectedGroups.length) {
@@ -833,7 +839,7 @@ export const CloneSchedulePage = () => {
         checklistType: 'Individual',
         checkInPhotograph: data.custom_form.before_after_enabled ? 'active' : 'inactive',
         asset: data.asset_task.assets?.map(asset => asset.id.toString()) || [],
-        service: data.asset_task.services?.map(service => service.id) || [],
+        service: data.asset_task.services?.map(service => service.id.toString()) || [],
         assetGroup: '',
         assetSubGroup: [],
         assignTo: data.asset_task.assignment_type === 'people' ? 'user' : 'group',
@@ -940,6 +946,20 @@ export const CloneSchedulePage = () => {
           }))
         }];
         setQuestionSections(mappedSections);
+
+        // Load sub-groups for any tasks that have group values
+        const uniqueGroups = [...new Set(
+          mappedSections[0].tasks
+            .map(task => task.group)
+            .filter(group => group && group.trim() !== '')
+        )];
+        
+        // Load sub-groups for each unique group
+        uniqueGroups.forEach(groupId => {
+          if (groupId) {
+            loadTaskSubGroups(groupId);
+          }
+        });
       }
 
       // Parse cron expression for time setup
@@ -1186,7 +1206,7 @@ export const CloneSchedulePage = () => {
 
   const handleCloneSchedule = async () => {
     console.log('handleCloneSchedule called');
-    
+
     if (!customFormCode) {
       toast.error('Custom form code is required for cloning');
       return;
@@ -1194,8 +1214,8 @@ export const CloneSchedulePage = () => {
 
     console.log('Starting validation...');
     console.log('Current questionSections:', questionSections);
-    // Validate all steps before submission
-    const basicErrors = validateBasicConfiguration();
+    // Validate all steps before submission - make basic validation async
+    const basicErrors = await validateBasicConfiguration();
     const scheduleErrors = validateScheduleSetup();
     const questionErrors = validateQuestionSetup();
     const timeValid = validateTimeSetup();
@@ -1218,12 +1238,12 @@ export const CloneSchedulePage = () => {
     try {
       // Build the API payload
       const payload = buildAPIPayload();
-      
+
       // Modify activity name to indicate it's a clone
       payload.pms_custom_form.form_name = `${formData.activityName}`;
-      
+
       console.log('Clone payload:', payload);
-      
+
       // Make POST API call to create a new schedule
       const response = await fetch(
         `${API_CONFIG.BASE_URL}/pms/custom_forms?access_token=${API_CONFIG.TOKEN}`,
@@ -1259,13 +1279,20 @@ export const CloneSchedulePage = () => {
   };
 
   // Validation functions for each section - field-level errors like AddSchedulePage
-  const validateBasicConfiguration = (): string[] => {
+  const validateBasicConfiguration = async (): Promise<string[]> => {
     const errors: string[] = [];
     const newFieldErrors: { [fieldName: string]: string } = {};
 
     if (!formData.activityName.trim()) {
       errors.push('Activity Name is required');
       newFieldErrors.activityName = 'Activity Name is required';
+    } else {
+      // Check for duplicate activity names (clone creates new, so no exclusion needed)
+      const isUnique = await validateActivityName(formData.activityName);
+      if (!isUnique) {
+        errors.push('Activity name already exists');
+        newFieldErrors.activityName = 'Activity name already exists';
+      }
     }
 
     if (!formData.type) {
@@ -1643,12 +1670,12 @@ export const CloneSchedulePage = () => {
     // Build custom_form object
     const customForm: any = {};
     let taskCounter = 1; // Counter for individual tasks with help text attachments
-    
+
     questionSections.forEach((section) => {
       // Get tasks with help text attachments
       const sectionTasks = section.tasks.filter(task => task.task.trim());
       const helpTextTasks = sectionTasks.filter(task => task.helpText);
-      
+
       helpTextTasks.forEach(task => {
         // Validation: All helpText tasks must have helpTextValue and helpTextAttachments
         if (!task.helpTextValue || !task.helpTextValue.trim()) {
@@ -1657,14 +1684,14 @@ export const CloneSchedulePage = () => {
         if (!task.helpTextAttachments || task.helpTextAttachments.length === 0) {
           throw new Error('Please attach a help file for all tasks where Help Text is checked.');
         }
-        
+
         // Create individual question_for_{taskCounter} for each task with help text
         customForm[`question_for_${taskCounter}`] = task.helpTextAttachments.map(attachment => ({
           filename: attachment.name,
           content: attachment.content,
           content_type: attachment.content_type
         }));
-        
+
         taskCounter++;
       });
     });
@@ -1866,6 +1893,178 @@ export const CloneSchedulePage = () => {
       prev.map(section =>
         section.id === sectionId
           ? { ...section, tasks: section.tasks.filter(task => task.id !== taskId) }
+          : section
+      )
+    );
+  };
+
+  // Helper functions for radio values
+  const addRadioValue = (sectionId: string, taskId: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  radioValues: [...task.radioValues, { label: '', type: 'positive' }]
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
+  const updateRadioValue = (sectionId: string, taskId: string, valueIndex: number, value: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  radioValues: task.radioValues.map((val, idx) =>
+                    idx === valueIndex ? { ...val, label: value } : val
+                  )
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
+  const updateRadioType = (sectionId: string, taskId: string, valueIndex: number, type: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  radioValues: task.radioValues.map((val, idx) =>
+                    idx === valueIndex ? { ...val, type: type } : val
+                  )
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
+  const removeRadioValue = (sectionId: string, taskId: string, valueIndex: number) => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  radioValues: task.radioValues.filter((_, idx) => idx !== valueIndex)
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
+  // Helper functions for checkbox values
+  const addCheckboxValue = (sectionId: string, taskId: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  checkboxValues: [...task.checkboxValues, ''],
+                  checkboxSelectedStates: [...task.checkboxSelectedStates, false]
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
+  const updateCheckboxValue = (sectionId: string, taskId: string, valueIndex: number, value: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  checkboxValues: task.checkboxValues.map((v, idx) =>
+                    idx === valueIndex ? value : v
+                  )
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
+  const updateCheckboxSelectedState = (sectionId: string, taskId: string, valueIndex: number, checked: boolean): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  checkboxSelectedStates: task.checkboxSelectedStates.map((state, idx) =>
+                    idx === valueIndex ? checked : state
+                  )
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
+  const removeCheckboxValue = (sectionId: string, taskId: string, valueIndex: number): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  checkboxValues: task.checkboxValues.filter((_, idx) => idx !== valueIndex),
+                  checkboxSelectedStates: task.checkboxSelectedStates.filter((_, idx) => idx !== valueIndex)
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -2302,10 +2501,43 @@ export const CloneSchedulePage = () => {
         placeholder="Enter Activity Name"
         fullWidth
         value={formData.activityName}
-        onChange={(e) => updateFormData('activityName', e.target.value)}
-        sx={{ mb: 3 }}
+        onChange={async (e) => {
+          const value = e.target.value;
+          updateFormData('activityName', value);
+          
+          // Clear previous validation result and errors
+          setActivityNameValidationResult(null);
+          setFieldErrors(prev => {
+            const { activityName, ...rest } = prev;
+            return rest;
+          });
+          
+          // Real-time validation with debouncing
+          if (value.trim().length > 2) {
+            setIsValidatingActivityName(true);
+            try {
+              await validateActivityNameDebounced(value.trim());
+            } catch (error) {
+              console.error('Activity name validation error:', error);
+            } finally {
+              setIsValidatingActivityName(false);
+            }
+          }
+        }}
+        sx={{ 
+          mb: 3,
+          '& .MuiFormHelperText-root': {
+            color: fieldErrors.activityName ? '#d32f2f' : 
+                   (isValidatingActivityName ? '#ed6c02' : 
+                    (activityNameValidationResult === true ? '#2e7d32' : 'rgba(0, 0, 0, 0.6)'))
+          }
+        }}
         error={!!fieldErrors.activityName}
-        helperText={fieldErrors.activityName}
+        helperText={
+          fieldErrors.activityName || 
+          (isValidatingActivityName ? 'Checking availability...' : 
+           (activityNameValidationResult === true ? '✓ Activity name is available' : ''))
+        }
       />
 
       <TextField
@@ -2548,7 +2780,7 @@ export const CloneSchedulePage = () => {
           {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
           {formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && (
             <Box sx={{ minWidth: 0 }}>
-              
+
               <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                 <InputLabel shrink>Select Assets <span style={{ color: 'red' }}>*</span></InputLabel>
                 <Select
@@ -2671,7 +2903,7 @@ export const CloneSchedulePage = () => {
                 >
                   <MenuItem value="">Select Services</MenuItem>
                   {Array.isArray(services) && services.map((service) => (
-                    <MenuItem key={service.id} value={service.id.toString()}>{service.service_name} ({service.service_code || 'No Code'})</MenuItem>
+                    <MenuItem key={service.id} value={service.id.toString()}>{service.service_name}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -2772,8 +3004,8 @@ export const CloneSchedulePage = () => {
                     if (!selected || selected.length === 0) {
                       return <span style={{ color: '#aaa' }}>Select Groups</span>;
                     }
-                    console.log("groups:--",groups);
-                    
+                    console.log("groups:--", groups);
+
                     return groups
                       .filter(group => selected.includes(group.id.toString()))
                       .map(group => group.name)
@@ -2794,7 +3026,7 @@ export const CloneSchedulePage = () => {
                   </Typography>
                 )}
               </FormControl>
-              
+
               {/* Display selected groups as chips */}
               {/* {formData.selectedGroups && formData.selectedGroups.length > 0 && (
                 <Box sx={{ mt: 2 }}>
@@ -2824,7 +3056,7 @@ export const CloneSchedulePage = () => {
                   </Box>
                 </Box>
               )} */}
-              
+
             </Box>
           )}
 
@@ -2840,7 +3072,7 @@ export const CloneSchedulePage = () => {
               >
                 <MenuItem value="">Select Backup Assignee</MenuItem>
                 {Array.isArray(users) && users.map((option) => (
-                  <MenuItem key={option.id} value={option.id.toString()}>{option.name || option.full_name} ({option.email})</MenuItem>
+                  <MenuItem key={option.id} value={option.id.toString()}>{option.name || option.full_name}</MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -3319,7 +3551,6 @@ export const CloneSchedulePage = () => {
                   </Typography>
                 )}
               </Box>
-
               <Box>
                 <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Sub-Group</InputLabel>
@@ -3467,8 +3698,19 @@ export const CloneSchedulePage = () => {
                               { label: 'Yes', type: 'positive' },
                               { label: 'No', type: 'negative' }
                             ]);
-                          } else if (value !== 'dropdown') {
+                          } else if (value === 'radio') {
+                            updateTaskInSection(section.id, task.id, 'radioValues', [
+                              { label: 'Yes', type: 'positive' },
+                              { label: 'No', type: 'negative' }
+                            ]);
+                          } else if (value === 'checkbox') {
+                            updateTaskInSection(section.id, task.id, 'checkboxValues', ['Yes', 'No']);
+                            updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false, false]);
+                          } else if (value !== 'dropdown' && value !== 'radio' && value !== 'checkbox') {
                             updateTaskInSection(section.id, task.id, 'dropdownValues', [{ label: '', type: 'positive' }]);
+                            updateTaskInSection(section.id, task.id, 'radioValues', [{ label: '', type: 'positive' }]);
+                            updateTaskInSection(section.id, task.id, 'checkboxValues', ['']);
+                            updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false]);
                           }
                         }}
                         disabled={task.reading && !formData.selectedTemplate}
@@ -3514,7 +3756,7 @@ export const CloneSchedulePage = () => {
                         onChange={(e) => updateTaskInSection(section.id, task.id, 'helpTextValue', e.target.value)}
                         sx={fieldStyles}
                       />
-                      
+
                       {/* File attachment for help text */}
                       <Box sx={{ mt: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -3675,7 +3917,171 @@ export const CloneSchedulePage = () => {
                     </Box>
                   )}
 
-                  {/* Similar configurations for radio, checkbox, etc. can be added here following the same pattern */}
+                  {/* Radio Input Type Configuration */}
+                  {task.inputType === 'radio' && (
+                    <Box sx={{ mt: 2 }}>
+                      <Box sx={{
+                        backgroundColor: '#F5F5F5',
+                        border: '1px solid #E0E0E0',
+                        borderRadius: 0,
+                        padding: 2
+                      }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                            Selected
+                          </Typography>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                            Enter Value
+                          </Typography>
+                        </Box>
+
+                        {task.radioValues && task.radioValues.map((value, valueIndex) => (
+                          <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                            <Radio
+                              checked={valueIndex === 0} // First option selected by default
+                              name={`radio-${section.id}-${task.id}`}
+                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            />
+
+                            <TextField
+                              fullWidth
+                              size="small"
+                              placeholder="Enter option value"
+                              value={value.label}
+                              onChange={(e) => updateRadioValue(section.id, task.id, valueIndex, e.target.value)}
+                              label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  backgroundColor: 'white'
+                                }
+                              }}
+                            />
+
+                            <FormControl variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
+                              <InputLabel shrink>Type</InputLabel>
+                              <Select
+                                label="Type"
+                                notched
+                                displayEmpty
+                                value={value.type || ''}
+                                onChange={(e) => updateRadioType(section.id, task.id, valueIndex, e.target.value)}
+                              >
+                                <MenuItem value="">Select Type</MenuItem>
+                                <MenuItem value="positive">P</MenuItem>
+                                <MenuItem value="negative">N</MenuItem>
+                              </Select>
+                            </FormControl>
+                            {task.radioValues.length > 1 && (
+                              <IconButton
+                                size="small"
+                                onClick={() => removeRadioValue(section.id, task.id, valueIndex)}
+                                sx={{ color: '#C72030' }}
+                              >
+                                <Close />
+                              </IconButton>
+                            )}
+                          </Box>
+                        ))}
+
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                          <MuiButton
+                            variant="outlined"
+                            size="small"
+                            startIcon={<Add />}
+                            onClick={() => addRadioValue(section.id, task.id)}
+                            sx={{
+                              color: '#C72030',
+                              borderColor: '#C72030',
+                              fontSize: '12px',
+                              padding: '4px 12px',
+                              '&:hover': {
+                                borderColor: '#C72030',
+                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                              }
+                            }}
+                          >
+                            Add Option
+                          </MuiButton>
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Checkbox Input Type Configuration */}
+                  {task.inputType === 'checkbox' && (
+                    <Box sx={{ mt: 2 }}>
+                      <Box sx={{
+                        backgroundColor: '#F5F5F5',
+                        border: '1px solid #E0E0E0',
+                        borderRadius: 0,
+                        padding: 2
+                      }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                            Selected
+                          </Typography>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                            Enter Value
+                          </Typography>
+                        </Box>
+
+                        {task.checkboxValues && task.checkboxValues.map((value, valueIndex) => (
+                          <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                            <Checkbox
+                              checked={task.checkboxSelectedStates?.[valueIndex] || false}
+                              onChange={(e) => updateCheckboxSelectedState(section.id, task.id, valueIndex, e.target.checked)}
+                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            />
+
+                            <TextField
+                              fullWidth
+                              size="small"
+                              placeholder="Enter option value"
+                              value={value}
+                              onChange={(e) => updateCheckboxValue(section.id, task.id, valueIndex, e.target.value)}
+                              label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  backgroundColor: 'white'
+                                }
+                              }}
+                            />
+
+                            {task.checkboxValues.length > 1 && (
+                              <IconButton
+                                size="small"
+                                onClick={() => removeCheckboxValue(section.id, task.id, valueIndex)}
+                                sx={{ color: '#C72030' }}
+                              >
+                                <Close />
+                              </IconButton>
+                            )}
+                          </Box>
+                        ))}
+
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                          <MuiButton
+                            variant="outlined"
+                            size="small"
+                            startIcon={<Add />}
+                            onClick={() => addCheckboxValue(section.id, task.id)}
+                            sx={{
+                              color: '#C72030',
+                              borderColor: '#C72030',
+                              fontSize: '12px',
+                              padding: '4px 12px',
+                              '&:hover': {
+                                borderColor: '#C72030',
+                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                              }
+                            }}
+                          >
+                            Add Option
+                          </MuiButton>
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
 
                 </Box>
               </Box>
@@ -3704,11 +4110,11 @@ export const CloneSchedulePage = () => {
             {sectionIndex < questionSections.length - 1 && <hr className="my-6 border-t border-gray-200" />}
           </div>
         </div>
-    ))}
+      ))}
     </div>
   );
-      console.log("timeSetupData:--", apiData?.asset_task?.cron_expression, timeSetupData);
-      console.log("editTiming:--", editTiming);
+  console.log("timeSetupData:--", apiData?.asset_task?.cron_expression, timeSetupData);
+  console.log("editTiming:--", editTiming);
 
   const renderTimeSetup = () => (
     <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
@@ -3735,7 +4141,7 @@ export const CloneSchedulePage = () => {
             Time Setup
           </Typography>
         </Box>
-        
+
         <FormControlLabel
           control={
             <Checkbox
