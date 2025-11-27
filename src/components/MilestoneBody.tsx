@@ -1193,7 +1193,7 @@ import axios from "axios";
 import "dhtmlx-gantt";
 import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 import { useParams, useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 const baseURL = `https://${localStorage.getItem("baseUrl")}`;
 
