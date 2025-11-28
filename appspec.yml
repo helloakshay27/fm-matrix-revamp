@@ -1,8 +1,6 @@
 version: 0.0
 os: linux
-files:
-  - source: /
-    destination: /var/www/html/development/fm-matrix-revamp
+
 hooks:
   AfterInstall:
     - location: src/scripts/install_dependencies.sh
