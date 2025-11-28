@@ -847,10 +847,10 @@ export const ViewSchedulePage = () => {
                       dayColumnValue = 'All';
                     } else {
                       const weekdayMap: Record<string, string> = { 
-                        '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday', 
-                        '5': 'Friday', '6': 'Saturday', '7': 'Sunday' 
+                        '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', 
+                        '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday' 
                       };
-                      dayColumnValue = weekdays.map(wd => weekdayMap[wd] || wd).join(', ');
+                      dayColumnValue = weekdays.map(wd => weekdayMap[wd] || wd).filter(day => day.trim() !== '').join(', ');
                     }
                   }
                   

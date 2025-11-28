@@ -974,11 +974,11 @@ export const EditSchedulePage = () => {
           const monthString = cronParts[3] !== '*' ? cronParts[3] : '';
           const weekdays = cronParts[4] !== '*' ? cronParts[4].split(',').map(d => {
             const dayMap: { [key: string]: string } = {
-              '1': 'Sunday', '2': 'Monday', '3': 'Tuesday', '4': 'Wednesday',
-              '5': 'Thursday', '6': 'Friday', '7': 'Saturday'
+              '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday',
+              '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday'
             };
             return dayMap[d] || d;
-          }).filter((day, index, array) => array.indexOf(day) === index) : [];
+          }).filter((day, index, array) => day && day.trim() && array.indexOf(day) === index) : [];
 
           // Convert numeric months to month names for UI
           const monthMap: { [key: string]: string } = {
@@ -1025,6 +1025,10 @@ export const EditSchedulePage = () => {
             betweenMonthStart: betweenMonthStart,
             betweenMonthEnd: betweenMonthEnd
           }));
+
+          // Debug logging for weekdays
+          console.log('EditSchedulePage - Parsed weekdays:', weekdays);
+          console.log('EditSchedulePage - selectedWeekdays:', weekdays);
         }
       }
 
@@ -1531,15 +1535,15 @@ export const EditSchedulePage = () => {
     // Build day part
     if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length > 0) {
       const weekdayMap: { [key: string]: string } = {
-        'Sunday': '1',
-        'Monday': '2',
-        'Tuesday': '3',
-        'Wednesday': '4',
-        'Thursday': '5',
-        'Friday': '6',
-        'Saturday': '7'
+        'Sunday': '0',
+        'Monday': '1',
+        'Tuesday': '2',
+        'Wednesday': '3',
+        'Thursday': '4',
+        'Friday': '5',
+        'Saturday': '6'
       };
-      dayOfWeek = timeSetupData.selectedWeekdays.map(day => weekdayMap[day]).join(',');
+      dayOfWeek = timeSetupData.selectedWeekdays.map(day => weekdayMap[day]).filter(val => val !== undefined && val !== '').join(',');
       dayOfMonth = '?';
     } else if (timeSetupData.dayMode === 'specific' && timeSetupData.selectedDays.length > 0) {
       dayOfMonth = timeSetupData.selectedDays.join(',');

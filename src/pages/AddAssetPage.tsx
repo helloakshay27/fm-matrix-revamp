@@ -4910,6 +4910,30 @@ const AddAssetPage = () => {
                         );
                       }}
                     />
+                    <TextField
+                      label="Expiry Date"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value;
+                        handleExtraFieldChange(
+                          "land_expiry_date",
+                          selectedDate,
+                          "date",
+                          "landSizeValue",
+                          "Expiry Date"
+                        );
+                      }}
+                    />
 
                     <div className="flex gap-2">
                       <FormControl
@@ -5930,6 +5954,30 @@ const AddAssetPage = () => {
                         handleFieldChange(
                           "depreciation_rate",
                           value.toString()
+                        );
+                      }}
+                    />
+                    <TextField
+                      label="Expiry Date"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value;
+                        handleExtraFieldChange(
+                          "leasehold_financial_expiry_date",
+                          selectedDate,
+                          "date",
+                          "leaseholdFinancial",
+                          "Expiry Date"
                         );
                       }}
                     />
@@ -7140,6 +7188,30 @@ const AddAssetPage = () => {
                           "Date of Purchase"
                         );
                         handleFieldChange("commisioning_date", selectedDate);
+                      }}
+                    />
+                    <TextField
+                      label="Expiry Date"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value;
+                        handleExtraFieldChange(
+                          "vehicle_financial_expiry_date",
+                          selectedDate,
+                          "date",
+                          "vehicleFinancial",
+                          "Expiry Date"
+                        );
                       }}
                     />
 
@@ -8627,6 +8699,30 @@ const AddAssetPage = () => {
                           "date",
                           "buildingAcquisition",
                           "Date of Acquisition"
+                        );
+                      }}
+                    />
+                    <TextField
+                      label="Expiry Date"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value;
+                        handleExtraFieldChange(
+                          "building_acquisition_expiry_date",
+                          selectedDate,
+                          "date",
+                          "buildingAcquisition",
+                          "Expiry Date"
                         );
                       }}
                     />
