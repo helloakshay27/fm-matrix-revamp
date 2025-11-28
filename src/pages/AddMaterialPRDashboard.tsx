@@ -529,6 +529,7 @@ export const AddMaterialPRDashboard = () => {
     const payload = {
       pms_purchase_order: {
         pms_supplier_id: supplierDetails.supplier,
+        type: supplierDetails.type,
         plant_detail_id: supplierDetails.plantDetail,
         billing_address_id: supplierDetails.billingAddress,
         shipping_address_id: supplierDetails.deliveryAddress,
@@ -552,6 +553,7 @@ export const AddMaterialPRDashboard = () => {
           expected_date: item.expectedDate,
           sac_hsn_code: item.sacHsnCodeId,
           prod_desc: item.productDescription,
+          general_storage: item.generalStorage,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
