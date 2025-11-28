@@ -76,7 +76,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ZxSidebar />;
     }
 
-    if (selectedCompany?.id === 295) {
+    if (
+      selectedCompany?.id === 295 ||
+      selectedCompany?.id === 298 ||
+      selectedCompany?.id === 199
+    ) {
       return <Sidebar />;
     }
 
@@ -108,7 +112,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (selectedCompany?.id === 189) {
       return <ZxDynamicHeader />;
     }
-    if (selectedCompany?.id === 295) {
+    if (
+      selectedCompany?.id === 295 ||
+      selectedCompany?.id === 298 ||
+      selectedCompany?.id === 199
+    ) {
       return <DynamicHeader />;
     }
 
