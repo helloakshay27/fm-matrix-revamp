@@ -7,11 +7,11 @@ hooks:
   AfterInstall:
     - location: src/scripts/install_dependencies.sh
       timeout: 300
-      runas: ec2-user
+      runas: root
     
     - location: src/scripts/build_react.sh
       timeout: 300
-      runas: ec2-user
+      runas: root
 
   ApplicationStart:
     - location: src/scripts/restart_nginx.sh
