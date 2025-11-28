@@ -993,103 +993,121 @@ export const FMUserMasterDashboard = () => {
 
               <TabsContent value="handover" className="space-y-4">
                 <div>
-                  <TextField
-                    select
-                    fullWidth
-                    label="From User"
-                    value={fromUser}
-                    onChange={(e) => setFromUser(e.target.value)}
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                  >
-                    {fmForClone.length > 0 ? (
-                      fmForClone.map((user) => (
-                        <MenuItem key={user.id} value={user.id}>
-                          {user.full_name}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem value="" disabled>
-                        No users available
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>From User</InputLabel>
+                    <Select
+                      label="From User"
+                      value={fromUser}
+                      onChange={(e) => setFromUser(e.target.value)}
+                      displayEmpty
+                    >
+                      <MenuItem value="">
+                        <em>Select User</em>
                       </MenuItem>
-                    )}
-                  </TextField>
+
+                      {fmForClone.length > 0 ? (
+                        fmForClone.map((user) => (
+                          <MenuItem key={user.id} value={user.id}>
+                            {user.full_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="" disabled>
+                          No users available
+                        </MenuItem>
+                      )}
+                    </Select>
+                  </FormControl>
                 </div>
 
                 <div>
-                  <TextField
-                    select
-                    fullWidth
-                    label="To User"
-                    value={toUser}
-                    onChange={(e) => setToUser(e.target.value)}
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                  >
-                    {fmForClone.length > 0 ? (
-                      fmForClone.map((user) => (
-                        <MenuItem key={user.id} value={user.id}>
-                          {user.full_name}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem value="" disabled>
-                        No users available
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>To User</InputLabel>
+                    <Select
+                      label="To User"
+                      value={toUser}
+                      onChange={(e) => setToUser(e.target.value)}
+                      displayEmpty
+                    >
+                      <MenuItem value="">
+                        <em>Select User</em>
                       </MenuItem>
-                    )}
-                  </TextField>
+
+                      {fmForClone.length > 0 ? (
+                        fmForClone.map((user) => (
+                          <MenuItem key={user.id} value={user.id}>
+                            {user.full_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="" disabled>
+                          No users available
+                        </MenuItem>
+                      )}
+                    </Select>
+                  </FormControl>
                 </div>
               </TabsContent>
+
 
               <TabsContent value="clone" className="space-y-4">
                 <div>
-                  <TextField
-                    select
-                    fullWidth
-                    label="From User"
-                    value={fromUser}
-                    onChange={(e) => setFromUser(e.target.value)}
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                  >
-                    {fmForClone.length > 0 ? (
-                      fmForClone.map((user) => (
-                        <MenuItem key={user.id} value={user.id}>
-                          {user.full_name}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem value="" disabled>
-                        No users available
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>From User</InputLabel>
+                    <Select
+                      label="From User"
+                      value={fromUser}
+                      onChange={(e) => setFromUser(e.target.value)}
+                      displayEmpty
+                    >
+                      <MenuItem value="">
+                        <em>Select User</em>
                       </MenuItem>
-                    )}
-                  </TextField>
+
+                      {fmForClone.length > 0 ? (
+                        fmForClone.map((user) => (
+                          <MenuItem key={user.id} value={user.id}>
+                            {user.full_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="" disabled>
+                          No users available
+                        </MenuItem>
+                      )}
+                    </Select>
+                  </FormControl>
                 </div>
 
                 <div>
-                  <TextField
-                    select
-                    fullWidth
-                    label="To User"
-                    value={toUser}
-                    onChange={(e) => setToUser(e.target.value)}
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                  >
-                    {fmForClone.length > 0 ? (
-                      fmForClone.map((user) => (
-                        <MenuItem key={user.id} value={user.id}>
-                          {user.full_name}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem value="" disabled>
-                        No users available
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>To User</InputLabel>
+                    <Select
+                      label="To User"
+                      value={toUser}
+                      onChange={(e) => setToUser(e.target.value)}
+                      displayEmpty
+                    >
+                      <MenuItem value="">
+                        <em>Select User</em>
                       </MenuItem>
-                    )}
-                  </TextField>
+
+                      {fmForClone.length > 0 ? (
+                        fmForClone.map((user) => (
+                          <MenuItem key={user.id} value={user.id}>
+                            {user.full_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="" disabled>
+                          No users available
+                        </MenuItem>
+                      )}
+                    </Select>
+                  </FormControl>
                 </div>
               </TabsContent>
+
             </Tabs>
 
             <div className="flex justify-center pt-6">
