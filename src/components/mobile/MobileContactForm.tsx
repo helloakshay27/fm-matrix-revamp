@@ -119,6 +119,54 @@ export const MobileContactForm: React.FC = () => {
   });  console.log("formData", formData);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingUserData, setIsLoadingUserData] = useState(false);
+
+  // Debounce timer for user data lookup
+  const userDataTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Function to fetch and auto-fill user data
+  const fetchUserData = async (mobile?: string, email?: string) => {
+    // Only fetch if we have complete mobile (8-9 digits) or valid email
+    const hasValidMobile = mobile && (mobile.length === 8 || mobile.length === 9);
+    const hasValidEmail = email && validateEmail(email);
+
+    if (!hasValidMobile && !hasValidEmail) {
+      return;
+    }
+
+    setIsLoadingUserData(true);
+    try {
+      const params: { customer_mobile?: string; customer_email?: string } = {};
+      if (hasValidMobile) params.customer_mobile = mobile;
+      if (hasValidEmail) params.customer_email = email;
+
+      const result = await restaurantApi.getUserData(params);
+      
+      if (result.success && result.data) {
+        console.log("✅ User data found, auto-filling form:", result.data);
+        
+        // Auto-fill the form with user data from API
+        setFormData(prev => ({
+          ...prev,
+          customer_name: result.data?.customer_name || prev.customer_name,
+          customer_mobile: result.data?.customer_mobile || prev.customer_mobile,
+          customer_email: result.data?.customer_email || prev.customer_email,
+          delivery_address: result.data?.delivery_address || prev.delivery_address,
+        }));
+
+        toast({
+          title: "User Found",
+          description: "Your information has been auto-filled.",
+        });
+      } else {
+        console.log("ℹ️ No existing user data found");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setIsLoadingUserData(false);
+    }
+  };
 
   const handleBack = () => {
     navigate(-1);
@@ -129,6 +177,24 @@ export const MobileContactForm: React.FC = () => {
       ...prev,
       [field]: value,
     }));
+
+    // Clear existing timer
+    if (userDataTimerRef.current) {
+      clearTimeout(userDataTimerRef.current);
+    }
+
+    // Trigger user data lookup after user stops typing (500ms debounce)
+    if (field === 'customer_mobile' || field === 'customer_email') {
+      userDataTimerRef.current = setTimeout(() => {
+        // Use the latest value from the updated formData
+        setFormData((currentData) => {
+          const mobile = field === 'customer_mobile' ? value : currentData.customer_mobile;
+          const email = field === 'customer_email' ? value : currentData.customer_email;
+          fetchUserData(mobile, email);
+          return currentData; // Don't modify state, just read it
+        });
+      }, 500);
+    }
   };
 
   // Validation functions
