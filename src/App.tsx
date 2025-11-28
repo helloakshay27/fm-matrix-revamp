@@ -2336,10 +2336,10 @@ function App() {
                     element={<ProjectTasksPage />}
                   />
                   <Route
-                  //   path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
-                  //   element={<ProjectTaskDetailsPage />}
-                  // />
-                  //   <Route
+                    //   path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
+                    //   element={<ProjectTaskDetailsPage />}
+                    // />
+                    //   <Route
                     path="/maintenance/projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetails />}
                   />
@@ -2353,7 +2353,7 @@ function App() {
                   />
 
                   <Route
-                    path="/maintenance/projects/:projectId/milestones/:id"
+                    path="/maintenance/projects/:id/milestones/:mid"
                     element={<MilestoneDetailsPage />}
                   />
 
