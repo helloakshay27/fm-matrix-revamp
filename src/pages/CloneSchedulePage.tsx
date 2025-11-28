@@ -983,10 +983,10 @@ export const CloneSchedulePage = () => {
           const weekdays = cronParts[4] !== '*' ? cronParts[4].split(',').map(d => {
             const dayMap: { [key: string]: string } = {
               '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday',
-              '4': 'Thursday', '5': 'Friday', '6': 'Saturday'
+              '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday'
             };
             return dayMap[d] || d;
-          }) : [];
+          }).filter((day, index, array) => array.indexOf(day) === index) : [];
 
           // Convert numeric months to month names for UI
           const monthMap: { [key: string]: string } = {
@@ -1055,6 +1055,10 @@ export const CloneSchedulePage = () => {
             betweenMonthStart: betweenMonthStart,
             betweenMonthEnd: betweenMonthEnd
           }));
+
+          // Debug logging for weekdays
+          console.log('CloneSchedulePage - Parsed weekdays:', weekdays);
+          console.log('CloneSchedulePage - selectedWeekdays:', weekdays);
         }
       }
 
@@ -1564,13 +1568,13 @@ export const CloneSchedulePage = () => {
     // Build day part
     if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length > 0) {
       const weekdayMap: { [key: string]: string } = {
-        'Sunday': '1',
-        'Monday': '2',
-        'Tuesday': '3',
-        'Wednesday': '4',
-        'Thursday': '5',
-        'Friday': '6',
-        'Saturday': '7'
+        'Sunday': '0',
+        'Monday': '1',
+        'Tuesday': '2',
+        'Wednesday': '3',
+        'Thursday': '4',
+        'Friday': '5',
+        'Saturday': '6'
       };
       dayOfWeek = timeSetupData.selectedWeekdays.map(day => weekdayMap[day]).join(',');
       dayOfMonth = '?';
