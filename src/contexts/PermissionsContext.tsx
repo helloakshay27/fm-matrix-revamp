@@ -105,31 +105,35 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({
 
   const isModuleEnabled = useCallback(
     (moduleName: string): boolean => {
-      // Try cache first for better performance
-      const cached = permissionCache.isModuleEnabled(moduleName);
-      if (cached !== false || !userRole) return cached;
+      // Prioritize fresh data if available
+      if (userRole) {
+        return permissionService.isModuleEnabled(userRole, moduleName);
+      }
 
-      // Fallback to service
-      return permissionService.isModuleEnabled(userRole, moduleName);
+      // Fallback to cache if loading
+      const cached = permissionCache.isModuleEnabled(moduleName);
+      return cached;
     },
     [userRole]
   );
 
   const isFunctionEnabled = useCallback(
     (moduleName: string, functionName: string): boolean => {
-      // Try cache first for better performance
+      // Prioritize fresh data if available
+      if (userRole) {
+        return permissionService.isFunctionEnabled(
+          userRole,
+          moduleName,
+          functionName
+        );
+      }
+
+      // Fallback to cache if loading
       const cached = permissionCache.isFunctionEnabled(
         moduleName,
         functionName
       );
-      if (cached !== false || !userRole) return cached;
-
-      // Fallback to service
-      return permissionService.isFunctionEnabled(
-        userRole,
-        moduleName,
-        functionName
-      );
+      return cached;
     },
     [userRole]
   );
@@ -140,21 +144,23 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({
       functionName: string,
       subFunctionName: string
     ): boolean => {
-      // Try cache first for better performance
+      // Prioritize fresh data if available
+      if (userRole) {
+        return permissionService.isSubFunctionEnabled(
+          userRole,
+          moduleName,
+          functionName,
+          subFunctionName
+        );
+      }
+
+      // Fallback to cache if loading
       const cached = permissionCache.isSubFunctionEnabled(
         moduleName,
         functionName,
         subFunctionName
       );
-      if (cached !== false || !userRole) return cached;
-
-      // Fallback to service
-      return permissionService.isSubFunctionEnabled(
-        userRole,
-        moduleName,
-        functionName,
-        subFunctionName
-      );
+      return cached;
     },
     [userRole]
   );
