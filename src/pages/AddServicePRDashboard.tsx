@@ -75,6 +75,7 @@ export const AddServicePRDashboard = () => {
   const [formData, setFormData] = useState({
     contractor: "",
     plantDetail: "",
+    type: "",
     woDate: "",
     billingAddress: "",
     retention: "",
@@ -110,6 +111,7 @@ export const AddServicePRDashboard = () => {
       amount: "",
       totalAmount: "",
       wbsCode: "",
+      generalStorage: "GNST",
     },
   ]);
 
@@ -138,6 +140,7 @@ export const AddServicePRDashboard = () => {
           setFormData({
             contractor: prData.pms_supplier_id || "",
             plantDetail: prData.plant_detail_id || "",
+            type: "",
             woDate: prData.wo_date ? prData.wo_date.split("T")[0] : "",
             billingAddress: prData.billing_address_id || "",
             retention: prData.retention || "",
@@ -216,6 +219,7 @@ export const AddServicePRDashboard = () => {
         pms_work_order: {
           letter_of_indent: true,
           pms_supplier_id: formData.contractor,
+          type: formData.type,
           plant_detail_id: formData.plantDetail,
           wo_date: formData.woDate,
           billing_address_id: formData.billingAddress,
@@ -248,6 +252,7 @@ export const AddServicePRDashboard = () => {
             taxable_value: item.taxAmount,
             total_value: item.amount,
             total_amount: item.totalAmount,
+            general_storage: item.generalStorage,
             ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
           })),
         },
@@ -344,6 +349,7 @@ export const AddServicePRDashboard = () => {
           setFormData({
             contractor: data.pms_supplier_id,
             plantDetail: data.work_order.plant_detail_id,
+            type: "",
             woDate: data.work_order.date ? data.work_order.date.split("T")[0] : "",
             billingAddress: data.work_order.billing_address_id,
             retention: data.work_order?.payment_terms?.retention,
@@ -508,6 +514,7 @@ export const AddServicePRDashboard = () => {
       amount: "",
       totalAmount: "",
       wbsCode: "",
+      generalStorage: "GNST",
     };
     setDetailsForms((prev) => [...prev, newForm]);
   };
@@ -713,6 +720,30 @@ export const AddServicePRDashboard = () => {
                 </MuiSelect>
               </FormControl>
 
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Type</InputLabel>
+                <MuiSelect
+                  label="Type"
+                  name="type"
+                  value={formData.type}
+                  onChange={(e) =>
+                    handleInputChange("type", e.target.value)
+                  }
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Type</em>
+                  </MenuItem>
+                  <MenuItem value="technical">
+                    Technical
+                  </MenuItem>
+                  <MenuItem value="non-technical">
+                    Non-Technical
+                  </MenuItem>
+                </MuiSelect>
+              </FormControl>
+
               <TextField
                 label="Select WO Date*"
                 value={formData.woDate}
@@ -853,7 +884,6 @@ export const AddServicePRDashboard = () => {
                 rows={2}
                 InputLabelProps={{ shrink: true }}
                 sx={{
-                  mt: 1,
                   "& .MuiOutlinedInput-root": {
                     height: "auto !important",
                     padding: "2px !important",
@@ -1243,6 +1273,22 @@ export const AddServicePRDashboard = () => {
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
                   />
+
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>GNST General Storage</InputLabel>
+                    <MuiSelect
+                      label="GNST General Storage"
+                      value={detailsData.generalStorage}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled
+                    >
+                      <MenuItem value="">
+                        <em>Select GNST</em>
+                      </MenuItem>
+                      <MenuItem value="GNST">GNST</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
 
                   {wbsSelection === "individual" && (
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
