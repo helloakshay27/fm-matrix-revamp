@@ -38,7 +38,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Get layout configuration based on company ID
   const layoutConfig = getLayoutByCompanyId(
-    selectedCompany?.id === 85 || selectedCompany?.id === 199
+    selectedCompany?.id === 295 || selectedCompany?.id === 199
       ? selectedCompany.id
       : null
   );
@@ -76,6 +76,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ZxSidebar />;
     }
 
+    if (selectedCompany?.id === 295) {
+      return <Sidebar />;
+    }
+
     // Use company ID-based layout
     switch (layoutConfig.sidebarComponent) {
       case "oman":
@@ -103,6 +107,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Company-specific logic
     if (selectedCompany?.id === 189) {
       return <ZxDynamicHeader />;
+    }
+    if (selectedCompany?.id === 295) {
+      return <DynamicHeader />;
     }
 
     // Use company ID-based layout

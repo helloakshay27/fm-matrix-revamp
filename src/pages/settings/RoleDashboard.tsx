@@ -346,6 +346,11 @@ export const RoleDashboard = () => {
       (sf) => (sf.sub_function_id ?? sf.id) === subFunctionId
     );
 
+    // Find the module data from allModules
+    const moduleData = allModules.find(
+      (m) => (m.module_id ?? m.id) === moduleId
+    );
+
     dispatch(
       updateSubFunctionEnabled({
         roleId: currentRole.role_id,
@@ -353,6 +358,8 @@ export const RoleDashboard = () => {
         functionId,
         subFunctionId,
         enabled,
+        moduleData, // Pass complete module structure
+        functionData, // Pass complete function structure
         subFunctionData, // Pass the complete sub-function structure
       })
     );
@@ -373,12 +380,18 @@ export const RoleDashboard = () => {
       (f) => (f.function_id ?? f.id) === functionId
     );
 
+    // Find the module data from allModules
+    const moduleData = allModules.find(
+      (m) => (m.module_id ?? m.id) === moduleId
+    );
+
     dispatch(
       updateFunctionEnabled({
         roleId: currentRole.role_id,
         moduleId,
         functionId,
         enabled,
+        moduleData, // Pass complete module structure
         functionData, // Pass the complete function structure
       })
     );
