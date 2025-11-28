@@ -219,7 +219,7 @@ export const AddServicePRDashboard = () => {
         pms_work_order: {
           letter_of_indent: true,
           pms_supplier_id: formData.contractor,
-          type: formData.type,
+          pr_type: formData.type,
           plant_detail_id: formData.plantDetail,
           wo_date: formData.woDate,
           billing_address_id: formData.billingAddress,
@@ -602,7 +602,7 @@ export const AddServicePRDashboard = () => {
       pms_work_order: {
         letter_of_indent: true,
         pms_supplier_id: formData.contractor,
-        type: formData.type,
+        pr_type: formData.type,
         plant_detail_id: formData.plantDetail,
         wo_date: formData.woDate,
         billing_address_id: formData.billingAddress,

@@ -472,6 +472,7 @@ export const AddFMUserPage = () => {
                     value={formData.designation}
                     onChange={(e) => handleInputChange('designation', e.target.value)}
                     InputLabelProps={{ shrink: true }}
+                    inputProps={{ maxLength: 50 }}
                   />
                 </div>
                 <div>

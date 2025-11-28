@@ -196,7 +196,7 @@ export const AddMaterialPRDashboard = () => {
         pms_purchase_order: {
           pms_supplier_id: supplierDetails.supplier,
           plant_detail_id: supplierDetails.plantDetail,
-          type: supplierDetails.type,
+          pr_type: supplierDetails.type,
           billing_address_id: supplierDetails.billingAddress,
           shipping_address_id: supplierDetails.deliveryAddress,
           po_date: supplierDetails.prDate,
@@ -529,7 +529,7 @@ export const AddMaterialPRDashboard = () => {
     const payload = {
       pms_purchase_order: {
         pms_supplier_id: supplierDetails.supplier,
-        type: supplierDetails.type,
+        pr_type: supplierDetails.type,
         plant_detail_id: supplierDetails.plantDetail,
         billing_address_id: supplierDetails.billingAddress,
         shipping_address_id: supplierDetails.deliveryAddress,

@@ -122,6 +122,7 @@ interface ServiceItem {
   tcs_amount: number;
   tax_amount: number;
   total_amount: number;
+  general_storage: string;
 }
 
 interface Approval {
@@ -157,12 +158,14 @@ interface ServicePR {
   signature?: string;
   contractor?: string;
   all_level_approved?: boolean;
+  pr_type: string;
 }
 
 // Column configurations
 const serviceColumns: ColumnConfig[] = [
   { key: "sno", label: "S.No", sortable: true, draggable: true },
   { key: "boq_details", label: "BOQ Details", sortable: true, draggable: true },
+  { key: "general_storage", label: "General Storage", sortable: true, draggable: true },
   { key: "quantity", label: "Quantity", sortable: true, draggable: true },
   { key: "uom", label: "UOM", sortable: true, draggable: true },
   {
@@ -550,6 +553,7 @@ export const ServicePRDetailsPage = () => {
       tcs_amount: item.tcs_amount || 0,
       tax_amount: item.tax_amount || 0,
       total_amount: item.total_amount || 0,
+      general_storage: item.general_storage || "GNST"
     })) || [];
 
   const renderCell = (item: ServiceItem, columnKey: string) => {
@@ -957,6 +961,17 @@ export const ServicePRDetailsPage = () => {
                 <span className="text-gray-900 font-medium">
                   {servicePR.work_order?.description ?? "-"}
                 </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+                {servicePR.pr_type ? (
+                  <span className="text-gray-900 font-medium px-3 text-sm rounded-[5px] w-max cursor-pointer bg-blue-200">
+                    {servicePR.pr_type}
+                  </span>
+                ) : (
+                  <span className="text-gray-500">-</span>
+                )}
               </div>
             </div>
           </CardContent>

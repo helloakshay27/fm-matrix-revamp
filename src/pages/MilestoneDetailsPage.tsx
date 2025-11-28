@@ -6,18 +6,9 @@ import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import EditMilestoneModal from "@/components/EditMilestoneModal";
-
-interface MilestoneDetails {
-  id?: string;
-  title?: string;
-  created_by?: string;
-  created_on?: string;
-  status?: string;
-  responsible_person?: string;
-  duration?: string;
-  start_date?: string;
-  end_date?: string;
-}
+import { useAppDispatch } from "@/store/hooks";
+import { fetchMilestoneById } from "@/store/slices/projectMilestoneSlice";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 
 interface Dependency {
   milestone_title?: string;
@@ -75,89 +66,40 @@ const dependencyColumns: ColumnConfig[] = [
 
 export const MilestoneDetailsPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const dispatch = useAppDispatch();
+  const { mid } = useParams<{ mid: string }>();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
-  const [milestoneDetails, setMilestoneDetails] = useState<MilestoneDetails>({});
+  const [milestoneDetails, setMilestoneDetails] = useState({});
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  
-  // Mock owners data - TODO: Replace with actual API call
-  const mockOwners = [
-    { id: "1", full_name: "Sadanand Gupta" },
-    { id: "2", full_name: "John Doe" },
-    { id: "3", full_name: "Jane Smith" },
-    { id: "4", full_name: "Mike Johnson" },
-    { id: "5", full_name: "Sarah Williams" },
-  ];
+  const [owners, setOwners] = useState([])
 
   const fetchData = async () => {
     try {
-      // TODO: Replace with actual API call when available
-      // const response = await dispatch(getMilestoneById({ baseUrl, token, id })).unwrap();
-      // setMilestoneDetails(response);
-      // setDependencies(response.dependencies || []);
-
-      // Mock data matching screenshot
-      setMilestoneDetails({
-        id: "M-0181",
-        title: "PP 2",
-        created_by: "Deepak Yadav",
-        created_on: "24/11/2025 04:39 PM",
-        status: "Open",
-        responsible_person: "Sadanand Gupta",
-        duration: "3d 7h 29m 16s",
-        start_date: "2025-11-24",
-        end_date: "2025-11-28",
-      });
-
-      setDependencies([
-        // Empty for now - matching screenshot shows "Add Milestone title"
-        {
-          milestone_title: "Sprint Planning",
-          status: "Open",
-          milestone_owner: "John Doe",
-          start_date: "2025-11-20",
-          end_date: "2025-11-25",
-          duration: "5d 0h 0m 0s",
-        },
-        {
-          milestone_title: "Development Phase",
-          status: "Active",
-          milestone_owner: "Jane Smith",
-          start_date: "2025-11-21",
-          end_date: "2025-12-05",
-          duration: "14d 0h 0m 0s",
-        },
-        {
-          milestone_title: "Testing & QA",
-          status: "Overdue",
-          milestone_owner: "Mike Johnson",
-          start_date: "2025-11-15",
-          end_date: "2025-11-22",
-          duration: "7d 0h 0m 0s",
-        },
-        {
-          milestone_title: "Deployment",
-          status: "Completed",
-          milestone_owner: "Sarah Williams",
-          start_date: "2025-11-10",
-          end_date: "2025-11-12",
-          duration: "2d 0h 0m 0s",
-        },
-      ]);
+      const response = await dispatch(fetchMilestoneById({ baseUrl, token, id: mid })).unwrap();
+      setMilestoneDetails(response);
     } catch (error) {
       console.error("Error fetching milestone details:", error);
       toast.error(String(error) || "Failed to fetch milestone details");
     }
   };
 
-  useEffect(() => {
-    if (id) {
-      fetchData();
+  const getOwners = async () => {
+    try {
+      const response = await dispatch(fetchFMUsers()).unwrap();
+      setOwners(response.users);
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
     }
-  }, [id]);
+  }
+
+  useEffect(() => {
+    fetchData();
+    getOwners();
+  }, [])
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -185,17 +127,16 @@ export const MilestoneDetailsPage = () => {
           )}`}
         >
           <span
-            className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-              item.status?.toLowerCase() === "open"
-                ? "bg-red-500"
-                : item.status?.toLowerCase() === "active"
+            className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status?.toLowerCase() === "open"
+              ? "bg-red-500"
+              : item.status?.toLowerCase() === "active"
                 ? "bg-green-500"
                 : item.status?.toLowerCase() === "overdue"
-                ? "bg-red-500"
-                : item.status?.toLowerCase() === "completed"
-                ? "bg-gray-500"
-                : "bg-gray-400"
-            }`}
+                  ? "bg-red-500"
+                  : item.status?.toLowerCase() === "completed"
+                    ? "bg-gray-500"
+                    : "bg-gray-400"
+              }`}
           ></span>
           {item.status}
         </span>
@@ -217,16 +158,15 @@ export const MilestoneDetailsPage = () => {
 
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">
-          {milestoneDetails.id} {milestoneDetails.title}
-        </h1>
+        <div className="flex flex-col space-y-2">
+          <h1 className="text-2xl font-semibold">
+            {milestoneDetails.id} {milestoneDetails.title}
+          </h1>
+          <div className="text-sm text-gray-600">
+            <span className="font-medium">Created By:</span> {milestoneDetails.created_by} ({milestoneDetails.created_on})
+          </div>
+        </div>
         <div className="flex gap-2 flex-wrap items-center">
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">Created By:</span> {milestoneDetails.created_by}
-          </div>
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">Created On:</span> {milestoneDetails.created_on}
-          </div>
           <Button
             size="sm"
             className={`${getStatusColor(milestoneDetails.status || "")} border-none`}
@@ -247,7 +187,7 @@ export const MilestoneDetailsPage = () => {
 
       {/* Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center gap-3 pb-6 border-b border-gray-200">
+        <div className="flex items-center gap-3 pb-6">
           <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
             <ScrollText className="w-4 h-4" />
           </div>
@@ -327,7 +267,7 @@ export const MilestoneDetailsPage = () => {
       <EditMilestoneModal
         openDialog={editModalOpen}
         handleCloseDialog={() => setEditModalOpen(false)}
-        owners={mockOwners}
+        owners={owners}
         milestoneData={milestoneDetails}
         onUpdate={fetchData}
       />
