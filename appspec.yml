@@ -5,15 +5,15 @@ files:
     destination: /var/www/html/development/fm-matrix-revamp
 hooks:
   AfterInstall:
-    - location: scripts/install_dependencies.sh
+    - location: src/scripts/install_dependencies.sh
       timeout: 300
       runas: ec2-user
     
-    - location: scripts/build_react.sh
+    - location: src/scripts/build_react.sh
       timeout: 300
       runas: ec2-user
 
   ApplicationStart:
-    - location: scripts/restart_nginx.sh
+    - location: src/scripts/restart_nginx.sh
       timeout: 120
       runas: root
