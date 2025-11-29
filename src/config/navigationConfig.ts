@@ -37,6 +37,7 @@ import {
   Globe,
   UserCheck,
   DollarSign,
+  Clock,
 } from "lucide-react";
 
 export const modulesByPackage = {
