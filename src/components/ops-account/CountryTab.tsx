@@ -104,7 +104,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 }) => {
   const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
-  
+
   // State management
   const [countries, setCountries] = useState<CountryItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -130,7 +130,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [selectedCountryId, setSelectedCountryId] = useState<number | null>(null);
-  
+
   // Maps for displaying related data
   const [countriesMap, setCountriesMap] = useState<Map<number, string>>(new Map());
   const [companiesMap, setCompaniesMap] = useState<Map<number, string>>(new Map());
@@ -147,7 +147,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
   const checkEditPermission = () => {
     const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'your-specific-email@domain.com'];
+    const allowedEmails = ['abhishek.sharma@lockated.com', 'adhip.shetty@lockated.com'];
     setCanEditCountry(allowedEmails.includes(userEmail));
   };
 
@@ -188,7 +188,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
 
       let countryData: CountryItem[] = [];
-      
+
       if (Array.isArray(result)) {
         countryData = result;
       } else if (result && result.headquarters && Array.isArray(result.headquarters)) {
@@ -211,13 +211,13 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       }
 
       if (filters.countryId) {
-        filteredData = filteredData.filter(country => 
+        filteredData = filteredData.filter(country =>
           country.country_id === parseInt(filters.countryId!)
         );
       }
 
       if (filters.companyId) {
-        filteredData = filteredData.filter(country => 
+        filteredData = filteredData.filter(country =>
           country.company_setup_id === parseInt(filters.companyId!)
         );
       }
@@ -227,11 +227,11 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       const startIndex = (page - 1) * per_page;
       const endIndex = startIndex + per_page;
       const paginatedData = filteredData.slice(startIndex, endIndex);
-      
 
-      
+
+
       setCountries(paginatedData);
-      
+
       setPagination({
         current_page: page,
         per_page: per_page,
@@ -296,18 +296,18 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       if (response.ok) {
         const data = await response.json();
         console.log('Countries API response:', data);
-        
+
         // Map the API response to the expected dropdown format
         // API returns array of objects with id and name properties
         if (Array.isArray(data)) {
           const mappedCountries = data
             .filter((country) => country?.id && country?.name) // Filter out invalid entries
-            .map((country) => ({ 
-              id: Number(country.id), 
-              name: String(country.name) 
+            .map((country) => ({
+              id: Number(country.id),
+              name: String(country.name)
             }));
           setCountriesDropdown(mappedCountries);
-          
+
           // Also update the countries map for quick lookups
           const countryMap = new Map();
           mappedCountries.forEach((country) => {
@@ -396,7 +396,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         </div>
       ) : (
         <>
-          <EnhancedTaskTable 
+          <EnhancedTaskTable
             data={countries}
             columns={columns}
             searchTerm={searchTerm}
@@ -435,11 +435,10 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 case 'active':
                   return (
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        country.active
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${country.active
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
-                      }`}
+                        }`}
                     >
                       {country.active ? 'Active' : 'Inactive'}
                     </span>
@@ -451,7 +450,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
               }
             }}
             leftActions={
-              <Button 
+              <Button
                 onClick={() => setIsAddModalOpen(true)}
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
               >
@@ -459,34 +458,34 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 Add Headquarter
               </Button>
             }
-            // rightActions={(
-            //   <div className="flex items-center gap-2">
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsFilterOpen(true)}
-            //     >
-            //       <Filter className="w-4 h-4 mr-2" />
-            //       Filter
-            //     </Button>
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsBulkUploadOpen(true)}
-            //     >
-            //       <Upload className="w-4 h-4 mr-2" />
-            //       Import
-            //     </Button>
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsExportOpen(true)}
-            //     >
-            //       <Download className="w-4 h-4 mr-2" />
-            //       Export
-            //     </Button>
-            //   </div>
-            // )}
+          // rightActions={(
+          //   <div className="flex items-center gap-2">
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsFilterOpen(true)}
+          //     >
+          //       <Filter className="w-4 h-4 mr-2" />
+          //       Filter
+          //     </Button>
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsBulkUploadOpen(true)}
+          //     >
+          //       <Upload className="w-4 h-4 mr-2" />
+          //       Import
+          //     </Button>
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsExportOpen(true)}
+          //     >
+          //       <Download className="w-4 h-4 mr-2" />
+          //       Export
+          //     </Button>
+          //   </div>
+          // )}
           />
 
           <TicketPagination
