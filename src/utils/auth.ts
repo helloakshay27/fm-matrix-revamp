@@ -146,7 +146,8 @@ const hostname = window.location.hostname;
 const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
-  hostname.includes("web.gophygital.work");
+  hostname.includes("web.gophygital.work") ||
+  hostname.includes("lockated.gophygital.work");
 
 const isFmSite =
   hostname.includes("fm-uat.gophygital.work") ||
@@ -289,11 +290,10 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
   const baseUrl = getBaseUrl();
   // const token = getToken();
 
-
-
-
   if (!email) {
-    throw new Error("Session expired. Please login again to receive a new OTP.");
+    throw new Error(
+      "Session expired. Please login again to receive a new OTP."
+    );
   }
 
   if (!baseUrl) {
@@ -481,7 +481,10 @@ export const resetPassword = async (
 export const getOrganizationsByEmailAndAutoSelect = async (
   email: string,
   orgId?: string
-): Promise<{ organizations: Organization[]; selectedOrg: Organization | null }> => {
+): Promise<{
+  organizations: Organization[];
+  selectedOrg: Organization | null;
+}> => {
   const hostname = window.location.hostname;
 
   const isOmanSite = hostname.includes("oig.gophygital.work");
@@ -516,7 +519,8 @@ export const getOrganizationsByEmailAndAutoSelect = async (
   let selectedOrg: Organization | null = null;
   if (orgId) {
     const orgIdNum = parseInt(orgId, 10);
-    selectedOrg = organizations.find((org: Organization) => org.id === orgIdNum) || null;
+    selectedOrg =
+      organizations.find((org: Organization) => org.id === orgIdNum) || null;
   }
 
   return { organizations, selectedOrg };
