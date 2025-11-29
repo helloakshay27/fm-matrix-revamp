@@ -1,11 +1,26 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from "@/contexts/PermissionsContext";
+import { findFirstAccessibleRoute } from "@/utils/dynamicNavigation";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { userRole, loading } = usePermissions();
 
   useEffect(() => {
+    // Wait for permissions to load
+    if (loading) return;
+
+    if (userRole) {
+      const firstRoute = findFirstAccessibleRoute(userRole);
+
+      if (firstRoute) {
+        navigate(firstRoute, { replace: true });
+        return;
+      }
+    }
+
+    // Fallback logic if no specific route found or no user role
     const hostname = window.location.hostname;
     const isViSite = hostname.includes('vi-web.gophygital.work');
 
@@ -14,7 +29,7 @@ const Index = () => {
     } else {
       navigate('/maintenance/asset', { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, userRole, loading]);
 
   // Show loading while redirecting
   return (
