@@ -406,15 +406,17 @@ export const AddVendorPage = () => {
 
     const apiFormData = new FormData();
 
-    // Step 0: Company Information - Only append non-empty values
-    apiFormData.append('pms_supplier[company_name]', formData.companyName);
-    if (formData.primaryPhone) apiFormData.append('pms_supplier[mobile1]', formData.primaryPhone);
-    if (formData.secondaryPhone) apiFormData.append('pms_supplier[mobile2]', formData.secondaryPhone);
-    apiFormData.append('pms_supplier[email]', formData.email);
-    if (formData.pan) apiFormData.append('pms_supplier[pan_number]', formData.pan);
-    if (formData.gst) apiFormData.append('pms_supplier[gstin_number]', formData.gst);
-    if (formData.supplierType) apiFormData.append('pms_supplier[supplier_type][]', formData.supplierType);
-    if (formData.serviceDescription) apiFormData.append('pms_supplier[service_description]', formData.serviceDescription);
+    // Step 0: Company Information - Send all fields (empty as empty strings to match curl)
+    apiFormData.append('pms_supplier[company_name]', formData.companyName || '');
+    apiFormData.append('pms_supplier[mobile1]', formData.primaryPhone || '');
+    apiFormData.append('pms_supplier[mobile2]', formData.secondaryPhone || '');
+    apiFormData.append('pms_supplier[email]', formData.email || '');
+    apiFormData.append('pms_supplier[pan_number]', formData.pan || '');
+    apiFormData.append('pms_supplier[gstin_number]', formData.gst || '');
+    if (formData.supplierType) {
+      apiFormData.append('pms_supplier[supplier_type][]', formData.supplierType);
+    }
+    apiFormData.append('pms_supplier[service_description]', formData.serviceDescription || '');
     if (formData.date) {
       apiFormData.append('pms_supplier[signed_on_contract]', "true");
     }
@@ -422,36 +424,37 @@ export const AddVendorPage = () => {
       apiFormData.append('pms_supplier[services_ids][]', formData.services);
     }
 
-    // Step 1: Address
-    apiFormData.append('pms_supplier[country]', formData.country);
-    apiFormData.append('pms_supplier[state]', formData.state);
-    apiFormData.append('pms_supplier[city]', formData.city);
-    if (formData.pincode) apiFormData.append('pms_supplier[pincode]', formData.pincode);
-    apiFormData.append('pms_supplier[address]', formData.addressLine1);
-    if (formData.addressLine2) apiFormData.append('pms_supplier[address2]', formData.addressLine2);
+    // Step 1: Address - Send all fields
+    apiFormData.append('pms_supplier[country]', formData.country || '');
+    apiFormData.append('pms_supplier[state]', formData.state || '');
+    apiFormData.append('pms_supplier[city]', formData.city || '');
+    apiFormData.append('pms_supplier[pincode]', formData.pincode || '');
+    apiFormData.append('pms_supplier[address]', formData.addressLine1 || '');
+    apiFormData.append('pms_supplier[address2]', formData.addressLine2 || '');
 
-    // Step 2: Bank Details - Only append if provided
-    if (formData.accountName) apiFormData.append('pms_supplier[account_name]', formData.accountName);
-    if (formData.accountNumber) apiFormData.append('pms_supplier[account_number]', formData.accountNumber);
-    if (formData.bankBranchName) apiFormData.append('pms_supplier[bank_branch_name]', formData.bankBranchName);
-    if (formData.ifscCode) apiFormData.append('pms_supplier[ifsc_code]', formData.ifscCode);
+    // Step 2: Bank Details - Send all fields
+    apiFormData.append('pms_supplier[account_name]', formData.accountName || '');
+    apiFormData.append('pms_supplier[account_number]', formData.accountNumber || '');
+    apiFormData.append('pms_supplier[bank_branch_name]', formData.bankBranchName || '');
+    apiFormData.append('pms_supplier[ifsc_code]', formData.ifscCode || '');
 
-    // Step 3: Contact Person - Only send contacts with required fields
+    // Step 3: Contact Person - Send all contact fields
     contactPersons.forEach((contact, index) => {
-      if (contact.firstName && contact.lastName) {
-        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][first_name]`, contact.firstName);
-        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][last_name]`, contact.lastName);
-        if (contact.primaryEmail) apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email1]`, contact.primaryEmail);
-        if (contact.secondaryEmail) apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email2]`, contact.secondaryEmail);
-        if (contact.primaryMobile) apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile1]`, contact.primaryMobile);
-        if (contact.secondaryMobile) apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile2]`, contact.secondaryMobile);
+      if (contact.firstName || contact.lastName) {
+        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][first_name]`, contact.firstName || '');
+        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][last_name]`, contact.lastName || '');
+        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email1]`, contact.primaryEmail || '');
+        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email2]`, contact.secondaryEmail || '');
+        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile1]`, contact.primaryMobile || '');
+        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile2]`, contact.secondaryMobile || '');
       }
     });
 
-    // Step 4: KYC Details - Fix the re_kyc_in value
+    // Step 4: KYC Details - Fix the re_kyc_in value (should be text, not file)
     if (formData.reKyc) {
       let reKycValue = formData.reKyc;
       if (reKycValue !== 'custom') {
+        // Convert '3m', '6m', etc. to '3_months', '6_months', etc.
         reKycValue = `${formData.reKyc.replace('m', '')}_months`;
       } else if (formData.customDate) {
         // For custom date, send the formatted date string
@@ -460,25 +463,13 @@ export const AddVendorPage = () => {
       apiFormData.append('pms_supplier[re_kyc_in]', reKycValue);
     }
 
-    // Step 5: Attachments - Only append if files exist
-    if (panAttachments.length > 0) {
-      panAttachments.forEach(file => apiFormData.append('pan_attachments[]', file));
-    }
-    if (tanAttachments.length > 0) {
-      tanAttachments.forEach(file => apiFormData.append('tan_attachments[]', file));
-    }
-    if (gstAttachments.length > 0) {
-      gstAttachments.forEach(file => apiFormData.append('gst_attachments[]', file));
-    }
-    if (kycAttachments.length > 0) {
-      kycAttachments.forEach(file => apiFormData.append('kyc_attachments[]', file));
-    }
-    if (complianceAttachments.length > 0) {
-      complianceAttachments.forEach(file => apiFormData.append('compliance_attachments[]', file));
-    }
-    if (otherAttachments.length > 0) {
-      otherAttachments.forEach(file => apiFormData.append('cancle_checque[]', file));
-    }
+    // Step 5: Attachments - Append files if they exist
+    panAttachments.forEach(file => apiFormData.append('pan_attachments[]', file));
+    tanAttachments.forEach(file => apiFormData.append('tan_attachments[]', file));
+    gstAttachments.forEach(file => apiFormData.append('gst_attachments[]', file));
+    kycAttachments.forEach(file => apiFormData.append('kyc_attachments[]', file));
+    complianceAttachments.forEach(file => apiFormData.append('compliance_attachments[]', file));
+    otherAttachments.forEach(file => apiFormData.append('cancle_checque[]', file));
 
     // Hardcoded values from API spec
     apiFormData.append('pms_supplier[society_id]', '1');
