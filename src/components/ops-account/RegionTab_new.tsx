@@ -106,7 +106,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
 }) => {
   const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
-  
+
   // State management
   const [regions, setRegions] = useState<RegionItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -131,7 +131,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [selectedRegionId, setSelectedRegionId] = useState<number | null>(null);
-  
+
   // Dropdowns and permissions
   const [companiesDropdown, setCompaniesDropdown] = useState<any[]>([]);
   const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
@@ -146,7 +146,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
 
   const checkEditPermission = () => {
     const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'your-specific-email@domain.com'];
+    const allowedEmails = ['abhishek.sharma@lockated.com', 'adhip.shetty@lockated.com'];
     setCanEditRegion(allowedEmails.includes(userEmail));
   };
 
@@ -260,7 +260,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       if (response.ok) {
         const data = await response.json();
         console.log('Countries API response:', data);
-        
+
         if (Array.isArray(data)) {
           // Handle direct array format
           const uniqueCountries = new Map();
@@ -271,7 +271,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
               uniqueCountries.set(id, name);
             }
           });
-          
+
           const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
           setCountriesDropdown(countriesArray);
         } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
@@ -284,7 +284,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
               uniqueCountries.set(id, name);
             }
           });
-          
+
           const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
           setCountriesDropdown(countriesArray);
         } else {
@@ -355,7 +355,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
 
   const totalRecords = pagination.total_count;
   const totalPages = pagination.total_pages;
-  
+
   // Use API data directly instead of client-side filtering
   const displayedData = regions;
 
@@ -416,11 +416,10 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     ),
     status: (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          region?.active
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${region?.active
             ? 'bg-green-100 text-green-800'
             : 'bg-red-100 text-red-800'
-        }`}
+          }`}
       >
         {region?.active ? 'Active' : 'Inactive'}
       </span>
@@ -515,8 +514,8 @@ export const RegionTab: React.FC<RegionTabProps> = ({
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
             leftActions={(
-              <Button 
-                className='bg-primary text-primary-foreground hover:bg-primary/90'  
+              <Button
+                className='bg-primary text-primary-foreground hover:bg-primary/90'
                 onClick={() => setIsAddModalOpen(true)}
                 disabled={!canEditRegion}
               >

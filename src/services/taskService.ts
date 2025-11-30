@@ -222,7 +222,7 @@ export const taskService = {
         task_details: {
           id: data.id,
           task_name: data.checklist || "N/A",
-          associated_with: "Asset",
+          associated_with: data.association_with || "N/A",
           asset_service_name: data.asset || "N/A",
           asset_service_code: data.asset_code || "N/A",
           scheduled_on: data.start_date || "N/A",
