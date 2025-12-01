@@ -101,11 +101,16 @@ export const MobileOrderReview: React.FC = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
+  const orgIdFromUrl = searchParams.get("org_id");
+  const orgId = orgIdFromUrl || sessionStorage.getItem("org_id");
+
   // Try to get data from navigation state first, then fallback to sessionStorage
   const navigationState = location.state || {};
   const sessionOrderData = sessionStorage.getItem("latest_order_data");
-  const parsedSessionData = sessionOrderData ? JSON.parse(sessionOrderData) : {};
-  
+  const parsedSessionData = sessionOrderData
+    ? JSON.parse(sessionOrderData)
+    : {};
+
   // Merge navigation state with session data (navigation state takes priority)
   const combinedData = {
     ...parsedSessionData,
@@ -160,11 +165,17 @@ export const MobileOrderReview: React.FC = () => {
     console.log("  - orderData:", orderData);
     console.log("  - restaurant:", restaurant);
     console.log("  - orderData.order_status:", orderData?.order_status);
-    console.log("  - orderData.order_status_color:", orderData?.order_status_color);
+    console.log(
+      "  - orderData.order_status_color:",
+      orderData?.order_status_color
+    );
     console.log("  - orderData.requests:", orderData?.requests);
     console.log("  - Current URL:", window.location.href);
     console.log("  - Navigation state:", location.state);
-    console.log("  - Session storage data:", sessionOrderData ? "Available" : "Not available");
+    console.log(
+      "  - Session storage data:",
+      sessionOrderData ? "Available" : "Not available"
+    );
     console.log("  - Combined data has restaurant:", !!restaurant);
   }, [
     passedExternalScan,
@@ -199,7 +210,7 @@ export const MobileOrderReview: React.FC = () => {
       navigate("/mobile/restaurant/order-history");
     } else {
       // App users go to my orders list page
-      navigate("/mobile/orders");
+      navigate(`/mobile/orders?org_id=${orgId}`);
     }
   };
 
@@ -208,12 +219,12 @@ export const MobileOrderReview: React.FC = () => {
     if (totalItems) {
       return totalItems;
     }
-    
+
     // Use API items if available
     if (orderData?.items && orderData.items.length > 0) {
       return orderData.items.reduce((total, item) => total + item.quantity, 0);
     }
-    
+
     // Fallback to passed items
     return items.reduce((total, item) => total + item.quantity, 0);
   };
@@ -223,12 +234,12 @@ export const MobileOrderReview: React.FC = () => {
     if (orderData?.total_amount && orderData.total_amount > 0) {
       return orderData.total_amount;
     }
-    
+
     // Priority 2: Use passed totalPrice
     if (totalPrice && totalPrice > 0) {
       return totalPrice;
     }
-    
+
     // Priority 3: Calculate from items
     const calculatedPrice = items.reduce((total, item) => {
       // Only add to total if item has a valid price
@@ -251,21 +262,21 @@ export const MobileOrderReview: React.FC = () => {
       };
     }
 
-    if (orderData && typeof orderData === 'object') {
+    if (orderData && typeof orderData === "object") {
       const apiOrder = orderData as ApiOrderData;
-      
+
       let deliveryLocation = "";
       if (apiOrder.flat) {
         deliveryLocation = apiOrder.flat;
       }
       if (apiOrder.user_department_name) {
-        deliveryLocation = deliveryLocation 
-          ? `${deliveryLocation}, ${apiOrder.user_department_name}` 
+        deliveryLocation = deliveryLocation
+          ? `${deliveryLocation}, ${apiOrder.user_department_name}`
           : apiOrder.user_department_name;
       }
       if (apiOrder.user_unit_name) {
-        deliveryLocation = deliveryLocation 
-          ? `${deliveryLocation}, ${apiOrder.user_unit_name}` 
+        deliveryLocation = deliveryLocation
+          ? `${deliveryLocation}, ${apiOrder.user_unit_name}`
           : apiOrder.user_unit_name;
       }
 
@@ -279,11 +290,11 @@ export const MobileOrderReview: React.FC = () => {
 
     const storedUser = localStorage.getItem("user");
     const user = storedUser ? JSON.parse(storedUser) : null;
-    
+
     return {
       customer_name: user?.name || user?.user_name || "",
       customer_number: user?.mobile || user?.phone || "",
-      customer_email: user?.email || "", 
+      customer_email: user?.email || "",
       delivery_location: user?.address || user?.flat || "",
     };
   };
@@ -295,7 +306,7 @@ export const MobileOrderReview: React.FC = () => {
     order_status_color: orderData?.order_status_color,
     requests: orderData?.requests,
     hasOrderData: !!orderData,
-    orderDataKeys: orderData ? Object.keys(orderData) : 'no orderData'
+    orderDataKeys: orderData ? Object.keys(orderData) : "no orderData",
   });
 
   const handleConfirmOrder = () => {
@@ -316,7 +327,7 @@ export const MobileOrderReview: React.FC = () => {
           setShowSuccess(false);
         } else {
           console.log("🏠 INTERNAL USER: Redirecting to My Orders");
-          navigate("/mobile/orders");
+          navigate(`/mobile/orders?org_id=${orgId}`);
         }
       }, 5000);
 
@@ -328,7 +339,9 @@ export const MobileOrderReview: React.FC = () => {
   }, [showSuccess, isExternalScan, navigate]);
 
   if (!restaurant && !orderData?.restaurant_name) {
-    console.log("❌ GUARD CLAUSE: No restaurant data and no orderData restaurant_name");
+    console.log(
+      "❌ GUARD CLAUSE: No restaurant data and no orderData restaurant_name"
+    );
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -385,7 +398,6 @@ export const MobileOrderReview: React.FC = () => {
               Order Placed Successfully
             </h2>
 
-           
             {isExternalScan && (
               <p className="text-sm text-gray-500 mt-4">
                 Showing order details in 5 seconds...
@@ -431,7 +443,6 @@ export const MobileOrderReview: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900">
               Order Placed Successfully
             </h2>
-
           </div>
         </div>
 
@@ -470,20 +481,20 @@ export const MobileOrderReview: React.FC = () => {
             order_status_color: orderData?.order_status_color,
             requests: orderData?.requests,
             hasOrderData: !!orderData,
-            orderDataKeys: orderData ? Object.keys(orderData) : 'no orderData'
+            orderDataKeys: orderData ? Object.keys(orderData) : "no orderData",
           });
           return null;
         })()}
-        
+
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Order Summary</h2>
           {/* Dynamic status based on order data */}
           {orderData?.order_status ? (
-            <span 
+            <span
               className="px-3 py-1 rounded text-sm font-medium text-white"
-              style={{ 
-                backgroundColor: orderData.order_status_color || '#6b7280',
-                color: 'white'
+              style={{
+                backgroundColor: orderData.order_status_color || "#6b7280",
+                color: "white",
               }}
             >
               {orderData.order_status}
@@ -516,13 +527,17 @@ export const MobileOrderReview: React.FC = () => {
           </div>
 
           {/* Items List - Use API items if available, otherwise use passed items */}
-          {(orderData?.items && orderData.items.length > 0 ? orderData.items : items).map((item, index) => {
+          {(orderData?.items && orderData.items.length > 0
+            ? orderData.items
+            : items
+          ).map((item, index) => {
             // Handle both API item format and regular item format
-            const itemName = 'menu_name' in item ? item.menu_name : item.name;
+            const itemName = "menu_name" in item ? item.menu_name : item.name;
             const itemQuantity = item.quantity;
-            const itemPrice = 'rate' in item ? item.rate : item.price;
-            const itemId = 'menu_id' in item ? item.menu_id.toString() : item.id;
-            
+            const itemPrice = "rate" in item ? item.rate : item.price;
+            const itemId =
+              "menu_id" in item ? item.menu_id.toString() : item.id;
+
             return (
               <div
                 key={itemId || index}
@@ -531,11 +546,14 @@ export const MobileOrderReview: React.FC = () => {
                 <div className="flex-1">
                   <span className="text-gray-900">{itemName}</span>
                   {/* Show individual price only if available and greater than 0 */}
-                  {itemPrice != null && itemPrice !== undefined && itemPrice > 0 && (
-                    <div className="text-sm text-gray-600 mt-1">
-                      OMR{itemPrice} × {itemQuantity} = OMR{itemPrice * itemQuantity}
-                    </div>
-                  )}
+                  {itemPrice != null &&
+                    itemPrice !== undefined &&
+                    itemPrice > 0 && (
+                      <div className="text-sm text-gray-600 mt-1">
+                        OMR{itemPrice} × {itemQuantity} = OMR
+                        {itemPrice * itemQuantity}
+                      </div>
+                    )}
                 </div>
                 <span className="text-gray-900 font-medium ml-3">
                   {itemQuantity < 10 ? `0${itemQuantity}` : itemQuantity}
@@ -548,7 +566,9 @@ export const MobileOrderReview: React.FC = () => {
           {getTotalPrice() > 0 && (
             <div className="border-t border-gray-400 border-dashed pt-3 mt-3">
               <div className="flex justify-between items-center">
-                <span className="font-semibold text-gray-900">Total Amount</span>
+                <span className="font-semibold text-gray-900">
+                  Total Amount
+                </span>
                 <span className="font-semibold text-red-600 text-lg">
                   OMR{getTotalPrice()}
                 </span>
@@ -561,68 +581,89 @@ export const MobileOrderReview: React.FC = () => {
           <h3 className="font-semibold text-gray-900 mb-3">Details</h3>
           <div className="border-t border-gray-400 border-dashed pt-3 space-y-2">
             {/* Name - Only show if available */}
-            {userDetails.customer_name && userDetails.customer_name !== "User" && (
-              <div className="flex justify-between">
-                <span className="text-gray-900">Name</span>
-                <span className="text-gray-900">{userDetails.customer_name}</span>
-              </div>
-            )}
-            
+            {userDetails.customer_name &&
+              userDetails.customer_name !== "User" && (
+                <div className="flex justify-between">
+                  <span className="text-gray-900">Name</span>
+                  <span className="text-gray-900">
+                    {userDetails.customer_name}
+                  </span>
+                </div>
+              )}
+
             {/* Contact Number - Only show if available and not "Not provided" */}
-            {userDetails.customer_number && userDetails.customer_number !== "Not provided" && (
-              <div className="flex justify-between">
-                <span className="text-gray-900">Contact Number</span>
-                <span className="text-gray-900">{userDetails.customer_number}</span>
-              </div>
-            )}
-            
+            {userDetails.customer_number &&
+              userDetails.customer_number !== "Not provided" && (
+                <div className="flex justify-between">
+                  <span className="text-gray-900">Contact Number</span>
+                  <span className="text-gray-900">
+                    {userDetails.customer_number}
+                  </span>
+                </div>
+              )}
+
             {/* Email - Only show if available and not "Not provided" */}
-            {userDetails.customer_email && userDetails.customer_email !== "Not provided" && (
-              <div className="flex justify-between">
-                <span className="text-gray-900">Email</span>
-                <span className="text-gray-900 text-sm break-all">{userDetails.customer_email}</span>
-              </div>
-            )}
-            
+            {userDetails.customer_email &&
+              userDetails.customer_email !== "Not provided" && (
+                <div className="flex justify-between">
+                  <span className="text-gray-900">Email</span>
+                  <span className="text-gray-900 text-sm break-all">
+                    {userDetails.customer_email}
+                  </span>
+                </div>
+              )}
+
             {/* Meeting Room - Show if available in order data */}
-            {(orderData?.facility_name || orderData?.meeting_room || orderData?.location) && (
+            {(orderData?.facility_name ||
+              orderData?.meeting_room ||
+              orderData?.location) && (
               <div className="flex justify-between">
                 <span className="text-gray-900">Meeting Room</span>
-                <span className="text-gray-900">{orderData.facility_name || orderData.meeting_room || orderData.location}</span>
-              </div>
-            )}
-            
-            {/* Delivery Location - Only show if available and not default */}
-            {userDetails.delivery_location && 
-             userDetails.delivery_location !== "Default delivery location" && 
-             userDetails.delivery_location.trim() !== "" && (
-              <div className="flex justify-between">
-                <span className="text-gray-900">Delivery Location</span>
-                <div className="text-right max-w-[60%]">
-                  <div className="text-gray-900 text-sm break-words">
-                    {userDetails.delivery_location}
-                  </div>
-                </div>
+                <span className="text-gray-900">
+                  {orderData.facility_name ||
+                    orderData.meeting_room ||
+                    orderData.location}
+                </span>
               </div>
             )}
 
-            {/* Facility Name - Show if available from localStorage */}
-            {(() => {
-              const storedFacility = localStorage.getItem("currentFacilityName");
-              return storedFacility && storedFacility.trim() !== "" && (
+            {/* Delivery Location - Only show if available and not default */}
+            {userDetails.delivery_location &&
+              userDetails.delivery_location !== "Default delivery location" &&
+              userDetails.delivery_location.trim() !== "" && (
                 <div className="flex justify-between">
-                  <span className="text-gray-900">Facility</span>
+                  <span className="text-gray-900">Delivery Location</span>
                   <div className="text-right max-w-[60%]">
                     <div className="text-gray-900 text-sm break-words">
-                      {storedFacility}
+                      {userDetails.delivery_location}
                     </div>
                   </div>
                 </div>
+              )}
+
+            {/* Facility Name - Show if available from localStorage */}
+            {(() => {
+              const storedFacility = localStorage.getItem(
+                "currentFacilityName"
+              );
+              return (
+                storedFacility &&
+                storedFacility.trim() !== "" && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-900">Facility</span>
+                    <div className="text-right max-w-[60%]">
+                      <div className="text-gray-900 text-sm break-words">
+                        {storedFacility}
+                      </div>
+                    </div>
+                  </div>
+                )
               );
             })()}
-            
+
             {/* Note - Show API requests or passed note */}
-            {((orderData?.requests && orderData.requests.trim() !== "") || (note && note.trim() !== "")) && (
+            {((orderData?.requests && orderData.requests.trim() !== "") ||
+              (note && note.trim() !== "")) && (
               <div className="flex justify-between">
                 <span className="text-gray-900">Note</span>
                 <div className="text-right max-w-[60%]">
