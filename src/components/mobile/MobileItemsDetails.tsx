@@ -131,7 +131,7 @@ export const MobileItemsDetails: React.FC = () => {
   const addMoreItems = () => {
     // Preserve any source parameter when going back to restaurant details
     const backUrl = finalSourceParam
-      ? `/mobile/restaurant/${restaurant.id}/details?source=${finalSourceParam}`
+      ? `/mobile/restaurant/${restaurant.id}/details?source=${finalSourceParam}&org_id=${orgId}`
       : `/mobile/restaurant/${restaurant.id}/details`;
 
     console.log("🔄 NAVIGATING BACK TO RESTAURANT:");
