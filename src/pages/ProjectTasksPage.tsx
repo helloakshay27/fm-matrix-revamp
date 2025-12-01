@@ -49,14 +49,14 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "start_date",
+        key: "expected_start_date",
         label: "Start Date",
         sortable: true,
         draggable: true,
         defaultVisible: true,
     },
     {
-        key: "end_date",
+        key: "target_date",
         label: "End Date",
         sortable: true,
         draggable: true,
@@ -147,7 +147,8 @@ const ProjectTasksPage = () => {
                 priority: data.priority,
                 active: true,
                 responsible_person_id: data.responsible,
-                ...(id && { project_type_id: id })
+                ...(id && { project_management_id: id }),
+                ...(mid && { milestone_id: mid })
             }
         }
         try {
@@ -217,6 +218,18 @@ const ProjectTasksPage = () => {
                         </div>
                     </div>
                 );
+            }
+            case "status": {
+                return item.status.charAt(0).toUpperCase() + item.status.slice(1)
+            }
+            case "responsible": {
+                return item.responsible_person?.name || "-";
+            }
+            case "predecessor": {
+                return item.predecessor_task.length
+            }
+            case "successor": {
+                return item.successor_task.length
             }
             default:
                 return item[columnKey] || "-";
@@ -298,9 +311,9 @@ const ProjectTasksPage = () => {
                     <MenuItem value="">
                         <em>Select priority</em>
                     </MenuItem>
-                    <MenuItem value="high">High</MenuItem>
-                    <MenuItem value="medium">Medium</MenuItem>
-                    <MenuItem value="low">Low</MenuItem>
+                    <MenuItem value="High">High</MenuItem>
+                    <MenuItem value="Medium">Medium</MenuItem>
+                    <MenuItem value="Low">Low</MenuItem>
                 </Select>
             );
         }

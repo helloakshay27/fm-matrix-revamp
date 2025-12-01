@@ -1234,6 +1234,7 @@ const ganttStyles = `
     
     /* Remove text from inside bars */
     .gantt_task_content {
+        color: #000 !important;
         width: max-content !important;
         font-size: 9px !important;
         background-color: transparent !important;
