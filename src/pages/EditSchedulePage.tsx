@@ -1642,7 +1642,26 @@ export const EditSchedulePage = () => {
           hint: task.helpText ? (task.helpTextValue || "") : "",
           values: values,
           weightage: task.weightage || "",
-          rating_enabled: task.rating ? "true" : "false"
+          rating_enabled: task.rating ? "true" : "false",
+          question_hint_image_ids: task.helpText && task.helpTextAttachments 
+            ? (() => {
+                // Get only existing attachment IDs (numeric, from original API data)
+                const existingIds = task.helpTextAttachments
+                  .map(attachment => {
+                    if (attachment.id && 
+                        !attachment.id.toString().startsWith('existing_') && 
+                        !attachment.id.toString().includes('-') &&
+                        !isNaN(Number(attachment.id))) {
+                      return attachment.id;
+                    }
+                    return null;
+                  })
+                  .filter(id => id !== null);
+                
+                // If no existing IDs found, return empty array (all are newly added)
+                return existingIds.length > 0 ? existingIds : [];
+              })()
+            : []
         };
       })
     );
