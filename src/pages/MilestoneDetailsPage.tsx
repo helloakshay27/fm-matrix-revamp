@@ -7,8 +7,9 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import EditMilestoneModal from "@/components/EditMilestoneModal";
 import { useAppDispatch } from "@/store/hooks";
-import { fetchMilestoneById } from "@/store/slices/projectMilestoneSlice";
+import { fetchDependentMilestones, fetchMilestoneById, updateMilestoneStatus } from "@/store/slices/projectMilestoneSlice";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import { format } from "date-fns";
 
 interface Dependency {
   milestone_title?: string;
@@ -64,6 +65,14 @@ const dependencyColumns: ColumnConfig[] = [
   },
 ];
 
+const milestoneStatuses = [
+  { value: "open", label: "Open" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "on_hold", label: "On Hold" },
+  { value: "overdue", label: "Overdue" },
+  { value: "completed", label: "Completed" },
+];
+
 export const MilestoneDetailsPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -71,6 +80,7 @@ export const MilestoneDetailsPage = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
+  const [status, setStatus] = useState("open")
   const [milestoneDetails, setMilestoneDetails] = useState({});
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -80,11 +90,22 @@ export const MilestoneDetailsPage = () => {
     try {
       const response = await dispatch(fetchMilestoneById({ baseUrl, token, id: mid })).unwrap();
       setMilestoneDetails(response);
+      setStatus(response.status || "open")
     } catch (error) {
       console.error("Error fetching milestone details:", error);
       toast.error(String(error) || "Failed to fetch milestone details");
     }
   };
+
+  const getDependencies = async () => {
+    try {
+      const response = await dispatch(fetchDependentMilestones({ baseUrl, token, id: mid })).unwrap();
+      setDependencies(response);
+    } catch (error) {
+      console.error("Error fetching dependencies:", error);
+      toast.error(String(error) || "Failed to fetch dependencies");
+    }
+  }
 
   const getOwners = async () => {
     try {
@@ -99,14 +120,13 @@ export const MilestoneDetailsPage = () => {
   useEffect(() => {
     fetchData();
     getOwners();
+    getDependencies();
   }, [])
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "open":
         return "bg-red-100 text-red-800";
-      case "active":
-        return "bg-green-100 text-green-800";
       case "overdue":
         return "bg-red-100 text-red-800";
       case "completed":
@@ -163,7 +183,7 @@ export const MilestoneDetailsPage = () => {
             {milestoneDetails.id} {milestoneDetails.title}
           </h1>
           <div className="text-sm text-gray-600">
-            <span className="font-medium">Created By:</span> {milestoneDetails.created_by} ({milestoneDetails.created_on})
+            <span className="font-medium">Created By:</span> {milestoneDetails.created_by_name} ({milestoneDetails.created_at ? format(milestoneDetails.created_at, "dd/MM/yyyy") : "-"})
           </div>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
@@ -171,7 +191,7 @@ export const MilestoneDetailsPage = () => {
             size="sm"
             className={`${getStatusColor(milestoneDetails.status || "")} border-none`}
           >
-            {milestoneDetails.status}
+            {milestoneDetails?.status?.charAt(0).toUpperCase() + milestoneDetails?.status?.slice(1)}
           </Button>
           <Button
             size="sm"
@@ -200,7 +220,7 @@ export const MilestoneDetailsPage = () => {
               <p className="text-sm font-medium text-gray-600">Responsible Person:</p>
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-900">{milestoneDetails.responsible_person || "-"}</p>
+              <p className="text-sm text-gray-900">{milestoneDetails.owner_name || "-"}</p>
             </div>
           </div>
 
@@ -218,7 +238,7 @@ export const MilestoneDetailsPage = () => {
               <p className="text-sm font-medium text-gray-600">Start Date:</p>
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-900">{milestoneDetails.start_date || "-"}</p>
+              <p className="text-sm text-gray-900">{(milestoneDetails.start_date) ? format(milestoneDetails.start_date, "dd/MM/yyyy") : "-"}</p>
             </div>
           </div>
 
@@ -227,7 +247,7 @@ export const MilestoneDetailsPage = () => {
               <p className="text-sm font-medium text-gray-600">End Date:</p>
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-900">{milestoneDetails.end_date || "-"}</p>
+              <p className="text-sm text-gray-900">{(milestoneDetails.end_date) ? format(milestoneDetails.end_date, "dd/MM/yyyy") : "-"}</p>
             </div>
           </div>
         </div>
