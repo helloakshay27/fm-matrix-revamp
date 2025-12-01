@@ -219,7 +219,7 @@ export const AddServicePRDashboard = () => {
         pms_work_order: {
           letter_of_indent: true,
           pms_supplier_id: formData.contractor,
-          type: formData.type,
+          pr_type: formData.type,
           plant_detail_id: formData.plantDetail,
           wo_date: formData.woDate,
           billing_address_id: formData.billingAddress,
@@ -602,6 +602,7 @@ export const AddServicePRDashboard = () => {
       pms_work_order: {
         letter_of_indent: true,
         pms_supplier_id: formData.contractor,
+        pr_type: formData.type,
         plant_detail_id: formData.plantDetail,
         wo_date: formData.woDate,
         billing_address_id: formData.billingAddress,
@@ -634,6 +635,7 @@ export const AddServicePRDashboard = () => {
           taxable_value: item.taxAmount,
           total_value: item.amount,
           total_amount: item.totalAmount,
+          general_storage: item.generalStorage,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },

@@ -93,6 +93,7 @@ interface PRInventory {
   approved_qty?: number;
   transfer_qty?: number;
   wbs_code?: string;
+  general_storage?: string;
 }
 
 interface Attachment {
@@ -123,6 +124,7 @@ interface MaterialPR {
   attachments?: Attachment[];
   show_send_sap_yes?: boolean;
   can_edit_wbs_codes?: boolean;
+  pr_type?: string;
 }
 
 interface TableRow {
@@ -150,6 +152,12 @@ const columns: ColumnConfig[] = [
   {
     key: "sacHsnCode",
     label: "SAC/HSN Code",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "general_storage",
+    label: "General Storage",
     sortable: true,
     defaultVisible: true,
   },
@@ -540,6 +548,7 @@ export const MaterialPRDetailsPage = () => {
       approved_qty: item.approved_qty?.toString() ?? "0",
       transfer_qty: item.transfer_qty?.toString() ?? "0",
       wbs_code: item.wbs_code ?? "-",
+      general_storage: item.general_storage ?? "GNST",
     })) ?? [];
 
   const renderCell = (item: any, columnKey: string) => {
@@ -861,6 +870,19 @@ export const MaterialPRDetailsPage = () => {
                   {pr.supplier?.address ?? "-"}
                 </span>
               </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+
+                {pr.pr_type ? (
+                  <span className="text-gray-900 font-medium px-3 text-sm rounded-[5px] w-max cursor-pointer bg-blue-200">
+                    {pr.pr_type.charAt(0).toUpperCase() + pr.pr_type.slice(1)}
+                  </span>
+                ) : (
+                  <span className="text-gray-500">-</span>
+                )}
+              </div>
+
             </div>
           </CardContent>
         </Card>

@@ -135,7 +135,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 }) => {
   const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
-  
+
   // State management
   const [organizations, setOrganizations] = useState<OrganizationItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -161,7 +161,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [selectedOrganizationId, setSelectedOrganizationId] = useState<number | null>(null);
-  
+
   // Countries dropdown and permissions
   const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
   const [canEditOrganization, setCanEditOrganization] = useState(false);
@@ -175,7 +175,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 
   const checkEditPermission = () => {
     const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'your-specific-email@domain.com'];
+    const allowedEmails = ['abhishek.sharma@lockated.com', 'adhip.shetty@lockated.com'];
     setCanEditOrganization(allowedEmails.includes(userEmail));
   };
 
@@ -269,15 +269,15 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
       if (response.ok) {
         const data = await response.json();
         console.log('Countries API response:', data);
-        
+
         // Map the API response to the expected dropdown format
         // API returns array of objects with id and name properties
         if (Array.isArray(data)) {
           const mappedCountries = data
             .filter((country) => country?.id && country?.name) // Filter out invalid entries
-            .map((country) => ({ 
-              id: Number(country.id), 
-              name: String(country.name) 
+            .map((country) => ({
+              id: Number(country.id),
+              name: String(country.name)
             }));
           setCountriesDropdown(mappedCountries);
         } else {
@@ -349,7 +349,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 
   const totalRecords = pagination.total_count;
   const totalPages = pagination.total_pages;
-  
+
   // Use API data directly instead of client-side filtering
   const displayedData = organizations;
 
@@ -418,11 +418,10 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
     ),
     status: (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          org?.active
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${org?.active
             ? 'bg-green-100 text-green-800'
             : 'bg-red-100 text-red-800'
-        }`}
+          }`}
       >
         {org?.active ? 'Active' : 'Inactive'}
       </span>
@@ -517,35 +516,35 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
             leftActions={(
-              <Button 
-                className='bg-primary text-primary-foreground hover:bg-primary/90'  
+              <Button
+                className='bg-primary text-primary-foreground hover:bg-primary/90'
                 onClick={() => setIsAddModalOpen(true)}
                 disabled={!canEditOrganization}
               >
                 <Plus className="w-4 h-4 mr-2" /> Add Organization
               </Button>
             )}
-            // rightActions={(
-            //   <div className="flex items-center gap-2">
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsBulkUploadOpen(true)}
-            //       disabled={!canEditOrganization}
-            //     >
-            //       <Upload className="w-4 h-4 mr-2" />
-            //       Bulk Upload
-            //     </Button>
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsExportOpen(true)}
-            //     >
-            //       <Download className="w-4 h-4 mr-2" />
-            //       Export
-            //     </Button>
-            //   </div>
-            // )}
+          // rightActions={(
+          //   <div className="flex items-center gap-2">
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsBulkUploadOpen(true)}
+          //       disabled={!canEditOrganization}
+          //     >
+          //       <Upload className="w-4 h-4 mr-2" />
+          //       Bulk Upload
+          //     </Button>
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsExportOpen(true)}
+          //     >
+          //       <Download className="w-4 h-4 mr-2" />
+          //       Export
+          //     </Button>
+          //   </div>
+          // )}
           />
 
           <TicketPagination

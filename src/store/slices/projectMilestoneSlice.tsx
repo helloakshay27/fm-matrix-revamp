@@ -52,10 +52,29 @@ export const fetchMilestoneById = createAsyncThunk(
     }
 )
 
+export const updateMilestoneStatus = createAsyncThunk(
+    "updateMilestoneStatus",
+    async ({ token, baseUrl, id, payload }: { token: string, baseUrl: string, id: string, payload: { status: string } }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/milestones/${id}.json`, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to update milestone status'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const createMilestoneSlice = createApiSlice("createMilestone", createMilestone);
 const fetchMilestonesSlice = createApiSlice("fetchMilestones", fetchMilestones);
 const fetchMilestoneByIdSlice = createApiSlice("fetchMilestoneById", fetchMilestoneById);
+const updateMilestoneStatusSlice = createApiSlice("updateMilestoneStatus", updateMilestoneStatus);
 
 export const createMilestoneReducer = createMilestoneSlice.reducer;
 export const fetchMilestonesReducer = fetchMilestonesSlice.reducer;
 export const fetchMilestoneByIdReducer = fetchMilestoneByIdSlice.reducer;
+export const updateMilestoneStatusReducer = updateMilestoneStatusSlice.reducer;

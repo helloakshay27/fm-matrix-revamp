@@ -246,39 +246,46 @@ export const AddFMUserPage = () => {
           <CardContent className="space-y-6">
             <Box component="form" noValidate>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Row 1 */}
-                <div>
-                  <TextField
-                    fullWidth
-                    label="First Name"
-                    variant="outlined"
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    required
-                    InputLabelProps={{
-                      classes: {
-                        asterisk: "text-red-500", // Tailwind class for red color
-                      },
-                      shrink: true
-                    }}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    fullWidth
-                    label="Last Name"
-                    variant="outlined"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    required
-                    InputLabelProps={{
-                      classes: {
-                        asterisk: "text-red-500", // Tailwind class for red color
-                      },
-                      shrink: true
-                    }}
-                  />
-                </div>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  variant="outlined"
+                  value={formData.firstName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // allow only letters
+                    if (/^[A-Za-z]*$/.test(value)) {
+                      handleInputChange("firstName", value);
+                    }
+                  }}
+                  required
+                  InputLabelProps={{
+                    classes: { asterisk: "text-red-500" },
+                    shrink: true,
+                  }}
+                />
+
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  variant="outlined"
+                  value={formData.lastName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // allow only letters
+                    if (/^[A-Za-z]*$/.test(value)) {
+                      handleInputChange("lastName", value);
+                    }
+                  }}
+                  required
+                  InputLabelProps={{
+                    classes: { asterisk: "text-red-500" },
+                    shrink: true,
+                  }}
+                />
+
                 <div>
                   <TextField
                     fullWidth
@@ -472,6 +479,7 @@ export const AddFMUserPage = () => {
                     value={formData.designation}
                     onChange={(e) => handleInputChange('designation', e.target.value)}
                     InputLabelProps={{ shrink: true }}
+                    inputProps={{ maxLength: 50 }}
                   />
                 </div>
                 <div>
