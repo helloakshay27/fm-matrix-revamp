@@ -67,7 +67,7 @@ import { createCompanyPartnerReducers, editCompanyPartnerReducer, fetchCompanyPa
 import { createChatTaskReducer, createConversationReducer, createGroupReducer, deleteChatTaskReducer, fetchChannelTaskDetailsReducer, fetchConversationMessagesReducer, fetchConversationReducer, fetchConversationsReducer, fetchGroupConversationReducer, fetchGroupsReducer, removeUserFromGroupReducer, sendMessageReducer, updateChatTaskReducer, updateMessageReducer } from './slices/channelSlice'
 import { createCircleReducer, fetchCircleListReducer, updateCircleReducer } from './slices/msafeCircleSlice'
 import { changeProjectStatusReducer, createProjectReducer, fetchProjectByIdReducer, fetchProjectsReducer, filterProjectsReducer } from './slices/projectManagementSlice'
-import { createMilestoneReducer, fetchMilestoneByIdReducer, fetchMilestonesReducer, updateMilestoneStatusReducer } from './slices/projectMilestoneSlice'
+import { createMilestoneReducer, fetchDependentMilestonesReducer, fetchMilestoneByIdReducer, fetchMilestonesReducer, updateMilestoneStatusReducer } from './slices/projectMilestoneSlice'
 import { createProjectTeamReducer, fetchProjectTeamByIdReducer, fetchProjectTeamsReducer, updateProjectTeamReducer } from './slices/projectTeamsSlice'
 import { createProjectTypesReducer, fetchProjectTypesReducer, updateProjectTypesReducer } from './slices/projectTypeSlice'
 import { createProjectsTagsReducer, fetchProjectsTagsReducer, updateProjectsTagsReducer } from './slices/projectTagSlice'
@@ -346,6 +346,7 @@ export const store = configureStore({
     fetchMilestones: fetchMilestonesReducer,
     fetchMilestoneById: fetchMilestoneByIdReducer,
     updateMilestoneStatus: updateMilestoneStatusReducer,
+    fetchDependentMilestones: fetchDependentMilestonesReducer,
 
     // Project Tasks
     fetchProjectTasks: fetchProjectTasksReducer,

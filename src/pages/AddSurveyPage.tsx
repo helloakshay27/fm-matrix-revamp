@@ -1456,7 +1456,7 @@ export const AddSurveyPage = () => {
             disabled={loading || isSubmitting}
             className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 h-auto disabled:opacity-50"
           >
-            {(loading || isSubmitting) ? "Creating..." : "Create Survey"}
+            {(loading || isSubmitting) ? "Creating..." : "Create"}
           </Button>
           <Button
             type="button"

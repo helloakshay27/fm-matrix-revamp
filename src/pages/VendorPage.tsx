@@ -214,8 +214,6 @@ export const VendorPage = () => {
     { key: 'gstin_number', label: 'GSTIN Number', sortable: true },
     { key: 'pan_number', label: 'PAN Number', sortable: true },
     { key: 'supplier_type', label: 'Supplier Type', sortable: true },
-    { key: 'po_outstandings', label: 'PO Outstandings', sortable: true },
-    { key: 'wo_outstandings', label: 'WO Outstandings', sortable: true },
     { key: 'average_rating', label: 'Ratings', sortable: true },
     { key: 'signed_on_contract', label: 'Signed On Contract', sortable: true },
     { key: 'kyc_end_in_days', label: 'KYC End In Days', sortable: true },
