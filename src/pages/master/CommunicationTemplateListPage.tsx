@@ -6,6 +6,7 @@ import { Plus, Pencil } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { communicationTemplateService } from '@/services/communicationTemplateService';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export interface CommunicationTemplate {
   id: number;
@@ -19,6 +20,9 @@ export interface CommunicationTemplate {
 
 const CommunicationTemplateListPage = () => {
   const navigate = useNavigate();
+  // Initialize permission hook
+  const { shouldShow } = useDynamicPermissions();
+  
   const [templates, setTemplates] = useState<CommunicationTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [optimisticActive, setOptimisticActive] = useState<Record<number, boolean>>({});
@@ -84,9 +88,9 @@ const CommunicationTemplateListPage = () => {
       </div>
       {showActionPanel && (
         <SelectionPanel
-          actions={[
+          actions={shouldShow("communication-templates", "add") ? [
             { label: 'Add', icon: Plus, onClick: handleAddTemplate },
-          ]}
+          ] : []}
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
@@ -102,28 +106,32 @@ const CommunicationTemplateListPage = () => {
         ]}
         data={templates.map((template, idx) => ({ ...template, srno: idx + 1 }))}
         leftActions={
-          <Button
-            onClick={() => setShowActionPanel((prev) => !prev)}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Action
-          </Button>
+          shouldShow("communication-templates", "add") ? (
+            <Button
+              onClick={() => setShowActionPanel((prev) => !prev)}
+              className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Action
+            </Button>
+          ) : null
         }
         renderCell={(row, key) => {
           if (key === 'srno') return <span>{row[key]}</span>;
           if (key === 'actions') {
             return (
               <div className="flex gap-2 justify-center items-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                  onClick={() => handleEdit(row.id)}
-                  title="Edit"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
+                {shouldShow("communication-templates", "edit") && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                    onClick={() => handleEdit(row.id)}
+                    title="Edit"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             );
           }

@@ -27,9 +27,13 @@ import { toast, Toaster } from "sonner";
 import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 import axios from 'axios';
 import { Loader2 } from 'lucide-react';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
+  // Initialize permission hook
+  const { shouldShow } = useDynamicPermissions();
+  
   // State for deactivate modal (must be inside component)
   const [deactivateModal, setDeactivateModal] = useState<{ open: boolean; scheduleId: string | null }>({ open: false, scheduleId: null });
   const [deactivateOption, setDeactivateOption] = useState<'upcoming' | 'all'>('upcoming');
@@ -453,13 +457,15 @@ export const ScheduleListDashboard = () => {
 
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-2 sm:gap-3">
-      <Button 
-        onClick={handleActionClick}
-        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
-      >
-        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
-        Action
-      </Button>
+      {shouldShow("schedules", "add") && (
+        <Button 
+          onClick={handleActionClick}
+          className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+        >
+          <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+          Action
+        </Button>
+      )}
     </div>
   );
   const renderCell = (item: TransformedScheduleData, columnKey: string) => {
@@ -468,15 +474,21 @@ export const ScheduleListDashboard = () => {
     if (columnKey === 'actions') {
       return (
         <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => handleEditSchedule(item)} title="Edit Schedule">
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item)} title="Clone Schedule">
-            <Copy className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleViewSchedule(item)} title="View Schedule">
-            <Eye className="w-4 h-4" />
-          </Button>
+          {shouldShow("schedules", "edit") && (
+            <Button variant="ghost" size="sm" onClick={() => handleEditSchedule(item)} title="Edit Schedule">
+              <Edit className="w-4 h-4" />
+            </Button>
+          )}
+          {shouldShow("schedules", "copy") && (
+            <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item)} title="Clone Schedule">
+              <Copy className="w-4 h-4" />
+            </Button>
+          )}
+          {shouldShow("schedules", "view") && (
+            <Button variant="ghost" size="sm" onClick={() => handleViewSchedule(item)} title="View Schedule">
+              <Eye className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       );
     }
@@ -816,9 +828,9 @@ export const ScheduleListDashboard = () => {
       {showActionPanel && (
         <SelectionPanel
           actions={selectionActions}
-          // onAdd={handleAddSchedule}
+          onAdd={shouldShow("schedules", "add") ? handleAddSchedule : undefined}
           onClearSelection={() => setShowActionPanel(false)}
-          onImport={() => setShowImportModal(true)}
+          onImport={shouldShow("schedules", "import") ? () => setShowImportModal(true) : undefined}
         />
       )}
 
@@ -828,7 +840,7 @@ export const ScheduleListDashboard = () => {
             columns={columns}
             renderCell={renderCell}
             pagination={false}
-            enableExport={true}
+            enableExport={shouldShow("schedules", "export")}
             exportFileName="schedules"
             storageKey="schedules-table"
             enableSearch={true}
@@ -836,7 +848,7 @@ export const ScheduleListDashboard = () => {
             searchValue={searchQuery}
             onSearchChange={handleSearchChange}
             leftActions={renderCustomActions()}
-            onFilterClick={() => setShowFilterDialog(true)}
+            onFilterClick={shouldShow("schedules", "filter") ? () => setShowFilterDialog(true) : undefined}
             onExport={handleScheduleExport}
             loading={isLoading}
             loadingMessage="Loading schedules..."

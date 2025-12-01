@@ -22,6 +22,7 @@ import { createChecklistMaster, ChecklistCreateRequest } from '@/services/custom
 import { fetchAssetTypes } from '@/services/assetTypesAPI';
 import { useNavigate } from 'react-router-dom';
 import { Cog } from 'lucide-react';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Define interfaces for better type safety
 interface AttachmentFile {
@@ -105,6 +106,7 @@ const fieldStyles = {
 export const ChecklistMasterPage = () => {
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
 
   useEffect(() => {
     setCurrentSection('Master');
@@ -1778,14 +1780,16 @@ export const ChecklistMasterPage = () => {
         </div>
 
         <div className="flex justify-center space-x-4 p-6 bg-white">
-          <Button
-            type="submit"
-            onClick={handleSubmit}
-            className="bg-red-600 text-white hover:bg-red-700"
-            disabled={createChecklistMutation.isPending}
-          >
-            {createChecklistMutation.isPending ? 'Creating...' : 'Create Checklist'}
-          </Button>
+          {shouldShow('checklist-master', 'add') && (
+            <Button
+              type="submit"
+              onClick={handleSubmit}
+              className="bg-red-600 text-white hover:bg-red-700"
+              disabled={createChecklistMutation.isPending}
+            >
+              {createChecklistMutation.isPending ? 'Creating...' : 'Create Checklist'}
+            </Button>
+          )}
           <Button
             type="button"
             variant="outline"

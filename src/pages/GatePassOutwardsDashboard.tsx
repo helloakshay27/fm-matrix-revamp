@@ -19,11 +19,15 @@ import {
 } from '@/components/ui/pagination';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Define your API base URL here or import it from your config/environment
 const API_BASE_URL = API_CONFIG.BASE_URL;
 
 export const GatePassOutwardsDashboard = () => {
+  // Initialize permission hook
+  const { shouldShow } = useDynamicPermissions();
+  
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [outwardData, setOutwardData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,18 +231,22 @@ export const GatePassOutwardsDashboard = () => {
     sNo: entry.sNo,
     actions: (
       <div className="flex gap-2 justify-center" style={{ maxWidth: '80px' }}>
-        <div title="View details">
-          <Eye
-            className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
-            onClick={() => handleViewDetails(entry.id)}
-          />
-        </div>
-        <div title={entry.isFlagged ? 'Remove Flag' : 'Flag'}>
-          <Flag
-            className={`w-4 h-4 cursor-pointer ${entry.isFlagged ? 'text-red-500 fill-red-500' : 'text-gray-600'} ${togglingIds.has(entry.id) ? 'opacity-50 pointer-events-none' : ''}`}
-            onClick={() => !togglingIds.has(entry.id) && handleFlagToggle(entry)}
-          />
-        </div>
+        {shouldShow("gatepass", "view") && (
+          <div title="View details">
+            <Eye
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
+              onClick={() => handleViewDetails(entry.id)}
+            />
+          </div>
+        )}
+        {shouldShow("gatepass", "flag") && (
+          <div title={entry.isFlagged ? 'Remove Flag' : 'Flag'}>
+            <Flag
+              className={`w-4 h-4 cursor-pointer ${entry.isFlagged ? 'text-red-500 fill-red-500' : 'text-gray-600'} ${togglingIds.has(entry.id) ? 'opacity-50 pointer-events-none' : ''}`}
+              onClick={() => !togglingIds.has(entry.id) && handleFlagToggle(entry)}
+            />
+          </div>
+        )}
       </div>
     ),
     id: entry.id,
@@ -272,19 +280,14 @@ export const GatePassOutwardsDashboard = () => {
     flaggedAt: entry.flaggedAt,
   });
 
-  const selectionActions = [
-    { label: 'Add', icon: Plus, onClick: handleAddOutward },
-    // { label: 'Import', icon: Filter, onClick: () => setIsFilterModalOpen(true) },
-  ];
+  const selectionActions = shouldShow("gatepass", "add")
+    ? [
+        { label: 'Add', icon: Plus, onClick: handleAddOutward },
+        // { label: 'Import', icon: Filter, onClick: () => setIsFilterModalOpen(true) },
+      ]
+    : [];
 
-  const renderActionButton = () => (
-    // <Button
-    //   onClick={() => setShowActionPanel((prev) => !prev)}
-    //   className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
-    // >
-    //   <Plus className="w-4 h-4 mr-2" />
-    //   Action
-    // </Button>
+  const renderActionButton = () => shouldShow("gatepass", "add") ? (
     <Button
       size="sm"
       className="mr-2"
@@ -293,7 +296,7 @@ export const GatePassOutwardsDashboard = () => {
       <Plus className="w-4 h-4 mr-2" />
       Action
     </Button>
-  );
+  ) : null;
 
   // Export handler for outward gate pass
   const handleExport = async () => {
@@ -354,9 +357,9 @@ export const GatePassOutwardsDashboard = () => {
           storageKey="outward-gate-pass-table"
           emptyMessage="No outward entries available"
           enableSearch={true}
-          enableExport={true}
+          enableExport={shouldShow("gatepass", "export")}
           handleExport={handleExport}
-          onFilterClick={() => setIsFilterModalOpen(true)}
+          onFilterClick={shouldShow("gatepass", "filter") ? () => setIsFilterModalOpen(true) : undefined}
           searchPlaceholder="Search outward entries..."
           exportFileName="outward-gate-pass-entries"
           leftActions={renderActionButton()}

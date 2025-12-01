@@ -6,6 +6,7 @@ import { Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { gateNumberService } from '@/services/gateNumberService';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export interface GateNumber {
   id: number;
@@ -18,6 +19,7 @@ export interface GateNumber {
 
 const GateNumberPage = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [gateNumbers, setGateNumbers] = useState<GateNumber[]>([]);
   const [loading, setLoading] = useState(true);
   const [optimisticActive, setOptimisticActive] = useState<Record<number, boolean>>({});
@@ -107,7 +109,7 @@ const GateNumberPage = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Gate Numbers</h1>
       </div>
-      {showActionPanel && (
+      {showActionPanel && shouldShow('gate-number', 'add') && (
         <SelectionPanel
           actions={[
             { label: 'Add', icon: Plus, onClick: handleAddGateNumber },
@@ -119,7 +121,7 @@ const GateNumberPage = () => {
         loading={loading}
         columns={[
           { key: 'srno', label: 'Sr. No.' },
-          { key: 'actions', label: 'Actions' },
+          ...(shouldShow('gate-number', 'edit') ? [{ key: 'actions', label: 'Actions' }] : []),
           { key: 'gate_number', label: 'Gate Number' },
           { key: 'company_name', label: 'Company' },
           { key: 'pms_site_name', label: 'Project' },
@@ -128,28 +130,32 @@ const GateNumberPage = () => {
         ]}
         data={gateNumbers.map((gn, idx) => ({ ...gn, srno: idx + 1 }))}
         leftActions={
-          <Button
-            onClick={() => setShowActionPanel((prev) => !prev)}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Action
-          </Button>
+          shouldShow('gate-number', 'add') && (
+            <Button
+              onClick={() => setShowActionPanel((prev) => !prev)}
+              className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Action
+            </Button>
+          )
         }
         renderCell={(row, key) => {
           if (key === 'srno') return <span>{row[key]}</span>;
           if (key === 'actions') {
             return (
               <div className="flex gap-2 justify-center items-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                  onClick={() => handleEdit(row.id)}
-                  title="Edit"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
+                {shouldShow('gate-number', 'edit') && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                    onClick={() => handleEdit(row.id)}
+                    title="Edit"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             );
           }

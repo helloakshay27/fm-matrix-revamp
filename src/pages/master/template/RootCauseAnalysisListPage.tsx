@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { Plus, Pencil } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { communicationTemplateService } from '@/services/communicationTemplateService';
@@ -19,6 +20,7 @@ export interface CommunicationTemplate {
 
 const RootCauseAnalysisListPage = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [templates, setTemplates] = useState<CommunicationTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [optimisticActive, setOptimisticActive] = useState<Record<number, boolean>>({});
@@ -84,7 +86,7 @@ const RootCauseAnalysisListPage = () => {
       {showActionPanel && (
         <SelectionPanel
           actions={[
-            { label: 'Add', icon: Plus, onClick: handleAddTemplate },
+            ...(shouldShow('root-cause-analysis', 'add') ? [{ label: 'Add', icon: Plus, onClick: handleAddTemplate }] : []),
           ]}
           onClearSelection={() => setShowActionPanel(false)}
         />
@@ -100,28 +102,32 @@ const RootCauseAnalysisListPage = () => {
         ]}
         data={templates.map((template, idx) => ({ ...template, srno: idx + 1 }))}
         leftActions={
-          <Button
-            onClick={() => setShowActionPanel((prev) => !prev)}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Action
-          </Button>
+          shouldShow('root-cause-analysis', 'add') && (
+            <Button
+              onClick={() => setShowActionPanel((prev) => !prev)}
+              className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Action
+            </Button>
+          )
         }
         renderCell={(row, key) => {
           if (key === 'srno') return <span>{row[key]}</span>;
           if (key === 'actions') {
             return (
               <div className="flex gap-2 justify-center items-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                  onClick={() => handleEdit(row.id)}
-                  title="Edit"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
+                {shouldShow('root-cause-analysis', 'edit') && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                    onClick={() => handleEdit(row.id)}
+                    title="Edit"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             );
           }

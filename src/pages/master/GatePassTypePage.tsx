@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { gatePassTypeService } from '@/services/gatePassTypeService';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export interface GatePassType {
   id: number;
@@ -22,6 +23,7 @@ export interface GatePassType {
 
 const GatePassTypePage = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [gatePassTypes, setGatePassTypes] = useState<GatePassType[]>([]);
   const [loading, setLoading] = useState(true);
   const [optimisticActive, setOptimisticActive] = useState<Record<number, boolean>>({});
@@ -111,7 +113,7 @@ const GatePassTypePage = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Gate Pass Types</h1>
       </div>
-      {showActionPanel && (
+      {showActionPanel && shouldShow('gate-pass-type', 'add') && (
         <SelectionPanel
           actions={[
             { label: 'Add', icon: Plus, onClick: handleAdd },
@@ -123,20 +125,22 @@ const GatePassTypePage = () => {
         loading={loading}
         columns={[
           { key: 'srno', label: 'Sr. No.' },
-          { key: 'actions', label: 'Actions' },
+          ...(shouldShow('gate-pass-type', 'edit') || shouldShow('gate-pass-type', 'delete') ? [{ key: 'actions', label: 'Actions' }] : []),
           { key: 'name', label: 'Name' },
           { key: 'value', label: 'Value' },
           { key: 'active', label: 'Status' },
         ]}
         data={gatePassTypes.map((gpt, idx) => ({ ...gpt, srno: idx + 1 }))}
         leftActions={
-          <Button
-            onClick={() => setShowActionPanel((prev) => !prev)}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Action
-          </Button>
+          shouldShow('gate-pass-type', 'add') && (
+            <Button
+              onClick={() => setShowActionPanel((prev) => !prev)}
+              className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium mr-2"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Action
+            </Button>
+          )
         }
 
         renderCell={(item, columnKey) => {
@@ -144,24 +148,28 @@ const GatePassTypePage = () => {
           if (columnKey === 'actions') {
             return (
               <div className="flex gap-2 justify-center items-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                  onClick={() => handleEdit(item.id)}
-                  title="Edit"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-red-600 hover:bg-red-50"
-                  onClick={() => handleDelete(item.id)}
-                  title="Delete"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {shouldShow('gate-pass-type', 'edit') && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                    onClick={() => handleEdit(item.id)}
+                    title="Edit"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
+                {shouldShow('gate-pass-type', 'delete') && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-red-600 hover:bg-red-50"
+                    onClick={() => handleDelete(item.id)}
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             );
           }

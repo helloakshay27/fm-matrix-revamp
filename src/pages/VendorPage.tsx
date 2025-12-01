@@ -10,6 +10,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, Pagi
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 interface Vendor {
   id: number;
   company_name: string;
@@ -31,6 +32,9 @@ interface Vendor {
 
 export const VendorPage = () => {
   const navigate = useNavigate();
+  // Initialize permission hook
+  const { shouldShow } = useDynamicPermissions();
+  
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -222,9 +226,11 @@ export const VendorPage = () => {
       case 'actions':
         return (
           <div className="flex gap-1">
-            <Button variant="ghost" size="sm" onClick={() => handleViewVendor(item.id)}>
-              <Eye className="w-4 h-4" />
-            </Button>
+            {shouldShow("vendors", "view") && (
+              <Button variant="ghost" size="sm" onClick={() => handleViewVendor(item.id)}>
+                <Eye className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         );
       case 'supplier_type':
@@ -259,7 +265,7 @@ export const VendorPage = () => {
     }
   };
 
-  const renderCustomActions = () => (
+  const renderCustomActions = () => shouldShow("vendors", "add") ? (
     <div className="flex flex-wrap gap-2 sm:gap-3">
       <Button 
         onClick={() => setShowActionPanel((prev) => !prev)}
@@ -269,14 +275,14 @@ export const VendorPage = () => {
         Action
       </Button>
     </div>
-  );
+  ) : null;
 
   const renderListTab = () => (
     <div className="space-y-4">
       {showActionPanel && (
         <SelectionPanel
-          onAdd={handleAddVendor}
-          onImport={handleImport}
+          onAdd={shouldShow("vendors", "add") ? handleAddVendor : undefined}
+          onImport={shouldShow("vendors", "import") ? handleImport : undefined}
           onClearSelection={handleClearSelection}
         />
       )}
@@ -287,7 +293,7 @@ export const VendorPage = () => {
             columns={columns}
             renderCell={renderCell}
             pagination={false}
-            enableExport={true}
+            enableExport={shouldShow("vendors", "export")}
             exportFileName="vendors"
             storageKey="vendors-table"
             enableGlobalSearch={true}
