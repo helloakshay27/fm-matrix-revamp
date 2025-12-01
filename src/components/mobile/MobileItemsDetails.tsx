@@ -160,6 +160,9 @@ export const MobileItemsDetails: React.FC = () => {
 
   // ✅ Place order handler
   const handlePlaceOrder = async () => {
+
+
+    https://oig.gophygital.work/mobile/restaurant/73/items?org_id=81&source=external&facilityId=1305
     if (isSubmitting) return; // Prevent double submission
 
     // Validate delivery location for app users
@@ -186,10 +189,11 @@ export const MobileItemsDetails: React.FC = () => {
       // Get facility_id from session storage to pass along
       const facilityId = sessionStorage.getItem("facility_id");
       const siteId = sessionStorage.getItem("site_id");
+      const orgId = sessionStorage.getItem("org_id");
 
       // Construct contact form URL with source parameter
       const contactFormUrl = finalSourceParam
-        ? `/mobile/restaurant/${restaurant.id}/contact-form?source=${finalSourceParam}`
+        ? `/mobile/restaurant/${restaurant.id}/contact-form?org_id=${orgId}&source=${finalSourceParam}&`
         : `/mobile/restaurant/${restaurant.id}/contact-form`;
 
       console.log("🔄 PASSING TO CONTACT FORM:");
