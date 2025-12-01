@@ -370,6 +370,15 @@ export const AddVendorPage = () => {
           isValid = false;
         }
         
+        // Primary email validation (REQUIRED - has red asterisk)
+        if (!contact.primaryEmail.trim()) {
+          newErrors[`contact_${index}_primaryEmail`] = 'Primary email is required';
+          isValid = false;
+        } else if (!/\S+@\S+\.\S+/.test(contact.primaryEmail)) {
+          newErrors[`contact_${index}_primaryEmail`] = 'Please enter a valid email address';
+          isValid = false;
+        }
+        
         // Optional fields - only validate format if provided
         if (contact.primaryMobile.trim() && !phoneRegex.test(contact.primaryMobile.trim())) {
           newErrors[`contact_${index}_primaryMobile`] = 'Please enter a valid 10-digit mobile number';
@@ -378,11 +387,6 @@ export const AddVendorPage = () => {
         
         if (contact.secondaryMobile.trim() && !phoneRegex.test(contact.secondaryMobile.trim())) {
           newErrors[`contact_${index}_secondaryMobile`] = 'Please enter a valid 10-digit mobile number';
-          isValid = false;
-        }
-        
-        if (contact.primaryEmail.trim() && !/\S+@\S+\.\S+/.test(contact.primaryEmail)) {
-          newErrors[`contact_${index}_primaryEmail`] = 'Please enter a valid email address';
           isValid = false;
         }
         
@@ -977,7 +981,7 @@ export const AddVendorPage = () => {
                       helperText={errors[`contact_${index}_lastName`]}
                     />
                     <TextField
-                      label="Primary Email"
+                      label={<span>Primary Email <span style={{ color: 'red' }}>*</span></span>}
                       type="email"
                       fullWidth
                       value={contact.primaryEmail}
