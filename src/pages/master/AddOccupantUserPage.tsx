@@ -112,7 +112,14 @@ export const AddOccupantUserPage: React.FC = () => {
   });
 
   const handleInputChange = (field: string, value: string | string[]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Allow only alphabetic characters (including spaces) for firstName and lastName
+    if (field === 'firstName' || field === 'lastName') {
+      const stringValue = typeof value === 'string' ? value : '';
+      const alphabeticValue = stringValue.replace(/[^A-Za-z\s]/g, '');
+      setFormData((prev) => ({ ...prev, [field]: alphabeticValue }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleCancel = () => navigate('/master/user/occupant-users');

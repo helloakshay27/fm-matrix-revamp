@@ -38,6 +38,12 @@ import {
   UserCheck,
   DollarSign,
   Clock,
+  IndianRupee,
+  Circle,
+  Car,
+  Wallet,
+  FolderTree,
+  Trash,
 } from "lucide-react";
 
 export const modulesByPackage = {
@@ -90,12 +96,12 @@ export const modulesByPackage = {
       href: "/master/user",
       subItems: [
         {
-          name: "FM User",
+          name: "FM Users",
           href: "/master/user/fm-users",
           color: "text-[#1a1a1a]",
         },
         {
-          name: "OCCUPANT USERS",
+          name: "Occupant Users",
           href: "/master/user/occupant-users",
           color: "text-[#1a1a1a]",
         },
@@ -105,6 +111,11 @@ export const modulesByPackage = {
       name: "Checklist Master",
       icon: CheckSquare,
       href: "/master/checklist",
+    },
+    {
+      name: "Question Bank",
+      icon: FileSpreadsheet,
+      href: "/master/survey/list",
     },
     {
       name: "Address Master",
@@ -126,6 +137,58 @@ export const modulesByPackage = {
       icon: DoorOpen,
       href: "/master/gate-number",
     },
+    {
+      name: "Gate Pass Type",
+      icon: Ticket,
+      href: "/master/gate-pass-type",
+    },
+    {
+      name: "Inventory Type",
+      icon: Package,
+      href: "/master/inventory-type",
+    },
+    {
+      name: "Template",
+      icon: FileSpreadsheet,
+      href: "/master/communication-template",
+      subItems: [
+        {
+          name: "Communication Template",
+          href: "/master/communication-template",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Root Cause Analysis",
+          href: "/master/template/root-cause-analysis",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Preventive Action",
+          href: "/master/template/preventive-action",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Short-term Impact",
+          href: "/master/template/short-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Long-term Impact",
+          href: "/master/template/long-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Corrective Action",
+          href: "/master/template/corrective-action",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    // {
+    //   name: 'Inventory Sub Type',
+    //   icon: PackagePlus,
+    //   href: '/master/inventory-sub-type'
+    // },
   ],
   Transitioning: [
     { name: "HOTO", icon: FileText, href: "/transitioning/hoto" },
@@ -180,31 +243,11 @@ export const modulesByPackage = {
     },
   ],
   Maintenance: [
-    {
-      name: "Ticket",
-      icon: FileText,
-      href: "/maintenance/ticket",
-    },
-    {
-      name: "Task",
-      icon: CheckSquare,
-      href: "/maintenance/task",
-    },
-    {
-      name: "Schedule",
-      icon: Calendar,
-      href: "/maintenance/schedule",
-    },
-    {
-      name: "Soft Services",
-      icon: Wrench,
-      href: "/maintenance/service",
-    },
-    {
-      name: "Assets",
-      icon: Building,
-      href: "/maintenance/asset",
-    },
+    { name: "Ticket", icon: FileText, href: "/maintenance/ticket" },
+    { name: "Task", icon: CheckSquare, href: "/maintenance/task" },
+    { name: "Schedule", icon: Calendar, href: "/maintenance/schedule" },
+    { name: "Soft Service", icon: Wrench, href: "/maintenance/service" },
+    { name: "Assets", icon: Building, href: "/maintenance/asset" },
 
     {
       name: "Inventory",
@@ -221,18 +264,11 @@ export const modulesByPackage = {
           href: "/maintenance/inventory-consumption",
           color: "text-[#1a1a1a]",
         },
+        // { name: 'Eco-Friendly List', href: '/maintenance/eco-friendly-list', color: 'text-[#1a1a1a]' }
       ],
     },
-    {
-      name: "AMC",
-      icon: FileText,
-      href: "/maintenance/amc",
-    },
-    {
-      name: "Attendance",
-      icon: Clock,
-      href: "/maintenance/attendance",
-    },
+    { name: "AMC", icon: FileText, href: "/maintenance/amc" },
+    { name: "Attendance", icon: Clock, href: "/maintenance/attendance" },
 
     {
       name: "Audit",
@@ -302,11 +338,7 @@ export const modulesByPackage = {
       icon: FileSpreadsheet,
       href: "/maintenance/survey",
       subItems: [
-        {
-          name: "Survey List",
-          href: "/maintenance/survey/list",
-          color: "text-[#1a1a1a]",
-        },
+        // { name: 'Survey List', href: '/maintenance/survey/list', color: 'text-[#1a1a1a]' },
         {
           name: "Survey Mapping",
           href: "/maintenance/survey/mapping",
@@ -324,109 +356,122 @@ export const modulesByPackage = {
       icon: UserRoundPen,
       href: "/maintenance/vendor",
     },
-    {
-      name: "M-Safe",
-      icon: User,
-      href: "/maintenance/m-safe",
-      subItems: [
-        {
-          name: "Internal User (FTE)",
-          href: "/maintenance/m-safe/internal",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "External User (NON FTE)",
-          href: "/maintenance/m-safe/external",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "LMC",
-          href: "/maintenance/m-safe/lmc",
-        },
-        {
-          name: "SMT",
-          href: "/maintenance/m-safe/smt",
-        },
-        {
-          name: "Krcc List",
-          href: "/maintenance/m-safe/krcc-list",
-        },
-        {
-          name: "Training List",
-          href: "/maintenance/m-safe/training-list",
-        },
-        {
-          name: "Reportees Reassign",
-          href: "/maintenance/m-safe/reportees-reassign",
-        },
-      ],
-    },
-    {
-      name: "Vi Miles",
-      icon: User,
-      href: "/maintenance/vi-miles",
-      subItems: [
-        {
-          name: "Vehicle Details",
-          href: "/maintenance/vi-miles/vehicle-details",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Vehicle Check In",
-          href: "/maintenance/vi-miles/vehicle-check-in",
-          color: "text-[#1a1a1a]",
-        },
-      ],
-    },
-    {
-      name: "Employee Deletion History",
-      icon: Trash2, // Changed from Trash to Trash2 as Trash was not imported in original file
-      href: "/maintenance/employee-deletion-history",
-    },
 
-    {
-      name: "Msafe Report",
-      icon: Download,
-      href: "/maintenance/msafe-report",
-    },
-    {
-      name: "Msafe Detail Report",
-      icon: Download,
-      href: "/maintenance/msafe-detail-report",
-    },
+    // {
+    //   name: 'Projects & Tasks',
+    //   icon: Briefcase,
+    //   href: "/maintenance/projects"
+    // },
+    // {
+    //   name: 'Sprint',
+    //   icon: Briefcase,
+    //   href: "/maintenance/sprint"
+    // }
+
+    // {
+    //   name: "Msafe Report",
+    //   icon: Download,
+    //   href: "/safety/msafe-report",
+    // },
+    // {
+    //   name: "Msafe Detail Report",
+    //   icon: Download,
+    //   href: "/safety/msafe-detail-report",
+    // },
+
+    // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
+
+    // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
   ],
   Safety: [
-    {
-      name: "Incident",
-      icon: AlertTriangle,
-      href: "/safety/incident",
-    },
+    { name: "Incident", icon: AlertTriangle, href: "/safety/incident" },
     {
       name: "Permit",
       icon: FileText,
       href: "/safety/permit",
       subItems: [
-        {
-          name: "Permit ",
-          href: "/safety/permit",
-          color: "text-[#1a1a1a]",
-        },
+        { name: "Permit ", href: "/safety/permit", color: "text-[#1a1a1a]" },
         {
           name: "Pending Approvals",
           href: "/safety/permit/pending-approvals",
           color: "text-[#1a1a1a]",
         },
+        {
+          name: "Permit Checklist",
+          href: "/safety/permit/checklist",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+
+    {
+      name: "M-Safe",
+      icon: User,
+      href: "/safety/m-safe",
+      subItems: [
+        {
+          name: "Internal User (FTE)",
+          href: "/safety/m-safe/internal",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "External User (NON FTE)",
+          href: "/safety/m-safe/external",
+          color: "text-[#1a1a1a]",
+        },
+        { name: "LMC", href: "/safety/m-safe/lmc" },
+        { name: "SMT", href: "/safety/m-safe/smt" },
+        { name: "Krcc List", href: "/safety/m-safe/krcc-list" },
+        { name: "Training List", href: "/safety/m-safe/training-list" },
+        {
+          name: "Reportees Reassign",
+          href: "/safety/m-safe/reportees-reassign",
+        },
       ],
     },
     {
-      name: "M Safe",
-      icon: Shield,
-      href: "/safety/m-safe",
+      name: "Report",
+      icon: Download,
+      href: "/safety/report",
+      subItems: [
+        {
+          name: "Msafe User Report",
+          icon: Download,
+          href: "/safety/report/msafe-report",
+        },
+        {
+          name: "Msafe Detail Report",
+          icon: Download,
+          href: "/safety/report/msafe-detail-report",
+        },
+      ],
+    },
+    // {
+    //   name: "Vi Miles",
+    //   icon: User,
+    //   href: "/safety/vi-miles",
+    //   subItems: [
+    //     {
+    //       name: "Vehicle Details",
+    //       href: "/safety/vi-miles/vehicle-details",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //     {
+    //       name: "Vehicle Check In",
+    //       href: "/safety/vi-miles/vehicle-check-in",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //   ],
+    // },
+    {
+      name: "Check Hierarchy Levels",
+      icon: FolderTree,
+      href: "/safety/check-hierarchy-levels",
     },
     {
-      name: "Training List",
-      icon: BookOpen,
-      href: "/safety/training-list",
+      name: "Employee Deletion History",
+      icon: Trash,
+      href: "/safety/employee-deletion-history",
     },
   ],
   Finance: [
@@ -436,44 +481,18 @@ export const modulesByPackage = {
       href: "/finance/procurement",
       subItems: [
         {
-          name: "PR/ SR",
-          href: "/finance/pr-sr",
+          name: "Material PR",
+          href: "/finance/material-pr",
           color: "text-[#1a1a1a]",
-          subItems: [
-            {
-              name: "Material PR",
-              href: "/finance/material-pr",
-              color: "text-[#1a1a1a]",
-            },
-            {
-              name: "Service PR",
-              href: "/finance/service-pr",
-              color: "text-[#1a1a1a]",
-            },
-          ],
         },
         {
-          name: "PO/WO",
-          href: "/finance/po-wo",
-          color: "text-[#1a1a1a]",
-          subItems: [
-            {
-              name: "PO",
-              href: "/finance/po",
-              color: "text-[#1a1a1a]",
-            },
-            {
-              name: "WO",
-              href: "/finance/wo",
-              color: "text-[#1a1a1a]",
-            },
-          ],
-        },
-        {
-          name: "GRN/ SRN",
-          href: "/finance/grn-srn",
+          name: "Service PR",
+          href: "/finance/service-pr",
           color: "text-[#1a1a1a]",
         },
+        { name: "PO", href: "/finance/po", color: "text-[#1a1a1a]" },
+        { name: "WO", href: "/finance/wo", color: "text-[#1a1a1a]" },
+        { name: "GRN/ SRN", href: "/finance/grn-srn", color: "text-[#1a1a1a]" },
         {
           name: "Auto Saved PR",
           href: "/finance/auto-saved-pr",
@@ -484,18 +503,20 @@ export const modulesByPackage = {
           href: "/finance/pending-approvals",
           color: "text-[#1a1a1a]",
         },
+        {
+          name: "Deletion Requests",
+          href: "/finance/deletion-requests",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Deleted PRs",
+          href: "/finance/deleted-prs",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
-    {
-      name: "Invoices",
-      icon: Receipt,
-      href: "/finance/invoices",
-    },
-    {
-      name: "Bill Booking",
-      icon: Receipt,
-      href: "/finance/bill-booking",
-    },
+    { name: "Invoices", icon: Receipt, href: "/finance/invoices" },
+    { name: "Bill Booking", icon: Receipt, href: "/finance/bill-booking" },
     {
       name: "Accounting",
       icon: Calculator,
@@ -513,83 +534,37 @@ export const modulesByPackage = {
         },
       ],
     },
-    {
-      name: "WBS",
-      icon: BarChart3,
-      href: "/finance/wbs",
-    },
+    { name: "WBS", icon: BarChart3, href: "/finance/wbs" },
   ],
   CRM: [
-    {
-      name: "Lead",
-      icon: Target,
-      href: "/crm/lead",
-    },
-    {
-      name: "Opportunity",
-      icon: Star,
-      href: "/crm/opportunity",
-    },
+    { name: "Lead", icon: Target, href: "/crm/lead" },
+    { name: "Opportunity", icon: Star, href: "/crm/opportunity" },
     {
       name: "CRM",
       icon: Users,
       subItems: [
-        {
-          name: "Customers",
-          href: "/crm/customers",
-        },
-        {
-          name: "FM Users",
-          href: "/crm/fm-users",
-        },
-        {
-          name: "Occupant Users",
-          href: "/crm/occupant-users",
-        },
+        { name: "Customers", href: "/crm/customers" },
+        // { name: "FM Users", href: "/crm/fm-users" },
+        // { name: "Occupant Users", href: "/crm/occupant-users" },
       ],
     },
+    { name: "Events", icon: Calendar, href: "/crm/events" },
+    { name: "Broadcast", icon: Bell, href: "/crm/broadcast" },
+    { name: "Polls", icon: BarChart3, href: "/crm/polls" },
+    { name: "Campaign", icon: Target, href: "/crm/campaign" },
     {
-      name: "Events",
-      icon: Calendar,
-      href: "/crm/events",
-    },
-    {
-      name: "Broadcast",
-      icon: Bell,
-      href: "/crm/broadcast",
-    },
-    {
-      name: "Groups",
-      icon: Users,
-      href: "/crm/groups",
-    },
-    {
-      name: "Polls",
-      icon: BarChart3,
-      href: "/crm/polls",
-    },
-    {
-      name: "Campaign",
-      icon: Target,
-      href: "/crm/campaign",
+      name: "Wallet",
+      icon: Wallet,
+      subItems: [
+        { name: "Wallet List", href: "/crm/wallet-list" },
+        { name: "Point Expiry", href: "/crm/point-expiry" },
+      ],
     },
   ],
   Utility: [
-    {
-      name: "Energy",
-      icon: Zap,
-      href: "/utility/energy",
-    },
-    {
-      name: "Water",
-      icon: Droplets,
-      href: "/utility/water",
-    },
-    {
-      name: "STP",
-      icon: Database,
-      href: "/utility/stp",
-    },
+    { name: "Energy", icon: Zap, href: "/utility/energy" },
+    { name: "Water", icon: Droplets, href: "/utility/water" },
+    { name: "STP", icon: Database, href: "/utility/stp" },
     {
       name: "Daily Readings",
       icon: ClipboardList,
@@ -600,21 +575,9 @@ export const modulesByPackage = {
       icon: FileText,
       href: "/utility/utility-request",
     },
-    {
-      name: "Utility Consumption",
-      icon: BarChart3,
-      href: "/utility/utility-consumption",
-    },
-    {
-      name: "EV Consumption",
-      icon: CheckSquare, // Replaced Car with CheckSquare as Car was not imported
-      href: "/utility/ev-consumption",
-    },
-    {
-      name: "Solar Generator",
-      icon: Sun,
-      href: "/utility/solar-generator",
-    },
+    // { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
+    { name: "EV Consumption", icon: Car, href: "/utility/ev-consumption" },
+    { name: "Solar Generator", icon: Sun, href: "/utility/solar-generator" },
   ],
   Security: [
     {
@@ -634,19 +597,11 @@ export const modulesByPackage = {
         },
       ],
     },
-    {
-      name: "Visitor",
-      icon: Users,
-      href: "/security/visitor",
-    },
-    {
-      name: "Staff",
-      icon: Users,
-      href: "/security/staff",
-    },
+    { name: "Visitor", icon: Users, href: "/security/visitor" },
+    { name: "Staff", icon: Users, href: "/security/staff" },
     {
       name: "Vehicle",
-      icon: CheckSquare, // Replaced Car with CheckSquare
+      icon: Car,
       href: "/security/vehicle",
       subItems: [
         {
@@ -673,15 +628,27 @@ export const modulesByPackage = {
         },
       ],
     },
-    {
-      name: "Patrolling",
-      icon: Shield,
-      href: "/security/patrolling",
-    },
+    { name: "Patrolling", icon: Shield, href: "/security/patrolling" },
   ],
   "Value Added Services": [
     { name: "F&B", icon: Coffee, href: "/vas/fnb" },
-    { name: "Parking", icon: CheckSquare, href: "/vas/parking" }, // Replaced Car with CheckSquare
+    {
+      name: "Parking",
+      icon: Car,
+      href: "/vas/parking",
+      subItems: [
+        {
+          name: "Parking Allocation",
+          href: "/vas/parking",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Parking Booking",
+          href: "/vas/parking/site-wise-bookings",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
     { name: "OSR", icon: TreePine, href: "/vas/osr" },
     {
       name: "Space Management",
@@ -751,6 +718,15 @@ export const modulesByPackage = {
       name: "Booking",
       icon: Calendar,
       href: "/vas/booking/list",
+      // subItems: [
+      //   { name: 'Booking List', href: '/vas/booking/list', color: 'text-[#1a1a1a]' },
+      //   { name: 'Book Setup', href: '/vas/booking/setup', color: 'text-[#1a1a1a]' }
+      // ]
+    },
+    {
+      name: "Redemption Marketplace",
+      icon: Globe,
+      href: "/vas/redemonection-marketplace",
     },
     {
       name: "Mailroom",
@@ -770,9 +746,20 @@ export const modulesByPackage = {
       ],
     },
     {
-      name: "Redemption Marketplace",
+      name: "Collaboration",
       icon: Globe,
-      href: "/vas/redemonection-marketplace",
+      subItems: [
+        {
+          name: "Channels",
+          href: "/vas/channels",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Tasks",
+          href: "/vas/channels/tasks",
+          color: "text-[#1a1a1a]",
+        },
+      ],
     },
   ],
   "Market Place": [
@@ -844,7 +831,7 @@ export const modulesByPackage = {
       subItems: [
         {
           name: "Asset Setup",
-          href: "/settings/asset-setup",
+          href: "/settings/asset-setup/approval-matrix",
           subItems: [
             {
               name: "Approval Matrix",
@@ -897,6 +884,10 @@ export const modulesByPackage = {
               name: "SAC/HSN Code",
               href: "/settings/inventory-management/sac-hsn-code",
             },
+            {
+              name: "Inventory Type",
+              href: "/settings/inventory-management/inventory-type",
+            },
           ],
         },
         {
@@ -937,7 +928,7 @@ export const modulesByPackage = {
       subItems: [
         {
           name: "Visitor Management",
-          href: "/security/visitor-management",
+          href: "/settings/visitor-management/setup",
           subItems: [
             { name: "Setup", href: "/settings/visitor-management/setup" },
             {
@@ -948,6 +939,7 @@ export const modulesByPackage = {
               name: "Support Staff",
               href: "/settings/visitor-management/support-staff",
             },
+            { name: "Icons", href: "/settings/visitor-management/icons" },
           ],
         },
         {
@@ -970,8 +962,7 @@ export const modulesByPackage = {
       subItems: [
         {
           name: "F&B",
-          href: "/settings/vas/fnb",
-          subItems: [{ name: "Setup", href: "/settings/vas/fnb/setup" }],
+          href: "/settings/vas/fnb/setup",
         },
         {
           name: "MOM",
@@ -999,8 +990,7 @@ export const modulesByPackage = {
         },
         {
           name: "Booking",
-          href: "/settings/vas/booking",
-          subItems: [{ name: "Setup", href: "/settings/vas/booking/setup" }],
+          href: "/settings/vas/booking/setup",
         },
         {
           name: "Parking Management",
@@ -1020,6 +1010,49 @@ export const modulesByPackage = {
           ],
         },
       ],
+    },
+    {
+      name: "Community Modules",
+      icon: Users,
+      subItems: [
+        {
+          name: "Testimonial Setup",
+          href: "/settings/community-modules/testimonial-setup",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Company Partner Setup",
+          href: "/settings/community-modules/company-partner-setup",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Banner Setup",
+          href: "/settings/community-modules/banner-setup",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Amenity Setup",
+          href: "/settings/community-modules/amenity-setup",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    { name: "FM Groups", icon: Users, href: "/settings/groups" },
+    // {
+    //   name: 'Currency',
+    //   icon: Currency,
+    //   href: '/settings/currency',
+    // }
+
+    {
+      name: "Common Modules",
+      icon: IndianRupee,
+      subItems: [{ name: "Currency", href: "/settings/currency" }],
+    },
+    {
+      icon: Circle,
+      name: "Circle",
+      href: "/safety/m-safe/circle",
     },
   ],
 };
