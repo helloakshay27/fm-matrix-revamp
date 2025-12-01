@@ -489,7 +489,7 @@ export const EditSchedulePage = () => {
 
       // Load assets using the specific API endpoint
       const assetsResponse = await fetch(
-        `https://fm-uat-api.lockated.com/pms/assets/get_assets.json`,
+        `${API_CONFIG.BASE_URL}/pms/assets/get_assets.json`,
         {
           method: 'GET',
           headers: {
@@ -762,9 +762,10 @@ export const EditSchedulePage = () => {
 
         // Validate supervisors against users
         if (users.length > 0 && prev.supervisors) {
-          const userExists = users.some(user => user.id.toString() === prev.supervisors);
+          const supervisorValue = prev.supervisors.toString();
+          const userExists = users.some(user => user.id.toString() === supervisorValue);
           if (!userExists) {
-            console.warn(`Invalid supervisors value: ${prev.supervisors}. Resetting to empty.`);
+            console.warn(`Invalid supervisors value: ${prev.supervisors}. Available users:`, users.map(u => u.id));
             updatedData.supervisors = '';
             hasChanges = true;
           }
@@ -808,6 +809,42 @@ export const EditSchedulePage = () => {
       });
     }
   }, [users, categories, suppliers, groups]);
+
+  // Helper function to normalize dropdown values
+  const normalizeDropdownValue = (value: string, validOptions: string[]): string => {
+    if (!value) return '';
+    
+    const normalizedValue = value.toLowerCase().trim();
+    
+    // Direct match
+    if (validOptions.includes(normalizedValue)) {
+      return normalizedValue;
+    }
+    
+    // Handle common variations
+    const variations: { [key: string]: string } = {
+      'hours': 'hour',
+      'hrs': 'hour',
+      'h': 'hour',
+      'mins': 'minutes',
+      'min': 'minutes',
+      'm': 'minutes',
+      'days': 'day',
+      'd': 'day',
+      'weeks': 'week',
+      'w': 'week',
+      'months': 'month',
+      'mo': 'month'
+    };
+    
+    // Check variations
+    if (variations[normalizedValue] && validOptions.includes(variations[normalizedValue])) {
+      return variations[normalizedValue];
+    }
+    
+    console.warn(`Unrecognized dropdown value: "${value}". Available options:`, validOptions);
+    return '';
+  };
 
   const loadScheduleData = async (scheduleId: string) => {
     if (!customFormCode) {
@@ -856,17 +893,17 @@ export const EditSchedulePage = () => {
         selectedUsers: data.asset_task.assigned_to?.map(user => user.id) || [],
         selectedGroups: [], // Will be populated after groups are loaded
         backupAssignee: data.asset_task.backup_assigned?.id?.toString() || '',
-        planDuration: data.asset_task.plan_type || '',
+        planDuration: normalizeDropdownValue(data.asset_task.plan_type || '', ['minutes', 'hour', 'day', 'week', 'month']),
         planDurationValue: data.asset_task.plan_value || '',
         emailTriggerRule: data.custom_form.rule_ids?.length > 0 ? data.custom_form.rule_ids[0]?.toString() : '',
         scanType: data.asset_task.scan_type || '',
         category: data.asset_task.category || '',
-        submissionTime: data.custom_form.submission_time_type || '',
+        submissionTime: normalizeDropdownValue(data.custom_form.submission_time_type || '', ['minutes', 'hour', 'day', 'week']),
         submissionTimeValue: data.custom_form.submission_time_value?.toString() || '',
-        supervisors: Array.isArray(data.custom_form.supervisors) && data.custom_form.supervisors.length > 0 ? data.custom_form.supervisors[0] : '',
+        supervisors: Array.isArray(data.custom_form.supervisors) && data.custom_form.supervisors.length > 0 ? data.custom_form.supervisors[0].toString() : '',
         lockOverdueTask: data.asset_task.overdue_task_start_status ? 'true' : 'false',
         frequency: data.asset_task.frequency || '',
-        graceTime: data.asset_task.grace_time_type || '',
+        graceTime: normalizeDropdownValue(data.asset_task.grace_time_type || '', ['minutes', 'hour', 'day', 'week']),
         graceTimeValue: data.asset_task.grace_time_value || '',
         endAt: data.asset_task.end_date ? data.asset_task.end_date.split('T')[0] : '',
         supplier: data.custom_form.supplier_id?.toString() || '',
@@ -884,6 +921,12 @@ export const EditSchedulePage = () => {
 
       console.log('API Response Data:', data);
       console.log('Mapped Form Data:', mappedFormData);
+
+      // Debug logging for dropdown values
+      console.log('Plan Duration API value:', data.asset_task.plan_type, '-> Normalized:', mappedFormData.planDuration);
+      console.log('Grace Time API value:', data.asset_task.grace_time_type, '-> Normalized:', mappedFormData.graceTime);
+      console.log('Submission Time API value:', data.custom_form.submission_time_type, '-> Normalized:', mappedFormData.submissionTime);
+      console.log('Supervisors API value:', data.custom_form.supervisors, '-> Normalized:', mappedFormData.supervisors);
 
       setFormData(prev => ({ ...prev, ...mappedFormData }));
 
