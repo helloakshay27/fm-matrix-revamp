@@ -169,6 +169,7 @@ interface TaskQuestion {
   radioValues: Array<{ label: string, type: string }>;
   checkboxValues: string[];
   checkboxSelectedStates: boolean[];
+  checkboxTypes: string[];
   optionsInputsValues: string[];
 }
 
@@ -285,7 +286,7 @@ interface ApiResponseData {
   email_rules: any[];
 }
 
-export const CloneSchedulePage = () => {
+const CloneSchedulePage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
@@ -367,6 +368,7 @@ export const CloneSchedulePage = () => {
           radioValues: [{ label: '', type: 'positive' }],
           checkboxValues: [''],
           checkboxSelectedStates: [false],
+          checkboxTypes: ['positive'],
           optionsInputsValues: ['']
         }
       ]
@@ -923,35 +925,66 @@ export const CloneSchedulePage = () => {
             helpText: !!item.hint,
             helpTextValue: item.hint || '',
             helpTextAttachments: (item.question_hint_image_url || []).map((attachment, attIndex) => {
+              console.log('Loading attachment from API:', {
+                attachment,
+                attIndex,
+                type: typeof attachment,
+                question_hint_image_ids: item.question_hint_image_ids
+              });
+              
               // Handle different attachment formats
               if (typeof attachment === 'string') {
-                return {
+                const mappedAttachment = {
                   id: item.question_hint_image_ids?.[attIndex] || `existing_${index}_${attIndex}`,
                   name: `attachment_${attIndex + 1}`,
                   url: attachment,
                   content: attachment,
                   content_type: 'image/png' // default type
                 };
+                console.log('Mapped string attachment:', mappedAttachment);
+                return mappedAttachment;
               } else if (attachment && typeof attachment === 'object') {
-                return {
+                // Use base64_string if available, otherwise fallback to url
+                const content = attachment.base64_string || attachment.content || attachment.url || '';
+                const mappedAttachment = {
                   id: attachment.id || item.question_hint_image_ids?.[attIndex] || `existing_${index}_${attIndex}`,
                   name: attachment.name || attachment.filename || `attachment_${attIndex + 1}`,
-                  url: attachment.url || attachment.content || '',
-                  content: attachment.content || attachment.url || '',
+                  url: attachment.url || '',
+                  content: content,
                   content_type: attachment.content_type || 'image/png'
                 };
+                console.log('Mapped object attachment with base64_string:', mappedAttachment);
+                return mappedAttachment;
               }
+              console.log('Invalid attachment, skipping:', attachment);
               return null;
             }).filter(Boolean),
             autoTicket: false,
             weightage: item.weightage || '',
             rating: item.rating_enabled === 'true',
             reading: item.is_reading === 'true',
-            dropdownValues: item.values && item.values.length > 0 ? item.values : [{ label: '', type: 'positive' }],
-            radioValues: item.values && item.values.length > 0 ? item.values : [{ label: '', type: 'positive' }],
-            checkboxValues: item.values && item.values.length > 0 ? item.values.map(v => v.label || v) : [''],
+            dropdownValues: (() => {
+              if (item.values && Array.isArray(item.values) && item.values.length > 0) {
+                return item.values.map((val: any) => ({
+                  label: val.label || val.value || val || '',
+                  type: val.type || 'positive'
+                }));
+              }
+              return [{ label: '', type: 'positive' }];
+            })(),
+            radioValues: (() => {
+              if (item.values && Array.isArray(item.values) && item.values.length > 0) {
+                return item.values.map((val: any) => ({
+                  label: val.label || val.value || val || '',
+                  type: val.type || 'positive'
+                }));
+              }
+              return [{ label: '', type: 'positive' }];
+            })(),
+            checkboxValues: item.values && item.values.length > 0 ? item.values.map(v => v.label || v.value || v) : [''],
             checkboxSelectedStates: item.values && item.values.length > 0 ? item.values.map(() => false) : [false],
-            optionsInputsValues: item.values && item.values.length > 0 ? item.values.map(v => v.label || v) : ['']
+            checkboxTypes: item.values && item.values.length > 0 ? item.values.map((v: any) => v.type || 'positive') : ['positive'],
+            optionsInputsValues: item.values && item.values.length > 0 ? item.values.map(v => v.label || v.value || v) : ['']
           }))
         }];
         setQuestionSections(mappedSections);
@@ -1250,7 +1283,7 @@ export const CloneSchedulePage = () => {
     setIsSubmitting(true);
     try {
       // Build the API payload
-      const payload = buildAPIPayload();
+      const payload = await buildAPIPayload();
 
       // Modify activity name to indicate it's a clone
       payload.pms_custom_form.form_name = `${formData.activityName}`;
@@ -1622,7 +1655,7 @@ export const CloneSchedulePage = () => {
   };
 
   // Build the API payload
-  const buildAPIPayload = () => {
+  const buildAPIPayload = async () => {
     // Build content array from question sections
     const content = questionSections.flatMap(section =>
       section.tasks.filter(task => task.task.trim()).map(task => {
@@ -1651,7 +1684,12 @@ export const CloneSchedulePage = () => {
           case 'checkbox':
             values = task.checkboxValues
               .filter(val => val.trim())
-              .map(val => val);
+              .map((val, idx) => ({
+                label: val,
+                type: task.checkboxTypes?.[idx] || 'positive',
+                value: val,
+                checked: task.checkboxSelectedStates?.[idx] || false
+              }));
             break;
           case 'options-inputs':
             values = task.optionsInputsValues
@@ -1660,6 +1698,35 @@ export const CloneSchedulePage = () => {
             break;
           default:
             values = [];
+        }
+
+        // Build question_hint_image_ids and question_hint_image_url for help text attachments
+        let questionHintImageIds: any[] = [];
+        let questionHintImageUrl: any[] = [];
+        
+        if (task.helpText && task.helpTextAttachments && task.helpTextAttachments.length > 0) {
+          task.helpTextAttachments.forEach((attachment, index) => {
+            // Add ID to question_hint_image_ids
+            questionHintImageIds.push(attachment.id || index);
+            
+            // Create question_hint_image_url object with base64_string
+            let base64Content = attachment.content;
+            
+            // If content is a URL, we need to use base64_string if available
+            if (attachment.content && !attachment.content.startsWith('data:') && 
+                (attachment.content.startsWith('http://') || attachment.content.startsWith('https://'))) {
+              // For existing attachments from API, try to get base64_string
+              // This should be handled in the API response parsing
+              base64Content = attachment.content; // Keep URL as fallback
+            }
+            
+            questionHintImageUrl.push({
+              id: attachment.id || index,
+              filename: attachment.name,
+              url: attachment.url || attachment.content,
+              base64_string: base64Content
+            });
+          });
         }
 
         return {
@@ -1675,52 +1742,80 @@ export const CloneSchedulePage = () => {
           hint: task.helpText ? (task.helpTextValue || "") : "",
           values: values,
           weightage: task.weightage || "",
-          rating_enabled: task.rating ? "true" : "false"
+          rating_enabled: task.rating ? "true" : "false",
         };
       })
     );
 
     // Build custom_form object
     const customForm: any = {};
-    let contentIndex = 1; // Track position in content array
+    let taskCounter = 1; // Counter for individual tasks with help text attachments
     
-    questionSections.forEach((section) => {
-      section.tasks.filter(task => task.task.trim()).forEach(task => {
-        // If this task has help text and attachments, add them with correct index
-        if (task.helpText) {
-          // Validation: All helpText tasks must have helpTextValue and helpTextAttachments
-          if (!task.helpTextValue || !task.helpTextValue.trim()) {
-            throw new Error('Please enter Help Text for all tasks where Help Text is checked.');
-          }
-          if (!task.helpTextAttachments || task.helpTextAttachments.length === 0) {
-            throw new Error('Please attach a help file for all tasks where Help Text is checked.');
-          }
-          
-          // Create individual question_for_{contentIndex} for each task with help text
-          customForm[`question_for_${contentIndex}`] = task.helpTextAttachments.map(attachment => {
-            // Handle both existing attachments (with URLs) and new attachments (with base64 content)
-            if (attachment.url && !attachment.content.startsWith('data:')) {
-              // Existing attachment from API - preserve as URL reference
-              return {
-                filename: attachment.name,
-                content: attachment.url, // Use URL for existing attachments
-                content_type: attachment.content_type,
-                attachment_id: attachment.id // Include ID for existing attachments
-              };
-            } else {
-              // New attachment with base64 content
-              return {
-                filename: attachment.name,
-                content: attachment.content,
-                content_type: attachment.content_type
-              };
-            }
-          });
+    // Also build content-to-question mapping for accessing base64_string
+    const contentItemsWithAttachments = content.filter(item => 
+      item.question_hint_image_url && item.question_hint_image_url.length > 0
+    );
+    
+    for (const section of questionSections) {
+      // Get tasks with help text attachments
+      const sectionTasks = section.tasks.filter(task => task.task.trim());
+      const helpTextTasks = sectionTasks.filter(task => task.helpText && task.helpTextAttachments && task.helpTextAttachments.length > 0);
+      
+      for (const task of helpTextTasks) {
+        // Validation: All helpText tasks must have helpTextValue and helpTextAttachments
+        if (!task.helpTextValue || !task.helpTextValue.trim()) {
+          throw new Error('Please enter Help Text for all tasks where Help Text is checked.');
+        }
+        if (!task.helpTextAttachments || task.helpTextAttachments.length === 0) {
+          throw new Error('Please attach a help file for all tasks where Help Text is checked.');
         }
         
-        contentIndex++;
-      });
-    });
+        // Find corresponding content item for this task to get base64_string
+        const matchingContentItem = contentItemsWithAttachments.find(contentItem => 
+          contentItem.label === task.task && 
+          contentItem.group_id === task.group && 
+          contentItem.sub_group_id === task.subGroup
+        );
+        
+        // Create individual question_for_{taskCounter} for each task with help text
+        customForm[`question_for_${taskCounter}`] = task.helpTextAttachments.map((attachment, index) => {
+          console.log('Processing attachment for question_for_' + taskCounter + ':', attachment);
+          
+          let content = '';
+          
+          // First try to get base64_string from matching content item
+          if (matchingContentItem && matchingContentItem.question_hint_image_url && matchingContentItem.question_hint_image_url[index]) {
+            const contentImageUrl = matchingContentItem.question_hint_image_url[index];
+            if (contentImageUrl.base64_string) {
+              content = contentImageUrl.base64_string;
+              console.log('Using base64_string from content item');
+            }
+          }
+          
+          // Fallback to attachment content
+          if (!content) {
+            if (attachment.content && attachment.content.startsWith('data:')) {
+              // Already base64 content
+              content = attachment.content;
+            } else if (attachment.url && attachment.url.startsWith('data:')) {
+              // Base64 content in url field
+              content = attachment.url;
+            } else {
+              // Use whatever content is available
+              content = attachment.content || '';
+            }
+          }
+          
+          return {
+            filename: attachment.name,
+            content: content,
+            content_type: attachment.content_type
+          };
+        });
+        
+        taskCounter++;
+      }
+    }
 
     // Get selected asset IDs or service IDs based on scheduleFor
     const assetIds = formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' ? formData.asset : [];
@@ -1769,6 +1864,77 @@ export const CloneSchedulePage = () => {
       cronMonth = "on";
     }
 
+    return {
+      schedule_type: 'ppm',
+      pms_custom_form: {
+        created_source: "form",
+        create_ticket: autoTicket ? "1" : "0",
+        ticket_level: formData.ticketLevel,
+        task_assigner_id: formData.ticketAssignedTo || "",
+        helpdesk_category_id: formData.ticketCategory || "",
+        weightage_enabled: weightage ? "1" : "0",
+        schedule_type: formData.type,
+        form_name: formData.activityName,
+        description: formData.description,
+        supervisors: formData.supervisors ? [formData.supervisors] : [],
+        submission_time_type: formData.submissionTime || "",
+        submission_time_value: formData.submissionTimeValue || "",
+        supplier_id: formData.supplier || "",
+        before_after_enabled: formData.checkInPhotograph === 'active',
+        rule_ids: formData.emailTriggerRule ? [formData.emailTriggerRule] : [],
+        // Add attachments from basic configuration step
+        attachments: attachments.map(attachment => ({
+          filename: attachment.name,
+          content: attachment.content,
+          content_type: attachment.content_type
+        })),
+        // Add custom form with question attachments
+        custom_form: customForm
+      },
+      sch_type: 'ppm',
+      checklist_type: formData.scheduleFor,
+      group_id: formData.assetGroup || "",
+      sub_group_id: Array.isArray(formData.assetSubGroup) ? (formData.assetSubGroup[0] || "") : (formData.assetSubGroup || ""),
+      content: content,
+      checklist_upload_type: formData.checklistType,
+      asset_ids: assetIds.filter(id => id),
+      service_ids: serviceIds.filter(id => id),
+      training_subject_ids: [""],
+      sub_group_ids: [""],
+      pms_asset_task: {
+        assignment_type: formData.assignToType === 'user' ? 'people' : 'group',
+        scan_type: 'qr',
+        plan_type: formData.planDuration || "",
+        plan_value: formData.planDurationValue || "",
+        priority: "Low", // Default or from form
+        category: formData.category || "",
+        grace_time_type: formData.graceTime || "",
+        grace_time_value: formData.graceTimeValue || "",
+        overdue_task_start_status: formData.lockOverdueTask || "false",
+        frequency: null, // Default or from form
+        start_date: formatDateToISO(formData.startFrom),
+        end_date: formatDateToISO(formData.endAt)
+      },
+      backup_assigned_to_id: formData.backupAssignee || "",
+      people_assigned_to_ids: peopleAssignedIds,
+      usergroup_ids: groupAssignedIds,
+      ppm_rule_ids: formData.emailTriggerRule ? [formData.emailTriggerRule] : [],
+      amc_rule_ids: [""],
+      // Dynamic time setup fields from TimeSetupStep component
+      cronMinute: cronMinute,
+      cronMinuteSpecificSpecific: cronMinuteSpecificSpecific,
+      cronHour: cronHour,
+      cronHourSpecificSpecific: cronHourSpecificSpecific,
+      cronDay: cronDay,
+      cronMonth: cronMonth,
+      cron_expression: cronExpression,
+    };
+    
+    console.log('Final payload before sending:', {
+      custom_form: customForm,
+      question_for_keys: Object.keys(customForm).filter(key => key.startsWith('question_for_'))
+    });
+    
     return {
       schedule_type: 'ppm',
       pms_custom_form: {
@@ -1902,6 +2068,7 @@ export const CloneSchedulePage = () => {
       radioValues: [{ label: '', type: 'positive' }],
       checkboxValues: [''],
       checkboxSelectedStates: [false],
+      checkboxTypes: ['positive'],
       optionsInputsValues: ['']
     };
 
@@ -2009,6 +2176,91 @@ export const CloneSchedulePage = () => {
     );
   };
 
+  // Helper functions for dropdown values
+  const addDropdownValue = (sectionId: string, taskId: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  dropdownValues: [...task.dropdownValues, { label: '', type: 'positive' }]
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
+  const updateDropdownValue = (sectionId: string, taskId: string, valueIndex: number, value: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  dropdownValues: task.dropdownValues.map((val, idx) =>
+                    idx === valueIndex ? { ...val, label: value } : val
+                  )
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
+  const updateDropdownType = (sectionId: string, taskId: string, valueIndex: number, type: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  dropdownValues: task.dropdownValues.map((val, idx) =>
+                    idx === valueIndex ? { ...val, type: type } : val
+                  )
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
+  const removeDropdownValue = (sectionId: string, taskId: string, valueIndex: number): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  dropdownValues: task.dropdownValues.filter((_, idx) => idx !== valueIndex)
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
   // Helper functions for checkbox values
   const addCheckboxValue = (sectionId: string, taskId: string): void => {
     setQuestionSections(prevSections =>
@@ -2021,7 +2273,8 @@ export const CloneSchedulePage = () => {
                 ? {
                   ...task,
                   checkboxValues: [...task.checkboxValues, ''],
-                  checkboxSelectedStates: [...task.checkboxSelectedStates, false]
+                  checkboxSelectedStates: [...task.checkboxSelectedStates, false],
+                  checkboxTypes: [...task.checkboxTypes, 'positive']
                 }
                 : task
             )
@@ -2075,6 +2328,28 @@ export const CloneSchedulePage = () => {
     );
   };
 
+  const updateCheckboxType = (sectionId: string, taskId: string, valueIndex: number, type: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  checkboxTypes: task.checkboxTypes.map((t, idx) =>
+                    idx === valueIndex ? type : t
+                  )
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
   const removeCheckboxValue = (sectionId: string, taskId: string, valueIndex: number): void => {
     setQuestionSections(prevSections =>
       prevSections.map(section =>
@@ -2086,7 +2361,8 @@ export const CloneSchedulePage = () => {
                 ? {
                   ...task,
                   checkboxValues: task.checkboxValues.filter((_, idx) => idx !== valueIndex),
-                  checkboxSelectedStates: task.checkboxSelectedStates.filter((_, idx) => idx !== valueIndex)
+                  checkboxSelectedStates: task.checkboxSelectedStates.filter((_, idx) => idx !== valueIndex),
+                  checkboxTypes: task.checkboxTypes.filter((_, idx) => idx !== valueIndex)
                 }
                 : task
             )
@@ -2145,6 +2421,7 @@ export const CloneSchedulePage = () => {
               radioValues: [{ label: '', type: 'positive' }],
               checkboxValues: [''],
               checkboxSelectedStates: [false],
+              checkboxTypes: ['positive'],
               optionsInputsValues: ['']
             }]
           }
@@ -2180,6 +2457,7 @@ export const CloneSchedulePage = () => {
           let radioValues = [{ label: '', type: 'positive' }];
           let checkboxValues = [''];
           let checkboxSelectedStates = [false];
+          let checkboxTypes = ['positive'];
           let optionsInputsValues = [''];
 
           // Map the values array based on input type
@@ -2197,6 +2475,7 @@ export const CloneSchedulePage = () => {
             } else if (inputType === 'checkbox') {
               checkboxValues = question.values.map((val: any) => val.label || val.value || '');
               checkboxSelectedStates = question.values.map(() => false);
+              checkboxTypes = question.values.map((val: any) => val.type || 'positive');
             } else if (inputType === 'options-inputs') {
               optionsInputsValues = question.values.map((val: any) => val.label || val.value || '');
             }
@@ -2220,6 +2499,7 @@ export const CloneSchedulePage = () => {
             radioValues: radioValues,
             checkboxValues: checkboxValues,
             checkboxSelectedStates: checkboxSelectedStates,
+            checkboxTypes: checkboxTypes,
             optionsInputsValues: optionsInputsValues
           };
         });
@@ -3878,12 +4158,7 @@ export const CloneSchedulePage = () => {
                               size="small"
                               placeholder="Enter option value"
                               value={value.label}
-                              onChange={(e) => {
-                                // Update dropdown value
-                                const newValues = [...task.dropdownValues];
-                                newValues[valueIndex] = { ...newValues[valueIndex], label: e.target.value };
-                                updateTaskInSection(section.id, task.id, 'dropdownValues', newValues);
-                              }}
+                              onChange={(e) => updateDropdownValue(section.id, task.id, valueIndex, e.target.value)}
                               label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
                               sx={{
                                 '& .MuiOutlinedInput-root': {
@@ -3898,11 +4173,7 @@ export const CloneSchedulePage = () => {
                                 notched
                                 displayEmpty
                                 value={value.type || ''}
-                                onChange={(e) => {
-                                  const newValues = [...task.dropdownValues];
-                                  newValues[valueIndex] = { ...newValues[valueIndex], type: e.target.value };
-                                  updateTaskInSection(section.id, task.id, 'dropdownValues', newValues);
-                                }}
+                                onChange={(e) => updateDropdownType(section.id, task.id, valueIndex, e.target.value)}
                               >
                                 <MenuItem value="">Select Type</MenuItem>
                                 <MenuItem value="positive">P</MenuItem>
@@ -3912,10 +4183,7 @@ export const CloneSchedulePage = () => {
                             {task.dropdownValues.length > 1 && (
                               <IconButton
                                 size="small"
-                                onClick={() => {
-                                  const newValues = task.dropdownValues.filter((_, idx) => idx !== valueIndex);
-                                  updateTaskInSection(section.id, task.id, 'dropdownValues', newValues);
-                                }}
+                                onClick={() => removeDropdownValue(section.id, task.id, valueIndex)}
                                 sx={{ color: '#C72030' }}
                               >
                                 <Close />
@@ -3928,10 +4196,7 @@ export const CloneSchedulePage = () => {
                             variant="outlined"
                             size="small"
                             startIcon={<Add />}
-                            onClick={() => {
-                              const newValues = [...task.dropdownValues, { label: '', type: 'positive' }];
-                              updateTaskInSection(section.id, task.id, 'dropdownValues', newValues);
-                            }}
+                            onClick={() => addDropdownValue(section.id, task.id)}
                             sx={{
                               color: '#C72030',
                               borderColor: '#C72030',
@@ -4079,6 +4344,21 @@ export const CloneSchedulePage = () => {
                                 }
                               }}
                             />
+
+                            <FormControl variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
+                              <InputLabel shrink>Type</InputLabel>
+                              <Select
+                                label="Type"
+                                notched
+                                displayEmpty
+                                value={task.checkboxTypes?.[valueIndex] || 'positive'}
+                                onChange={(e) => updateCheckboxType(section.id, task.id, valueIndex, e.target.value)}
+                              >
+                                <MenuItem value="">Select Type</MenuItem>
+                                <MenuItem value="positive">P</MenuItem>
+                                <MenuItem value="negative">N</MenuItem>
+                              </Select>
+                            </FormControl>
 
                             {task.checkboxValues.length > 1 && (
                               <IconButton
