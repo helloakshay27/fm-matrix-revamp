@@ -11,6 +11,7 @@ import { getMaterialPR, updateActiveStaus } from "@/store/slices/materialPRSlice
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -97,6 +98,7 @@ export const MaterialPRDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const { shouldShow } = useDynamicPermissions();
 
   const { loading } = useAppSelector((state) => state.getMaterialPR);
 
@@ -281,29 +283,35 @@ export const MaterialPRDashboard = () => {
   const renderActions = (item: any) => {
     return (
       <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant="ghost"
-          className="p-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/finance/material-pr/details/${item.id}`);
-          }}
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
         {
-          item.allLevelApproved === null && <Button
-            size="sm"
-            variant="ghost"
-            className="p-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/finance/material-pr/edit/${item.id}`);
-            }}
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
+          shouldShow("material-pr", "view") && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="p-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/finance/material-pr/details/${item.id}`);
+              }}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          )
+        }
+        {
+          shouldShow("material-pr", "edit") && (
+            item.allLevelApproved === null && <Button
+              size="sm"
+              variant="ghost"
+              className="p-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/finance/material-pr/edit/${item.id}`);
+              }}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          )
         }
       </div>
     )
@@ -311,13 +319,17 @@ export const MaterialPRDashboard = () => {
 
   const leftActions = (
     <>
-      <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={() => navigate("/finance/material-pr/add")}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      {
+        shouldShow("material-pr", "add") && (
+          <Button
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={() => navigate("/finance/material-pr/add")}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        )
+      }
     </>
   );
 

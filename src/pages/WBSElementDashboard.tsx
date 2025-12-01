@@ -9,6 +9,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useAppDispatch } from '@/store/hooks';
 import { createWBSCode, fetchWBSList, updateWBSCode } from '@/store/slices/wbsSlice';
 import { EditWBSDialog } from '@/components/EditWBSDialog';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface WBSElement {
   id: string;
@@ -33,6 +34,7 @@ export const WBSElementDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem('token');
   const baseUrl = localStorage.getItem('baseUrl');
+  const { shouldShow } = useDynamicPermissions();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -120,43 +122,61 @@ export const WBSElementDashboard = () => {
 
   const renderActions = (item: WBSElement) => (
     <div className="flex gap-2 justify-center">
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => handleEditWBS(item)}
-        className="h-8 w-8 p-0 hover:bg-gray-100"
-      >
-        <Edit className="h-4 w-4" />
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => handleDeleteWBS(item.id)}
-        className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      {
+        shouldShow('wbs', 'edit') && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleEditWBS(item)}
+            className="h-8 w-8 p-0 hover:bg-gray-100"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        )
+      }
+
+      {
+        shouldShow('wbs', 'delete') && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleDeleteWBS(item.id)}
+            className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )
+      }
     </div>
   );
 
   const leftAction = (
     <div className="flex gap-3">
-      <Button
-        style={{ backgroundColor: '#C72030' }}
-        className="text-white hover:bg-[#C72030]/90"
-        onClick={() => setIsAddDialogOpen(true)}
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Add
-      </Button>
-      <Button
-        variant="outline"
-        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-        onClick={() => setIsBulkUploadOpen(true)}
-      >
-        <Download className="h-4 w-4 mr-2" />
-        Import
-      </Button>
+      {
+        shouldShow("wbs", "add") && (
+          <Button
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
+            onClick={() => setIsAddDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add
+          </Button>
+        )
+      }
+
+      {
+        shouldShow("wbs", "import") && (
+          <Button
+            variant="outline"
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+            onClick={() => setIsBulkUploadOpen(true)}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Import
+          </Button>
+        )
+      }
     </div>
   );
 

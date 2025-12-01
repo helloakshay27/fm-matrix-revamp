@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getGRN } from "@/store/slices/grnSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -139,6 +140,7 @@ export const GRNSRNDashboard = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
+  const { shouldShow } = useDynamicPermissions();
   const { loading } = useAppSelector(state => state.getGRN)
 
   const navigate = useNavigate();
@@ -279,36 +281,47 @@ export const GRNSRNDashboard = () => {
 
   const renderActions = (item) => (
     <div className="flex gap-1">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => handleView(item.id)}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
       {
-        item.approved_status === 'Pending' && <Button
-          size="sm"
-          variant="ghost"
-          className="p-1"
-          onClick={() => handleEdit(item.id)}
-        >
-          <Edit className="w-4 h-4" />
-        </Button>
+        shouldShow("grn-srn", "view") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() => handleView(item.id)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        )
+      }
+
+      {
+        shouldShow("grn-srn", "edit") && (
+          item.approved_status === 'Pending' && <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() => handleEdit(item.id)}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+        )
       }
     </div>
   );
 
   const leftActions = (
     <div className="flex gap-3">
-      <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={handleAddNew}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      {
+        shouldShow("grn-srn", "add") && (
+          <Button
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={handleAddNew}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        )
+      }
     </div>
   );
 
@@ -457,8 +470,6 @@ export const GRNSRNDashboard = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">GRN LIST</h1>
-
       <EnhancedTable
         data={grn}
         columns={columns}

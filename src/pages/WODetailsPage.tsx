@@ -46,6 +46,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import DebitCreditModal from "@/components/DebitCreditModal";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface Approval {
   id: string;
@@ -205,6 +206,7 @@ export const WODetailsPage = () => {
 
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
 
   const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState("");
@@ -494,29 +496,37 @@ export const WODetailsPage = () => {
               Send To SAP Team
             </Button>
           )}
-          {workOrder.all_level_approved === null && !shouldShowButtons && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300"
-              onClick={() => navigate(`/finance/wo/edit/${id}`)}
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </Button>
-          )}
           {
-            !shouldShowButtons && (
-              <>
+            shouldShow("work-order", "edit") && (
+              workOrder.all_level_approved === null && !shouldShowButtons && (
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                  onClick={() => navigate(`/finance/wo/add?clone=${id}`)}
+                  className="border-gray-300"
+                  onClick={() => navigate(`/finance/wo/edit/${id}`)}
                 >
-                  <Copy className="w-4 h-4 mr-1" />
-                  Clone
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
                 </Button>
+              )
+            )
+          }
+          {
+            !shouldShowButtons && (
+              <>
+                {
+                  shouldShow("work-order", "add") && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                      onClick={() => navigate(`/finance/wo/add?clone=${id}`)}
+                    >
+                      <Copy className="w-4 h-4 mr-1" />
+                      Clone
+                    </Button>
+                  )
+                }
                 <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
                   {
                     printing ? (

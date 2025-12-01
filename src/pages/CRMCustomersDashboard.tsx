@@ -9,6 +9,7 @@ import { getCustomerList } from "@/store/slices/cusomerSlice";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import axios from "axios";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const columns: ColumnConfig[] = [
   {
@@ -123,6 +124,7 @@ const CRMCustomersDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const { shouldShow } = useDynamicPermissions();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [customers, setCustomers] = useState([]);
@@ -208,20 +210,26 @@ const CRMCustomersDashboard = () => {
   };
 
   const renderActions = (item: any) => (
-    <Button variant="ghost" size="sm" onClick={() => navigate(`/crm/customers/${item.id}`)}>
-      <Eye className="w-4 h-4" />
-    </Button>
+    shouldShow("customers", "view") && (
+      <Button variant="ghost" size="sm" onClick={() => navigate(`/crm/customers/${item.id}`)}>
+        <Eye className="w-4 h-4" />
+      </Button>
+    )
   );
 
   const leftActions = (
     <>
-      <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={() => navigate("/crm/customers/add")}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      {
+        shouldShow("customers", "add") && (
+          <Button
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={() => navigate("/crm/customers/add")}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        )
+      }
     </>
   );
 

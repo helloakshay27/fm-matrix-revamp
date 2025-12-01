@@ -51,6 +51,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { fetchWBS } from "@/store/slices/materialPRSlice";
 import { approveDeletionRequest } from "@/store/slices/pendingApprovalSlice";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Interfaces
 interface Company {
@@ -208,6 +209,7 @@ export const ServicePRDetailsPage = () => {
   const userId = searchParams.get("user_id");
   const requestId = searchParams.get("request_id");
   const shouldShowButtons = Boolean(levelId && userId);
+  const { shouldShow } = useDynamicPermissions();
 
   const [isDeletionRequest, setIsDeletionRequest] = useState(false)
   const [servicePR, setServicePR] = useState<ServicePR>({});
@@ -622,29 +624,37 @@ export const ServicePRDetailsPage = () => {
                 </Button>
               )}
 
-              {servicePR?.all_level_approved === null && !shouldShowButtons && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300"
-                  onClick={() => navigate(`/finance/service-pr/edit/${id}`)}
-                >
-                  <Edit className="w-4 h-4 mr-1" />
-                  Edit
-                </Button>
-              )}
+              {
+                shouldShow("service-pr", "edit") && (
+                  servicePR?.all_level_approved === null && !shouldShowButtons && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-gray-300"
+                      onClick={() => navigate(`/finance/service-pr/edit/${id}`)}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                  )
+                )
+              }
 
               {!shouldShowButtons && (
                 <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                    onClick={() => navigate(`/finance/service-pr/add?clone=${id}`)}
-                  >
-                    <Copy className="w-4 h-4 mr-1" />
-                    Clone
-                  </Button>
+                  {
+                    shouldShow("service-pr", "add") && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                        onClick={() => navigate(`/finance/service-pr/add?clone=${id}`)}
+                      >
+                        <Copy className="w-4 h-4 mr-1" />
+                        Clone
+                      </Button>
+                    )
+                  }
 
                   <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
                     {

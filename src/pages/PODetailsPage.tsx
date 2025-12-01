@@ -42,6 +42,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { format } from "date-fns";
 import DebitCreditModal from "@/components/DebitCreditModal";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Interfaces
 interface BillingAddress {
@@ -348,6 +349,7 @@ export const PODetailsPage = () => {
   const levelId = searchParams.get("level_id");
   const userId = searchParams.get("user_id");
   const shouldShowButtons = Boolean(levelId && userId);
+  const { shouldShow } = useDynamicPermissions();
 
   const [poDetails, setPoDetails] = useState<PODetails>({});
   const [loading, setLoading] = useState<boolean>(true);
@@ -705,15 +707,19 @@ export const PODetailsPage = () => {
           {
             !shouldShowButtons && (
               <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                  onClick={() => navigate(`/finance/po/add?clone=${id}`)}
-                >
-                  <Copy className="w-4 h-4 mr-1" />
-                  Clone
-                </Button>
+                {
+                  shouldShow("purchase-order", "add") && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                      onClick={() => navigate(`/finance/po/add?clone=${id}`)}
+                    >
+                      <Copy className="w-4 h-4 mr-1" />
+                      Clone
+                    </Button>
+                  )
+                }
                 <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
                   {
                     printing ? (

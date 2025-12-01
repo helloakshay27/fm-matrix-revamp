@@ -11,6 +11,7 @@ import { fetchWorkOrders } from "@/store/slices/workOrderSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { updateServiceActiveStaus } from "@/store/slices/servicePRSlice";
 import { Switch } from "@/components/ui/switch";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -215,6 +216,7 @@ const columns: ColumnConfig[] = [
 export const WODashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions();
 
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
@@ -373,40 +375,50 @@ export const WODashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center gap-3">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => navigate(`/finance/wo/details/${item.id}`)}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
       {
-        item.all_level_approved === null && <Button
-          size="sm"
-          variant="ghost"
-          className="p-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/finance/wo/edit/${item.id}`);
-          }}
-        >
-          <Edit className="w-4 h-4" />
-        </Button>
+        shouldShow("work-order", "view") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() => navigate(`/finance/wo/details/${item.id}`)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        )
+      }
+      {
+        shouldShow("work-order", "edit") && (
+          item.all_level_approved === null && <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/finance/wo/edit/${item.id}`);
+            }}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+        )
       }
     </div>
   );
 
   const leftActions = (
     <>
-      <Button
-        style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-        className="hover:bg-[#F2EEE9]/90"
-        onClick={() => navigate('/finance/wo/add')}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      {
+        shouldShow("work-order", "add") && (
+          <Button
+            style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+            className="hover:bg-[#F2EEE9]/90"
+            onClick={() => navigate('/finance/wo/add')}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        )
+      }
     </>
   );
 

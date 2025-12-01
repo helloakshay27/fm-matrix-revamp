@@ -21,6 +21,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Switch } from "@/components/ui/switch";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -108,6 +109,7 @@ export const ServicePRDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const { shouldShow } = useDynamicPermissions();
 
   const { loading } = useAppSelector((state) => state.getServicePr);
 
@@ -279,42 +281,54 @@ export const ServicePRDashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex gap-2">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/finance/service-pr/details/${item.id}`);
-        }}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
-      {item.all_level_approved === null && (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="p-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/finance/service-pr/edit/${item.id}`);
-          }}
-        >
-          <Edit className="w-4 h-4" />
-        </Button>
-      )}
+      {
+        shouldShow("service-pr", "view") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/finance/service-pr/details/${item.id}`);
+            }}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        )
+      }
+      {
+        shouldShow("service-pr", "edit") && (
+          item.all_level_approved === null && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="p-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/finance/service-pr/edit/${item.id}`);
+              }}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          )
+        )
+      }
     </div>
   );
 
   const leftActions = (
     <>
-      <Button
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
-        onClick={() => navigate("/finance/service-pr/add")}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      {
+        shouldShow("service-pr", "add") && (
+          <Button
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
+            onClick={() => navigate("/finance/service-pr/add")}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        )
+      }
     </>
   );
 

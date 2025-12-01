@@ -49,6 +49,7 @@ import {
 import { approvePO, rejectPO } from "@/store/slices/purchaseOrderSlice";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { approveDeletionRequest } from "@/store/slices/pendingApprovalSlice";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Interfaces
 interface BillingAddress {
@@ -183,6 +184,7 @@ const columns: ColumnConfig[] = [
 ];
 
 export const MaterialPRDetailsPage = () => {
+  const { shouldShow } = useDynamicPermissions();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -608,27 +610,33 @@ export const MaterialPRDetailsPage = () => {
                   </Button>
                 )}
                 {
-                  pr.all_level_approved === null && !shouldShowButtons && <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-gray-300"
-                    onClick={() => navigate(`/finance/material-pr/edit/${id}`)}
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
+                  shouldShow("material-pr", "edit") && (
+                    pr.all_level_approved === null && !shouldShowButtons && <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-gray-300"
+                      onClick={() => navigate(`/finance/material-pr/edit/${id}`)}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                  )
                 }
                 {
                   !shouldShowButtons && (
                     <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/finance/material-pr/add?clone=${id}`)}
-                      >
-                        <Copy className="w-4 h-4 mr-2" />
-                        Clone
-                      </Button>
+                      {
+                        shouldShow("material-pr", "add") && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/finance/material-pr/add?clone=${id}`)}
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Clone
+                          </Button>
+                        )
+                      }
                       <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
                         {
                           printing ? (

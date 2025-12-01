@@ -12,6 +12,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { updateActiveStaus } from "@/store/slices/materialPRSlice";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -196,6 +197,7 @@ export const PODashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const { shouldShow } = useDynamicPermissions();
 
   const { loading } = useAppSelector(state => state.getPurchaseOrders)
 
@@ -400,26 +402,33 @@ export const PODashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex gap-2">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => navigate(`/finance/po/details/${item.id}`)}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
       {
-        item.allLevelApproved === null && <Button
-          size="sm"
-          variant="ghost"
-          className="p-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/finance/po/edit/${item.id}`);
-          }}
-        >
-          <Edit className="w-4 h-4" />
-        </Button>
+        shouldShow("purchase-order", "view") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() => navigate(`/finance/po/details/${item.id}`)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        )
+      }
+
+      {
+        shouldShow("purchase-order", "edit") && (
+          item.allLevelApproved === null && <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/finance/po/edit/${item.id}`);
+            }}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+        )
       }
     </div>
   );
@@ -569,14 +578,18 @@ export const PODashboard = () => {
 
   const leftActions = (
     <>
-      <Button
-        style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
-        className="hover:bg-[#F2EEE9]/90"
-        onClick={() => navigate("/finance/po/add")}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      {
+        shouldShow("purchase-order", "add") && (
+          <Button
+            style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
+            className="hover:bg-[#F2EEE9]/90"
+            onClick={() => navigate("/finance/po/add")}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        )
+      }
     </>
   );
 
