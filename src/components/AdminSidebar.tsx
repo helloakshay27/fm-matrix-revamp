@@ -23,27 +23,42 @@ const adminNavigationStructure = {
         name: "Account Management",
         icon: Building,
         subItems: [
-          { name: "Private Setup", href: "/ops-console/master/location/account" },
-        ],
-      },
-      {
-        name: "User Management",
-        icon: Users,
-        subItems: [
-          { name: "FM Users", href: "/ops-console/master/user/fm-users" },
-          { name: "Admin Users", href: "/ops-console/admin/users" },
-          { name: "Create Admin User", href: "/ops-console/admin/create-admin-user" },
-          { name: "Roles", href: "/ops-console/settings/roles/role" },
+          {
+            name: "Private Setup",
+            href: "/ops-console/master/location/account",
+          },
         ],
       },
       {
         name: "Access Control",
         icon: Lock,
         subItems: [
-          { name: "Lock Module", href: "/ops-console/settings/account/lock-module" },
-          { name: "Lock Function", href: "/ops-console/settings/account/lock-function" },
-          { name: "Lock Sub Function", href: "/ops-console/settings/account/lock-sub-function" },
-          { name: "Locked Users", href: "/ops-console/settings/account/locked-users" },
+          {
+            name: "Lock Module",
+            href: "/ops-console/settings/account/lock-module",
+          },
+          {
+            name: "Lock Function",
+            href: "/ops-console/settings/account/lock-function",
+          },
+          {
+            name: "Lock Sub Function",
+            href: "/ops-console/settings/account/lock-sub-function",
+          },
+        ],
+      },
+      {
+        name: "User Management",
+        icon: Users,
+        subItems: [
+          // { name: "FM Users", href: "/ops-console/master/user/fm-users" },
+          { name: "Admin Users", href: "/ops-console/admin/users" },
+          // { name: "Create Admin User", href: "/ops-console/admin/create-admin-user" },
+          { name: "Roles", href: "/ops-console/settings/roles/role" },
+          {
+            name: "Locked Users",
+            href: "/ops-console/settings/account/locked-users",
+          },
         ],
       },
     ],
@@ -206,7 +221,7 @@ export const AdminSidebar = () => {
             <ChevronLeft className="w-4 h-4" />
           )}
         </button>
-        
+
         <div className="w-full h-4 bg-[#f6f4ee] border-[#e5e1d8] mb-2"></div>
 
         <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
