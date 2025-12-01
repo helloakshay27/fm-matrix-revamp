@@ -66,7 +66,8 @@ export const MobileItemsDetails: React.FC = () => {
   const finalSourceParam = sourceParam || passedSourceParam;
 
   // Get org_id from URL parameters, fallback to session storage
-  const orgIdFromUrl = searchParams.get("org_id");
+  const orgIdFromUrl =
+    searchParams.get("org_id") || searchParams.get("organization_id");
   const orgId = orgIdFromUrl || sessionStorage.getItem("org_id");
 
   // 🔍 Debug logging for external detection in Items Details
@@ -359,7 +360,7 @@ export const MobileItemsDetails: React.FC = () => {
         // Navigate to order review with success state
         // navigate(`/mobile/restaurant/${restaurant.id}/order-placed`, {
         navigate(
-          `/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`,
+          `/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}&org_id=${orgId}`,
           {
             state: orderReviewData,
           }

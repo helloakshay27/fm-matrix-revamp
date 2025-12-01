@@ -224,7 +224,7 @@ export const MobileOrderPlaced: React.FC = () => {
 
       {/* View Order Details Button */}
       <div className="mx-4 mt-6 space-y-3 pb-6">
-          <Button
+        <Button
           onClick={handleBackToHome}
           variant="outline"
           className="w-full border-2 border-gray-300 text-gray-700 hover:bg-gray-50 py-4 rounded-xl text-lg font-semibold"
@@ -246,7 +246,7 @@ export const MobileOrderPlaced: React.FC = () => {
                 },
               });
             } else {
-              navigate("/mobile/orders");
+              navigate(`/mobile/orders`);
             }
           }}
           variant="outline"
