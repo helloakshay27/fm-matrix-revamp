@@ -29,17 +29,22 @@ export function useEnhancedTable<T>({
 }: UseEnhancedTableProps<T>) {
   // Initialize column visibility state with saved state or defaults
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(() => {
-    if (initialColumnVisibility) {
-      return initialColumnVisibility;
-    }
-    
-    return columns.reduce((acc, column) => ({
+    const defaultVisibility = columns.reduce((acc, column) => ({
       ...acc,
       [column.key]: column.defaultVisible !== false
-    }), {});
+    }), {} as Record<string, boolean>);
+
+    if (initialColumnVisibility) {
+      return {
+        ...defaultVisibility,
+        ...initialColumnVisibility
+      };
+    }
+
+    return defaultVisibility;
   });
 
-  const [columnOrder, setColumnOrder] = useState<string[]>(() => 
+  const [columnOrder, setColumnOrder] = useState<string[]>(() =>
     columns.map(column => column.key)
   );
 
@@ -79,9 +84,9 @@ export function useEnhancedTable<T>({
     setColumnOrder(prevOrder => {
       const oldIndex = prevOrder.indexOf(sourceId);
       const newIndex = prevOrder.indexOf(destinationId);
-      
+
       if (oldIndex === -1 || newIndex === -1) return prevOrder;
-      
+
       const newOrder = [...prevOrder];
       newOrder.splice(oldIndex, 1);
       newOrder.splice(newIndex, 0, sourceId);
@@ -93,7 +98,7 @@ export function useEnhancedTable<T>({
   const handleSort = useCallback((columnKey: string) => {
     setSortState(prevState => ({
       column: columnKey,
-      direction: 
+      direction:
         prevState.column === columnKey
           ? prevState.direction === 'asc'
             ? 'desc'
@@ -108,7 +113,7 @@ export function useEnhancedTable<T>({
   const visibleColumns = useMemo(() => {
     return columnOrder
       .map(key => columns.find(col => col.key === key))
-      .filter((column): column is ColumnConfig => 
+      .filter((column): column is ColumnConfig =>
         !!column && columnVisibility[column.key]
       );
   }, [columns, columnOrder, columnVisibility]);
