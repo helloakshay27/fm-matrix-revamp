@@ -168,11 +168,11 @@ const CheckpointLocationSelector: React.FC<{
 
       {/* Wing */}
       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-        <InputLabel shrink>Wing *</InputLabel>
+        <InputLabel shrink>Wing</InputLabel>
         <MuiSelect
           value={selectedWingId || ''}
           onChange={(e) => handleWingChange(Number(e.target.value))}
-          label="Wing *"
+          label="Wing"
           notched
           displayEmpty
           disabled={disabled || !selectedBuildingId || loading.wings}
@@ -193,11 +193,11 @@ const CheckpointLocationSelector: React.FC<{
 
       {/* Area */}
       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-        <InputLabel shrink>Area *</InputLabel>
+        <InputLabel shrink>Area</InputLabel>
         <MuiSelect
           value={selectedAreaId || ''}
           onChange={(e) => handleAreaChange(Number(e.target.value))}
-          label="Area *"
+          label="Area"
           notched
           displayEmpty
           disabled={disabled || !selectedWingId || loading.areas}
@@ -218,11 +218,11 @@ const CheckpointLocationSelector: React.FC<{
 
       {/* Floor */}
       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-        <InputLabel shrink>Floor *</InputLabel>
+        <InputLabel shrink>Floor</InputLabel>
         <MuiSelect
           value={selectedFloorId || ''}
           onChange={(e) => handleFloorChange(Number(e.target.value))}
-          label="Floor *"
+          label="Floor"
           notched
           displayEmpty
           disabled={disabled || !selectedBuildingId || loading.floors}
@@ -753,13 +753,10 @@ export const PatrollingCreatePage: React.FC = () => {
     // Validate checkpoint locations
     const checkpointsWithoutLocation = validCheckpoints.filter(c => {
       const hasBuilding = c.buildingId && c.buildingId > 0;
-      const hasWing = c.wingId && c.wingId > 0;
-      const hasArea = c.areaId && c.areaId > 0;
-      const hasFloor = c.floorId && c.floorId > 0;
-      return !(hasBuilding && hasWing && hasArea && hasFloor);
+      return !hasBuilding;
     });
     if (checkpointsWithoutLocation.length > 0) {
-      toast.error('All checkpoints must have Building, Wing, Area, and Floor selected', {
+      toast.error('All checkpoints must have Building selected', {
         duration: 5000,
       });
       setIsSubmitting(false);

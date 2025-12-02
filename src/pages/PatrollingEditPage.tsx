@@ -184,11 +184,11 @@ const CheckpointLocationSelector: React.FC<{
         variant="outlined"
         sx={{ "& .MuiInputBase-root": fieldStyles }}
       >
-        <InputLabel shrink>Wing *</InputLabel>
+        <InputLabel shrink>Wing</InputLabel>
         <MuiSelect
           value={selectedWingId || ""}
           onChange={(e) => handleWingChange(Number(e.target.value))}
-          label="Wing *"
+          label="Wing"
           notched
           displayEmpty
           disabled={disabled || !selectedBuildingId || loading.wings}
@@ -209,11 +209,11 @@ const CheckpointLocationSelector: React.FC<{
         variant="outlined"
         sx={{ "& .MuiInputBase-root": fieldStyles }}
       >
-        <InputLabel shrink>Area *</InputLabel>
+        <InputLabel shrink>Area</InputLabel>
         <MuiSelect
           value={selectedAreaId || ""}
           onChange={(e) => handleAreaChange(Number(e.target.value))}
-          label="Area *"
+          label="Area"
           notched
           displayEmpty
           disabled={disabled || !selectedWingId || loading.areas}
@@ -234,11 +234,11 @@ const CheckpointLocationSelector: React.FC<{
         variant="outlined"
         sx={{ "& .MuiInputBase-root": fieldStyles }}
       >
-        <InputLabel shrink>Floor *</InputLabel>
+        <InputLabel shrink>Floor</InputLabel>
         <MuiSelect
           value={selectedFloorId || ""}
           onChange={(e) => handleFloorChange(Number(e.target.value))}
-          label="Floor *"
+          label="Floor"
           notched
           displayEmpty
           disabled={disabled || !selectedBuildingId || loading.floors}

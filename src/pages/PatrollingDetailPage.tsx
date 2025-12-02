@@ -715,7 +715,7 @@ export const PatrollingDetailPage: React.FC = () => {
             )}
 
             {/* QR Code Section */}
-            {patrolling.checkpoints &&
+            {/* {patrolling.checkpoints &&
               patrolling.checkpoints.some &&
               patrolling.checkpoints.some((cp) => cp.qr_code_available) && (
                 <Card className="mb-6 border-none bg-transparent shadow-none">
@@ -953,7 +953,7 @@ export const PatrollingDetailPage: React.FC = () => {
                     </div>
                   </div>
                 </Card>
-              )}
+              )} */}
           </TabsContent>
 
           {/* Questions */}
@@ -1398,7 +1398,7 @@ export const PatrollingDetailPage: React.FC = () => {
                         <TableHead>Name</TableHead>
                         <TableHead>Description</TableHead>
                         <TableHead>Location</TableHead>
-                        <TableHead>QR Code</TableHead>
+                        {/* <TableHead>QR Code</TableHead> */}
                         <TableHead>Created On</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1442,7 +1442,7 @@ export const PatrollingDetailPage: React.FC = () => {
                                 </div>
                               </TableCell>
                             
-                              <TableCell>
+                              {/* <TableCell>
                                 {checkpoint.qr_code_available ? (
                                   <div className="flex items-center gap-2">
                                     <Badge
@@ -1531,7 +1531,7 @@ export const PatrollingDetailPage: React.FC = () => {
                                     Not Available
                                   </Badge>
                                 )}
-                              </TableCell>
+                              </TableCell> */}
                               <TableCell className="text-xs text-gray-600">
                                 {formatDateTime(checkpoint.created_at)}
                               </TableCell>
