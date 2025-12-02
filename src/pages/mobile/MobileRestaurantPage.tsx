@@ -79,7 +79,8 @@ export const MobileRestaurantPage: React.FC = () => {
   const urlFacilityId = facilityId; // This comes from URL params (mr/:restaurant/:orgId)
   const queryFacilityId = searchParams.get("facilityId"); // This comes from query params (?facilityId=1307)
   const storedFacilityId = sessionStorage.getItem("facility_id");
-  const effectiveFacilityId = urlFacilityId || queryFacilityId || storedFacilityId;
+  const effectiveFacilityId =
+    urlFacilityId || queryFacilityId || storedFacilityId;
 
   // console.log("🔍 FACILITY ID RESOLUTION:");
   // console.log("  - URL facilityId (from path):", urlFacilityId);
@@ -96,10 +97,10 @@ export const MobileRestaurantPage: React.FC = () => {
     // console.log("  - Action:", action);
     // console.log("  - EffectiveFacilityId:", effectiveFacilityId);
     // console.log("  - OrgId:", orgId);
-    
+
     if (!currentSource) {
       const newParams = new URLSearchParams(searchParams);
-      
+
       if (token) {
         // Token present - set source as "app"
         // console.log("🔗 AUTO-ADDING SOURCE=APP for token-based URL");
@@ -120,10 +121,18 @@ export const MobileRestaurantPage: React.FC = () => {
     } else {
       // console.log("🔗 SOURCE ALREADY EXISTS, NOT OVERRIDING:", currentSource);
     }
-  }, [effectiveFacilityId, urlFacilityId, queryFacilityId, orgId, action, token, searchParams, setSearchParams]);
+  }, [
+    effectiveFacilityId,
+    urlFacilityId,
+    queryFacilityId,
+    orgId,
+    action,
+    token,
+    searchParams,
+    setSearchParams,
+  ]);
 
   useEffect(() => {
-
     fetchRestaurants();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveFacilityId, orgId, restaurantId, action, token]);
@@ -135,7 +144,7 @@ export const MobileRestaurantPage: React.FC = () => {
       // Priority 1: Token-based authentication for application users
       if (token) {
         // console.log("🔑 TOKEN-BASED FLOW: authenticating with token:", token);
-        
+
         // IMPORTANT: Store facility_id and org_id if available in URL path (for app users)
         if (effectiveFacilityId) {
           sessionStorage.setItem("facility_id", effectiveFacilityId);
@@ -143,27 +152,32 @@ export const MobileRestaurantPage: React.FC = () => {
             sessionStorage.setItem("org_id", orgId);
           }
         }
-        
+
         // Check if this is a direct restaurant access with token
         if (restaurantId && action === "details") {
           // console.log("🔑🍽️ TOKEN + DIRECT RESTAURANT ACCESS:", restaurantId);
-          
+
           // First authenticate with token, then get specific restaurant
-          const tokenResponse = await restaurantApi.getRestaurantsByToken(token);
-          
+          const tokenResponse =
+            await restaurantApi.getRestaurantsByToken(token);
+
           if (tokenResponse.success) {
             // console.log("🔑 TOKEN SUCCESS: Now fetching specific restaurant:", restaurantId);
-            
+
             // Store token, user info, and source for order placement
             sessionStorage.setItem("app_token", token);
             sessionStorage.setItem("app_source", "app");
             if (tokenResponse.user_info) {
-              sessionStorage.setItem("app_user_info", JSON.stringify(tokenResponse.user_info));
+              sessionStorage.setItem(
+                "app_user_info",
+                JSON.stringify(tokenResponse.user_info)
+              );
               setUserInfo(tokenResponse.user_info);
             }
-            
+
             // Now get the specific restaurant
-            const apiRestaurant = await restaurantApi.getRestaurantById(restaurantId);
+            const apiRestaurant =
+              await restaurantApi.getRestaurantById(restaurantId);
             const restaurant = {
               ...apiRestaurant,
               menuItems: apiRestaurant.menuItems || [],
@@ -175,31 +189,37 @@ export const MobileRestaurantPage: React.FC = () => {
             toast({
               variant: "destructive",
               title: "Authentication Failed",
-              description: tokenResponse.message || "Invalid token. Please try again.",
+              description:
+                tokenResponse.message || "Invalid token. Please try again.",
             });
             return; // Exit on token failure
           }
         }
-        
+
         // Regular token-based flow (no specific restaurant)
         const tokenResponse = await restaurantApi.getRestaurantsByToken(token);
-        
+
         if (tokenResponse.success && tokenResponse.restaurants) {
           // console.log("🔑 TOKEN SUCCESS: restaurants found:", tokenResponse.restaurants.length);
           setUserInfo(tokenResponse.user_info || null);
-          
+
           // Store token, user info, and source for order placement
           sessionStorage.setItem("app_token", token);
           sessionStorage.setItem("app_source", "app");
           if (tokenResponse.user_info) {
-            sessionStorage.setItem("app_user_info", JSON.stringify(tokenResponse.user_info));
+            sessionStorage.setItem(
+              "app_user_info",
+              JSON.stringify(tokenResponse.user_info)
+            );
           }
-          
+
           // If there's only one restaurant, load its menu items immediately
           if (tokenResponse.restaurants.length === 1) {
             // console.log("🔑🍽️ SINGLE RESTAURANT: Loading menu items for", tokenResponse.restaurants[0].id);
             try {
-              const apiRestaurant = await restaurantApi.getRestaurantById(tokenResponse.restaurants[0].id);
+              const apiRestaurant = await restaurantApi.getRestaurantById(
+                tokenResponse.restaurants[0].id
+              );
               const restaurantWithMenus = {
                 ...tokenResponse.restaurants[0],
                 menuItems: apiRestaurant.menuItems || [],
@@ -212,14 +232,15 @@ export const MobileRestaurantPage: React.FC = () => {
           } else {
             setRestaurants(tokenResponse.restaurants);
           }
-          
+
           return; // Exit early on success
         } else {
           console.error("🔑 TOKEN FAILED:", tokenResponse.message);
           toast({
             variant: "destructive",
             title: "Authentication Failed",
-            description: tokenResponse.message || "Invalid token. Please try again.",
+            description:
+              tokenResponse.message || "Invalid token. Please try again.",
           });
           return; // Exit on token failure
         }
@@ -236,16 +257,18 @@ export const MobileRestaurantPage: React.FC = () => {
         // console.log("  - org_id:", orgId);
         sessionStorage.setItem("facility_id", effectiveFacilityId);
         sessionStorage.setItem("org_id", orgId);
-        
+
         // Only fetch facility setup and restaurants if no action (i.e., on main restaurant list)
         if (!action) {
           // Step 1: Get facility setup to get site_id
-          const facilityResponse = await restaurantApi.getFacilitySetup(
-            effectiveFacilityId
-          );
-          
+          const facilityResponse =
+            await restaurantApi.getFacilitySetup(effectiveFacilityId);
+
           // Store facility response in session storage
-          sessionStorage.setItem("facility_setup", JSON.stringify(facilityResponse.facility_setup));
+          sessionStorage.setItem(
+            "facility_setup",
+            JSON.stringify(facilityResponse.facility_setup)
+          );
           const siteId = facilityResponse.facility_setup.site_id;
 
           // console.log("📍 SITE ID:", siteId);
@@ -265,28 +288,33 @@ export const MobileRestaurantPage: React.FC = () => {
           // console.log("🍽️ RESTAURANTS FOUND:", restaurantsList.length);
 
           // Convert to Restaurant format and load menu items if there's only one restaurant
-          const convertedRestaurants: Restaurant[] = restaurantsList.map((r) => ({
-            id: r.id.toString(),
-            name: r.name,
-            location: r.location || "Location not specified",
-            rating: r.rating || 4.0,
-            timeRange: r.delivery_time || "30-45 mins",
-            discount: r.discount || "",
-            image:
-              r.cover_image ||
-              r.cover_images?.[0]?.document ||
-              "/placeholder.svg",
-            images: r.cover_images?.map((img) => img.document) || [],
-            menuItems: [], // Will be loaded if there's only one restaurant
-            can_book_today: r.can_book_today,
-            can_order_today: r.can_order_today,
-          }));
+          const convertedRestaurants: Restaurant[] = restaurantsList.map(
+            (r) => ({
+              id: r.id.toString(),
+              name: r.name,
+              location: r.location || "Location not specified",
+              rating: r.rating || 4.0,
+              timeRange: r.delivery_time || "30-45 mins",
+              discount: r.discount || "",
+              image:
+                r.cover_image ||
+                r.cover_images?.[0]?.document ||
+                "/placeholder.svg",
+              images: r.cover_images?.map((img) => img.document) || [],
+              menuItems: [], // Will be loaded if there's only one restaurant
+              can_book_today: r.can_book_today,
+              can_order_today: r.can_order_today,
+            })
+          );
+
           setRestaurants(convertedRestaurants);
           // If there's only one restaurant, load its menu items immediately
           if (convertedRestaurants.length === 1) {
             // console.log("🍽️ SINGLE RESTAURANT: Loading menu items for", convertedRestaurants[0].id);
             try {
-              const apiRestaurant = await restaurantApi.getRestaurantById(convertedRestaurants[0].id);
+              const apiRestaurant = await restaurantApi.getRestaurantById(
+                convertedRestaurants[0].id
+              );
               // console.log("APIRESP", apiRestaurant);
               const restaurantWithMenus = {
                 ...convertedRestaurants[0],
@@ -301,9 +329,8 @@ export const MobileRestaurantPage: React.FC = () => {
       } else if (restaurantId && action === "details") {
         // Priority 3: Direct restaurant access (existing flow)
         // console.log("🍽️ DIRECT RESTAURANT ACCESS:", restaurantId);
-        const apiRestaurant = await restaurantApi.getRestaurantById(
-          restaurantId
-        );
+        const apiRestaurant =
+          await restaurantApi.getRestaurantById(restaurantId);
         // Convert API restaurant to local Restaurant format
         const restaurant = {
           ...apiRestaurant,
@@ -379,7 +406,7 @@ export const MobileRestaurantPage: React.FC = () => {
       // Check if user is app user (has token or source=app)
       const sourceParam = searchParams.get("source");
       const isAppUser = token || sourceParam === "app";
-      
+
       // console.log("🔍 USER TYPE DETECTION:");
       // console.log("  - token:", !!token);
       // console.log("  - sourceParam:", sourceParam);
