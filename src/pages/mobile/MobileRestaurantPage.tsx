@@ -255,9 +255,10 @@ export const MobileRestaurantPage: React.FC = () => {
           // Store site_id and facility_setup in sessionStorage for external order API
           sessionStorage.setItem("site_id", siteId.toString());
 
-          // Step 2: Get restaurants by site_id
+          // Step 2: Get restaurants by site_id and facility_id
           const restaurantsResponse = await restaurantApi.getRestaurantsBySite(
-            siteId
+            siteId,
+            effectiveFacilityId
           );
           const restaurantsList = restaurantsResponse.restaurants || [];
 

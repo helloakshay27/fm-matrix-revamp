@@ -1,6 +1,12 @@
 import { set } from 'lodash';
 import React from 'react';
+import { useLocation } from 'react-router-dom';
+import { Box, Typography } from "@mui/material";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { DEFAULT_LOGO_CODE } from "@/assets/default-logo-code";
+import { OIG_LOGO_CODE } from "@/assets/pdf/oig-logo-code";
+import { VI_LOGO_CODE } from "@/assets/vi-logo-code";
+import GoPhygital from "@/assets/pdf/Gophygital.svg";
 
 // Clean final version
 type StatCardProps = { value: number | string; label: string; percent?: string; subLabel?: string };
@@ -23,26 +29,186 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
     const brcPctCalc = total ? (breached / total) * 100 : 0;
     const achPct = achievedPctOverride !== undefined ? achievedPctOverride : achPctCalc;
     const brcPct = breachedPctOverride !== undefined ? breachedPctOverride : brcPctCalc;
-    const data = [
-        { name: 'Achieved', value: achieved, color: '#D9D3C4' },
-        { name: 'Breached', value: breached, color: '#C4B89D' }
-    ];
+    const baseData = React.useMemo(
+        () => [
+        { name: 'Achieved', value: achieved, color: '#DBC2A9' },
+        { name: 'Breached', value: breached, color: '#8B7355' }
+        ],
+        [achieved, breached]
+    );
+    // Detect print to enlarge only the circle, not the container height
+    const [isPrinting, setIsPrinting] = React.useState(false);
+    const [activeSlice, setActiveSlice] = React.useState<string | null>(null);
+    React.useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const before = () => setIsPrinting(true);
+        const after = () => setIsPrinting(false);
+        window.addEventListener('beforeprint', before);
+        window.addEventListener('afterprint', after);
+        let mql: MediaQueryList | null = null;
+        const onChange = (e: MediaQueryListEvent) => setIsPrinting(!!e.matches);
+        try {
+            mql = window.matchMedia('print');
+            // @ts-ignore cross-browser
+            if (mql.addEventListener) mql.addEventListener('change', onChange);
+            else if (mql.addListener) mql.addListener(onChange);
+        } catch { }
+        return () => {
+            window.removeEventListener('beforeprint', before);
+            window.removeEventListener('afterprint', after);
+            try {
+                if (mql) {
+                    // @ts-ignore cross-browser
+                    if (mql.removeEventListener) mql.removeEventListener('change', onChange);
+                    else if (mql.removeListener) mql.removeListener(onChange);
+                }
+            } catch { }
+        };
+    }, []);
+    const RADIAN = Math.PI / 180;
+    const outerRadiusValue = isPrinting ? 225 : 150;
+    const innerRadiusValue = 0;
+    const formatPercent = (p: number) => `${p.toFixed(2)}%`;
+    const toggleSlice = React.useCallback((name: string) => {
+        if (isPrinting) return;
+        setActiveSlice(prev => (prev === name ? null : name));
+    }, [isPrinting]);
+
+    const pieData = React.useMemo(() => {
+        if (!activeSlice) return baseData;
+        const highlighted = baseData.find((item) => item.name === activeSlice);
+        if (!highlighted) return baseData;
+        const others = baseData.filter((item) => item.name !== activeSlice);
+        return [...others, highlighted];
+    }, [baseData, activeSlice]);
+
+    const legendData = React.useMemo(
+        () =>
+            baseData.map((item) => ({
+                ...item,
+                pct: item.name === 'Achieved' ? achPct : brcPct,
+            })),
+        [baseData, achPct, brcPct]
+    );
+
+    const handlePieClick = (_: any, index: number) => {
+        if (isPrinting) return;
+        const segment = pieData[index];
+        if (segment?.name) toggleSlice(segment.name);
+    };
+
+    const makeLegendHandlers = (name: string) => ({
+        onClick: () => toggleSlice(name),
+        onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleSlice(name);
+            }
+        }
+    });
+
+    const renderInnerLabel = (labelProps: any) => {
+        const { x, y, value, index } = labelProps;
+        if (value == null || index == null) return null;
+        const pct = total ? (Number(value) / total) * 100 : 0;
+        return (
+            <text
+                x={x}
+                y={y}
+                fill="#FFFFFF"
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={isPrinting ? 10 : 12}
+                fontWeight={500}
+                letterSpacing="0.05em"
+                fontFamily="'Inter','Segoe UI',sans-serif"
+                pointerEvents="none"
+            >
+                {`${pct.toFixed(2)}%`}
+            </text>
+        );
+    };
+
     return (
-        <div className="w-full">
-            <h3 className="text-black font-semibold text-base sm:text-lg mb-2">{title}</h3>
-            <div className="bg-[#F6F4EE] rounded-sm px-6 sm:px-8 py-5 sm:py-6">
-                <div className="w-full h-[300px] sm:h-[360px] print:h-[250px]">
+        <div className="w-full no-break tat-pie-card">
+            <h3 className="text-black font-semibold text-base sm:text-lg mb-1 print:mb-1">{title}</h3>
+            <div className="bg-[#F6F4EE] rounded-sm px-6 sm:px-8 py-4 sm:py-5 print:px-5 print:py-3">
+                <div className="w-full h-[260px] sm:h-[320px] print:h-[320px] tat-pie-container" style={{ overflow: 'visible' }}>
                     <ResponsiveContainer width="100%" height="100%">
-                        <PieChart margin={{ top: 8, right: 40, bottom: 8, left: 40 }}>
-                            <Pie data={data} dataKey="value" nameKey="name" innerRadius={0} outerRadius={110} stroke="#FFFFFF" paddingAngle={0}>
-                                {data.map((d, i) => <Cell key={i} fill={d.color} />)}
+                        {/* Provide extra margin so outer labels have space and are not clipped */}
+                        <PieChart margin={isPrinting ? { top: 12, right: 48, bottom: 12, left: 48 } : { top: 20, right: 36, bottom: 20, left: 36 }}>
+                            <Pie
+                                data={pieData}
+                                dataKey="value"
+                                nameKey="name"
+                                innerRadius={innerRadiusValue}
+                                outerRadius={outerRadiusValue}
+                                stroke="#FFFFFF"
+                                paddingAngle={0}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                label={({ cx, cy, midAngle, percent, index }) => {
+                                    // use a smaller offset for the label radius so text remains within chart bounds
+                                    const labelOffset = isPrinting ? 32 : 12;
+                                    const radius = outerRadiusValue + labelOffset;
+                                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                    const alignRight = x > cx;
+                                    const item = pieData[index];
+                                    return (
+                                        <text
+                                            x={x}
+                                            y={y}
+                                            fill="#374151"
+                                            textAnchor={alignRight ? 'start' : 'end'}
+                                            dominantBaseline="middle"
+                                            fontSize={12}
+                                            fontWeight={600}
+                                        >
+                                            {`${item.name} ${item.value.toLocaleString()} (${formatPercent(percent * 100)})`}
+                                        </text>
+                                    );
+                                }}
+                                onClick={handlePieClick}
+                            >
+                                {pieData.map((d, i) => (
+                                    <Cell
+                                        key={i}
+                                        fill={d.color}
+                                        stroke={!isPrinting && activeSlice === d.name ? '#4B351F' : '#FFFFFF'}
+                                        strokeWidth={!isPrinting && activeSlice === d.name ? 4 : 2}
+                                        style={{ cursor: isPrinting ? 'default' : 'pointer', outline: 'none' }}
+                                    />
+                                ))}
+                                {/* inner percent label removed to avoid a small clipped white text in the corner */}
                             </Pie>
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
-                <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm sm:text-base">
-                    <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: '#D9D3C4' }} /> <span className="text-black font-medium">Achieved:</span> <span className="text-black/80">{achieved.toLocaleString()} ({achPct.toFixed(2)}%)</span></div>
-                    <div className="flex items-center gap-2"><span className="inline-block h-3 w-3 rounded-sm" style={{ background: '#C4B89D' }} /> <span className="text-black font-medium">Breached:</span> <span className="text-black/80">{breached.toLocaleString()} ({brcPct.toFixed(2)}%)</span></div>
+
+                <div className="mt-2 print:mt-1 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm sm:text-base print:text-[12px]">
+                    {legendData.map((legend) => {
+                        const handlers = makeLegendHandlers(legend.name);
+                        const isActive = !isPrinting && activeSlice === legend.name;
+                        return (
+                            <div
+                                key={legend.name}
+                                className={`legend-pill flex items-center gap-2 px-3 py-1 rounded-md transition ${
+                                    isActive ? 'bg-white/70 font-semibold text-[#4B351F]' : 'text-black'
+                                } ${isPrinting ? '' : 'cursor-pointer'}`}
+                                role={isPrinting ? undefined : 'button'}
+                                tabIndex={isPrinting ? -1 : 0}
+                                {...(!isPrinting ? handlers : {})}
+                            >
+                                <span className="inline-block h-3 w-3 rounded-sm" style={{ background: legend.color }} />
+                                <span className="text-black font-medium">{legend.name}:</span>
+                                <span className="text-black/80">
+                                    {legend.value.toLocaleString()} ({legend.pct.toFixed(2)}%)
+                                </span>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>
@@ -52,14 +218,92 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
 type WeeklyReportProps = { title?: string };
 const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) => {
     const sectionBox = 'bg-white border border-gray-300 w-[95%] mx-auto p-5 mb-10 print:w-[95%] print:mx-auto print:p-2 print:mb-4 no-break';
-
+    
+    const location = useLocation();
+    const params = React.useMemo(() => new URLSearchParams(location.search), [location.search]);
+    
+    // Get dates from URL params or use default (last 7 days)
+    const startDate = params.get('start_date') || '';
+    const endDate = params.get('end_date') || '';
+    
     // Dynamic 7-day window label (start = today - 6 days, end = today)
     const weekRangeLabel = React.useMemo(() => {
-        const end = new Date();
-        const start = new Date(end);
-        start.setDate(end.getDate() - 6);
+        let end: Date;
+        let start: Date;
+        
+        if (startDate && endDate) {
+            start = new Date(startDate);
+            end = new Date(endDate);
+        } else {
+            end = new Date();
+            start = new Date(end);
+            start.setDate(end.getDate() - 6);
+        }
+        
         const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         return `${fmt(start)} - ${fmt(end)}`;
+    }, [startDate, endDate]);
+
+    // Date range label for cover page (format: From: DD Mon YYYY to DD Mon YYYY) - full date range
+    const dateRangeLabel = React.useMemo(() => {
+        let end: Date;
+        let start: Date;
+        
+        if (startDate && endDate) {
+            start = new Date(startDate);
+            end = new Date(endDate);
+        } else {
+            end = new Date();
+            start = new Date(end);
+            start.setDate(end.getDate() - 6);
+        }
+        
+        try {
+            const fmt = (d: Date) => {
+                const day = d.getDate();
+                const month = d.toLocaleString('en-US', { month: 'short' });
+                const year = d.getFullYear();
+                return `${day} ${month} ${year}`;
+            };
+            return `From: ${fmt(start)} to ${fmt(end)}`;
+        } catch {
+            const dayStart = start.getDate();
+            const monthStart = start.toLocaleString('en-US', { month: 'short' });
+            const yearStart = start.getFullYear();
+            const dayEnd = end.getDate();
+            const monthEnd = end.toLocaleString('en-US', { month: 'short' });
+            const yearEnd = end.getFullYear();
+            return `From: ${dayStart} ${monthStart} ${yearStart} to ${dayEnd} ${monthEnd} ${yearEnd}`;
+        }
+    }, [startDate, endDate]);
+
+    // Site label from localStorage - same as AllContent
+    const siteLabel = React.useMemo(() => {
+        if (typeof window === 'undefined') return '';
+        return (
+            localStorage.getItem('selectedSiteName') ||
+            localStorage.getItem('selectedSite') ||
+            localStorage.getItem('site_name') ||
+            ''
+        );
+    }, []);
+
+    const logoElement = React.useMemo(() => {
+        if (typeof window === 'undefined') {
+            return <DEFAULT_LOGO_CODE />;
+        }
+
+        const hostname = window.location.hostname.toLowerCase();
+
+        if (hostname.includes('oig.gophygital.work')) {
+            return <OIG_LOGO_CODE />;
+        }
+
+        if (hostname.includes('vi-web.gophygital.work')) {
+            return <VI_LOGO_CODE />;
+        }
+
+        return <DEFAULT_LOGO_CODE />;
     }, []);
 
     // === State: Category Wise Ticket (Top-5) dynamic data ===
@@ -374,36 +618,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
     const [categoryTatLoading, setCategoryTatLoading] = React.useState(false);
     const [categoryTatError, setCategoryTatError] = React.useState<string | null>(null);
 
-    // === State: Customer Feedback Analysis (dynamic rendering) ===
-    interface CustomerFeedbackRating { key: string; label: string; count: number; percentage: number; rating_value: number; color: string; raw?: any; }
-    const [customerFeedbackRatings, setCustomerFeedbackRatings] = React.useState<CustomerFeedbackRating[]>([]);
-    const [customerFeedbackLoading, setCustomerFeedbackLoading] = React.useState(false);
-    const [customerFeedbackError, setCustomerFeedbackError] = React.useState<string | null>(null);
-
-    // Fixed original color palette for Customer Experience Feedback (do not use API colors for box backgrounds)
-    const customerFeedbackColorPalette: Record<string, string> = {
-        great: '#EDE7DB',      // Excellent
-        good: '#D9D3C4',       // Good
-        okay: '#C4B89D',       // Average
-        bad: '#C1A593',        // Bad
-        terrible: '#D5DBDB'    // Poor
-    };
-
-    // === State: Customer Feedback Weekly Trend (stacked bar) ===
-    interface WeeklyTrendRow {
-        day: string;              // e.g. Mon, Tue
-        date: string;             // original date dd-mm-yyyy
-        Excellent: number;
-        Good: number;
-        Average: number;
-        Bad: number;
-        Poor: number;
-        total: number;            // total_feedback
-        satisfaction: number;     // daily_satisfaction_score
-    }
-    const [weeklyTrendRows, setWeeklyTrendRows] = React.useState<WeeklyTrendRow[]>([]);
-    const [weeklyTrendLoading, setWeeklyTrendLoading] = React.useState(false);
-    const [weeklyTrendError, setWeeklyTrendError] = React.useState<string | null>(null);
+    // Customer Feedback sections removed as requested
 
     // === State: Asset Management Analysis (log response first only) ===
 
@@ -448,16 +663,25 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         const rawBase = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         const siteId = localStorage.getItem('selectedSiteId') || '';
-        // Dynamic date range: start = today - 6 days, end = today (7 day window)
+        // Dynamic date range: use URL params or default to last 7 days
         const formatDate = (d: Date) => {
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`; // YYYY-MM-DD
         };
-        const endDateObj = new Date();
-        const startDateObj = new Date(endDateObj); // clone
-        startDateObj.setDate(endDateObj.getDate() - 6); // last 7 calendar days inclusive
+        let endDateObj: Date;
+        let startDateObj: Date;
+        
+        if (startDate && endDate) {
+            startDateObj = new Date(startDate);
+            endDateObj = new Date(endDate);
+        } else {
+            endDateObj = new Date();
+            startDateObj = new Date(endDateObj); // clone
+            startDateObj.setDate(endDateObj.getDate() - 6); // last 7 calendar days inclusive
+        }
+        
         const fromDate = formatDate(startDateObj);
         const toDate = formatDate(endDateObj);
         const url = `https://${rawBase}/pms/admin/complaints/ticket_ageing_matrix.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${token}`;
@@ -509,7 +733,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             })
             .finally(() => setAgeingLoading(false));
         return () => controller.abort();
-    }, []);
+    }, [startDate, endDate]);
 
     // Fetch Asset Management Analysis (log response only first as requested)
     React.useEffect(() => {
@@ -671,141 +895,9 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         return () => controller.abort();
     }, []);
 
-    // Fetch Customer Feedback Analysis (log first then map to ratings)
-    React.useEffect(() => {
-        const rawBase = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-        const siteId = localStorage.getItem('selectedSiteId') || '';
-        if (!rawBase || !token) {
-            if (!rawBase) console.warn('[WeeklyReport][customer_feedback_analysis] baseUrl missing in localStorage');
-            if (!token) console.warn('[WeeklyReport][customer_feedback_analysis] token missing in localStorage');
-            return;
-        }
-        const base = rawBase.startsWith('http') ? rawBase : `https://${rawBase}`;
-        const url = `${base.replace(/\/$/, '')}/api/pms/reports/customer_feedback_analysis${siteId ? `?site_id=${siteId}` : ''}`;
-        const controller = new AbortController();
-        console.log('[WeeklyReport] Fetching Customer Feedback Analysis:', { url, siteId });
-        setCustomerFeedbackLoading(true);
-        setCustomerFeedbackError(null);
-        fetch(url, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
-            signal: controller.signal
-        }).then(async res => {
-            const status = res.status;
-            let bodyText = '';
-            try { bodyText = await res.text(); } catch { /* ignore */ }
-            let parsed: any = {};
-            try { parsed = bodyText ? JSON.parse(bodyText) : {}; } catch (e) {
-                console.error('[WeeklyReport][customer_feedback_analysis] JSON parse failed', e, bodyText?.slice(0, 400));
-            }
-            if (!res.ok) {
-                console.error('[WeeklyReport][customer_feedback_analysis] API error', status, parsed);
-                setCustomerFeedbackError(`API ${status}`);
-                return;
-            }
-            console.log('[WeeklyReport][customer_feedback_analysis] raw response:', parsed);
-            const analysis = parsed?.feedback_data?.feedback_analysis || parsed?.customer_feedback_data?.analysis || parsed?.analysis || parsed;
-            const ratingObj = analysis?.feedback_by_rating || analysis?.ratings || {};
-            // Mapping backend keys to display labels consistent with original static UI
-            const labelMap: Record<string, string> = {
-                great: 'Excellent',
-                good: 'Good',
-                okay: 'Average',
-                bad: 'Bad',
-                terrible: 'Poor'
-            };
-            const order = ['great', 'good', 'okay', 'bad', 'terrible'];
-            const collected: CustomerFeedbackRating[] = order.map(k => {
-                const r = ratingObj?.[k] || {};
-                return {
-                    key: k,
-                    label: labelMap[k] || k,
-                    count: Number(r.count ?? 0),
-                    percentage: Number(r.percentage ?? 0),
-                    rating_value: Number(r.rating_value ?? 0),
-                    color: r.color || '#EDE7DB',
-                    raw: r
-                } as CustomerFeedbackRating;
-            });
-            // If percentages are zero or all zero, compute manually
-            // const totalCount = collected.reduce((s, r) => s + r.count, 0);
-            // const allZeroPct = collected.every(r => !r.percentage);
-            // if (totalCount > 0 && allZeroPct) {
-            //     collected.forEach(r => { r.percentage = (r.count / totalCount) * 100; });
-            // }
-            setCustomerFeedbackRatings(collected);
-        }).catch(err => {
-            if (err?.name === 'AbortError') return;
-            console.error('[WeeklyReport][customer_feedback_analysis] Fetch failed', err);
-            setCustomerFeedbackError('Network error');
-        }).finally(() => setCustomerFeedbackLoading(false));
-        return () => controller.abort();
-    }, []);
+    // Customer Feedback analysis effect removed
 
-    // Fetch Customer Feedback Weekly Trend (log response only first)
-    React.useEffect(() => {
-        const rawBase = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-        const siteId = localStorage.getItem('selectedSiteId') || '';
-        if (!rawBase || !token) {
-            if (!rawBase) console.warn('[WeeklyReport][customer_feedback_weekly_trend] baseUrl missing in localStorage');
-            if (!token) console.warn('[WeeklyReport][customer_feedback_weekly_trend] token missing in localStorage');
-            return;
-        }
-        const base = rawBase.startsWith('http') ? rawBase : `https://${rawBase}`;
-        const url = `${base.replace(/\/$/, '')}/api/pms/reports/customer_feedback_weekly_trend${siteId ? `?site_id=${encodeURIComponent(siteId)}` : ''}`;
-        const controller = new AbortController();
-        console.log('[WeeklyReport] Fetching Customer Feedback Weekly Trend:', { url, siteId });
-        setWeeklyTrendLoading(true);
-        setWeeklyTrendError(null);
-        fetch(url, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
-            signal: controller.signal
-        }).then(async res => {
-            const status = res.status;
-            let bodyText = '';
-            try { bodyText = await res.text(); } catch { /* ignore */ }
-            let parsed: any = {};
-            try { parsed = bodyText ? JSON.parse(bodyText) : {}; } catch (e) {
-                console.error('[WeeklyReport][customer_feedback_weekly_trend] JSON parse failed', e, bodyText?.slice(0, 400));
-            }
-            if (!res.ok) {
-                console.error('[WeeklyReport][customer_feedback_weekly_trend] API error', status, parsed);
-                setWeeklyTrendError(`API ${status}`);
-                setWeeklyTrendRows([]);
-                return;
-            }
-            console.log('[WeeklyReport][customer_feedback_weekly_trend] raw response:', parsed);
-            // Map daily_trends -> weeklyTrendRows
-            const daily = parsed?.feedback_trend_data?.feedback_weekly_trend?.daily_trends || parsed?.daily_trends;
-            if (Array.isArray(daily)) {
-                const mapped: WeeklyTrendRow[] = daily.map((d: any) => ({
-                    day: d.day_name || d.day || '',
-                    date: d.date || '',
-                    Excellent: Number(d.feedback_breakdown?.excellent ?? 0),
-                    Good: Number(d.feedback_breakdown?.good ?? 0),
-                    Average: Number(d.feedback_breakdown?.average ?? 0),
-                    Bad: Number(d.feedback_breakdown?.bad ?? 0),
-                    Poor: Number(d.feedback_breakdown?.poor ?? 0),
-                    total: Number(d.total_feedback ?? 0),
-                    satisfaction: Number(d.daily_satisfaction_score ?? 0)
-                }));
-                setWeeklyTrendRows(mapped);
-                console.log('[WeeklyReport][customer_feedback_weekly_trend] mapped weeklyTrendRows:', mapped);
-            } else {
-                console.warn('[WeeklyReport][customer_feedback_weekly_trend] daily_trends not array');
-                setWeeklyTrendRows([]);
-            }
-        }).catch(err => {
-            if (err?.name === 'AbortError') return;
-            console.error('[WeeklyReport][customer_feedback_weekly_trend] Fetch failed', err);
-            setWeeklyTrendError('Network error');
-            setWeeklyTrendRows([]);
-        }).finally(() => setWeeklyTrendLoading(false));
-        return () => controller.abort();
-    }, []);
+    // Customer Feedback weekly trend effect removed
 
     // Fetch TAT Achievement Analysis (log only first as requested)
     React.useEffect(() => {
@@ -944,7 +1036,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
 
 
     // --- Global loader: show until ALL individual API loaders have finished (success or error) ---
-    const overallLoading = topCatLoading || weeklySummaryLoading || priorityLoading || ageingLoading || tatLoading || categoryTatLoading || customerFeedbackLoading || weeklyTrendLoading || assetMgmtLoading || checklistStatusLoading;
+    const overallLoading = topCatLoading || weeklySummaryLoading || priorityLoading || ageingLoading || tatLoading || categoryTatLoading || assetMgmtLoading || checklistStatusLoading;
 
     // Detect auto print trigger via query param (?auto=1 / true / yes)
     const auto = React.useMemo(() => {
@@ -1005,176 +1097,976 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         <div className="w-full print-exact">
             {/* readiness marker so external logic (or tests) can detect when page content mounted */}
             <div data-component="weekly-report" data-loading={overallLoading ? 'true' : 'false'} style={{ display: 'none' }} />
-            <style>{`@media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .no-break { break-inside: avoid !important; page-break-inside: avoid !important; } }`}</style>
-            <header className="w-full bg-[#F6F4EE] py-6 sm:py-8 mb-6 print:py-4 print:mb-4">
-                <h1 className="text-center text-black font-extrabold text-3xl sm:text-4xl print:text-2xl">{title}</h1>
-                <p className="mt-2 text-center text-black font-medium text-base sm:text-lg print:text-sm">{weekRangeLabel}</p>
-            </header>
+            <style>{`
+.tat-pie-card,
+.tat-pie-card:focus,
+.tat-pie-card:focus-visible,
+.tat-pie-card:focus-within,
+.tat-pie-card .legend-pill,
+.tat-pie-card .legend-pill:focus,
+.tat-pie-card .legend-pill:focus-visible,
+.tat-pie-card .legend-pill:focus-within,
+.tat-pie-card .recharts-sector,
+.tat-pie-card .recharts-sector:focus,
+.tat-pie-card .recharts-sector:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+`}</style>
+              <style>{`
+        @media print {
+          @page {
+              size: A4;
+              margin: 4mm 0 1mm 0;
+          }
 
-            {/* 1. Help Desk Management */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">1. Help Desk Management</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {(() => {
-                            const loading = weeklySummaryLoading;
-                            const err = weeklySummaryError;
-                            if (loading) {
-                                return (
-                                    <>
-                                        <StatCard value="…" label="Total Tickets" />
-                                        <StatCard value="…" label="Open Tickets" />
-                                        <StatCard value="…" label="Closed Tickets" />
-                                    </>
-                                );
-                            }
-                            if (err) {
-                                return (
-                                    <>
-                                        <StatCard value="-" label="Total Tickets" subLabel={err} />
-                                        <StatCard value="-" label="Open Tickets" />
-                                        <StatCard value="-" label="Closed Tickets" />
-                                    </>
-                                );
-                            }
-                            const total = weeklySummary?.total ?? 0;
-                            const totalPct = weeklySummary?.total_percentage;
-                            const open = weeklySummary?.open ?? 0;
-                            const openPct = weeklySummary?.open_percentage;
-                            const closed = weeklySummary?.closed ?? 0;
-                            const closedPct = weeklySummary?.closed_percentage;
-                            const fmtPct = (v?: number) => (v === 0 || v ? `(${Math.round(v)}%)` : undefined);
-                            return (
-                                <>
-                                    <StatCard value={total} percent={fmtPct(totalPct)} label="Total Tickets" />
-                                    <StatCard value={open} percent={fmtPct(openPct)} label="Open Tickets" />
-                                    <StatCard value={closed} percent={fmtPct(closedPct)} label="Closed Tickets" />
-                                </>
-                            );
-                        })()}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                        {(() => {
-                            const reactive = weeklySummary?.reactive ?? 0;
-                            const preventive = weeklySummary?.preventive ?? 0;
-                            if (weeklySummaryLoading) {
-                                return (<><StatCard value="…" label="Reactive Tickets" subLabel="(User Generated)" /><StatCard value="…" label="Preventive Tickets" subLabel="(Team Generated)" /></>);
-                            }
-                            if (weeklySummaryError) {
-                                return (<><StatCard value="-" label="Reactive Tickets" subLabel="(User Generated)" /><StatCard value="-" label="Preventive Tickets" subLabel="(Team Generated)" /></>);
-                            }
-                            return (<>
-                                <StatCard value={reactive} label="Reactive Tickets" subLabel="(User Generated)" />
-                                <StatCard value={preventive} label="Preventive Tickets" subLabel="(Team Generated)" />
-                            </>);
-                        })()}
-                    </div>
-                </div>
-            </section>
+          html,
+          body {
+              font-size: 18px;
+              
+              margin: 0;
+              padding: 0;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+          }
 
-            {/* 2. Priority Wise Tickets */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">2. Priority Wise Tickets</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
-                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
-                            <thead>
-                                <tr>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/2">Priority</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-1/2">Open Tickets</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {priorityLoading && (
-                                    <tr><td colSpan={2} className="p-4 print:p-2 text-center text-gray-500">Loading...</td></tr>
-                                )}
-                                {!priorityLoading && priorityError && (
-                                    <tr><td colSpan={2} className="p-4 print:p-2 text-center text-red-600">{priorityError}</td></tr>
-                                )}
-                                {!priorityLoading && !priorityError && (
-                                    <>
-                                        <tr className="border-b border-gray-200"><td className="p-4 print:p-2 text-black">High (P1)</td><td className="p-4 print:p-2 text-center text-black">{priorityWise ? priorityWise.high : 0}</td></tr>
-                                        <tr className="border-b border-gray-200"><td className="p-4 print:p-2 text-black">Medium (P2, P3)</td><td className="p-4 print:p-2 text-center text-black">{priorityWise ? priorityWise.medium : 0}</td></tr>
-                                        <tr><td className="p-4 print:p-2 text-black">Low (P4, P5)</td><td className="p-4 print:p-2 text-center text-black">{priorityWise ? priorityWise.low : 0}</td></tr>
-                                    </>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
+          .print-page {
+              page-break-before: always;
+              break-before: page;
+          }
 
-            {/* 3. Category Wise Ticket (Top-5) */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">3. Category Wise Ticket (Top-5)</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
-                        <table className="w-full table-fixed border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
-                            <thead>
-                                <tr>
-                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left">Category</th>
-                                    <th colSpan={3} className="bg-[#ECE6DE] w-3/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total (Category Wise)</th>
-                                </tr>
-                                <tr>
-                                    <th className="bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Count</th>
-                                    <th className="bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">% out of total</th>
-                                    <th className="bg-[#ECE6DE] w-1/4 text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">% inc./dec. from last week</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {topCatLoading && (
-                                    <tr><td colSpan={4} className="p-4 print:p-2 text-center text-sm text-gray-500">Loading...</td></tr>
-                                )}
-                                {!topCatLoading && topCatError && (
-                                    <tr><td colSpan={4} className="p-4 print:p-2 text-center text-sm text-red-600">{topCatError}</td></tr>
-                                )}
-                                {!topCatLoading && !topCatError && topCategories.length === 0 && (
-                                    <tr><td colSpan={4} className="p-4 print:p-2 text-center text-sm text-gray-500">No data</td></tr>
-                                )}
-                                {topCategories.map((row, i) => {
-                                    const arrowUp = (row.trend_icon || row.trend || '').toLowerCase().includes('up');
-                                    const arrowDown = (row.trend_icon || row.trend || '').toLowerCase().includes('down');
-                                    const arrowSymbol = arrowUp ? '▲' : arrowDown ? '▼' : '';
-                                    const arrowColor = arrowDown ? 'text-[#C72030]' : arrowUp ? 'text-green-600' : 'text-gray-400';
+          .page-break {
+              break-before: page;
+          }
+
+          .print-small li {
+              font-size: 0.75rem;
+              line-height: 1.25rem;
+          }
+
+          .print-removespace {
+              padding-top: 12px !important;
+          }
+
+          .print-footer-bar {
+              break-inside: avoid;
+              page-break-inside: avoid;
+          }
+
+          h3 {
+              font-size: 0.85rem;
+              line-height: 1rem;
+          }
+
+          .print-avoid-break {
+              break-inside: avoid;
+              page-break-inside: avoid;
+          }
+
+          .print-avoid-break * {
+              break-inside: avoid;
+              page-break-inside: avoid;
+          }
+
+          .clip-triangle-tr {
+              clip-path: polygon(0 0, 100% 0, 100% 100%);
+          }
+
+          .clip-triangle-bl {
+              clip-path: polygon(0 100%, 0 0, 100% 100%);
+          }
+
+          img {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+          }
+
+          .print-bg-force {
+              background-color: #bf0c0c !important;
+              color: white !important;
+          }
+
+          .rotate-header-print {
+              writing-mode: vertical-rl;
+              transform: rotate(180deg);
+              white-space: nowrap;
+              text-align: center;
+          }
+
+          .print-th-vertical {
+              width: 28px !important;
+              min-width: 28px !important;
+              max-width: 28px !important;
+              padding: 2px !important;
+          }
+
+          .print-th-site {
+              width: 90px !important;
+              min-width: 90px !important;
+              max-width: 120px !important;
+          }
+
+          .print-td-narrow {
+              width: 28px !important;
+              min-width: 28px !important;
+              max-width: 28px !important;
+              padding: 2px !important;
+              font-size: 9px !important;
+          }
+
+          .print-keep-together {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .print-avoid-before {
+              break-before: avoid !important;
+              page-break-before: avoid !important;
+          }
+
+          .print-avoid-after {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .print-tight {
+              margin-top: 0 !important;
+              margin-bottom: 8px !important;
+              padding-top: 8px !important;
+              padding-bottom: 8px !important;
+          }
+
+          /* Fix date range overflow in print */
+          .date-range-text {
+              white-space: nowrap !important;
+              overflow: visible !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              font-size: 0.85rem !important;
+          }
+
+          .date-range-text > span:first-of-type {
+              left: 239px !important;
+              max-width: none !important;
+              overflow: visible !important;
+          }
+
+          .date-range-text > span:last-of-type {
+              left: 279px !important;
+              max-width: none !important;
+              overflow: visible !important;
+          }
+
+          .date-range-text span span {
+              white-space: nowrap !important;
+              display: inline-block !important;
+          }
+
+          /* Fix WEEKLY text overflow in print */
+          .weekly-text {
+              white-space: nowrap !important;
+               overflow: visible !important;
+              width: 100% !important;
+              max-width: 100% !important;
+          }
+
+          .weekly-text > span:first-of-type {
+              left: 70px !important;
+              max-width: none !important;
+              overflow: visible !important;
+          }
+
+          .weekly-text > span:last-of-type {
+              left: 120px !important;
+              max-width: none !important;
+              overflow: visible !important;
+          }
+
+          .weekly-text span span {
+              white-space: nowrap !important;
+              display: inline-block !important;
+          }
+
+          /* Fix REPORT text overflow in print */
+          .report-text {
+              white-space: nowrap !important;
+              overflow: visible !important;
+              width: 100% !important;
+              max-width: 100% !important;
+          }
+
+          .report-text > span:first-of-type {
+              left: 140px !important;
+              max-width: none !important;
+              overflow: visible !important;
+          }
+
+          .report-text > span:last-of-type {
+              left: 181px !important;
+              max-width: none !important;
+              overflow: visible !important;
+          }
+
+          .report-text span span {
+              white-space: nowrap !important;
+              display: inline-block !important;
+          }
+
+          /* Keep Tickets Ageing Matrix header and table together on same page */
+          .ageing-matrix-section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .ageing-matrix-container {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .ageing-matrix-header {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .ageing-matrix-border {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .ageing-matrix-table-wrapper {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .ageing-matrix-table {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .ageing-matrix-table thead {
+              display: table-header-group !important;
+          }
+
+          .ageing-matrix-table tbody {
+              display: table-row-group !important;
+          }
+
+          .ageing-matrix-table tr {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* Keep TAT Achievement section together on same page */
+          .tat-achievement-section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-achievement-container {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-achievement-header {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .tat-achievement-border {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .tat-achievement-pie-cards {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .resolution-tat-pie-card-wrapper {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-pie-card {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* Keep Task Status section together on same page */
+          .task-status-section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .task-status-container {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .task-status-header {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .task-status-border {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .task-status-table-wrapper {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .task-status-table {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .task-status-table thead {
+              display: table-header-group !important;
+          }
+
+          .task-status-table tbody {
+              display: table-row-group !important;
+          }
+
+          .task-status-table tr {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* Keep TAT Achievement Category-Wise section together on same page */
+          .tat-category-wise-section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-category-wise-container {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-category-wise-header {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .tat-category-wise-border {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .tat-category-wise-table-wrapper {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-category-wise-table {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-category-wise-table thead {
+              display: table-header-group !important;
+          }
+
+          .tat-category-wise-table tbody {
+              display: table-row-group !important;
+          }
+
+          .tat-category-wise-table tr {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* Keep Category-Wise Overdue Status section together on same page */
+          .overdue-status-section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .overdue-status-container {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .overdue-status-header {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .overdue-status-border {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .overdue-status-table-wrapper {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .overdue-status-table {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .overdue-status-table thead {
+              display: table-header-group !important;
+          }
+
+          .overdue-status-table tbody {
+              display: table-row-group !important;
+          }
+
+          .overdue-status-table tr {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* General rules to keep all sections together in print */
+          section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          /* Keep all table sections together */
+          section table {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          section table thead {
+              display: table-header-group !important;
+          }
+
+          section table tbody {
+              display: table-row-group !important;
+          }
+
+          section h2 {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          /* Ensure all section containers stay together */
+          section > div {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .tat-pie-container .recharts-wrapper {
+              overflow: visible !important;
+          }
+
+          .tat-pie-container svg {
+              transform: scale(1.25);
+              transform-origin: center center;
+          }
+
+          /* Specific rules for remaining sections */
+          .help-desk-section,
+          .priority-wise-section,
+          .category-wise-section,
+          .asset-management-section {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .help-desk-header,
+          .priority-wise-header,
+          .category-wise-header,
+          .asset-management-header {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .help-desk-border,
+          .priority-wise-border,
+          .category-wise-border,
+          .asset-management-border {
+              break-after: avoid !important;
+              page-break-after: avoid !important;
+          }
+
+          .priority-wise-table,
+          .category-wise-table,
+          .asset-management-table {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+
+          .priority-wise-table-wrapper,
+          .category-wise-table-wrapper,
+          .asset-management-table-wrapper {
+              break-inside: avoid !important;
+              page-break-inside: avoid !important;
+          }
+        }
+      `}</style>
+
+      {/* ✅ Main Layout */}
+      <Box
+        sx={{
+          fontFamily: "sans-serif",
+          bgcolor: "white",
+          minHeight: "100vh",
+          position: "relative",
+        }}
+      >
+        {/* Header Image */}
+        <div className="relative h-[750px] w-full print:h-[600px] print:overflow-hidden">
+            <img
+                src="/weekly_report png.png"
+                alt="Meeting Room"
+                className="w-full h-full object-cover print:h-[600px] print:object-cover"
+            />
+
+
+          {/* Logo top-right */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: 16,
+              right: 24,
+              backgroundColor: "white",
+              borderRadius: "6px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              px: 1.5,
+              py: 0.5,
+              "& svg": {
+                height: "40px",
+                width: "auto",
+                display: "block",
+              },
+              "@media print": {
+                "& svg": {
+                  height: "32px",
+                },
+              },
+            }}
+          >
+            {logoElement}
+          </Box>
+
+          {/* Site Label */}
+          <Typography
+            sx={{
+              position: "absolute",
+              bottom: 16,
+              right: 0,
+              color: "white",
+              fontWeight: 700,
+              fontSize: 18,
+              minWidth: 250,
+              textAlign: "right",
+              paddingRight: 3,
+              '@media print': {
+                right: 0,
+                paddingRight: 2,
+                fontSize: 16,
+              },
+            }}
+          >
+            <span style={{ fontWeight: 700 }}>Site</span> : <span style={{ fontWeight: 700 }}>{siteLabel || 'N/A'}</span>
+          </Typography>
+        </div>
+
+        {/* Main Content Section */}
+        <Box
+          sx={{
+            position: "relative",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            py: { xs: 6, md: 10 },
+            px: { xs: 2, md: 6 },
+          }}
+        >
+          {/* Red Box */}
+          <Box
+            sx={{
+              position: "absolute",
+              left: { xs: "10%", md: "25%" },
+              top: { xs: "-30px", md: "-100px" },
+              width: { xs: "40%", md: "320px" },
+              height: { xs: "400px", md: "450px" },
+              bgcolor: "#bf0c0c",
+              zIndex: 2,
+            }}
+          />
+
+          {/* White Box */}
+          <Box
+            sx={{
+              position: "relative",
+              border: "1px solid #bf0c0c",
+              bgcolor: "white",
+              zIndex: 1,
+              width: { xs: "70%", md: "50%" },
+              height: { xs: "380px", md: "400px" },
+            }}
+          />
+
+          {/* WEEKLY REPORT Text - Single div with complete words, split at box boundary */}
+          <Box
+            sx={{
+              position: "absolute",
+              left: { xs: "10%", md: "25%" },
+              top: { xs: "80px", md: "100px" },
+              width: { xs: "80%", md: "calc(320px + 50%)" },
+              zIndex: 10,
+            }}
+          >
+            {/* WEEKLY - Single word, split by color - TOP */}
+            <div
+              className="weekly-text"
+              style={{
+                marginTop: "20px",
+                paddingLeft: "40px",
+                lineHeight: "1.2",
+                whiteSpace: "nowrap",
+                fontWeight: 700,
+                letterSpacing: "2px",
+                fontSize: "3rem",
+                fontFamily: "sans-serif",
+                position: "relative",
+                display: "block",
+              }}
+            >
+              {/* White text (shows on red box) - shows WEEKL part */}
+              <span
+                style={{
+                  color: "white",
+                  position: "relative",
+                  display: "inline-block",
+                  zIndex: 11,
+                  left: "103px",
+                }}
+              >
+                <span
+                  style={{
+                    clipPath: "polygon(0 0, 83% 0, 83% 100%, 0 100%)",
+                    WebkitClipPath: "polygon(0 0, 83% 0, 83% 100%, 0 100%)",
+                  }}
+                >
+                  WEEKLY
+                </span>
+              </span>
+              {/* Red text overlay (shows on white box) - shows Y part */}
+              <span
+                style={{
+                  color: "#bf0c0c",
+                  position: "absolute",
+                  left: "140px",
+                  top: 0,
+                  zIndex: 12,
+                  clipPath: "polygon(83% 0, 100% 0, 100% 100%, 83% 100%)",
+                  WebkitClipPath: "polygon(83% 0, 100% 0, 100% 100%, 83% 100%)",
+                }}
+              >
+                WEEKLY
+              </span>
+            </div>
+
+            {/* REPORT - Single word, split by color - BELOW */}
+            <div
+              className="report-text"
+              style={{
+                marginTop: "20px",
+                paddingLeft: "40px",
+                lineHeight: "1.2",
+                whiteSpace: "nowrap",
+                fontWeight: 600,
+                letterSpacing: "2px",
+                fontSize: "3.75rem",
+                fontFamily: "sans-serif",
+                position: "relative",
+                display: "block",
+              }}
+            >
+              {/* White text (shows on red box) - shows REP part */}
+              <span
+                style={{
+                  color: "white",
+                  position: "relative",
+                  display: "inline-block",
+                  left: "150px",
+                  zIndex: 12,
+                }}
+              >
+                <span
+                  style={{
+                    clipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
+                    WebkitClipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
+                  }}
+                >
+                  REPORT
+                </span>
+              </span>
+              {/* Red text overlay (shows on white box) - shows ORT part */}
+              <span
+                style={{
+                  color: "#bf0c0c",
+                  position: "absolute",
+                  left: "190px",
+                  top: 0,
+                  zIndex: 12,
+                  clipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
+                  WebkitClipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
+                }}
+              >
+                REPORT
+              </span>
+            </div>
+
+            {/* Date Range - Split by color like WEEKLY and REPORT */}
+            <div
+              className="date-range-text"
+              style={{
+                marginTop: "20px",
+                paddingLeft: "40px",
+                lineHeight: "1.2",
+                whiteSpace: "nowrap",
+                fontWeight: 300,
+                fontSize: "1rem",
+                position: "relative",
+                display: "block",
+              }}
+            >
+              {/* White text (shows on red box) - left part */}
+              <span
+                style={{
+                  color: "black",
+                  position: "relative",
+                  display: "inline-block",
+                  left: "298px",
+                  zIndex: 12,
+                }}
+              >
+                <span
+                  style={{
+                    clipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
+                    WebkitClipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
+                  }}
+                >
+                  {dateRangeLabel}
+                </span>
+              </span>
+              {/* Red text overlay (shows on white box) - right part */}
+              <span
+                style={{
+                  color: "black",
+                  position: "absolute",
+                  left: "337px",
+                  top: 0,
+                  zIndex: 12,
+                  clipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
+                  WebkitClipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
+                }}
+              >
+                {dateRangeLabel}
+              </span>
+            </div>
+          </Box>
+        </Box>
+        <div className="w-full flex items-center justify-center py-6 print:py-3 first-page-logo">
+        <img
+          src={GoPhygital}
+          alt="GoPhygital"
+          className="h-10 print:h-5"
+        />
+      </div>
+      </Box>
+
+      {/* GoPhygital logo footer under the cover layout (both view & print) */}
+   
+            {/* Wrap sections 1–3 together to keep them on a single page in PDF */}
+            <div className="no-break first-page-group">
+                {/* <header className="w-full bg-[#F6F4EE] flex flex-col items-center justify-center text-center py-6 sm:py-8 mb-6 
+    print:flex print:flex-col print:items-center print:justify-center print:text-center 
+    print:pt-0 print:mt-0 print:pb-4 print:mb-4">
+                    <h1 className="text-center text-black font-extrabold text-3xl sm:text-4xl print:text-2xl">
+                        {title}
+                    </h1>
+                    <p className="mt-2 text-center text-black font-medium text-base sm:text-lg print:text-sm">
+                        {weekRangeLabel}
+                    </p>
+                </header> */}
+            
+   
+
+
+
+
+
+                {/* 1. Help Desk Management */}
+                <section className={`${sectionBox} help-desk-section`}>
+                    <div className="px-1 sm:px-2 help-desk-container">
+                        <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg help-desk-header">1. Help Desk Management</h2>
+                        <div className="border-t border-dashed border-gray-300 my-3 help-desk-border" />
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {(() => {
+                                const loading = weeklySummaryLoading;
+                                const err = weeklySummaryError;
+                                if (loading) {
                                     return (
-                                        <tr key={row.category_id} className={i !== topCategories.length - 1 ? 'border-b border-gray-200' : ''}>
-                                            <td className="p-4 print:p-2 text-black border-r border-gray-300 break-words whitespace-normal">{row.category_name}</td>
-                                            <td className="p-4 print:p-2 text-center text-black border-r border-gray-300">{String(row.current_week_count ?? 0).padStart(2, '0')}</td>
-                                            <td className="p-4 print:p-2 text-center text-black border-r border-gray-300">{(row.percentage_of_total ?? 0).toFixed(2)}%</td>
-                                            <td className="p-4 print:p-2 text-center text-black break-words whitespace-normal">
-                                                <span>{(row.percentage_change ?? 0).toFixed(2)}%</span>
-                                                {arrowSymbol && <span className={`ml-2 ${arrowColor}`}>{arrowSymbol}</span>}
-                                            </td>
-                                        </tr>
+                                        <>
+                                            <StatCard value="…" label="Total Tickets" />
+                                            <StatCard value="…" label="Open Tickets" />
+                                            <StatCard value="…" label="Closed Tickets" />
+                                        </>
                                     );
-                                })}
-                            </tbody>
-                        </table>
+                                }
+                                if (err) {
+                                    return (
+                                        <>
+                                            <StatCard value="-" label="Total Tickets" subLabel={err} />
+                                            <StatCard value="-" label="Open Tickets" />
+                                            <StatCard value="-" label="Closed Tickets" />
+                                        </>
+                                    );
+                                }
+                                const total = weeklySummary?.total ?? 0;
+                                const totalPct = weeklySummary?.total_percentage;
+                                const open = weeklySummary?.open ?? 0;
+                                const openPct = weeklySummary?.open_percentage;
+                                const closed = weeklySummary?.closed ?? 0;
+                                const closedPct = weeklySummary?.closed_percentage;
+                                const fmtPct = (v?: number) => (v === 0 || v ? `(${Math.round(v)}%)` : undefined);
+                                return (
+                                    <>
+                                        <StatCard value={total} percent={fmtPct(totalPct)} label="Total Tickets" />
+                                        <StatCard value={open} percent={fmtPct(openPct)} label="Open Tickets" />
+                                        <StatCard value={closed} percent={fmtPct(closedPct)} label="Closed Tickets" />
+                                    </>
+                                );
+                            })()}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                            {(() => {
+                                const reactive = weeklySummary?.reactive ?? 0;
+                                const preventive = weeklySummary?.preventive ?? 0;
+                                if (weeklySummaryLoading) {
+                                    return (<><StatCard value="…" label="Reactive Tickets" subLabel="(User Generated)" /><StatCard value="…" label="Preventive Tickets" subLabel="(Team Generated)" /></>);
+                                }
+                                if (weeklySummaryError) {
+                                    return (<><StatCard value="-" label="Reactive Tickets" subLabel="(User Generated)" /><StatCard value="-" label="Preventive Tickets" subLabel="(Team Generated)" /></>);
+                                }
+                                return (<>
+                                    <StatCard value={reactive} label="Reactive Tickets" subLabel="(User Generated)" />
+                                    <StatCard value={preventive} label="Preventive Tickets" subLabel="(Team Generated)" />
+                                </>);
+                            })()}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+
+                {/* 2. Priority Wise Tickets */}
+                <section className={`${sectionBox} priority-wise-section`}>
+                    <div className="px-1 sm:px-2 priority-wise-container">
+                        <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg priority-wise-header">2. Priority Wise Tickets</h2>
+                        <div className="border-t border-dashed border-gray-300 my-3 priority-wise-border" />
+                        <div className="overflow-x-auto priority-wise-table-wrapper">
+                            <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 priority-wise-table">
+                                <thead>
+                                    <tr>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/2">Priority</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-1/2">Open Tickets</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {priorityLoading && (
+                                        <tr><td colSpan={2} className="p-4 print:p-2 text-center text-gray-500">Loading...</td></tr>
+                                    )}
+                                    {!priorityLoading && priorityError && (
+                                        <tr><td colSpan={2} className="p-4 print:p-2 text-center text-red-600">{priorityError}</td></tr>
+                                    )}
+                                    {!priorityLoading && !priorityError && (
+                                        <>
+                                            <tr className="border-b border-gray-200"><td className="p-4 print:p-2 text-black">High (P1)</td><td className="p-4 print:p-2 text-center text-black">{priorityWise ? priorityWise.high : 0}</td></tr>
+                                            <tr className="border-b border-gray-200"><td className="p-4 print:p-2 text-black">Medium (P2, P3)</td><td className="p-4 print:p-2 text-center text-black">{priorityWise ? priorityWise.medium : 0}</td></tr>
+                                            <tr><td className="p-4 print:p-2 text-black">Low (P4, P5)</td><td className="p-4 print:p-2 text-center text-black">{priorityWise ? priorityWise.low : 0}</td></tr>
+                                        </>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                {/* 3. Category Wise Ticket (Top-5) */}
+                <section className={`${sectionBox} category-wise-section`}>
+                    <div className="px-1 sm:px-2 category-wise-container">
+                        <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg category-wise-header">3. Category Wise Ticket (Top-5)</h2>
+                        <div className="border-t border-dashed border-gray-300 my-3 category-wise-border" />
+                        <div className="overflow-x-auto category-wise-table-wrapper">
+                            <table className="w-full table-fixed border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 category-wise-table">
+                                <thead>
+                                    <tr>
+                                        <th rowSpan={2} className="align-middle bg-[#ECE6DE] w-1/4 text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left">Category</th>
+                                        <th colSpan={3} className="bg-[#ECE6DE] w-3/4 text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total (Category Wise)</th>
+                                    </tr>
+                                    <tr>
+                                        <th className="bg-[#ECE6DE] w-1/4 text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Count</th>
+                                        <th className="bg-[#ECE6DE] w-1/4 text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">% out of total</th>
+                                        <th className="bg-[#ECE6DE] w-1/4 text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">% inc./dec. from last week</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {topCatLoading && (
+                                        <tr><td colSpan={4} className="p-4 print:p-2 text-center text-sm text-gray-500">Loading...</td></tr>
+                                    )}
+                                    {!topCatLoading && topCatError && (
+                                        <tr><td colSpan={4} className="p-4 print:p-2 text-center text-sm text-red-600">{topCatError}</td></tr>
+                                    )}
+                                    {!topCatLoading && !topCatError && topCategories.length === 0 && (
+                                        <tr><td colSpan={4} className="p-4 print:p-2 text-center text-sm text-gray-500">No data</td></tr>
+                                    )}
+                                    {topCategories.map((row, i) => {
+                                        const arrowUp = (row.trend_icon || row.trend || '').toLowerCase().includes('up');
+                                        const arrowDown = (row.trend_icon || row.trend || '').toLowerCase().includes('down');
+                                        const arrowSymbol = arrowUp ? '▲' : arrowDown ? '▼' : '';
+                                        const arrowColor = arrowDown ? 'text-[#C72030]' : arrowUp ? 'text-green-600' : 'text-gray-400';
+                                        return (
+                                            <tr key={row.category_id} className={i !== topCategories.length - 1 ? 'border-b border-gray-200' : ''}>
+                                                <td className="p-4 print:p-2 text-black border-r border-gray-300 break-words whitespace-normal">{row.category_name}</td>
+                                                <td className="p-4 print:p-2 text-center text-black border-r border-gray-300">{String(row.current_week_count ?? 0).padStart(2, '0')}</td>
+                                                <td className="p-4 print:p-2 text-center text-black border-r border-gray-300">{(row.percentage_of_total ?? 0).toFixed(2)}%</td>
+                                                <td className="p-4 print:p-2 text-center text-black break-words whitespace-normal">
+                                                    <span>{(row.percentage_change ?? 0).toFixed(2)}%</span>
+                                                    {arrowSymbol && <span className={`ml-2 ${arrowColor}`}>{arrowSymbol}</span>}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
 
             {/* Tickets Ageing Matrix */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">Tickets Ageing Matrix</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
-                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+            <section className={`${sectionBox} ageing-matrix-section`}>
+                <div className="px-1 sm:px-2 ageing-matrix-container">
+                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg ageing-matrix-header">Tickets Ageing Matrix</h2>
+                    <div className="border-t border-dashed border-gray-300 my-3 ageing-matrix-border" />
+                    <div className="overflow-x-auto ageing-matrix-table-wrapper">
+                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 ageing-matrix-table">
                             <thead>
                                 <tr>
-                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/6">Priority</th>
-                                    <th colSpan={5} className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">No. of Days</th>
+                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/6">Priority</th>
+                                    <th colSpan={5} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">No. of Days</th>
                                 </tr>
                                 <tr>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">0-10</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">11-20</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">21-30</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">31-40</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">40 +</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">0-10</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">11-20</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">21-30</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">31-40</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">40 +</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1220,12 +2112,12 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
 
 
             {/* TAT Achievement (Response & Resolution) */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">TAT Achievement (Response & Resolution)</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
+            <section className={`${sectionBox} tat-achievement-section`}>
+                <div className="px-1 sm:px-2 tat-achievement-container">
+                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg tat-achievement-header">TAT Achievement (Response & Resolution)</h2>
+                    <div className="border-t border-dashed border-gray-300 my-3 tat-achievement-border" />
                     {tatLoading && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 gap-8">
                             <TATPieCard title="Response TAT Overall" achieved={0} breached={0} achievedPctOverride={0} breachedPctOverride={0} />
                             <TATPieCard title="Resolution TAT Overall" achieved={0} breached={0} achievedPctOverride={0} breachedPctOverride={0} />
                         </div>
@@ -1234,7 +2126,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                         <div className="text-center text-red-600 text-sm">{tatError}</div>
                     )}
                     {!tatLoading && !tatError && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 gap-8 print:gap-4 tat-achievement-pie-cards">
                             <TATPieCard
                                 title={tatResponse?.title || 'Response TAT Overall'}
                                 achieved={tatResponse?.achieved ?? 0}
@@ -1242,37 +2134,39 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                                 achievedPctOverride={tatResponse?.achievedPct}
                                 breachedPctOverride={tatResponse?.breachedPct}
                             />
-                            <TATPieCard
-                                title={tatResolution?.title || 'Resolution TAT Overall'}
-                                achieved={tatResolution?.achieved ?? 0}
-                                breached={tatResolution?.breached ?? 0}
-                                achievedPctOverride={tatResolution?.achievedPct}
-                                breachedPctOverride={tatResolution?.breachedPct}
-                            />
+                            <div className="resolution-tat-pie-card-wrapper">
+                                <TATPieCard
+                                    title={tatResolution?.title || 'Resolution TAT Overall'}
+                                    achieved={tatResolution?.achieved ?? 0}
+                                    breached={tatResolution?.breached ?? 0}
+                                    achievedPctOverride={tatResolution?.achievedPct}
+                                    breachedPctOverride={tatResolution?.breachedPct}
+                                />
+                            </div>
                         </div>
                     )}
                 </div>
             </section>
 
             {/* TAT Achievement Category-Wise */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">TAT Achievement Category-Wise (Top 5 Categories)</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
-                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+            <section className={`${sectionBox} tat-category-wise-section`}>
+                <div className="px-1 sm:px-2 tat-category-wise-container">
+                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg tat-category-wise-header">TAT Achievement Category-Wise (Top 5 Categories)</h2>
+                    <div className="border-t border-dashed border-gray-300 my-3 tat-category-wise-border" />
+                    <div className="overflow-x-auto tat-category-wise-table-wrapper">
+                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 tat-category-wise-table">
                             <thead>
                                 <tr>
-                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-[28%]">Category</th>
-                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[10%]">Total</th>
-                                    <th colSpan={2} className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[24%]">Resolution TAT</th>
-                                    <th colSpan={2} className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-[24%]">Resolution TAT %</th>
+                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-[28%]">Category</th>
+                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[10%]">Total</th>
+                                    <th colSpan={2} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[24%]">Resolution TAT</th>
+                                    <th colSpan={2} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-[24%]">Resolution TAT %</th>
                                 </tr>
                                 <tr>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Achieved</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Breached</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Achieved %</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Breached %</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Achieved</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Breached</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Achieved %</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Breached %</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1301,98 +2195,14 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                 </div>
             </section>
 
-            {/* Customer Experience Feedback (Dynamic) */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">Customer Experience Feedback</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="border border-gray-300 rounded-sm overflow-hidden">
-                        {customerFeedbackLoading && (
-                            <div className="p-6 text-center text-gray-500 text-sm">Loading feedback...</div>
-                        )}
-                        {!customerFeedbackLoading && customerFeedbackError && (
-                            <div className="p-6 text-center text-red-600 text-sm">{customerFeedbackError}</div>
-                        )}
-                        {!customerFeedbackLoading && !customerFeedbackError && customerFeedbackRatings.length === 0 && (
-                            <div className="p-6 text-center text-gray-500 text-sm">No feedback data</div>
-                        )}
-                        {!customerFeedbackLoading && !customerFeedbackError && customerFeedbackRatings.length > 0 && (
-                            <>
-                                <div className="grid grid-cols-5">
-                                    {customerFeedbackRatings.map(r => (
-                                        <div key={r.key} className="p-3 sm:p-4 print:p-2 text-center font-semibold text-black border-b border-gray-300">{r.label}</div>
-                                    ))}
-                                </div>
-                                <div className="grid grid-cols-5">
-                                    {customerFeedbackRatings.map((r, idx) => (
-                                        <div key={r.key} className={`p-6 sm:p-8 print:p-4 text-center ${idx ? 'border-l-2 border-white' : ''}`} style={{ background: customerFeedbackColorPalette[r.key] || '#EDE7DB' }}>
-                                            <div className="text-3xl sm:text-4xl font-extrabold text-black">{r.count.toLocaleString()}</div>
-                                            <div className="mt-2 text-sm sm:text-base text-black/80">{r.percentage}%</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </section>
-
-            {/* Customer Feedback */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">Customer Feedback</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    {(() => {
-                        const palette: Record<string, string> = { Excellent: '#EDE7DB', Good: '#D9D3C4', Average: '#C4B89D', Bad: '#C1A593', Poor: '#D5DBDB' };
-                        const categories = Object.keys(palette);
-                        if (weeklyTrendLoading) {
-                            return <div className="bg-[#F6F4EE] rounded-sm p-6 sm:p-8 text-center text-gray-500 text-sm">Loading weekly trend...</div>;
-                        }
-                        if (weeklyTrendError) {
-                            return <div className="bg-[#F6F4EE] rounded-sm p-6 sm:p-8 text-center text-red-600 text-sm">{weeklyTrendError}</div>;
-                        }
-                        const allZero = weeklyTrendRows.length > 0 && weeklyTrendRows.every(r => (r.total === 0));
-                        return (
-                            <div className="bg-[#F6F4EE] rounded-sm p-6 sm:p-8">
-                                <h3 className="text-black font-semibold text-base sm:text-lg mb-4 flex items-center gap-4">Weekly Trend {allZero && <span className="text-xs sm:text-sm text-gray-500 font-normal">(No feedback data for this period)</span>}</h3>
-                                <div className="w-full h-72 sm:h-80 print:h-64 relative">
-                                    {weeklyTrendRows.length === 0 && (
-                                        <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">No data</div>
-                                    )}
-                                    {weeklyTrendRows.length > 0 && (
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={weeklyTrendRows} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-                                                <CartesianGrid stroke="#DDD" strokeDasharray="3 3" />
-                                                <XAxis dataKey="day" stroke="#000" fontSize={12} />
-                                                <YAxis stroke="#000" fontSize={12} allowDecimals={false} />
-                                                <Tooltip cursor={{ fill: '#00000008' }} wrapperStyle={{ fontSize: '12px' }} />
-                                                {categories.map(cat => (
-                                                    <Bar key={cat} dataKey={cat} stackId="fb" fill={palette[cat]} radius={[4, 4, 0, 0]} />
-                                                ))}
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    )}
-                                </div>
-                                <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs sm:text-sm print:text-[10px]">
-                                    {categories.map(cat => (
-                                        <div key={cat} className="flex items-center gap-2">
-                                            <span className="inline-block h-3 w-3 rounded-sm" style={{ background: palette[cat] }} />
-                                            <span className="text-black font-medium">{cat}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        );
-                    })()}
-                </div>
-            </section>
+            {/* Customer Experience Feedback and Customer Feedback sections removed */}
 
             {/* 4. Asset Management */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">4. Asset Management</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
+            <section className={`${sectionBox} asset-management-section`}>
+                <div className="px-1 sm:px-2 asset-management-container">
+                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg asset-management-header">4. Asset Management</h2>
+                    <div className="border-t border-dashed border-gray-300 my-3 asset-management-border" />
+                    <div className="overflow-x-auto asset-management-table-wrapper">
                         {assetMgmtLoading && (
                             <div className="p-6 text-center text-gray-500 text-sm">Loading asset management data...</div>
                         )}
@@ -1403,20 +2213,20 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                             <div className="p-6 text-center text-gray-500 text-sm">No data</div>
                         )}
                         {!assetMgmtLoading && !assetMgmtError && assetMgmtData && (
-                            <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+                            <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 asset-management-table">
                                 <thead>
                                     <tr>
-                                        <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-[16%]">Metric</th>
-                                        <th colSpan={3} className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[42%]">Critical</th>
-                                        <th colSpan={3} className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-[42%]">Non-Critical</th>
+                                        <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w>[16%]">Metric</th>
+                                        <th colSpan={3} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center w-[42%]">Critical</th>
+                                        <th colSpan={3} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center w-[42%]">Non-Critical</th>
                                     </tr>
                                     <tr>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Total</th>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">In Use</th>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Breakdown</th>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Total</th>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">In Use</th>
-                                        <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Breakdown</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Total</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">In Use</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Breakdown</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Total</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">In Use</th>
+                                        <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Breakdown</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1460,21 +2270,21 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             </section>
 
             {/* 5. Task Status (dynamic) */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">5. Task Status</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
-                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+            <section className={`${sectionBox} task-status-section`}>
+                <div className="px-1 sm:px-2 task-status-container">
+                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg task-status-header">5. Task Status</h2>
+                    <div className="border-t border-dashed border-gray-300 my-3 task-status-border" />
+                    <div className="overflow-x-auto task-status-table-wrapper">
+                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 task-status-table">
                             <thead>
                                 <tr>
-                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/3">Task Status</th>
-                                    <th colSpan={3} className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total (Category Wise)</th>
+                                    <th rowSpan={2} className="align-middle bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-left w-1/3">Task Status</th>
+                                    <th colSpan={3} className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total (Category Wise)</th>
                                 </tr>
                                 <tr>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Technical</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Non-Technical</th>
-                                    <th className="bg-[#ECE6DE] text-black font-semibold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Technical</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 border-r text-center">Non-Technical</th>
+                                    <th className="bg-[#ECE6DE] text-black font-bold p-3 sm:p-4 print:p-2 border-b border-gray-300 text-center">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1495,6 +2305,23 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                                         <td className="p-4 print:p-2 text-center text-black">{row.total}</td>
                                     </tr>
                                 ))}
+                                {/* Total Row */}
+                                {!checklistStatusLoading && !checklistStatusError && checklistStatusRows.length > 0 && (() => {
+                                    const totals = checklistStatusRows.reduce((acc, r) => {
+                                        acc.technical += Number(r.technical || 0);
+                                        acc.nonTechnical += Number(r.nonTechnical || 0);
+                                        acc.total += Number(r.total || 0);
+                                        return acc;
+                                    }, { technical: 0, nonTechnical: 0, total: 0 });
+                                    return (
+                                        <tr className="border-t border-gray-300 font-semibold">
+                                            <td className="p-4 print:p-2 text-black">Total</td>
+                                            <td className="p-4 print:p-2 text-center text-black">{totals.technical}</td>
+                                            <td className="p-4 print:p-2 text-center text-black">{totals.nonTechnical}</td>
+                                            <td className="p-4 print:p-2 text-center text-black">{totals.total}</td>
+                                        </tr>
+                                    );
+                                })()}
                             </tbody>
                         </table>
                     </div>
@@ -1502,16 +2329,16 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             </section>
 
             {/* Category-Wise Overdue Status (Top 5) - dynamic */}
-            <section className={sectionBox}>
-                <div className="px-1 sm:px-2">
-                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg">Category-Wise Overdue Status (Top 5)</h2>
-                    <div className="border-t border-dashed border-gray-300 my-3" />
-                    <div className="overflow-x-auto">
-                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0">
+            <section className={`${sectionBox} overdue-status-section`}>
+                <div className="px-1 sm:px-2 overdue-status-container">
+                    <h2 className="text-black font-extrabold text-xl sm:text-2xl print:text-lg overdue-status-header">Category-Wise Overdue Status (Top 5)</h2>
+                    <div className="border-t border-dashed border-gray-300 my-3 overdue-status-border" />
+                    <div className="overflow-x-auto overdue-status-table-wrapper">
+                        <table className="w-full border border-gray-300 text-sm sm:text-base print:text-sm border-separate border-spacing-0 overdue-status-table">
                             <thead>
                                 <tr>
-                                    <th className="bg-[#ECE6DE] font-semibold p-4 sm:p-5 print:p-2 border-b border-gray-300 text-left w-3/4">Category Of Checklist (PPM)</th>
-                                    <th className="bg-[#ECE6DE] font-semibold p-4 sm:p-5 print:p-2 border-b border-gray-300 text-center w-1/4">Overdue Count</th>
+                                    <th className="bg-[#ECE6DE] font-bold p-4 sm:p-5 print:p-2 border-b border-gray-300 text-left w-3/4">Category Of Checklist (PPM)</th>
+                                    <th className="bg-[#ECE6DE] font-bold p-4 sm:p-5 print:p-2 border-b border-gray-300 text-center w-1/4">Overdue Count</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1539,6 +2366,16 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                                         <td className="p-5 sm:p-6 print:p-3 text-center text-black font-medium">{row.overdue_count}</td>
                                     </tr>
                                 ))}
+                                {/* Total row */}
+                                {!checklistStatusLoading && !checklistStatusError && overdueCategoryRows.length > 0 && (() => {
+                                    const totalOverdue = overdueCategoryRows.reduce((sum, r) => sum + Number(r.overdue_count || 0), 0);
+                                    return (
+                                        <tr className="border-t border-gray-300 font-semibold">
+                                            <td className="p-5 sm:p-6 print:p-3 text-black">Total</td>
+                                            <td className="p-5 sm:p-6 print:p-3 text-center text-black">{totalOverdue}</td>
+                                        </tr>
+                                    );
+                                })()}
                             </tbody>
                         </table>
                     </div>

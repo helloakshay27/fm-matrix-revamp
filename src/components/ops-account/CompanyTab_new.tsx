@@ -146,7 +146,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const checkEditPermission = () => {
     const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'your-specific-email@domain.com'];
+    const allowedEmails = ['abhishek.sharma@lockated.com', 'adhip.shetty@lockated.com'];
     setCanEditCompany(allowedEmails.includes(userEmail));
   };
 

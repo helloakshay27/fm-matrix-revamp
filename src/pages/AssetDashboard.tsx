@@ -1085,7 +1085,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
@@ -1163,6 +1163,8 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import AssetStatisticsSelector from '@/components/AssetStatisticsSelector';
 import { AssetAnalyticsSelector } from '@/components/AssetAnalyticsSelector';
+import type { Asset as TableAsset } from '@/hooks/useAssets';
+import { DataArray } from '@mui/icons-material';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -1220,6 +1222,7 @@ const SortableChartItem = ({
 
 export const AssetDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
 
   // Redux state
@@ -1258,10 +1261,14 @@ export const AssetDashboard = () => {
     'critical-breakdown',
   ]);
   const [analyticsDateRange, setAnalyticsDateRange] = useState(() => {
+    // Default date range: last 7 days from today
     const today = new Date();
-    const lastYear = new Date();
-    lastYear.setFullYear(today.getFullYear() - 1);
-    return { fromDate: lastYear, toDate: today };
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    // Reset time to start of day
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+    today.setHours(23, 59, 59, 999);
+    return { fromDate: sevenDaysAgo, toDate: today };
   });
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [selectedAnalyticsTypes, setSelectedAnalyticsTypes] = useState<string[]>([
@@ -1298,6 +1305,15 @@ export const AssetDashboard = () => {
   const { assets: searchedAssets, loading: searchLoading, error: searchError, pagination: searchPagination, searchAssets } =
     useAssetSearch();
 
+  useEffect(() => {
+    const refreshFlag = (location.state as { refreshAssets?: boolean } | null)?.refreshAssets;
+    if (refreshFlag) {
+      setCurrentPage(1);
+      dispatch(fetchAssetsData({ page: 1 }));
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, dispatch, navigate]);
+
   // Function to format date for API
   const formatDateForAPI = (date: Date) => {
     return date.toISOString().split('T')[0];
@@ -1307,6 +1323,9 @@ export const AssetDashboard = () => {
   const handleAnalyticsFilterApply = (startDateStr: string, endDateStr: string) => {
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
+    // Set time to start of day for startDate and end of day for endDate
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
     setAnalyticsDateRange({ fromDate: startDate, toDate: endDate });
   };
 
@@ -1368,7 +1387,7 @@ export const AssetDashboard = () => {
   }, [reduxCustomFields]);
 
   // Transform assets
-  const transformedAssets = assets.map((asset, index) => ({
+  const transformedAssets: TableAsset[] = assets.map((asset, index) => ({
     id: asset.id?.toString() || '',
     name: asset.name || '',
     serialNumber: (currentPage - 1) * 15 + index + 1,
@@ -1377,11 +1396,18 @@ export const AssetDashboard = () => {
     siteName: asset.site_name || '',
     building: asset.building || null,
     wing: asset.wing || null,
-    area: asset.area || null,
+    area:
+      (asset.area && typeof asset.area === 'object')
+        ? asset.area
+        : (asset.pms_area && typeof asset.pms_area === 'object')
+          ? asset.pms_area
+          : (typeof asset.area === 'string')
+            ? { name: asset.area }
+            : (asset.area_name ? { name: asset.area_name } : null),
     pmsRoom: asset.pms_room || null,
     assetGroup: asset.pms_asset_group || asset.asset_group || '',
     assetSubGroup: asset.sub_group || asset.asset_sub_group || '',
-    assetType: asset.asset_type || '',
+    assetType: Boolean(asset.asset_type),
     purchaseCost: asset.purchase_cost || 0,
     currentBookValue: asset.current_book_value || 0,
     floor: asset.pms_floor || null,
@@ -1401,7 +1427,19 @@ export const AssetDashboard = () => {
     commisioning_date: asset.commisioning_date || '',
     warranty: asset.warranty || '',
     amc: asset.amc || '',
+    disabled: !!asset.disabled,
     ...availableCustomFields.reduce((acc, field) => {
+      const coreKeysToSkip = new Set([
+        'id', 'name', 'asset_number', 'status', 'site_name',
+        'building', 'wing', 'floor', 'area', 'pms_room',
+        'asset_group', 'sub_group', 'asset_type', 'asset_type_category',
+        'purchase_cost', 'current_book_value', 'purchased_on', 'supplier_name',
+        'allocation_type', 'useful_life', 'depreciation_method',
+        'accumulated_depreciation', 'current_book_value', 'disposal_date',
+        'model_number', 'manufacturer', 'critical', 'commisioning_date',
+        'warranty', 'amc'
+      ]);
+      if (coreKeysToSkip.has(field.key)) return acc;
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
         acc[field.key] =
@@ -1413,9 +1451,9 @@ export const AssetDashboard = () => {
       }
       return acc;
     }, {} as Record<string, any>),
-  }));
+  })) as unknown as TableAsset[];
 
-  const transformedSearchedAssets = searchedAssets.map((asset, index) => ({
+  const transformedSearchedAssets: TableAsset[] = searchedAssets.map((asset, index) => ({
     id: asset.id?.toString() || '',
     name: asset.name || '',
     serialNumber: (currentPage - 1) * 15 + index + 1,
@@ -1424,11 +1462,18 @@ export const AssetDashboard = () => {
     siteName: asset.siteName || '',
     building: asset.building || null,
     wing: asset.wing || null,
-    area: asset.area || null,
+    area:
+      (asset.area && typeof asset.area === 'object')
+        ? asset.area
+        : (asset.pms_area && typeof asset.pms_area === 'object')
+          ? asset.pms_area
+          : (typeof asset.area === 'string')
+            ? { name: asset.area }
+            : (asset.area_name ? { name: asset.area_name } : null),
     pmsRoom: asset.pmsRoom || null,
     assetGroup: asset.assetGroup || '',
     assetSubGroup: asset.assetSubGroup || '',
-    assetType: asset.assetType ? 'True' : 'False',
+    assetType: Boolean(asset.assetType),
     floor: null,
     category: asset.asset_type_category || '',
     purchased_on: asset.purchased_on || '',
@@ -1446,7 +1491,19 @@ export const AssetDashboard = () => {
     commisioning_date: asset.commisioning_date || '',
     warranty: asset.warranty || '',
     amc: asset.amc || '',
+    disabled: !!asset.disabled,
     ...availableCustomFields.reduce((acc, field) => {
+      const coreKeysToSkip = new Set([
+        'id', 'name', 'asset_number', 'status', 'site_name',
+        'building', 'wing', 'floor', 'area', 'pms_room',
+        'asset_group', 'sub_group', 'asset_type', 'asset_type_category',
+        'purchase_cost', 'current_book_value', 'purchased_on', 'supplier_name',
+        'allocation_type', 'useful_life', 'depreciation_method',
+        'accumulated_depreciation', 'current_book_value', 'disposal_date',
+        'model_number', 'manufacturer', 'critical', 'commisioning_date',
+        'warranty', 'amc'
+      ]);
+      if (coreKeysToSkip.has(field.key)) return acc;
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
         acc[field.key] =
@@ -1458,10 +1515,10 @@ export const AssetDashboard = () => {
       }
       return acc;
     }, {} as Record<string, any>),
-  }));
+  })) as unknown as TableAsset[];
 
   // Use search results if search term exists
-  const displayAssets = searchTerm.trim() ? transformedSearchedAssets : transformedAssets;
+  const displayAssets: TableAsset[] = searchTerm.trim() ? transformedSearchedAssets : transformedAssets;
   const isSearchMode = searchTerm.trim().length > 0;
 
   // Use search pagination when in search mode
@@ -1589,13 +1646,20 @@ export const AssetDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedAssets(displayAssets.map((asset) => asset.id));
-    } else {
-      setSelectedAssets([]);
+      const enabledAssetIds = displayAssets
+        .filter((asset) => !asset.disabled)
+        .map((asset) => asset.id);
+      setSelectedAssets(enabledAssetIds);
+      return;
     }
+    setSelectedAssets([]);
   };
 
   const handleSelectAsset = (assetId: string, checked: boolean) => {
+    const targetAsset = displayAssets.find((asset) => asset.id === assetId);
+    if (targetAsset?.disabled) {
+      return;
+    }
     if (checked) {
       setSelectedAssets((prev) => [...prev, assetId]);
     } else {
@@ -1766,7 +1830,8 @@ export const AssetDashboard = () => {
             </div>
           ) : (
             <>
-              <AssetStats stats={data} onCardClick={handleStatCardClick} assets={displayAssets} />
+              {/* @ts-ignore - API stats object uses snake_case fields */}
+              <AssetStats stats={data} onCardClick={handleStatCardClick} />
 
               <div className="relative">
                 <AssetDataTable
@@ -1909,6 +1974,8 @@ export const AssetDashboard = () => {
       <AssetAnalyticsFilterDialog
         isOpen={isAnalyticsFilterOpen}
         onClose={() => setIsAnalyticsFilterOpen(false)}
+        currentStartDate={analyticsDateRange.fromDate}
+        currentEndDate={analyticsDateRange.toDate}
         onApplyFilters={handleAnalyticsFilterApply}
       />
     </div>

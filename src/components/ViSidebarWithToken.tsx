@@ -114,6 +114,29 @@ const ViSidebarWithToken: React.FC = () => {
         if (isSidebarCollapsed) setExpandedItems([]);
     }, [isSidebarCollapsed]);
 
+    // Auto-expand M-Safe on first load only (per browser tab via sessionStorage) when landing under /safety/m-safe
+    useEffect(() => {
+        if (isLoading || !hasValidToken) return;
+        const FLAG_KEY = 'vi_safety_auto_expanded_once';
+        if (!sessionStorage.getItem(FLAG_KEY)) {
+            const p = location.pathname || '';
+            const groupToExpand = p.startsWith('/safety/m-safe') ? 'M-Safe' : null;
+
+            // Ensure the sidebar is open so expansion is visible
+            if (isSidebarCollapsed) {
+                setIsSidebarCollapsed(false);
+            }
+
+            if (groupToExpand) {
+                // Slight defer to allow collapse state to update before expanding (exclusive)
+                setTimeout(() => {
+                    setExpandedItems([groupToExpand]);
+                }, 0);
+            }
+            sessionStorage.setItem(FLAG_KEY, '1');
+        }
+    }, [isLoading, hasValidToken, location.pathname, isSidebarCollapsed, setIsSidebarCollapsed]);
+
     // Don't render sidebar if no valid token
     if (isLoading) {
         return (
@@ -159,8 +182,17 @@ const ViSidebarWithToken: React.FC = () => {
 
     const currentModules = Array.isArray(modulesByPackage['Safety']) ? modulesByPackage['Safety'] : [];
 
-    const toggleExpanded = (name: string) =>
-        setExpandedItems((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
+    const toggleExpanded = (name: string, level: number = 0) => {
+        setExpandedItems((prev) => {
+            const isExpanded = prev.includes(name);
+            if (level === 0) {
+                // For top-level groups, keep it exclusive: only one open at a time
+                return isExpanded ? [] : [name];
+            }
+            // For deeper levels (if any), allow independent toggling
+            return isExpanded ? prev.filter((n) => n !== name) : [...prev, name];
+        });
+    };
 
     const isActiveRoute = (href: string) => {
         const p = location.pathname;
@@ -185,7 +217,7 @@ const ViSidebarWithToken: React.FC = () => {
             return (
                 <div key={item.name}>
                     <button
-                        onClick={() => toggleExpanded(item.name)}
+                        onClick={() => toggleExpanded(item.name, level)}
                         className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
                     >
                         <div className="flex items-center gap-3">

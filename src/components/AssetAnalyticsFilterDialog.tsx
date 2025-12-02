@@ -15,40 +15,55 @@ interface AssetAnalyticsFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyFilters: (startDate: string, endDate: string) => void;
+  currentStartDate?: Date;
+  currentEndDate?: Date;
 }
 
 export const AssetAnalyticsFilterDialog: React.FC<AssetAnalyticsFilterDialogProps> = ({
   isOpen,
   onClose,
   onApplyFilters,
+  currentStartDate,
+  currentEndDate
 }) => {
-  // Function to get default date range (today to last year)
+  // Helper function to format date as YYYY-MM-DD (using local date components to avoid timezone issues)
+  const formatDateForInput = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Function to get default date range (last 7 days to today)
   const getDefaultDates = () => {
     const today = new Date();
-    const lastYear = new Date();
-    lastYear.setFullYear(today.getFullYear() - 1);
-    
-    const formatDate = (date: Date) => {
-      return date.toISOString().split('T')[0]; // YYYY-MM-DD format for input[type="date"]
-    };
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 7);
     
     return {
-      startDate: formatDate(lastYear),
-      endDate: formatDate(today)
+      startDate: formatDateForInput(sevenDaysAgo),
+      endDate: formatDateForInput(today)
     };
   };
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Set default dates when dialog opens
+  // Set default dates when dialog opens - use current dates if provided, otherwise use defaults
   useEffect(() => {
     if (isOpen) {
-      const defaults = getDefaultDates();
-      setStartDate(defaults.startDate);
-      setEndDate(defaults.endDate);
+      if (currentStartDate && currentEndDate) {
+        // Use current applied dates
+        setStartDate(formatDateForInput(currentStartDate));
+        setEndDate(formatDateForInput(currentEndDate));
+      } else {
+        // Use default dates (last 7 days)
+        const defaults = getDefaultDates();
+        setStartDate(defaults.startDate);
+        setEndDate(defaults.endDate);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, currentStartDate, currentEndDate]);
 
   const handleSubmit = () => {
     if (!startDate || !endDate) {
@@ -67,6 +82,7 @@ export const AssetAnalyticsFilterDialog: React.FC<AssetAnalyticsFilterDialogProp
   };
 
   const handleReset = () => {
+    // Always reset to default dates (last 7 days)
     const defaults = getDefaultDates();
     setStartDate(defaults.startDate);
     setEndDate(defaults.endDate);

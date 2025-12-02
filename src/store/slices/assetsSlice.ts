@@ -34,6 +34,8 @@ export interface Asset {
 export interface AssetFilters {
   assetName?: string
   assetId?: string
+  extra_fields_field_value_in?: string
+  critical_eq?: boolean
   groupId?: string
   subgroupId?: string
   siteId?: string
@@ -86,6 +88,11 @@ export const fetchAssetsData = createAsyncThunk(
     // Add filter parameters
     if (filters.assetName) queryParams.append('q[name_cont]', filters.assetName)
     if (filters.assetId) queryParams.append('q[id_eq]', filters.assetId)
+    if (filters.extra_fields_field_value_in) {
+      const categoryValues = filters.extra_fields_field_value_in.split(',').map(c => c.trim()).filter(Boolean);
+      categoryValues.forEach(val => queryParams.append('q[extra_fields_field_value_in][]', val));
+    }
+    if (filters.critical_eq !== undefined) queryParams.append('q[critical_eq]', filters.critical_eq.toString())
     if (filters.groupId) queryParams.append('q[pms_asset_group_id_eq]', filters.groupId)
     if (filters.subgroupId) queryParams.append('q[pms_sub_group_id_eq]', filters.subgroupId)
     if (filters.siteId) queryParams.append('q[pms_site_id_eq]', filters.siteId)

@@ -17,7 +17,11 @@ import { X, Plus, ArrowLeft, CheckCircle, Upload, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import { apiClient } from "@/utils/apiClient";
-import { ticketManagementAPI } from "@/services/ticketManagementAPI";
+import {
+  ticketManagementAPI,
+  CategoryResponse,
+  SubCategoryResponse,
+} from "@/services/ticketManagementAPI";
 import {
   TextField,
   InputAdornment,
@@ -65,14 +69,16 @@ interface Category {
   name: string;
 }
 
-interface CategoryResponse {
-  id: number;
-  name: string;
-  description: string;
-  active: boolean;
-  tag_created_at: string;
-  tag_updated_at: string;
+interface SurveyImage {
+  id?: number;
+  file_name?: string;
+  content_type?: string;
+  file_size?: number;
+  updated_at?: string;
+  url?: string;
 }
+
+
 
 // --- Field Styles for Material-UI Components ---
 const fieldStyles = {
@@ -128,29 +134,34 @@ export const EditSurveyPage = () => {
   const [createTicket, setCreateTicket] = useState(false);
   const [ticketCategory, setTicketCategory] = useState(""); // Store category name for display
   const [ticketCategoryId, setTicketCategoryId] = useState(""); // Store category ID for backend
+  const [ticketSubCategory, setTicketSubCategory] = useState("");
   const [assignTo, setAssignTo] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [ticketCategories, setTicketCategories] = useState<CategoryResponse[]>(
     []
   );
+  const [ticketSubCategories, setTicketSubCategories] = useState<SubCategoryResponse[]>([]);
   const [fmUsers, setFmUsers] = useState<
     { id: number; firstname: string; lastname: string; email?: string }[]
   >([]);
   const [loadingTicketCategories, setLoadingTicketCategories] = useState(false);
+  const [loadingTicketSubCategories, setLoadingTicketSubCategories] = useState(false);
   const [loadingFmUsers, setLoadingFmUsers] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([
     { id: "1", text: "", answerType: "", mandatory: false },
   ]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Destroy IDs tracking for smart deletion
+  const [surveyImage, setSurveyImage] = useState<File | null>(null);
+  const [existingSurveyImage, setExistingSurveyImage] = useState<SurveyImage | null>(null);
   const [destroyQuestionIds, setDestroyQuestionIds] = useState<string[]>([]);
   const [destroyTagIds, setDestroyTagIds] = useState<number[]>([]);
   const [destroyOptionIds, setDestroyOptionIds] = useState<number[]>([]);
   const [destroyIconIds, setDestroyIconIds] = useState<number[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Destroy IDs tracking for smart deletion
 
   // Emoji and rating constants
-  const EMOJIS = ["😞", "😟", "😐", "😊", "😁"];
+  const EMOJIS = ["😁", "😊", "😐", "😟", "😞"];
   const RATING_STARS = ["1-star", "2-star", "3-star", "4-star", "5-star"];
 
   useEffect(() => {
@@ -176,6 +187,22 @@ export const EditSurveyPage = () => {
     }
   }, [createTicket]);
 
+  // Load subcategories when category changes
+  const loadTicketSubCategories = useCallback(async (categoryId: number) => {
+    setLoadingTicketSubCategories(true);
+    try {
+      const subcats = await ticketManagementAPI.getSubCategoriesByCategory(categoryId);
+      setTicketSubCategories(subcats);
+      console.log("Ticket subcategories loaded:", subcats);
+      return subcats; // Return the loaded subcategories
+    } catch (error) {
+      console.error("Error loading ticket subcategories:", error);
+      return []; // Return empty array on error
+    } finally {
+      setLoadingTicketSubCategories(false);
+    }
+  }, []);
+
   // Load FM users for assign to dropdown
   const loadFMUsers = useCallback(async () => {
     if (!createTicket) return;
@@ -192,6 +219,16 @@ export const EditSurveyPage = () => {
     }
   }, [createTicket]);
 
+  // Handle category change and load subcategories
+  const handleTicketCategoryChange = (categoryId: string) => {
+    setTicketCategoryId(categoryId);
+    setTicketSubCategory(""); // Reset subcategory when category changes
+    setTicketSubCategories([]); // Clear subcategories
+    if (categoryId) {
+      loadTicketSubCategories(parseInt(categoryId));
+    }
+  };
+
   // Load ticket data when createTicket checkbox is checked
   useEffect(() => {
     if (createTicket) {
@@ -201,7 +238,9 @@ export const EditSurveyPage = () => {
       // Reset selections when unchecked
       setTicketCategory("");
       setTicketCategoryId("");
+      setTicketSubCategory("");
       setAssignTo("");
+      setTicketSubCategories([]);
     }
   }, [createTicket, loadTicketCategories, loadFMUsers]);
 
@@ -243,13 +282,95 @@ export const EditSurveyPage = () => {
 
       if (hasTicketConfig && surveyData.ticket_configs) {
         const ticketConfig = surveyData.ticket_configs;
-        // Set ticket configuration data
-        if (ticketConfig.category_id) {
+        console.log("Processing ticket config:", ticketConfig);
+        
+        // First, load all ticket categories for the dropdowns
+        try {
+          const categoriesResponse = await ticketManagementAPI.getCategories();
+          const allCategories = categoriesResponse.helpdesk_categories || [];
+          setTicketCategories(allCategories);
+          console.log("All ticket categories loaded:", allCategories);
+        } catch (error) {
+          console.error("Error loading ticket categories:", error);
+        }
+
+        // Handle category and subcategory setup
+        // Handle different naming conventions for subcategory ID
+        const subcategoryId = ticketConfig.subcategory_id || ticketConfig.sub_category_id;
+        
+        if (ticketConfig.category_id && subcategoryId) {
+          // Case 1: Both category and subcategory IDs are available
+          console.log("Case 1: Both category and subcategory available");
+          console.log("Using subcategory_id:", subcategoryId, "from field:", ticketConfig.subcategory_id ? 'subcategory_id' : 'sub_category_id');
           setTicketCategoryId(ticketConfig.category_id.toString());
           setTicketCategory(ticketConfig.category || "");
+          
+          // Load subcategories for this category
+          try {
+            const loadedSubcategories = await loadTicketSubCategories(ticketConfig.category_id);
+            console.log("Subcategories loaded for category", ticketConfig.category_id, ":", loadedSubcategories);
+            
+            // Set the subcategory after loading subcategories
+            setTimeout(() => {
+              setTicketSubCategory(subcategoryId.toString());
+              console.log("Set subcategory ID:", subcategoryId);
+            }, 100);
+          } catch (error) {
+            console.error("Error loading subcategories:", error);
+          }
+          
+        } else if (subcategoryId && !ticketConfig.category_id) {
+          // Case 2: Only subcategory ID is available, need to find parent category
+          console.log("Case 2: Only subcategory ID available, finding parent category");
+          console.log("Using subcategory_id for reverse lookup:", subcategoryId);
+          try {
+            const allSubCategoriesResponse = await ticketManagementAPI.getSubCategories();
+            const allSubCategories = allSubCategoriesResponse.sub_categories || allSubCategoriesResponse || [];
+            console.log("All subcategories loaded:", allSubCategories);
+            
+            const matchingSubCategory = allSubCategories.find(
+              (subCat: SubCategoryResponse) => subCat.id === subcategoryId
+            );
+            
+            if (matchingSubCategory && matchingSubCategory.helpdesk_category_id) {
+              console.log("Found parent category:", matchingSubCategory.helpdesk_category_id);
+              setTicketCategoryId(matchingSubCategory.helpdesk_category_id.toString());
+              
+              // Load subcategories for the parent category
+              const loadedSubcats = await loadTicketSubCategories(matchingSubCategory.helpdesk_category_id);
+              
+              // Set subcategory after loading
+              setTimeout(() => {
+                setTicketSubCategory(subcategoryId.toString());
+                console.log("Set subcategory ID from reverse lookup:", subcategoryId);
+                
+                const foundSubcat = loadedSubcats?.find(s => s.id === subcategoryId);
+                console.log("Verified subcategory from reverse lookup:", foundSubcat);
+              }, 100);
+            }
+          } catch (error) {
+            console.error("Error loading subcategories to find parent category:", error);
+          }
+          
+        } else if (ticketConfig.category_id && !subcategoryId) {
+          // Case 3: Only category ID is available
+          console.log("Case 3: Only category ID available");
+          setTicketCategoryId(ticketConfig.category_id.toString());
+          setTicketCategory(ticketConfig.category || "");
+          
+          // Load subcategories for this category
+          try {
+            await loadTicketSubCategories(ticketConfig.category_id);
+          } catch (error) {
+            console.error("Error loading subcategories:", error);
+          }
         }
-        if (ticketConfig.assigned_to_id) {
-          setAssignTo(ticketConfig.assigned_to_id.toString());
+        
+        // Set assigned user if available (handle both naming conventions)
+        const assignedToId = ticketConfig.assigned_to_id || ticketConfig.assignedtoid;
+        if (assignedToId) {
+          setAssignTo(assignedToId.toString());
+          console.log("Set assigned user ID:", assignedToId);
         }
       }
 
@@ -305,6 +426,19 @@ export const EditSurveyPage = () => {
           ? mappedQuestions
           : [{ id: "1", text: "", answerType: "", mandatory: false }]
       );
+
+      // Set existing survey image if available in survey_attachment format
+      if (surveyData.survey_attachment) {
+        setExistingSurveyImage({
+          id: surveyData.survey_attachment.id,
+          file_name: surveyData.survey_attachment.file_name,
+          content_type: surveyData.survey_attachment.content_type,
+          file_size: surveyData.survey_attachment.file_size,
+          updated_at: surveyData.survey_attachment.updated_at,
+          url: surveyData.survey_attachment.url
+        });
+      }
+
       setInitialLoading(false);
     } catch (error) {
       console.error("Error fetching Question data:", error);
@@ -826,12 +960,22 @@ export const EditSurveyPage = () => {
       formData.append("snag_checklist[name]", title);
       formData.append("snag_checklist[check_type]", checkType);
 
+      // Add survey image if provided
+      if (surveyImage) {
+        formData.append("snag_checklist[survey_image]", surveyImage);
+      }
+
       // Add ticket creation fields - send create_tickets flag and related data
       formData.append("create_ticket", createTicket ? "true" : "false");
       
       if (createTicket) {
         formData.append("category_name", ticketCategoryId);
-        formData.append("category_type", assignTo);
+        if (ticketSubCategory) {
+          formData.append("sub_category_id", ticketSubCategory);
+        }
+        // Pass 'subcategory' if both category and subcategory are selected, otherwise pass 'category'
+        const categoryType = ticketSubCategory ? 'subcategory' : 'category';
+        formData.append("category_type", categoryType);
       }
 
       // Add destroy IDs for smart deletion
@@ -1127,14 +1271,14 @@ export const EditSurveyPage = () => {
                         id="ticketCategory"
                         value={ticketCategoryId}
                         label="Ticket Category"
-                        onChange={(e) => {
-                          const selectedCategoryId = e.target.value;
-                          const selectedCategory = ticketCategories.find(cat => cat.id.toString() === selectedCategoryId);
-                          setTicketCategoryId(selectedCategoryId);
-                          setTicketCategory(selectedCategory?.name || "");
-                        }}
+                        onChange={(e) => handleTicketCategoryChange(e.target.value)}
                         disabled={loadingTicketCategories}
                       >
+                        <MenuItem value="">
+                          {loadingTicketCategories
+                            ? "Loading categories..."
+                            : "Select Ticket Category"}
+                        </MenuItem>
                         {ticketCategories.map((category) => (
                           <MenuItem key={category.id} value={category.id.toString()}>
                             {category.name}
@@ -1143,8 +1287,104 @@ export const EditSurveyPage = () => {
                       </MuiSelect>
                     </FormControl>
                   </div>
+
+                  <div className="space-y-2">
+                    <FormControl fullWidth sx={{
+                      ...fieldStyles,
+                    }}>
+                      <InputLabel id="ticket-subcategory-label">
+                        Ticket Sub Category
+                      </InputLabel>
+                      <MuiSelect
+                        labelId="ticket-subcategory-label"
+                        id="ticketSubCategory"
+                        value={ticketSubCategory}
+                        label="Ticket Sub Category"
+                        onChange={(e) => setTicketSubCategory(e.target.value)}
+                        disabled={loadingTicketSubCategories || !ticketCategoryId}
+                      >
+                        <MenuItem value="">
+                          {loadingTicketSubCategories
+                            ? "Loading subcategories..."
+                            : !ticketCategoryId
+                            ? "Select a category first"
+                            : "Select Ticket Sub Category"}
+                        </MenuItem>
+                        {ticketSubCategories.map((subcat) => (
+                          <MenuItem key={subcat.id} value={subcat.id.toString()}>
+                            {subcat.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
                 </div>
               )}
+                 <div className="space-y-2 mt-3">
+                              <label className="text-sm font-medium text-gray-700">
+                                Upload Image
+                              </label>
+                              <div className="flex items-center gap-4 grid grid-cols-3">
+                                <div className="flex-1">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0] || null;
+                                      setSurveyImage(file);
+                                    }}
+                                    className="hidden"
+                                    id="survey-image"
+                                    disabled={isSubmitting}
+                                  />
+                                  <label
+                                    htmlFor="survey-image"
+                                    className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                                      isSubmitting
+                                        ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
+                                        : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
+                                    }`}
+                                  >
+                                    {surveyImage
+                                      ? `Selected: ${surveyImage.name}`
+                                      : "Click to upload survey image"}
+                                  </label>
+                                </div>
+                                {surveyImage && (
+                                  <Button
+                                    onClick={() => setSurveyImage(null)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-gray-400 hover:text-red-500 p-2"
+                                    disabled={isSubmitting}
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                              {surveyImage && (
+                                <div className="mt-2">
+                                  <img
+                                    src={URL.createObjectURL(surveyImage)}
+                                    alt="Survey preview"
+                                    className="max-w-full h-32 object-cover rounded-lg border"
+                                    onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                                  />
+                                </div>
+                              )}
+                              {existingSurveyImage && !surveyImage && (
+                                <div className="mt-2">
+                                  <img
+                                    src={existingSurveyImage.url}
+                                    alt="Existing survey image"
+                                    className="max-w-full h-32 object-cover rounded-lg border"
+                                  />
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Current image: {existingSurveyImage.file_name}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
             </div>
           </CardContent>
         </Card>
@@ -1457,7 +1697,7 @@ export const EditSurveyPage = () => {
                                       value={
                                         field.files.length > 0
                                           ? `${field.files.length} file(s) selected`
-                                          : "Choose File: No file chosen"
+                                          : "Choose File"
                                       }
                                       fullWidth
                                       variant="outlined"

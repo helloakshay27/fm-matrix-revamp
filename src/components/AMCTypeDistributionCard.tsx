@@ -12,13 +12,29 @@ interface AMCTypeDistributionCardProps {
   }> | null;
   className?: string;
   onDownload?: () => Promise<void>;
+  colorPalette?: {
+    primary: string;
+    secondary: string;
+    tertiary: string;
+    primaryLight: string;
+    secondaryLight: string;
+    tertiaryLight: string;
+  };
+  headerClassName?: string;
 }
 
-// Use unified analytics palette
-const COLORS = [ANALYTICS_PALETTE[2], ANALYTICS_PALETTE[0]]; // Breakdown, Preventive
-
-export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = ({ data, className, onDownload }) => {
+export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = ({ data, className, onDownload, colorPalette, headerClassName }) => {
   const { toast } = useToast();
+
+  const palette = colorPalette || {
+    primary: '#C4B99D',
+    secondary: '#DAD6CA',
+    tertiary: '#D5DBDB',
+    primaryLight: '#DDD4C4',
+    secondaryLight: '#E8E5DD',
+    tertiaryLight: '#E5E9E9',
+  };
+  const COLORS = [palette.tertiary, palette.primary];
 
   const handleDownload = async () => {
     if (onDownload) {
@@ -93,10 +109,10 @@ export const AMCTypeDistributionCard: React.FC<AMCTypeDistributionCardProps> = (
   return (
     <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 h-full flex flex-col ${className}`}>
       <div className="flex items-center justify-between mb-4 sm:mb-6 p-3 sm:p-6 pb-0">
-        <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Breakdown vs Preventive Visits</h3>
+        <h3 className={`text-base sm:text-lg font-bold ${headerClassName || 'text-[#1A1A1A]'}`}>Breakdown vs Preventive Visits</h3>
         {onDownload && (
           <Download
-            className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer text-[#C72030] hover:text-[#A01828]"
+            className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer ${headerClassName || 'text-[#1A1A1A]'} hover:opacity-80"
             onClick={handleDownload}
           />
         )}

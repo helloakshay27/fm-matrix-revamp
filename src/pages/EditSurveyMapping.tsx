@@ -946,12 +946,12 @@ export const EditSurveyMapping = () => {
             Back to Survey Mapping
           </Button>
         </div>
-        <div className="text-sm text-gray-600">
+        {/* <div className="text-sm text-gray-600">
           {surveyMappings.filter(m => !m.markedForDeletion).length === 1 
             ? '1 Location Configuration' 
             : `${surveyMappings.filter(m => !m.markedForDeletion).length} Location Configurations`
           }
-        </div>
+        </div> */}
       </header>
 
       <Section title="Survey Selection" icon={<List className="w-3.5 h-3.5" />}>
@@ -967,7 +967,7 @@ export const EditSurveyMapping = () => {
                   variant="outlined" 
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel shrink>Select Survey</InputLabel>
+                  <InputLabel shrink>Select Survey <span className='text-red-500'>*</span></InputLabel>
                   <Select
                     value={selectedSurveyId || ''}
                     onChange={handleSurveyChange}
@@ -989,9 +989,9 @@ export const EditSurveyMapping = () => {
                         <MenuItem key={survey.id} value={survey.id}>
                           <Box>
                             <div className="font-medium">{survey.name}</div>
-                            <div className="text-xs text-gray-500">
+                            {/* <div className="text-xs text-gray-500">
                               Questions: {survey.questions_count} | Type: {survey.check_type}
-                            </div>
+                            </div> */}
                           </Box>
                         </MenuItem>
                       ))
@@ -1053,7 +1053,7 @@ export const EditSurveyMapping = () => {
                   variant="outlined" 
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel shrink>Site</InputLabel>
+                  <InputLabel shrink>Site <span className='text-red-500'>*</span></InputLabel>
                   <Select
                     value={mapping.selectedLocation.site}
                     onChange={(e) => handleLocationChange(actualIndex, 'site', e.target.value as string)}
@@ -1088,7 +1088,7 @@ export const EditSurveyMapping = () => {
                   variant="outlined" 
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel shrink>Building</InputLabel>
+                  <InputLabel shrink>Building <span className='text-red-500'>*</span></InputLabel>
                   <Select
                     value={mapping.selectedLocation.building}
                     onChange={(e) => handleLocationChange(actualIndex, 'building', e.target.value as string)}

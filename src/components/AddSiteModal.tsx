@@ -131,22 +131,25 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     }
   }, [editingSite, isOpen]);
 
-  // Filter companies based on selected headquarter (country)
+  // Filter countries based on selected company
   useEffect(() => {
-    if (formData.headquarter_id) {
-      const filtered = companies.filter(company => 
-        company.country_id === formData.headquarter_id
-      );
-      setFilteredCompanies(filtered);
-      
-      // Reset company and region if current selection is not valid
-      if (formData.company_id && !filtered.find(c => c.id === formData.company_id)) {
-        setFormData(prev => ({ ...prev, company_id: 0, region_id: 0 }));
+    if (formData.company_id) {
+      const selectedCompany = companies.find(c => c.id === formData.company_id);
+      if (selectedCompany && selectedCompany.country_id) {
+        const filtered = headquarters.filter(hq => 
+          hq.id === selectedCompany.country_id
+        );
+        setFilteredHeadquarters(filtered);
+        
+        // Auto-select the country if not already selected
+        if (!formData.headquarter_id || formData.headquarter_id !== selectedCompany.country_id) {
+          setFormData(prev => ({ ...prev, headquarter_id: selectedCompany.country_id }));
+        }
       }
     } else {
-      setFilteredCompanies(companies);
+      setFilteredHeadquarters(headquarters);
     }
-  }, [formData.headquarter_id, companies]);
+  }, [formData.company_id, companies, headquarters]);
 
   // Filter regions based on selected company
   useEffect(() => {
@@ -165,10 +168,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     }
   }, [formData.company_id, regions]);
 
-  // Set all headquarters as available (these are countries)
+  // Set all companies as available initially
   useEffect(() => {
-    setFilteredHeadquarters(headquarters);
-  }, [headquarters]);
+    setFilteredCompanies(companies);
+  }, [companies]);
 
   const fetchDropdownData = async () => {
     setIsLoadingDropdowns(true);
@@ -319,12 +322,9 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       const newData = { ...prev, [field]: value };
 
       // Reset dependent fields when parent changes
-      if (field === "headquarter_id") {
-        newData.company_id = 0; // Reset company when country changes
-        newData.region_id = 0; // Reset region when country changes
-      }
       if (field === "company_id") {
         newData.region_id = 0; // Reset region when company changes
+        // Country will be auto-set by the useEffect
       }
 
       return newData;
@@ -415,39 +415,6 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                 />
 
                 <FormControl fullWidth variant="outlined" required>
-                  <InputLabel shrink>Country</InputLabel>
-                  <MuiSelect
-                    value={formData.headquarter_id?.toString() || ""}
-                    onChange={(e) => {
-                      console.log("Country selected:", e.target.value);
-                      handleInputChange("headquarter_id", parseInt(e.target.value as string) || 0);
-                    }}
-                    label="Country"
-                    displayEmpty
-                    MenuProps={selectMenuProps}
-                    sx={fieldStyles}
-                    disabled={isLoading || isLoadingDropdowns}
-                  >
-                    <MenuItem value="">
-                      <em>
-                        {isLoadingDropdowns
-                          ? "Loading countries..."
-                          : filteredHeadquarters.length === 0
-                          ? "No countries available"
-                          : "Select Country"}
-                      </em>
-                    </MenuItem>
-                    {filteredHeadquarters.map((hq) => (
-                      <MenuItem key={hq.id} value={hq.id.toString()}>
-                        {hq.country_name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-6 mt-6">
-                <FormControl fullWidth variant="outlined" required>
                   <InputLabel shrink>Company</InputLabel>
                   <MuiSelect
                     value={formData.company_id?.toString() || ""}
@@ -459,12 +426,12 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                     displayEmpty
                     MenuProps={selectMenuProps}
                     sx={fieldStyles}
-                    disabled={isLoading || isLoadingDropdowns || !formData.headquarter_id}
+                    disabled={isLoading || isLoadingDropdowns}
                   >
                     <MenuItem value="">
                       <em>
-                        {!formData.headquarter_id
-                          ? "Select country first"
+                        {isLoadingDropdowns
+                          ? "Loading companies..."
                           : filteredCompanies.length === 0
                           ? "No companies available"
                           : "Select Company"}
@@ -473,6 +440,39 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                     {filteredCompanies.map((company) => (
                       <MenuItem key={company.id} value={company.id.toString()}>
                         {company.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-6 mt-6">
+                <FormControl fullWidth variant="outlined" required>
+                  <InputLabel shrink>Country</InputLabel>
+                  <MuiSelect
+                    value={formData.headquarter_id?.toString() || ""}
+                    onChange={(e) => {
+                      console.log("Country selected:", e.target.value);
+                      handleInputChange("headquarter_id", parseInt(e.target.value as string) || 0);
+                    }}
+                    label="Country"
+                    displayEmpty
+                    MenuProps={selectMenuProps}
+                    sx={fieldStyles}
+                    disabled={isLoading || isLoadingDropdowns || !formData.company_id}
+                  >
+                    <MenuItem value="">
+                      <em>
+                        {!formData.company_id
+                          ? "Select company first"
+                          : filteredHeadquarters.length === 0
+                          ? "No countries available"
+                          : "Select Country"}
+                      </em>
+                    </MenuItem>
+                    {filteredHeadquarters.map((hq) => (
+                      <MenuItem key={hq.id} value={hq.id.toString()}>
+                        {hq.country_name}
                       </MenuItem>
                     ))}
                   </MuiSelect>

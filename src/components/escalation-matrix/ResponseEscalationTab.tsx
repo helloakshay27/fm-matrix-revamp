@@ -589,17 +589,44 @@ export const ResponseEscalationTab: React.FC = () => {
                             isLoading={loadingUsers}
                             isDisabled={loadingUsers}
                             className="min-w-[250px]"
+                            menuPortalTarget={document.body}
+                            menuPosition="fixed"
                             styles={{
                               control: (base) => ({
                                 ...base,
-                                minHeight: '32px',
+                                minHeight: '40px',
                                 fontSize: '14px',
-                                border: 'none',
-                                boxShadow: 'none'
+                                border: '1px solid #d1d5db',
+                                borderRadius: '6px',
+                                boxShadow: 'none',
+                                '&:hover': {
+                                  borderColor: '#9ca3af'
+                                }
+                              }),
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999
+                              }),
+                              menu: (base) => ({
+                                ...base,
+                                zIndex: 9999
                               }),
                               multiValue: (base) => ({
                                 ...base,
-                                fontSize: '12px'
+                                fontSize: '12px',
+                                backgroundColor: '#f3f4f6'
+                              }),
+                              multiValueLabel: (base) => ({
+                                ...base,
+                                color: '#374151'
+                              }),
+                              multiValueRemove: (base) => ({
+                                ...base,
+                                color: '#6b7280',
+                                '&:hover': {
+                                  backgroundColor: '#ef4444',
+                                  color: 'white'
+                                }
                               })
                             }}
                           />

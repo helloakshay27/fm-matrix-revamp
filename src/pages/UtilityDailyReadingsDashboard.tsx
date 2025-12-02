@@ -460,6 +460,16 @@ export default function UtilityDailyReadingsDashboard() {
         return item[columnKey] || '-';
     }
   };
+  const leftActions = (
+    <Button
+      onClick={handleImport}
+      className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
+    >
+      <Upload className="w-4 h-4" />
+      Import
+    </Button>
+
+  )
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -472,37 +482,7 @@ export default function UtilityDailyReadingsDashboard() {
       <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">DAILY READINGS</h1>
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3">
-        {/* <Button
-          onClick={handleRefresh}
-          disabled={loading}
-          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button> */}
-        <Button
-          onClick={handleImport}
-          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
-        >
-          <Upload className="w-4 h-4" />
-          Import
-        </Button>
-        <Button
-          onClick={handleExport}
-          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
-        >
-          <Download className="w-4 h-4" />
-          Export
-        </Button>
-        <Button
-          onClick={handleFilterOpen}
-          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
-        >
-          <Filter className="w-4 h-4" />
-          Filters
-        </Button>
-      </div>
+
 
       {/* Search */}
       {/* <div className="flex justify-between items-center">
@@ -545,18 +525,21 @@ export default function UtilityDailyReadingsDashboard() {
               data={filteredData}
               columns={columns}
               renderCell={renderCell}
-              onSelectAll={handleSelectAll}
-              onSelectItem={handleSelectItem}
-              selectedItems={selectedItems}
+              // onSelectAll={handleSelectAll}
+              // onSelectItem={handleSelectItem}
+              // selectedItems={selectedItems}
               searchTerm={searchTerm}
               onSearchChange={handleSearch}
               enableSearch={true}
-              enableExport={false}
+              handleExport={handleExport}
+              onFilterClick={handleFilterOpen}
+              enableExport={true}
               hideColumnsButton={false}
               pagination={false} // Disable built-in pagination
               emptyMessage="No daily readings found"
-              selectable={true}
+              // selectable={true}
               storageKey="daily-readings-table"
+              leftActions={leftActions}
             />
 
             {/* Custom Pagination Controls */}

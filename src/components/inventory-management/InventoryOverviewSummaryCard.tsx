@@ -36,13 +36,29 @@ const InventoryOverviewSummaryCard: React.FC<Props> = ({ data }) => {
   }, [summary]);
 
   return (
-    <div className="bg-white border rounded-lg shadow p-4">
-      <h3 className="text-lg font-semibold mb-3">Inventory Management – Overview Summary</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
+      <h3 className="mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3"
+        style={{
+          fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+          fontWeight: 600,
+          fontSize: '16px',
+          lineHeight: '100%',
+          letterSpacing: '0%'
+        }}>
+        Inventory Management – Overview Summary
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {cards.map((card) => (
-          <div key={card.label} className="border rounded p-3 bg-[#f7f4ed]">
-            <div className="text-sm text-gray-600">{card.label}</div>
-            <div className="text-xl font-bold text-[#b62527]">{card.value}</div>
+          <div 
+            key={card.label} 
+            className="bg-[#f2eee9] p-6 text-center shadow-sm rounded-lg hover:shadow-md transition-shadow duration-200"
+          >
+            <div className="text-2xl font-extrabold mb-2 text-gray-900">
+              {card.value}
+            </div>
+            <div className="text-gray-700 text-sm">
+              {card.label}
+            </div>
           </div>
         ))}
       </div>
@@ -51,3 +67,4 @@ const InventoryOverviewSummaryCard: React.FC<Props> = ({ data }) => {
 };
 
 export default InventoryOverviewSummaryCard;
+

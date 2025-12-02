@@ -16,7 +16,15 @@ interface TaskAnalyticsCardProps {
   };
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+// Color palette with lighter shades
+const CHART_COLORS = {
+  primary: '#C4B99D',
+  secondary: '#DAD6CA',
+  tertiary: '#D5DBDB',
+  primaryLight: '#DDD4C4',    // Lighter shade of primary
+  secondaryLight: '#E8E5DD',  // Lighter shade of secondary
+  tertiaryLight: '#E5E9E9',   // Lighter shade of tertiary
+};
 
 export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({ 
   title, 
@@ -96,10 +104,10 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="open" stackId="a" fill="#0088FE" name="Open" />
-                  <Bar dataKey="closed" stackId="a" fill="#00C49F" name="Closed" />
-                  <Bar dataKey="work_in_progress" stackId="a" fill="#FFBB28" name="Work in Progress" />
-                  <Bar dataKey="overdue" stackId="a" fill="#FF8042" name="Overdue" />
+                  <Bar dataKey="open" stackId="a" fill={CHART_COLORS.primary} name="Open" />
+                  <Bar dataKey="closed" stackId="a" fill={CHART_COLORS.secondary} name="Closed" />
+                  <Bar dataKey="work_in_progress" stackId="a" fill={CHART_COLORS.tertiary} name="Work in Progress" />
+                  <Bar dataKey="overdue" stackId="a" fill="#A3A8AA" name="Overdue" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -147,22 +155,34 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
         }
 
         // For top ten, show both chart and table
+        const topTenColors = [
+          CHART_COLORS.primary, 
+          CHART_COLORS.secondary, 
+          CHART_COLORS.tertiary,
+          CHART_COLORS.primaryLight,
+          CHART_COLORS.secondaryLight,
+          CHART_COLORS.tertiaryLight
+        ];
         const chartData = responseData.slice(0, 10).map((item: any, index: number) => ({
           ...item,
-          color: COLORS[index % COLORS.length]
+          fill: topTenColors[index % topTenColors.length]
         }));
 
         return (
-          <div className="space-y-4">
+          <div className="space-y-4 h-[500px]">
             {/* Bar Chart */}
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="type" angle={-45} textAnchor="end" height={80} />
+                  <XAxis dataKey="type" angle={-35} textAnchor="end" height={100} fontSize={9} />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#8884d8" />
+                  <Bar dataKey="count">
+                    {chartData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -222,10 +242,10 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                   <XAxis dataKey="site" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="open" stackId="a" fill="#0088FE" name="Open" />
-                  <Bar dataKey="closed" stackId="a" fill="#00C49F" name="Closed" />
-                  <Bar dataKey="work_in_progress" stackId="a" fill="#FFBB28" name="Work in Progress" />
-                  <Bar dataKey="overdue" stackId="a" fill="#FF8042" name="Overdue" />
+                  <Bar dataKey="open" stackId="a" fill={CHART_COLORS.primary} name="Open" />
+                  <Bar dataKey="closed" stackId="a" fill={CHART_COLORS.secondary} name="Closed" />
+                  <Bar dataKey="work_in_progress" stackId="a" fill={CHART_COLORS.tertiary} name="Work in Progress" />
+                  <Bar dataKey="overdue" stackId="a" fill="#A3A8AA" name="Overdue" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -268,23 +288,21 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
 
   return (
     <Card className={`h-full transition-all duration-200 hover:shadow-lg border-gray-200 group ${className}`}>
-      <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+      <CardHeader className="pb-2 px-4 sm:px-6 pt-4 sm:pt-6 flex flex-row items-center justify-between gap-2">
+        <CardTitle className="text-sm sm:text-base lg:text-lg font-semibold truncate flex-1">{title}</CardTitle>
         {dateRange && (
-         
-
           <Button
             variant="outline"
             size="sm"
             onClick={handleDownload}
             disabled={isDownloading}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 flex-shrink-0"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3 h-3 sm:w-4 sm:h-4" />
           </Button>
         )}
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 px-4 sm:px-6 pb-4 sm:pb-6">
         {renderContent()}
       </CardContent>
     </Card>

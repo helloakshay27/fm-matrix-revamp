@@ -8,6 +8,7 @@ import { fetchOccupantUserCounts } from "@/store/slices/occupantUserCountsSlice"
 import { StatsCard } from "@/components/StatsCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Users, Download, X, Eye, Plus } from "lucide-react";
 import {
   Pagination,
@@ -22,20 +23,37 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { ImportOccupantUsers } from "@/components/ImportOccupantUsers";
 import axios from "axios";
-import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
 import { OccupantUsersFilterDialog } from "@/components/OccupantUsersFilterDialog";
 import { useAppSelector } from "@/store/hooks";
 import { debounce } from "lodash";
 
-const columns: ColumnConfig[] = [
+const columns: ColumnConfig[] =  [
   { key: "id", label: "ID", sortable: true, draggable: true },
-  { key: "company", label: "Company", sortable: true, draggable: true },
-  { key: "name", label: "Name", sortable: true, draggable: true },
+  { key: "active", label: "Active", sortable: true, draggable: true },
+  { key: "name", label: "User Name", sortable: true, draggable: true },
+  { key: "gender", label: "Gender", sortable: true, draggable: true },
   { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
   { key: "email", label: "Email", sortable: true, draggable: true },
-  { key: "entity", label: "Entity", sortable: true, draggable: true },
+  { key: "company", label: "Vendor Company Name", sortable: true, draggable: true },
+  { key: "entity", label: "Entity Name", sortable: true, draggable: true },
+  { key: "department", label: "Unit", sortable: true, draggable: true },
+  { key: "role", label: "Role", sortable: true, draggable: true },
+  { key: "employeeId", label: "Employee ID", sortable: true, draggable: true },
+  { key: "createdBy", label: "Created By", sortable: true, draggable: true },
+  { key: "accessLevel", label: "Access Level", sortable: true, draggable: true },
+  { key: "type", label: "Type", sortable: true, draggable: true },
   { key: "status", label: "Status", sortable: true, draggable: true },
+  { key: "faceRecognition", label: "Face Recognition", sortable: true, draggable: true },
   { key: "appDownloaded", label: "App Downloaded", sortable: true, draggable: true },
 ];
 
@@ -46,7 +64,9 @@ export const OccupantUserMasterDashboard = () => {
   const [statusDialogOpen, setStatusDialogOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false);
   const [occupantUser, setOccupantUser] = useState([]);
+  const [occupantUsersState, setOccupantUsersState] = useState<any[]>([]);
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
@@ -92,6 +112,7 @@ export const OccupantUserMasterDashboard = () => {
     const data: any = occupantUsersData;
     if (data?.transformedUsers) {
       setOccupantUser(data.transformedUsers);
+      setOccupantUsersState(data.transformedUsers);
       setPagination({
         current_page:
           statePagination?.current_page ?? data.pagination?.current_page ?? 1,
@@ -102,6 +123,7 @@ export const OccupantUserMasterDashboard = () => {
       });
     } else if (Array.isArray(data)) {
       setOccupantUser(data);
+      setOccupantUsersState(data);
       setPagination((prev) => ({
         current_page: statePagination?.current_page ?? prev.current_page,
         total_count: statePagination?.total_count ?? prev.total_count,
@@ -120,20 +142,23 @@ export const OccupantUserMasterDashboard = () => {
     search?: string;
   }) => {
     setFilters(newFilters);
-    const [firstName = "", lastName = ""] = (newFilters?.name?.trim().split(" ") ?? []);
+    const [firstName = "", lastName = ""] =
+      newFilters?.name?.trim().split(" ") ?? [];
     await dispatch(
       fetchOccupantUsers({
         page: 1,
         perPage: 10,
         firstname_cont: firstName,
         lastname_cont: lastName,
+        mobile_cont: newFilters.mobile,
         email_cont: newFilters.email,
         lock_user_permission_status_eq: newFilters.status,
         entity_id_eq: newFilters.entity,
         app_downloaded_eq: newFilters.downloaded,
-        search_all_fields_cont: newFilters.search
+        search_all_fields_cont: newFilters.search,
       })
     );
+    toast.success("Filters applied successfully");
     setFilterDialogOpen(false);
   };
 
@@ -173,9 +198,9 @@ export const OccupantUserMasterDashboard = () => {
         fetchOccupantUsers({ page: pagination.current_page, perPage: 10 })
       );
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   useEffect(() => {
     setCurrentSection("Master");
@@ -187,7 +212,7 @@ export const OccupantUserMasterDashboard = () => {
     debounce(async (searchQuery: string) => {
       handleApplyFilters({
         search: searchQuery,
-      })
+      });
     }, 500),
     [pagination.current_page]
   );
@@ -213,7 +238,7 @@ export const OccupantUserMasterDashboard = () => {
           lock_user_permission_status_eq: filters.status,
           entity_id_eq: filters.entity,
           app_downloaded_eq: filters.downloaded,
-          search_all_fields_cont: searchTerm
+          search_all_fields_cont: searchTerm,
         })
       );
     } catch (error) {
@@ -338,32 +363,70 @@ export const OccupantUserMasterDashboard = () => {
   };
 
   // Status update functionality
+  const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    
+    if (!baseUrl || !token) {
+      toast.error("Missing authentication credentials");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://${baseUrl}/pms/users/status_update.jsong?id=${userId}&active=${isActive}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update status");
+      }
+
+      // Update local state
+      setOccupantUsersState((prevUsers) =>
+        prevUsers.map((user) =>
+          user.lockUserId === userId
+            ? {
+              ...user,
+              active: isActive,
+              status: isActive ? "Active" : "Inactive",
+            }
+            : user
+        )
+      );
+
+      toast.success("User status updated successfully!");
+    } catch (error: unknown) {
+      console.error("Status toggle failed:", error);
+      toast.error("Failed to update user status.");
+    }
+  };
+
   const getStatusBadgeProps = (status: string | null) => {
     if (status === "approved" || status === "active") {
       return {
-        variant: "default" as const,
-        className:
-          "bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer",
+        className: "bg-green-600 text-white hover:bg-green-700 cursor-pointer",
         children: "Approved",
       };
     } else if (status === "pending") {
       return {
-        variant: "secondary" as const,
-        className:
-          "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer",
+        className: "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
         children: "Pending",
       };
     } else if (status === "rejected") {
       return {
-        variant: "destructive" as const,
-        className: "bg-red-100 text-red-800 hover:bg-red-200 cursor-pointer",
+        className: "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
         children: "Rejected",
       };
     } else {
       return {
-        variant: "secondary" as const,
-        className:
-          "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer",
+        className: "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
         children: "Pending",
       };
     }
@@ -423,6 +486,23 @@ export const OccupantUserMasterDashboard = () => {
 
   const renderCell = (user: any, columnKey: string) => {
     switch (columnKey) {
+      case "active":
+        return (
+          <Switch
+            checked={user.active === "Yes" || user.active === true || user.active === "true"}
+            onCheckedChange={(checked) =>
+              handleToggleUserStatus(user.lockUserId ?? "", checked)
+            }
+            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            disabled={!user.lockUserId}
+          />
+        );
+      case "type":
+        return (
+          <Badge variant="secondary">
+            {user?.type || "-"}
+          </Badge>
+        );
       case "status":
         return (
           <Badge
@@ -430,8 +510,32 @@ export const OccupantUserMasterDashboard = () => {
             onClick={() => handleStatusClick(user)}
           />
         );
+      case "faceRecognition":
+        return (
+          <Badge variant={user.faceRecognition === "Yes" || user.faceRecognition === true ? "default" : "secondary"}>
+            {user.faceRecognition === "Yes" || user.faceRecognition === true ? "Yes" : "No"}
+          </Badge>
+        );
+      case "appDownloaded":
+        return (
+          <Badge variant={user.appDownloaded === "Yes" || user.appDownloaded === true ? "default" : "secondary"}>
+            {user.appDownloaded === "Yes" || user.appDownloaded === true ? "Yes" : "No"}
+          </Badge>
+        );
+      case "gender":
+        return user.gender || "";
+      case "employeeId":
+        return user.employeeId || "";
+      case "accessLevel":
+        return user.accessLevel || "";
+      case "department":
+        return user.department || "";
+      case "entity":
+        return user.entity || "";
+      case "company":
+        return user.company || "";
       default:
-        return user[columnKey];
+        return user[columnKey] || "";
     }
   };
 
@@ -450,15 +554,9 @@ export const OccupantUserMasterDashboard = () => {
   return (
     <div className="w-full p-4 sm:p-6 space-y-6">
       <div className="w-full space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-[#1a1a1a]">
-            Occupant Users
-          </h1>
-        </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatsCard
             title="Total Users"
             value={totalUsers}
@@ -498,7 +596,7 @@ export const OccupantUserMasterDashboard = () => {
         {/* Table */}
         <div className="overflow-x-auto">
           <EnhancedTable
-            data={occupantUser}
+            data={occupantUsersState}
             columns={columns}
             renderCell={renderCell}
             renderActions={(item: any) => (
@@ -508,7 +606,11 @@ export const OccupantUserMasterDashboard = () => {
                   size="icon"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/master/user/occupant-users/view/${item.id}`);
+                    location.pathname.includes("/club-management/")
+                      ? navigate(
+                        `/club-management/users/occupant-users/view/${item.id}`
+                      )
+                      : navigate(`/master/user/occupant-users/view/${item.id}`);
                   }}
                   title="View"
                 >
@@ -521,7 +623,7 @@ export const OccupantUserMasterDashboard = () => {
             handleExport={handleExport}
             searchTerm={searchTerm}
             onSearchChange={handleSearchChange}
-            storageKey="fm-user-master-table"
+            storageKey="occupant-user-master-table"
             searchPlaceholder="Search users..."
             loading={loading}
             leftActions={leftActions}
@@ -569,8 +671,13 @@ export const OccupantUserMasterDashboard = () => {
 
       {showActionPanel && (
         <SelectionPanel
-          onAdd={() => navigate("/master/user/occupant-users/add")}
-          onImport={() => { }}
+          onAdd={() => location.pathname.includes("/club-management/")
+            ? navigate("/club-management/users/occupant-users/add")
+            : navigate("/master/user/occupant-users/add")}
+          onImport={() => {
+            setShowActionPanel(false);
+            setIsImportModalOpen(true);
+          }}
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
@@ -583,13 +690,16 @@ export const OccupantUserMasterDashboard = () => {
         handleApplyFilters={handleApplyFilters}
       />
 
-      <Dialog open={statusDialogOpen} onClose={setStatusDialogOpen} maxWidth="xs" fullWidth>
+      <Dialog
+        open={statusDialogOpen}
+        onClose={setStatusDialogOpen}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogContent className="p-0 bg-white">
           <div className="px-6 py-3 border-b mb-3">
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-semibold">
-                Update Status
-              </h1>
+              <h1 className="text-xl font-semibold">Update Status</h1>
               <Button
                 variant="ghost"
                 size="sm"
@@ -630,6 +740,15 @@ export const OccupantUserMasterDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ImportOccupantUsers
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onRefresh={() => {
+          fetchUsers();
+          dispatch(fetchOccupantUserCounts());
+        }}
+      />
     </div>
   );
 };

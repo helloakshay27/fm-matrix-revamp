@@ -3,13 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Plus, Eye } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useNavigate } from 'react-router-dom';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { toast } from 'sonner';
 
 interface PermitChecklist {
-    id: string;
+    id: number;
     name: string;
-    status: boolean;
+    active: number;
+    snag_audit_category_id: number;
     category: string;
-    questionCount: number;
+    questions_count: number;
 }
 
 export const PermitChecklistList = () => {
@@ -24,133 +27,176 @@ export const PermitChecklistList = () => {
         navigate('/safety/permit-checklist/add');
     };
 
-    const handleViewDetails = (id: string) => {
+    const handleViewDetails = (id: number) => {
         navigate(`/safety/permit/checklist/details/${id}`);
     };
 
-    // Mock data - replace with actual API call
-    const mockChecklists: PermitChecklist[] = [
-        {
-            id: '1',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Loading, Unloading Hazardous Material Work',
-            questionCount: 16
-        },
-        {
-            id: '2',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Hot Work',
-            questionCount: 18
-        },
-        {
-            id: '3',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Height Work',
-            questionCount: 13
-        },
-        {
-            id: '4',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Excavation Work',
-            questionCount: 17
-        },
-        {
-            id: '5',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Electrical Work',
-            questionCount: 14
-        },
-        {
-            id: '6',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Cold Work',
-            questionCount: 14
-        },
-        {
-            id: '7',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Confined Space Work',
-            questionCount: 17
-        },
-        {
-            id: '8',
-            name: 'Safety Checks + PPE Checks',
-            status: true,
-            category: 'Radiology Work',
-            questionCount: 16
+    const [checklists, setChecklists] = React.useState<PermitChecklist[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
+
+    const fetchChecklists = async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+
+            let baseUrl = localStorage.getItem('baseUrl') || '';
+            const token = localStorage.getItem('token') || '';
+
+            if (!baseUrl || !token) {
+                const errorMsg = 'Authentication credentials not found. Please login again.';
+                console.error(errorMsg);
+                setError(errorMsg);
+                toast.error(errorMsg);
+                setIsLoading(false);
+                return;
+            }
+
+            // Ensure baseUrl has the correct format
+            if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+                baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+            }
+
+            const url = `${baseUrl}/pms/admin/snag_checklists/permit_checklist.json`;
+            console.log('Fetching checklists from:', url);
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch checklists: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('API Response:', data);
+
+            if (data.status === 'success' && data.checklists) {
+                setChecklists(data.checklists);
+                console.log(`Successfully loaded ${data.checklists.length} checklists`);
+            } else {
+                console.warn('Unexpected API response format:', data);
+                setChecklists([]);
+            }
+        } catch (error: any) {
+            const errorMsg = error.message || 'Failed to fetch checklists';
+            console.error('Error fetching checklists:', error);
+            setError(errorMsg);
+            toast.error(errorMsg);
+            setChecklists([]);
+        } finally {
+            setIsLoading(false);
         }
-    ];
+    };
+
+    React.useEffect(() => {
+        fetchChecklists();
+    }, []);
+
+    if (isLoading) {
+        return (
+            <div className="p-6">
+                <div className="flex flex-col items-center justify-center min-h-[400px]">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
+                    <p className="text-gray-600">Loading checklists...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-6">
+                <div className="flex flex-col items-center justify-center min-h-[400px]">
+                    <div className="text-red-500 mb-4">
+                        <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <p className="text-gray-600 mb-4">{error}</p>
+                    <Button onClick={fetchChecklists} className="bg-purple-600 hover:bg-purple-700">
+                        Retry
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-6">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">PERMIT CHECKLIST</h1>
-                <Button
+
+            </div>
+
+            {/* Enhanced Table */}
+            <EnhancedTable
+                data={checklists}
+                columns={[
+                    {
+                        key: 'sr_no',
+                        label: 'Sr. No.',
+                        sortable: false,
+                        defaultVisible: true,
+                        draggable: false
+                    },
+                    {
+                        key: 'name',
+                        label: 'Name',
+                        sortable: true,
+                        defaultVisible: true,
+                        draggable: true
+                    },
+                    {
+                        key: 'category',
+                        label: 'Category',
+                        sortable: true,
+                        defaultVisible: true,
+                        draggable: true
+                    },
+                    {
+                        key: 'questions_count',
+                        label: 'No. of Questions',
+                        sortable: true,
+                        defaultVisible: true,
+                        draggable: true
+                    }
+                ]}
+                renderCell={(item, columnKey) => {
+                    if (columnKey === 'sr_no') {
+                        return <div className="text-center">{checklists.indexOf(item) + 1}</div>;
+                    }
+                    return <div className="text-center">{item[columnKey as keyof PermitChecklist]}</div>;
+                }}
+                renderActions={(item) => (
+                    <Button
+                        onClick={() => handleViewDetails(item.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="p-2 hover:bg-gray-100"
+                    >
+                        <Eye className="h-4 w-4" />
+                    </Button>
+                )}
+                enableSearch={true}
+                searchPlaceholder="Search checklists..."
+                pagination={false}
+                pageSize={20}
+                storageKey="permit-checklist-list"
+                enableExport={true}
+                exportFileName="permit-checklists"
+                leftActions={(<Button
                     onClick={handleAddChecklist}
                     className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
                 >
                     <Plus className="h-4 w-4" />
                     Add Checklist
-                </Button>
-            </div>
-
-            {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm border">
-                <table className="w-full">
-                    <thead>
-                        <tr className="border-b bg-gray-50">
-                            <th className="text-left p-4 font-medium text-gray-700">
-                                <input type="checkbox" className="rounded border-gray-300" />
-                            </th>
-                            <th className="text-left p-4 font-medium text-gray-700">Action</th>
-                            <th className="text-left p-4 font-medium text-gray-700">Name</th>
-                            <th className="text-left p-4 font-medium text-gray-700">Status</th>
-                            <th className="text-left p-4 font-medium text-gray-700">Category</th>
-                            <th className="text-right p-4 font-medium text-gray-700">No. Of Q.</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {mockChecklists.map((checklist) => (
-                            <tr key={checklist.id} className="border-b hover:bg-gray-50">
-                                <td className="p-4">
-                                    <input type="checkbox" className="rounded border-gray-300" />
-                                </td>
-                                <td className="p-4">
-                                    <Button
-                                        onClick={() => handleViewDetails(checklist.id)}
-                                        variant="ghost"
-                                        size="sm"
-                                        className="p-2 hover:bg-gray-100"
-                                    >
-                                        <Eye className="h-4 w-4" />
-                                    </Button>
-                                </td>
-                                <td className="p-4 text-gray-900">{checklist.name}</td>
-                                <td className="p-4">
-                                    <div className="flex items-center">
-                                        <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center mr-2">
-                                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                                        </div>
-                                        <span className={checklist.status ? 'text-blue-600' : 'text-gray-500'}>
-                                            {checklist.status ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td className="p-4 text-gray-900">{checklist.category}</td>
-                                <td className="p-4 text-right text-gray-900">{checklist.questionCount}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                </Button>)}
+            />
         </div>
     );
 };

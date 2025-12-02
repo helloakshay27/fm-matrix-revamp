@@ -394,6 +394,7 @@ export const incidentService = {
     if (formData.primaryRootCauseCategory) body.append('incident[rca_category_id]', formData.primaryRootCauseCategory);
     if (formData.correctiveAction) body.append('incident[corrective_action]', formData.correctiveAction);
     if (formData.preventiveAction) body.append('incident[preventive_action]', formData.preventiveAction);
+    if (formData.incident_over_time) body.append('incident[incident_over_time]', formData.incident_over_time);
     
     // Damage related fields
     if (formData.propertyDamageHappened !== undefined && formData.propertyDamageHappened !== '') {

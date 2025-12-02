@@ -21,6 +21,7 @@ import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
 import { RootState } from '@/store/store';
 import { toast } from 'sonner';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+import axios from 'axios';
 
 export const AddFMUserPage = () => {
   const dispatch = useAppDispatch();
@@ -38,11 +39,26 @@ export const AddFMUserPage = () => {
   const hostname = window.location.hostname;
   const isOmanSite = hostname.includes('oig.gophygital.work');
 
+  const [userCategories, setUserCategories] = useState([])
   const [userAccount, setUserAccount] = useState({})
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
 
   const userId = JSON.parse(localStorage.getItem('user'))?.id;
+
+  const fetchUserCategories = async () => {
+    try {
+      const categories = await axios.get(`https://${baseUrl}/pms/admin/user_categories.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setUserCategories(categories.data);
+    } catch (error) {
+      console.error('Error loading user categories:', error);
+      toast.error('Failed to load user categories');
+    }
+  }
 
   useEffect(() => {
     dispatch(fetchEntities());
@@ -52,6 +68,7 @@ export const AddFMUserPage = () => {
     dispatch(fetchRoles({ baseUrl, token }));
     dispatch(fetchAllowedSites(userId));
     dispatch(fetchAllowedCompanies())
+    fetchUserCategories();
   }, [dispatch, baseUrl, token, userId]);
 
   useEffect(() => {
@@ -89,6 +106,7 @@ export const AddFMUserPage = () => {
     selectDepartment: '',
     designation: '',
     selectUserType: '',
+    selectUserCategory: '',
     selectRole: '',
     selectAccessLevel: '',
     selectEmailPreference: '',
@@ -182,6 +200,7 @@ export const AddFMUserPage = () => {
         gender: formData.gender,
         entity_id: formData.selectEntity,
         supplier_id: formData.supplier,
+        user_category_id: formData.selectUserCategory
       },
     };
     try {
@@ -227,39 +246,46 @@ export const AddFMUserPage = () => {
           <CardContent className="space-y-6">
             <Box component="form" noValidate>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Row 1 */}
-                <div>
-                  <TextField
-                    fullWidth
-                    label="First Name"
-                    variant="outlined"
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    required
-                    InputLabelProps={{
-                      classes: {
-                        asterisk: "text-red-500", // Tailwind class for red color
-                      },
-                      shrink: true
-                    }}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    fullWidth
-                    label="Last Name"
-                    variant="outlined"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    required
-                    InputLabelProps={{
-                      classes: {
-                        asterisk: "text-red-500", // Tailwind class for red color
-                      },
-                      shrink: true
-                    }}
-                  />
-                </div>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  variant="outlined"
+                  value={formData.firstName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // allow only letters
+                    if (/^[A-Za-z]*$/.test(value)) {
+                      handleInputChange("firstName", value);
+                    }
+                  }}
+                  required
+                  InputLabelProps={{
+                    classes: { asterisk: "text-red-500" },
+                    shrink: true,
+                  }}
+                />
+
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  variant="outlined"
+                  value={formData.lastName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // allow only letters
+                    if (/^[A-Za-z]*$/.test(value)) {
+                      handleInputChange("lastName", value);
+                    }
+                  }}
+                  required
+                  InputLabelProps={{
+                    classes: { asterisk: "text-red-500" },
+                    shrink: true,
+                  }}
+                />
+
                 <div>
                   <TextField
                     fullWidth
@@ -453,6 +479,7 @@ export const AddFMUserPage = () => {
                     value={formData.designation}
                     onChange={(e) => handleInputChange('designation', e.target.value)}
                     InputLabelProps={{ shrink: true }}
+                    inputProps={{ maxLength: 50 }}
                   />
                 </div>
                 <div>
@@ -580,6 +607,27 @@ export const AddFMUserPage = () => {
                     </FormControl>
                   </div>
                 )}
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select User Category</InputLabel>
+                    <Select
+                      value={formData.selectUserCategory}
+                      onChange={(e) => handleInputChange('selectUserCategory', e.target.value)}
+                      label="Select User Category"
+                      displayEmpty
+                      required
+                    >
+                      <MenuItem value="">Select User Category</MenuItem>
+                      {
+                        userCategories?.map((category) => (
+                          <MenuItem key={category.id} value={category.id}>
+                            {category.name}
+                          </MenuItem>
+                        ))
+                      }
+                    </Select>
+                  </FormControl>
+                </div>
               </div>
             </Box>
             {/* Action Buttons */}

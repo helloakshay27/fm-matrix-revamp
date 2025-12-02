@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
-import { TextField, IconButton, InputAdornment } from '@mui/material';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Building2, Check, Eye, EyeOff } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { getOrganizationsByEmail, loginUser, saveUser, saveToken, saveBaseUrl, Organization } from '@/utils/auth';
-import { toast } from 'sonner';
-import { Label } from '@/components/ui/label';
+import React, { useState } from "react";
+import { TextField, IconButton, InputAdornment } from "@mui/material";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Building2, Check, Eye, EyeOff } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  getOrganizationsByEmail,
+  getOrganizationsByEmailAndAutoSelect,
+  loginUser,
+  saveUser,
+  saveToken,
+  saveBaseUrl,
+  Organization,
+} from "@/utils/auth";
+import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
 
 const muiFieldStyles = {
   width: "100%",
@@ -42,7 +50,6 @@ const muiFieldStyles = {
   },
 };
 
-
 export const LoginPage = ({ setBaseUrl, setToken }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -59,9 +66,65 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const hostname = window.location.hostname;
 
   // Check if it's Oman site
-  const isOmanSite = hostname.includes('oig.gophygital.work');
+  const isOmanSite = hostname.includes("oig.gophygital.work");
   // Check if it's VI site
-  const isViSite = hostname.includes('vi-web.gophygital.work');
+  const isViSite = hostname.includes("vi-web.gophygital.work");
+  const isWebSite = hostname.includes("web.gophygital.work");
+
+  // Check URL for email and orgId parameters on component mount
+  React.useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const emailParam = searchParams.get("email");
+    const orgIdParam = searchParams.get("orgId");
+
+    if (emailParam) {
+      setEmail(emailParam);
+
+      // Auto-fetch and select organization if orgId is provided
+      if (orgIdParam) {
+        handleAutoSelectOrganization(emailParam, orgIdParam);
+      }
+    }
+  }, [location.search]);
+
+  const handleAutoSelectOrganization = async (
+    emailAddress: string,
+    orgId: string
+  ) => {
+    if (!validateEmail(emailAddress)) {
+      toast.error("Invalid email address in URL.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { organizations: orgs, selectedOrg } =
+        await getOrganizationsByEmailAndAutoSelect(emailAddress, orgId);
+
+      setOrganizations(orgs);
+
+      if (selectedOrg) {
+        // Auto-select the organization and move to password step
+        handleOrganizationSelect(selectedOrg);
+        toast.success(
+          `Organization "${selectedOrg.name}" automatically selected.`
+        );
+      } else {
+        // If orgId doesn't match, show organization selection step
+        setCurrentStep(2);
+        toast.info("Please select your organization.");
+      }
+
+      if (orgs.length === 0) {
+        toast.error("No organizations found for this email address.");
+      }
+    } catch (error) {
+      toast.error("Failed to fetch organizations. Please try again.");
+      console.error("Auto-select organization error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const validateEmail = (email: string) => {
     return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
@@ -70,27 +133,43 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const validatePassword = (password: string) => {
     // Password must be at least 8 characters long
     if (password.length < 8) {
-      return { isValid: false, message: "Password must be at least 8 characters long." };
+      return {
+        isValid: false,
+        message: "Password must be at least 8 characters long.",
+      };
     }
 
     // Must contain at least one uppercase letter
     if (!/[A-Z]/.test(password)) {
-      return { isValid: false, message: "Password must contain at least one uppercase letter." };
+      return {
+        isValid: false,
+        message: "Password must contain at least one uppercase letter.",
+      };
     }
 
     // Must contain at least one lowercase letter
     if (!/[a-z]/.test(password)) {
-      return { isValid: false, message: "Password must contain at least one lowercase letter." };
+      return {
+        isValid: false,
+        message: "Password must contain at least one lowercase letter.",
+      };
     }
 
     // Must contain at least one number
     if (!/[0-9]/.test(password)) {
-      return { isValid: false, message: "Password must contain at least one number." };
+      return {
+        isValid: false,
+        message: "Password must contain at least one number.",
+      };
     }
 
     // Must contain at least one special character
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      return { isValid: false, message: "Password must contain at least one special character (!@#$%^&*(),.?\":{}|<>)." };
+      return {
+        isValid: false,
+        message:
+          'Password must contain at least one special character (!@#$%^&*(),.?":{}|<>).',
+      };
     }
 
     return { isValid: true, message: "Password is valid." };
@@ -101,7 +180,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       toast.error("Please enter your email address.");
       return;
     }
-
 
     if (!validateEmail(email)) {
       toast.error("Please enter a valid email address.");
@@ -124,10 +202,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   };
 
   const handleOrganizationSelect = (org: Organization) => {
-    localStorage.setItem("selectedOrg", org.name)
+    localStorage.setItem("selectedOrg", org.name);
     localStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
     //Session Storage For App-Level
-    sessionStorage.setItem("selectedOrg", org.name)
+    sessionStorage.setItem("selectedOrg", org.name);
     sessionStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
     setBaseUrl(`${org.sub_domain}.${org.domain}`);
     setSelectedOrganization(org);
@@ -157,9 +235,21 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");
       }
+      if (
+        (!response.web_enabled ||
+          response.web_enabled == null ||
+          response.web_enabled === false) &&
+        response.company_id === 145 &&
+        (isViSite || isWebSite)
+      ) {
+        toast.error(
+          "Web access is disabled for your account. Please contact your administrator."
+        );
+        return;
+      }
 
       // Check if number is verified first
-      if (response.number_verified === 0) {
+      if (response.number_verified === 0 && isViSite) {
         // Store email temporarily for OTP verification
         localStorage.setItem("temp_email", email);
         localStorage.setItem("temp_token", response.access_token);
@@ -174,7 +264,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           longitude: response.longitude,
           country_code: response.country_code,
           // spree_api_key: response.spree_api_key,
-          lock_role: response.lock_role
+          lock_role: response.lock_role,
         });
 
         saveBaseUrl(baseUrl);
@@ -184,11 +274,53 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         sessionStorage.setItem("userId", response.id.toString());
         sessionStorage.setItem("userType", response.user_type.toString());
 
-        toast.success("OTP sent successfully! Please verify your phone number to continue.");
+        toast.success(
+          "OTP sent successfully! Please verify your phone number to continue."
+        );
 
         // Redirect to OTP verification page
         setTimeout(() => {
-          navigate('/otp-verification');
+          navigate("/otp-verification");
+        }, 500);
+        return; // Exit early, don't save user data yet
+      }
+
+      if (
+        response.company_id === 145 &&
+        response.web_enabled === true &&
+        isViSite
+      ) {
+        // Store email temporarily for OTP verification
+        localStorage.setItem("temp_email", email);
+        localStorage.setItem("temp_token", response.access_token);
+
+        saveUser({
+          id: response.id,
+          email: response.email,
+          firstname: response.firstname,
+          lastname: response.lastname,
+          mobile: response.mobile,
+          latitude: response.latitude,
+          longitude: response.longitude,
+          country_code: response.country_code,
+          // spree_api_key: response.spree_api_key,
+          lock_role: response.lock_role,
+        });
+
+        saveBaseUrl(baseUrl);
+        localStorage.setItem("userId", response.id.toString());
+        localStorage.setItem("userType", response.user_type.toString());
+        // Session Storage
+        sessionStorage.setItem("userId", response.id.toString());
+        sessionStorage.setItem("userType", response.user_type.toString());
+
+        toast.success(
+          "OTP sent successfully! Please verify your phone number to continue."
+        );
+
+        // Redirect to OTP verification page
+        setTimeout(() => {
+          navigate("/otp-verification");
         }, 500);
         return; // Exit early, don't save user data yet
       }
@@ -204,7 +336,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         longitude: response.longitude,
         country_code: response.country_code,
         spree_api_key: response.spree_api_key,
-        lock_role: response.lock_role
+        lock_role: response.lock_role,
       });
       saveToken(response.access_token);
       setToken(response.access_token);
@@ -215,17 +347,49 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       sessionStorage.setItem("userId", response.id.toString());
       sessionStorage.setItem("userType", response.user_type.toString());
 
-      const from = (location.state as { from?: Location })?.from?.pathname + (location.state as { from?: Location })?.from?.search || "/maintenance/asset";
+      const from =
+        (location.state as { from?: Location })?.from?.pathname +
+          (location.state as { from?: Location })?.from?.search ||
+        "/maintenance/asset";
 
       toast.success(`Welcome back, ${response.firstname}! Login successful.`);
 
       // Add a slight delay for better UX, then redirect to dashboard
       setTimeout(() => {
-        isViSite ? navigate('/safety/m-safe/internal') : navigate(from, { replace: true });
+        isViSite
+          ? navigate("/safety/m-safe/internal")
+          : navigate(from, { replace: true });
+        // Special routing for user ID 189005
+        if (response.id === 189005) {
+          navigate("/dashboard");
+        } else if (isViSite) {
+          navigate("/safety/m-safe/internal");
+        } else {
+          navigate(from, { replace: true });
+        }
       }, 500);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      toast.error("Invalid email or password. Please try again.");
+
+      // Handle specific error messages from API
+      if (error?.status === 401) {
+        // Check for specific error messages
+        const errorMessage = error?.message?.toLowerCase() || "";
+
+        if (errorMessage.includes("locked") || errorMessage.includes("lock")) {
+          toast.error(
+            "Your account has been locked. Please contact your administrator."
+          );
+        } else {
+          toast.error("Invalid email or password. Please try again.");
+        }
+      } else if (error?.data?.error) {
+        toast.error(error.data.error);
+      } else if (error?.message) {
+        toast.error(error.message);
+      } else {
+        toast.error("An error occurred during login. Please try again.");
+      }
     } finally {
       setLoginLoading(false);
     }
@@ -247,12 +411,13 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         {[1, 2, 3].map((step) => (
           <div
             key={step}
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${step === currentStep
-              ? "bg-[#C72030] text-white shadow-lg scale-110"
-              : step < currentStep
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${
+              step === currentStep
+                ? "bg-[#C72030] text-white shadow-lg scale-110"
+                : step < currentStep
                 ? "bg-green-500 text-white"
                 : "bg-gray-100 text-gray-400"
-              }`}
+            }`}
           >
             {step < currentStep ? (
               <Check className="w-5 h-5 stroke-[2.5]" />
@@ -263,11 +428,25 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         ))}
       </div>
       <div className="flex justify-center items-center gap-2">
-        <div className={`h-1 w-16 rounded-full transition-all ${currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"}`}></div>
-        <div className={`h-1 w-16 rounded-full transition-all ${currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"}`}></div>
-        <div className={`h-1 w-16 rounded-full transition-all ${currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"}`}></div>
+        <div
+          className={`h-1 w-16 rounded-full transition-all ${
+            currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"
+          }`}
+        ></div>
+        <div
+          className={`h-1 w-16 rounded-full transition-all ${
+            currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"
+          }`}
+        ></div>
+        <div
+          className={`h-1 w-16 rounded-full transition-all ${
+            currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"
+          }`}
+        ></div>
       </div>
-      <p className="text-gray-400 text-sm mt-3 font-medium">Step {currentStep} of 3</p>
+      <p className="text-gray-400 text-sm mt-3 font-medium">
+        Step {currentStep} of 3
+      </p>
     </div>
   );
 
@@ -275,7 +454,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     <>
       {/* Email Input Label */}
       <div className="mb-4">
-        <Label htmlFor="email" className="text-gray-700 font-medium text-base block mb-2">
+        <Label
+          htmlFor="email"
+          className="text-gray-700 font-medium text-base block mb-2"
+        >
           Email Address
         </Label>
 
@@ -286,15 +468,15 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleEmailSubmit()}
+          onKeyPress={(e) => e.key === "Enter" && handleEmailSubmit()}
           sx={{
             ...muiFieldStyles,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '0.5rem',
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "0.5rem",
             },
             ...(isViSite && {
-              '& .MuiOutlinedInput-input': {
-                fontSize: '16px',
+              "& .MuiOutlinedInput-input": {
+                fontSize: "16px",
               },
             }),
           }}
@@ -314,7 +496,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
             <span>Finding Organizations...</span>
           </div>
         ) : (
-          'Continue'
+          "Continue"
         )}
       </Button>
     </>
@@ -341,22 +523,22 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
             Select Organization
           </h2>
         )}
-
       </div>
       <p className="text-black-400 text-sm mb-6">
         Email: <span className="text-black-300">{email}</span>
       </p>
 
       <div className="space-y-3 mb-6 max-h-[250px] overflow-y-auto scrollbar">
-        {organizations && organizations.map((org) => (
-          <div
-            key={org.id}
-            onClick={() => handleOrganizationSelect(org)}
-            className="bg-white shadow-md rounded-xl p-4 cursor-pointer hover:bg-gray-50 border border-gray-100 hover:border-[#C72030]"
-          >
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-[#C72030] bg-opacity-10 rounded-lg flex items-center justify-center mr-4">
-                {/* {org.logo?.url ? (
+        {organizations &&
+          organizations.map((org) => (
+            <div
+              key={org.id}
+              onClick={() => handleOrganizationSelect(org)}
+              className="bg-white shadow-md rounded-xl p-4 cursor-pointer hover:bg-gray-50 border border-gray-100 hover:border-[#C72030]"
+            >
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-[#C72030] bg-opacity-10 rounded-lg flex items-center justify-center mr-4">
+                  {/* {org.logo?.url ? (
                   <img 
                     src={`https://uat.lockated.com${org.logo.url}`} 
                     alt={`${org.name} logo`}
@@ -366,16 +548,15 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
                   <Building2 className="text-[#C72030]" size={24} />
                 )} */}
 
-                <Building2 className="text-[#C72030]" size={24} />
-
-              </div>
-              <div>
-                <h3 className="text-gray-900 font-medium">{org.name}</h3>
-                <p className="text-gray-500 text-sm">{org.domain}</p>
+                  <Building2 className="text-[#C72030]" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-gray-900 font-medium">{org.name}</h3>
+                  <p className="text-gray-500 text-sm">{org.domain}</p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {(!organizations || organizations.length === 0) && (
@@ -417,10 +598,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
               )} */}
 
               <Building2 className="text-black" size={20} />
-
             </div>
             <div>
-              <h3 className="text-black font-medium">{selectedOrganization.name}</h3>
+              <h3 className="text-black font-medium">
+                {selectedOrganization.name}
+              </h3>
               <p className="text-gray-400 text-sm">{email}</p>
             </div>
           </div>
@@ -442,10 +624,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
                 onClick={() => setShowPassword(!showPassword)}
                 edge="end"
                 sx={{
-                  color: '#64748b',
-                  '&:hover': {
-                    backgroundColor: 'rgba(0,0,0,0.04)'
-                  }
+                  color: "#64748b",
+                  "&:hover": {
+                    backgroundColor: "rgba(0,0,0,0.04)",
+                  },
                 }}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -454,8 +636,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           ),
         }}
       />
-
-
 
       {/* Terms and Privacy */}
       <div className="text-center text-sm text-gray-300 mb-6">
@@ -482,13 +662,16 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
             <span>Logging in...</span>
           </div>
         ) : (
-          'LOG IN'
+          "LOG IN"
         )}
       </Button>
 
       {/* Forgot Password */}
       <div className="text-center mt-6">
-        <button className="text-[#C72030] hover:text-[#a81c29] text-sm font-medium transition-colors" onClick={() => navigate('/forgot-password', { state: { email } })}>
+        <button
+          className="text-[#C72030] hover:text-[#a81c29] text-sm font-medium transition-colors"
+          onClick={() => navigate("/forgot-password", { state: { email } })}
+        >
           Forgot your password?
         </button>
       </div>
@@ -563,11 +746,39 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
                     </defs>
                   </svg>
                 ) : (
-                  <img 
-                    src="https://panchshil-s3.s3.ap-south-1.amazonaws.com/attachfiles/documents/Panchshil_logo.png"
-                    alt="Panchshil Logo"
-                    className="h-16 w-auto object-contain"
-                  />
+                  <svg
+                    width="173"
+                    height="31"
+                    viewBox="0 0 173 31"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g clip-path="url(#clip0_6_1770)">
+                      <path
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                        d="M42.3083 1.85299H33.0312V14.3579H37.9649V10.6408H41.9632C45.4267 10.6408 47.7544 9.52016 47.7544 6.16925C47.7655 3.36202 46.0392 1.85299 42.3083 1.85299ZM41.2504 7.45637H37.9649V5.09296H41.2504C42.3306 5.09296 42.843 5.43692 42.843 6.21364C42.843 7.0791 42.3306 7.45637 41.2504 7.45637ZM56.4635 4.59365C54.5479 4.59365 53.5456 5.39254 53.0778 6.025V1.86408H48.6676V14.369H53.0778V9.38698C53.0778 8.31073 53.3674 7.54509 54.6593 7.54509C55.9734 7.54509 56.1851 8.33292 56.1851 9.38698V14.369H60.5953V8.48823C60.5841 5.88075 59.2032 4.59365 56.4635 4.59365ZM69.3158 4.83776L67.3779 9.98622L65.2951 4.83776H60.7623L65.3399 14.2914L63.6354 17.3427H68.1241L73.8592 4.83776H69.3158ZM81.8004 4.83776H86.21V13.6478C86.21 17.3427 82.9473 17.6867 79.3722 17.6867C75.1735 17.6867 73.6364 16.3774 73.5586 14.4467H77.5905C77.7685 15.068 78.6708 15.1457 79.361 15.1457C80.3971 15.1457 81.778 15.179 81.778 13.6478V12.8267C81.1096 13.4369 80.1407 13.7698 78.7822 13.7698C75.8194 13.7698 73.2917 12.5049 73.2917 9.26497C73.2917 6.03609 75.4853 4.58254 78.4368 4.58254C79.9291 4.58254 81.0206 4.9598 81.778 5.69212V4.83776H81.8004ZM79.8289 11.1513C81.3548 11.1513 82.1451 10.5299 82.1451 9.27607C82.1451 8.01114 81.2988 7.37868 79.8289 7.37868C78.3367 7.37868 77.5905 8.08883 77.5905 9.27607C77.5905 10.4522 78.3031 11.1513 79.8289 11.1513ZM89.4958 4.12763C90.8213 4.12763 91.7566 3.37311 91.7566 2.0749C91.7566 0.754509 90.8213 0 89.4958 0C88.1703 0 87.235 0.754509 87.235 2.0749C87.235 3.37311 88.1703 4.12763 89.4958 4.12763ZM87.2903 14.369H91.7006V4.84885H87.2903V14.369ZM101.401 7.22337V4.84885H98.6057V2.38559H94.1954V4.84885H92.425V7.22337H94.1954V10.4078C94.1954 13.8253 95.5097 14.5355 99.419 14.5355C100.087 14.5355 100.822 14.4689 101.412 14.3912V11.5396C99.0288 11.6616 98.6169 11.5729 98.6169 10.3967V7.21227H101.401V7.22337ZM108.217 4.59365C105.021 4.59365 102.982 5.41474 102.638 7.73376H106.58C106.702 7.14569 107.248 6.94592 108.217 6.94592C109.475 6.94592 109.776 7.38978 109.776 8.26634V8.49933C103.461 8.19975 102.114 9.52016 102.114 11.7282C102.114 13.6922 103.562 14.6242 106.279 14.6242C108.006 14.6242 109.13 14.0472 109.776 13.4037V14.3468H114.186V8.25524C114.197 5.12623 111.38 4.59365 108.217 4.59365ZM109.787 11.7615C109.309 12.2053 108.551 12.5271 107.594 12.5271C107.014 12.5271 106.357 12.4051 106.357 11.6727C106.357 10.6852 107.582 10.6187 109.787 10.7296V11.7615ZM115.267 1.17615V14.3579H119.677V1.17615H115.267ZM122.172 12.1831C121.492 12.1831 120.936 12.7158 120.936 13.3926C120.936 14.0694 121.492 14.6132 122.172 14.6132C122.84 14.6132 123.397 14.0805 123.397 13.3926C123.397 12.7047 122.84 12.1831 122.172 12.1831ZM137.941 4.83776H140.269L136.505 14.3579H134.356L131.738 7.45637L129.143 14.3579H126.994L123.23 4.83776H125.558L128.119 11.8281L130.758 4.83776H132.752L135.391 11.8281L137.941 4.83776ZM146.105 4.57145C143.309 4.57145 140.637 6.09157 140.637 9.60894C140.637 13.1263 143.309 14.6353 146.105 14.6353C148.9 14.6353 151.595 13.1374 151.595 9.60894C151.584 6.09157 148.9 4.57145 146.105 4.57145ZM146.105 13.0043C143.543 13.0043 142.663 11.2733 142.663 9.60894C142.663 7.93346 143.543 6.19142 146.105 6.19142C148.667 6.19142 149.546 7.92236 149.546 9.60894C149.546 11.2733 148.667 13.0043 146.105 13.0043ZM159.425 4.57145C157.365 4.57145 156.039 5.92514 155.605 6.6242V4.83776H153.378V14.3579H155.605V9.52016C155.605 8.03334 156.518 6.64634 158.946 6.64634C159.558 6.64634 160.037 6.71293 160.416 6.82391H160.483V4.64911C160.104 4.59364 159.859 4.57145 159.425 4.57145ZM169.816 14.369H172.433L168.123 8.61031L172.199 4.83776H169.437L164.503 9.46467V1.85299H162.276V14.3579H164.503V11.9612L166.564 10.0305L169.816 14.369Z"
+                        fill="#141414"
+                      />
+                      <path
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                        d="M27.9536 16.2575H14.4014V2.60082C14.4014 1.60909 13.5978 0.808435 12.6024 0.808435C11.8809 0.808435 11.2599 1.22697 10.9768 1.83656C9.87189 1.15418 8.58422 0.762939 7.19612 0.762939C3.22366 0.762939 0 3.97468 0 7.93245C0 11.8903 3.22366 15.102 7.19612 15.102C8.51116 15.102 9.74401 14.7472 10.8034 14.1285C10.8034 14.8564 10.8034 15.566 10.8034 16.2575H7.58885C7.46097 16.2484 7.324 16.2484 7.19612 16.2484C3.22366 16.2484 0 19.4601 0 23.4179C0 27.3757 3.22366 30.5874 7.19612 30.5874C11.1686 30.5874 14.3923 27.3757 14.3923 23.4179C14.3923 23.2269 14.3831 23.0358 14.3649 22.8538H14.4106V19.8513H27.8897L27.9536 16.2575ZM7.18703 11.5172C5.20534 11.5172 3.58894 9.90684 3.58894 7.93245C3.58894 5.95812 5.20534 4.3477 7.18703 4.3477C9.16869 4.3477 10.7851 5.95812 10.7851 7.93245C10.7851 9.91589 9.17784 11.5172 7.18703 11.5172ZM10.8034 23.1086C10.8034 23.2177 10.7942 23.3178 10.7851 23.4179C10.7851 25.3923 9.16869 27.0027 7.18703 27.0027C5.20534 27.0027 3.58894 25.3923 3.58894 23.4179C3.58894 21.5073 5.08662 19.9515 6.977 19.8423V19.8513H10.8034C10.8034 21.671 10.8034 22.8538 10.8034 22.8538H10.8125C10.7942 22.9357 10.8034 23.0267 10.8034 23.1086ZM22.3647 4.3477C24.3464 4.3477 25.9628 5.95812 25.9628 7.93245C25.9628 9.90684 24.3464 11.5172 22.3647 11.5172C20.383 11.5172 18.7666 9.90684 18.7666 7.93245C18.7666 5.95812 20.3739 4.3477 22.3647 4.3477ZM22.3647 0.762939C26.3372 0.762939 29.5608 3.97468 29.5608 7.93245C29.5608 11.8903 26.3372 15.102 22.3647 15.102C18.3922 15.102 15.1686 11.8903 15.1686 7.93245C15.1686 3.97468 18.3922 0.762939 22.3647 0.762939Z"
+                        fill="#C72031"
+                      />
+                      <path
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                        d="M30.3283 17.6778C29.6616 17.1865 28.4927 16.3313 27.7256 15.7671C27.5795 15.6671 27.3968 15.6489 27.2325 15.7307C27.0772 15.8126 26.9768 15.9673 26.9768 16.1493C26.9768 16.1857 26.9768 16.2221 26.9768 16.2585H14.3379V19.8523H26.9768C26.9768 19.8887 26.9768 19.9342 26.9768 19.9706C26.9768 20.1435 27.0772 20.3073 27.2325 20.3892C27.3878 20.471 27.5795 20.4529 27.7256 20.3437C28.4927 19.7795 29.6616 18.9243 30.3283 18.433C30.447 18.342 30.52 18.2055 30.52 18.06C30.52 17.9144 30.447 17.7688 30.3283 17.6778Z"
+                        fill="#C72031"
+                      />
+                    </g>
+                    <defs>
+                      <clipPath id="clip0_6_1770">
+                        <rect width="173" height="31" fill="white" />
+                      </clipPath>
+                    </defs>
+                  </svg>
                 )
               }
 
@@ -578,7 +789,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
                 Sign in to your account
               </p>
             </div>
-
 
             {/* Step Form */}
             <div className="mt-8 space-y-5">

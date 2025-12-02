@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Download, Eye, File, FileSpreadsheet, FileText, Printer, Rss } from "lucide-react";
+import { ArrowLeft, ClipboardList, Contact, Download, Eye, File, FileSpreadsheet, FileText, Images, Printer, Rss, ScrollText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import { approveInvoice, getInvoiceById } from "@/store/slices/invoicesSlice";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import axios from "axios";
 import DebitCreditModal from "@/components/DebitCreditModal";
@@ -159,6 +159,7 @@ export const InvoiceDetails = () => {
     const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [openDebitModal, setOpenDebitModal] = useState(false)
+    const [printing, setPrinting] = useState(false)
     const [debitCreditForm, setDebitCreditForm] = useState({
         type: "",
         amount: "",
@@ -184,6 +185,7 @@ export const InvoiceDetails = () => {
     }, [dispatch, baseUrl, token, id]);
 
     const handlePrint = async () => {
+        setPrinting(true)
         try {
             const response = await axios.get(`https://${baseUrl}/pms/work_order_invoices/${id}/print_pdf.pdf`, {
                 responseType: 'blob',
@@ -203,6 +205,8 @@ export const InvoiceDetails = () => {
             URL.revokeObjectURL(downloadUrl);
         } catch (error) {
             console.log(error)
+        } finally {
+            setPrinting(false)
         }
     };
 
@@ -344,14 +348,20 @@ export const InvoiceDetails = () => {
                     </Button>
                     {
                         !shouldShowButtons && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                                onClick={handlePrint}
-                            >
-                                <Printer className="w-4 h-4 mr-1" />
-                                Print
+                            <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
+                                {
+                                    printing ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Print
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Printer className="w-4 h-4 mr-2" />
+                                            Print
+                                        </>
+                                    )
+                                }
                             </Button>
                         )
                     }
@@ -382,189 +392,162 @@ export const InvoiceDetails = () => {
 
             {/* Vendor/Contact Details Section */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-                <div className="flex items-center justify-center gap-2 mb-4">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                        {invoice.supplier_name}
-                    </h2>
-                </div>
-                <div className="flex flex-col lg:flex-row gap-8">
-                    <div className="flex-1 space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <span className="text-sm font-medium text-gray-700">
-                                    Address
-                                </span>
-                                <span className="ml-8">
-                                    : {invoice.billing_address?.address}
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-sm font-medium text-gray-700">Phone</span>
-                                <span className="ml-12">
-                                    : {invoice.billing_address?.phone}
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-sm font-medium text-gray-700">Fax</span>
-                                <span className="ml-8">: {invoice.billing_address?.fax}</span>
-                            </div>
-                            <div>
-                                <span className="text-sm font-medium text-gray-700">Email</span>
-                                <span className="ml-11">
-                                    : {invoice.billing_address?.email}
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-sm font-medium text-gray-700">GST</span>
-                                <span className="ml-9">
-                                    : {invoice.billing_address?.gst_number}
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-sm font-medium text-gray-700">PAN</span>
-                                <span className="ml-5">
-                                    : {invoice.billing_address?.pan_number}
-                                </span>
-                            </div>
-                        </div>
+                <div className="flex items-center gap-3 pb-6">
+                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                        <Contact className="w-4 h-4" />
                     </div>
+                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">{invoice.supplier_name}</h3>
+                </div>
 
-                    <div className="flex flex-col items-center justify-center lg:min-w-[200px]">
-                        <div className="w-16 h-16 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-                            <span className="text-xs text-gray-500">image</span>
-                        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Address</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.billing_address?.address}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Phone</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.billing_address?.phone}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Fax</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.billing_address?.fax}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Email</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.billing_address?.email}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">GST</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.billing_address?.gst_number}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">PAN</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.billing_address?.pan_number}</span>
                     </div>
                 </div>
             </div>
 
             {/* Purchase Order Details Section */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
-                    WO INVOICE
-                </h3>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
-                    <div className="space-y-4">
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Invoice No.
-                            </span>
-                            <span className="text-sm">: {invoice.invoice_number}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Posting Date
-                            </span>
-                            <span className="text-sm">: {invoice.posting_date}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Physical Invoice Sent to
-                            </span>
-                            <span className="text-sm">: {invoice.plant_detail?.name}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                WO Reference Number
-                            </span>
-                            <span className="text-sm">: {invoice.wo_reference_number}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Related to
-                            </span>
-                            <span className="text-sm">: {invoice.related_to}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Supplier Name
-                            </span>
-                            <span className="text-sm">: {invoice.supplier_name}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Invoice Amount
-                            </span>
-                            <span className="text-sm">: {invoice.invoice_amount}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Total Taxes
-                            </span>
-                            <span className="text-sm">: {invoice.total_taxes}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Total Invoice Amount
-                            </span>
-                            <span className="text-sm">: {invoice.total_invoice_amount}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Notes
-                            </span>
-                            <span className="text-sm">: {invoice.notes}</span>
-                        </div>
+                <div className="flex items-center gap-3 pb-6">
+                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                        <ScrollText className="w-4 h-4" />
                     </div>
+                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]"> WO INVOICE</h3>
+                </div>
 
-                    <div className="space-y-4">
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Invoice Date
-                            </span>
-                            <span className="text-sm">: {invoice.invoice_date}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">ID</span>
-                            <span className="text-sm">: {invoice.id}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                WO Number
-                            </span>
-                            <span className="text-sm">: {invoice.wo_number}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Physical Invoice received
-                            </span>
-                            <span className="text-sm">: N/A</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Adjustment Amount
-                            </span>
-                            <span className="text-sm">: {invoice.adjustment_amount}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Retention Amount
-                            </span>
-                            <span className="text-sm">: {invoice.retention_amount}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                TDS Amount
-                            </span>
-                            <span className="text-sm">: {invoice.tds_amount}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                QC Amount
-                            </span>
-                            <span className="text-sm">: {invoice.qc_amount}</span>
-                        </div>
-                        <div className="flex">
-                            <span className="text-sm font-medium text-gray-700 w-44">
-                                Payable Amount
-                            </span>
-                            <span className="text-sm">: {invoice.payable_amount}</span>
-                        </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Invoice No.</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.invoice_number}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Invoice Date</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.invoice_date}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Posting Date</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.posting_date}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">ID</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.id}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Physical Invoice Sent to</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">N/A</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">WO Number</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.wo_number}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">WO Reference Number</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.wo_reference_number}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Physical Invoice received</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">N/A</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Related to</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.related_to}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Adjustment Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.adjustment_amount}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Supplier Name</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.supplier_name}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Retention Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.retention_amount}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Invoice Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.invoice_amount}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">TDS Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.tds_amount}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Total Taxes</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.total_taxes}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">QC Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.qc_amount}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Total Invoice Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.total_invoice_amount}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Payable Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.payable_amount}</span>
+                    </div>
+                    <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[180px]">Notes</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{invoice.notes}</span>
                     </div>
                 </div>
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+                <div className="flex items-center gap-3 pb-3">
+                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                        <ClipboardList className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BOQ List</h3>
+                </div>
                 <div className="overflow-x-auto">
                     <EnhancedTable
                         data={invoice.wo_invoice_inventories || []}
@@ -608,9 +591,12 @@ export const InvoiceDetails = () => {
             </div>
 
             <Card className="shadow-sm border border-border mb-6">
-                <CardHeader className="pb-4">
-                    <CardTitle className="text-lg font-medium">Attachments</CardTitle>
-                </CardHeader>
+                <div className="flex items-center gap-3 p-6">
+                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                        <Images className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+                </div>
                 <CardContent>
                     {Array.isArray(invoice.attachments) && invoice.attachments.length > 0 ? (
                         <div className="flex items-center flex-wrap gap-4">
@@ -693,9 +679,12 @@ export const InvoiceDetails = () => {
             </Card>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Debit/Credit Note Details
-                </h3>
+                <div className="flex items-center gap-3 pb-3">
+                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                        <ScrollText className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Debit Note Details</h3>
+                </div>
                 <div className="overflow-x-auto">
                     <EnhancedTable
                         data={invoice?.debit_notes || []}

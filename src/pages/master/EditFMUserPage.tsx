@@ -29,6 +29,7 @@ import { fetchAllowedCompanies } from "@/store/slices/projectSlice";
 import { RootState } from "@/store/store";
 import { toast } from "sonner";
 import { ticketManagementAPI } from "@/services/ticketManagementAPI";
+import axios from "axios";
 
 // Define interfaces for data shapes
 interface UserAccount {
@@ -71,6 +72,8 @@ interface LockUserPermission {
   employee_id?: string;
   designation?: string;
   access_level?: string;
+  last_working_date?: string;
+  lock_role_id?: number;
   access_to?: string[];
 }
 
@@ -81,6 +84,7 @@ interface UserData {
   mobile?: string;
   email?: string;
   gender?: string;
+  employee_type?: string;
   entity_id?: number;
   supplier_id?: number;
   site_id?: number;
@@ -89,6 +93,7 @@ interface UserData {
   user_type?: string;
   role_id?: number;
   urgency_email_enabled?: boolean;
+  user_category_id?: number;
   lock_user_permission?: LockUserPermission;
 }
 
@@ -98,6 +103,7 @@ interface FormData {
   mobileNumber: string;
   emailAddress: string;
   gender: string;
+  employeeType: string;
   selectEntity: string | number;
   supplier: string | number;
   employeeId: string;
@@ -112,6 +118,7 @@ interface FormData {
   selectedSites: string[];
   selectedCompanies: string[];
   lastWorkingDate: string;
+  selectUserCategory: string | number;
 }
 
 interface Payload {
@@ -138,6 +145,8 @@ interface Payload {
     gender: string;
     entity_id: string | number;
     supplier_id: string | number;
+    employee_type: string;
+    user_category_id: string | number;
   };
   lock_user_permission?: number;
 }
@@ -200,6 +209,7 @@ export const EditFMUserPage = () => {
     (state: RootState) => state.project
   );
 
+  const [userCategories, setUserCategories] = useState([])
   const [userAccount, setUserAccount] = useState<UserAccount>({});
   const [lockId, setLockId] = useState<number | undefined>();
   const [loadingSubmitting, setLoadingSubmitting] = useState<boolean>(false);
@@ -209,6 +219,7 @@ export const EditFMUserPage = () => {
     mobileNumber: "",
     emailAddress: "",
     gender: "",
+    employeeType: "",
     selectEntity: "",
     supplier: "",
     employeeId: "",
@@ -223,8 +234,23 @@ export const EditFMUserPage = () => {
     selectedSites: [],
     selectedCompanies: [],
     lastWorkingDate: "",
+    selectUserCategory: ""
   });
   const [userData, setUserData] = useState<UserData>({});
+
+  const fetchUserCategories = async () => {
+    try {
+      const categories = await axios.get(`https://${baseUrl}/pms/admin/user_categories.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setUserCategories(categories.data);
+    } catch (error) {
+      console.error('Error loading user categories:', error);
+      toast.error('Failed to load user categories');
+    }
+  }
 
   useEffect(() => {
     dispatch(fetchEntities());
@@ -232,6 +258,7 @@ export const EditFMUserPage = () => {
     dispatch(fetchUnits({ baseUrl, token }));
     dispatch(fetchDepartmentData());
     dispatch(fetchRoles({ baseUrl, token }));
+    fetchUserCategories();
     if (userId) {
       dispatch(fetchAllowedSites(userId));
     }
@@ -281,6 +308,7 @@ export const EditFMUserPage = () => {
         mobileNumber: userData.mobile || "",
         emailAddress: userData.email || "",
         gender: userData.gender || "",
+        employeeType: userData.employee_type || "",
         selectEntity: userData.entity_id || "",
         supplier: userData.supplier_id || "",
         employeeId: userData.lock_user_permission?.employee_id || "",
@@ -301,6 +329,7 @@ export const EditFMUserPage = () => {
             ? userData.lock_user_permission?.access_to || []
             : [],
         lastWorkingDate: userData.lock_user_permission?.last_working_date || "",
+        selectUserCategory: userData.user_category_id
       });
     } else {
       console.log("userData not found for id:", id);
@@ -387,6 +416,8 @@ export const EditFMUserPage = () => {
         gender: formData.gender,
         entity_id: formData.selectEntity,
         supplier_id: formData.supplier,
+        employee_type: formData.employeeType,
+        user_category_id: formData.selectUserCategory,
       },
       lock_user_permission: lockId,
     };
@@ -521,6 +552,23 @@ export const EditFMUserPage = () => {
                       <MenuItem value="">Select Gender</MenuItem>
                       <MenuItem value="Male">Male</MenuItem>
                       <MenuItem value="Female">Female</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Employee Type</InputLabel>
+                    <Select
+                      value={formData.employeeType}
+                      onChange={(e) =>
+                        handleInputChange("employeeType", e.target.value as string)
+                      }
+                      label="Gender"
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Type</MenuItem>
+                      <MenuItem value="internal">Internal</MenuItem>
+                      <MenuItem value="external">External</MenuItem>
                     </Select>
                   </FormControl>
                 </div>
@@ -876,6 +924,28 @@ export const EditFMUserPage = () => {
                       shrink: true
                     }}
                   />
+                </div>
+
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select User Category</InputLabel>
+                    <Select
+                      value={formData.selectUserCategory}
+                      onChange={(e) => handleInputChange('selectUserCategory', e.target.value.toString())}
+                      label="Select User Category"
+                      displayEmpty
+                      required
+                    >
+                      <MenuItem value="">Select User Category</MenuItem>
+                      {
+                        userCategories?.map((category) => (
+                          <MenuItem key={category.id} value={category.id.toString()}>
+                            {category.name}
+                          </MenuItem>
+                        ))
+                      }
+                    </Select>
+                  </FormControl>
                 </div>
               </div>
             </Box>

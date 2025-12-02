@@ -84,6 +84,14 @@ export const IncidentDetailsPage = () => {
     "5": "Catastrophic"
   };
 
+  const probabilityMap = {
+    "1": "Rare",
+    "2": "Possible",
+    "3": "Likely",
+    "4": "Often",
+    "5": "Frequent/ Almost certain"
+  };
+
 
   useEffect(() => {
     if (id) {
@@ -206,9 +214,9 @@ export const IncidentDetailsPage = () => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {!hasData && (
+            {/* {!hasData && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">No data</span>
-            )}
+            )} */}
             {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-600" /> : <ChevronDown className="w-5 h-5 text-gray-600" />}
           </div>
         </CardTitle>
@@ -641,6 +649,9 @@ export const IncidentDetailsPage = () => {
           {incident.severity && (
             <Field label="Severity" value={severityMap[incident.severity]} />
           )}
+          {incident.probability && (
+            <Field label="Probability" value={probabilityMap[incident.probability]} />
+          )}
           {incident.severity_brief && (
             <Field label="Severity Brief" value={incident.severity_brief} />
           )}
@@ -876,11 +887,37 @@ export const IncidentDetailsPage = () => {
                       size="icon"
                       variant="ghost"
                       className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                      onClick={() => {
-                        if (isImage) {
-                          window.open(attachmentUrl, '_blank');
-                        } else if (attachmentUrl) {
-                          window.open(attachmentUrl, '_blank');
+                      onClick={async () => {
+                        try {
+                          let baseUrl = localStorage.getItem('baseUrl') || '';
+                          const token = localStorage.getItem('token') || '';
+                          if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+                            baseUrl = 'https://' + baseUrl.replace(/^\/\/+/, '');
+                          }
+
+                          const response = await fetch(`${baseUrl}/attachfiles/${attachment.id}?show_file=true`, {
+                            headers: {
+                              'Authorization': `Bearer ${token}`
+                            }
+                          });
+
+                          if (!response.ok) {
+                            throw new Error('Download failed');
+                          }
+
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = attachmentName;
+                          document.body.appendChild(a);
+                          a.click();
+                          window.URL.revokeObjectURL(url);
+                          document.body.removeChild(a);
+                          toast.success('File downloaded successfully');
+                        } catch (error) {
+                          console.error('Download error:', error);
+                          toast.error('Failed to download file');
                         }
                       }}
                     >

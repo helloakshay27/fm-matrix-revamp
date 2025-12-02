@@ -37,6 +37,7 @@ export interface LoginResponse {
   firstname: string;
   lastname: string;
   access_token: string;
+  verified?: boolean; // OTP verification status
   mobile?: string;
   latitude?: number;
   longitude?: number;
@@ -122,9 +123,6 @@ export const getBaseUrl = (): string | null => {
   return savedUrl.startsWith("http") ? savedUrl : `https://${savedUrl}`;
 };
 
-
-
-
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
   const user = getUser();
@@ -148,7 +146,8 @@ const hostname = window.location.hostname;
 const isOmanSite = hostname.includes("oig.gophygital.work");
 const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
-  hostname.includes("web.gophygital.work");
+  hostname.includes("web.gophygital.work") ||
+  hostname.includes("lockated.gophygital.work");
 
 const isFmSite =
   hostname.includes("fm-uat.gophygital.work") ||
@@ -198,21 +197,47 @@ export const getOrganizationsByEmail = async (
 export const loginUser = async (
   email: string,
   password: string,
-  baseUrl: string
+  baseUrl: string,
+  organizationId?: number
 ): Promise<User> => {
+  // Build request body
+  const requestBody: any = {
+    email,
+    password,
+  };
+
+  // Add organization_id if provided
+  if (organizationId) {
+    requestBody.organization_id = organizationId;
+  }
+
   const response = await fetch(`https://${baseUrl}/api/users/sign_in.json`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      email,
-      password,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
-    throw new Error("Login failed");
+    // Try to get error details from response
+    let errorMessage = "Login failed";
+    let errorData = null;
+
+    try {
+      errorData = await response.json();
+      if (errorData?.error) {
+        errorMessage = errorData.error;
+      }
+    } catch (e) {
+      // If response is not JSON, use status text
+      errorMessage = response.statusText || "Login failed";
+    }
+
+    const error = new Error(errorMessage) as any;
+    error.status = response.status;
+    error.data = errorData;
+    throw error;
   }
 
   const data = await response.json();
@@ -265,11 +290,10 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
   const baseUrl = getBaseUrl();
   // const token = getToken();
 
-
-
-
   if (!email) {
-    throw new Error("Session expired. Please login again to receive a new OTP.");
+    throw new Error(
+      "Session expired. Please login again to receive a new OTP."
+    );
   }
 
   if (!baseUrl) {
@@ -451,4 +475,53 @@ export const resetPassword = async (
     success: true,
     message: "Password validation successful",
   };
+};
+
+// Get organizations by email and auto-select based on orgId
+export const getOrganizationsByEmailAndAutoSelect = async (
+  email: string,
+  orgId?: string
+): Promise<{
+  organizations: Organization[];
+  selectedOrg: Organization | null;
+}> => {
+  const hostname = window.location.hostname;
+
+  const isOmanSite = hostname.includes("oig.gophygital.work");
+  const isViSite =
+    hostname.includes("vi-web.gophygital.work") ||
+    hostname.includes("web.gophygital.work");
+  const isFmSite =
+    hostname.includes("fm-uat.gophygital.work") ||
+    hostname.includes("fm.gophygital.work");
+
+  let apiUrl = "";
+
+  if (isOmanSite || isFmSite) {
+    apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+  } else if (isViSite) {
+    apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`;
+  } else {
+    // Default fallback
+    apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+  }
+
+  const response = await fetch(apiUrl);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch organizations");
+  }
+
+  const data = await response.json();
+  const organizations = data.organizations || [];
+
+  // Auto-select organization if orgId is provided
+  let selectedOrg: Organization | null = null;
+  if (orgId) {
+    const orgIdNum = parseInt(orgId, 10);
+    selectedOrg =
+      organizations.find((org: Organization) => org.id === orgIdNum) || null;
+  }
+
+  return { organizations, selectedOrg };
 };

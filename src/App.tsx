@@ -6,8 +6,6 @@ import {
   Navigate,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Provider } from "react-redux";
-import { store } from "./store/store";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
@@ -58,6 +56,7 @@ import { FitoutChecklistDashboard } from "./pages/FitoutChecklistDashboard";
 import { AddChecklistDashboard } from "./pages/AddChecklistDashboard";
 import { FitoutViolationDashboard } from "./pages/FitoutViolationDashboard";
 import { CostApprovalPage } from "./pages/maintenance/CostApprovalPage";
+import { CostApprovalPage as CostApprovalStandalonePage } from "./pages/CostApprovalPage";
 
 // Import Maintenance pages
 import { AssetDashboard } from "./pages/AssetDashboard";
@@ -86,10 +85,15 @@ import { EditInventoryPage } from "./pages/EditInventoryPage";
 import InventoryConsumptionDashboard from "./pages/InventoryConsumptionDashboard";
 import InventoryConsumptionViewPage from "./pages/InventoryConsumptionViewPage";
 import EcoFriendlyListPage from "./pages/EcoFriendlyListPage";
+import { NewInboundPage } from "./pages/NewInboundPage";
+import { NewOutboundPage } from "./pages/NewOutboundPage";
+import { OutboundListPage } from "./pages/OutboundListPage";
+import { OutboundDetailPage } from "./pages/OutboundDetailPage";
 
 // Import Task pages
 import { ScheduledTaskDashboard } from "./pages/maintenance/ScheduledTaskDashboard";
 import { TaskDetailsPage } from "./pages/TaskDetailsPage";
+import { JobSheetPage } from "./pages/JobSheetPage";
 
 // Import Utility pages
 import { UtilityDashboard } from "./pages/UtilityDashboard";
@@ -136,6 +140,7 @@ import { ScheduleListDashboard } from "./pages/ScheduleListDashboard";
 import { AddSchedulePage } from "./pages/AddSchedulePage";
 import { ScheduleExportPage } from "./pages/ScheduleExportPage";
 import { EditSchedulePage } from "./pages/EditSchedulePage";
+import CloneSchedulePage from "./pages/CloneSchedulePage";
 import { CopySchedulePage } from "./pages/CopySchedulePage";
 import { ViewSchedulePage } from "./pages/ViewSchedulePage";
 
@@ -164,6 +169,7 @@ import { EditIconPage } from "./pages/EditIconPage";
 import { IncidentDashboard } from "./pages/IncidentDashboard";
 import { PermitToWorkDashboard } from "./pages/PermitToWorkDashboard";
 import { PermitDetails } from "./pages/PermitDetails";
+import PermitSafetyCheckForm from "./pages/PermitSafetyCheckForm";
 import { PermitPendingApprovalsDashboard } from "./pages/PermitPendingApprovalsDashboard";
 import { VendorPermitForm } from "./pages/VendorPermitForm";
 import FillForm from "./pages/FillForm";
@@ -171,6 +177,7 @@ import FillJSAForm from "./pages/FillJSAForm";
 import { AddPermitChecklist } from "./pages/AddPermitChecklist";
 import { PermitChecklistList } from "./pages/PermitChecklistList";
 import { PermitChecklistDetails } from "./pages/PermitChecklistDetails";
+import { EditPermitChecklist } from "./pages/EditPermitCheklist";
 import { EditPermitPage } from "./pages/EditPermitPage";
 
 import { LeadDashboard } from "./pages/LeadDashboard";
@@ -238,6 +245,10 @@ import { EditStaffPage } from "./pages/EditStaffPage";
 
 // Import Add Staff page
 import { AddStaffPage } from "./pages/AddStaffPage";
+
+// Import Mailroom pages
+import { InboundListPage } from "./pages/InboundListPage";
+import { InboundDetailPage } from "./pages/InboundDetailPage";
 
 import { FnBRestaurantDashboard } from "./pages/FnBRestaurantDashboard";
 import { FnBRestaurantDetailsPage } from "./pages/FnBRestaurantDetailsPage";
@@ -388,6 +399,7 @@ import { AssetAuditDashboard } from "./pages/AssetAuditDashboard";
 import { AddAssetAuditPage } from "./pages/AddAssetAuditPage";
 import { EditAssetAuditPage } from "./pages/EditAssetAuditPage";
 import { AssetAuditDetailsPage } from "./pages/AssetAuditDetailsPage";
+import { AssetAuditReportPage } from "./pages/AssetAuditReportPage";
 
 // Import Master Checklist page
 import { AddMasterChecklistPage } from "./pages/AddMasterChecklistPage";
@@ -606,6 +618,7 @@ import { AddressMasterPage } from "./pages/AddressMasterPage";
 
 // Import new master pages
 import { UnitMasterByDefaultPage } from "./pages/UnitMasterByDefaultPage";
+import { CommunicationTemplatePage } from "./pages/CommunicationTemplatePage";
 
 // Import Add Address page
 import { AddAddressPage } from "./pages/AddAddressPage";
@@ -615,9 +628,6 @@ import { EditAddressPage } from "./pages/EditAddressPage";
 
 // Import ChecklistGroupDashboard for setup and settings
 import { ChecklistGroupDashboard } from "./pages/setup/ChecklistGroupDashboard";
-
-// Import Booking List page
-import BookingListDashboard from "./pages/BookingListDashboard";
 
 // Import Booking Setup Dashboard
 import { BookingSetupDashboard } from "./pages/BookingSetupDashboard";
@@ -643,6 +653,7 @@ import { MobileTicketsPage } from "./pages/mobile/MobileTicketsPage";
 import { TicketListPage } from "./pages/TicketListPage";
 import { MobileRestaurantPage } from "./pages/mobile/MobileRestaurantPage";
 import { MobileAssetPage } from "./pages/mobile/MobileAssetPage";
+import { MobileOwnerCostAssetPage } from "./pages/mobile/MobileOwnerCostAssetPage";
 import { MobileOrdersPage } from "./components/mobile/MobileOrdersPage";
 import { QRTestPage } from "./pages/QRTestPage";
 
@@ -651,6 +662,7 @@ import { EscalationMatrixPage } from "./pages/maintenance/EscalationMatrixPage";
 // Import Setup pages
 import { PermitSetupDashboard } from "./pages/PermitSetupDashboard";
 import { IncidentSetupDashboard } from "./pages/IncidentSetupDashboard";
+import { IncidentNewDetails } from "./pages/IncidentNewDetails";
 
 // Import Holiday Calendar page
 import { HolidayCalendarPage as SettingsHolidayCalendarPage } from "./pages/settings/HolidayCalendarPage";
@@ -721,6 +733,27 @@ import AddGateNumberPage from "./pages/master/AddGateNumberPage";
 import AddGatePassTypePage from "./pages/master/AddGatePassTypePage";
 import EditGateNumberPage from "./pages/master/EditGateNumberPage";
 import EditGatePassTypePage from "./pages/master/EditGatePassTypePage";
+import CommunicationTemplateListPage from "./pages/master/CommunicationTemplateListPage";
+import AddCommunicationTemplatePage from "./pages/master/AddCommunicationTemplatePage";
+import EditCommunicationTemplatePage from "./pages/master/EditCommunicationTemplatePage";
+
+// Import Template pages
+import RootCauseAnalysisListPage from "./pages/master/template/RootCauseAnalysisListPage";
+import AddRootCauseAnalysisPage from "./pages/master/template/AddRootCauseAnalysisPage";
+import EditRootCauseAnalysisPage from "./pages/master/template/EditRootCauseAnalysisPage";
+import PreventiveActionListPage from "./pages/master/template/PreventiveActionListPage";
+import AddPreventiveActionPage from "./pages/master/template/AddPreventiveActionPage";
+import EditPreventiveActionPage from "./pages/master/template/EditPreventiveActionPage";
+import ShortTermImpactListPage from "./pages/master/template/ShortTermImpactListPage";
+import AddShortTermImpactPage from "./pages/master/template/AddShortTermImpactPage";
+import EditShortTermImpactPage from "./pages/master/template/EditShortTermImpactPage";
+import LongTermImpactListPage from "./pages/master/template/LongTermImpactListPage";
+import AddLongTermImpactPage from "./pages/master/template/AddLongTermImpactPage";
+import EditLongTermImpactPage from "./pages/master/template/EditLongTermImpactPage";
+import CorrectiveActionListPage from "./pages/master/template/CorrectiveActionListPage";
+import AddCorrectiveActionPage from "./pages/master/template/AddCorrectiveActionPage";
+import EditCorrectiveActionPage from "./pages/master/template/EditCorrectiveActionPage";
+
 import AddInventoryTypePage from "./pages/master/AddInventoryTypePage";
 import EditInventoryTypePage from "./pages/master/EditInventoryTypePage";
 import AddInventorySubTypePage from "./pages/master/AddInventorySubTypePage";
@@ -732,6 +765,7 @@ import CheckHierarchy from "./components/CheckHierarchy";
 import { InvoiceFeeds } from "./pages/InvoiceFeeds";
 import EditApprovalMatrixPage from "./pages/settings/EditApprovalMatrixPage";
 import AllContent from "./components/fm-pdf/AllContent";
+import DailyReport from "./components/DailyReport";
 import PDFDownloadPage from "./components/PDFDownloadPage";
 import PermissionDemo from "./components/PermissionDemo";
 import CRMWalletList from "./pages/CRMWalletList";
@@ -756,6 +790,36 @@ import { LocationAccountPage } from "./pages/master/LocationAccountPage";
 import LMCPage from "./pages/LMCPage";
 import { ChannelsLayout } from "./pages/ChannelsLayout";
 import DMConversation from "./pages/DMConversation";
+import { TaskSubmissionPage } from "./pages/TaskSubmissionPage";
+import { AdminUsersDashboard } from "./pages/admin/AdminUsersDashboard";
+import { CreateAdminUserPage } from "./pages/admin/CreateAdminUserPage";
+import GroupConversation from "./components/GroupConversation";
+import ChannelTasksAll from "./pages/ChannelTasksAll";
+import ChatTaskDetailsPage from "./pages/ChatTaskDetailsPage";
+import TabularResponseDetailsPage from "./pages/TabularResponseDetailsPage";
+import CurrencyPage from "./pages/CurrencyPage";
+import { LockedUsersDashboard } from "./pages/settings/LockedUsersDashboard";
+import { PRDeletionRequests } from "./pages/PRDeletionRequests";
+import { DirectPDFDownloadPage } from "./pages/DirectPDFDownloadPage";
+import { DirectPDFDownloadAPIPage } from "./pages/DirectPDFDownloadAPIPage";
+import { DeletedPRs } from "./pages/DeletedPRs";
+import MsafeDashboardVI from "./pages/MsafeDashboardVI";
+import { DashboardMobile } from "./pages/DashboardMobile";
+import SafetyCheckAudit from "./pages/SafetyCheckAudit";
+import MsafeCirlce from "./pages/MsafeCirlce";
+import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
+import Sitemap from "./pages/Sitemap";
+import BookingList from "./pages/BookingList";
+import IframeDashboardMsafe from "./pages/IframeDashboardMsafe";
+import { ProjectsDashboard } from "./pages/ProjectsDashboard";
+import ProjectDetailsPage from "./pages/ProjectDetailsPage";
+import ProjectMilestones from "./pages/ProjectMilestones";
+import ProjectTasksPage from "./pages/ProjectTasksPage";
+import ProjectTaskDetailsPage from "./pages/ProjectTaskDetailsPage";
+import { SprintDashboard } from "./pages/SprintDashboard";
+import SprintDetailsPage from "./pages/SprintDetailsPage";
+import MilestoneDetailsPage from "./pages/MilestoneDetailsPage";
+import ProjectTaskDetails from "./pages/ProjectTaskDetails";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -768,7 +832,6 @@ function App() {
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
   useRouteLogger();
-
 
   // Initialize global MUI Select search enhancer
   useEffect(() => {
@@ -784,31 +847,45 @@ function App() {
     };
   }, []);
 
-
-  // Check authentication and fetch currency on app load
+  // Check authentication and fetch currency when site is available
+  const selectedSite = useAppSelector((s) => s.site.selectedSite);
   useEffect(() => {
     if (!baseUrl || !token) return;
+    const urlSiteId =
+      new URLSearchParams(window.location.search).get("site_id") || "";
+    const id =
+      (selectedSite?.id ? String(selectedSite.id) : "") ||
+      urlSiteId ||
+      localStorage.getItem("selectedSiteId") ||
+      "";
+    if (!id) return;
 
     const fetchCurrency = async () => {
       try {
-        const response = await dispatch(
-          getCurrency({
-            baseUrl,
-            token,
-            currency: isOmanSite ? "Oman" : "Indian Rupees",
-          })
+        const response: any = await dispatch(
+          getCurrency({ baseUrl, token, id })
         ).unwrap();
-        localStorage.setItem("currency", response[0].value);
+        const currency =
+          Array.isArray(response) && response[0]?.currency
+            ? response[0].currency
+            : "INR";
+        const currencySymbol =
+          Array.isArray(response) && response[0]?.symbol
+            ? response[0].symbol
+            : "₹";
+        if (currency) localStorage.setItem("currency", currency);
+        if (currencySymbol)
+          localStorage.setItem("currencySymbol", currencySymbol);
       } catch (error) {
         console.log(error);
       }
     };
 
     fetchCurrency();
-  }, [baseUrl, token]);
+  }, [baseUrl, token, selectedSite?.id, dispatch]);
 
   return (
-    <Provider store={store}>
+    <>
       {/* <Router> */}
       <QueryClientProvider client={queryClient}>
         <EnhancedSelectProvider>
@@ -827,6 +904,11 @@ function App() {
                   <Route
                     path="master/location/account"
                     element={<OpsAccountPage />}
+                  />
+                  <Route path="admin/users" element={<AdminUsersDashboard />} />
+                  <Route
+                    path="admin/create-admin-user"
+                    element={<CreateAdminUserPage />}
                   />
 
                   <Route
@@ -893,6 +975,10 @@ function App() {
                     path="settings/account/lock-sub-function/edit/:id"
                     element={<LockSubFunctionEdit />}
                   />
+                  <Route
+                    path="settings/account/locked-users"
+                    element={<LockedUsersDashboard />}
+                  />
                   {/* <Route
                       path="settings/account/lock-sub-function/create"
                       element={<LockSubFunctionCreate />}
@@ -901,6 +987,7 @@ function App() {
 
                 {/* Login Route */}
                 <Route path="/thepdf" element={<AllContent />} />
+                <Route path="/dailypdf" element={<DailyReport />} />
                 <Route path="/weeklypdf" element={<WeeklyReport />} />
 
                 <Route
@@ -931,8 +1018,38 @@ function App() {
                   path="/password-reset-success"
                   element={<PasswordResetSuccessPage />}
                 />
+
+                <Route
+                  path="/direct-pdf-download/:taskId"
+                  element={<DirectPDFDownloadPage />}
+                />
+                <Route
+                  path="/app/direct-pdf-download/:taskId"
+                  element={<DirectPDFDownloadAPIPage />}
+                />
+                <Route path="/dashboard-mobile" element={<DashboardMobile />} />
+                <Route path="/sitemap" element={<Sitemap />} />
+
                 <Route
                   path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/msafe-dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <IframeDashboardMsafe />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/dashboard-executive"
                   element={
                     <ProtectedRoute>
                       <Dashboard />
@@ -1010,7 +1127,7 @@ function App() {
                   path="/bookings"
                   element={
                     <ProtectedRoute>
-                      <BookingListDashboard />
+                      <BookingList />
                     </ProtectedRoute>
                   }
                 />
@@ -1034,6 +1151,15 @@ function App() {
                 />
 
                 <Route
+                  path="/cost-approval/:approvalId/:userId"
+                  element={
+                    <ProtectedRoute>
+                      <CostApprovalStandalonePage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
                   path="/"
                   element={
                     <ProtectedRoute>
@@ -1044,10 +1170,35 @@ function App() {
                   }
                 >
                   <Route index element={<Index />} />
-                  <Route path="/channels" element={<ChannelsLayout />}>
-                    <Route index element={<div className="flex justify-center items-center h-[calc(100vh-112px)] w-[calc(100vw-32rem)]">Select a Chat/Group to view messages</div>} />
-                    <Route path="/channels/messages/:id" element={<DMConversation />} />
+                  <Route path="/vas/channels" element={<ChannelsLayout />}>
+                    <Route
+                      index
+                      element={
+                        <div
+                          className={`flex justify-center items-center h-[calc(100vh-112px)] w-[calc(100vw-32rem)]`}
+                        >
+                          Select a Chat/Group to view messages
+                        </div>
+                      }
+                    />
+                    <Route
+                      path="/vas/channels/messages/:id"
+                      element={<DMConversation />}
+                    />
+                    <Route
+                      path="/vas/channels/groups/:id"
+                      element={<GroupConversation />}
+                    />
                   </Route>
+                  <Route
+                    path="/vas/channels/tasks"
+                    element={<ChannelTasksAll />}
+                  />
+                  <Route
+                    path="/vas/channels/tasks/:id"
+                    element={<ChatTaskDetailsPage />}
+                  />
+
                   {/* Dashboard Routes */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route
@@ -1060,6 +1211,7 @@ function App() {
                     path="/holiday-calendar"
                     element={<HolidayCalendarPage />}
                   />
+                  <Route path="/sitemap" element={<Sitemap />} />
 
                   {/* Rule Engine Routes */}
                   <Route
@@ -1193,6 +1345,8 @@ function App() {
                     path="/settings/checklist-setup/groups"
                     element={<ChecklistGroupsPage />}
                   />
+
+                  <Route path="/settings/currency" element={<CurrencyPage />} />
 
                   <Route
                     path="/master/checklist"
@@ -1442,6 +1596,12 @@ function App() {
                     path="/crm/wallet-list/:id"
                     element={<CRMWalletDetails />}
                   />
+
+                  <Route
+                    path="/msafedashboard"
+                    element={<MsafeDashboardVI />}
+                  />
+
                   <Route
                     path="/crm/point-expiry"
                     element={<CRMWalletPointExpiry />}
@@ -1527,7 +1687,7 @@ function App() {
                     element={<UpdateTicketsPage />}
                   />
                   <Route
-                    path="/maintenance/ticket/details/:id"
+                    path="/maintenance/ticket/debls/:id"
                     element={<TicketDetailsPage />}
                   />
                   <Route
@@ -1537,6 +1697,10 @@ function App() {
                   <Route
                     path="/maintenance/ticket/:id/tag-vendor"
                     element={<TicketTagVendorPage />}
+                  />
+                  <Route
+                    path="/maintenance/ticket/:id/job-sheet"
+                    element={<TicketJobSheetPage />}
                   />
                   <Route
                     path="/maintenance/ticket"
@@ -1574,8 +1738,18 @@ function App() {
                     element={<ScheduledTaskDashboard />}
                   />
                   <Route
+                    path="/maintenance/task/submit/:id"
+                    element={<TaskSubmissionPage />}
+                  />
+
+                  <Route
                     path="/maintenance/task/details/:id"
                     element={<TaskDetailsPage />}
+                  />
+
+                  <Route
+                    path="/maintenance/task/job-sheet/:id"
+                    element={<JobSheetPage />}
                   />
 
                   {/* Safety Routes */}
@@ -1590,6 +1764,10 @@ function App() {
                   <Route
                     path="/safety/incident/:id"
                     element={<IncidentDetailsPage />}
+                  />
+                  <Route
+                    path="/safety/incident/new-details/:id"
+                    element={<IncidentNewDetails />}
                   />
                   <Route
                     path="/safety/incident/edit/:id"
@@ -1612,6 +1790,10 @@ function App() {
                     element={<PermitChecklistDetails />}
                   />
                   <Route
+                    path="/safety/permit/checklist/edit/:id"
+                    element={<EditPermitChecklist />}
+                  />
+                  <Route
                     path="/safety/permit-checklist/add"
                     element={<AddPermitChecklist />}
                   />
@@ -1620,12 +1802,21 @@ function App() {
                     element={<PermitDetails />}
                   />
                   <Route
+                    path="/safety-check-audit"
+                    element={<SafetyCheckAudit />}
+                  />
+
+                  <Route
                     path="/safety/permit/edit/:id"
                     element={
                       <ProtectedRoute>
                         <EditPermitPage />
                       </ProtectedRoute>
                     }
+                  />
+                  <Route
+                    path="/safety/permit/safety-check-form"
+                    element={<PermitSafetyCheckForm />}
                   />
                   <Route
                     path="/safety/permit/vendor-form/:id?"
@@ -1684,6 +1875,10 @@ function App() {
                   <Route
                     path="/safety/training-list"
                     element={<TrainingListDashboard />}
+                  />
+                  <Route
+                    path="/safety/m-safe/circle"
+                    element={<MsafeCirlce />}
                   />
 
                   {/* CRM Routes */}
@@ -1786,6 +1981,10 @@ function App() {
                   <Route
                     path="/maintenance/audit/assets/details/:id"
                     element={<AssetAuditDetailsPage />}
+                  />
+                  <Route
+                    path="/maintenance/audit/assets/report/:id"
+                    element={<AssetAuditReportPage />}
                   />
 
                   {/* Waste Generation Routes */}
@@ -1894,6 +2093,10 @@ function App() {
                     element={<SurveyResponseDashboard />}
                   />
 
+                  <Route
+                    path="/maintenance/survey/response/:surveyId/:responseId"
+                    element={<TabularResponseDetailsPage />}
+                  />
                   {/* Finance Routes */}
                   <Route
                     path="/finance/material-pr"
@@ -2022,6 +2225,11 @@ function App() {
                     path="/finance/pending-approvals"
                     element={<PendingApprovalsDashboard />}
                   />
+                  <Route
+                    path="/finance/deletion-requests"
+                    element={<PRDeletionRequests />}
+                  />
+                  <Route path="/finance/deleted-prs" element={<DeletedPRs />} />
                   <Route
                     path="/finance/invoice"
                     element={<InvoiceDashboard />}
@@ -2174,6 +2382,11 @@ function App() {
                     element={<TaskDetailsPage />}
                   />
 
+                  <Route
+                    path="/maintenance/task/job-sheet/:id"
+                    element={<JobSheetPage />}
+                  />
+
                   {/* Schedule Routes */}
                   <Route
                     path="/maintenance/schedule"
@@ -2191,6 +2404,11 @@ function App() {
                     path="/maintenance/schedule/edit/:id"
                     element={<EditSchedulePage />}
                   />
+                  <Route
+                    path="/maintenance/schedule/clone/:id"
+                    element={<CloneSchedulePage />}
+                  />
+
                   <Route
                     path="/maintenance/schedule/copy/:id"
                     element={<CopySchedulePage />}
@@ -2212,6 +2430,43 @@ function App() {
                   <Route
                     path="/maintenance/vendor/view/:id"
                     element={<DetailsVendorPage />}
+                  />
+                  <Route
+                    path="/maintenance/projects"
+                    element={<ProjectsDashboard />}
+                  />
+                  <Route
+                    path="/maintenance/projects/details/:id"
+                    element={<ProjectDetailsPage />}
+                  />
+                  <Route
+                    path="/maintenance/projects/:id/milestones"
+                    element={<ProjectMilestones />}
+                  />
+                  <Route
+                    path="/maintenance/projects/:id/milestones/:mid/tasks"
+                    element={<ProjectTasksPage />}
+                  />
+                  <Route
+                    //   path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
+                    //   element={<ProjectTaskDetailsPage />}
+                    // />
+                    //   <Route
+                    path="/maintenance/projects/:id/milestones/:mid/tasks/:taskId"
+                    element={<ProjectTaskDetails />}
+                  />
+                  <Route
+                    path="/maintenance/sprint"
+                    element={<SprintDashboard />}
+                  />
+                  <Route
+                    path="/maintenance/sprint/details/:id"
+                    element={<SprintDetailsPage />}
+                  />
+
+                  <Route
+                    path="/maintenance/projects/:id/milestones/:mid"
+                    element={<MilestoneDetailsPage />}
                   />
 
                   {/* Utility Routes */}
@@ -2495,6 +2750,16 @@ function App() {
                     element={<RVehiclesOutDashboard />}
                   />
                   {/* Value Added Services Routes */}
+
+                  <Route
+                    path="/mail-inbounds-create"
+                    element={
+
+
+                      <NewInboundPage />
+
+                    }
+                  />
                   <Route
                     path="/vas/fnb"
                     element={<RestaurantOrdersTable needPadding={true} />}
@@ -2516,10 +2781,33 @@ function App() {
                     path="/vas/fnb/discounts"
                     element={<FnBDiscountsPage />}
                   />
+
+                  {/* Mailroom Routes */}
                   <Route
-                    path="/vas/parking"
-                    element={<ParkingDashboard />}
+                    path="/vas/mailroom/inbound"
+                    element={<InboundListPage />}
                   />
+                  <Route
+                    path="/vas/mailroom/inbound/create"
+                    element={<NewInboundPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/inbound/:id"
+                    element={<InboundDetailPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/outbound"
+                    element={<OutboundListPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/outbound/create"
+                    element={<NewOutboundPage />}
+                  />
+                  <Route
+                    path="/vas/mailroom/outbound/:id"
+                    element={<OutboundDetailPage />}
+                  />
+                  <Route path="/vas/parking" element={<ParkingDashboard />} />
                   <Route
                     path="/vas/parking/details/:clientId"
                     element={<ParkingDetailsPage />}
@@ -2722,9 +3010,7 @@ function App() {
                   />
                   <Route
                     path="/safety/m-safe"
-                    element={
-                      <Navigate to="/safety/m-safe/internal" replace />
-                    }
+                    element={<Navigate to="/safety/m-safe/internal" replace />}
                   />
 
                   <Route
@@ -2759,10 +3045,7 @@ function App() {
                     path="/safety/m-safe/krcc-list/:id"
                     element={<KRCCFormDetail />}
                   />
-                  <Route
-                    path="/safety/m-safe/lmc"
-                    element={<LMCDashboard />}
-                  />
+                  <Route path="/safety/m-safe/lmc" element={<LMCDashboard />} />
                   <Route
                     path="/safety/m-safe/lmc/:id"
                     element={<LMCUserDetail />}
@@ -2775,10 +3058,7 @@ function App() {
                     path="/safety/m-safe/training-list/:id"
                     element={<TrainingDetailPage />}
                   />
-                  <Route
-                    path="/safety/m-safe/smt"
-                    element={<SMTDashboard />}
-                  />
+                  <Route path="/safety/m-safe/smt" element={<SMTDashboard />} />
                   <Route
                     path="/safety/m-safe/smt/:id"
                     element={<SMTDetailPage />}
@@ -2835,10 +3115,7 @@ function App() {
                   />
 
                   {/* VAS Booking Routes */}
-                  <Route
-                    path="/vas/booking/list"
-                    element={<BookingListDashboard />}
-                  />
+                  <Route path="/vas/booking/list" element={<BookingList />} />
                   <Route
                     path="/vas/booking/add"
                     element={<AddFacilityBookingPage />}
@@ -2911,6 +3188,89 @@ function App() {
                     element={<EditGateNumberPage />}
                   />
                   <Route
+                    path="/master/communication-template"
+                    element={<CommunicationTemplateListPage />}
+                  />
+                  <Route
+                    path="/master/communication-template/add"
+                    element={<AddCommunicationTemplatePage />}
+                  />
+                  <Route
+                    path="/master/communication-template/edit/:id"
+                    element={<EditCommunicationTemplatePage />}
+                  />
+
+                  {/* Template Routes - Root Cause Analysis */}
+                  <Route
+                    path="/master/template/root-cause-analysis"
+                    element={<RootCauseAnalysisListPage />}
+                  />
+                  <Route
+                    path="/master/template/root-cause-analysis/add"
+                    element={<AddRootCauseAnalysisPage />}
+                  />
+                  <Route
+                    path="/master/template/root-cause-analysis/edit/:id"
+                    element={<EditRootCauseAnalysisPage />}
+                  />
+
+                  {/* Template Routes - Preventive Action */}
+                  <Route
+                    path="/master/template/preventive-action"
+                    element={<PreventiveActionListPage />}
+                  />
+                  <Route
+                    path="/master/template/preventive-action/add"
+                    element={<AddPreventiveActionPage />}
+                  />
+                  <Route
+                    path="/master/template/preventive-action/edit/:id"
+                    element={<EditPreventiveActionPage />}
+                  />
+
+                  {/* Template Routes - Short-term Impact */}
+                  <Route
+                    path="/master/template/short-term-impact"
+                    element={<ShortTermImpactListPage />}
+                  />
+                  <Route
+                    path="/master/template/short-term-impact/add"
+                    element={<AddShortTermImpactPage />}
+                  />
+                  <Route
+                    path="/master/template/short-term-impact/edit/:id"
+                    element={<EditShortTermImpactPage />}
+                  />
+
+                  {/* Template Routes - Long-term Impact */}
+                  <Route
+                    path="/master/template/long-term-impact"
+                    element={<LongTermImpactListPage />}
+                  />
+                  <Route
+                    path="/master/template/long-term-impact/add"
+                    element={<AddLongTermImpactPage />}
+                  />
+                  <Route
+                    path="/master/template/long-term-impact/edit/:id"
+                    element={<EditLongTermImpactPage />}
+                  />
+
+                  {/* Template Routes - Corrective Action */}
+                  <Route
+                    path="/master/template/corrective-action"
+                    element={<CorrectiveActionListPage />}
+                  />
+                  <Route
+                    path="/master/template/corrective-action/add"
+                    element={<AddCorrectiveActionPage />}
+                  />
+                  <Route
+                    path="/master/template/corrective-action/edit/:id"
+                    element={<EditCorrectiveActionPage />}
+                  />
+
+                  <Route
                     path="/master/gate-pass-type"
                     element={<GatePassTypePage />}
                   />
@@ -2971,6 +3331,12 @@ function App() {
                     path="/maintenance/task/task-details/:id"
                     element={<TaskDetailsPage />}
                   />
+
+                  <Route
+                    path="/maintenance/task/job-sheet/:id"
+                    element={<JobSheetPage />}
+                  />
+
                   <Route path="*" element={<NotFound />} />
                 </Route>
 
@@ -3292,8 +3658,19 @@ function App() {
                   path="/mobile/assets/:assetId/breakdown"
                   element={<MobileAssetPage />}
                 />
+                {/* Mobile Owner Cost Routes */}
+                <Route
+                  path="/mobile/owner-cost/:assetId"
+                  element={<MobileOwnerCostAssetPage />}
+                />
+                <Route
+                  path="/mo/:assetId"
+                  element={<MobileOwnerCostAssetPage />}
+                />
                 {/* QR Test Route */}
                 <Route path="/qr-test" element={<QRTestPage />} />
+
+                {/* Mail Inbound Routes */}
               </Routes>
               <Toaster />
               <SonnerToaster
@@ -3314,7 +3691,7 @@ function App() {
         </EnhancedSelectProvider>
       </QueryClientProvider>
       {/* </Router> */}
-    </Provider>
+    </>
   );
 }
 

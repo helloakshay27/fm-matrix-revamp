@@ -21,19 +21,29 @@ export const AssetCategoryWiseCard: React.FC<AssetCategoryWiseCardProps> = ({ da
     // Handle different data structures
     let categoryData = [];
     
-    if (data.categories && Array.isArray(data.categories)) {
+    if (data.assets_statistics?.asset_categorywise) {
+      // New structure
+      categoryData = data.assets_statistics.asset_categorywise.map((item: any, index: number) => ({
+        name: item.category,
+        value: item.count,
+        color: COLORS[index % COLORS.length]
+      }));
+    } else if (data.categories && Array.isArray(data.categories)) {
+      // Legacy structure with categories array
       categoryData = data.categories.map((item: any, index: number) => ({
         name: item.category_name || item.name,
         value: item.asset_count || item.count || item.value,
         color: COLORS[index % COLORS.length]
       }));
     } else if (data.asset_type_category_counts) {
+      // Legacy structure with asset_type_category_counts
       categoryData = Object.entries(data.asset_type_category_counts).map(([name, value], index) => ({
         name,
         value: value as number,
         color: COLORS[index % COLORS.length]
       }));
     } else if (Array.isArray(data)) {
+      // Direct array structure
       categoryData = data.map((item: any, index: number) => ({
         name: item.category || item.name,
         value: item.count || item.value,

@@ -6,6 +6,7 @@ import createApiSlice from "../api/apiSlice";
 export interface OccupantUserApiResponse {
   id: number;
   company: string;
+  vendor_name?: string;
   firstname: string;
   lastname: string;
   country_code: string;
@@ -15,6 +16,7 @@ export interface OccupantUserApiResponse {
   department?: {
     department_name: string;
   };
+  unit_name?: string;
   user_type: string;
   status: string;
   active: boolean;
@@ -29,6 +31,8 @@ export interface OccupantUserApiResponse {
     access_level?: string;
   };
   entity_name?: string;
+  role_name?: string;
+  created_by_name?: string;
 }
 
 // API response shape
@@ -51,10 +55,14 @@ export interface OccupantUser {
   status: string;
   employeeId?: string;
   accessLevel?: string;
+  role?: string;
+  createdBy?: string;
   type: string;
-  active: boolean;
-  faceRecognition: boolean;
+  active: string | boolean;
+  faceRecognition: string | boolean;
   appDownloaded: string;
+  lockUserId?: string | null;
+  entity?: string;
 }
 
 interface Pagination {
@@ -85,6 +93,7 @@ export const fetchOccupantUsers = createAsyncThunk(
     perPage,
     firstname_cont = "",
     lastname_cont = "",
+    mobile_cont = "",
     email_cont = "",
     lock_user_permission_status_eq = "",
     entity_id_eq = "",
@@ -95,6 +104,7 @@ export const fetchOccupantUsers = createAsyncThunk(
     perPage: number;
     firstname_cont?: string;
     lastname_cont?: string;
+    mobile_cont?: string;
     email_cont?: string;
     lock_user_permission_status_eq?: string;
     entity_id_eq?: string;
@@ -105,6 +115,7 @@ export const fetchOccupantUsers = createAsyncThunk(
       "q[lock_user_permission_status_eq]": lock_user_permission_status_eq,
       "q[firstname_cont]": firstname_cont,
       "q[lastname_cont]": lastname_cont,
+      "q[mobile_cont]": mobile_cont,
       "q[email_cont]": email_cont,
       "q[entity_id_eq]": entity_id_eq,
       "q[search_all_fields_cont]": search_all_fields_cont,
@@ -119,17 +130,19 @@ export const fetchOccupantUsers = createAsyncThunk(
     const transformedUsers: OccupantUser[] = response.data.occupant_users.map(
       (user) => ({
         id: user.id,
-        company: user.company,
+        company: user.vendor_name ,
         name: `${user.firstname} ${user.lastname}`,
-        mobile: `${user.country_code} ${user.mobile}`,
+        mobile: `${user.mobile}`,
         email: user.email,
         gender: user.gender,
-        department: user.department?.department_name,
+        department: user.unit_name ,
         status: user.lock_user_permission.status,
         employeeId: user.lock_user_permission?.employee_id,
         accessLevel: user.lock_user_permission?.access_level,
+        role: user.role_name,
+        createdBy: user.created_by_name,
         type: user.user_type === "pms_occupant_admin" ? "Admin" : "Member",
-        active: user.active ? "Yes" : "No",
+        active: user.department?.active ? "Yes" : "No",
         faceRecognition: user.face_added ? "Yes" : "No",
         appDownloaded: user.app_downloaded,
         lockUserId: user.lock_user_permission.id ?? null,
@@ -189,7 +202,7 @@ const occupantUsersSlice = createSlice({
       })
       .addCase(fetchOccupantUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload;
+        state.users = action.payload.transformedUsers;
         state.pagination = action.payload.pagination;
       })
       .addCase(fetchOccupantUsers.rejected, (state, action) => {

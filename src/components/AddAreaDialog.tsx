@@ -40,7 +40,7 @@ export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialog
 
   const fetchBuildings = async () => {
     try {
-      const response = await apiClient.get('/buildings.json');
+      const response = await apiClient.get('/buildings.json?order=name');
       setBuildings(response.data || []);
     } catch (error) {
       console.error('Error fetching buildings:', error);
@@ -50,7 +50,7 @@ export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialog
 
   const fetchWings = async () => {
     try {
-      const response = await apiClient.get('/pms/wings.json');
+      const response = await apiClient.get(`/pms/wings.json?building_id=${selectedBuilding}`);
       setWings(response.data.wings || []);
     } catch (error) {
       console.error('Error fetching wings:', error);
@@ -140,14 +140,14 @@ export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-w-2xl">
         <DialogHeader className="flex flex-row items-center justify-between pb-0">
-          <DialogTitle className="text-lg font-semibold">ADD AREA</DialogTitle>
+          <DialogTitle>Add Area</DialogTitle>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </DialogHeader>
         
@@ -160,7 +160,7 @@ export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialog
               <SelectTrigger className="focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Building" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white z-50">
                 {buildings.map((building) => (
                   <SelectItem key={building.id} value={building.id.toString()}>
                     {building.name}
@@ -178,7 +178,7 @@ export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialog
               <SelectTrigger className="focus:ring-[#C72030] focus:border-[#C72030]">
                 <SelectValue placeholder="Select Wing" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white z-50">
                 {wings.map((wing) => (
                   <SelectItem key={wing.id} value={wing.id.toString()}>
                     {wing.name}
@@ -202,28 +202,21 @@ export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialog
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4">
+        <div className="flex justify-end gap-2 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            className="border-gray-300"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            style={{ backgroundColor: '#72305C' }}
-            className="text-white hover:bg-[#72305C]/90 px-8"
+            className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
           >
             {isSubmitting ? 'Submitting...' : 'Submit'}
-          </Button>
-          <Button
-            onClick={handleSampleFormat}
-            variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-          >
-            Sample Format
-          </Button>
-          <Button
-            onClick={handleImport}
-            variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-          >
-            Import
           </Button>
         </div>
       </DialogContent>

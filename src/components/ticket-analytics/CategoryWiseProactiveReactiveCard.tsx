@@ -6,6 +6,14 @@ import { TicketCategoryData } from '@/services/ticketAnalyticsAPI';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
+// Color palette with lighter shades
+const CHART_COLORS = {
+  proactiveOpen: '#8B7355',      // Darker brown for Proactive Open
+  proactiveClosed: '#C4B99D',    // Original primary for Proactive Closed
+  reactiveOpen: '#B8AFA0',       // Medium shade for Reactive Open
+  reactiveClosed: '#DAD6CA',     // Original secondary for Reactive Closed
+};
+
 interface CategoryWiseProactiveReactiveCardProps {
   data: TicketCategoryData[];
   dateRange: {
@@ -53,12 +61,24 @@ export const CategoryWiseProactiveReactiveCard: React.FC<CategoryWiseProactiveRe
     <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">
-            Category Wise ProActive / Reactives
+          <CardTitle className="text-base sm:text-lg font-bold text-[#1A1A1A]">
+            Category Wise Proactive / Reactives
           </CardTitle>
           <Download
-            className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors"
-            onClick={handleDownload}
+            data-no-drag="true"
+            className="w-5 h-5 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
           />
         </div>
       </CardHeader>
@@ -70,7 +90,7 @@ export const CategoryWiseProactiveReactiveCard: React.FC<CategoryWiseProactiveRe
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
                     <XAxis
@@ -84,6 +104,8 @@ export const CategoryWiseProactiveReactiveCard: React.FC<CategoryWiseProactiveRe
                     <YAxis
                       fontSize={12}
                       tick={{ fill: '#374151' }}
+                      allowDecimals={false}
+                      domain={[0, data && data.length > 0 ? Math.max(3, Math.ceil(Math.max(...chartData.map(d => d.proactiveTotal || 0, ...chartData.map(d => d.reactiveTotal || 0))) * 1.2)) : 3]}
                     />
                     <Tooltip
                       content={({ active, payload, label }) => {
@@ -94,16 +116,20 @@ export const CategoryWiseProactiveReactiveCard: React.FC<CategoryWiseProactiveRe
                               <p className="font-semibold text-gray-800 mb-2">{label}</p>
                               <div className="space-y-1">
                                 <div className="flex justify-between items-center">
-                                  <span className="text-blue-600 font-medium">Proactive:</span>
-                                  <span className="text-gray-700">
-                                    Open: {data.proactiveOpen}, Closed: {data.proactiveClosed}
-                                  </span>
+                                  <span className="font-medium" style={{ color: CHART_COLORS.proactiveOpen }}>Proactive Open:</span>
+                                  <span className="text-gray-700">{data.proactiveOpen}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                  <span className="text-red-600 font-medium">Reactive:</span>
-                                  <span className="text-gray-700">
-                                    Open: {data.reactiveOpen}, Closed: {data.reactiveClosed}
-                                  </span>
+                                  <span className="font-medium" style={{ color: CHART_COLORS.proactiveClosed }}>Proactive Closed:</span>
+                                  <span className="text-gray-700">{data.proactiveClosed}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="font-medium" style={{ color: CHART_COLORS.reactiveOpen }}>Reactive Open:</span>
+                                  <span className="text-gray-700">{data.reactiveOpen}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="font-medium" style={{ color: CHART_COLORS.reactiveClosed }}>Reactive Closed:</span>
+                                  <span className="text-gray-700">{data.reactiveClosed}</span>
                                 </div>
                                 <div className="pt-1 border-t border-gray-200">
                                   <div className="flex justify-between items-center font-semibold">
@@ -118,8 +144,10 @@ export const CategoryWiseProactiveReactiveCard: React.FC<CategoryWiseProactiveRe
                         return null;
                       }}
                     />
-                    <Bar dataKey="proactiveTotal" fill="#3b82f6" name="Proactive" />
-                    <Bar dataKey="reactiveTotal" fill="#ef4444" name="Reactive" />
+                    <Bar dataKey="proactiveOpen" stackId="proactive" fill={CHART_COLORS.proactiveOpen} name="Proactive Open" />
+                    <Bar dataKey="proactiveClosed" stackId="proactive" fill={CHART_COLORS.proactiveClosed} name="Proactive Closed" />
+                    <Bar dataKey="reactiveOpen" stackId="reactive" fill={CHART_COLORS.reactiveOpen} name="Reactive Open" />
+                    <Bar dataKey="reactiveClosed" stackId="reactive" fill={CHART_COLORS.reactiveClosed} name="Reactive Closed" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

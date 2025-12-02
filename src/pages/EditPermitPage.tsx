@@ -583,7 +583,6 @@ export const EditPermitPage = () => {
 
     useEffect(() => {
         if (permitData.building) {
-            console.log(permitData.building)
             fetchWings(permitData.building)
         }
     }, [permitData.building])
@@ -790,51 +789,23 @@ export const EditPermitPage = () => {
         }
     }, [originalPermitData, permitTypes, suppliers]);
 
-    // Handle dependent dropdowns after permit data is loaded
     useEffect(() => {
-        if (permitData.building && buildings.length > 0) {
-            fetchWings(permitData.building);
-        }
-    }, [permitData.building, buildings]);
-
-    useEffect(() => {
-        if (permitData.wing && wings.length === 0 && permitData.building) {
-            // Wings might not be loaded yet, so fetch them first
-            fetchWings(permitData.building).then(() => {
-                if (permitData.wing) {
-                    fetchAreas(permitData.wing);
-                }
-            });
-        } else if (permitData.wing && wings.length > 0) {
+        if (permitData.wing) {
             fetchAreas(permitData.wing);
         }
-    }, [permitData.wing, wings, permitData.building]);
+    }, [permitData.wing]);
 
     useEffect(() => {
-        if (permitData.area && areas.length === 0 && permitData.wing) {
-            // Areas might not be loaded yet
-            fetchAreas(permitData.wing).then(() => {
-                if (permitData.area) {
-                    fetchFloors(permitData.area);
-                }
-            });
-        } else if (permitData.area && areas.length > 0) {
+        if (permitData.area) {
             fetchFloors(permitData.area);
         }
-    }, [permitData.area, areas, permitData.wing]);
+    }, [permitData.area]);
 
     useEffect(() => {
-        if (permitData.floor && floors.length === 0 && permitData.area) {
-            // Floors might not be loaded yet
-            fetchFloors(permitData.area).then(() => {
-                if (permitData.floor) {
-                    fetchRooms(permitData.floor);
-                }
-            });
-        } else if (permitData.floor && floors.length > 0) {
+        if (permitData.floor) {
             fetchRooms(permitData.floor);
         }
-    }, [permitData.floor, floors, permitData.area]);
+    }, [permitData.floor]);
 
     // Handle permit type dependent data
     useEffect(() => {
@@ -1030,9 +1001,6 @@ export const EditPermitPage = () => {
             floor: '',
             room: ''
         }));
-        if (value) {
-            fetchWings(value);
-        }
     };
 
     const handleWingChange = (value: string) => {
@@ -1043,9 +1011,6 @@ export const EditPermitPage = () => {
             floor: '',
             room: ''
         }));
-        if (value) {
-            fetchAreas(value);
-        }
     };
 
     const handleAreaChange = (value: string) => {
@@ -1055,9 +1020,6 @@ export const EditPermitPage = () => {
             floor: '',
             room: ''
         }));
-        if (value) {
-            fetchFloors(value);
-        }
     };
 
     const handleFloorChange = (value: string) => {
@@ -1066,9 +1028,9 @@ export const EditPermitPage = () => {
             floor: value,
             room: ''
         }));
-        if (value) {
-            fetchRooms(value);
-        }
+        // if (value) {
+        //     fetchRooms(value);
+        // }
     };
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {

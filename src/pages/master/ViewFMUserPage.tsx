@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store/store';
-import { fetchFMUsers, fetchRoles, fetchSuppliers, fetchUnits, FMUser, getUserDetails } from '@/store/slices/fmUserSlice';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { fetchRoles, fetchSuppliers, fetchUnits, getUserDetails } from '@/store/slices/fmUserSlice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +17,6 @@ import { fetchAllowedSites } from '@/store/slices/siteSlice';
 import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
 import { fetchDepartmentData } from '@/store/slices/departmentSlice';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
-import { toast } from 'sonner';
 
 interface FormData {
   firstname: string;
@@ -126,7 +125,7 @@ export const ViewFMUserPage = () => {
         entity_id: userData.entity_id || '',
         designation: userData.lock_user_permission?.designation || '',
         employee_id: userData.lock_user_permission?.employee_id || '',
-        user_type: userData.user_type === 'pms_admin' ? 'internal' : 'external',
+        user_type: userData.employee_type,
         face_added: userData.face_added || false,
         app_downloaded: userData.app_downloaded || 'No',
         access_level: userData.lock_user_permission?.access_level || 'Site',

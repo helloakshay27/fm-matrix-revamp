@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, Info } from 'lucide-react';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   PieChart,
   Pie,
@@ -21,9 +22,32 @@ interface AssetAnalyticsCardProps {
   type: 'groupWise' | 'categoryWise' | 'statusDistribution' | 'assetDistributions';
   dateRange: { startDate: Date; endDate: Date };
   onDownload?: () => void;
+  info?: string;
 }
 
-const COLORS = ['#C72030', '#c6b692', '#d8dcdd', '#8B5A3C', '#A0A0A0', '#FFB366', '#FF8C42', '#6B8E23'];
+const DEFAULT_COLORS = [
+  "#C4AE9D",
+  "#C4B99D",
+  "#DAD6CA",
+  "#D5DBDB",
+  "#8B5A3C",
+  "#A0A0A0",
+  "#FFB366",
+  "#FF8C42",
+  "#6B8E23",
+];
+
+const CATEGORY_COLORS = [
+  "#C8B89E",
+  "#E2D9C9",
+  "#D5CBB4",
+  "#BEB39D",
+  "#E8E0D2",
+  "#CDC2AB",
+  "#B7B09E",
+  "#D9D0C0",
+  "#C2B9A5",
+];
 
 export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
   title,
@@ -31,6 +55,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
   type,
   dateRange,
   onDownload,
+  info,
 }) => {
   const renderChart = () => {
     switch (type) {
@@ -63,18 +88,17 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                 }}
               />
-              <Bar
-                dataKey="value"
-                fill="#C72030"
-                radius={[4, 4, 0, 0]}
-                stroke="#C72030"
-                strokeWidth={1}
-              />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                {data.map((entry: any, index: number) => (
+                  <Cell key={`cell-${index}`} fill="#C4AE9D" />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         );
 
-      case 'categoryWise':
+      case 'categoryWise': {
+        const palette = CATEGORY_COLORS;
         return (
           <ResponsiveContainer width="100%" height={320}>
             <PieChart>
@@ -84,15 +108,18 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 cy="50%"
                 labelLine={false}
                 label={({ name, value }) => `${name} (${value})`}
-                outerRadius={85}
-                innerRadius={40}
+                outerRadius={90}
+                innerRadius={45}
                 fill="#8884d8"
                 dataKey="value"
                 stroke="#FFFFFF"
                 strokeWidth={2}
               >
                 {data.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.color || palette[index % palette.length]}
+                  />
                 ))}
               </Pie>
               <Tooltip
@@ -108,6 +135,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
             </PieChart>
           </ResponsiveContainer>
         );
+      }
 
       case 'statusDistribution':
         return (
@@ -119,15 +147,29 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 cy="50%"
                 labelLine={false}
                 label={({ name, value }) => `${name} (${value})`}
-                outerRadius={80}
+                outerRadius={90}
+                innerRadius={45}
                 fill="#8884d8"
                 dataKey="value"
+                stroke="#FFFFFF"
+                strokeWidth={2}
               >
                 {data.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
+                  />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => [value, 'Count']} />
+              <Tooltip 
+                formatter={(value) => [value, 'Count']}
+                contentStyle={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         );
@@ -142,15 +184,29 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 cy="50%"
                 labelLine={false}
                 label={({ name, value }) => `${name} (${value})`}
-                outerRadius={80}
+                outerRadius={90}
+                innerRadius={45}
                 fill="#8884d8"
                 dataKey="value"
+                stroke="#FFFFFF"
+                strokeWidth={2}
               >
                 {data.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.color || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
+                  />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => [value, 'Count']} />
+              <Tooltip 
+                formatter={(value) => [value, 'Count']}
+                contentStyle={{
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         );
@@ -169,17 +225,46 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
       <CardHeader className="pb-4 px-6 pt-6">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold text-[#C72030]">{title}</CardTitle>
-          {onDownload && title !== "Asset Status" && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onDownload}
-              className="flex items-center gap-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors"
-              data-download="true"
-            >
-              <Download className="w-4 h-4" />
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {info && (
+              <TooltipProvider>
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                    >
+                      <Info className="w-5 h-5 !text-[#000000]" style={{ color: '#000000' }} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-gray-900 text-white border-gray-700">
+                    <p className="max-w-xs text-sm font-medium">
+                      {info}
+                    </p>
+                  </TooltipContent>
+                </UITooltip>
+              </TooltipProvider>
+            )}
+            {onDownload && title !== "Asset Status" && (
+              <Download
+                data-no-drag="true"
+                className="w-5 h-5 flex-shrink-0 cursor-pointer text-black hover:text-gray-700 transition-colors z-50"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDownload();
+                }}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                }}
+                style={{ pointerEvents: 'auto' }}
+              />
+            )}
+          </div>
         </div>
 
       </CardHeader>

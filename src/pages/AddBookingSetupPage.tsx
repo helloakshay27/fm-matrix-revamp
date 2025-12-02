@@ -250,28 +250,26 @@ export const AddBookingSetupPage = () => {
 
       if (slot.startTime.hour !== "00") {
         if (
-          slot.breakTimeStart.hour === "00" ||
-          slot.breakTimeEnd.hour === "00" ||
           slot.endTime.hour === "00"
         ) {
           toast.error(
-            `Slot ${index + 1}: All subsequent time fields must be selected when Start Time is set`
+            `Slot ${index + 1}: End Time must be selected when Start Time is set`
           );
           return false;
         }
 
-        if (breakStartHour < startHour) {
-          toast.error(
-            `Slot ${index + 1}: Break Time Start hour must be greater than or equal to Start Time hour`
-          );
-          return false;
-        }
-        if (breakEndHour < startHour) {
-          toast.error(
-            `Slot ${index + 1}: Break Time End hour must be greater than or equal to Start Time hour`
-          );
-          return false;
-        }
+        // if (breakStartHour < startHour) {
+        //   toast.error(
+        //     `Slot ${index + 1}: Break Time Start hour must be greater than or equal to Start Time hour`
+        //   );
+        //   return false;
+        // }
+        // if (breakEndHour < startHour) {
+        //   toast.error(
+        //     `Slot ${index + 1}: Break Time End hour must be greater than or equal to Start Time hour`
+        //   );
+        //   return false;
+        // }
         if (endHour < startHour) {
           toast.error(
             `Slot ${index + 1}: End Time hour must be greater than or equal to Start Time hour`

@@ -34,6 +34,7 @@ export const AddBroadcastPage = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -90,13 +91,16 @@ export const AddBroadcastPage = () => {
     } else if (!formData.description) {
       toast.error("Description is required");
       return false;
+    } else if (formData.description.length > 255) {
+      toast.error("Description cannot exceed 255 characters");
+      return false;
     }
     return true;
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-
+    setIsSubmitting(true)
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("noticeboard[notice_heading]", formData.title);
@@ -112,11 +116,11 @@ export const AddBroadcastPage = () => {
       formDataToSend.append("noticeboard[publish]", "1");
 
       if (formData.shareWith === 'individuals') {
-        formDataToSend.append("event[swusers]", formData.selectedIndividuals);
+        formDataToSend.append("noticeboard[swusers]", formData.selectedIndividuals);
       }
 
       if (formData.shareWith === 'groups') {
-        formDataToSend.append("event[group_id]", formData.selectedGroups);
+        formDataToSend.append("noticeboard[group_id]", formData.selectedGroups);
       }
 
       attachments.forEach((file) => {
@@ -125,10 +129,12 @@ export const AddBroadcastPage = () => {
 
       await dispatch(createBroadcast({ data: formDataToSend, baseUrl, token })).unwrap();
       toast.success("Broadcast created successfully");
-      navigate("/crm/broadcast");
+      navigate(-1);
     } catch (error) {
       console.log(error);
       toast.error(error);
+    } finally {
+      setIsSubmitting(false)
     }
   };
 
@@ -173,7 +179,7 @@ export const AddBroadcastPage = () => {
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
         <MuiButton
           startIcon={<ArrowBack />}
-          onClick={() => navigate("/crm/broadcast")}
+          onClick={() => navigate(-1)}
           sx={{ color: "#666", textTransform: "none" }}
         >
           Back to Broadcasts
@@ -220,7 +226,7 @@ export const AddBroadcastPage = () => {
             <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
               <Box sx={{ flex: "1 1 300px" }}>
                 <TextField
-                  label="Title*"
+                  label={<span>Title<span className="text-red-500">*</span></span>}
                   placeholder="Title"
                   fullWidth
                   variant="outlined"
@@ -232,7 +238,7 @@ export const AddBroadcastPage = () => {
               </Box>
               <Box sx={{ flex: "1 1 300px" }}>
                 <TextField
-                  label="End Date"
+                  label={<span>End Date<span className="text-red-500">*</span></span>}
                   type="date"
                   fullWidth
                   variant="outlined"
@@ -240,11 +246,14 @@ export const AddBroadcastPage = () => {
                   onChange={(e) => handleInputChange("endDate", e.target.value)}
                   InputLabelProps={{ shrink: true }}
                   sx={fieldStyles}
+                  inputProps={{
+                    min: new Date().toISOString().split("T")[0],
+                  }}
                 />
               </Box>
               <Box sx={{ flex: "1 1 300px" }}>
                 <TextField
-                  label="End Time"
+                  label={<span>End Time<span className="text-red-500">*</span></span>}
                   type="time"
                   fullWidth
                   variant="outlined"
@@ -255,9 +264,9 @@ export const AddBroadcastPage = () => {
                 />
               </Box>
             </Box>
-            <Box>
+            <Box sx={{ position: "relative" }}>
               <TextField
-                label="Description"
+                label={<span>Description<span className="text-red-500">*</span></span>}
                 placeholder="Enter Description"
                 fullWidth
                 multiline
@@ -266,7 +275,37 @@ export const AddBroadcastPage = () => {
                 value={formData.description}
                 onChange={(e) => handleInputChange("description", e.target.value)}
                 InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
               />
+              <Typography
+                variant="caption"
+                sx={{
+                  position: "absolute",
+                  bottom: -4,
+                  right: 8,
+                  color: formData.description.length > 255 ? "red" : "gray",
+                }}
+              >
+                {formData.description.length}/255
+              </Typography>
             </Box>
           </Box>
         </Box>
@@ -521,8 +560,11 @@ export const AddBroadcastPage = () => {
         </Box>
 
         {/* Submit Button */}
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-          <Button onClick={handleSubmit} className="px-8 py-3 text-base">
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4, gap: 2 }}>
+          <Button onClick={() => navigate(-1)} className="px-8 py-3 text-base">
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} className="px-8 py-3 text-base" disabled={isSubmitting}>
             Submit
           </Button>
         </Box>

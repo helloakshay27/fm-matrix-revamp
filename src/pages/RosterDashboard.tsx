@@ -505,14 +505,14 @@ export const RosterDashboard = () => {
       <div className="flex items-center gap-2">
         <button 
           onClick={() => handleView(roster.id)} 
-          className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
+          className="p-1 text-black hover:bg-gray-100 rounded" 
           title="View"
         >
           <Eye className="w-4 h-4" />
         </button>
         <button 
           onClick={() => handleEdit(roster.id)} 
-          className="p-1 text-green-600 hover:bg-green-50 rounded" 
+          className="p-1 text-black hover:bg-gray-100 rounded" 
           title="Edit"
         >
           <Edit className="w-4 h-4" />

@@ -65,6 +65,11 @@ export const MobileItemsDetails: React.FC = () => {
   const finalIsExternalScan = isExternalScan || passedExternalScan || false;
   const finalSourceParam = sourceParam || passedSourceParam;
 
+  // Get org_id from URL parameters, fallback to session storage
+  const orgIdFromUrl =
+    searchParams.get("org_id") || searchParams.get("organization_id");
+  const orgId = orgIdFromUrl || sessionStorage.getItem("org_id");
+
   // 🔍 Debug logging for external detection in Items Details
   useEffect(() => {
     console.log("🛒 ITEMS DETAILS - EXTERNAL DETECTION:");
@@ -126,7 +131,7 @@ export const MobileItemsDetails: React.FC = () => {
   const addMoreItems = () => {
     // Preserve any source parameter when going back to restaurant details
     const backUrl = finalSourceParam
-      ? `/mobile/restaurant/${restaurant.id}/details?source=${finalSourceParam}`
+      ? `/mobile/restaurant/${restaurant.id}/details?source=${finalSourceParam}&org_id=${orgId}`
       : `/mobile/restaurant/${restaurant.id}/details`;
 
     console.log("🔄 NAVIGATING BACK TO RESTAURANT:");
@@ -187,12 +192,13 @@ export const MobileItemsDetails: React.FC = () => {
       const facilityId = sessionStorage.getItem("facility_id");
       const siteId = sessionStorage.getItem("site_id");
 
-      // Construct contact form URL with source parameter
+      // Construct contact form URL with source parameter and org_id
       const contactFormUrl = finalSourceParam
-        ? `/mobile/restaurant/${restaurant.id}/contact-form?source=${finalSourceParam}`
-        : `/mobile/restaurant/${restaurant.id}/contact-form`;
+        ? `/mobile/restaurant/${restaurant.id}/contact-form?org_id=${orgId}&source=${finalSourceParam}&facilityId=${facilityId}`
+        : `/mobile/restaurant/${restaurant.id}/contact-form?org_id=${orgId}&facilityId=${facilityId}`;
 
       console.log("🔄 PASSING TO CONTACT FORM:");
+      console.log("  - orgId:", orgId);
       console.log("  - facilityId:", facilityId);
       console.log("  - siteId:", siteId);
 
@@ -227,7 +233,6 @@ export const MobileItemsDetails: React.FC = () => {
 
     // Get facility_id from session storage for order association
     const facilityId = sessionStorage.getItem("facility_id");
-    const orgId = sessionStorage.getItem("org_id");
     const siteId = sessionStorage.getItem("site_id");
     const facilitySetup = sessionStorage.getItem("facility_setup");
 
@@ -251,9 +256,8 @@ export const MobileItemsDetails: React.FC = () => {
       // If we have facility_id but no facility_setup, try to fetch it
       try {
         console.log("🏢 Fetching facility setup for facility_id:", facilityId);
-        const facilityResponse = await restaurantApi.getFacilitySetup(
-          facilityId
-        );
+        const facilityResponse =
+          await restaurantApi.getFacilitySetup(facilityId);
         deliveryLocation =
           facilityResponse.facility_setup.fac_name ||
           facilityResponse.facility_setup.name ||
@@ -356,7 +360,7 @@ export const MobileItemsDetails: React.FC = () => {
         // Navigate to order review with success state
         // navigate(`/mobile/restaurant/${restaurant.id}/order-placed`, {
         navigate(
-          `/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`,
+          `/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}&org_id=${orgId}`,
           {
             state: orderReviewData,
           }
@@ -549,7 +553,7 @@ export const MobileItemsDetails: React.FC = () => {
               <span>Placing Order...</span>
             </div>
           ) : (
-             <span className="text-white">Place Order</span>
+            <span className="text-white">Place Order</span>
           )}
         </Button>
       </div>

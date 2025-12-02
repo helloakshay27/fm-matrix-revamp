@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo, startTransiti
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star } from 'lucide-react';
+import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star, Calendar } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { TicketAnalyticsFilterDialog } from '@/components/TicketAnalyticsFilterDialog';
 import { EditStatusDialog } from '@/components/EditStatusDialog';
@@ -15,7 +15,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ticketManagementAPI, TicketResponse, TicketFilters } from '@/services/ticketManagementAPI';
+import { ticketManagementAPI, TicketResponse, TicketFilters, EscalationInfo } from '@/services/ticketManagementAPI';
 import { ticketAnalyticsAPI, TicketCategoryData, TicketStatusData, TicketAgingMatrix, UnitCategorywiseData, ResponseTATData, ResolutionTATReportData, RecentTicketsResponse } from '@/services/ticketAnalyticsAPI';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { TicketAnalyticsCard } from '@/components/TicketAnalyticsCard';
@@ -91,6 +91,25 @@ const SortableChartItem = ({
     </div>
   );
 };
+
+// Section Loader Component
+const SectionLoader: React.FC<{
+  loading: boolean;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ loading, children, className }) => {
+  return (
+    <div className={`relative ${className ?? ""}`}>
+      {children}
+      {loading && (
+        <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const TicketDashboard = () => {
   const navigate = useNavigate();
   const {
@@ -139,6 +158,17 @@ export const TicketDashboard = () => {
   const [recentTicketsData, setRecentTicketsData] = useState<RecentTicketsResponse | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsLoaded, setAnalyticsLoaded] = useState(false); // Track if analytics data has been loaded
+  
+  // Individual loading states for each analytics card
+  const [loadingStates, setLoadingStates] = useState({
+    statusChart: false,
+    reactiveChart: false,
+    responseTat: false,
+    categoryWiseProactiveReactive: false,
+    categoryChart: false,
+    agingMatrix: false,
+    resolutionTat: false
+  });
 
   // Utility function to convert DD/MM/YYYY to Date object
   const convertDateStringToDate = (dateString: string): Date => {
@@ -208,33 +238,58 @@ export const TicketDashboard = () => {
   // Fetch analytics data from API
   const fetchAnalyticsData = useCallback(async (startDate: Date, endDate: Date) => {
     setAnalyticsLoading(true);
+    
+    // Set all individual cards to loading
+    setLoadingStates({
+      statusChart: true,
+      reactiveChart: true,
+      responseTat: true,
+      categoryWiseProactiveReactive: true,
+      categoryChart: true,
+      agingMatrix: true,
+      resolutionTat: true
+    });
+    
     try {
-      const [
-        categoryData,
-        statusData,
-        agingData,
-        unitCategoryData,
-        responseTATData,
-        resolutionTATData,
-        recentTickets
-      ] = await Promise.all([
-        ticketAnalyticsAPI.getTicketsCategorywiseData(startDate, endDate),
-        ticketAnalyticsAPI.getTicketStatusData(startDate, endDate),
-        ticketAnalyticsAPI.getTicketAgingMatrix(startDate, endDate),
-        ticketAnalyticsAPI.getUnitCategorywiseData(startDate, endDate),
-        ticketAnalyticsAPI.getResponseTATData(startDate, endDate),
-        ticketAnalyticsAPI.getResolutionTATReportData(startDate, endDate),
-        ticketAnalyticsAPI.getRecentTickets()
-      ]);
+      // Fetch all data in parallel but update states individually as they complete
+      const promises = [
+        ticketAnalyticsAPI.getTicketsCategorywiseData(startDate, endDate).then(data => {
+          setCategoryAnalyticsData(data);
+          setCategorywiseTicketsData(data);
+          setLoadingStates(prev => ({ ...prev, categoryWiseProactiveReactive: false, categoryChart: false }));
+          return data;
+        }),
+        ticketAnalyticsAPI.getTicketStatusData(startDate, endDate).then(data => {
+          setStatusAnalyticsData(data);
+          setLoadingStates(prev => ({ ...prev, statusChart: false, reactiveChart: false }));
+          return data;
+        }),
+        ticketAnalyticsAPI.getTicketAgingMatrix(startDate, endDate).then(data => {
+          setAgingMatrixAnalyticsData(data);
+          setLoadingStates(prev => ({ ...prev, agingMatrix: false }));
+          return data;
+        }),
+        ticketAnalyticsAPI.getUnitCategorywiseData(startDate, endDate).then(data => {
+          setUnitCategorywiseData(data);
+          return data;
+        }),
+        ticketAnalyticsAPI.getResponseTATData(startDate, endDate).then(data => {
+          setResponseTATData(data);
+          setLoadingStates(prev => ({ ...prev, responseTat: false }));
+          return data;
+        }),
+        ticketAnalyticsAPI.getResolutionTATReportData(startDate, endDate).then(data => {
+          setResolutionTATReportData(data);
+          setLoadingStates(prev => ({ ...prev, resolutionTat: false }));
+          return data;
+        }),
+        ticketAnalyticsAPI.getRecentTickets().then(data => {
+          setRecentTicketsData(data);
+          return data;
+        })
+      ];
 
-      setCategoryAnalyticsData(categoryData);
-      setCategorywiseTicketsData(categoryData); // Set the same data for the new category-wise section
-      setStatusAnalyticsData(statusData);
-      setAgingMatrixAnalyticsData(agingData);
-      setUnitCategorywiseData(unitCategoryData);
-      setResponseTATData(responseTATData);
-      setResolutionTATReportData(resolutionTATData);
-      setRecentTicketsData(recentTickets);
+      await Promise.all(promises);
       setAnalyticsLoaded(true); // Mark analytics as loaded
 
       // toast({
@@ -243,6 +298,18 @@ export const TicketDashboard = () => {
       // });
     } catch (error) {
       console.error('Error fetching analytics data:', error);
+      
+      // Reset all loading states on error
+      setLoadingStates({
+        statusChart: false,
+        reactiveChart: false,
+        responseTat: false,
+        categoryWiseProactiveReactive: false,
+        categoryChart: false,
+        agingMatrix: false,
+        resolutionTat: false
+      });
+      
       toast({
         title: "Error",
         description: "Failed to fetch analytics data. Please try again.",
@@ -262,16 +329,29 @@ export const TicketDashboard = () => {
     const endDate = convertDateStringToDate(filters.endDate);
 
     fetchAnalyticsData(startDate, endDate);
+    
+    // Apply date range to ticket summary cards
+    const dateRangeParam = `${filters.startDate} - ${filters.endDate}`;
+    // The API will automatically wrap date_range with q[] so just pass date_range
+    const summaryFilters: TicketFilters = {
+      date_range: dateRangeParam
+    };
+    fetchTicketSummary(summaryFilters);
   };
 
-  // Fetch ticket summary from API - Optimized with caching
-  const fetchTicketSummary = useCallback(async () => {
+  // Fetch ticket summary from API - accepts optional filter object
+  const fetchTicketSummary = useCallback(async (filters?: TicketFilters) => {
     try {
-      const summary = await ticketManagementAPI.getTicketSummary();
+      // Summary cards should show overall counts by default
+      // Only pass filters when explicitly provided
+      // Status filters should NEVER be passed to ticket_summary API
+      const summaryFilters: TicketFilters = filters || {};
+      
+      const summary = await ticketManagementAPI.getTicketSummary(summaryFilters);
       setTicketSummary(summary);
 
-      // Store initial total count only if not already stored and no filters are applied
-      if (Object.keys(filters).length === 0 && initialTotalTickets === 0) {
+      // Store initial total count only on first load without filters
+      if (!filters && initialTotalTickets === 0) {
         setInitialTotalTickets(summary.total_tickets);
       }
     } catch (error) {
@@ -282,7 +362,7 @@ export const TicketDashboard = () => {
         variant: "destructive"
       });
     }
-  }, [filters, initialTotalTickets, toast]);
+  }, [initialTotalTickets, toast]);
 
   // Fetch tickets from API - Optimized for faster loading
   const fetchTickets = useCallback(async (page: number = 1) => {
@@ -381,20 +461,8 @@ export const TicketDashboard = () => {
     fetchTickets(currentPage);
   }, [currentPage, filters, fetchTickets]);
 
-  // Separate effect for fetching summary - only when necessary
-  useEffect(() => {
-    // Only fetch summary when:
-    // 1. Component mounts (no filters)
-    // 2. Non-search filters change (status filters, etc.)
-    // 3. Search is cleared
-    const isSearchFilter = filters.search_all_fields_cont;
-    const isInitialLoad = Object.keys(filters).length === 0;
-    const isNonSearchFilter = Object.keys(filters).length > 0 && !isSearchFilter;
-    
-    if (isInitialLoad || isNonSearchFilter) {
-      fetchTicketSummary();
-    }
-  }, [filters, fetchTicketSummary]);
+  // Summary should NEVER be affected by filters
+  // It's only fetched once on component mount (see useEffect below)
 
   // Load analytics data with default date range on component mount - Only when analytics tab is active
   useEffect(() => {
@@ -429,8 +497,8 @@ export const TicketDashboard = () => {
   const closedTickets = ticketSummary.closed_tickets || 0;
   const totalSummaryTickets = ticketSummary.total_tickets || 0;
   const pendingTickets = ticketSummary.pending_tickets || 0; // Use ticket summary for pending as it's not in analytics
-  const totalTicketsCount = initialTotalTickets || totalSummaryTickets;
-  const displayTotalTickets = totalTicketsCount.toLocaleString();
+  // Always use the current totalSummaryTickets from API to ensure the count is up-to-date
+  const displayTotalTickets = totalSummaryTickets.toLocaleString();
 
 
   // Memoized calculations for better performance
@@ -870,62 +938,89 @@ export const TicketDashboard = () => {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when applying filters
     setIsFilterOpen(false);
+    
+    // Update ticket summary cards with the applied filters
+    // Extract only the date_range filter for the summary API
+    const dateRange = newFilters.date_range;
+    
+    if (dateRange) {
+      // Pass only date filter to ticket summary API
+      // The API will automatically wrap it with q[] so just pass date_range
+      const summaryFilters: TicketFilters = {
+        date_range: dateRange
+      };
+      fetchTicketSummary(summaryFilters);
+    } else {
+      // If no date filter, refresh summary to show overall counts
+      fetchTicketSummary();
+    }
   };
 
   // Handle status card click for filtering
   const handleStatusCardClick = (cardType: string) => {
     console.log('Status card clicked:', cardType);
-    const newFilters: TicketFilters = {};
 
     if (cardType === 'total') {
-      // Clear all filters to show all records
-      // console.log('Clearing all filters to show all tickets');
-      setFilters({});
+      // Clear only status filters, keep other filters like date_range
+      setFilters(prevFilters => {
+        const { 
+          complaint_status_fixed_state_eq, 
+          complaint_status_fixed_state_not_eq, 
+          complaint_status_fixed_state_null, 
+          m, 
+          g, // Remove nested group structure
+          ...otherFilters 
+        } = prevFilters;
+        console.log('Total card - Clearing status filters, keeping:', otherFilters);
+        return otherFilters;
+      });
       setCurrentPage(1);
       return;
     }
 
-    if (cardType !== 'total') {
-      // Use the correct API parameter format for status filtering
+    // Preserve existing filters (like date_range) and only update status filters
+    setFilters(prevFilters => {
+      // Remove any existing status filters first (including nested group structure)
+      const { 
+        complaint_status_fixed_state_eq, 
+        complaint_status_fixed_state_not_eq, 
+        complaint_status_fixed_state_null, 
+        m, 
+        g, // Remove nested group structure
+        ...otherFilters 
+      } = prevFilters;
+
+      const newFilters: TicketFilters = { ...otherFilters };
+
+      // Add the new status filter
       if (cardType === 'open') {
-        // Use specific API call format for open tickets: q[complaint_status_fixed_state_not_eq]=closed&q[complaint_status_fixed_state_null]=1&q[m]=or
-        newFilters.complaint_status_fixed_state_not_eq = 'closed';
-        newFilters.complaint_status_fixed_state_null = '1';
-        newFilters.m = 'or';
-        console.log('Setting Open filter with complaint_status_fixed_state_not_eq=closed&complaint_status_fixed_state_null=1&m=or');
+        // Use nested group structure for open tickets as per API requirement
+        // q[m]=and&q[g][0][m]=or&q[g][0][complaint_status_fixed_state_not_eq]=closed&q[g][0][complaint_status_fixed_state_null]=1
+        newFilters.m = 'and';
+        newFilters.g = [{
+          m: 'or',
+          complaint_status_fixed_state_not_eq: 'closed',
+          complaint_status_fixed_state_null: '1'
+        }];
+        console.log('✅ Open card - Combined filters with date_range:', newFilters);
       } else if (cardType === 'pending') {
         newFilters.complaint_status_fixed_state_eq = 'Pending';
-        //  console.log('Setting Pending filter with complaint_status_fixed_state_eq=Pending');
+        console.log('✅ Pending card - Combined filters with date_range:', newFilters);
       } else if (cardType === 'in_progress') {
         newFilters.complaint_status_fixed_state_eq = 'In Progress';
-        //  console.log('Setting In Progress filter with complaint_status_fixed_state_eq=In Progress');
+        console.log('✅ In Progress card - Combined filters with date_range:', newFilters);
       } else if (cardType === 'closed') {
         newFilters.complaint_status_fixed_state_eq = 'Closed';
-        console.log('Setting Closed filter with complaint_status_fixed_state_eq=Closed');
+        console.log('✅ Closed card - Combined filters with date_range:', newFilters);
       }
-    }
 
-    console.log('Setting filters:', newFilters);
-    setFilters(newFilters);
+      return newFilters;
+    });
+
     setCurrentPage(1);
-
-    // Log what the resulting URL will look like
-    const testParams = new URLSearchParams();
-    testParams.append('page', '1');
-    testParams.append('per_page', '20');
-    if (newFilters.complaint_status_fixed_state_eq) {
-      testParams.append('q[complaint_status_fixed_state_eq]', newFilters.complaint_status_fixed_state_eq);
-    }
-    if (newFilters.complaint_status_fixed_state_not_eq) {
-      testParams.append('q[complaint_status_fixed_state_not_eq]', newFilters.complaint_status_fixed_state_not_eq);
-    }
-    if (newFilters.complaint_status_fixed_state_null) {
-      testParams.append('q[complaint_status_fixed_state_null]', newFilters.complaint_status_fixed_state_null);
-    }
-    if (newFilters.m) {
-      testParams.append('q[m]', newFilters.m);
-    }
-    console.log('Expected API URL will be:', `/pms/admin/complaints.json?${testParams.toString()}`);
+    
+    // DO NOT call fetchTicketSummary here - status card clicks should only filter the ticket list,
+    // not affect the summary counts which should remain unfiltered
   };
 
   // Helper function to check if a status card is currently active
@@ -933,9 +1028,11 @@ export const TicketDashboard = () => {
     if (cardType === 'total') return false;
 
     if (cardType === 'open') {
-      return filters.complaint_status_fixed_state_not_eq === 'closed' &&
-        filters.complaint_status_fixed_state_null === '1' &&
-        filters.m === 'or';
+      // Check for nested group structure
+      return filters.m === 'and' &&
+        filters.g?.[0]?.m === 'or' &&
+        filters.g?.[0]?.complaint_status_fixed_state_not_eq === 'closed' &&
+        filters.g?.[0]?.complaint_status_fixed_state_null === '1';
     } else if (cardType === 'pending') {
       return filters.complaint_status_fixed_state_eq === 'Pending';
     } else if (cardType === 'in_progress') {
@@ -1016,7 +1113,7 @@ export const TicketDashboard = () => {
     label: 'Complaint Mode',
     sortable: true
   }, {
-    key: 'service_or_asset',
+    key: 'asset_or_service_name',
     label: 'Asset / Service Name',
     sortable: true
   }, {
@@ -1029,7 +1126,7 @@ export const TicketDashboard = () => {
     sortable: true
   }, {
     key: 'review_tracking_date',
-    label: 'Review',
+    label: 'Review Date',
     sortable: true
   }, {
     key: 'response_escalation',
@@ -1106,8 +1203,75 @@ export const TicketDashboard = () => {
   );
   const formatDate = (dateString: string) => {
     if (!dateString) return '--';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB');
+    try {
+      // Parse the ISO string to extract date and time parts directly
+      // Format: "2025-11-19T12:01:19.000+04:00"
+      const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+      if (match) {
+        const [, year, month, day, hours, minutes, seconds] = match;
+        return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+      }
+      // Fallback to Date object if regex doesn't match
+      const date = new Date(dateString);
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      const h = String(date.getHours()).padStart(2, '0');
+      const min = String(date.getMinutes()).padStart(2, '0');
+      const sec = String(date.getSeconds()).padStart(2, '0');
+      return `${d}/${m}/${y}, ${h}:${min}:${sec}`;
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // Helper function to format escalation data
+  const formatEscalationData = (escalation: EscalationInfo | null | undefined) => {
+    if (!escalation) return null;
+    
+    const { minutes, is_overdue, users, escalation_name, escalation_time } = escalation;
+    
+    return {
+      minutes: minutes || 0,
+      isOverdue: is_overdue || false,
+      users: users || [],
+      escalationName: escalation_name || '--',
+      escalationTime: escalation_time || '--'
+    };
+  };
+
+  // Helper function to format escalation display
+  const formatEscalationDisplay = (escalation: EscalationInfo | null | undefined, type: 'response' | 'resolution') => {
+    if (!escalation) return '--';
+    
+    const formatted = formatEscalationData(escalation);
+    return formatted?.escalationName || '--';
+  };
+
+  // Helper function to format escalation minutes
+  const formatEscalationMinutes = (escalation: EscalationInfo | null | undefined) => {
+    if (!escalation) return '--';
+    const formatted = formatEscalationData(escalation);
+    return formatted?.minutes.toString() || '--';
+  };
+
+  // Helper function to format escalation time in D:H:M format
+  const formatEscalationTime = (escalation: EscalationInfo | null | undefined) => {
+    if (!escalation || !escalation.minutes) return '--';
+    
+    const totalMinutes = escalation.minutes;
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+    
+    return `${days}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  // Helper function to format escalation level
+  const formatEscalationLevel = (escalation: EscalationInfo | null | undefined) => {
+    if (!escalation) return '--';
+    const formatted = formatEscalationData(escalation);
+    return formatted?.escalationName || '--';
   };
   const TruncatedDescription = ({
     text,
@@ -1123,14 +1287,13 @@ export const TicketDashboard = () => {
     }
 
     const truncated = text.substring(0, maxCharacters);
-    return <div className="w-32 max-w-[150px] group relative">
-      <span className="block truncate">
-        {`${truncated}...`}
-      </span>
-      <div className="absolute left-0 top-0 w-max max-w-sm bg-black text-white text-xs p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 pointer-events-none break-words">
-        {text}
+    return (
+      <div className="w-32 max-w-[150px]" title={text}>
+        <span className="block truncate">
+          {`${truncated}...`}
+        </span>
       </div>
-    </div>;
+    );
   };
   const renderCell = (item, columnKey) => {
     if (columnKey === 'actions') {
@@ -1207,6 +1370,24 @@ export const TicketDashboard = () => {
     if (columnKey === 'review_tracking_date') {
       return formatDate(item.review_tracking_date);
     }
+    if (columnKey === 'response_tat') {
+      return formatEscalationMinutes(item.next_response_escalation);
+    }
+    if (columnKey === 'response_time') {
+      return formatEscalationTime(item.next_response_escalation);
+    }
+    if (columnKey === 'escalation_response_name') {
+      return formatEscalationLevel(item.next_response_escalation);
+    }
+    if (columnKey === 'resolution_tat') {
+      return formatEscalationMinutes(item.next_resolution_escalation);
+    }
+    if (columnKey === 'resolution_time') {
+      return formatEscalationTime(item.next_resolution_escalation);
+    }
+    if (columnKey === 'escalation_resolution_name') {
+      return formatEscalationLevel(item.next_resolution_escalation);
+    }
     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
       return '--';
     }
@@ -1221,6 +1402,17 @@ export const TicketDashboard = () => {
       const startDate = convertDateStringToDate(defaultRange.startDate);
       const endDate = convertDateStringToDate(defaultRange.endDate);
       fetchAnalyticsData(startDate, endDate);
+      
+      // Also fetch ticket summary with date range for analytics tab
+      const dateRangeParam = `${defaultRange.startDate} - ${defaultRange.endDate}`;
+      // The API will automatically wrap date_range with q[] so just pass date_range
+      const summaryFilters: TicketFilters = {
+        date_range: dateRangeParam
+      };
+      fetchTicketSummary(summaryFilters);
+    } else if (value === 'tickets') {
+      // Reset to show all tickets without date filter when switching to tickets tab
+      fetchTicketSummary();
     }
   };
 
@@ -1273,27 +1465,19 @@ export const TicketDashboard = () => {
 
 
         <TabsContent value="analytics" className="space-y-4 sm:space-y-4 mt-4">
-
-
-
           {/* Header with Filter and Ticket Selector */}
           <div className="flex justify-end items-center gap-2">
 
             <Button
-              onClick={() => setIsAnalyticsFilterOpen(true)}
               variant="outline"
-              className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
-              disabled={analyticsLoading}
+              onClick={() => setIsAnalyticsFilterOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
             >
-              <Filter className="w-4 h-4" />
-              {/* {analyticsDateRange.startDate && analyticsDateRange.endDate && (
-                <span className="text-sm text-gray-600">
-                  {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
-                </span>
-              )} */}
-              {analyticsLoading && (
-                <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
-              )}
+              <Calendar className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">
+                {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
+              </span>
+              <Filter className="w-4 h-4 text-gray-600" />
             </Button>
 
             <TicketSelector onSelectionChange={handleSelectionChange} />
@@ -1313,22 +1497,26 @@ export const TicketDashboard = () => {
                         if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
                           return (
                             <SortableChartItem key={chartId} id={chartId}>
-                              <TicketStatusOverviewCard
-                                openTickets={openticketanalyticsData}
-                                closedTickets={closedticketanalyticsData}
-                              />
+                              <SectionLoader loading={loadingStates.statusChart}>
+                                <TicketStatusOverviewCard
+                                  openTickets={openticketanalyticsData}
+                                  closedTickets={closedticketanalyticsData}
+                                />
+                              </SectionLoader>
                             </SortableChartItem>
                           );
                         }
                         if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
                           return (
                             <SortableChartItem key={chartId} id={chartId}>
-                              <ProactiveReactiveCard
-                                proactiveOpenTickets={proactiveOpenTickets}
-                                proactiveClosedTickets={proactiveClosedTickets}
-                                reactiveOpenTickets={reactiveOpenTickets}
-                                reactiveClosedTickets={reactiveClosedTickets}
-                              />
+                              <SectionLoader loading={loadingStates.reactiveChart}>
+                                <ProactiveReactiveCard
+                                  proactiveOpenTickets={proactiveOpenTickets}
+                                  proactiveClosedTickets={proactiveClosedTickets}
+                                  reactiveOpenTickets={reactiveOpenTickets}
+                                  reactiveClosedTickets={reactiveClosedTickets}
+                                />
+                              </SectionLoader>
                             </SortableChartItem>
                           );
                         }
@@ -1340,14 +1528,16 @@ export const TicketDashboard = () => {
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('responseTat') && (
                         <SortableChartItem key="responseTat" id="responseTat">
-                          <ResponseTATCard
-                            data={responseTATData}
-                            className="h-full"
-                            dateRange={{
-                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                            }}
-                          />
+                          <SectionLoader loading={loadingStates.responseTat}>
+                            <ResponseTATCard
+                              data={responseTATData}
+                              className="h-full"
+                              dateRange={{
+                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                              }}
+                            />
+                          </SectionLoader>
                         </SortableChartItem>
                       )}
                     </div>
@@ -1356,19 +1546,21 @@ export const TicketDashboard = () => {
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('categoryWiseProactiveReactive') && (
                         <SortableChartItem key="categoryWiseProactiveReactive" id="categoryWiseProactiveReactive">
-                          <CategoryWiseProactiveReactiveCard
-                            data={categorywiseTicketsData}
-                            dateRange={{
-                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                            }}
-                          />
+                          <SectionLoader loading={loadingStates.categoryWiseProactiveReactive}>
+                            <CategoryWiseProactiveReactiveCard
+                              data={categorywiseTicketsData}
+                              dateRange={{
+                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                              }}
+                            />
+                          </SectionLoader>
                         </SortableChartItem>
                       )}
                     </div>
 
                     {/* Fourth Row - Unit Category-wise Tickets */}
-                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                    {/* <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('categoryChart') && (
                         <SortableChartItem key="categoryChart" id="categoryChart">
                           <UnitCategoryWiseCard
@@ -1380,20 +1572,22 @@ export const TicketDashboard = () => {
                           />
                         </SortableChartItem>
                       )}
-                    </div>
+                    </div> */}
 
                     {/* Fifth Row - Tickets Aging Matrix */}
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('agingMatrix') && (
                         <SortableChartItem key="agingMatrix" id="agingMatrix">
-                          <TicketAgingMatrixCard
-                            data={agingMatrixAnalyticsData}
-                            agingMatrixData={agingMatrixData}
-                            dateRange={{
-                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                            }}
-                          />
+                          <SectionLoader loading={loadingStates.agingMatrix}>
+                            <TicketAgingMatrixCard
+                              data={agingMatrixAnalyticsData}
+                              agingMatrixData={agingMatrixData}
+                              dateRange={{
+                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                              }}
+                            />
+                          </SectionLoader>
                         </SortableChartItem>
                       )}
                     </div>
@@ -1402,14 +1596,16 @@ export const TicketDashboard = () => {
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('resolutionTat') && (
                         <SortableChartItem key="resolutionTat" id="resolutionTat">
-                          <ResolutionTATCard
-                            data={resolutionTATReportData}
-                            className="bg-white border border-gray-200 rounded-lg"
-                            dateRange={{
-                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                            }}
-                          />
+                          <SectionLoader loading={loadingStates.resolutionTat}>
+                            <ResolutionTATCard
+                              data={resolutionTATReportData}
+                              className="bg-white border border-gray-200 rounded-lg"
+                              dateRange={{
+                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                              }}
+                            />
+                          </SectionLoader>
                         </SortableChartItem>
                       )}
                     </div>
@@ -1510,7 +1706,6 @@ export const TicketDashboard = () => {
               className="transition-all duration-500 ease-in-out"
               loading={loading}
               loadingMessage="Loading tickets..."
-              exportLoading={isExporting}
             />
 
                 {/* Add custom CSS for smooth row transitions */}
@@ -1684,6 +1879,8 @@ export const TicketDashboard = () => {
         isOpen={isAnalyticsFilterOpen}
         onClose={() => setIsAnalyticsFilterOpen(false)}
         onApplyFilters={handleAnalyticsFilterApply}
+        currentStartDate={analyticsDateRange.startDate}
+        currentEndDate={analyticsDateRange.endDate}
       />
 
       {/* Ticket Selection Panel */}

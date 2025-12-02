@@ -1,136 +1,698 @@
-
-import React, { useState } from 'react';
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
-import { Plus, Filter } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ProjectFilterModal } from "@/components/ProjectFilterModal";
-import { useNavigate } from 'react-router-dom';
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { createProject, fetchProjects, filterProjects } from "@/store/slices/projectManagementSlice";
+import { MenuItem, Select, TextField } from "@mui/material";
+import {
+  ChartNoAxesColumn,
+  ChevronDown,
+  Eye,
+  List,
+  LogOut,
+  Plus,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import { fetchProjectTeams } from "@/store/slices/projectTeamsSlice";
+import { fetchProjectTypes } from "@/store/slices/projectTypeSlice";
+import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
+import { toast } from "sonner";
+import AddProjectModal from "@/components/AddProjectModal";
+import ProjectCreateModal from "@/components/ProjectCreateModal";
+import ProjectManagementKanban from "@/components/ProjectManagementKanban";
+
+const columns: ColumnConfig[] = [
+  {
+    key: "id",
+    label: "Project ID",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "title",
+    label: "Project Title",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "type",
+    label: "Project Type",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "manager",
+    label: "Project Manager",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "milestones",
+    label: "Milestones",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "tasks",
+    label: "Tasks",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "issues",
+    label: "Issues",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "start_date",
+    label: "Start Date",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "end_date",
+    label: "End Date",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "priority",
+    label: "Priority",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+];
+
+const transformedProjects = (projects: any) => {
+  return projects.map((project: any) => {
+    return {
+      id: project.id,
+      title: project.title,
+      status: project.status
+        ? project.status
+          .split("_")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ")
+        : "",
+      type: project.project_type_name,
+      manager: project.project_owner_name,
+      milestones: project.total_milestone_count,
+      milestonesCompleted: project.completed_milestone_count,
+      tasks: project.total_task_management_count,
+      tasksCompleted: project.completed_task_management_count,
+      issues: project.total_issues_count,
+      resolvedIssues: project.completed_issues_count,
+      start_date: project.start_date,
+      end_date: project.end_date,
+      priority: project.priority
+        ? project.priority.charAt(0).toUpperCase() + project.priority.slice(1)
+        : "",
+    };
+  });
+};
+
+const STATUS_OPTIONS = [
+  {
+    value: "all",
+    label: "All"
+  },
+  {
+    value: "active",
+    label: "Active"
+  },
+  {
+    value: "in_progress",
+    label: "In Progress"
+  },
+  {
+    value: "completed",
+    label: "Completed"
+  },
+  {
+    value: "on_hold",
+    label: "On Hold"
+  },
+  {
+    value: "overdue",
+    label: "Overdue"
+  }
+]
 
 export const ProjectsDashboard = () => {
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
 
-  const handleAddProject = () => {
-    navigate('/projects/add');
+  const [selectedFilterOption, setSelectedFilterOption] = useState("all")
+  const [projects, setProjects] = useState([]);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [openFormDialog, setOpenFormDialog] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [openStatusOptions, setOpenStatusOptions] = useState(false)
+  const [selectedView, setSelectedView] = useState("List");
+  const [projectTypes, setProjectTypes] = useState([]);
+  const [owners, setOwners] = useState([])
+  const [teams, setTeams] = useState([])
+  const [tags, setTags] = useState([])
+
+  const fetchData = async () => {
+    try {
+      let filters = {};
+      if (selectedFilterOption !== "all") {
+        filters["q[status_eq]"] = selectedFilterOption;
+      }
+      const response = await dispatch(
+        filterProjects({ token, baseUrl, filters })
+      ).unwrap();
+      setProjects(transformedProjects(response));
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const handleFitoutSetup = () => {
-    navigate('/projects/fitout-setup');
+
+  useEffect(() => {
+    fetchData();
+  }, [dispatch, token, baseUrl, selectedFilterOption]);
+
+  const getOwners = async () => {
+    try {
+      const response = await dispatch(fetchFMUsers()).unwrap();
+      setOwners(response.users);
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  }
+
+  const getTeams = async () => {
+    try {
+      const response = await dispatch(fetchProjectTeams({ baseUrl, token })).unwrap();
+      setTeams(response);
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  }
+
+  const getProjectTypes = async () => {
+    try {
+      const response = await dispatch(fetchProjectTypes({ baseUrl, token })).unwrap();
+      setProjectTypes(response);
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  }
+
+  const getTags = async () => {
+    try {
+      const response = await dispatch(fetchProjectsTags({ baseUrl, token })).unwrap();
+      setTags(response);
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  }
+
+  useEffect(() => {
+    getOwners();
+    getTeams();
+    getProjectTypes();
+    getTags();
+  }, [])
+
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
   };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
+
+  const handleSubmit = async (data) => {
+    try {
+      const payload = {
+        project_management: {
+          title: data.title,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          status: "active",
+          owner_id: data.manager,
+          priority: data.priority,
+          active: true,
+          project_type_id: data.type,
+        },
+      }
+      await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
+      toast.success("Project created successfully");
+      fetchData();
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  };
+
+  const renderActions = (item: any) => (
+    <div className="flex items-center justify-center gap-2">
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
+        onClick={() => navigate(`/maintenance/projects/details/${item.id}`)}
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
+        onClick={() => navigate(`/maintenance/projects/${item.id}/milestones`)}
+      >
+        <LogOut className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case "milestones": {
+        const completed = item.milestonesCompleted || 0;
+        const total = item.milestonesTotal || 0;
+        const progress = total > 0 ? (completed / total) * 100 : 0;
+
+        return (
+          <div className="relative w-[8rem] bg-gray-200 rounded-full h-3">
+            <div
+              className="absolute top-0 left-0 h-3 bg-[#84edba] rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            ></div>
+            <div className="absolute inset-0 flex !items-center !justify-center text-xs font-medium text-black">
+              {progress.toFixed(2)}%
+            </div>
+          </div>
+        );
+      }
+      case "tasks": {
+        const completed = item.tasksCompleted || 0;
+        const total = item.tasksTotal || 0;
+        const progress = total > 0 ? (completed / total) * 100 : 0;
+
+        return (
+          <div className="relative w-[8rem] bg-gray-200 rounded-full h-3">
+            <div
+              className="absolute top-0 left-0 h-3 bg-[#e9e575] rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            ></div>
+            <div className="absolute inset-0 flex !items-center !justify-center text-xs font-medium text-black">
+              {progress.toFixed(2)}%
+            </div>
+          </div>
+        );
+      }
+      default:
+        return item[columnKey] || "-";
+    }
+  };
+
+  const leftActions = (
+    <>
+      <Button
+        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+        onClick={handleOpenDialog}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add
+      </Button>
+    </>
+  );
+
+  const renderEditableCell = (columnKey, value, onChange) => {
+    if (columnKey === "status") {
+      return (
+        <Select
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          displayEmpty
+          size="small"
+          sx={{ minWidth: 120 }}
+        >
+          <MenuItem value="">
+            <em>Select status</em>
+          </MenuItem>
+          <MenuItem value="active">Active</MenuItem>
+          <MenuItem value="inactive">Inactive</MenuItem>
+        </Select>
+      );
+    }
+    if (columnKey === "type") {
+      return (
+        <Select
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          displayEmpty
+          size="small"
+          sx={{ minWidth: 120 }}
+        >
+          <MenuItem value="">
+            <em>Select type</em>
+          </MenuItem>
+          {
+            projectTypes.map((projectType) => (
+              <MenuItem key={projectType.id} value={projectType.id}>
+                {projectType.name}
+              </MenuItem>
+            ))
+          }
+        </Select>
+      );
+    }
+    if (columnKey === "manager") {
+      return (
+        <Select
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          displayEmpty
+          size="small"
+          sx={{ minWidth: 120 }}
+        >
+          <MenuItem value="">
+            <em>Select owner</em>
+          </MenuItem>
+          {
+            owners.map((owner) => (
+              <MenuItem key={owner.id} value={owner.id}>
+                {owner.full_name}
+              </MenuItem>
+            ))
+          }
+        </Select>
+      );
+    }
+    if (columnKey === "start_date") {
+      return (
+        <TextField
+          type="date"
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          size="small"
+          sx={{ minWidth: 120 }}
+        />
+      );
+    }
+    if (columnKey === "end_date") {
+      return (
+        <TextField
+          type="date"
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          size="small"
+          sx={{ minWidth: 120 }}
+        />
+      );
+    }
+    if (columnKey === "priority") {
+      return (
+        <Select
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          displayEmpty
+          size="small"
+          sx={{ minWidth: 120 }}
+        >
+          <MenuItem value="">
+            <em>Select priority</em>
+          </MenuItem>
+          <MenuItem value="high">High</MenuItem>
+          <MenuItem value="medium">Medium</MenuItem>
+          <MenuItem value="low">Low</MenuItem>
+        </Select>
+      );
+    }
+    return null;
+  }
+
+  const rightActions = (
+    <div className="flex items-center">
+      <div className="relative">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+        >
+          <span className="text-[#C72030] font-medium flex items-center gap-2">
+            {selectedView === "Kanban" ? (
+              <ChartNoAxesColumn className="w-4 h-4 rotate-180 text-[#C72030]" />
+            ) : (
+              <List className="w-4 h-4 text-[#C72030]" />
+            )}
+            {selectedView}
+          </span>
+          <ChevronDown className="w-4 h-4 text-gray-600" />
+        </button>
+
+        {isOpen && (
+          <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+            <div className="py-2">
+              <button
+                onClick={() => {
+                  setSelectedView("Kanban");
+                  setIsOpen(false);
+                }}
+                className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+              >
+                <div className="w-4 flex justify-center">
+                  <ChartNoAxesColumn className="rotate-180 text-[#C72030]" />
+                </div>
+                <span className="text-gray-700">Kanban</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedView("List");
+                  setIsOpen(false);
+                }}
+                className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+              >
+                <div className="w-4 flex justify-center">
+                  <List className="w-4 h-4 text-[#C72030]" />
+                </div>
+                <span className="text-gray-700">List</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="relative">
+        <button
+          onClick={() => setOpenStatusOptions(!openStatusOptions)}
+          className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+        >
+          <span className="text-[#C72030] font-medium flex items-center gap-2">
+            {STATUS_OPTIONS.find((option) => option.value === selectedFilterOption)?.label || "All"}
+          </span>
+          <ChevronDown className="w-4 h-4 text-gray-600" />
+        </button>
+
+        {openStatusOptions && (
+          <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+            <div className="py-2">
+              {
+                STATUS_OPTIONS.map((option) => (
+                  <button
+                    onClick={() => {
+                      setSelectedFilterOption(option.value);
+                      setOpenStatusOptions(false);
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                  >
+                    <span className="text-gray-700">{option.label}</span>
+                  </button>
+                ))
+              }
+            </div>
+          </div>
+        )}
+      </div>
+
+    </div>
+  );
+
+  if (selectedView === "Kanban") {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-between">
+          <Button
+            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            onClick={handleOpenDialog}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+          <div className="flex items-center">
+            <div className="relative">
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+              >
+                <span className="text-[#C72030] font-medium flex items-center gap-2">
+                  {selectedView === "Kanban" ? (
+                    <ChartNoAxesColumn className="w-4 h-4 rotate-180 text-[#C72030]" />
+                  ) : (
+                    <List className="w-4 h-4 text-[#C72030]" />
+                  )}
+                  {selectedView}
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-600" />
+              </button>
+
+              {isOpen && (
+                <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                  <div className="py-2">
+                    <button
+                      onClick={() => {
+                        setSelectedView("Kanban");
+                        setIsOpen(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                    >
+                      <div className="w-4 flex justify-center">
+                        <ChartNoAxesColumn className="rotate-180 text-[#C72030]" />
+                      </div>
+                      <span className="text-gray-700">Kanban</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedView("List");
+                        setIsOpen(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                    >
+                      <div className="w-4 flex justify-center">
+                        <List className="w-4 h-4 text-[#C72030]" />
+                      </div>
+                      <span className="text-gray-700">List</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="relative">
+              <button
+                onClick={() => setOpenStatusOptions(!openStatusOptions)}
+                className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+              >
+                <span className="text-[#C72030] font-medium flex items-center gap-2">
+                  {STATUS_OPTIONS.find((option) => option.value === selectedFilterOption)?.label || "All"}
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-600" />
+              </button>
+
+              {openStatusOptions && (
+                <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+                  <div className="py-2">
+                    {
+                      STATUS_OPTIONS.map((option) => (
+                        <button
+                          onClick={() => {
+                            setSelectedFilterOption(option.value);
+                            setOpenStatusOptions(false);
+                          }}
+                          className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                        >
+                          <span className="text-gray-700">{option.label}</span>
+                        </button>
+                      ))
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <ProjectManagementKanban />
+
+        <AddProjectModal
+          openDialog={openDialog}
+          handleCloseDialog={handleCloseDialog}
+          setOpenFormDialog={setOpenFormDialog}
+        />
+
+        <ProjectCreateModal
+          openDialog={openFormDialog}
+          handleCloseDialog={() => {
+            setOpenFormDialog(false);
+            setOpenDialog(false);
+          }}
+          owners={owners}
+          projectTypes={projectTypes}
+          tags={tags}
+          teams={teams}
+          fetchProjects={fetchData}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="p-6">
-      {/* Breadcrumb */}
-      <div className="mb-4">
-        <span className="text-sm text-gray-600">Projects &gt; Project Dashboard</span>
-      </div>
+      <EnhancedTable
+        data={projects}
+        columns={columns}
+        renderActions={renderActions}
+        renderCell={renderCell}
+        leftActions={leftActions}
+        rightActions={rightActions}
+        storageKey="projects-table"
+        onFilterClick={() => { }}
+        canAddRow={true}
+        readonlyColumns={["id", "milestones", "tasks", "issues"]}
+        onAddRow={(newRowData) => {
+          handleSubmit(newRowData)
+        }}
+        renderEditableCell={renderEditableCell}
+        newRowPlaceholder="Click to add new project"
+      />
 
-      {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">PROJECTS DASHBOARD</h1>
+      <AddProjectModal
+        openDialog={openDialog}
+        handleCloseDialog={handleCloseDialog}
+        setOpenFormDialog={setOpenFormDialog}
+      />
 
-      {/* Quick Navigation Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-purple-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">Fitout Setup</h3>
-              <p className="text-gray-600 text-sm mt-1">Manage categories, status, and deviation settings</p>
-            </div>
-            <Button 
-              onClick={handleFitoutSetup}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-            >
-              Open
-            </Button>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-blue-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">Fitout Requests</h3>
-              <p className="text-gray-600 text-sm mt-1">View and manage fitout requests</p>
-            </div>
-            <Button 
-              variant="outline"
-              className="border-blue-500 text-blue-500 hover:bg-blue-50"
-            >
-              View List
-            </Button>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">Add New Project</h3>
-              <p className="text-gray-600 text-sm mt-1">Create a new fitout project</p>
-            </div>
-            <Button 
-              onClick={handleAddProject}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex gap-4 mb-6">
-        <Button 
-          onClick={handleAddProject}
-          className="bg-purple-700 hover:bg-purple-800 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Project
-        </Button>
-        <Button 
-          variant="outline"
-          onClick={() => setIsFilterOpen(true)}
-          className="border-purple-700 text-purple-700 hover:bg-purple-50"
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
-      </div>
-
-      {/* Recent Projects Table */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold">Recent Fitout Requests</h2>
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Actions</TableHead>
-              <TableHead className="font-semibold">ID</TableHead>
-              <TableHead className="font-semibold">User</TableHead>
-              <TableHead className="font-semibold">Category</TableHead>
-              <TableHead className="font-semibold">Description</TableHead>
-              <TableHead className="font-semibold">Tower</TableHead>
-              <TableHead className="font-semibold">Unit</TableHead>
-              <TableHead className="font-semibold">Supplier</TableHead>
-              <TableHead className="font-semibold">Master Status</TableHead>
-              <TableHead className="font-semibold">Created on</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {/* Empty state - no data to display */}
-            <TableRow>
-              <TableCell colSpan={10} className="text-center py-8 text-gray-500">
-                No fitout requests found. Click "Add Project" to create your first project.
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Filter Modal */}
-      <ProjectFilterModal 
-        isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
+      <ProjectCreateModal
+        openDialog={openFormDialog}
+        handleCloseDialog={() => {
+          setOpenFormDialog(false);
+          setOpenDialog(false);
+        }}
+        owners={owners}
+        projectTypes={projectTypes}
+        tags={tags}
+        teams={teams}
+        fetchProjects={fetchData}
       />
     </div>
   );

@@ -198,17 +198,31 @@ export interface Order {
   note?: string;
   createdAt: string;
 }
-
+// console.log("restaurantApi file loaded",facilityId)
 export const restaurantApi = {
   // Get restaurants by site ID
-  async getRestaurantsBySite(siteId: string | number): Promise<RestaurantsBySiteResponse> {
+  async getRestaurantsBySite(siteId: string | number, facilityId?: string | number): Promise<RestaurantsBySiteResponse> {
     try {
+      console.log("🏢 getRestaurantsBySite called with:", { siteId, facilityId });
+      
+      const params: { site_id: string | number; facility_id?: string | number } = { site_id: siteId };
+      if (facilityId) {
+        params.facility_id = facilityId;
+        console.log("✅ facility_id added to params:", facilityId);
+      } else {
+        console.log("⚠️ No facility_id provided");
+      }
+      
+      console.log("📡 API Request params:", params);
+      
       const response = await baseClient.get(
         `/pms/admin/restaurants/get_restaurants_by_site.json?skp_dr=true`,
         {
-          params: { site_id: siteId }
+          params
         }
       );
+      
+      console.log("📥 API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching restaurants by site:", error);
@@ -424,13 +438,64 @@ export const restaurantApi = {
   // Get facility setup by facility ID
   async getFacilitySetup(facilityId: string): Promise<FacilityResponse> {
     try {
+      console.log("🏢 getFacilitySetup called with facilityId:", facilityId);
+      
       const response = await baseClient.get(
         `/pms/admin/facility_setups/${facilityId}.json?skp_dr=true`
       );
+      
+      console.log("📥 Facility Setup Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching facility setup:", error);
       throw new Error("Failed to fetch facility setup");
+    }
+  },
+
+  // Get user data by mobile or email
+  async getUserData(params: { customer_mobile?: string; customer_email?: string }): Promise<{
+    success: boolean;
+    data?: UserData;
+    message?: string;
+  }> {
+    try {
+      console.log("🔍 getUserData called with:", params);
+      
+      const response = await baseClient.get(
+        `/pms/admin/restaurants/get_user_data.json`,
+        {
+          params: {
+            skp_dr: true,
+            ...params
+          }
+        }
+      );
+      
+      console.log("📥 User Data Response:", response.data);
+      
+      // API returns user data directly: {name, email, mobile}
+      if (response.data && (response.data.name || response.data.email || response.data.mobile)) {
+        return {
+          success: true,
+          data: {
+            customer_name: response.data.name,
+            customer_email: response.data.email,
+            customer_mobile: response.data.mobile,
+            delivery_address: response.data.delivery_address
+          }
+        };
+      }
+      
+      return {
+        success: false,
+        message: "No user data found"
+      };
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      return {
+        success: false,
+        message: "Failed to fetch user data"
+      };
     }
   },
 
@@ -727,4 +792,11 @@ export interface AdminRestaurant {
   name: string;
   location?: string;
   image?: string;
+}
+
+export interface UserData {
+  customer_name?: string;
+  customer_mobile?: string;
+  customer_email?: string;
+  delivery_address?: string;
 }

@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { redirect, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Copy,
   Printer,
@@ -18,7 +18,13 @@ import {
   Eye,
   FileSpreadsheet,
   Download,
-  Edit
+  Edit,
+  AlertTriangle,
+  Contact,
+  ScrollText,
+  ClipboardList,
+  Images,
+  Loader2
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { getMaterialPRById, fetchWBS } from "@/store/slices/materialPRSlice";
@@ -38,9 +44,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  DialogContentText,
 } from "@mui/material";
 import { approvePO, rejectPO } from "@/store/slices/purchaseOrderSlice";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import { approveDeletionRequest } from "@/store/slices/pendingApprovalSlice";
 
 // Interfaces
 interface BillingAddress {
@@ -84,6 +92,7 @@ interface PRInventory {
   approved_qty?: number;
   transfer_qty?: number;
   wbs_code?: string;
+  general_storage?: string;
 }
 
 interface Attachment {
@@ -94,6 +103,7 @@ interface Attachment {
 }
 
 interface MaterialPR {
+  active?: boolean;
   id?: string;
   external_id?: string;
   po_date?: string;
@@ -113,6 +123,7 @@ interface MaterialPR {
   attachments?: Attachment[];
   show_send_sap_yes?: boolean;
   can_edit_wbs_codes?: boolean;
+  pr_type?: string;
 }
 
 interface TableRow {
@@ -137,15 +148,15 @@ interface TableRow {
 const columns: ColumnConfig[] = [
   { key: "srNo", label: "SR No.", sortable: true, defaultVisible: true },
   { key: "item", label: "Item", sortable: true, defaultVisible: true },
-  // {
-  //   key: "availability",
-  //   label: "Availability",
-  //   sortable: true,
-  //   defaultVisible: true,
-  // },
   {
     key: "sacHsnCode",
     label: "SAC/HSN Code",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "general_storage",
+    label: "General Storage",
     sortable: true,
     defaultVisible: true,
   },
@@ -187,8 +198,12 @@ export const MaterialPRDetailsPage = () => {
   const searchParams = new URLSearchParams(location.search);
   const levelId = searchParams.get("level_id");
   const userId = searchParams.get("user_id");
+  const requestId = searchParams.get("request_id");
   const shouldShowButtons = Boolean(levelId && userId);
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
 
+  const [isDeletionRequest, setIsDeletionRequest] = useState(false)
   const [pr, setPR] = useState<MaterialPR>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
@@ -197,6 +212,8 @@ export const MaterialPRDetailsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [showEditWbsModal, setShowEditWbsModal] = useState(false);
   const [wbsCodes, setWbsCodes] = useState([]);
+  const [openDeletionModal, setOpenDeletionModal] = useState(false)
+  const [printing, setPrinting] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
   }>({});
@@ -205,13 +222,16 @@ export const MaterialPRDetailsPage = () => {
     editWbsCode: false,
   });
 
+  useEffect(() => {
+    if (searchParams.get("type") === "delete-request") {
+      setIsDeletionRequest(true)
+    }
+  }, [])
+
   // Fetch PR data
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
-
-      const token = localStorage.getItem("token");
-      const baseUrl = localStorage.getItem("baseUrl");
 
       if (!baseUrl || !token) {
         toast.error("Missing required configuration");
@@ -252,8 +272,6 @@ export const MaterialPRDetailsPage = () => {
   // Fetch WBS codes
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem("token");
-      const baseUrl = localStorage.getItem("baseUrl");
 
       if (!baseUrl || !token) {
         toast.error("Missing required configuration");
@@ -283,8 +301,6 @@ export const MaterialPRDetailsPage = () => {
 
   // Handle update WBS codes to backend
   const handleUpdateWbsCodes = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
 
     if (!baseUrl || !token || !id) {
       toast.error("Missing required configuration");
@@ -314,42 +330,76 @@ export const MaterialPRDetailsPage = () => {
     }
   }, [id, updatedWbsCodes]);
 
-  // Handle approve action
-  const handleApprove = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
-    if (!baseUrl || !token || !id || !levelId || !userId) {
-      toast.error("Missing required configuration");
-      return;
-    }
-
+  const handleApproveDeletionRequest = async () => {
     const payload = {
-      pms_purchase_order: {
-        id: Number(id),
-        pms_pr_inventories_attributes:
-          pr.pms_pr_inventories?.map((item) => ({
-            id: item.id,
-            rate: item.rate,
-            total_value: item.total_value,
-            approved_qty: item.quantity,
-            transfer_qty: item.transfer_qty,
-          })) || [],
-      },
       level_id: Number(levelId),
       user_id: Number(userId),
       approve: true,
-    };
-
-    try {
-      await dispatch(
-        approvePO({ baseUrl, token, id: Number(id), data: payload })
-      ).unwrap();
-      toast.success("PO approved successfully");
-      navigate(`/finance/pending-approvals`);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to approve PO");
+      redirect: false
     }
-  }, [dispatch, id, levelId, userId, pr.pms_pr_inventories, navigate]);
+    try {
+      await dispatch(approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })).unwrap();
+      toast.success("Deletion request approved successfully");
+      navigate(-1);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const handleRejectDeletionRequest = async () => {
+    const payload = {
+      level_id: Number(levelId),
+      user_id: Number(userId),
+      approve: false,
+      redirect: false,
+      rejection_reason: rejectComment
+    }
+    try {
+      await dispatch(approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })).unwrap();
+      toast.success("Deletion request rejected successfully");
+      navigate(-1);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const handleApprove = async () => {
+    if (isDeletionRequest) {
+      await handleApproveDeletionRequest();
+    } else {
+      if (!baseUrl || !token || !id || !levelId || !userId) {
+        toast.error("Missing required configuration");
+        return;
+      }
+
+      const payload = {
+        pms_purchase_order: {
+          id: Number(id),
+          pms_pr_inventories_attributes:
+            pr.pms_pr_inventories?.map((item) => ({
+              id: item.id,
+              rate: item.rate,
+              total_value: item.total_value,
+              approved_qty: item.quantity,
+              transfer_qty: item.transfer_qty,
+            })) || [],
+        },
+        level_id: Number(levelId),
+        user_id: Number(userId),
+        approve: true,
+      };
+
+      try {
+        await dispatch(
+          approvePO({ baseUrl, token, id: Number(id), data: payload })
+        ).unwrap();
+        toast.success("PO approved successfully");
+        navigate(`/finance/pending-approvals`);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to approve PO");
+      }
+    }
+  };
 
   // Handle reject action
   const handleRejectConfirm = useCallback(async () => {
@@ -358,39 +408,39 @@ export const MaterialPRDetailsPage = () => {
       return;
     }
 
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
     if (!baseUrl || !token || !id || !levelId || !userId) {
       toast.error("Missing required configuration");
       return;
     }
 
-    const payload = {
-      level_id: levelId,
-      approve: "false",
-      user_id: userId,
-      rejection_reason: rejectComment,
-      redirect: false,
-    };
+    if (isDeletionRequest) {
+      await handleRejectDeletionRequest();
+    } else {
+      const payload = {
+        level_id: levelId,
+        approve: "false",
+        user_id: userId,
+        rejection_reason: rejectComment,
+        redirect: false,
+      };
 
-    try {
-      await dispatch(
-        rejectPO({ baseUrl, token, id: Number(id), data: payload })
-      ).unwrap();
-      toast.success("PO rejected successfully");
-      navigate(`/finance/pending-approvals`);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to reject PO");
-    } finally {
-      setOpenRejectDialog(false);
-      setRejectComment("");
+      try {
+        await dispatch(
+          rejectPO({ baseUrl, token, id: Number(id), data: payload })
+        ).unwrap();
+        toast.success("PO rejected successfully");
+        navigate(`/finance/pending-approvals`);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to reject PO");
+      } finally {
+        setOpenRejectDialog(false);
+        setRejectComment("");
+      }
     }
   }, [dispatch, id, levelId, userId, rejectComment, navigate]);
 
   // Handle send to SAP
   const handleSendToSap = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
     if (!baseUrl || !token || !id) {
       toast.error("Missing required configuration");
       return;
@@ -409,15 +459,36 @@ export const MaterialPRDetailsPage = () => {
     }
   }, [id]);
 
+  const handleDelete = async () => {
+    const payload = {
+      deletion_request: {
+        resource_id: id,
+        resource_type: "Pms::PurchaseOrder",
+        approve: false
+      }
+    }
+    try {
+      await axios.post(`https://${baseUrl}/deletion_requests.json`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      toast.success("Deletion request raised successfully")
+      setOpenDeletionModal(false)
+    } catch (error) {
+      console.log(error)
+      toast.error(error.response.data.error)
+    }
+  }
+
   // Handle print
   const handlePrint = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
     if (!baseUrl || !token || !id) {
       toast.error("Missing required configuration");
       return;
     }
-
+    setPrinting(true);
     try {
       const response = await axios.get(
         `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
@@ -438,6 +509,8 @@ export const MaterialPRDetailsPage = () => {
       URL.revokeObjectURL(downloadUrl);
     } catch (error: any) {
       toast.error(error.message || "Failed to download PDF");
+    } finally {
+      setPrinting(false);
     }
   }, [id]);
 
@@ -473,6 +546,7 @@ export const MaterialPRDetailsPage = () => {
       approved_qty: item.approved_qty?.toString() ?? "0",
       transfer_qty: item.transfer_qty?.toString() ?? "0",
       wbs_code: item.wbs_code ?? "-",
+      general_storage: item.general_storage ?? "GNST",
     })) ?? [];
 
   const renderCell = (item: any, columnKey: string) => {
@@ -501,66 +575,119 @@ export const MaterialPRDetailsPage = () => {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <h1 className="text-2xl font-semibold">Material PR Details</h1>
         <div className="flex items-center gap-3">
-          {buttonCondition.showSap && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white"
-              onClick={handleSendToSap}
-            >
-              Send To SAP Team
-            </Button>
-          )}
           {
-            pr.all_level_approved === null && !shouldShowButtons && <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300"
-              onClick={() => navigate(`/finance/material-pr/edit/${id}`)}
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </Button>
-          }
-          {
-            !shouldShowButtons && (
+            !pr.active ? (
               <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 !bg-[#C72030] !text-white cursor-default"
+                >
+                  Deleted
+                </Button>
+                <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
+                  {
+                    printing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Print
+                      </>
+                    ) : (
+                      <>
+                        <Printer className="w-4 h-4 mr-2" />
+                        Print
+                      </>
+                    )
+                  }
+                </Button>
+              </>
+            ) : (
+              <>
+                {buttonCondition.showSap && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-300 bg-purple-600 text-white"
+                    onClick={handleSendToSap}
+                  >
+                    Send To SAP Team
+                  </Button>
+                )}
+                {
+                  pr.all_level_approved === null && !shouldShowButtons && <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-300"
+                    onClick={() => navigate(`/finance/material-pr/edit/${id}`)}
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
+                    Edit
+                  </Button>
+                }
+                {
+                  !shouldShowButtons && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/finance/material-pr/add?clone=${id}`)}
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Clone
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
+                        {
+                          printing ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Print
+                            </>
+                          ) : (
+                            <>
+                              <Printer className="w-4 h-4 mr-2" />
+                              Print
+                            </>
+                          )
+                        }
+                      </Button>
+                    </>
+                  )
+                }
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/finance/material-pr/add?clone=${id}`)}
+                  onClick={() => navigate(`/finance/material-pr/feeds/${id}`)}
                 >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Clone
+                  <Rss className="w-4 h-4 mr-2" />
+                  Feeds
                 </Button>
-                <Button variant="outline" size="sm" onClick={handlePrint}>
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print
-                </Button>
+                {pr.all_level_approved && !shouldShowButtons && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-gray-300 btn-primary"
+                      onClick={() => setShowEditWbsModal(true)}
+                    >
+                      Edit WBS Codes
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-gray-300 btn-primary"
+                      onClick={() => setOpenDeletionModal(true)}
+                    >
+                      Raise Deletion Request
+                    </Button>
+                  </div>
+                )}
               </>
             )
           }
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(`/finance/material-pr/feeds/${id}`)}
-          >
-            <Rss className="w-4 h-4 mr-2" />
-            Feeds
-          </Button>
-          {pr.all_level_approved && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 btn-primary"
-              onClick={() => setShowEditWbsModal(true)}
-            >
-              Edit WBS Codes
-            </Button>
-          )}
         </div>
       </div>
 
@@ -607,132 +734,158 @@ export const MaterialPRDetailsPage = () => {
 
       <div className="space-y-6">
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">
-              Contact Information
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <Contact className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Contact Information</h3>
+          </div>
           <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Phone</span>
-                  <span className="font-medium">
-                    : {pr.billing_address?.phone ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Email</span>
-                  <span className="font-medium">
-                    : {pr.billing_address?.email ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">PAN</span>
-                  <span className="font-medium">
-                    : {pr.billing_address?.pan_number ?? "-"}
-                  </span>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Phone</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.billing_address?.phone ?? "-"}
+                </span>
               </div>
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Fax</span>
-                  <span className="font-medium">
-                    : {pr.billing_address?.fax ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">GST</span>
-                  <span className="font-medium">
-                    : {pr.billing_address?.gst_number ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Address</span>
-                  <span className="font-medium">
-                    : {pr.billing_address?.address ?? "-"}
-                  </span>
-                </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Fax</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.billing_address?.fax ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Email</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.billing_address?.email ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">GST</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.billing_address?.gst_number ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">PAN</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.billing_address?.pan_number ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Address</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.billing_address?.address ?? "-"}
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">
-              Material Purchase Request
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ScrollText className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Material Purchase Request</h3>
+          </div>
           <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">MPR No.</span>
-                  <span className="font-medium">: {pr.external_id ?? "-"}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">MPR Date</span>
-                  <span className="font-medium">
-                    :{" "}
-                    {pr.po_date
-                      ? format(new Date(pr.po_date), "dd-MM-yyyy")
-                      : "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">
-                    Plant Detail
-                  </span>
-                  <span className="font-medium">
-                    : {pr.plant_detail?.plant_name ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Address</span>
-                  <span className="font-medium">
-                    : {pr.supplier?.address ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Related To</span>
-                  <span className="font-medium">: {pr.related_to ?? "-"}</span>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">MPR No.</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.external_id ?? "-"}
+                </span>
               </div>
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">
-                    Reference No.
-                  </span>
-                  <span className="font-medium">
-                    : {pr.reference_number ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">ID</span>
-                  <span className="font-medium">: {pr.id ?? "-"}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Supplier</span>
-                  <span className="font-medium">
-                    : {pr.supplier?.company_name ?? "-"}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Email</span>
-                  <span className="font-medium">
-                    : {pr.supplier?.email ?? "-"}
-                  </span>
-                </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Reference No.</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.reference_number ?? "-"}
+                </span>
               </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">MPR Date</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.po_date
+                    ? format(new Date(pr.po_date), "dd-MM-yyyy")
+                    : "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.id ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Plant Detail</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.plant_detail?.plant_name ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Supplier</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.supplier?.company_name ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Email</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.supplier?.email ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Related To</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.related_to ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Address</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {pr.supplier?.address ?? "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+
+                {pr.pr_type ? (
+                  <span className="text-gray-900 font-medium px-3 text-sm rounded-[5px] w-max cursor-pointer bg-blue-200">
+                    {pr.pr_type.charAt(0).toUpperCase() + pr.pr_type.slice(1)}
+                  </span>
+                ) : (
+                  <span className="text-gray-500">-</span>
+                )}
+              </div>
+
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-medium">Items Table</CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ClipboardList className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Items Table</h3>
+          </div>
           <CardContent>
             <EnhancedTable
               data={tableData}
@@ -763,9 +916,12 @@ export const MaterialPRDetailsPage = () => {
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">Attachments</CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <Images className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+          </div>
           <CardContent>
             {Array.isArray(pr.attachments) && pr.attachments.length > 0 ? (
               <div className="flex items-center flex-wrap gap-4">
@@ -852,11 +1008,12 @@ export const MaterialPRDetailsPage = () => {
         </Card>
 
         <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">
-              Terms & Conditions
-            </CardTitle>
-          </CardHeader>
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <ScrollText className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
+          </div>
           <CardContent className="text-wrap break-words">
             <p className="text-muted-foreground">
               {pr.terms_conditions ?? "No terms and conditions available"}
@@ -887,7 +1044,7 @@ export const MaterialPRDetailsPage = () => {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Reject Purchase Order</DialogTitle>
+          <DialogTitle>{isDeletionRequest ? "Reject Deletion Request" : "Reject Purchase Order"}</DialogTitle>
           <DialogContent>
             <TextField
               autoFocus
@@ -900,6 +1057,25 @@ export const MaterialPRDetailsPage = () => {
               value={rejectComment}
               onChange={(e) => setRejectComment(e.target.value)}
               variant="outlined"
+              sx={{
+                mt: 1,
+                "& .MuiOutlinedInput-root": {
+                  height: "auto !important",
+                  padding: "2px !important",
+                  display: "flex",
+                },
+                "& .MuiInputBase-input[aria-hidden='true']": {
+                  flex: 0,
+                  width: 0,
+                  height: 0,
+                  padding: "0 !important",
+                  margin: 0,
+                  display: "none",
+                },
+                "& .MuiInputBase-input": {
+                  resize: "none !important",
+                },
+              }}
             />
           </DialogContent>
           <DialogActions>
@@ -976,6 +1152,31 @@ export const MaterialPRDetailsPage = () => {
           </DialogActions>
         </Dialog>
 
+        <Dialog
+          open={openDeletionModal}
+          onClose={() => setOpenDeletionModal(false)}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AlertTriangle size={24} color="#d32f2f" />
+            Confirm Deletion Request
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to raise a deletion request? This action will initiate the deletion process.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setOpenDeletionModal(false)} variant="outline">
+              Cancel
+            </Button>
+            <Button onClick={handleDelete}>
+              Yes
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         <AttachmentPreviewModal
           isModalOpen={isModalOpen}
           setIsModalOpen={setIsModalOpen}
@@ -986,3 +1187,4 @@ export const MaterialPRDetailsPage = () => {
     </div>
   );
 };
+

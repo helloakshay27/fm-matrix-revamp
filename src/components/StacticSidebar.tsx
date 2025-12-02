@@ -74,7 +74,10 @@ import {
   Wallet,
   Trash,
   ChartColumnIncreasing,
+  IndianRupee,
+  Circle,
 } from "lucide-react";
+import { template } from "lodash";
 
 const navigationStructure = {
   Settings: {
@@ -349,12 +352,12 @@ const modulesByPackage = {
       href: "/master/user",
       subItems: [
         {
-          name: "FM User",
+          name: "FM Users",
           href: "/master/user/fm-users",
           color: "text-[#1a1a1a]",
         },
         {
-          name: "OCCUPANT USERS",
+          name: "Occupant Users",
           href: "/master/user/occupant-users",
           color: "text-[#1a1a1a]",
         },
@@ -399,6 +402,43 @@ const modulesByPackage = {
       name: "Inventory Type",
       icon: Package,
       href: "/master/inventory-type",
+    },
+    {
+      name: "Template",
+      icon: FileSpreadsheet,
+      href: "/master/communication-template",
+      subItems: [
+        {
+          name: "Communication Template",
+          href: "/master/communication-template",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Root Cause Analysis",
+          href: "/master/template/root-cause-analysis",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Preventive Action",
+          href: "/master/template/preventive-action",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Short-term Impact",
+          href: "/master/template/short-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Long-term Impact",
+          href: "/master/template/long-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Corrective Action",
+          href: "/master/template/corrective-action",
+          color: "text-[#1a1a1a]",
+        },
+      ],
     },
     // {
     //   name: 'Inventory Sub Type',
@@ -573,6 +613,17 @@ const modulesByPackage = {
       href: "/maintenance/vendor",
     },
 
+    // {
+    //   name: 'Projects & Tasks',
+    //   icon: Briefcase,
+    //   href: "/maintenance/projects"
+    // },
+    // {
+    //   name: 'Sprint',
+    //   icon: Briefcase,
+    //   href: "/maintenance/sprint"
+    // }
+
 
     // {
     //   name: "Msafe Report",
@@ -602,7 +653,7 @@ const modulesByPackage = {
           href: "/safety/permit/pending-approvals",
           color: "text-[#1a1a1a]",
         },
-        // { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
+        { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
       ],
     },
 
@@ -643,23 +694,23 @@ const modulesByPackage = {
         { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
       ],
     },
-    {
-      name: "Vi Miles",
-      icon: User,
-      href: "/safety/vi-miles",
-      subItems: [
-        {
-          name: "Vehicle Details",
-          href: "/safety/vi-miles/vehicle-details",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Vehicle Check In",
-          href: "/safety/vi-miles/vehicle-check-in",
-          color: "text-[#1a1a1a]",
-        },
-      ],
-    },
+    // {
+    //   name: "Vi Miles",
+    //   icon: User,
+    //   href: "/safety/vi-miles",
+    //   subItems: [
+    //     {
+    //       name: "Vehicle Details",
+    //       href: "/safety/vi-miles/vehicle-details",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //     {
+    //       name: "Vehicle Check In",
+    //       href: "/safety/vi-miles/vehicle-check-in",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //   ],
+    // },
     {
       name: "Check Hierarchy Levels",
       icon: FolderTree,
@@ -700,6 +751,16 @@ const modulesByPackage = {
           href: "/finance/pending-approvals",
           color: "text-[#1a1a1a]",
         },
+        {
+          name: "Deletion Requests",
+          href: "/finance/deletion-requests",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Deleted PRs",
+          href: "/finance/deleted-prs",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
     { name: "Invoices", icon: Receipt, href: "/finance/invoices" },
@@ -731,8 +792,8 @@ const modulesByPackage = {
       icon: Users,
       subItems: [
         { name: "Customers", href: "/crm/customers" },
-        { name: "FM Users", href: "/crm/fm-users" },
-        { name: "Occupant Users", href: "/crm/occupant-users" },
+        // { name: "FM Users", href: "/crm/fm-users" },
+        // { name: "Occupant Users", href: "/crm/occupant-users" },
       ],
     },
     { name: "Events", icon: Calendar, href: "/crm/events" },
@@ -825,12 +886,12 @@ const modulesByPackage = {
       href: "/vas/parking",
       subItems: [
         {
-          name: "Parking Booking",
+          name: "Parking Allocation",
           href: "/vas/parking",
           color: "text-[#1a1a1a]",
         },
         {
-          name: "Parking Allocation",
+          name: "Parking Booking",
           href: "/vas/parking/site-wise-bookings",
           color: "text-[#1a1a1a]",
         },
@@ -914,6 +975,39 @@ const modulesByPackage = {
       name: "Redemption Marketplace",
       icon: Globe,
       href: "/vas/redemonection-marketplace",
+    },
+    {
+      name: "Mailroom",
+      icon: Mail,
+      href: "/vas/mailroom",
+      subItems: [
+        {
+          name: "Inbound",
+          href: "/vas/mailroom/inbound",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Outbound",
+          href: "/vas/mailroom/outbound",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
+      name: "Collaboration",
+      icon: Globe,
+      subItems: [
+        {
+          name: "Channels",
+          href: "/vas/channels",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Tasks",
+          href: "/vas/channels/tasks",
+          color: "text-[#1a1a1a]",
+        },
+      ]
     }
   ],
   "Market Place": [
@@ -1197,6 +1291,19 @@ const modulesByPackage = {
     //   icon: Currency,
     //   href: '/settings/currency',
     // }
+
+    {
+      name: "Common Modules",
+      icon: IndianRupee,
+      subItems: [
+        { name: "Currency", href: "/settings/currency" },
+      ]
+    },
+    {
+      icon: Circle,
+      name: "Circle",
+      href: "/safety/m-safe/circle",
+    },
   ],
 };
 

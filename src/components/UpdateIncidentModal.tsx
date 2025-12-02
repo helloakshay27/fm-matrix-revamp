@@ -258,8 +258,24 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
               InputLabelProps={{
                 shrink: true
               }}
-              sx={fieldStyles}
-            />
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  height: "auto !important",
+                  padding: "2px !important",
+                  display: "flex",
+                },
+                "& .MuiInputBase-input[aria-hidden='true']": {
+                  flex: 0,
+                  width: 0,
+                  height: 0,
+                  padding: "0 !important",
+                  margin: 0,
+                  display: "none",
+                },
+                "& .MuiInputBase-input": {
+                  resize: "none !important",
+                },
+              }} />
           </div>
 
           {/* Show additional fields only when status is "Closed" */}
@@ -281,8 +297,24 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
                     InputLabelProps={{
                       shrink: true
                     }}
-                    sx={fieldStyles}
-                  />
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }} />
                 </div>
 
                 <div className="space-y-2">
@@ -298,8 +330,24 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
                     InputLabelProps={{
                       shrink: true
                     }}
-                    sx={fieldStyles}
-                  />
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }} />
                 </div>
 
                 <div className="space-y-2">
@@ -315,8 +363,24 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
                     InputLabelProps={{
                       shrink: true
                     }}
-                    sx={fieldStyles}
-                  />
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }} />
                 </div>
               </>
             )}

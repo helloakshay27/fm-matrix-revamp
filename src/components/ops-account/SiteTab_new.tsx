@@ -132,7 +132,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
 }) => {
   const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
-  
+
   // State management
   const [sites, setSites] = useState<SiteItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -157,7 +157,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
-  
+
   // Dropdowns and permissions
   const [companiesDropdown, setCompaniesDropdown] = useState<any[]>([]);
   const [regionsDropdown, setRegionsDropdown] = useState<any[]>([]);
@@ -173,7 +173,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
 
   const checkEditPermission = () => {
     const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'your-specific-email@domain.com'];
+    const allowedEmails = ['abhishek.sharma@lockated.com', 'adhip.shetty@lockated.com'];
     setCanEditSite(allowedEmails.includes(userEmail));
   };
 
@@ -312,7 +312,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       if (response.ok) {
         const data = await response.json();
         console.log('Countries API response:', data);
-        
+
         if (Array.isArray(data)) {
           // Handle direct array format
           const uniqueCountries = new Map();
@@ -323,7 +323,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
               uniqueCountries.set(id, name);
             }
           });
-          
+
           const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
           setCountriesDropdown(countriesArray);
         } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
@@ -336,7 +336,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
               uniqueCountries.set(id, name);
             }
           });
-          
+
           const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
           setCountriesDropdown(countriesArray);
         } else {
@@ -414,7 +414,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
 
   const totalRecords = pagination.total_count;
   const totalPages = pagination.total_pages;
-  
+
   // Use API data directly instead of client-side filtering
   const displayedData = sites;
 
@@ -492,11 +492,10 @@ export const SiteTab: React.FC<SiteTabProps> = ({
     ),
     status: (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          site?.active
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${site?.active
             ? 'bg-green-100 text-green-800'
             : 'bg-red-100 text-red-800'
-        }`}
+          }`}
       >
         {site?.active ? 'Active' : 'Inactive'}
       </span>
@@ -591,8 +590,8 @@ export const SiteTab: React.FC<SiteTabProps> = ({
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
             leftActions={(
-              <Button 
-                className='bg-primary text-primary-foreground hover:bg-primary/90'  
+              <Button
+                className='bg-primary text-primary-foreground hover:bg-primary/90'
                 onClick={() => setIsAddModalOpen(true)}
                 disabled={!canEditSite}
               >

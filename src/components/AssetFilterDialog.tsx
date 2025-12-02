@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store/store';
+// Updated AssetFilters interface with extra_fields_field_value_cont and critical_eq
 import { fetchAssetsData, AssetFilters } from '@/store/slices/assetsSlice';
 import {
   Dialog,
@@ -85,12 +86,33 @@ interface RoomItem {
   name: string;
 }
 
+// Category options
+const categoryOptions = [
+  'Land',
+  'Building',
+  'Leasehold Improvement',
+  'Vehicle',
+  'Furniture & Fixtures',
+  'IT Equipment',
+  'Machinery & Equipment',
+  'Tools & Instruments',
+  'Meter'
+];
+
+// Criticality options
+const criticalityOptions = [
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' }
+];
+
 export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   // Form state
   const [assetName, setAssetName] = useState('');
   const [assetId, setAssetId] = useState('');
+  const [category, setCategory] = useState<string[]>([]);
+  const [criticality, setCriticality] = useState('');
   const [group, setGroup] = useState('');
   const [subgroup, setSubgroup] = useState('');
   const [site, setSite] = useState('');
@@ -412,6 +434,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       const filters: AssetFilters = {
         assetName: assetName || undefined,
         assetId: assetId || undefined,
+        extra_fields_field_value_in: category.length > 0 ? category.join(',') : undefined,
+        critical_eq: criticality === 'yes' ? true : criticality === 'no' ? false : undefined,
         groupId: group || undefined,
         subgroupId: subgroup || undefined,
         siteId: site || undefined,
@@ -450,6 +474,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       // Clear all form fields
       setAssetName('');
       setAssetId('');
+      setCategory([]);
+      setCriticality('');
       setGroup('');
       setSubgroup('');
       setSite('');
@@ -524,6 +550,52 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
             </div>
             <div className="grid grid-cols-2 gap-6 mt-4">
               <FormControl fullWidth variant="outlined">
+                <InputLabel id="category-label" shrink>Category</InputLabel>
+                <MuiSelect
+                  labelId="category-label"
+                  label="Category"
+                  value={category}
+                  onChange={(e) => setCategory(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                  displayEmpty
+                  multiple
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                  renderValue={(selected) => {
+                    if (Array.isArray(selected) && selected.length === 0) {
+                      return <em>Select Categories</em>;
+                    }
+                    return Array.isArray(selected) ? selected.join(', ') : '';
+                  }}
+                >
+                  {categoryOptions.map((categoryOption) => (
+                    <MenuItem key={categoryOption} value={categoryOption}>
+                      {categoryOption}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="criticality-label" shrink>Criticality</InputLabel>
+                <MuiSelect
+                  labelId="criticality-label"
+                  label="Criticality"
+                  value={criticality}
+                  onChange={(e) => setCriticality(e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value=""><em>Select Criticality</em></MenuItem>
+                  {criticalityOptions.map((criticalityOption) => (
+                    <MenuItem key={criticalityOption.value} value={criticalityOption.value}>
+                      {criticalityOption.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            </div>
+            <div className="grid grid-cols-2 gap-6 mt-4">
+              <FormControl fullWidth variant="outlined">
                 <InputLabel id="group-label" shrink>Group</InputLabel>
                 <MuiSelect
                   labelId="group-label"
@@ -535,7 +607,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
                   disabled={loadingGroups}
                   MenuProps={selectMenuProps}
                 >
-                  <MenuItem value=""><em>Select Category</em></MenuItem>
+                  <MenuItem value=""><em>Select Group</em></MenuItem>
                   {groups.map((groupItem) => (
                     <MenuItem key={groupItem.id} value={groupItem.id?.toString() || ''}>
                       {groupItem.name || 'Unknown Group'}

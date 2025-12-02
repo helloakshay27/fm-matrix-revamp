@@ -153,12 +153,12 @@ export const EditCountryModal: React.FC<EditCountryModalProps> = ({
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-50">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-gray-900">EDIT COUNTRY</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-gray-900">EDIT Headquarter</DialogTitle>
           </DialogHeader>
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
-              <div className="text-gray-600">Loading country data...</div>
+              <div className="text-gray-600">Loading headquarter data...</div>
             </div>
           </div>
         </DialogContent>

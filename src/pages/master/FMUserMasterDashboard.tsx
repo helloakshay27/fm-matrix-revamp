@@ -189,6 +189,7 @@ export const FMUserMasterDashboard = () => {
   });
 
   const [fmUsersData, setFmUsersData] = useState<TransformedFMUser[]>([]);
+  const [fmForClone, setFmForClone] = useState([])
   const [filteredFMUsersData, setFilteredFMUsersData] = useState<TransformedFMUser[]>([]);
   const [cloneLoading, setCloneLoading] = useState<boolean>(false);
   const [pagination, setPagination] = useState<PaginationState>({
@@ -216,9 +217,24 @@ export const FMUserMasterDashboard = () => {
     }
   };
 
+  const getShortFmUsers = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+
+      setFmForClone(response.data.users)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   useEffect(() => {
     if (baseUrl && token) {
       fetchUsers(1);
+      getShortFmUsers()
     }
   }, [baseUrl, token]);
 
@@ -390,7 +406,7 @@ export const FMUserMasterDashboard = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "fm_users.csv");
+      link.setAttribute("download", "fm_users.xlsx");
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -739,7 +755,7 @@ export const FMUserMasterDashboard = () => {
         </h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
           title="Total Users"
           value={totalUsers}
@@ -977,103 +993,121 @@ export const FMUserMasterDashboard = () => {
 
               <TabsContent value="handover" className="space-y-4">
                 <div>
-                  <TextField
-                    select
-                    fullWidth
-                    label="From User"
-                    value={fromUser}
-                    onChange={(e) => setFromUser(e.target.value)}
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                  >
-                    {fmUsersData.length > 0 ? (
-                      fmUsersData.map((user) => (
-                        <MenuItem key={user.id} value={user.id}>
-                          {user.userName}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem value="" disabled>
-                        No users available
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>From User</InputLabel>
+                    <Select
+                      label="From User"
+                      value={fromUser}
+                      onChange={(e) => setFromUser(e.target.value)}
+                      displayEmpty
+                    >
+                      <MenuItem value="">
+                        <em>Select User</em>
                       </MenuItem>
-                    )}
-                  </TextField>
+
+                      {fmForClone.length > 0 ? (
+                        fmForClone.map((user) => (
+                          <MenuItem key={user.id} value={user.id}>
+                            {user.full_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="" disabled>
+                          No users available
+                        </MenuItem>
+                      )}
+                    </Select>
+                  </FormControl>
                 </div>
 
                 <div>
-                  <TextField
-                    select
-                    fullWidth
-                    label="To User"
-                    value={toUser}
-                    onChange={(e) => setToUser(e.target.value)}
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                  >
-                    {fmUsersData.length > 0 ? (
-                      fmUsersData.map((user) => (
-                        <MenuItem key={user.id} value={user.id}>
-                          {user.userName}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem value="" disabled>
-                        No users available
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>To User</InputLabel>
+                    <Select
+                      label="To User"
+                      value={toUser}
+                      onChange={(e) => setToUser(e.target.value)}
+                      displayEmpty
+                    >
+                      <MenuItem value="">
+                        <em>Select User</em>
                       </MenuItem>
-                    )}
-                  </TextField>
+
+                      {fmForClone.length > 0 ? (
+                        fmForClone.map((user) => (
+                          <MenuItem key={user.id} value={user.id}>
+                            {user.full_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="" disabled>
+                          No users available
+                        </MenuItem>
+                      )}
+                    </Select>
+                  </FormControl>
                 </div>
               </TabsContent>
+
 
               <TabsContent value="clone" className="space-y-4">
                 <div>
-                  <TextField
-                    select
-                    fullWidth
-                    label="From User"
-                    value={fromUser}
-                    onChange={(e) => setFromUser(e.target.value)}
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                  >
-                    {fmUsersData.length > 0 ? (
-                      fmUsersData.map((user) => (
-                        <MenuItem key={user.id} value={user.id}>
-                          {user.userName}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem value="" disabled>
-                        No users available
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>From User</InputLabel>
+                    <Select
+                      label="From User"
+                      value={fromUser}
+                      onChange={(e) => setFromUser(e.target.value)}
+                      displayEmpty
+                    >
+                      <MenuItem value="">
+                        <em>Select User</em>
                       </MenuItem>
-                    )}
-                  </TextField>
+
+                      {fmForClone.length > 0 ? (
+                        fmForClone.map((user) => (
+                          <MenuItem key={user.id} value={user.id}>
+                            {user.full_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="" disabled>
+                          No users available
+                        </MenuItem>
+                      )}
+                    </Select>
+                  </FormControl>
                 </div>
 
                 <div>
-                  <TextField
-                    select
-                    fullWidth
-                    label="To User"
-                    value={toUser}
-                    onChange={(e) => setToUser(e.target.value)}
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                  >
-                    {fmUsersData.length > 0 ? (
-                      fmUsersData.map((user) => (
-                        <MenuItem key={user.id} value={user.id}>
-                          {user.userName}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem value="" disabled>
-                        No users available
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>To User</InputLabel>
+                    <Select
+                      label="To User"
+                      value={toUser}
+                      onChange={(e) => setToUser(e.target.value)}
+                      displayEmpty
+                    >
+                      <MenuItem value="">
+                        <em>Select User</em>
                       </MenuItem>
-                    )}
-                  </TextField>
+
+                      {fmForClone.length > 0 ? (
+                        fmForClone.map((user) => (
+                          <MenuItem key={user.id} value={user.id}>
+                            {user.full_name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="" disabled>
+                          No users available
+                        </MenuItem>
+                      )}
+                    </Select>
+                  </FormControl>
                 </div>
               </TabsContent>
+
             </Tabs>
 
             <div className="flex justify-center pt-6">

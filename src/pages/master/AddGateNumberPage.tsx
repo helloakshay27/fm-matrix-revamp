@@ -6,6 +6,7 @@ import { TextField, Autocomplete, TextFieldProps, FormControl, InputLabel, MenuI
 import { toast } from 'sonner';
 import { gateNumberService } from '@/services/gateNumberService';
 import { SectionCard } from '@/components/survey/SectionCard';
+import { ArrowLeft } from 'lucide-react';
 
 interface GateNumberFormValues {
   gate_number: string;
@@ -100,11 +101,28 @@ const AddGateNumberPage = () => {
   };
 
   return (
+    
     <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
       <div className="w-full max-w-none space-y-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">ADD GATE NUMBER</h1>
+        {/* Breadcrumb */}
+        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+          <button
+            onClick={() => navigate('/master/gate-number')}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Gate Number List</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium">Add Gate Number</span>
+        </div>
+        
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          ADD GATE NUMBER
+        </h1>
 
-        <div style={{ padding: '24px', margin: 0, borderRadius: '3px', background: '#fff' }}>
+        <div style={{ padding: '24px', marginTop: '20px', borderRadius: '3px', background: '#fff' }}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Controller

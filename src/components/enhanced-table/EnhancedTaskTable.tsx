@@ -252,6 +252,13 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
       return apiSearchResults;
     }
 
+    // If onSearchChange is provided, the parent is handling search (server-side)
+    // So don't apply client-side filtering, just use the data as-is
+    if (onSearchChange) {
+      return baseSortedData;
+    }
+
+    // Otherwise, apply client-side filtering
     if (!searchTerm) return baseSortedData;
 
     return baseSortedData.filter(item =>
@@ -259,7 +266,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
-  }, [baseSortedData, searchTerm, apiSearchResults]);
+  }, [baseSortedData, searchTerm, apiSearchResults, onSearchChange]);
 
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
@@ -495,7 +502,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
       </div>
 
       <div className=" rounded-lg border border-[#D5DbDB] overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto enhancedTable">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}

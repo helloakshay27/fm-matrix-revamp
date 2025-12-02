@@ -6,9 +6,127 @@
    =========================================== */
 
 /* All MUI FormControl components get consistent height */
+
 .MuiFormControl-root .MuiOutlinedInput-root {
   height: 36px !important;
 }
+
+/* ===========================================
+   TABLE STYLING - PROFESSIONAL DESIGN
+   =========================================== */
+
+/* Table Header Cells - Mobile First */
+.enhancedTable th {
+  padding: 8px 10px 8px 8px !important;
+  height: 36px !important;
+  vertical-align: middle !important;
+  background-color: rgba(196, 184, 157, 0.289) !important; /* #C4B89D with 34% opacity */
+  border-radius: 0 !important;
+  border-bottom: 0.96px solid #FFFFFF !important;
+  border-right: 0.96px solid #FFFFFF !important;
+  font-weight: 500 !important;
+  color: #1a1a1adc !important;
+  text-align: left !important;
+  position: relative !important;
+  font-size: 12px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Table Data Cells - Mobile First */
+.enhancedTable td {
+  padding: 8px 10px 8px 8px !important;
+  height: 36px !important;
+  vertical-align: middle !important;
+  border-bottom: 0.96px solid rgba(255, 255, 255, 0.5) !important;
+  border-right: 0.96px solid rgba(255, 255, 255, 0.5) !important;
+  background-color: white !important;
+  color: #1A1A1A !important;
+  transition: background-color 0.2s ease !important;
+  font-size: 11px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Tablet - 640px and up */
+@media (min-width: 640px) {
+  .enhancedTable th {
+    padding: 10px 14px 10px 10px !important;
+    height: 38px !important;
+    font-size: 13px !important;
+  }
+
+  .enhancedTable td {
+    padding: 10px 14px 10px 10px !important;
+    height: 38px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Desktop - 768px and up */
+@media (min-width: 768px) {
+  .enhancedTable th {
+    padding: 12px 16px 12px 12px !important;
+    height: 40px !important;
+    font-size: 14px !important;
+  }
+
+  .enhancedTable td {
+    padding: 12px 16px 12px 12px !important;
+    height: 40px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Large Desktop - 1024px and up */
+@media (min-width: 1024px) {
+  .enhancedTable th {
+    padding: 12px 20px 12px 16px !important;
+    height: 40px !important;
+    font-size: 14px !important;
+  }
+
+  .enhancedTable td {
+    padding: 7px 16px 7px 16px !important;
+    height: 40px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* Table Row Hover Effect */
+/* tr:hover td {
+  background-color: rgba(196, 184, 157, 0.1) !important;
+} */
+
+/* Remove borders from last column */
+th:last-child,
+td:last-child {
+  border-right: none !important;
+}
+
+/* Responsive Table Padding */
+/* @media (max-width: 640px) {
+  th, td {
+    padding: 8px 12px 8px 8px !important;
+    font-size: 12px !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  th, td {
+    padding: 10px 14px 10px 10px !important;
+    font-size: 14px !important;
+  }
+}
+
+@media (min-width: 1025px) {
+  th, td {
+    padding: 12px 16px 12px 12px !important;
+    font-size: 14px !important;
+  }
+} */
 
 @media (min-width: 640px) {
   .MuiFormControl-root .MuiOutlinedInput-root {

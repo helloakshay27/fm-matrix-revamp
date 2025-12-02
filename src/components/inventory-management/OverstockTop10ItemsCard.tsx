@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { Download } from 'lucide-react';
 
 type Props = {
   data: any;
+  onDownload?: () => void;
 };
 
 const normalizeSiteKey = (name: string) => {
@@ -35,9 +37,16 @@ const Block = ({ capitalText, stock }: { capitalText: string; stock: number | st
   </div>
 );
 
-const OverstockTop10ItemsCard: React.FC<Props> = ({ data }) => {
+const OverstockTop10ItemsCard: React.FC<Props> = ({ data, onDownload }) => {
   const inv = useMemo(() => data?.data?.inventory_overstock_report ?? data?.inventory_overstock_report ?? null, [data]);
   const legacy = useMemo(() => data?.data?.overstock_top_items_by_site ?? data?.overstock_top_items_by_site ?? null, [data]);
+
+  // refs and state to measure positions for axis alignment
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const siteLabelsRef = useRef<HTMLDivElement | null>(null);
+  const [axisTop, setAxisTop] = useState<number | null>(null);
+  const [gridTop, setGridTop] = useState<number | null>(null);
 
   const grid = useMemo(() => {
     if (inv) {
@@ -108,36 +117,120 @@ const OverstockTop10ItemsCard: React.FC<Props> = ({ data }) => {
     return { sites, items };
   }, [inv, legacy]);
 
+  // measure positions after render so axes can be positioned precisely
+  useEffect(() => {
+    const w = wrapperRef.current;
+    const g = gridRef.current;
+    const s = siteLabelsRef.current;
+    if (!w || !g || !s) {
+      setAxisTop(null);
+      setGridTop(null);
+      return;
+    }
+    const wRect = w.getBoundingClientRect();
+    const gRect = g.getBoundingClientRect();
+    const sRect = s.getBoundingClientRect();
+    // compute coordinates relative to wrapper
+    setGridTop(Math.round(gRect.top - wRect.top));
+    setAxisTop(Math.round(sRect.top - wRect.top));
+  }, [grid.sites.length, grid.items.length]);
+
   return (
-    <div className="bg-white border rounded-lg shadow p-4">
-      <h3 className="text-lg font-semibold mb-3">Inventory Management – Overstock Analysis: Top 10 Items</h3>
+    <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
+      <div className="flex items-center justify-between gap-4 mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3">
+        <h3
+          className="flex-1"
+          style={{
+            fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+            fontWeight: 600,
+            fontSize: '16px',
+            lineHeight: '100%',
+            letterSpacing: '0%'
+          }}
+        >
+          Overstock Analysis: Top 10 Items
+        </h3>
+        {onDownload && (
+          <Download
+            data-no-drag="true"
+            className="w-5 h-5 flex-shrink-0 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
+          />
+        )}
+      </div>
+
       {grid.sites.length === 0 ? (
-        <div className="text-sm text-gray-500">No data</div>
+        <div className="text-sm text-gray-500 mt-4">No data</div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full border text-xs text-center">
-            <thead>
-              <tr className="bg-[#ded9cd] text-[#b62527]">
-                <th className="border p-2 text-left">Items</th>
-                {grid.sites.map((s) => (
-                  <th key={s} className="border p-2">{s}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {grid.items.map((row) => (
-                <tr key={row.name}>
-                  <td className="border p-2 text-left font-medium">{row.name}</td>
-                  {row.capitalText.map((cap: string, idx: number) => (
-                    <td key={`${row.name}-${idx}`} className="border w-24 h-14 p-1 align-middle">
-                      <Block capitalText={cap} stock={row.stock[idx] ?? 0} />
-                    </td>
-                  ))}
-                </tr>
+        <>
+          <div className="flex items-center justify-end gap-4 mb-4 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 rounded-full" style={{ backgroundColor: '#C4B89D' }}></span>
+              <span>Capital Book</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-4 rounded-full" style={{ backgroundColor: '#E8E8E8' }}></span>
+              <span>Current Stock</span>
+            </div>
+          </div>
+          <div className="flex">
+          {/* Left Items */}
+          <div className="flex flex-col justify-around gap-[2px]">
+            {grid.items.map((item, idx) => (
+              <div key={idx} className="h-14 flex items-center justify-end pr-2 text-xs font-medium">{item.name}</div>
+            ))}
+          </div>
+
+          {/* Wrapper containing grid + site labels + absolute axes */}
+          <div ref={wrapperRef} className="relative flex-1">
+            {/* Grid */}
+            <div ref={gridRef} className="grid min-w-0 ml-3 mr-3" style={{gridTemplateColumns:`repeat(${grid.sites.length},minmax(80px,1fr))`, gap: '8px'}}>
+              {grid.items.map((item, itemIdx) =>
+                item.capitalText.map((cap: string, siteIdx: number) => (
+                  <div key={`${itemIdx}-${siteIdx}`} className="relative h-14 border border-[#C4AE9D] bg-white min-w-0 overflow-hidden">
+                    <Block capitalText={cap} stock={item.stock[siteIdx] ?? 0} />
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Site labels (site names row) */}
+            <div ref={siteLabelsRef} className="grid mt-3" style={{gridTemplateColumns:`repeat(${grid.sites.length},minmax(80px,1fr))`, gap: '4px'}}>
+              {grid.sites.map((site, index) => (
+                <div key={index} className="text-center text-xs font-medium mt-2">{site}</div>
               ))}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Axes: render only when measurements are available */}
+            {axisTop !== null && gridTop !== null && (
+              <>
+                {/* vertical Y-axis */}
+                <div className="absolute bg-gray-700 mr-2" style={{left: 0, top: gridTop, width: 1, height: Math.max(0, axisTop - gridTop), zIndex: 40}} />
+                {/* horizontal X-axis */}
+                <div className="absolute bg-gray-700" style={{left: 0, top: axisTop - 1, right: 0, height: 1, zIndex: 40}} />
+              </>
+            )}
+          </div>
         </div>
+        
+        {/* Note section */}
+        <div className="mt-4 p-3 rounded-md">
+          <p className="text-xs text-gray-700">
+            <span className="font-semibold">Note:</span> This table shows the top 10 overstock items with their capital block (Upper section) and current stock (Lower section), highlighting excess inventory tied up in high-value items.
+          </p>
+        </div>
+        </>
       )}
     </div>
   );

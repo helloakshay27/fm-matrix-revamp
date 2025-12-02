@@ -1153,7 +1153,7 @@
 
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -1267,7 +1267,7 @@ export const AddIncidentPage = () => {
     description: '',
     supportRequired: false,
     factsCorrect: false,
-    attachments: null as File | null
+    attachments: [] as File[]
   });
 
 
@@ -1285,7 +1285,7 @@ export const AddIncidentPage = () => {
   const [secondarySubSubSubCategories, setSecondarySubSubSubCategories] = useState<any[]>([]);
   // Incident levels
   const [incidentLevels, setIncidentLevels] = useState<{ id: number; name: string }[]>([]);
-
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   // Fetch all tags and buildings on mount
   useEffect(() => {
     const fetchAll = async () => {
@@ -1456,14 +1456,27 @@ export const AddIncidentPage = () => {
   }, [incidentData.severity, incidentData.probability, incidentLevels]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files);
       setIncidentData(prev => ({
         ...prev,
-        attachments: file
+        attachments: [...prev.attachments, ...newFiles]
       }));
-      toast.success('File uploaded successfully');
+      toast.success(`${newFiles.length} file(s) uploaded successfully`);
+      // Reset the input so the same file can be selected again if removed and re-added
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
+  };
+
+  const removeFile = (index: number) => {
+    setIncidentData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, i) => i !== index)
+    }));
+    toast.success('File removed');
   };
 
   const handleCheckboxChange = (field: string, checked: boolean) => {
@@ -1567,6 +1580,20 @@ export const AddIncidentPage = () => {
       form.append('incident[inc_sub_sub_category_id]', incidentData.subSubCategory);
       form.append('incident[inc_sub_sub_sub_category_id]', incidentData.subSubSubCategory);
 
+      // Secondary hierarchy (only append if values exist)
+      if (incidentData.secondaryCategory) {
+        form.append('incident[inc_sec_category_id]', incidentData.secondaryCategory);
+      }
+      if (incidentData.secondarySubCategory) {
+        form.append('incident[inc_sec_sub_category_id]', incidentData.secondarySubCategory);
+      }
+      if (incidentData.secondarySubSubCategory) {
+        form.append('incident[inc_sec_sub_sub_category_id]', incidentData.secondarySubSubCategory);
+      }
+      if (incidentData.secondarySubSubSubCategory) {
+        form.append('incident[inc_sec_sub_sub_sub_category_id]', incidentData.secondarySubSubSubCategory);
+      }
+
       // Severity, Probability, Incident Level
       // form.append('incident[consequence_insignificant]', incidentData.severity);
       form.append('incident[probability]', incidentData.probability);
@@ -1576,13 +1603,15 @@ export const AddIncidentPage = () => {
       // Description
       form.append('incident[description]', incidentData.description);
 
-      // Disclaimer and support
-      form.append('incident[support_required]', incidentData.supportRequired ? '1' : '0');
-      form.append('incident[disclaimer]', incidentData.factsCorrect ? '1' : '0');
+      // Disclaimer and support required - passing true/false instead of 1/0
+      form.append('incident[support_required]', incidentData.supportRequired ? 'true' : 'false');
+      form.append('incident[disclaimer]', incidentData.factsCorrect ? 'true' : 'false');
 
-      // Attachments (optional)
-      if (incidentData.attachments) {
-        form.append('noticeboard[files_attached][]', incidentData.attachments);
+      // Attachments (optional) - append all files
+      if (incidentData.attachments && incidentData.attachments.length > 0) {
+        incidentData.attachments.forEach(file => {
+          form.append('noticeboard[files_attached][]', file);
+        });
       }
 
       const resp = await fetch(`${baseUrl}/pms/incidents.json`, {
@@ -2058,7 +2087,7 @@ export const AddIncidentPage = () => {
         </CardHeader>
         <CardContent className="p-6 bg-white">
           <div className="space-y-4">
-            <div>
+            {/* <div>
               <input
                 type="file"
                 onChange={handleFileUpload}
@@ -2075,9 +2104,93 @@ export const AddIncidentPage = () => {
               <span className="ml-4 text-sm text-gray-500">
                 {incidentData.attachments ? incidentData.attachments.name : 'No file chosen'}
               </span>
+            </div> */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="file-upload"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  multiple
+                />
+                <label htmlFor="file-upload" className="cursor-pointer">
+                  <Button className="flex items-center gap-2"
+                    onClick={() => fileInputRef.current?.click()}>
+                    Choose Files
+                  </Button>
+                </label>
+                <span className="text-sm text-gray-500">
+                  {incidentData.attachments.length > 0
+                    ? `${incidentData.attachments.length} file(s) selected`
+                    : 'No files chosen'}
+                </span>
+              </div>
+
+              {/* Display selected files with preview thumbnails */}
+              {incidentData.attachments.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700">Selected Files:</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {incidentData.attachments.map((file, index) => {
+                      const isImage = file.type.startsWith('image/');
+                      const fileUrl = URL.createObjectURL(file);
+
+                      return (
+                        <div key={index} className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+                          {/* Preview Area */}
+                          <div className="aspect-square bg-gray-100 flex items-center justify-center p-2">
+                            {isImage ? (
+                              <img
+                                src={fileUrl}
+                                alt={file.name}
+                                className="w-full h-full object-contain"
+                                onLoad={() => URL.revokeObjectURL(fileUrl)}
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center justify-center text-gray-400">
+                                <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                <span className="text-xs font-medium uppercase">
+                                  {file.name.split('.').pop()}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* File Info */}
+                          <div className="p-2 bg-white border-t border-gray-100">
+                            <p className="text-xs text-gray-600 truncate" title={file.name}>
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {(file.size / 1024).toFixed(1)} KB
+                            </p>
+                          </div>
+
+                          {/* Remove Button */}
+                          <button
+                            onClick={() => removeFile(index)}
+                            className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Remove file"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div>
+
+            {/* <div>
               <Button
                 style={{
                   backgroundColor: '#C72030'
@@ -2086,7 +2199,7 @@ export const AddIncidentPage = () => {
               >
                 Choose a file...
               </Button>
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </Card>
@@ -2095,10 +2208,11 @@ export const AddIncidentPage = () => {
       <div className="flex justify-center pt-6">
         <Button
           onClick={handleSubmit}
-          style={{
-            backgroundColor: '#8B4A8C'
-          }}
-          className="text-white hover:opacity-90 px-8 py-3 text-lg"
+          // style={{
+          //   backgroundColor: '#8B4A8C'
+          // }}
+          // className="text-white hover:opacity-90 px-8 py-3 text-lg"
+          className='text-[18px]'
         >
           Create Incident
         </Button>

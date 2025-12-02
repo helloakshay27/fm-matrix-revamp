@@ -1,27 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { X } from 'lucide-react';
-import { toast } from 'sonner';
-import { AsyncSearchableDropdown } from '@/components/AsyncSearchableDropdown';
-import { userService, User } from '@/services/userService';
-import { taskServiceFilter } from '@/services/taskServiceFilter';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  CircularProgress,
+} from "@mui/material";
+import { X } from "lucide-react";
+import { toast } from "sonner";
+import { debounce } from "lodash";
+import { AsyncSearchableDropdown } from "@/components/AsyncSearchableDropdown";
+import { userService, User } from "@/services/userService";
+import { taskServiceFilter } from "@/services/taskServiceFilter";
+import { API_CONFIG } from "@/config/apiConfig";
 
-interface TaskFilterDialogProps {
+interface CustomForm {
+  id: number;
+  form_name: string;
+  description: string;
+  checklist_for: string;
+  schedule_type: string;
+  category_name: string | null;
+  custom_form_code: string;
+}
+
+export interface TaskFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onApply: (filters: TaskFilters) => void;
   showAll?: boolean;
   onShowAllChange?: (showAll: boolean) => void;
 }
-
-
 
 export interface TaskFilters {
   taskId?: string;
@@ -35,12 +52,15 @@ export interface TaskFilters {
   assetSubGroupId?: string;
   supplierId?: string;
   showAll?: boolean;
+  searchChecklist?: string;
+  searchTaskId?: string;
+  taskCategory?: string; // Add this line
 }
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px", sm: "10px", md: "12px" },
   },
 };
 
@@ -48,10 +68,11 @@ const selectMenuProps = {
   PaperProps: {
     style: {
       maxHeight: 224,
-      backgroundColor: 'white',
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
       zIndex: 9999,
     },
   },
@@ -60,39 +81,50 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
-export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onClose, onApply, showAll = true, onShowAllChange }) => {
-  const [taskId, setTaskId] = useState('');
-  const [checklist, setChecklist] = useState('');
-  const [assignedTo, setAssignedTo] = useState('');
-  const [scheduleType, setScheduleType] = useState('');
-  const [type, setType] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [assetGroupId, setAssetGroupId] = useState('');
-  const [assetSubGroupId, setAssetSubGroupId] = useState('');
-  const [supplierId, setSupplierId] = useState('');
+export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
+  isOpen,
+  onClose,
+  onApply,
+  showAll = true,
+  onShowAllChange,
+}) => {
+  // Existing state
+  const [taskId, setTaskId] = useState("");
+  const [checklist, setChecklist] = useState("");
+  const [assignedTo, setAssignedTo] = useState("");
+  const [scheduleType, setScheduleType] = useState("");
+  const [type, setType] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [assetGroupId, setAssetGroupId] = useState("");
+  const [assetSubGroupId, setAssetSubGroupId] = useState("");
+  const [supplierId, setSupplierId] = useState("");
+  const [taskCategory, setTaskCategory] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [assetGroups, setAssetGroups] = useState<any[]>([]);
   const [assetSubGroups, setAssetSubGroups] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
-  const [dateError, setDateError] = useState<string>('');
+  const [dateError, setDateError] = useState<string>("");
+  const [customForms, setCustomForms] = useState<CustomForm[]>([]);
+  const [isLoadingCustomForms, setIsLoadingCustomForms] = useState(false);
 
   // Fetch initial data when component mounts
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [fetchedUsers, fetchedAssetGroups, fetchedSuppliers] = await Promise.all([
-          userService.searchUsers(''),
-          taskServiceFilter.getAssetGroups(),
-          taskServiceFilter.getSuppliers()
-        ]);
+        const [fetchedUsers, fetchedAssetGroups, fetchedSuppliers] =
+          await Promise.all([
+            userService.searchUsers(""),
+            taskServiceFilter.getAssetGroups(),
+            taskServiceFilter.getSuppliers(),
+          ]);
         setUsers(fetchedUsers);
         setAssetGroups(fetchedAssetGroups);
         setSuppliers(fetchedSuppliers);
       } catch (error) {
-        console.error('Error fetching initial data:', error);
-        toast.error('Failed to fetch initial data');
+        console.error("Error fetching initial data:", error);
+        toast.error("Failed to fetch initial data");
       }
     };
     fetchInitialData();
@@ -103,62 +135,55 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
     const fetchSubGroups = async () => {
       if (assetGroupId) {
         try {
-          const fetchedSubGroups = await taskServiceFilter.getAssetSubGroups(assetGroupId);
+          const fetchedSubGroups = await taskServiceFilter.getAssetSubGroups(
+            assetGroupId
+          );
           setAssetSubGroups(fetchedSubGroups);
         } catch (error) {
-          console.error('Error fetching sub groups:', error);
-          toast.error('Failed to fetch sub groups');
+          console.error("Error fetching sub groups:", error);
+          toast.error("Failed to fetch sub groups");
         }
       } else {
         setAssetSubGroups([]);
-        setAssetSubGroupId('');
+        setAssetSubGroupId("");
       }
     };
     fetchSubGroups();
   }, [assetGroupId]);
 
-  const scheduleTypeOptions = [
-    'asset',
-    'service'
-  ];
+  const scheduleTypeOptions = ["asset", "service"];
 
-  const typeOptions = [
-    'PPM',
-    'AMC',
-    'Preparedness',
-    'Routine'
+  const typeOptions = ["PPM", "AMC", "Preparedness", "Routine"];
+
+  const taskCategoryOptions = [
+    { value: "Technical", label: "Technical" },
+    { value: "Non Technical", label: "Non Technical" },
   ];
 
   // Date validation function
   const validateDates = (fromDate: string, toDate: string): string => {
     if (!fromDate && !toDate) {
-      return '';
+      return "";
     }
-    
+
     if (fromDate && !toDate) {
       return 'Please select a "To Date"';
     }
-    
+
     if (!fromDate && toDate) {
       return 'Please select a "From Date"';
     }
-    
+
     if (fromDate && toDate) {
       const from = new Date(fromDate);
       const to = new Date(toDate);
-      
+
       if (from > to) {
         return '"From Date" cannot be later than "To Date"';
       }
-      
-      // Check if date range is too large (more than 1 year)
-      const oneYear = 365 * 24 * 60 * 60 * 1000; // milliseconds in a year
-      if (to.getTime() - from.getTime() > oneYear) {
-        return 'Date range cannot exceed 1 year';
-      }
     }
-    
-    return '';
+
+    return "";
   };
 
   // Handle date changes with validation
@@ -196,62 +221,140 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
         ...(assetGroupId && { assetGroupId }),
         ...(assetSubGroupId && { assetSubGroupId }),
         ...(supplierId && { supplierId }),
+        ...(taskCategory && { "q[task_category_eq]": taskCategory }),
       };
 
-      console.log('Applying task filters:', filters);
+      console.log("Applying task filters:", filters);
       onApply(filters);
       onClose();
-      
-      toast.success('Filters applied successfully');
+
+      toast.success("Filters applied successfully");
     } catch (error) {
-      console.error('Error applying filters:', error);
-      toast.error('Failed to apply filters');
+      console.error("Error applying filters:", error);
+      toast.error("Failed to apply filters");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleClear = () => {
-    setTaskId('');
-    setChecklist('');
-    setAssignedTo('');
-    setScheduleType('');
-    setType('');
-    setDateFrom('');
-    setDateTo('');
-    setAssetGroupId('');
-    setAssetSubGroupId('');
-    setSupplierId('');
-    setDateError(''); // Clear date error
-    
+    setTaskId("");
+    setChecklist("");
+    setAssignedTo("");
+    setScheduleType("");
+    setType("");
+    setDateFrom("");
+    setDateTo("");
+    setAssetGroupId("");
+    setAssetSubGroupId("");
+    setSupplierId("");
+    setTaskCategory("");
+    setDateError(""); // Clear date error
+    setCustomForms([]); // Clear custom form suggestions
+
     onApply({});
-    toast.success('Filters cleared successfully');
+    toast.success("Filters cleared successfully");
   };
 
   // Handle user search for assigned to dropdown
   const handleUserSearch = async (searchTerm: string) => {
     try {
       const users = await userService.searchUsers(searchTerm);
-      return users.map(user => ({
+      return users.map((user) => ({
         value: user.id.toString(),
-        label: user.full_name
+        label: user.full_name,
       }));
     } catch (error) {
-      console.error('Error searching users:', error);
+      console.error("Error searching users:", error);
       return [];
     }
   };
 
   // Handle assigned user selection
-  const handleAssignedUserChange = (selectedOption: { value: string; label: string } | null) => {
-    setAssignedTo(selectedOption?.value || '');
+  const handleAssignedUserChange = (
+    selectedOption: { value: string; label: string } | null
+  ) => {
+    setAssignedTo(selectedOption?.value || "");
+  };
+
+  // Function to fetch custom forms
+  const fetchCustomForms = async (searchQuery: string) => {
+    setIsLoadingCustomForms(true);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const accessToken = API_CONFIG.TOKEN;
+      
+      if (!baseUrl || !accessToken) {
+        throw new Error('Missing API configuration');
+      }
+      
+      // Remove trailing slash from baseUrl if present
+      const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+      
+      // Add https:// protocol if not present
+      const fullBaseUrl = cleanBaseUrl.startsWith('http') 
+        ? cleanBaseUrl 
+        : `https://${cleanBaseUrl}`;
+      
+      // Build the API URL - ensure proper format
+      const apiUrl = `${fullBaseUrl}/pms/custom_forms.json?page=1&access_token=${accessToken}&q[form_name_cont]=${encodeURIComponent(searchQuery)}`;
+      
+      console.log('Fetching custom forms from:', apiUrl);
+      console.log('Base URL:', baseUrl);
+      console.log('Access Token:', accessToken ? 'Present' : 'Missing');
+      
+      const response = await fetch(apiUrl);
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Custom forms response:', data);
+      
+      setCustomForms(data.custom_forms || []);
+    } catch (error) {
+      console.error("Error fetching custom forms:", error);
+      toast.error("Failed to fetch custom forms");
+    } finally {
+      setIsLoadingCustomForms(false);
+    }
+  };
+
+  // Debounced function for checklist search
+  const debouncedFetchCustomForms = useCallback(
+    debounce((query: string) => {
+      if (query) {
+        fetchCustomForms(query);
+      } else {
+        setCustomForms([]);
+      }
+    }, 300),
+    []
+  );
+
+  // Handle checklist input change
+  const handleChecklistChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setChecklist(value);
+    debouncedFetchCustomForms(value);
+  };
+
+  const handleChecklistSelect = (form: CustomForm) => {
+    setChecklist(form.form_name);
+    setCustomForms([]); // Clear suggestions after selection
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-50" aria-describedby="task-filter-dialog-description">
+      <DialogContent
+        className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-50"
+        aria-describedby="task-filter-dialog-description"
+      >
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900">FILTER TASKS</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-gray-900">
+            FILTER TASKS
+          </DialogTitle>
           <Button
             variant="ghost"
             size="sm"
@@ -261,14 +364,17 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
             <X className="h-4 w-4" />
           </Button>
           <div id="task-filter-dialog-description" className="sr-only">
-            Filter tasks by ID, checklist, assigned to, status, schedule type, site, priority, and date range
+            Filter tasks by ID, checklist, assigned to, status, schedule type,
+            site, priority, and date range
           </div>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {/* Task Details Section */}
           <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">Task Details</h3>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">
+              Task Details
+            </h3>
             <div className="grid grid-cols-3 gap-6">
               <TextField
                 label="Task ID"
@@ -280,16 +386,41 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
               />
-              <TextField
-                label="Checklist"
-                placeholder="Enter Checklist Name"
-                value={checklist}
-                onChange={(e) => setChecklist(e.target.value)}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-              />
+              <div className="relative">
+                <TextField
+                  label="Checklist"
+                  placeholder="Type to search checklists..."
+                  value={checklist}
+                  onChange={handleChecklistChange}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ 
+                    sx: fieldStyles,
+                    endAdornment: isLoadingCustomForms ? (
+                      <CircularProgress size={20} />
+                    ) : null
+                  }}
+                />
+                {customForms.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {customForms.map((form) => (
+                      <div
+                        key={form.id}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => handleChecklistSelect(form)}
+                      >
+                        <div className="font-medium">{form.form_name}</div>
+                        {form.description && (
+                          <div className="text-sm text-gray-500">
+                            {form.description}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <FormControl fullWidth variant="outlined">
                 <InputLabel shrink>Assigned To</InputLabel>
                 <MuiSelect
@@ -315,8 +446,10 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
 
           {/* Task Type & Asset Information Section */}
           <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">Task Type & Asset Information</h3>
-            <div className="grid grid-cols-2 gap-6">
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">
+              Task Type & Asset Information
+            </h3>
+            <div className="grid grid-cols-3 gap-6">
               <FormControl fullWidth variant="outlined">
                 <InputLabel shrink>Schedule Type</InputLabel>
                 <MuiSelect
@@ -358,12 +491,35 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
                   ))}
                 </MuiSelect>
               </FormControl>
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Task Category</InputLabel>
+                <MuiSelect
+                  value={taskCategory}
+                  onChange={(e) => setTaskCategory(e.target.value)}
+                  label="Task Category"
+                  displayEmpty
+                  MenuProps={selectMenuProps}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Category</em>
+                  </MenuItem>
+                  {taskCategoryOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           {/* Asset Groups & Supplier Section */}
           <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">Asset Groups & Supplier</h3>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">
+              Asset Groups & Supplier
+            </h3>
             <div className="grid grid-cols-3 gap-6">
               <FormControl fullWidth variant="outlined">
                 <InputLabel shrink>Asset Group</InputLabel>
@@ -433,7 +589,9 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
 
           {/* Date Range Section */}
           <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">Date Range</h3>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">
+              Date Range
+            </h3>
             <div className="grid grid-cols-2 gap-6">
               <TextField
                 label="From Date"
@@ -444,8 +602,10 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
-                error={!!dateError && dateError.includes('From')}
-                helperText={dateError && dateError.includes('From') ? dateError : ''}
+                error={!!dateError && dateError.includes("From")}
+                helperText={
+                  dateError && dateError.includes("From") ? dateError : ""
+                }
               />
               <TextField
                 label="To Date"
@@ -456,15 +616,17 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
-                error={!!dateError && dateError.includes('To')}
-                helperText={dateError && dateError.includes('To') ? dateError : ''}
+                error={!!dateError && dateError.includes("To")}
+                helperText={
+                  dateError && dateError.includes("To") ? dateError : ""
+                }
               />
             </div>
-            {dateError && !dateError.includes('From') && !dateError.includes('To') && (
-              <div className="mt-2 text-sm text-red-600">
-                {dateError}
-              </div>
-            )}
+            {dateError &&
+              !dateError.includes("From") &&
+              !dateError.includes("To") && (
+                <div className="mt-2 text-sm text-red-600">{dateError}</div>
+              )}
           </div>
 
           {/* Show All Tasks Toggle */}
@@ -496,22 +658,23 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-6 border-t">
-          <Button
-            variant="outline"
-            onClick={handleClear}
-            className="px-6 py-2"
-          >
-            Clear All
-          </Button>
+        <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
           <Button
             onClick={handleApply}
             disabled={isLoading}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6 py-2"
+            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex-1 h-11"
           >
             {isLoading ? 'Applying...' : 'Apply Filter'}
           </Button>
+          <Button
+            variant="outline"
+            onClick={handleClear}
+            className="flex-1 h-11"
+          >
+            Clear All
+          </Button>
         </div>
+        {/* Action Buttons */}
       </DialogContent>
     </Dialog>
   );

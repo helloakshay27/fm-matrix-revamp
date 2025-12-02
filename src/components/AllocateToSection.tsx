@@ -110,7 +110,7 @@ export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
           <ThemeProvider theme={dropdownTheme}>
             <TextField
               select
-              label={allocateTo === 'department' ? 'Department*' : 'User*'}
+              label={allocateTo === 'department' ? 'Department' : 'User'}
               value={allocatedToId || ''}
               onChange={(e) => setAllocatedToId(e.target.value ? Number(e.target.value) : null)}
               variant="outlined"

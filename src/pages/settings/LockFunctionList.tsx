@@ -344,11 +344,16 @@ export const LockFunctionList = () => {
       const formData = new FormData();
       formData.append('excel_file', file);
 
-      // Using fetch since we need multipart/form-data
-      const response = await fetch('http://localhost:3000/lock_modules/import_from_excel', {
+      // Using fetch with dynamic base URL from API_CONFIG
+      const { API_CONFIG, getAuthHeader } = await import('@/config/apiConfig');
+      const baseUrl = API_CONFIG.BASE_URL;
+      const apiUrl = `${baseUrl}/lock_modules/import_from_excel`;
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
+          'Authorization': getAuthHeader(),
         },
         body: formData,
       });

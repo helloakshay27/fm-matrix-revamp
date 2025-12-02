@@ -438,7 +438,7 @@ export const AddFacilityBookingPage = () => {
               )}
               {facilities.map((facility) => (
                 <MenuItem key={facility.id} value={facility}>
-                  {facility.fac_name}
+                  {facility.fac_name} ({facility.fac_type.charAt(0).toUpperCase() + facility.fac_type.slice(1)})
                 </MenuItem>
               ))}
             </TextField>
@@ -459,6 +459,9 @@ export const AddFacilityBookingPage = () => {
                   asterisk: "text-red-500", // Tailwind class for red color
                 },
                 shrink: true
+              }}
+              inputProps={{
+                min: new Date().toISOString().split("T")[0],
               }}
               sx={fieldStyles}
             />

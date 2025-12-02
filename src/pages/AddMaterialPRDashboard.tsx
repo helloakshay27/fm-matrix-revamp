@@ -73,16 +73,20 @@ export const AddMaterialPRDashboard = () => {
       sacHsnCode: "",
       sacHsnCodeId: "",
       productDescription: "",
+      glAccount: "",
+      taxCode: "",
       each: "",
       quantity: "",
       expectedDate: "",
       amount: "",
       wbsCode: "",
+      generalStorage: "GNST"
     },
   ]);
   const [supplierDetails, setSupplierDetails] = useState({
     supplier: "",
     plantDetail: "",
+    type: "",
     prDate: "",
     billingAddress: "",
     deliveryAddress: "",
@@ -122,6 +126,7 @@ export const AddMaterialPRDashboard = () => {
           setSupplierDetails({
             supplier: prData.pms_supplier_id || "",
             plantDetail: prData.plant_detail_id || "",
+            type: "",
             prDate: prData.po_date ? prData.po_date.split("T")[0] : "",
             billingAddress: prData.billing_address_id || "",
             deliveryAddress: prData.shipping_address_id || "",
@@ -191,6 +196,7 @@ export const AddMaterialPRDashboard = () => {
         pms_purchase_order: {
           pms_supplier_id: supplierDetails.supplier,
           plant_detail_id: supplierDetails.plantDetail,
+          pr_type: supplierDetails.type,
           billing_address_id: supplierDetails.billingAddress,
           shipping_address_id: supplierDetails.deliveryAddress,
           po_date: supplierDetails.prDate,
@@ -207,11 +213,14 @@ export const AddMaterialPRDashboard = () => {
           pms_po_inventories_attributes: items.map((item) => ({
             pms_inventory_id: item.itemDetails,
             quantity: item.quantity,
+            gl_account: item.glAccount,
+            tax_code: item.taxCode,
             rate: item.each,
             total_value: item.amount,
             expected_date: item.expectedDate,
             sac_hsn_code: item.sacHsnCodeId,
             prod_desc: item.productDescription,
+            general_storage: item.generalStorage,
             ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
           })),
         },
@@ -268,6 +277,7 @@ export const AddMaterialPRDashboard = () => {
           setSupplierDetails({
             supplier: response.supplier?.id,
             plantDetail: response.plant_detail?.id,
+            type: "",
             prDate: response.po_date ? response.po_date.split("T")[0] : "",
             billingAddress: response.billing_address_id,
             deliveryAddress: response.shipping_address_id,
@@ -411,11 +421,14 @@ export const AddMaterialPRDashboard = () => {
         sacHsnCode: "",
         sacHsnCodeId: "",
         productDescription: "",
+        glAccount: "",
+        taxCode: "",
         each: "",
         quantity: "",
         expectedDate: "",
         amount: "",
         wbsCode: "",
+        generalStorage: "GNST"
       },
     ]);
   };
@@ -516,6 +529,7 @@ export const AddMaterialPRDashboard = () => {
     const payload = {
       pms_purchase_order: {
         pms_supplier_id: supplierDetails.supplier,
+        pr_type: supplierDetails.type,
         plant_detail_id: supplierDetails.plantDetail,
         billing_address_id: supplierDetails.billingAddress,
         shipping_address_id: supplierDetails.deliveryAddress,
@@ -529,18 +543,22 @@ export const AddMaterialPRDashboard = () => {
         payment_tenure: supplierDetails.paymentTenure,
         related_to: supplierDetails.relatedTo,
         advance_amount: supplierDetails.advanceAmount,
-        ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
         pms_po_inventories_attributes: items.map((item) => ({
           pms_inventory_id: item.itemDetails,
           quantity: item.quantity,
+          gl_account: item.glAccount,
+          tax_code: item.taxCode,
           rate: item.each,
           total_value: item.amount,
           expected_date: item.expectedDate,
           sac_hsn_code: item.sacHsnCodeId,
           prod_desc: item.productDescription,
+          general_storage: item.generalStorage,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
+      ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
+      apply_wbs: wbsSelection === "overall" ? "overall" : "individual",
       attachments: files,
       ...(savedPrId && { slid }),
     };
@@ -619,6 +637,28 @@ export const AddMaterialPRDashboard = () => {
                       {plantDetail.plant_name}
                     </MenuItem>
                   ))}
+                </MuiSelect>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Type</InputLabel>
+                <MuiSelect
+                  label="Type"
+                  name="type"
+                  value={supplierDetails.type}
+                  onChange={handleSupplierChange}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Type</em>
+                  </MenuItem>
+                  <MenuItem value="technical">
+                    Technical
+                  </MenuItem>
+                  <MenuItem value="non-technical">
+                    Non-Technical
+                  </MenuItem>
                 </MuiSelect>
               </FormControl>
 
@@ -813,7 +853,6 @@ export const AddMaterialPRDashboard = () => {
                 minRows={2}
                 InputLabelProps={{ shrink: true }}
                 sx={{
-                  mt: 1,
                   "& .MuiOutlinedInput-root": {
                     height: "auto !important",
                     padding: "2px !important",
@@ -962,6 +1001,30 @@ export const AddMaterialPRDashboard = () => {
                   />
 
                   <TextField
+                    label="GL Account"
+                    value={item.glAccount}
+                    onChange={(e) => handleItemChange(item.id, "glAccount", e.target.value)}
+                    placeholder="GL Account"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
+
+                  <TextField
+                    label="Tax Code"
+                    value={item.taxCode}
+                    onChange={(e) => handleItemChange(item.id, "taxCode", e.target.value)}
+                    placeholder="Tax Code"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
+
+                  <TextField
                     label="Expected Date*"
                     type="date"
                     value={item.expectedDate}
@@ -970,6 +1033,9 @@ export const AddMaterialPRDashboard = () => {
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
+                    inputProps={{
+                      min: new Date().toISOString().split("T")[0],
+                    }}
                     sx={{ mt: 1 }}
                   />
 
@@ -1014,6 +1080,23 @@ export const AddMaterialPRDashboard = () => {
                     InputProps={{ sx: fieldStyles, readOnly: true }}
                     sx={{ mt: 1 }}
                   />
+
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>GNST General Storage</InputLabel>
+                    <MuiSelect
+                      label="GNST General Storage"
+                      value={item.generalStorage}
+                      onChange={(e) => handleItemChange(item.id, "generalStorage", e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                      disabled
+                    >
+                      <MenuItem value="">
+                        <em>Select GNST</em>
+                      </MenuItem>
+                      <MenuItem value="GNST">GNST</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
 
                   {wbsSelection === "individual" && (
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>

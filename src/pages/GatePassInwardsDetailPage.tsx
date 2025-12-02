@@ -2,13 +2,23 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, FileText, QrCode, Box, User, Download, Eye, FileSpreadsheet, File } from 'lucide-react';
+import { ArrowLeft, FileText, QrCode, Box, User, Download, Eye, FileSpreadsheet, File, Upload } from 'lucide-react';
 import { API_CONFIG } from '@/config/apiConfig';
 import { AttachmentGoodsPreviewModal } from '@/components/AttachmentGoodsPreviewModal';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 
 export const GatePassInwardsDetailPage = () => {
@@ -17,6 +27,11 @@ export const GatePassInwardsDetailPage = () => {
   const [gatePassData, setGatePassData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("profile");
+
+  // Receive modal state
+  const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
+  const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
+  const [handoverView, setHandoverView] = useState<{ [index: number]: any }>({});
 
   // Attachment/receive modal state
   const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
@@ -33,21 +48,126 @@ export const GatePassInwardsDetailPage = () => {
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
+  const fetchGatePassData = async () => {
     if (!id) return;
-    fetch(`${API_CONFIG.BASE_URL}/gate_passes/${id}.json`, {
-      headers: {
-        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    })
-      .then(res => res.json())
-      .then(data => {
-        setGatePassData(data.gate_pass || data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/gate_passes/${id}.json`, {
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await res.json();
+      setGatePassData(data.gate_pass || data);
+
+      // Pre-populate handoverView for already handed over materials
+      const materials = (data.gate_pass || data).gate_pass_materials || [];
+      const handoverMap: { [index: number]: any } = {};
+      materials.forEach((mat: any, idx: number) => {
+        if (mat.recieved_date) {
+          handoverMap[idx] = { ...mat, attachments: mat.attachments || [] };
+        }
+      });
+      setHandoverView(handoverMap);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGatePassData();
   }, [id]);
+
+  const handleReceiveClick = (itemIndex: number) => {
+    setSelectedItemIndex(itemIndex);
+    setIsReceiveModalOpen(true);
+    setHandoverTo('');
+    setReceivedDate('');
+    setRemarks('');
+    setAttachments([]);
+  };
+
+  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setAttachments(Array.from(e.target.files));
+    }
+  };
+
+  const handleSubmitReceive = async () => {
+    if (selectedItemIndex === null || !gatePassData) return;
+    const material = gatePassData.gate_pass_materials[selectedItemIndex];
+    if (!material) return;
+
+    // Validation
+    if (!handoverTo.trim()) {
+      toast.error('Handover To is required');
+      return;
+    }
+    if (!receivedDate) {
+      toast.error('Received Date is required');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('gate_pass_material[remarks]', remarks);
+    formData.append('gate_pass_material[handover_to]', handoverTo);
+    formData.append('gate_pass_material[recieved_date]', receivedDate);
+    attachments.forEach(file => {
+      formData.append('gate_pass_material[attachments][]', file);
+    });
+
+    try {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/gate_passes/${gatePassData.id}/gate_pass_materials/${material.id}/update_material`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`
+        },
+        body: formData
+      });
+
+      if (res.ok) {
+        const responseData = await res.json();
+
+        // Fetch latest details and update state
+        const updatedRes = await fetch(`${API_CONFIG.BASE_URL}/gate_passes/${gatePassData.id}.json`, {
+          headers: {
+            'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const updatedData = await updatedRes.json();
+        setGatePassData(updatedData.gate_pass || updatedData);
+
+        // Update handoverView with latest material data
+        const materials = (updatedData.gate_pass || updatedData).gate_pass_materials || [];
+        const handoverMap: { [index: number]: any } = {};
+        materials.forEach((mat: any, idx: number) => {
+          if (mat.recieved_date) {
+            handoverMap[idx] = { ...mat, attachments: mat.attachments || [] };
+          }
+        });
+        setHandoverView(handoverMap);
+
+        toast.success('Material received successfully!');
+
+        // Close modal and reset form
+        setIsReceiveModalOpen(false);
+        setHandoverTo('');
+        setReceivedDate('');
+        setRemarks('');
+        setAttachments([]);
+        setReceivedItems(prev => [...prev, selectedItemIndex]);
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.message || 'Failed to update material');
+        console.error('Failed to update material:', errorData);
+      }
+    } catch (err) {
+      toast.error('Failed to update material. Please try again.');
+      console.error('Error updating material:', err);
+    }
+  };
 
 
   // Defensive fallback for missing fields
@@ -125,7 +245,7 @@ export const GatePassInwardsDetailPage = () => {
   });
 
   console.log(gatePassData.attachments.map);
-  
+
 
   // Prepare table data and columns for EnhancedTable
   const tableData =
@@ -137,7 +257,7 @@ export const GatePassInwardsDetailPage = () => {
       unit: mat.unit || '--',
       quantity: mat.gate_pass_qty ?? '--',
       description: mat.other_material_description || mat.remarks || '--',
-      updates: '', // Placeholder for updates/actions
+      updates: idx, // Store index for updates column
     })) || [];
 
   const columns = [
@@ -147,6 +267,7 @@ export const GatePassInwardsDetailPage = () => {
     { key: "unit", label: "Unit", sortable: false, defaultVisible: true },
     { key: "quantity", label: "Quantity", sortable: false, defaultVisible: true },
     { key: "description", label: "Description", sortable: false, defaultVisible: true },
+    { key: "updates", label: "Updates", sortable: false, defaultVisible: true },
   ];
 
   const getStatusBadgeStyles = (status: string) => {
@@ -298,9 +419,69 @@ export const GatePassInwardsDetailPage = () => {
                         <span className="text-gray-900 font-medium">{gatePassData.remarks || '--'}</span>
                       </div>
                     )}
+                    {gatePassData.invoice_no && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Invoice No.</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{gatePassData.invoice_no}</span>
+                      </div>
+                    )}
+                    {gatePassData.invoice_date && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Invoice Date</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {gatePassData.invoice_date
+                            ? (() => {
+                              const d = new Date(gatePassData.invoice_date);
+                              const day = String(d.getDate()).padStart(2, '0');
+                              const month = String(d.getMonth() + 1).padStart(2, '0');
+                              const year = d.getFullYear();
+                              return `${day}/${month}/${year}`;
+                            })()
+                            : '--'}
+                        </span>
+                      </div>
+                    )}
+                    {gatePassData.invoice_amount && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Invoice Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹{gatePassData.invoice_amount}</span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Extra Fields Card - Only show if there are extra fields */}
+              {gatePassData.extra_fields_grouped && Object.keys(gatePassData.extra_fields_grouped).length > 0 && (
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                      </div>
+                      <span className="uppercase tracking-wide">Additional Fields</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                      {Object.entries(gatePassData.extra_fields_grouped).map(([groupName, fields]: [string, any]) => (
+                        <React.Fragment key={groupName}>
+                          {Array.isArray(fields) && fields.map((field: any) => (
+                            <div key={field.id} className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">{field.field_name}</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{field.field_value || '--'}</span>
+                            </div>
+                          ))}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Vendor Details Card */}
               <Card className="w-full">
@@ -352,13 +533,14 @@ export const GatePassInwardsDetailPage = () => {
                           <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Item Name</TableHead>
                           <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Unit</TableHead>
                           <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Quantity</TableHead>
-                          <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Description</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Description</TableHead>
+                          <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Updates</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {loading ? (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8">
+                            <TableCell colSpan={7} className="text-center py-8">
                               <div className="flex items-center justify-center">
                                 <Loader2 className="h-8 w-8 animate-spin" />
                                 <span className="ml-2">Loading...</span>
@@ -374,6 +556,28 @@ export const GatePassInwardsDetailPage = () => {
                               <TableCell className="py-3 px-4">{item.unit}</TableCell>
                               <TableCell className="py-3 px-4">{item.quantity}</TableCell>
                               <TableCell className="py-3 px-4">{item.description}</TableCell>
+                              <TableCell className="py-3 px-4">
+                                {handoverView[item.updates] ? (
+                                  <Button
+                                    size="sm"
+                                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                                    onClick={() => {
+                                      setSelectedItemIndex(item.updates);
+                                      setIsReceiveModalOpen(true);
+                                    }}
+                                  >
+                                    View Handover
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                                    onClick={() => handleReceiveClick(item.updates)}
+                                  >
+                                    Receive
+                                  </Button>
+                                )}
+                              </TableCell>
                             </TableRow>
                           ))
                         ) : (
@@ -521,6 +725,187 @@ export const GatePassInwardsDetailPage = () => {
           return mat && (!mat.recieved_date || mat.recieved_date === '' || mat.recieved_date === null);
         })()}
       />
+
+      {/* Receive Modal */}
+      <Dialog open={isReceiveModalOpen} onOpenChange={setIsReceiveModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {handoverView[selectedItemIndex ?? -1] ? "Material Handover Details" : "Mark as Received"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="handoverTo">Handover To</Label>
+              <Input
+                id="handoverTo"
+                value={handoverView[selectedItemIndex ?? -1] ? handoverView[selectedItemIndex ?? -1].handover_to || '' : handoverTo}
+                onChange={(e) => setHandoverTo(e.target.value)}
+                placeholder="Enter person name"
+                disabled={!!handoverView[selectedItemIndex ?? -1]}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="receivedDate">Received Date</Label>
+              <Input
+                id="receivedDate"
+                type={handoverView[selectedItemIndex ?? -1] ? "text" : "date"}
+                value={
+                  handoverView[selectedItemIndex ?? -1]
+                    ? handoverView[selectedItemIndex ?? -1].recieved_date
+                      ? new Date(handoverView[selectedItemIndex ?? -1].recieved_date).toLocaleDateString()
+                      : ''
+                    : receivedDate
+                }
+                onChange={(e) => setReceivedDate(e.target.value)}
+                disabled={!!handoverView[selectedItemIndex ?? -1]}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="remarks">Remarks</Label>
+              <Textarea
+                id="remarks"
+                value={handoverView[selectedItemIndex ?? -1] ? handoverView[selectedItemIndex ?? -1].remarks || '' : remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="Enter remarks"
+                rows={3}
+                disabled={!!handoverView[selectedItemIndex ?? -1]}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Attachments</Label>
+              {handoverView[selectedItemIndex ?? -1] ? (
+                <div className="flex items-center flex-wrap gap-4">
+                  {(handoverView[selectedItemIndex ?? -1].attachments || []).length > 0 ? (
+                    handoverView[selectedItemIndex ?? -1].attachments.map((attachment: any) => {
+                      const url = attachment.document || attachment.url || `${API_CONFIG.BASE_URL}/attachments/${attachment.id}`;
+                      const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                      const isPdf = /\.pdf$/i.test(url);
+                      const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                      const isWord = /\.(doc|docx)$/i.test(url);
+                      const isDownloadable = isPdf || isExcel || isWord;
+
+                      return (
+                        <div
+                          key={attachment.id}
+                          className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                        >
+                          {isImage ? (
+                            <>
+                              <button
+                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                title="View"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    ...attachment,
+                                    url,
+                                    type: 'image'
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                                type="button"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <img
+                                src={url}
+                                alt={attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
+                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    ...attachment,
+                                    url,
+                                    type: 'image'
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                              />
+                            </>
+                          ) : isPdf ? (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                              <FileText className="w-6 h-6" />
+                            </div>
+                          ) : isExcel ? (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                              <FileSpreadsheet className="w-6 h-6" />
+                            </div>
+                          ) : isWord ? (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                              <FileText className="w-6 h-6" />
+                            </div>
+                          ) : (
+                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                              <File className="w-6 h-6" />
+                            </div>
+                          )}
+                          <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                            {attachment.document_name ||
+                              attachment.document_file_name ||
+                              url.split('/').pop() ||
+                              `Document_${attachment.id}`}
+                          </span>
+                          {isDownloadable && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = attachment.document_name || attachment.document_file_name || url.split('/').pop() || 'document';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}
+                              title="Download"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <span className="text-gray-400">No attachments</span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Input
+                    type="file"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        setAttachments(Array.from(e.target.files));
+                      }
+                    }}
+                    className="hidden"
+                    id="attachment-input"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('attachment-input')?.click()}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Choose Files
+                  </Button>
+                  <span className="text-sm text-gray-500">
+                    {attachments.length} file(s) selected
+                  </span>
+                </div>
+              )}
+            </div>
+            {!handoverView[selectedItemIndex ?? -1] && (
+              <div className="flex justify-center pt-4">
+                <Button onClick={handleSubmitReceive} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8">
+                  Submit
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

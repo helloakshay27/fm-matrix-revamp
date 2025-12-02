@@ -229,7 +229,6 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
                 activities: relatedActivities
               };
             });
-
             // If no breakdown activities found, create a single breakdown entry with all activities
             if (history.length === 0 && assetApiData.asset.activities.length > 0) {
               console.log("No breakdown activities found, showing all activities in single breakdown");

@@ -17,6 +17,7 @@ export interface Asset {
   assetSubGroup: string;
   assetType?: boolean;
   category?: string;
+  disabled?: boolean;
   // Allow any additional custom fields
   [key: string]: any;
 }
@@ -101,6 +102,7 @@ export const useAssets = (page: number = 1) => {
     assetSubGroup: apiAsset.asset_sub_group,
     assetType: apiAsset.asset_type,
     category: apiAsset.asset_type_category,
+    disabled: !!apiAsset.disabled,
   });
 
   const formatStatusLabel = (status: string): string => {

@@ -56,7 +56,7 @@ export const CRMEventsPage = () => {
           created_by: event.created_by || 'Unknown',
           from_time: event.from_time,
           to_time: event.to_time,
-          event_type: event.event_type || '-',
+          event_type: event.shared === 0 ? "General" : "Personal",
           status: event.status,
           is_expired: event.is_expired === 1,
           attachments: event.documents || [],
@@ -90,16 +90,6 @@ export const CRMEventsPage = () => {
     { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
   ];
 
-  // Handle view event
-  const handleViewEvent = (event) => {
-    navigate(`/crm/events/details/${event.id}`);
-  };
-
-  // Handle add event
-  const handleAddEvent = () => {
-    navigate('/crm/events/add');
-  };
-
   // Handle filter dialog
   const handleOpenFilterDialog = () => {
     setOpenFilterDialog(true);
@@ -129,7 +119,7 @@ export const CRMEventsPage = () => {
         created_by: event.created_by || 'Unknown',
         from_time: event.from_time,
         to_time: event.to_time,
-        event_type: event.event_type || '-',
+        event_type: event.shared === 0 ? "General" : "Personal",
         status: event.status,
         is_expired: event.is_expired === 1,
         attachments: event.documents || [],
@@ -151,10 +141,32 @@ export const CRMEventsPage = () => {
   const handleResetFilters = () => {
     setFilters({
       unit: '',
-      dateRange: undefined,
+      dateRange: {
+        from: undefined,
+        to: undefined,
+      },
       status: '',
     });
   };
+
+  const handleAdd = () => {
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("club-management")) {
+      navigate("/club-management/events/add");
+    } else {
+      navigate("/crm/events/add");
+    }
+  };
+
+  const handleView = (id: number) => {
+    const currentPath = window.location.pathname;
+    if (currentPath.includes("club-management")) {
+      navigate(`/club-management/events/details/${id}`);
+    } else {
+      navigate(`/crm/events/details/${id}`);
+    }
+  }
 
   // Render cell content
   const renderCell = (item, columnKey) => {
@@ -165,7 +177,7 @@ export const CRMEventsPage = () => {
         );
       case 'event_type':
         return (
-          <Badge className="bg-blue-600 text-white">{item.event_type}</Badge>
+          <span>{item.event_type}</span>
         );
       case 'is_expired':
         return item.is_expired ? (
@@ -205,7 +217,7 @@ export const CRMEventsPage = () => {
         created_by: event.created_by || 'Unknown',
         from_time: event.from_time,
         to_time: event.to_time,
-        event_type: event.event_type || '-',
+        event_type: event.shared === 0 ? "General" : "Personal",
         status: event.status,
         is_expired: event.is_expired === 1,
         attachments: event.documents || [],
@@ -344,7 +356,7 @@ export const CRMEventsPage = () => {
       variant="ghost"
       size="icon"
       className="h-8 w-8 text-blue-600"
-      onClick={() => handleViewEvent(item)}
+      onClick={() => handleView(item.id)}
     >
       <Eye className="h-4 w-4" />
     </Button>
@@ -363,11 +375,6 @@ export const CRMEventsPage = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-4">Event List</h1>
-      </div>
-
       {/* Filter Dialog */}
       <Dialog open={openFilterDialog} onClose={handleCloseFilterDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Filter Events</DialogTitle>
@@ -446,8 +453,6 @@ export const CRMEventsPage = () => {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search events..."
-        enableExport={true}
-        exportFileName="events"
         pagination={true}
         pageSize={10}
         enableSearch={true}
@@ -456,7 +461,7 @@ export const CRMEventsPage = () => {
           <div className="flex flex-wrap gap-2">
             <Button
               className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
-              onClick={handleAddEvent}
+              onClick={handleAdd}
             >
               <Plus className="w-4 h-4" />
               Add

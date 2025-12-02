@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, FileText, Box, Clock, Calendar, Link, Mail, MapPin, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, Box, Clock, Calendar, Link, Mail, MapPin, Loader2, Eye, Download, File, FileSpreadsheet } from 'lucide-react';
 import { SetApprovalModal } from '@/components/SetApprovalModal';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, Typography, Tooltip } from '@mui/material';
 import AttachFile from '@mui/icons-material/AttachFile';
 import { assetService } from '@/services/assetService';
@@ -97,6 +98,8 @@ export const ViewSchedulePage = () => {
   const [showSetApprovalModal, setShowSetApprovalModal] = useState(false);
   const [groupOptions, setGroupOptions] = useState<any[]>([]);
   const [subGroupOptions, setSubGroupOptions] = useState<any[]>([]);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
 
   // Supervisor and Supplier state
   const [users, setUsers] = useState<any[]>([]);
@@ -469,18 +472,103 @@ export const ViewSchedulePage = () => {
                       <div className="flex items-start col-span-2">
                         <span className="text-gray-500 min-w-[140px]">Attachments</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <div className="flex flex-wrap gap-2">
-                          {customForm.attachments.map((attachment: any, index: number) => (
-                            <a 
-                              key={attachment.id || index} 
-                              href={attachment.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 underline"
-                            >
-                              {attachment.file_name || `Attachment ${index + 1}`}
-                            </a>
-                          ))}
+                        <div className="flex flex-wrap gap-4">
+                          {customForm.attachments.map((attachment: any, index: number) => {
+                            const url = attachment.document || attachment.url || attachment.file_url;
+                            const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                            const isPdf = /\.pdf$/i.test(url);
+                            const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                            const isWord = /\.(doc|docx)$/i.test(url);
+                            const isDownloadable = isPdf || isExcel || isWord;
+
+                            return (
+                              <div
+                                key={attachment.id || index}
+                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                              >
+                                {isImage ? (
+                                  <>
+                                    <button
+                                      className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                      title="View"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: attachment.id || 0,
+                                          document_name: attachment.document_name || attachment.file_name || `Attachment ${index + 1}`,
+                                          url: url,
+                                          document_url: url,
+                                          document: url,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      type="button"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                    <img
+                                      src={url}
+                                      alt={attachment.document_name || attachment.file_name || `Attachment ${index + 1}`}
+                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedDoc({
+                                          id: attachment.id || 0,
+                                          document_name: attachment.document_name || attachment.file_name || `Attachment ${index + 1}`,
+                                          url: url,
+                                          document_url: url,
+                                          document: url,
+                                        });
+                                        setShowImagePreview(true);
+                                      }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  </>
+                                ) : isPdf ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : isExcel ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                    <FileSpreadsheet className="w-6 h-6" />
+                                  </div>
+                                ) : isWord ? (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                    <FileText className="w-6 h-6" />
+                                  </div>
+                                ) : (
+                                  <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                    <File className="w-6 h-6" />
+                                  </div>
+                                )}
+                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                  {attachment.document_name ||
+                                    attachment.file_name ||
+                                    url?.split('/').pop() ||
+                                    `Attachment ${index + 1}`}
+                                </span>
+                                {isDownloadable && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                    onClick={() => {
+                                      setSelectedDoc({
+                                        id: attachment.id || 0,
+                                        document_name: attachment.document_name || attachment.file_name || `Attachment ${index + 1}`,
+                                        url: url,
+                                        document_url: url,
+                                        document: url,
+                                      });
+                                      setShowImagePreview(true);
+                                    }}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -611,18 +699,94 @@ export const ViewSchedulePage = () => {
                               <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Help Images</span>
                                 <span className="text-gray-500 mx-2">:</span>
-                                <div className="flex flex-wrap gap-2">
-                                  {task.question_hint_image_url.map((image: any, imgIndex: number) => (
-                                    <a 
-                                      key={image.id || imgIndex} 
-                                      href={image.url} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:text-blue-800 underline"
-                                    >
-                                      {image.filename || `Image ${imgIndex + 1}`}
-                                    </a>
-                                  ))}
+                                <div className="flex items-center flex-wrap gap-4">
+                                  {task.question_hint_image_url.map((image: any, imgIndex: number) => {
+                                    const url = image.url || image.document;
+                                    const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                                    const isPdf = /\.pdf$/i.test(url);
+                                    const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
+                                    const isWord = /\.(doc|docx)$/i.test(url);
+                                    const isDownloadable = isPdf || isExcel || isWord;
+
+                                    return (
+                                      <div
+                                        key={image.id || imgIndex}
+                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                      >
+                                        {isImage ? (
+                                          <>
+                                            <button
+                                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                              title="View"
+                                              onClick={() => {
+                                                setSelectedDoc({
+                                                  ...image,
+                                                  url,
+                                                  type: 'image'
+                                                });
+                                                setShowImagePreview(true);
+                                              }}
+                                              type="button"
+                                            >
+                                              <Eye className="w-4 h-4" />
+                                            </button>
+                                            <img
+                                              src={url}
+                                              alt={image.filename || image.document_name || `Help Image ${imgIndex + 1}`}
+                                              className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                              onClick={() => {
+                                                setSelectedDoc({
+                                                  ...image,
+                                                  url,
+                                                  type: 'image'
+                                                });
+                                                setShowImagePreview(true);
+                                              }}
+                                            />
+                                          </>
+                                        ) : isPdf ? (
+                                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                            <FileText className="w-6 h-6" />
+                                          </div>
+                                        ) : isExcel ? (
+                                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                            <FileSpreadsheet className="w-6 h-6" />
+                                          </div>
+                                        ) : isWord ? (
+                                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                            <FileText className="w-6 h-6" />
+                                          </div>
+                                        ) : (
+                                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                            <File className="w-6 h-6" />
+                                          </div>
+                                        )}
+                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                          {image.filename ||
+                                            image.document_name ||
+                                            url.split('/').pop() ||
+                                            `Help Image ${imgIndex + 1}`}
+                                        </span>
+                                        {isDownloadable && (
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                            onClick={() => {
+                                              setSelectedDoc({
+                                                ...image,
+                                                url,
+                                                type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
+                                              });
+                                              setShowImagePreview(true);
+                                            }}
+                                          >
+                                            <Download className="w-4 h-4" />
+                                          </Button>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             </div>
@@ -651,22 +815,45 @@ export const ViewSchedulePage = () => {
                 {/* Parse cron expression and show as MUI Table */}
                 {(() => {
                   const cron = (assetTask && ((assetTask as any).cron_expression || (assetTask as any).cron || (assetTask as any).schedule_cron)) || '';
-                  let minutes: string[] = [], hours: string[] = [], months: string[] = [], weekdays: string[] = [];
+                  let minutes: string[] = [], hours: string[] = [], dayOfMonth: string[] = [], months: string[] = [], weekdays: string[] = [];
+                  let isDayOfMonth = false;
                   if (cron) {
                     const parts = cron.split(' ');
                     if (parts.length >= 5) {
                       minutes = parts[0].split(',');
                       hours = parts[1].split(',');
+                      dayOfMonth = parts[2] === '*' ? [] : parts[2].split(',');
                       months = parts[3] === '*' ? ['All'] : parts[3].split(',');
-                      weekdays = parts[4] === '*' ? ['All'] : parts[4].split(',');
+                      weekdays = parts[4] === '*' ? [] : parts[4].split(',');
+                      
+                      // Check if we have specific days of month (dates like 14, 20)
+                      isDayOfMonth = parts[2] !== '*' && dayOfMonth.length > 0;
                     }
                   }
                   if (!hours.length || (hours.length === 1 && hours[0] === '*')) hours = ['All'];
                   if (!minutes.length || (minutes.length === 1 && minutes[0] === '*')) minutes = ['All'];
                   if (!months.length) months = ['All'];
-                  if (!weekdays.length) weekdays = ['All'];
-                  const weekdayMap: Record<string, string> = { '1': 'Sunday', '2': 'Monday', '3': 'Tuesday', '4': 'Wednesday', '5': 'Thursday', '6': 'Friday', '7': 'Saturday' };
-                  const weekdayNames = weekdays.map(wd => weekdayMap[wd] || wd);
+                  
+                  // Determine what to show in the day column
+                  let dayColumnHeader = '';
+                  let dayColumnValue = '';
+                  
+                  if (isDayOfMonth) {
+                    dayColumnHeader = 'Date of Month';
+                    dayColumnValue = dayOfMonth.join(', ');
+                  } else {
+                    dayColumnHeader = 'Day of Week';
+                    if (weekdays.length === 0) {
+                      dayColumnValue = 'All';
+                    } else {
+                      const weekdayMap: Record<string, string> = { 
+                        '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', 
+                        '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday' 
+                      };
+                      dayColumnValue = weekdays.map(wd => weekdayMap[wd] || wd).filter(day => day.trim() !== '').join(', ');
+                    }
+                  }
+                  
                   return (
                     <div className="rounded-lg border border-gray-200 overflow-hidden">
                       <Table className="border-separate">
@@ -674,7 +861,7 @@ export const ViewSchedulePage = () => {
                           <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
                             <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Hours</TableHead>
                             <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Minutes</TableHead>
-                            <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Day of Week</TableHead>
+                            <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>{dayColumnHeader}</TableHead>
                             <TableHead className="font-semibold text-gray-900 py-3 px-4" style={{ borderColor: '#fff' }}>Month</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -682,7 +869,7 @@ export const ViewSchedulePage = () => {
                           <TableRow className="hover:bg-gray-50 transition-colors">
                             <TableCell className="py-3 px-4 font-medium">{hours.join(', ')}</TableCell>
                             <TableCell className="py-3 px-4">{minutes.join(', ')}</TableCell>
-                            <TableCell className="py-3 px-4">{weekdayNames.join(', ')}</TableCell>
+                            <TableCell className="py-3 px-4">{dayColumnValue}</TableCell>
                             <TableCell className="py-3 px-4">{months.join(', ')}</TableCell>
                           </TableRow>
                         </TableBody>
@@ -756,6 +943,30 @@ export const ViewSchedulePage = () => {
                       <span className="text-gray-500 min-w-[140px]">Backup Assigned To</span>
                       <span className="text-gray-500 mx-2">:</span>
                       <span className="text-gray-900 font-medium">{assetTask?.backup_assigned?.name || 'No backup assigned'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Supervisors</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {customForm?.supervisors && Array.isArray(customForm.supervisors) && customForm.supervisors.length > 0
+                          ? customForm.supervisors.map(supervisorId => {
+                              const supervisor = users.find(user => user.id === parseInt(supervisorId));
+                              return supervisor ? supervisor.full_name : `ID: ${supervisorId}`;
+                            }).join(', ')
+                          : 'No supervisors assigned'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Supplier</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {customForm?.supplier_id && suppliers.length > 0
+                          ? (() => {
+                              const supplier = suppliers.find(sup => sup.id === customForm.supplier_id);
+                              return supplier ? supplier.name : `ID: ${customForm.supplier_id}`;
+                            })()
+                          : 'No supplier assigned'}
+                      </span>
                     </div>
                     <div className="flex items-start">
                       <span className="text-gray-500 min-w-[140px]">Submission Time</span>
@@ -979,7 +1190,7 @@ export const ViewSchedulePage = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3 pt-6">
+      {/* <div className="flex gap-3 pt-6">
         <Button
           onClick={() => navigate('/maintenance/schedule')}
           variant="outline"
@@ -987,12 +1198,20 @@ export const ViewSchedulePage = () => {
         >
           Back to List
         </Button>
-      </div>
+      </div> */}
 
       {/* Set Approval Modal */}
       <SetApprovalModal
         isOpen={showSetApprovalModal}
         onClose={() => setShowSetApprovalModal(false)}
+      />
+
+      {/* Attachment Preview Modal */}
+      <AttachmentPreviewModal
+        isModalOpen={showImagePreview}
+        setIsModalOpen={setShowImagePreview}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
       />
     </div>
   );

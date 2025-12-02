@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Autocomplete, Chip } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Autocomplete, Chip, Select } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchAllowedSites } from '@/store/slices/siteSlice';
@@ -33,15 +33,34 @@ export const EditOccupantUserPage: React.FC = () => {
     address: '',
     altMobileNumber: '',
     designation: '',
+    selectUserCategory: '',
   });
   const [showAdditional, setShowAdditional] = useState(true);
   const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
   const { data: entitiesData, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
   const { sites } = useAppSelector((state) => state.site);
   const { selectedCompany } = useAppSelector((state: RootState) => state.project);
   const [departments, setDepartments] = useState<any[]>([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(false);
   const [departmentsError, setDepartmentsError] = useState<string | null>(null);
+  const [userCategories, setUserCategories] = useState([])
+  const [lockId, setLockId] = useState<number | undefined>();
+
+  const fetchUserCategories = async () => {
+    try {
+      const categories = await axios.get(`https://${baseUrl}/pms/admin/user_categories.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setUserCategories(categories.data);
+    } catch (error) {
+      console.error('Error loading user categories:', error);
+      toast.error('Failed to load user categories');
+    }
+  }
 
   useEffect(() => {
     dispatch(fetchEntities());
@@ -51,6 +70,7 @@ export const EditOccupantUserPage: React.FC = () => {
       if (userId) dispatch(fetchAllowedSites(userId));
     } catch { }
     dispatch(fetchAllowedCompanies());
+    fetchUserCategories();
   }, [dispatch]);
 
   // Fetch departments using selectedCompanyId from localStorage
@@ -91,10 +111,12 @@ export const EditOccupantUserPage: React.FC = () => {
         setLoading(true);
         const baseUrl = localStorage.getItem('baseUrl') || 'app.gophygital.work';
         const token = localStorage.getItem('token') || '';
-        const url = `https://${baseUrl}/pms/users/${id}/user_show.json`;
+        const url = `https://${baseUrl}/pms/get_fm_user_detail.json?id=${id}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const u = resp.data?.user || resp.data || {};
         const lup = u.lock_user_permission || {};
+        
+        setLockId(lup?.id);
 
         const accessLevel = lup.access_level || '';
         const accessTo: string[] = Array.isArray(lup.access_to) ? lup.access_to.map((v: any) => String(v)) : [];
@@ -117,6 +139,7 @@ export const EditOccupantUserPage: React.FC = () => {
           address: u.alternate_address || '',
           altMobileNumber: u.alternate_mobile || '',
           designation: lup.designation || '',
+          selectUserCategory: u.user_category_id || '',
         }));
       } catch (e) {
         console.error('Error fetching user for edit', e);
@@ -182,6 +205,7 @@ export const EditOccupantUserPage: React.FC = () => {
           registration_source: 'Web',
           lock_user_permissions_attributes: [
             {
+              id: lockId,
               account_id: accountId,
               employee_id: formData.employeeId,
               designation: formData.designation,
@@ -200,6 +224,7 @@ export const EditOccupantUserPage: React.FC = () => {
           alternate_mobile: formData.altMobileNumber,
           birth_date: formData.birthDate,
           entity_id: formData.selectEntity,
+          user_category_id: formData.selectUserCategory,
         },
       };
 
@@ -461,6 +486,27 @@ export const EditOccupantUserPage: React.FC = () => {
                   )}
                 </FormControl>
               )}
+              <div>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Select User Category</InputLabel>
+                  <Select
+                    value={formData.selectUserCategory}
+                    onChange={(e) => handleInputChange('selectUserCategory', e.target.value)}
+                    label="Select User Category"
+                    displayEmpty
+                    required
+                  >
+                    <MenuItem value="">Select User Category</MenuItem>
+                    {
+                      userCategories?.map((category) => (
+                        <MenuItem key={category.id} value={category.id}>
+                          {category.name}
+                        </MenuItem>
+                      ))
+                    }
+                  </Select>
+                </FormControl>
+              </div>
             </div>
 
             <div className="my-6">

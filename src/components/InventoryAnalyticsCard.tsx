@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ITEM_STATUS_COLORS, ANALYTICS_PALETTE, CATEGORY_BAR_COLOR, LINE_CHART_COLORS, getPaletteColor } from '@/styles/chartPalette';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LabelList, LineChart, Line, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, Info, RefreshCw } from 'lucide-react';
 import { inventoryAnalyticsDownloadAPI } from '@/services/inventoryAnalyticsDownloadAPI';
 import { toast } from 'sonner';
 
@@ -28,11 +28,20 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
     console.log('[DEBUG] InventoryAnalyticsCard data for consumptionReportNonGreen:', data);
   }
   const [downloadLoading, setDownloadLoading] = useState(false);
+  const [refreshLoading, setRefreshLoading] = useState(false);
+  const [localData, setLocalData] = useState<any>(data);
 
-  // Helper to format date as YYYY-MM-DD
+  useEffect(() => {
+    setLocalData(data);
+  }, [data]);
+
+  // Helper to format date as YYYY-MM-DD (using local date components to avoid timezone issues)
   const formatDate = (date: Date) => {
     if (!(date instanceof Date) || isNaN(date.getTime())) return '';
-    return date.toISOString().slice(0, 10);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const handleDownload = async (e?: React.MouseEvent) => {
@@ -205,7 +214,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
           <div className="w-full space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="text-sm text-gray-600 flex items-center gap-2">
-                <span className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#C72030] to-[#E84A4A]"></span>
+                <span className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#D5DbDB] to-[#C4b89D]"></span>
                 <span className="font-medium text-gray-700">Monthly Cost</span>
               </div>
               <div className="text-sm font-semibold text-gray-800">Total: <span className="text-[#C72030]">{currency}{total}</span></div>
@@ -215,8 +224,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                 <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 48 }} barCategoryGap={20}>
                   <defs>
                     <linearGradient id="invCostBar" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={ANALYTICS_PALETTE[2]} />
-                      <stop offset="100%" stopColor={ANALYTICS_PALETTE[3]} />
+                      <stop offset="0%" stopColor="#D5DbDB" />
+                      <stop offset="100%" stopColor="#C4b89D" />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -290,7 +299,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         );
       }
       case 'consumptionReportNonGreen': {
-        if (!data.response || !Array.isArray(data.response)) {
+        if (!localData?.response || !Array.isArray(localData.response)) {
           return <div>No consumption data available</div>;
         }
         // Responsive rendering: cards on small screens, table on >=sm
@@ -298,12 +307,12 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
           <div className="w-full">
             {/* Mobile: Stacked cards */}
             <div className="block sm:hidden space-y-2">
-              {data.response.map((row: any, index: number) => (
+              {localData.response.map((row: any, index: number) => (
                 <div key={index} className="border border-gray-200 rounded-md p-3 bg-white">
-                  <div className="flex items-center justify-between text-[13px]">
+                  {/* <div className="flex items-center justify-between text-[13px]">
                     <span className="text-gray-500">Date</span>
                     <span className="font-medium text-gray-900">{row.date}</span>
-                  </div>
+                  </div> */}
                   <div className="mt-1 text-[13px]">
                     <div className="text-gray-500">Product</div>
                     <div className="font-medium text-gray-900 break-words">{row.product}</div>
@@ -344,9 +353,9 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                   </div>
                 </div>
               ))}
-              {data.info?.info && (
-                <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
-              )}
+              {/* {localData?.info?.info && (
+                <div className="mt-2 text-xs text-gray-500">{localData.info.info}</div>
+              )} */}
             </div>
 
             {/* Tablet/Desktop: Scrollable table */}
@@ -367,7 +376,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {data.response.map((row: any, index: number) => (
+                    {localData.response.map((row: any, index: number) => (
                       <tr key={index} className="border-t odd:bg-white even:bg-gray-50 hover:bg-gray-100/60 transition-colors">
                         <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700 whitespace-nowrap">{row.date}</td>
                         <td className="w-64 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-800 break-words">{row.product}</td>
@@ -383,9 +392,9 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                   </tbody>
                 </table>
               </div>
-              {data.info?.info && (
+              {/* {data.info?.info && (
                 <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
-              )}
+              )} */}
             </div>
           </div>
         );
@@ -393,16 +402,16 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
 
       case 'itemsStatus': {
         // Convert status data to chart format with safe fallbacks
-        // Updated color palette as requested:
-        // #C4B89D, #D5DBDB, #E4626F, #C4AE9D
-        // Mapped in order: Active, Inactive, Critical, Non-Critical
+        // Chart colors requested: Critical #8B7355, Non-Critical #DBC2A9, Eco-friendly #d1d5db
         const statusChartData = [
           { name: 'Active', value: Number(data?.count_of_active_items) || 0, color: ITEM_STATUS_COLORS.active },
           { name: 'Inactive', value: Number(data?.count_of_inactive_items) || 0, color: ITEM_STATUS_COLORS.inactive },
-          { name: 'Critical', value: Number(data?.count_of_critical_items) || 0, color: ITEM_STATUS_COLORS.critical },
-            { name: 'Non-Critical', value: Number(data?.count_of_non_critical_items) || 0, color: ITEM_STATUS_COLORS.nonCritical }
+          { name: 'Critical', value: Number(data?.count_of_critical_items) || 0, color: '#8B7355' },
+          { name: 'Non-Critical', value: Number(data?.count_of_non_critical_items) || 0, color: '#DBC2A9' },
+          // Use a distinct light green for eco-friendly to avoid clashing with Inactive
+          { name: 'Eco-friendly', value: Number(data?.eco_friendly) || 0, color: '#A7F3D0' }
         ];
-        const total = statusChartData.reduce((sum, item) => sum + (item.value || 0), 0);
+        const total = Number(data?.total_items) || statusChartData.reduce((sum, item) => sum + (item.value || 0), 0);
         const withPct = statusChartData.map((s) => ({
           ...s,
           pct: total > 0 ? Math.round((s.value / total) * 100) : 0,
@@ -441,7 +450,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                 </div>
               </div>
 
-              {/* Legend with counts and tiny progress */}
+              {/* Legend with counts and tiny progress (includes eco-friendly) */}
               <div className="space-y-3 w-full">
                 {withPct.map((item, idx) => (
                   <div key={idx} className="space-y-1.5">
@@ -464,7 +473,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
 
       case 'categoryWise': {
         // Show a bar chart for category_wise using category_counts
-        const categoryData = Array.isArray(data.category_counts) ? data.category_counts : [];
+        const categoryData = Array.isArray(localData?.category_counts) ? localData.category_counts : [];
         return (
           <div className="space-y-4">
             <ResponsiveContainer width="100%" height={300}>
@@ -490,13 +499,13 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                   }}
                 />
                 <Tooltip />
-                <Bar dataKey="item_count" fill={CATEGORY_BAR_COLOR} />
+                <Bar dataKey="item_count" fill="#d1d5db" />
               </BarChart>
             </ResponsiveContainer>
             <div className="flex justify-center gap-6 mt-4 flex-wrap">
               {categoryData.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: CATEGORY_BAR_COLOR }}></div>
+                  <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: '#d1d5db' }}></div>
                   <span className="text-sm font-medium text-gray-700">{item.group_name}: {item.item_count}</span>
                 </div>
               ))}
@@ -507,7 +516,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
 
       case 'greenConsumption': {
         // Show a table for green_consumption using the API response
-        if (!data.response || !Array.isArray(data.response)) {
+        if (!localData?.response || !Array.isArray(localData.response)) {
           return <div>No consumption data available</div>;
         }
         // Responsive rendering: cards on small screens, table on >=sm
@@ -515,7 +524,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
           <div className="w-full">
             {/* Mobile: Stacked cards */}
             <div className="block sm:hidden space-y-2">
-              {data.response.map((row: any, index: number) => (
+              {localData.response.map((row: any, index: number) => (
                 <div key={index} className="border border-gray-200 rounded-md p-3 bg-white">
                   <div className="flex items-center justify-between text-[13px]">
                     <span className="text-gray-500">Date</span>
@@ -561,8 +570,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                   </div>
                 </div>
               ))}
-              {data.info?.info && (
-                <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
+              {localData?.info?.info && (
+                <div className="mt-2 text-xs text-gray-500">{localData.info.info}</div>
               )}
             </div>
 
@@ -584,7 +593,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {data.response.map((row: any, index: number) => (
+                    {localData.response.map((row: any, index: number) => (
                       <tr key={index} className="border-t odd:bg-white even:bg-gray-50 hover:bg-gray-100/60 transition-colors">
                         <td className="w-28 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700 whitespace-nowrap">{row.date}</td>
                         <td className="w-64 px-3 md:px-4 py-2 text-xs md:text-sm text-gray-800 break-words">{row.product}</td>
@@ -600,9 +609,9 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                   </tbody>
                 </table>
               </div>
-              {data.info?.info && (
-                <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
-              )}
+              {/* {localData?.info?.info && (
+                <div className="mt-2 text-xs text-gray-500">{localData.info.info}</div>
+              )} */}
             </div>
           </div>
         );
@@ -610,10 +619,10 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
 
       case 'consumptionReportGreen': {
         // Show a bar chart and info for consumption_report_green using the API response
-        if (!data.response || typeof data.response !== 'object') {
+        if (!localData?.response || typeof localData.response !== 'object') {
           return <div>No consumption report data available</div>;
         }
-        const consumptionData = Object.entries(data.response).map(([product, value]) => ({
+        const consumptionData = Object.entries(localData.response).map(([product, value]) => ({
           name: product,
           value: value
         }));
@@ -625,12 +634,12 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                 <XAxis dataKey="name" angle={-45} textAnchor="end" interval={0} height={80} />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#22C55E" />
+                <Bar dataKey="value" fill="#C4B99D" />
               </BarChart>
             </ResponsiveContainer>
             {/* Info section */}
-            {data.info?.info && (
-              <div className="mt-4 text-xs text-gray-500">{data.info.info}</div>
+            {localData?.info?.info && (
+              <div className="mt-4 text-xs text-gray-500">{localData.info.info}</div>
             )}
           </div>
         );
@@ -669,7 +678,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                 <YAxis width={80} domain={yDomainNG} allowDecimals={false} tick={{ fontSize: 12, fill: '#374151' }} label={{ value: 'Stock', angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }} />
                 <Tooltip formatter={(v:number) => v} cursor={{ stroke: '#9ca3af', strokeDasharray: '4 4' }} />
                 <Legend verticalAlign="bottom" align="center" height={32} iconType="square" wrapperStyle={{ paddingTop: 12 }} />
-                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke={LINE_CHART_COLORS.minimum} strokeWidth={2} dot={{ r: 4, fill: LINE_CHART_COLORS.minimum, stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabelNG} />
+                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke="#D5DbDB" strokeWidth={2} dot={{ r: 4, fill: '#D5DbDB', stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabelNG} />
                 <Line type="monotone" dataKey="current" name="Current Stock" stroke={LINE_CHART_COLORS.current} strokeWidth={2} dot={{ r: 5, fill: LINE_CHART_COLORS.current, stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 7 }} label={renderValueLabelNG} />
               </LineChart>
             </ResponsiveContainer>
@@ -720,7 +729,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                 <YAxis width={80} domain={yDomain} allowDecimals={false} tick={{ fontSize: 12, fill: '#374151' }} label={{ value: 'Stock', angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }} />
                 <Tooltip formatter={(v:number) => v} cursor={{ stroke: '#9ca3af', strokeDasharray: '4 4' }} />
                 <Legend verticalAlign="bottom" align="center" height={32} iconType="square" wrapperStyle={{ paddingTop: 12 }} />
-                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke={LINE_CHART_COLORS.minimum} strokeWidth={2} dot={{ r: 4, fill: LINE_CHART_COLORS.minimum, stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabel} />
+                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke="#D5DbDB" strokeWidth={2} dot={{ r: 4, fill: '#D5DbDB', stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabel} />
                 <Line type="monotone" dataKey="current" name="Current Stock" stroke={LINE_CHART_COLORS.current} strokeWidth={2} dot={{ r: 5, fill: LINE_CHART_COLORS.current, stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 7 }} label={renderValueLabel} />
               </LineChart>
             </ResponsiveContainer>
@@ -743,29 +752,477 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   <div className={`relative bg-white rounded-lg border border-gray-200 p-4 shadow-sm h-[420px] flex flex-col ${className}`}>
       <div className="flex items-center justify-between mb-4 shrink-0">
         <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
-        {!['itemsStatus', 'categoryWise'].includes(type) && (
-          <div
-            className="p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDownload(e);
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            {downloadLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
-            ) : (
-              <Download className="w-4 h-4 text-gray-600 hover:text-blue-600" />
-            )}
+        <div className="flex items-center gap-2">
+          {type === 'greenConsumption' && (
+            <>
+              {/* Info tooltip icon */}
+              <div
+                className="p-1 rounded hover:bg-gray-100 transition-colors cursor-default"
+                title={localData?.info?.info || ''}
+              >
+                <Info className="w-4 h-4 text-gray-600" />
+              </div>
+              {/* Refresh icon */}
+              <div
+                className={`p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer ${refreshLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (refreshLoading) return;
+                  try {
+                    if (!dateRange) {
+                      toast.error('Date range is required to refresh');
+                      return;
+                    }
+                    const baseUrl = localStorage.getItem('baseUrl');
+                    const token = localStorage.getItem('token');
+                    const siteId = localStorage.getItem('selectedSiteId') || '0';
+                    if (!baseUrl || !token) {
+                      toast.error('Missing base URL or token');
+                      return;
+                    }
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
+                    const url = `https://${baseUrl}/pms/inventories/inventory_consumption_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    setRefreshLoading(true);
+                    const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!resp.ok) throw new Error('Failed to refresh data');
+                    const json = await resp.json();
+                    setLocalData(json);
+                    toast.success('Green Consumption refreshed');
+                  } catch (err) {
+                    console.error(err);
+                    toast.error('Failed to refresh');
+                  } finally {
+                    setRefreshLoading(false);
+                  }
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Refresh"
+              >
+                {refreshLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+                )}
+              </div>
+            </>
+          )}
+          {type === 'categoryWise' && (
+            <>
+              {/* Info tooltip icon */}
+              <div
+                className="p-1 rounded hover:bg-gray-100 transition-colors cursor-default"
+                title={localData?.info || ''}
+              >
+                <Info className="w-4 h-4 text-gray-600" />
+              </div>
+              {/* Refresh icon */}
+              <div
+                className={`p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer ${refreshLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (refreshLoading) return;
+                  try {
+                    if (!dateRange) {
+                      toast.error('Date range is required to refresh');
+                      return;
+                    }
+                    const baseUrl = localStorage.getItem('baseUrl');
+                    const token = localStorage.getItem('token');
+                    const siteId = localStorage.getItem('selectedSiteId') || '0';
+                    if (!baseUrl || !token) {
+                      toast.error('Missing base URL or token');
+                      return;
+                    }
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
+                    const url = `https://${baseUrl}/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    setRefreshLoading(true);
+                    const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!resp.ok) throw new Error('Failed to refresh data');
+                    const json = await resp.json();
+                    setLocalData(json);
+                    toast.success('Category Wise Items refreshed');
+                  } catch (err) {
+                    console.error(err);
+                    toast.error('Failed to refresh');
+                  } finally {
+                    setRefreshLoading(false);
+                  }
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Refresh"
+              >
+                {refreshLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+                )}
+              </div>
+            </>
+          )}
+          {type === 'inventoryCostOverMonth' && (
+            <>
+              <div
+                className="p-1 rounded hover:bg-gray-100 transition-colors cursor-default"
+                title={localData?.info?.info || ''}
+              >
+                <Info className="w-4 h-4 text-gray-600" />
+              </div>
+              <div
+                className={`p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer ${refreshLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (refreshLoading) return;
+                  try {
+                    if (!dateRange) {
+                      toast.error('Date range is required to refresh');
+                      return;
+                    }
+                    const baseUrl = localStorage.getItem('baseUrl');
+                    const token = localStorage.getItem('token');
+                    const siteId = localStorage.getItem('selectedSiteId') || '0';
+                    if (!baseUrl || !token) {
+                      toast.error('Missing base URL or token');
+                      return;
+                    }
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
+                    const url = `https://${baseUrl}/pms/inventories/card_inventory_cost_over_month.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    setRefreshLoading(true);
+                    const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!resp.ok) throw new Error('Failed to refresh data');
+                    const json = await resp.json();
+                    setLocalData(json);
+                    toast.success('Inventory Cost Over Month refreshed');
+                  } catch (err) {
+                    console.error(err);
+                    toast.error('Failed to refresh');
+                  } finally {
+                    setRefreshLoading(false);
+                  }
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Refresh"
+              >
+                {refreshLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+                )}
+              </div>
+            </>
+          )}
+          {type === 'consumptionReportGreen' && (
+            <>
+              <div
+                className="p-1 rounded hover:bg-gray-100 transition-colors cursor-default"
+                title={localData?.info?.info || ''}
+              >
+                <Info className="w-4 h-4 text-gray-600" />
+              </div>
+              <div
+                className={`p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer ${refreshLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (refreshLoading) return;
+                  try {
+                    if (!dateRange) {
+                      toast.error('Date range is required to refresh');
+                      return;
+                    }
+                    const baseUrl = localStorage.getItem('baseUrl');
+                    const token = localStorage.getItem('token');
+                    const siteId = localStorage.getItem('selectedSiteId') || '0';
+                    if (!baseUrl || !token) {
+                      toast.error('Missing base URL or token');
+                      return;
+                    }
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
+                    const url = `https://${baseUrl}/pms/inventories/consumption_report_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    setRefreshLoading(true);
+                    const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!resp.ok) throw new Error('Failed to refresh data');
+                    const json = await resp.json();
+                    setLocalData(json);
+                    toast.success('Consumption Report (Green) refreshed');
+                  } catch (err) {
+                    console.error(err);
+                    toast.error('Failed to refresh');
+                  } finally {
+                    setRefreshLoading(false);
+                  }
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Refresh"
+              >
+                {refreshLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+                )}
+              </div>
+            </>
+          )}
+          {type === 'consumptionReportNonGreen' && (
+            <>
+              <div
+                className="p-1 rounded hover:bg-gray-100 transition-colors cursor-default"
+                title={localData?.info?.info || ''}
+              >
+                <Info className="w-4 h-4 text-gray-600" />
+              </div>
+              <div
+                className={`p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer ${refreshLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (refreshLoading) return;
+                  try {
+                    if (!dateRange) {
+                      toast.error('Date range is required to refresh');
+                      return;
+                    }
+                    const baseUrl = localStorage.getItem('baseUrl');
+                    const token = localStorage.getItem('token');
+                    const siteId = localStorage.getItem('selectedSiteId') || '0';
+                    if (!baseUrl || !token) {
+                      toast.error('Missing base URL or token');
+                      return;
+                    }
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
+                    const url = `https://${baseUrl}/pms/inventories/consumption_report_non_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    setRefreshLoading(true);
+                    const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!resp.ok) throw new Error('Failed to refresh data');
+                    const json = await resp.json();
+                    setLocalData(json);
+                    toast.success('Consumption Report (Non-Green) refreshed');
+                  } catch (err) {
+                    console.error(err);
+                    toast.error('Failed to refresh');
+                  } finally {
+                    setRefreshLoading(false);
+                  }
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Refresh"
+              >
+                {refreshLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+                )}
+              </div>
+            </>
+          )}
+          {type === 'currentMinimumStockGreen' && (
+            <>
+              <div
+                className="p-1 rounded hover:bg-gray-100 transition-colors cursor-default"
+                title={`${localData?.info?.current_stock_info || ''} ${localData?.info?.minimum_stock_info || ''}`.trim()}
+              >
+                <Info className="w-4 h-4 text-gray-600" />
+              </div>
+              <div
+                className={`p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer ${refreshLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (refreshLoading) return;
+                  try {
+                    if (!dateRange) {
+                      toast.error('Date range is required to refresh');
+                      return;
+                    }
+                    const baseUrl = localStorage.getItem('baseUrl');
+                    const token = localStorage.getItem('token');
+                    const siteId = localStorage.getItem('selectedSiteId') || '0';
+                    if (!baseUrl || !token) {
+                      toast.error('Missing base URL or token');
+                      return;
+                    }
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
+                    const url = `https://${baseUrl}/pms/inventories/current_minimum_stock_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    setRefreshLoading(true);
+                    const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!resp.ok) throw new Error('Failed to refresh data');
+                    const json = await resp.json();
+                    setLocalData(json);
+                    toast.success('Current Minimum Stock (Green) refreshed');
+                  } catch (err) {
+                    console.error(err);
+                    toast.error('Failed to refresh');
+                  } finally {
+                    setRefreshLoading(false);
+                  }
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Refresh"
+              >
+                {refreshLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+                )}
+              </div>
+            </>
+          )}
+          {type === 'currentMinimumStockNonGreen' && (
+            <>
+              <div
+                className="p-1 rounded hover:bg-gray-100 transition-colors cursor-default"
+                title={`${localData?.info?.current_stock_info || ''} ${localData?.info?.minimum_stock_info || ''}`.trim()}
+              >
+                <Info className="w-4 h-4 text-gray-600" />
+              </div>
+              <div
+                className={`p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer ${refreshLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (refreshLoading) return;
+                  try {
+                    if (!dateRange) {
+                      toast.error('Date range is required to refresh');
+                      return;
+                    }
+                    const baseUrl = localStorage.getItem('baseUrl');
+                    const token = localStorage.getItem('token');
+                    const siteId = localStorage.getItem('selectedSiteId') || '0';
+                    if (!baseUrl || !token) {
+                      toast.error('Missing base URL or token');
+                      return;
+                    }
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
+                    const url = `https://${baseUrl}/pms/inventories/current_minimum_stock_non_green.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    setRefreshLoading(true);
+                    const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!resp.ok) throw new Error('Failed to refresh data');
+                    const json = await resp.json();
+                    setLocalData(json);
+                    toast.success('Current Minimum Stock (Non-Green) refreshed');
+                  } catch (err) {
+                    console.error(err);
+                    toast.error('Failed to refresh');
+                  } finally {
+                    setRefreshLoading(false);
+                  }
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Refresh"
+              >
+                {refreshLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+                )}
+              </div>
+            </>
+          )}
+          {type === 'itemsStatus' && (
+            <>
+              <div
+                className="p-1 rounded hover:bg-gray-100 transition-colors cursor-default"
+                title={localData?.info || ''}
+              >
+                <Info className="w-4 h-4 text-gray-600" />
+              </div>
+              <div
+                className={`p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer ${refreshLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (refreshLoading) return;
+                  try {
+                    if (!dateRange) {
+                      toast.error('Date range is required to refresh');
+                      return;
+                    }
+                    const baseUrl = localStorage.getItem('baseUrl');
+                    const token = localStorage.getItem('token');
+                    const siteId = localStorage.getItem('selectedSiteId') || '0';
+                    if (!baseUrl || !token) {
+                      toast.error('Missing base URL or token');
+                      return;
+                    }
+                    const from = formatDate(dateRange.startDate);
+                    const to = formatDate(dateRange.endDate);
+                    const url = `https://${baseUrl}/pms/inventories/items_status.json?site_id=${siteId}&from_date=${from}&to_date=${to}&access_token=${encodeURIComponent(token)}`;
+                    setRefreshLoading(true);
+                    const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!resp.ok) throw new Error('Failed to refresh data');
+                    const json = await resp.json();
+                    setLocalData(json);
+                    toast.success('Items Status refreshed');
+                  } catch (err) {
+                    console.error(err);
+                    toast.error('Failed to refresh');
+                  } finally {
+                    setRefreshLoading(false);
+                  }
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                title="Refresh"
+              >
+                {refreshLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+                )}
+              </div>
+            </>
+          )}
+          {!['itemsStatus', 'categoryWise'].includes(type) && (
+            <div
+              className="p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDownload(e);
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              {downloadLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+              ) : (
+                <Download className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 min-h-0 overflow-hidden relative">
+        {refreshLoading ? (
+          <div className="absolute inset-0 bg-white flex items-center justify-center z-30 rounded-lg">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="w-10 h-10 animate-spin text-[#C72030]" />
+              <span className="text-sm font-semibold text-gray-700">Refreshing data...</span>
+            </div>
+          </div>
+        ) : null}
+        {!refreshLoading && (
+          <div className="h-full overflow-y-auto pr-1 custom-scrollbar">
+            {renderContent()}
           </div>
         )}
-      </div>
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <div className="h-full overflow-y-auto pr-1 custom-scrollbar">
-          {renderContent()}
-        </div>
       </div>
       {downloadLoading && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg">

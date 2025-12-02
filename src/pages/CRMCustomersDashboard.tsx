@@ -148,8 +148,8 @@ const CRMCustomersDashboard = () => {
             lease_end_date: lease?.lease_end_date,
             free_parking: lease?.free_parking,
             paid_parking: lease?.paid_parking,
-            created_at: format(item.created_at, 'dd-MM-yyyy'),
-            updated_at: format(item.updated_at, 'dd-MM-yyyy'),
+            created_at: item?.created_at && format(item.created_at, 'dd-MM-yyyy'),
+            updated_at: item?.updated_at && format(item.updated_at, 'dd-MM-yyyy'),
             color_code: item.color_code,
           }
         })

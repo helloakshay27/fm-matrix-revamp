@@ -49,15 +49,15 @@ const PDFDownloadPage: React.FC = () => {
   // };
 
   const onDownload = () => {
-  if (!validateRange()) return;
-  const params = `start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}&auto=1`;
-  const w = window.open(`/thepdf?${params}`, '_blank', 'noopener,noreferrer');
-  try {
-    w?.focus();
-  } catch {
-    /* noop */
-  }
-};
+    if (!validateRange()) return;
+    const params = `start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}&auto=1`;
+    const w = window.open(`/thepdf?${params}`, '_blank', 'noopener,noreferrer');
+    try {
+      w?.focus();
+    } catch {
+      /* noop */
+    }
+  };
 
 
   // Weekly download (assumes /weeklypdf supports auto=1 like monthly endpoint)
@@ -67,15 +67,27 @@ const PDFDownloadPage: React.FC = () => {
   //   try { w?.focus(); } catch { /* noop */ }
   // };
 
-const onWeeklyDownload = () => {
-  setError('');
-  const w = window.open('/weeklypdf?auto=1', '_blank', 'noopener,noreferrer');
-  try {
-    w?.focus();
-  } catch {
-    /* noop */
-  }
-};
+  const onWeeklyDownload = () => {
+    setError('');
+    const w = window.open('/weeklypdf?auto=1', '_blank', 'noopener,noreferrer');
+    try {
+      w?.focus();
+    } catch {
+      /* noop */
+    }
+  };
+
+  // Daily report open and download
+  const onDailyView = () => {
+    setError('');
+    navigate('/dailypdf');
+  };
+
+  const onDailyDownload = () => {
+    setError('');
+    const w = window.open('/dailypdf?auto=1', '_blank', 'noopener,noreferrer');
+    try { w?.focus(); } catch { /* noop */ }
+  };
 
 
 
@@ -89,12 +101,60 @@ const onWeeklyDownload = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 mx-auto">
+    <div className="p-4 sm:p-6 mx-auto ">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">REPORT PDF GENERATOR</h1>
           <p className="text-sm text-gray-600 mt-1">Generate and download period based PDF or weekly summaries.</p>
+        </div>
+      </div>
+
+      {/* <div className="bg-white rounded-lg border mt-6 mb-6">
+        <div className="flex p-4 items-center border-b">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+            <Clock className="w-5 h-5 text-[#C72030]" />
+          </div>
+          <h2 className="text-lg font-bold">DAILY REPORT</h2>
+        </div>
+        <div className="p-4 flex flex-col gap-4">
+          <p className="text-sm text-gray-600 max-w-2xl">View or download the Daily Report. Download opens the page and triggers print automatically.</p>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={onDailyView} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2">
+              <Eye className="w-4 h-4" /> View Daily Report
+            </Button>
+            <Button onClick={onDailyDownload} variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] flex items-center gap-2">
+              <DownloadIcon className="w-4 h-4" /> Download Daily
+            </Button>
+          </div>
+        </div>
+      </div> */}
+
+            {/* Weekly Report Card */}
+      <div className="bg-white rounded-lg border mb-6">
+        <div className="flex p-4 items-center border-b">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+            <Clock className="w-5 h-5 text-[#C72030]" />
+          </div>
+          <h2 className="text-lg font-bold">WEEKLY REPORT</h2>
+        </div>
+        <div className="p-4 flex flex-col gap-4">
+          <p className="text-sm text-gray-600 max-w-2xl">View or download the consolidated weekly PDF report generated from rolling weekly metrics.</p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => navigate('/weeklypdf')}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+            >
+              <Eye className="w-4 h-4" /> View Weekly Report
+            </Button>
+            <Button
+              onClick={onWeeklyDownload}
+              variant="outline"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] flex items-center gap-2"
+            >
+              <DownloadIcon className="w-4 h-4" /> Download Weekly
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -165,33 +225,10 @@ const onWeeklyDownload = () => {
         </div>
       </div>
 
-      {/* Weekly Report Card */}
-      <div className="bg-white rounded-lg border">
-        <div className="flex p-4 items-center border-b">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
-            <Clock className="w-5 h-5 text-[#C72030]" />
-          </div>
-          <h2 className="text-lg font-bold">WEEKLY REPORT</h2>
-        </div>
-        <div className="p-4 flex flex-col gap-4">
-          <p className="text-sm text-gray-600 max-w-2xl">View or download the consolidated weekly PDF report generated from rolling weekly metrics.</p>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => navigate('/weeklypdf')}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
-            >
-              <Eye className="w-4 h-4" /> View Weekly Report
-            </Button>
-            <Button
-              onClick={onWeeklyDownload}
-              variant="outline"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] flex items-center gap-2"
-            >
-              <DownloadIcon className="w-4 h-4" /> Download Weekly
-            </Button>
-          </div>
-        </div>
-      </div>
+
+
+      {/* Daily Report Card */}
+
     </div>
   );
 };

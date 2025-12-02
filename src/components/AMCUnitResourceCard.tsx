@@ -12,13 +12,32 @@ interface AMCUnitResourceCardProps {
   }> | null;
   className?: string;
   onDownload?: () => Promise<void>;
+  colorPalette?: {
+    primary: string;
+    secondary: string;
+    tertiary: string;
+    primaryLight: string;
+    secondaryLight: string;
+    tertiaryLight: string;
+  };
+  headerClassName?: string;
 }
 
 // Unified palette mapping
 const COLORS = [ANALYTICS_PALETTE[3], ANALYTICS_PALETTE[1]]; // Services, Assets
 
-export const AMCUnitResourceCard: React.FC<AMCUnitResourceCardProps> = ({ data, className, onDownload }) => {
+export const AMCUnitResourceCard: React.FC<AMCUnitResourceCardProps> = ({ data, className, onDownload, colorPalette, headerClassName }) => {
   const { toast } = useToast();
+
+  const palette = colorPalette || {
+    primary: '#C4B99D',
+    secondary: '#DAD6CA',
+    tertiary: '#D5DBDB',
+    primaryLight: '#DDD4C4',
+    secondaryLight: '#E8E5DD',
+    tertiaryLight: '#E5E9E9',
+  };
+  const COLORS = [palette.primaryLight, palette.secondary];
 
   const handleDownload = async () => {
     if (onDownload) {
@@ -49,15 +68,14 @@ export const AMCUnitResourceCard: React.FC<AMCUnitResourceCardProps> = ({ data, 
   return (
     <div className={`bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 h-full flex flex-col ${className}`}>
       <div className="flex items-center justify-between mb-4 sm:mb-6 p-3 sm:p-6 pb-0">
-        <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMC Unit Resource Distribution</h3>
+        <h3 className={`text-base sm:text-lg font-bold ${headerClassName || 'text-[#1A1A1A]'}`}>AMC Unit Resource Distribution</h3>
         {onDownload && (
           <Download
-            className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer text-[#C72030] hover:text-[#A01828]"
+            className={`w-4 h-4 sm:w-5 sm:h-5 cursor-pointer ${headerClassName || 'text-[#1A1A1A]'} hover:opacity-80`}
             onClick={handleDownload}
           />
         )}
       </div>
-      
       <div className="flex-1 overflow-auto p-3 sm:p-6 pt-0">
         {data && data.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -86,7 +104,6 @@ export const AMCUnitResourceCard: React.FC<AMCUnitResourceCardProps> = ({ data, 
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            
             {/* Legend and Stats */}
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-gray-700 mb-3">Resource Breakdown</h4>
@@ -105,11 +122,10 @@ export const AMCUnitResourceCard: React.FC<AMCUnitResourceCardProps> = ({ data, 
                   </div>
                 </div>
               ))}
-              
               {/* Summary */}
-              <div className="mt-4 p-3 rounded-lg border" style={{ background: '#f5f4f1', borderColor: '#e0ddd6' }}>
-                <div className="text-sm font-semibold mb-1" style={{ color: ANALYTICS_PALETTE[3] }}>Total Units</div>
-                <div className="text-lg font-bold" style={{ color: ANALYTICS_PALETTE[3] }}>
+              <div className="mt-4 p-3 rounded-lg border" style={{ background: palette.primaryLight, borderColor: palette.secondaryLight }}>
+                <div className="text-sm font-semibold mb-1" style={{ color: palette.primaryLight }}>Total Units</div>
+                <div className="text-lg font-bold" style={{ color: palette.primaryLight }}>
                   {chartData?.reduce((sum, item) => sum + item.value, 0) || 0}
                 </div>
               </div>

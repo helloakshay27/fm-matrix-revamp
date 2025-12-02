@@ -33,9 +33,9 @@ export const DashboardWithConfiguration: React.FC = () => {
         <div>Ticket Aging Matrix Component</div>
       )}
       
-      {isItemVisible('tickets', 'unitCategoryWise') && (
+      {/* {isItemVisible('tickets', 'unitCategoryWise') && (
         <div>Unit Category Wise Component</div>
-      )}
+      )} */}
       
       {isItemVisible('tickets', 'responseTatReport') && (
         <div>Response TAT Report Component</div>

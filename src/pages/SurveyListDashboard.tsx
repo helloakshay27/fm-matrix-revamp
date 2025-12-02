@@ -297,16 +297,23 @@ export const SurveyListDashboard = () => {
         draggable: true,
         defaultVisible: true,
       },
+      // {
+      //   key: "associations_count",
+      //   label: "No. of Associations",
+      //   sortable: true,
+      //   draggable: true,
+      //   defaultVisible: true,
+      // },
       {
-        key: "associations_count",
-        label: "No. of Associations",
+        key: "ticket_category",
+        label: "Ticket Category",
         sortable: true,
         draggable: true,
         defaultVisible: true,
       },
       {
-        key: "ticket_category",
-        label: "Ticket Category",
+        key: "created_at",
+        label: "Created At",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -360,6 +367,20 @@ export const SurveyListDashboard = () => {
           return (
             <span>
               {item.ticket_configs?.category || "-"}
+            </span>
+          );
+        case "created_at":
+          return (
+            <span>
+              {item.created_at
+                ? new Date(item.created_at).toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    // hour: '2-digit',
+                    // minute: '2-digit'
+                  })
+                : "-"}
             </span>
           );
         case "assigned_to":

@@ -15,6 +15,7 @@ import { apiClient } from "@/utils/apiClient";
 import {
   ticketManagementAPI,
   CategoryResponse,
+  SubCategoryResponse,
 } from "@/services/ticketManagementAPI";
 import {
   TextField,
@@ -41,6 +42,7 @@ interface Question {
     title: string;
     files: File[];
   }>;
+  questionImage?: File | null;
 }
 
 interface Category {
@@ -100,12 +102,15 @@ export const AddSurveyPage = () => {
   const [checkType, setCheckType] = useState("");
   const [createTicket, setCreateTicket] = useState(false);
   const [ticketCategory, setTicketCategory] = useState("");
+  const [ticketSubCategory, setTicketSubCategory] = useState("");
   const [assignTo, setAssignTo] = useState("");
   const [ticketCategories, setTicketCategories] = useState<CategoryResponse[]>([]);
+  const [ticketSubCategories, setTicketSubCategories] = useState<SubCategoryResponse[]>([]);
   const [fmUsers, setFmUsers] = useState<
     { full_name: string; id: number; firstname: string; lastname: string; email?: string }[]
   >([]);
   const [loadingTicketCategories, setLoadingTicketCategories] = useState(false);
+  const [loadingTicketSubCategories, setLoadingTicketSubCategories] = useState(false);
   const [loadingFmUsers, setLoadingFmUsers] = useState(false);
   const [additionalTitle, setAdditionalTitle] = useState("");
   const [additionalDescription, setAdditionalDescription] = useState("");
@@ -157,6 +162,20 @@ export const AddSurveyPage = () => {
     }
   }, [createTicket]);
 
+  // Load subcategories when category changes
+  const loadTicketSubCategories = useCallback(async (categoryId: number) => {
+    setLoadingTicketSubCategories(true);
+    try {
+      const subcats = await ticketManagementAPI.getSubCategoriesByCategory(categoryId);
+      setTicketSubCategories(subcats);
+      console.log("Ticket subcategories loaded:", subcats);
+    } catch (error) {
+      console.error("Error loading ticket subcategories:", error);
+    } finally {
+      setLoadingTicketSubCategories(false);
+    }
+  }, []);
+
   // Load FM users for assign to dropdown
   const loadFMUsers = useCallback(async () => {
     if (!createTicket) return;
@@ -173,6 +192,16 @@ export const AddSurveyPage = () => {
     }
   }, [createTicket]);
 
+  // Handle category change and load subcategories
+  const handleTicketCategoryChange = (categoryId: string) => {
+    setTicketCategory(categoryId);
+    setTicketSubCategory(""); // Reset subcategory when category changes
+    setTicketSubCategories([]); // Clear subcategories
+    if (categoryId) {
+      loadTicketSubCategories(parseInt(categoryId));
+    }
+  };
+
   // Load ticket data when createTicket checkbox is checked
   useEffect(() => {
     if (createTicket) {
@@ -181,7 +210,9 @@ export const AddSurveyPage = () => {
     } else {
       // Reset selections when unchecked
       setTicketCategory("");
+      setTicketSubCategory("");
       setAssignTo("");
+      setTicketSubCategories([]);
     }
   }, [createTicket, loadTicketCategories, loadFMUsers]);
 
@@ -191,6 +222,7 @@ export const AddSurveyPage = () => {
       text: "",
       answerType: "",
       mandatory: false,
+      questionImage: null,
     };
     setQuestions([...questions, newQuestion]);
   };
@@ -336,7 +368,7 @@ export const AddSurveyPage = () => {
     );
   };
 
-  const EMOJIS = ["😞", "😟", "😐", "😊", "😁"];
+  const EMOJIS = ["😁", "😊", "😐", "😟", "😞"];
   const RATINGS = ["1", "2", "3", "4", "5"];
   const RATING_STARS = ["1-star", "2-star", "3-star", "4-star", "5-star"];
 
@@ -345,7 +377,18 @@ export const AddSurveyPage = () => {
     if (!question) return;
 
     const currentOptionsCount = question.answerOptions?.length || 0;
-    if (currentOptionsCount >= 5) return; // Limit to 5 options
+
+    // Different limits based on answer type
+    if (question.answerType === "rating" || question.answerType === "emojis") {
+      if (currentOptionsCount >= 5) {
+        toast.error("Maximum Options Reached", {
+          description: `You can only add up to 5 options for ${question.answerType === "rating" ? "rating" : "emojis"} questions.`,
+          duration: 3000,
+        });
+        return;
+      }
+    }
+    // For multiple-choice, no limit is applied
 
     // Always start with empty text to allow user input for both ratings and emojis
     const newOptionText = "";
@@ -536,7 +579,12 @@ export const AddSurveyPage = () => {
       formData.append('create_ticket', createTicket ? 'true' : 'false');
       if (createTicket) {
         formData.append('category_name', ticketCategory);
-        formData.append('category_type', assignTo);
+        if (ticketSubCategory) {
+          formData.append('sub_category_id', ticketSubCategory);
+        }
+        // Pass 'subcategory' if both category and subcategory are selected, otherwise pass 'category'
+        const categoryType = ticketSubCategory ? 'subcategory' : 'category';
+        formData.append('category_type', categoryType);
       }
 
       // Process questions with proper FormData structure
@@ -557,6 +605,12 @@ export const AddSurveyPage = () => {
         formData.append(`question[][qtype]`, qtype);
         formData.append(`question[][quest_mandatory]`, question.mandatory.toString());
         formData.append(`question[][image_mandatory]`, 'false');
+
+        // Handle question image upload
+        if (question.questionImage) {
+          formData.append(`snag_checklist[survey_image]`, question.questionImage);
+          fileCounter++;
+        }
 
         // Add options for multiple-choice, rating, and emojis
         if (["multiple-choice", "rating", "emojis"].includes(question.answerType) && question.answerOptions) {
@@ -607,6 +661,10 @@ export const AddSurveyPage = () => {
         console.log(`   question[][qtype]: ${question.answerType === "multiple-choice" ? "multiple" : question.answerType === "rating" ? "rating" : question.answerType === "emojis" ? "emoji" : "description"}`);
         console.log(`   question[][quest_mandatory]: ${question.mandatory}`);
 
+        if (question.questionImage) {
+          console.log(`   survey_image: ${question.questionImage.name} (${(question.questionImage.size / 1024).toFixed(2)} KB)`);
+        }
+
         if (["multiple-choice", "rating", "emojis"].includes(question.answerType) && question.answerOptions) {
           question.answerOptions.forEach((option, optIndex) => {
             console.log(`   question[][quest_options][][option_name]: "${option.text}"`);
@@ -642,14 +700,14 @@ export const AddSurveyPage = () => {
       console.log(`\n4. Summary:`);
       console.log(`   Total FormData fields: ${allKeys.length}`);
       console.log(`   Total files: ${fileCounter}`);
-      console.log(`   File keys: ${allKeys.filter(key => key.includes('[icons][]')).length}`);
+      console.log(`   File keys: ${allKeys.filter(key => key.includes('[icons][]') || key.includes('survey_image')).length}`);
 
       console.log(
         "\n5. FormData Request Summary:",
         {
           total_fields: Array.from(formData.keys()).length,
           total_files: fileCounter,
-          file_fields: Array.from(formData.keys()).filter(key => key.includes('[icons][]')).length
+          file_fields: Array.from(formData.keys()).filter(key => key.includes('[icons][]') || key.includes('survey_image')).length
         }
       );
 
@@ -678,10 +736,18 @@ export const AddSurveyPage = () => {
       if (error.response) {
         console.error("Response data:", error.response.data);
         console.error("Response status:", error.response.status);
-        toast.error("Failed to Create Survey", {
-          description: error.response.data?.message || error.response.statusText || "Unknown error occurred",
-          duration: 5000,
-        });
+
+        if (error.response.status === 422) {
+          toast.error("Name Already Taken", {
+            description: "The survey name has already been taken. Please choose a different name.",
+            duration: 5000,
+          });
+        } else {
+          toast.error("Failed to Create Survey", {
+            description: error.response.data?.message || error.response.statusText || "Unknown error occurred",
+            duration: 5000,
+          });
+        }
       } else if (error.request) {
         toast.error("Network Error", {
           description: "Unable to connect to server. Please check your connection.",
@@ -787,6 +853,9 @@ export const AddSurveyPage = () => {
                 </MuiSelect>
               </FormControl>
 
+              {/* Survey Image Upload */}
+              
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="create-ticket"
@@ -806,7 +875,7 @@ export const AddSurveyPage = () => {
 
             {/* Conditional Ticket Dropdowns */}
             {createTicket && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-6 border-t border-gray-200">
                 <FormControl
                   fullWidth
                   variant="outlined"
@@ -819,7 +888,7 @@ export const AddSurveyPage = () => {
                   <InputLabel shrink>Ticket Category</InputLabel>
                   <MuiSelect
                     value={ticketCategory}
-                    onChange={(e) => setTicketCategory(e.target.value)}
+                    onChange={(e) => handleTicketCategoryChange(e.target.value)}
                     label="Ticket Category*"
                     notched
                     displayEmpty
@@ -837,9 +906,97 @@ export const AddSurveyPage = () => {
                     ))}
                   </MuiSelect>
                 </FormControl>
+
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  sx={{ 
+                    "& .MuiInputBase-root": fieldStyles,
+                  }}
+                >
+                  <InputLabel shrink>Ticket Sub Category</InputLabel>
+                  <MuiSelect
+                    value={ticketSubCategory}
+                    onChange={(e) => setTicketSubCategory(e.target.value)}
+                    label="Ticket Sub Category"
+                    notched
+                    displayEmpty
+                    disabled={loadingTicketSubCategories || !ticketCategory}
+                  >
+                    <MenuItem value="">
+                      {loadingTicketSubCategories
+                        ? "Loading subcategories..."
+                        : !ticketCategory
+                        ? "Select a category first"
+                        : "Select Ticket Sub Category"}
+                    </MenuItem>
+                    {ticketSubCategories.map((subcat) => (
+                      <MenuItem key={subcat.id} value={subcat.id.toString()}>
+                        {subcat.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
               </div>
             )}
+            <div className="space-y-2 mt-3">
+                <label className="text-sm font-medium text-gray-700">
+                  Upload Image
+                </label>
+                <div className="flex items-center gap-4 grid grid-cols-3">
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        // For now, we'll add this to the first question or handle it differently
+                        if (file && questions.length > 0) {
+                          handleQuestionChange(questions[0].id, "questionImage", file);
+                        }
+                      }}
+                      className="hidden"
+                      id="survey-image"
+                      disabled={isSubmitting}
+                    />
+                    <label
+                      htmlFor="survey-image"
+                      className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                        isSubmitting
+                          ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
+                      }`}
+                    >
+                      {questions.length > 0 && questions[0].questionImage
+                        ? `Selected: ${questions[0].questionImage.name}`
+                        : "Click to upload question image"}
+                    </label>
+                  </div>
+                  {questions.length > 0 && questions[0].questionImage && (
+                    <Button
+                      onClick={() => handleQuestionChange(questions[0].id, "questionImage", null)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-400 hover:text-red-500 p-2"
+                      disabled={isSubmitting}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+                {questions.length > 0 && questions[0].questionImage && (
+                  <div className="mt-2">
+                    <img
+                      src={URL.createObjectURL(questions[0].questionImage)}
+                      alt="Question preview"
+                      className="max-w-full h-32 object-cover rounded-lg border"
+                      onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                    />
+                  </div>
+                )}
+              </div>
           </div>
+          
         </div>
 
         {/* Section 2: Questions */}
@@ -1119,7 +1276,7 @@ export const AddSurveyPage = () => {
                                     value={
                                       field.files.length > 0
                                         ? `${field.files.length} file(s) selected`
-                                        : "Choose File: No file chosen"
+                                        : "Choose File"
                                     }
                                     fullWidth
                                     variant="outlined"
@@ -1299,7 +1456,7 @@ export const AddSurveyPage = () => {
             disabled={loading || isSubmitting}
             className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 h-auto disabled:opacity-50"
           >
-            {(loading || isSubmitting) ? "Creating..." : "Create Survey"}
+            {(loading || isSubmitting) ? "Creating..." : "Create"}
           </Button>
           <Button
             type="button"

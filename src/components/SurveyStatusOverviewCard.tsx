@@ -60,6 +60,7 @@ export const SurveyStatusOverviewCard: React.FC<SurveyStatusOverviewCardProps> =
         total_surveys: 'Total Surveys',
         total_responses: 'Total Responses',
         positive_responses: 'Positive Responses',
+        csat: 'CSAT Score',
         negative_responses: 'Negative Responses',
         neutral_responses: 'Neutral Responses',
         complaints_count: 'Complaints'
@@ -97,14 +98,14 @@ export const SurveyStatusOverviewCard: React.FC<SurveyStatusOverviewCardProps> =
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
-            <div className="relative text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-              {/* <Download
+            {/* <div className="relative text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <Download
                 className="absolute top-3 right-3 w-4 h-4 cursor-pointer text-blue-600 hover:text-blue-700 transition-colors"
                 onClick={() => handleDownload('total_surveys')}
-              /> */}
+              />
               <div className="text-2xl font-bold text-blue-600">{surveyData.total_surveys}</div>
               <div className="text-sm text-blue-700 font-medium">Total Surveys</div>
-            </div>
+            </div> */}
             
             <div className="relative text-center p-4 bg-green-50 rounded-lg border border-green-200">
               {/* <Download
@@ -113,6 +114,15 @@ export const SurveyStatusOverviewCard: React.FC<SurveyStatusOverviewCardProps> =
               /> */}
               <div className="text-2xl font-bold text-green-600">{surveyData.total_responses}</div>
               <div className="text-sm text-green-700 font-medium">Total Responses</div>
+            </div>
+
+            <div className="relative text-center p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+              {/* <Download
+                className="absolute top-3 right-3 w-4 h-4 cursor-pointer text-emerald-600 hover:text-emerald-700 transition-colors"
+                onClick={() => handleDownload('positive_responses')}
+              /> */}
+              <div className="text-2xl font-bold text-emerald-600">{surveyData.csat}</div>
+              <div className="text-sm text-emerald-700 font-medium">CSAT Score</div>
             </div>
             
             <div className="relative text-center p-4 bg-emerald-50 rounded-lg border border-emerald-200">
@@ -133,14 +143,14 @@ export const SurveyStatusOverviewCard: React.FC<SurveyStatusOverviewCardProps> =
               <div className="text-sm text-red-700 font-medium">Negative Responses</div>
             </div>
             
-            <div className="relative text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              {/* <Download
+            {/* <div className="relative text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <Download
                 className="absolute top-3 right-3 w-4 h-4 cursor-pointer text-yellow-600 hover:text-yellow-700 transition-colors"
                 onClick={() => handleDownload('neutral_responses')}
-              /> */}
+              />
               <div className="text-2xl font-bold text-yellow-600">{surveyData.neutral_responses}</div>
               <div className="text-sm text-yellow-700 font-medium">Neutral Responses</div>
-            </div>
+            </div> */}
             
             <div className="relative text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
               {/* <Download

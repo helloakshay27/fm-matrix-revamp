@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Building, X, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Edit, Building, X, ChevronLeft, ChevronRight, Check, Download, Upload, Loader2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
@@ -39,6 +39,10 @@ export function FloorPage() {
   const [editFloorBuilding, setEditFloorBuilding] = useState<number | null>(null);
   const [editSelectedWing, setEditSelectedWing] = useState<number | null>(null);
   const [editSelectedArea, setEditSelectedArea] = useState<number | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
@@ -169,6 +173,94 @@ export function FloorPage() {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem('token') || '';
+      let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+      baseUrl = baseUrl.replace(/^https?:\/\//, '');
+      const templateUrl = `https://${baseUrl}/assets/floor.xlsx`;
+      
+      const response = await fetch(templateUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download template');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'floor.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Template downloaded successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to download template');
+    }
+  };
+
+  const handleImportFloors = async () => {
+    if (!importFile) return;
+
+    setIsImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('pms_floor[file]', importFile);
+      
+      const token = localStorage.getItem('token') || '';
+      let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+      baseUrl = baseUrl.replace(/^https?:\/\//, '');
+      const apiUrl = `https://${baseUrl}/pms/account_setups/floor_import.json?token=${token}`;
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to import floors');
+      }
+
+      toast.success('Floors imported successfully');
+      setShowImportDialog(false);
+      setImportFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      dispatch(fetchAllFloors());
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to import floors');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'text/csv'
+      ];
+      
+      if (validTypes.includes(file.type) || file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) {
+        setImportFile(file);
+      } else {
+        toast.error('Please select a valid Excel or CSV file');
+        event.target.value = '';
+      }
+    }
+  };
+
   const toggleFloorStatus = async (floorId: number) => {
     try {
       const floor = floors.data.find(f => f.id === floorId);
@@ -199,13 +291,84 @@ export function FloorPage() {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">FLOORS</h1>
             
-            <Button 
-              onClick={() => setShowAddDialog(true)} 
-              className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
-            >
-              <Building className="h-4 w-4" />
-              Add Floor
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleDownloadTemplate}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download Sample Format
+              </Button>
+
+              <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Import Floors
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Import Floors</DialogTitle>
+                    <button
+                      className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                      onClick={() => setShowImportDialog(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Select Excel or CSV file
+                      </label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".xlsx,.xls,.csv"
+                        onChange={handleFileSelect}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      {importFile && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          Selected: {importFile.name}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowImportDialog(false);
+                          setImportFile(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleImportFloors}
+                        disabled={!importFile || isImporting}
+                      >
+                        {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Import
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Button 
+                onClick={() => setShowAddDialog(true)} 
+                className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Floor
+              </Button>
+            </div>
           </div>
 
           {/* Controls */}
@@ -433,15 +596,26 @@ export function FloorPage() {
                 placeholder="Enter floor name"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setShowAddDialog(false);
+                  setNewFloorName('');
+                  setNewFloorBuilding(null);
+                  setNewFloorWing(null);
+                  setNewFloorArea(null);
+                }}
+              >
+                Cancel
+              </Button>
               <Button 
                 onClick={handleAddFloor} 
                 disabled={!newFloorName.trim() || !newFloorBuilding || !newFloorWing || !newFloorArea}
+                className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
               >
                 Submit
               </Button>
-              <Button variant="outline">Sample Format</Button>
-              <Button variant="outline">Import</Button>
             </div>
           </div>
         </DialogContent>

@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus } from "lucide-react";
+import { Plus, Search, Shield, Check, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   roleService,
@@ -27,6 +27,9 @@ import {
   updateModuleEnabled,
   setUpdating,
 } from "@/store/slices/roleWithModulesSlice";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 interface Permission {
   name: string;
@@ -157,9 +160,34 @@ export const RoleDashboard = () => {
       })
     : null;
 
-  // Use functions from the role's module if available, otherwise from the general module
-  const currentFunctions =
-    currentRoleModule?.functions || currentModule?.functions || [];
+  const [functionSearchTerm, setFunctionSearchTerm] = useState("");
+
+  // Use functions from the general module (master list) to ensure all available functions are shown
+  // We should NOT use currentRoleModule?.functions here as it may be sparse (only containing enabled functions)
+  const rawFunctions = currentModule?.functions || [];
+
+  // Filter functions based on search term
+  const currentFunctions = rawFunctions.filter((func) => {
+    const searchLower = functionSearchTerm.toLowerCase();
+    const functionName = (
+      func.function_name ||
+      (func as any).name ||
+      ""
+    ).toLowerCase();
+
+    // Check if function name matches
+    if (functionName.includes(searchLower)) return true;
+
+    // Check if any sub-function matches
+    return (func.sub_functions || []).some((subFunc) => {
+      const subFunctionName = (
+        subFunc.sub_function_name ||
+        (subFunc as any).name ||
+        ""
+      ).toLowerCase();
+      return subFunctionName.includes(searchLower);
+    });
+  });
 
   // Debug logging
   console.log("RoleDashboard Debug:", {
@@ -302,6 +330,58 @@ export const RoleDashboard = () => {
     return enabled;
   };
 
+  // Helper function to check if ALL functions and sub-functions in a module are enabled
+  const areAllFunctionsEnabled = (moduleId: number): boolean => {
+    if (!currentRole) return false;
+
+    // Find the master module definition to know all available functions
+    const masterModule = allModules.find(
+      (m) => (m.module_id ?? m.id) === moduleId
+    );
+
+    if (
+      !masterModule ||
+      !masterModule.functions ||
+      masterModule.functions.length === 0
+    ) {
+      return false;
+    }
+
+    const roleModule = currentRole.modules.find(
+      (m) => (m.module_id ?? m.id) === moduleId
+    );
+
+    // If role doesn't have this module initialized, or it's disabled, then not all are enabled
+    if (!roleModule || !roleModule.enabled) {
+      return false;
+    }
+
+    // Check if every function in the MASTER module is enabled in the ROLE module
+    return masterModule.functions.every((masterFunc) => {
+      const funcId = masterFunc.function_id ?? masterFunc.id;
+      const roleFunc = roleModule.functions.find(
+        (f) => (f.function_id ?? f.id) === funcId
+      );
+
+      // If function doesn't exist in role or is disabled
+      if (!roleFunc || !roleFunc.enabled) return false;
+
+      // Check all sub-functions
+      if (masterFunc.sub_functions && masterFunc.sub_functions.length > 0) {
+        return masterFunc.sub_functions.every((masterSubFunc) => {
+          const subFuncId = masterSubFunc.sub_function_id ?? masterSubFunc.id;
+          const roleSubFunc = roleFunc.sub_functions.find(
+            (sf) => (sf.sub_function_id ?? sf.id) === subFuncId
+          );
+
+          return roleSubFunc && roleSubFunc.enabled;
+        });
+      }
+
+      return true;
+    });
+  };
+
   const handleRoleClick = (role: RoleWithModules) => {
     setSelectedRole(role);
     // Keep the same tab when switching roles, or set first tab if none
@@ -346,6 +426,11 @@ export const RoleDashboard = () => {
       (sf) => (sf.sub_function_id ?? sf.id) === subFunctionId
     );
 
+    // Find the module data from allModules
+    const moduleData = allModules.find(
+      (m) => (m.module_id ?? m.id) === moduleId
+    );
+
     dispatch(
       updateSubFunctionEnabled({
         roleId: currentRole.role_id,
@@ -353,6 +438,8 @@ export const RoleDashboard = () => {
         functionId,
         subFunctionId,
         enabled,
+        moduleData, // Pass complete module structure
+        functionData, // Pass complete function structure
         subFunctionData, // Pass the complete sub-function structure
       })
     );
@@ -373,12 +460,18 @@ export const RoleDashboard = () => {
       (f) => (f.function_id ?? f.id) === functionId
     );
 
+    // Find the module data from allModules
+    const moduleData = allModules.find(
+      (m) => (m.module_id ?? m.id) === moduleId
+    );
+
     dispatch(
       updateFunctionEnabled({
         roleId: currentRole.role_id,
         moduleId,
         functionId,
         enabled,
+        moduleData, // Pass complete module structure
         functionData, // Pass the complete function structure
       })
     );
@@ -442,178 +535,229 @@ export const RoleDashboard = () => {
   };
 
   return (
-    <div className="space-y-6 p-4 lg:p-6">
-      <h1 className="text-xl lg:text-2xl font-bold text-[#1a1a1a]">ROLE</h1>
-
-      <div className="bg-white rounded-lg border border-gray-200 p-4 lg:p-6">
-        {/* Header with Add Role button */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <Button
-            onClick={handleAddRole}
-            className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Role
-          </Button>
+    <div className="space-y-6 p-4 lg:p-8 bg-gray-50/50 min-h-screen">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1a1a1a] flex items-center gap-2">
+            <Shield className="w-6 h-6 text-[#C72030]" />
+            Role Management
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage user roles and their access permissions across modules
+          </p>
         </div>
+        <Button
+          onClick={handleAddRole}
+          className="bg-[#C72030] hover:bg-[#A11D2A] text-white shadow-sm"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add New Role
+        </Button>
+      </div>
 
-        {/* Search */}
-        <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <div className="relative w-full sm:max-w-xs">
-            <Input
-              placeholder="Search Role"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pr-8"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Responsive Layout: Stack on mobile, side-by-side on desktop */}
-        <div className="flex flex-col xl:flex-row gap-6">
-          {/* Left Panel - Roles List */}
-          <div className="w-full xl:w-80 bg-gray-50 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">
-              Roles List
-            </h3>
-            <div className="space-y-2 max-h-64 xl:max-h-96 overflow-y-auto">
+      <div className="flex flex-col xl:flex-row gap-6">
+        {/* Left Panel - Roles List */}
+        <Card className="w-full xl:w-80 h-fit border-gray-200 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-gray-800">
+              Roles
+            </CardTitle>
+            <div className="relative mt-2">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search roles..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 bg-gray-50 border-gray-200"
+              />
+            </div>
+          </CardHeader>
+          <CardContent className="p-2">
+            <div className="space-y-1 max-h-[calc(100vh-300px)] overflow-y-auto pr-1 custom-scrollbar">
               {loading ? (
-                <div className="flex justify-center py-4">
-                  <div className="text-gray-500">Loading roles...</div>
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#C72030]"></div>
                 </div>
               ) : filteredRoles.length > 0 ? (
                 filteredRoles.map((role, index) => (
-                  <div
+                  <button
                     key={`${role.role_name}-${index}`}
                     onClick={() => handleRoleClick(role)}
-                    className={`p-3 rounded border cursor-pointer transition-colors ${
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-between group ${
                       currentRole?.role_name === role.role_name
-                        ? "bg-[#C72030] text-white border-[#C72030]"
-                        : "bg-white hover:bg-gray-50 border-gray-200"
+                        ? "bg-[#C72030] text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                     }`}
                   >
-                    <div className="text-sm font-medium">
-                      {role.role_id} - {role.role_name}
-                    </div>
-                  </div>
+                    <span>{role.role_name}</span>
+                    {currentRole?.role_name === role.role_name && (
+                      <Check className="w-4 h-4 text-white/90" />
+                    )}
+                  </button>
                 ))
               ) : (
-                <div className="text-center text-gray-500 py-4">
-                  No roles found
+                <div className="text-center text-gray-500 py-8 flex flex-col items-center">
+                  <AlertCircle className="w-8 h-8 text-gray-300 mb-2" />
+                  <span className="text-sm">No roles found</span>
                 </div>
               )}
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Right Panel - Permissions Matrix */}
-          <div className="flex-1 min-w-0">
-            {/* Debug info */}
-            <div className="mb-2 text-xs text-gray-500">
-              Debug: Roles loaded: {Array.isArray(roles) ? roles.length : "No"},
-              Modules loaded: {allModules.length}, Selected role:{" "}
-              {currentRole?.role_name || "None"}, Active tab:{" "}
-              {activeModuleTab || "None"}, Loading: {loading ? "Yes" : "No"},
-              Error: {error || "None"}
+        {/* Right Panel - Permissions Matrix */}
+        <Card className="flex-1 min-w-0 border-gray-200 shadow-sm">
+          <CardHeader className="pb-0 border-b border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-800">
+                  Permissions Configuration
+                </CardTitle>
+                <p className="text-sm text-gray-500 mt-1">
+                  Configure access rights for{" "}
+                  <span className="font-medium text-[#C72030]">
+                    {currentRole?.role_name || "selected role"}
+                  </span>
+                </p>
+              </div>
+              <Button
+                onClick={handleUpdatePermissions}
+                className="bg-[#C72030] hover:bg-[#A11D2A] text-white min-w-[140px]"
+                disabled={updating || !currentRole}
+              >
+                {updating ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
             </div>
 
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">
-              Permissions for: {currentRole?.role_name}
-            </h3>
-
             {/* Module Tabs */}
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+            <div className="flex gap-1 overflow-x-auto pb-0 scrollbar-hide -mb-px">
               {modulesLoading ? (
-                <div className="text-gray-500 text-sm">Loading modules...</div>
+                <div className="text-gray-500 text-sm py-2">
+                  Loading modules...
+                </div>
               ) : tabs.length > 0 ? (
                 tabs.map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveModuleTab(tab.id)}
-                    className={`px-3 lg:px-4 py-2 rounded border text-xs lg:text-sm font-medium transition-colors whitespace-nowrap ${
+                    onClick={() => {
+                      setActiveModuleTab(tab.id);
+                      setFunctionSearchTerm(""); // Reset search when switching tabs
+                    }}
+                    className={`px-4 py-3 border-b-2 text-sm font-medium transition-colors whitespace-nowrap ${
                       activeModuleTab === tab.id
-                        ? "bg-[#C72030] text-white border-[#C72030]"
-                        : "bg-white text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10"
+                        ? "border-[#C72030] text-[#C72030] bg-red-50/30"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                     }`}
                   >
                     {tab.name}
                   </button>
                 ))
               ) : (
-                <div className="text-gray-500 text-sm">
+                <div className="text-gray-500 text-sm py-2">
                   No modules available
                 </div>
               )}
             </div>
+          </CardHeader>
 
-            {/* Functions and Sub-functions Table */}
+          <CardContent className="p-0">
             <div
-              className="border rounded-lg overflow-hidden"
+              className="min-h-[400px]"
               key={`role-${currentRole?.role_id}-module-${activeModuleTab}`}
             >
-              {/* Module Toggle */}
+              {/* Module Toggle and Search */}
               {currentModule && (
-                <div className="bg-gray-100 p-3 border-b">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-sm">
-                      {currentModule.name} Module
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-600">Enable All</span>
-                      <Checkbox
-                        checked={isModuleEnabled(
-                          currentModule.module_id ?? currentModule.id
-                        )}
-                        onCheckedChange={(checked) => {
-                          handleModuleToggle(
-                            currentModule.module_id ?? currentModule.id,
-                            checked as boolean
-                          );
-                        }}
-                        className="w-4 h-4"
-                        disabled={updating || !currentModule}
-                      />
+                <div className="bg-gray-50/80 p-4 border-b border-gray-100 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-gray-700">
+                        {currentModule.name} Module Access
+                      </span>
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {currentFunctions.length} Functions
+                      </Badge>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      {/* Function Search */}
+                      <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+                        <Input
+                          placeholder="Search functions..."
+                          value={functionSearchTerm}
+                          onChange={(e) =>
+                            setFunctionSearchTerm(e.target.value)
+                          }
+                          className="pl-9 h-9 bg-white border-gray-200 text-sm"
+                        />
+                      </div>
+
+                      <div className="flex items-center space-x-3 bg-white px-3 py-1.5 rounded-md border border-gray-200 shadow-sm whitespace-nowrap">
+                        <span className="text-sm font-medium text-gray-700">
+                          Enable All
+                        </span>
+                        <Checkbox
+                          checked={areAllFunctionsEnabled(
+                            currentModule.module_id ?? currentModule.id
+                          )}
+                          onCheckedChange={(checked) => {
+                            handleModuleToggle(
+                              currentModule.module_id ?? currentModule.id,
+                              checked as boolean
+                            );
+                          }}
+                          className="w-5 h-5 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                          disabled={updating || !currentModule}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
               <div className="overflow-x-auto">
-                <div className="max-h-64 lg:max-h-96 overflow-y-auto">
-                  <Table className="min-w-full">
-                    <TableHeader className="sticky top-0 bg-white z-10">
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="font-semibold text-gray-700 min-w-[200px] lg:w-48 text-xs lg:text-sm">
+                <div className="max-h-[calc(100vh-450px)] overflow-y-auto custom-scrollbar">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="w-[70%] pl-6">
                           Function / Sub-function
                         </TableHead>
-                        <TableHead className="font-semibold text-gray-700 text-center min-w-[80px] text-xs lg:text-sm">
-                          Enabled
+                        <TableHead className="w-[30%] text-center">
+                          Access Status
                         </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {loading || modulesLoading ? (
                         <TableRow>
-                          <TableCell colSpan={2} className="text-center py-4">
-                            Loading functions...
+                          <TableCell colSpan={2} className="text-center py-12">
+                            <div className="flex flex-col items-center justify-center">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mb-2"></div>
+                              <span className="text-gray-500">
+                                Loading permissions...
+                              </span>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ) : currentFunctions.length === 0 ? (
                         <TableRow>
                           <TableCell
                             colSpan={2}
-                            className="text-center py-4 text-gray-500"
+                            className="text-center py-12 text-gray-500"
                           >
                             {!currentRoleModule && !currentModule
-                              ? "Please select a module"
-                              : "No functions found for this module"}
+                              ? "Please select a module to view permissions"
+                              : functionSearchTerm
+                                ? "No matching functions found"
+                                : "No functions found for this module"}
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -621,15 +765,21 @@ export const RoleDashboard = () => {
                           // Function row
                           <TableRow
                             key={`func-${func.function_id ?? func.id}`}
-                            className="hover:bg-gray-50 bg-gray-25"
+                            className="bg-gray-50/50 hover:bg-gray-100/50 border-b border-gray-100"
                           >
-                            <TableCell className="font-semibold text-sm py-3 pl-4">
-                              📁{" "}
-                              {func.function_name ||
-                                (func as any).name ||
-                                "Unknown Function"}
+                            <TableCell className="py-4 pl-6">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                                  <Shield className="w-4 h-4" />
+                                </div>
+                                <span className="font-semibold text-gray-800">
+                                  {func.function_name ||
+                                    (func as any).name ||
+                                    "Unknown Function"}
+                                </span>
+                              </div>
                             </TableCell>
-                            <TableCell className="text-center py-3">
+                            <TableCell className="text-center py-4">
                               <div className="flex justify-center">
                                 <Checkbox
                                   checked={
@@ -651,7 +801,7 @@ export const RoleDashboard = () => {
                                       );
                                     }
                                   }}
-                                  className="w-4 h-4"
+                                  className="w-5 h-5 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                                   disabled={updating || !currentModule}
                                 />
                               </div>
@@ -663,15 +813,20 @@ export const RoleDashboard = () => {
                               key={`subfunc-${
                                 subFunc.sub_function_id ?? subFunc.id
                               }`}
-                              className="hover:bg-gray-50"
+                              className="hover:bg-gray-50 border-b border-gray-50 last:border-0"
                             >
-                              <TableCell className="text-sm py-2 pl-8 text-gray-600">
-                                ↳{" "}
-                                {subFunc.sub_function_name ||
-                                  (subFunc as any).name ||
-                                  "Unknown Sub-function"}
+                              <TableCell className="py-3 pl-16">
+                                <div className="flex items-center gap-2 relative">
+                                  <div className="absolute -left-6 top-1/2 -translate-y-1/2 w-4 h-px bg-gray-300"></div>
+                                  <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                                  <span className="text-sm text-gray-600">
+                                    {subFunc.sub_function_name ||
+                                      (subFunc as any).name ||
+                                      "Unknown Sub-function"}
+                                  </span>
+                                </div>
                               </TableCell>
-                              <TableCell className="text-center py-2">
+                              <TableCell className="text-center py-3">
                                 <div className="flex justify-center">
                                   <Checkbox
                                     checked={
@@ -696,7 +851,7 @@ export const RoleDashboard = () => {
                                         );
                                       }
                                     }}
-                                    className="w-4 h-4"
+                                    className="w-4 h-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                                     disabled={updating || !currentModule}
                                   />
                                 </div>
@@ -710,19 +865,8 @@ export const RoleDashboard = () => {
                 </div>
               </div>
             </div>
-
-            {/* Update Button */}
-            <div className="mt-4 flex flex-col sm:flex-row justify-center">
-              <Button
-                onClick={handleUpdatePermissions}
-                className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
-                disabled={updating || !currentRole}
-              >
-                {updating ? "Updating..." : "Update Permissions"}
-              </Button>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

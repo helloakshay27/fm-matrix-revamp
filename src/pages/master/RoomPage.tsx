@@ -246,7 +246,7 @@ export const RoomPage = () => {
       
       // Remove any protocol if present and ensure https
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
-      const templateUrl = `https://${baseUrl}/assets/import_locations.xlsx`;
+      const templateUrl = `https://${baseUrl}/assets/room.xlsx`;
       
       console.log('Final Template URL:', templateUrl);
       toast.info('Downloading template...');
@@ -269,7 +269,7 @@ export const RoomPage = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'import_locations.xlsx';
+      link.download = 'room.xlsx';
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -292,7 +292,7 @@ export const RoomPage = () => {
     setIsImporting(true);
     try {
       const formData = new FormData();
-      formData.append('file', importFile);
+      formData.append('pms_room[file]', importFile);
 
       const token = localStorage.getItem('token') || '';
       let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
@@ -301,16 +301,13 @@ export const RoomPage = () => {
       
       // Remove any protocol if present and ensure https
       baseUrl = baseUrl.replace(/^https?:\/\//, '');
-      const apiUrl = `https://${baseUrl}/pms/buildings/import.json`;
+      const apiUrl = `https://${baseUrl}/pms/account_setups/room_import.json?token=${token}`;
       
       console.log('Final Import API URL:', apiUrl);
       toast.info('Starting import...');
       
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
         body: formData,
       });
 
@@ -450,7 +447,8 @@ export const RoomPage = () => {
                 className="flex items-center gap-2"
               >
                 <Download className="h-4 w-4" />
-                Download Template
+                {/* Download Template */}
+                Download Sample Format
               </Button>
 
               <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
@@ -688,20 +686,31 @@ export const RoomPage = () => {
                     </div>
                   </div>
                   
-                  <div className="flex gap-2 pt-4">
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        setIsAddDialogOpen(false);
+                        setNewRoom({
+                          building: '',
+                          wing: '',
+                          area: '',
+                          floor: '',
+                          unit: '',
+                          roomName: '',
+                          createQrCode: false
+                        });
+                      }}
+                      className="border-gray-300"
+                    >
+                      Cancel
+                    </Button>
                     <Button 
                       onClick={handleAddRoom} 
                       className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
                       disabled={!newRoom.building || !newRoom.wing || !newRoom.floor || !newRoom.roomName.trim()}
                     >
                       Submit
-                    </Button>
-                    <Button variant="outline" className="border-gray-300">
-                      Sample Format
-                    </Button>
-                    <Button variant="outline" className="border-gray-300 flex items-center gap-2">
-                      <Plus className="w-4 h-4" />
-                      Import
                     </Button>
                   </div>
                 </DialogContent>

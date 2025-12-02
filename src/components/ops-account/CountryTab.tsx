@@ -104,7 +104,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 }) => {
   const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
-  
+
   // State management
   const [countries, setCountries] = useState<CountryItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -130,7 +130,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [selectedCountryId, setSelectedCountryId] = useState<number | null>(null);
-  
+
   // Maps for displaying related data
   const [countriesMap, setCountriesMap] = useState<Map<number, string>>(new Map());
   const [companiesMap, setCompaniesMap] = useState<Map<number, string>>(new Map());
@@ -147,7 +147,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
   const checkEditPermission = () => {
     const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'your-specific-email@domain.com'];
+    const allowedEmails = ['abhishek.sharma@lockated.com', 'adhip.shetty@lockated.com'];
     setCanEditCountry(allowedEmails.includes(userEmail));
   };
 
@@ -188,7 +188,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
 
       let countryData: CountryItem[] = [];
-      
+
       if (Array.isArray(result)) {
         countryData = result;
       } else if (result && result.headquarters && Array.isArray(result.headquarters)) {
@@ -211,13 +211,13 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       }
 
       if (filters.countryId) {
-        filteredData = filteredData.filter(country => 
+        filteredData = filteredData.filter(country =>
           country.country_id === parseInt(filters.countryId!)
         );
       }
 
       if (filters.companyId) {
-        filteredData = filteredData.filter(country => 
+        filteredData = filteredData.filter(country =>
           country.company_setup_id === parseInt(filters.companyId!)
         );
       }
@@ -227,11 +227,11 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       const startIndex = (page - 1) * per_page;
       const endIndex = startIndex + per_page;
       const paginatedData = filteredData.slice(startIndex, endIndex);
-      
 
-      
+
+
       setCountries(paginatedData);
-      
+
       setPagination({
         current_page: page,
         per_page: per_page,
@@ -291,58 +291,43 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/headquarters.json'), {
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch('https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU');
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Countries API response:', data);
 
-        
+        // Map the API response to the expected dropdown format
+        // API returns array of objects with id and name properties
         if (Array.isArray(data)) {
-          // Handle direct array format
-          const uniqueCountries = new Map();
-          data.forEach((country: any) => {
-            const id = country.country_id || country.id;
-            const name = country.country_name || country.name;
-            if (id && name && !uniqueCountries.has(id)) {
-              uniqueCountries.set(id, name);
-            }
-          });
-          
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id, name }));
-          setCountriesDropdown(countriesArray);
-          setCountriesMap(uniqueCountries);
-        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
-          // Handle nested headquarters format
-          const uniqueCountries = new Map();
-          data.headquarters.forEach((hq: any) => {
-            const id = hq.country_id;
-            const name = hq.country_name;
-            if (id && name && !uniqueCountries.has(id)) {
-              uniqueCountries.set(id, name);
-            }
-          });
-          
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id, name }));
-          setCountriesDropdown(countriesArray);
-          setCountriesMap(uniqueCountries);
-        } else if (data && data.countries && Array.isArray(data.countries)) {
-          // Handle existing format as fallback
-          const mappedCountries = data.countries.map(([id, name]) => ({ id, name }));
+          const mappedCountries = data
+            .filter((country) => country?.id && country?.name) // Filter out invalid entries
+            .map((country) => ({
+              id: Number(country.id),
+              name: String(country.name)
+            }));
           setCountriesDropdown(mappedCountries);
+
+          // Also update the countries map for quick lookups
           const countryMap = new Map();
-          data.countries.forEach(([id, name]) => {
-            countryMap.set(id, name);
+          mappedCountries.forEach((country) => {
+            countryMap.set(country.id, country.name);
           });
           setCountriesMap(countryMap);
+        } else {
+          console.error('Countries data format unexpected:', data);
+          setCountriesDropdown([]);
+          setCountriesMap(new Map());
         }
+      } else {
+        console.error('Failed to fetch countries');
+        setCountriesDropdown([]);
+        setCountriesMap(new Map());
       }
     } catch (error) {
       console.error('Error fetching countries:', error);
+      setCountriesDropdown([]);
+      setCountriesMap(new Map());
     }
   };
 
@@ -411,7 +396,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         </div>
       ) : (
         <>
-          <EnhancedTaskTable 
+          <EnhancedTaskTable
             data={countries}
             columns={columns}
             searchTerm={searchTerm}
@@ -450,11 +435,10 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 case 'active':
                   return (
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        country.active
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${country.active
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
-                      }`}
+                        }`}
                     >
                       {country.active ? 'Active' : 'Inactive'}
                     </span>
@@ -466,42 +450,42 @@ export const CountryTab: React.FC<CountryTabProps> = ({
               }
             }}
             leftActions={
-              <Button 
+              <Button
                 onClick={() => setIsAddModalOpen(true)}
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Country
+                Add Headquarter
               </Button>
             }
-            rightActions={(
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsFilterOpen(true)}
-                >
-                  <Filter className="w-4 h-4 mr-2" />
-                  Filter
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsBulkUploadOpen(true)}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Import
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsExportOpen(true)}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </Button>
-              </div>
-            )}
+          // rightActions={(
+          //   <div className="flex items-center gap-2">
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsFilterOpen(true)}
+          //     >
+          //       <Filter className="w-4 h-4 mr-2" />
+          //       Filter
+          //     </Button>
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsBulkUploadOpen(true)}
+          //     >
+          //       <Upload className="w-4 h-4 mr-2" />
+          //       Import
+          //     </Button>
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsExportOpen(true)}
+          //     >
+          //       <Download className="w-4 h-4 mr-2" />
+          //       Export
+          //     </Button>
+          //   </div>
+          // )}
           />
 
           <TicketPagination

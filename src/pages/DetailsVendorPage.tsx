@@ -111,6 +111,9 @@ interface Vendor {
         all_level_approved: boolean;
     };
     average_rating: number | null;
+    created_by?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 
@@ -173,7 +176,7 @@ const DetailsVendorPage = () => {
         <Grid item xs={12} sm={6} md={4}>
             <TextField
                 label={label}
-                value={value || 'N/A'}
+                value={value || '-'}
                 InputProps={{ readOnly: true, disableUnderline: true }}
                 variant="standard"
                 fullWidth
@@ -236,7 +239,21 @@ const DetailsVendorPage = () => {
                             </h1>
                         </div>
                         <div className="text-sm text-gray-600">
-                            Vendor ID: {vendor?.id} • PAN: {vendor?.pan_number || '--'}
+                            Vendor # {vendor?.id} • Created by{" "}
+                            {vendor?.created_by || vendor?.first_name && vendor?.last_name 
+                                ? `${vendor.first_name} ${vendor.last_name}`.trim() 
+                                : "Unknown"} 
+                            {vendor?.updated_at && (() => {
+                                const date = new Date(vendor.updated_at);
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const year = date.getFullYear();
+                                let hours = date.getHours();
+                                const minutes = String(date.getMinutes()).padStart(2, '0');
+                                const ampm = hours >= 12 ? 'PM' : 'AM';
+                                hours = hours % 12 || 12;
+                                return `• Last updated ${day}/${month}/${year}, ${hours}:${minutes}${ampm}`;
+                            })()}
                         </div>
                     </div>
                 </div>
@@ -312,67 +329,67 @@ const DetailsVendorPage = () => {
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Company Name</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.company_name || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.company_name || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Contact Person</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.first_name && vendor?.last_name ? `${vendor.first_name} ${vendor.last_name}` : vendor?.first_name || vendor?.last_name || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.first_name && vendor?.last_name ? `${vendor.first_name} ${vendor.last_name}` : vendor?.first_name || vendor?.last_name || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Primary Email</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.email || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.email || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Primary Phone</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.mobile1 || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.mobile1 || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Secondary Phone</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.mobile2 || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.mobile2 || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Secondary Email</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.secondary_emails || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.secondary_emails || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">PAN</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.pan_number || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.pan_number || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">GST</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.gstin_number || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.gstin_number || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Supplier Type</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.supplier_type || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.supplier_type || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Country</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.country || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.country || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">State</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.state || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.state || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">City</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.city || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.city || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Pincode</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.pincode || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.pincode || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Average Rating</span>
@@ -382,27 +399,27 @@ const DetailsVendorPage = () => {
                                     <div className="flex items-start col-span-2">
                                         <span className="text-gray-500 min-w-[140px]">Address Line 1</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.address || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.address || '-'}</span>
                                     </div>
                                     <div className="flex items-start col-span-2">
                                         <span className="text-gray-500 min-w-[140px]">Address Line 2</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.address2 || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.address2 || '-'}</span>
                                     </div>
                                     <div className="flex items-start col-span-2">
                                         <span className="text-gray-500 min-w-[140px]">Service Description</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.service_description || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.service_description || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Service</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.services?.map(s => s.service_name).join(', ') || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.services?.map(s => s.service_name).join(', ') || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Signed On Contract</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.signed_on_contract ? new Date(vendor.signed_on_contract).toLocaleDateString() : 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.signed_on_contract ? new Date(vendor.signed_on_contract).toLocaleDateString() : '-'}</span>
                                     </div>
                                 </div>
                             </CardContent>
@@ -434,9 +451,9 @@ const DetailsVendorPage = () => {
                                             <TableBody>
                                                 {vendor?.contacts && vendor.contacts.length > 0 ? vendor.contacts.map((person, index) => (
                                                     <TableRow key={index} className="hover:bg-gray-50 transition-colors">
-                                                        <TableCell className="py-3 px-4 font-medium">{person.name || 'N/A'}</TableCell>
-                                                        <TableCell className="py-3 px-4">{person.email || 'N/A'}</TableCell>
-                                                        <TableCell className="py-3 px-4">{person.phone || 'N/A'}</TableCell>
+                                                        <TableCell className="py-3 px-4 font-medium">{person.name || '-'}</TableCell>
+                                                        <TableCell className="py-3 px-4">{person.email || '-'}</TableCell>
+                                                        <TableCell className="py-3 px-4">{person.phone || '-'}</TableCell>
                                                     </TableRow>
                                                 )) : (
                                                     <TableRow>
@@ -467,22 +484,22 @@ const DetailsVendorPage = () => {
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Account Name</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.account_name || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.account_name || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Bank & Branch Name</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.bank_branch_name || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.bank_branch_name || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Account Number</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.account_number || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.account_number || '-'}</span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">IFSC Code</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.ifsc_code || 'N/A'}</span>
+                                        <span className="text-gray-900 font-medium">{vendor?.ifsc_code || '-'}</span>
                                     </div>
                                 </div>
                             </CardContent>
@@ -524,7 +541,7 @@ const DetailsVendorPage = () => {
                                                         <TableCell className="py-3 px-4">{audit.report_id}</TableCell>
                                                         <TableCell className="py-3 px-4">{audit.vendor_name}</TableCell>
                                                         <TableCell className="py-3 px-4">{audit.audit_name}</TableCell>
-                                                        <TableCell className="py-3 px-4">{audit.date_time ? new Date(audit.date_time).toLocaleString() : 'N/A'}</TableCell>
+                                                        <TableCell className="py-3 px-4">{audit.date_time ? new Date(audit.date_time).toLocaleString() : '-'}</TableCell>
                                                         <TableCell className="py-3 px-4">{audit.conducted_by}</TableCell>
                                                         <TableCell className="py-3 px-4">{audit.total_score}</TableCell>
                                                         <TableCell className="py-3 px-4">{audit.evaluation_score}</TableCell>
@@ -572,9 +589,9 @@ const DetailsVendorPage = () => {
                                                         <TableCell className="py-3 px-4 font-medium">
                                                             <span className="capitalize">{att.category}</span>
                                                         </TableCell>
-                                                        <TableCell className="py-3 px-4">{att.document_name || 'N/A'}</TableCell>
+                                                        <TableCell className="py-3 px-4">{att.document_name || '-'}</TableCell>
                                                         <TableCell className="py-3 px-4">
-                                                            {att.document_size ? `${(att.document_size / 1024).toFixed(1)} KB` : 'N/A'}
+                                                            {att.document_size ? `${(att.document_size / 1024).toFixed(1)} KB` : '-'}
                                                         </TableCell>
                                                         <TableCell className="py-3 px-4">
                                                             <button

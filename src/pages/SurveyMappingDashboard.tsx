@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
+import { SurveyMappingFilterDialog, SurveyMappingFilters } from '@/components/SurveyMappingFilterDialog';
 import { Plus, Filter, Edit, Copy, Eye, Share2, ChevronDown, Loader2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
@@ -116,14 +117,18 @@ export const SurveyMappingDashboard = () => {
   const [mappings, setMappings] = useState<SurveyMapping[]>([]);
   const [allMappings, setAllMappings] = useState<SurveyMapping[]>([]); // Store all mappings for client-side filtering
   const [allMappingsData, setAllMappingsData] = useState<SurveyGroup[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isSearching, setIsSearching] = useState(false); // Separate loading state for search
+  const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false); // Separate loading state for search
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [perPage] = useState(10);
+
+  // Filter state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<SurveyMappingFilters>({});
 
   // Column visibility state - using the same structure as parking page
   const [columns, setColumns] = useState([
@@ -146,12 +151,14 @@ export const SurveyMappingDashboard = () => {
   ]);
 
   // Fetch function that accepts both page and search parameters
-  const fetchSurveyMappingsData = useCallback(async (page: number, search?: string, showLoading = true) => {
+  const fetchSurveyMappingsData = useCallback(async (page: number, search?: string, filters?: SurveyMappingFilters, showLoading = true) => {
     try {
-      if (showLoading) {
-        setLoading(true);
+      // Use different loading states based on whether it's a search operation
+      const isSearch = search && search.trim() !== "";
+      if (isSearch) {
+        setSearchLoading(true);
       } else {
-        setIsSearching(true);
+        setLoading(true);
       }
       
       // Build query parameters
@@ -160,6 +167,43 @@ export const SurveyMappingDashboard = () => {
       // Add search parameter if provided
       if (search && search.trim()) {
         queryParams += `&q[name_cont]=${encodeURIComponent(search.trim())}`;
+      }
+
+      // Add filter parameters
+      if (filters) {
+        if (filters.siteIds && filters.siteIds.length > 0) {
+          filters.siteIds.forEach(id => {
+            queryParams += `&q[survey_mappings_site_id_in][]=${id}`;
+          });
+        }
+        if (filters.buildingIds && filters.buildingIds.length > 0) {
+          filters.buildingIds.forEach(id => {
+            queryParams += `&q[survey_mappings_building_id_in][]=${id}`;
+          });
+        }
+        if (filters.wingIds && filters.wingIds.length > 0) {
+          filters.wingIds.forEach(id => {
+            queryParams += `&q[survey_mappings_wing_id_in][]=${id}`;
+          });
+        }
+        if (filters.floorIds && filters.floorIds.length > 0) {
+          filters.floorIds.forEach(id => {
+            queryParams += `&q[survey_mappings_floor_id_in][]=${id}`;
+          });
+        }
+        if (filters.areaIds && filters.areaIds.length > 0) {
+          filters.areaIds.forEach(id => {
+            queryParams += `&q[survey_mappings_area_id_in][]=${id}`;
+          });
+        }
+        if (filters.roomIds && filters.roomIds.length > 0) {
+          filters.roomIds.forEach(id => {
+            queryParams += `&q[survey_mappings_room_id_in][]=${id}`;
+          });
+        }
+        if (filters.surveyTitle && filters.surveyTitle.trim()) {
+          queryParams += `&q[name_cont]=${encodeURIComponent(filters.surveyTitle.trim())}`;
+        }
       }
       
       // Use the new mappings_list endpoint with pagination and search
@@ -220,17 +264,19 @@ export const SurveyMappingDashboard = () => {
         variant: "destructive"
       });
     } finally {
-      if (showLoading) {
-        setLoading(false);
+      // Clear loading states based on operation type
+      const isSearch = search && search.trim() !== "";
+      if (isSearch) {
+        setSearchLoading(false);
       } else {
-        setIsSearching(false);
+        setLoading(false);
       }
     }
   }, [perPage, toast]);
 
   // Initial load
   useEffect(() => {
-    fetchSurveyMappingsData(1);
+    fetchSurveyMappingsData(1, undefined, appliedFilters);
   }, [fetchSurveyMappingsData]);
 
   // Client-side filtering function for immediate results
@@ -280,9 +326,9 @@ export const SurveyMappingDashboard = () => {
       // Reset to page 1 when searching
       setCurrentPage(1);
       // Fetch data with new search term, but don't show main loading spinner
-      fetchSurveyMappingsData(1, newSearchTerm, false);
+      fetchSurveyMappingsData(1, newSearchTerm, appliedFilters, false);
     }, 1000); // Increased debounce delay for server search since client-side provides instant results
-  }, [filterMappingsClientSide, allMappings, fetchSurveyMappingsData]);
+  }, [filterMappingsClientSide, allMappings, appliedFilters, fetchSurveyMappingsData]);
 
   // Clear search and reset to all mappings
   const handleClearSearch = useCallback(() => {
@@ -421,12 +467,19 @@ export const SurveyMappingDashboard = () => {
     }
   };
 
+  // Handle filter application
+  const handleApplyFilters = (filters: SurveyMappingFilters) => {
+    setAppliedFilters(filters);
+    setCurrentPage(1);
+    fetchSurveyMappingsData(1, searchTerm.trim() || undefined, filters, true);
+  };
+
   // Handle page change for server-side pagination
   const handlePageChange = async (page: number) => {
     try {
       // If there's an active search, use server-side search with pagination
       // Otherwise, use regular pagination
-      await fetchSurveyMappingsData(page, searchTerm.trim() || undefined, true);
+      await fetchSurveyMappingsData(page, searchTerm.trim() || undefined, appliedFilters, true);
       
     } catch (error: unknown) {
       console.error('Error fetching survey mappings:', error);
@@ -480,12 +533,26 @@ export const SurveyMappingDashboard = () => {
     const unique = [...new Set(allValues.filter((v): v is string => !!v && v.trim() !== ''))];
     const display = unique[0] || (fallback ?? '-') || '-';
     const hasMore = unique.length > 1;
+    const additionalCount = unique.length - 1;
     const title = unique.length > 0 ? unique.join(', ') : (display || '-');
+    
     return (
-      <span className="text-sm text-gray-600 truncate inline-block max-w-[220px] align-middle" title={title}>
-        {display}
-        {hasMore ? ' ...' : ''}
-      </span>
+      <div className="flex items-center gap-2" title={title}>
+        <span className="text-sm text-black truncate inline-block max-w-[180px] align-middle">
+          {display}
+        </span>
+        {hasMore && (
+          <span 
+            className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full"
+            style={{ 
+              backgroundColor: '#E6E0D3', 
+              color: '#C72030' 
+            }}
+          >
+            +{additionalCount}
+          </span>
+        )}
+      </div>
     );
   };
 
@@ -496,14 +563,14 @@ export const SurveyMappingDashboard = () => {
           <div className="flex justify-center items-center gap-2">
             <button 
               onClick={() => handleViewClick(item)}
-              className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+              className="p-1 text-black-600 hover:text-black-800 transition-colors"
               title="View"
             >
               <Eye className="w-4 h-4" />
             </button>
             <button 
               onClick={() => handleEditClick(item)}
-              className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+              className="p-1 text-black-600 hover:text-black-800 transition-colors"
               title="Edit"
             >
               <Edit className="w-4 h-4" />
@@ -511,9 +578,9 @@ export const SurveyMappingDashboard = () => {
           </div>
         );
       case 'survey_title':
-        return <span className="text-sm font-medium text-gray-900">{item.survey_title || item.survey_name}</span>;
+        return <span className="text-sm text-black">{item.survey_title || item.survey_name}</span>;
       case 'site_name':
-        return <span className="text-sm text-gray-600">{item.site_name}</span>;
+        return <span className="text-sm text-black">{item.site_name}</span>;
       case 'building_name': {
         const surveyData = allMappingsData.find(s => s.id === item.survey_id);
         const allBuildings = surveyData ? surveyData.mappings.map(m => m.building_name) : [item.building_name];
@@ -540,11 +607,11 @@ export const SurveyMappingDashboard = () => {
         return renderFirstWithHover(allRooms, item.room_name);
       }
       case 'check_type':
-        return <span className="text-sm text-gray-600 capitalize">{item.survey_check_type || '-'}</span>;
+        return <span className="text-sm text-black capitalize">{item.survey_check_type || '-'}</span>;
       case 'questions_count':
         return (
           <div
-            className="text-center text-sm text-gray-600"
+            className="text-center text-sm text-black"
             title={`${item.survey_questions_count || 0} Questions`}
           >
             {item.survey_questions_count || 0}
@@ -553,7 +620,7 @@ export const SurveyMappingDashboard = () => {
       case 'associations_count':
         return (
           <div
-            className="text-center text-sm text-gray-600"
+            className="text-center text-sm text-black"
             title={`${item.survey_no_of_associations || 0} Associations`}
           >
             {item.survey_no_of_associations || 0}
@@ -561,14 +628,14 @@ export const SurveyMappingDashboard = () => {
         );
       case 'ticket_category':
         return (
-          <span className="text-sm text-gray-600">{item.ticket_configs?.category || '-'}</span>
+          <span className="text-sm text-black">{item.ticket_configs?.category || '-'}</span>
         );
       case 'assigned_to':
         return (
-          <span className="text-sm text-gray-600">{item.ticket_configs?.assigned_to || '-'}</span>
+          <span className="text-sm text-black">{item.ticket_configs?.assigned_to || '-'}</span>
         );
       case 'created_by':
-        return <span className="text-sm text-gray-600">{item.created_by}</span>;
+        return <span className="text-sm text-black">{item.created_by}</span>;
       case 'status': {
         // Handle both boolean and number (0/1) status values
         const currentStatus = item.survey_active || item.active;
@@ -592,7 +659,7 @@ export const SurveyMappingDashboard = () => {
         );
       }
       case 'created_at':
-        return <span className="text-sm text-gray-600">{item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}</span>;
+        return <span className="text-sm text-black">{item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}</span>;
       case 'qr_code':
         return (
           <div className="flex justify-center">
@@ -609,14 +676,14 @@ export const SurveyMappingDashboard = () => {
                 />
               </button>
             ) : (
-              <span className="text-sm text-gray-600">-</span>
+              <span className="text-sm text-black">-</span>
             )}
           </div>
         );
       default: {
         // Fallback for any other columns
         const value = item[columnKey as keyof SurveyMapping];
-        return <span className="text-sm text-gray-600">{value !== null && value !== undefined ? String(value) : '-'}</span>;
+        return <span className="text-sm text-black">{value !== null && value !== undefined ? String(value) : '-'}</span>;
       }
     }
   };
@@ -638,22 +705,17 @@ export const SurveyMappingDashboard = () => {
         </div>
       </div>
       
-      {loading ? (
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading survey mappings...</span>
-        </div>
-      ) : (
-            <div>
-              {/* Optional: Show subtle search indicator */}
-              {isSearching && (
-                <div className="mb-2 text-sm text-gray-500 flex items-center">
-                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                  Searching server...
-                </div>
-              )}
-          
-              {/* Survey Mapping Table using EnhancedTable */}
+      <div className="overflow-x-auto animate-fade-in">
+        {searchLoading && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
+            <div className="flex items-center gap-2 text-blue-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              <span className="text-sm">Searching survey mappings...</span>
+            </div>
+          </div>
+        )}
+        
+        {/* Survey Mapping Table using EnhancedTable */}
               <EnhancedTable
                 data={mappings}
                 columns={enhancedTableColumns}
@@ -669,6 +731,7 @@ export const SurveyMappingDashboard = () => {
                 pagination={false}
                 pageSize={perPage}
                 hideColumnsButton={true}
+                loading={loading}
                 leftActions={
                   <div className="flex flex-wrap items-center gap-2 md:gap-4">
                     <Button 
@@ -688,6 +751,7 @@ export const SurveyMappingDashboard = () => {
                     />
                   </div>
                 }
+                onFilterClick={() => setIsFilterOpen(true)}
               />
 
               {/* Server-side Pagination */}
@@ -699,12 +763,12 @@ export const SurveyMappingDashboard = () => {
                       <PaginationItem>
                         <PaginationPrevious
                           onClick={() => {
-                            if (currentPage > 1) {
+                            if (currentPage > 1 && !loading && !searchLoading) {
                               handlePageChange(currentPage - 1);
                             }
                           }}
                           className={
-                            currentPage === 1
+                            currentPage === 1 || loading || searchLoading
                               ? "pointer-events-none opacity-50"
                               : ""
                           }
@@ -714,8 +778,17 @@ export const SurveyMappingDashboard = () => {
                       {/* First Page */}
                       <PaginationItem>
                         <PaginationLink
-                          onClick={() => handlePageChange(1)}
+                          onClick={() => {
+                            if (!loading && !searchLoading) {
+                              handlePageChange(1);
+                            }
+                          }}
                           isActive={currentPage === 1}
+                          className={
+                            loading || searchLoading
+                              ? "pointer-events-none opacity-50"
+                              : ""
+                          }
                         >
                           1
                         </PaginationLink>
@@ -739,8 +812,17 @@ export const SurveyMappingDashboard = () => {
                         .map((page) => (
                           <PaginationItem key={page}>
                             <PaginationLink
-                              onClick={() => handlePageChange(page)}
+                              onClick={() => {
+                                if (!loading && !searchLoading) {
+                                  handlePageChange(page);
+                                }
+                              }}
                               isActive={currentPage === page}
+                              className={
+                                loading || searchLoading
+                                  ? "pointer-events-none opacity-50"
+                                  : ""
+                              }
                             >
                               {page}
                             </PaginationLink>
@@ -758,11 +840,18 @@ export const SurveyMappingDashboard = () => {
                       {totalPages > 1 && (
                         <PaginationItem>
                           <PaginationLink
-                            onClick={() =>
-                              handlePageChange(totalPages)
-                            }
+                            onClick={() => {
+                              if (!loading && !searchLoading) {
+                                handlePageChange(totalPages);
+                              }
+                            }}
                             isActive={
                               currentPage === totalPages
+                            }
+                            className={
+                              loading || searchLoading
+                                ? "pointer-events-none opacity-50"
+                                : ""
                             }
                           >
                             {totalPages}
@@ -774,12 +863,12 @@ export const SurveyMappingDashboard = () => {
                       <PaginationItem>
                         <PaginationNext
                           onClick={() => {
-                            if (currentPage < totalPages) {
+                            if (currentPage < totalPages && !loading && !searchLoading) {
                               handlePageChange(currentPage + 1);
                             }
                           }}
                           className={
-                            currentPage === totalPages
+                            currentPage === totalPages || loading || searchLoading
                               ? "pointer-events-none opacity-50"
                               : ""
                           }
@@ -791,11 +880,17 @@ export const SurveyMappingDashboard = () => {
                   <div className="text-center mt-2 text-sm text-gray-600">
                     Showing page {currentPage} of{" "}
                     {totalPages} ({totalCount} total survey mappings)
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+                  </div>
+                </div>
+              )}
+          </div>
+
+      {/* Filter Dialog */}
+      <SurveyMappingFilterDialog
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApply={handleApplyFilters}
+      />
     </div>
   );
 };

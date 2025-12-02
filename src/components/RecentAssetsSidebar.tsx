@@ -150,7 +150,7 @@ export const RecentAssetsSidebar = () => {
 
 
   return (
-    <div className="bg-white p-4 h-fit">
+    <div className="bg-white p-4 h-fit border">
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-lg font-bold mb-1" style={{ color: '#C72030' }}>Recent Assets</h3>

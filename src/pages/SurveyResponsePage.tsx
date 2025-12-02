@@ -10,8 +10,10 @@ import {
   Activity,
   ThumbsUp,
   ClipboardList,
+  HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -196,10 +198,12 @@ export const SurveyResponsePage = () => {
     []
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [activeTab, setActiveTab] = useState("list");
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null); // null = all, 'active', 'inactive'
   const [pagination, setPagination] = useState({
     current_page: 1,
     per_page: 10,
@@ -211,6 +215,7 @@ export const SurveyResponsePage = () => {
     total_feedback_count: 0,
     total_survey_count: 0,
     total_responses: 0,
+    inactive_surveys: 0,
   });
   const [appliedFilters, setAppliedFilters] = useState<FilterState>({
     surveyTitle: "",
@@ -259,6 +264,7 @@ export const SurveyResponsePage = () => {
           data.distributions?.info?.total_survey_count ||
           prev.total_survey_count,
         total_responses: prev.total_responses,
+        inactive_surveys: prev.inactive_surveys,
       }));
     }
   };
@@ -267,7 +273,8 @@ export const SurveyResponsePage = () => {
   const fetchSurveyResponseList = async (
     page: number = 1,
     filters?: FilterState,
-    searchQuery?: string
+    searchQuery?: string,
+    status?: string | null
   ) => {
     try {
       const url = getFullUrl("/survey_mappings/response_list.json?list_response=true");
@@ -285,6 +292,12 @@ export const SurveyResponsePage = () => {
       if (API_CONFIG.TOKEN) {
         urlWithParams.searchParams.append("access_token", API_CONFIG.TOKEN);
         // console.log('🔑 Adding access_token to request');
+      }
+
+      // Add status filter if provided
+      if (status === 'active' || status === 'inactive') {
+        urlWithParams.searchParams.append("status", status);
+        // console.log('🔍 Adding status filter:', status);
       }
 
       // Add search query if provided - composite search across name and location fields
@@ -362,11 +375,11 @@ export const SurveyResponsePage = () => {
       setIsExporting(true);
       // console.log('📤 Exporting survey response data with current filters:', appliedFilters);
 
-      const url = getFullUrl("/survey_mappings/response_list.json");
+      const url = getFullUrl("/survey_mappings/response_list.json?list_response=true&export=true");
       const urlWithParams = new URL(url);
 
       // Add export parameter
-      urlWithParams.searchParams.append("export", "true");
+      // urlWithParams.searchParams.append("export", "true");
 
       // Add access_token parameter if available
       if (API_CONFIG.TOKEN) {
@@ -493,7 +506,7 @@ export const SurveyResponsePage = () => {
       const answerType =
         response.answers.length > 0 && response.answers[0].answer_type
           ? response.answers[0].answer_type
-          : "N/A";
+          : "-";
 
       // Get responded by from the first answer (or use the most recent one)
       const respondedBy =
@@ -522,32 +535,32 @@ export const SurveyResponsePage = () => {
           (location.site_name || response.site_name) &&
           (location.site_name || response.site_name).trim() !== ""
             ? location.site_name || response.site_name
-            : "N/A",
+            : "-",
         building_name:
           (location.building_name || response.building_name) &&
           (location.building_name || response.building_name).trim() !== ""
             ? location.building_name || response.building_name
-            : "N/A",
+            : "-",
         wing_name:
           (location.wing_name || response.wing_name) &&
           (location.wing_name || response.wing_name).trim() !== ""
             ? location.wing_name || response.wing_name
-            : "N/A",
+            : "-",
         floor_name:
           (location.floor_name || response.floor_name) &&
           (location.floor_name || response.floor_name).trim() !== ""
             ? location.floor_name || response.floor_name
-            : "N/A",
+            : "-",
         area_name:
           (location.area_name || response.area_name) &&
           (location.area_name || response.area_name).trim() !== ""
             ? location.area_name || response.area_name
-            : "N/A",
+            : "-",
         room_name:
           (location.room_name || response.room_name) &&
           (location.room_name || response.room_name).trim() !== ""
             ? location.room_name || response.room_name
-            : "N/A",
+            : "-",
         total_responses: response?.answers_count || 0,
         total_complaints: response?.complaints_count || 0,
         latest_response_date: latestResponseDate,
@@ -570,10 +583,12 @@ export const SurveyResponsePage = () => {
 
   // console.log("resp data", responseData);
   const fetchSurveyResponses = useCallback(
-    async (filters?: FilterState, searchQuery?: string, page?: number) => {
-      // Only show loading for non-search operations (when searchQuery is empty or this is initial load)
-      const isInitialOrFilterLoad = !searchQuery || searchQuery.trim() === "";
-      if (isInitialOrFilterLoad) {
+    async (filters?: FilterState, searchQuery?: string, page?: number, status?: string | null) => {
+      // Use different loading states based on whether it's a search operation
+      const isSearch = searchQuery && searchQuery.trim() !== "";
+      if (isSearch) {
+        setSearchLoading(true);
+      } else {
         setIsLoading(true);
       }
       
@@ -582,11 +597,13 @@ export const SurveyResponsePage = () => {
         // console.log('📡 Fetching survey responses for page:', pageToUse);
         // console.log('🔍 Applied filters:', filters);
         // console.log('🔍 Search query:', searchQuery);
+        // console.log('🔍 Status filter:', status);
 
         const data = await fetchSurveyResponseList(
           pageToUse,
           filters,
-          searchQuery
+          searchQuery,
+          status
         );
 
         // Check if data and data.responses exist before transforming
@@ -631,6 +648,7 @@ export const SurveyResponsePage = () => {
             total_feedback_count: data.summary.total_responses,
             total_survey_count: data.summary.total_surveys,
             total_responses: data.summary.total_responses,
+            inactive_surveys: data.summary.inactive_surveys,
           };
           console.log("🔄 Setting summary stats:", newStats);
           setSummaryStats(newStats);
@@ -667,6 +685,7 @@ export const SurveyResponsePage = () => {
             total_feedback_count: totalResponsesFromData,
             total_survey_count: totalSurveys,
             total_responses: totalResponsesFromData,
+            inactive_surveys: totalSurveys - activeSurveys, // Calculate inactive surveys
           };
           // console.log('🔄 Setting calculated summary stats:', newStats);
           setSummaryStats(newStats);
@@ -683,10 +702,16 @@ export const SurveyResponsePage = () => {
           total_pages: 1,
         });
       } finally {
-        setIsLoading(false);
+        // Clear loading states based on operation type
+        const isSearch = searchQuery && searchQuery.trim() !== "";
+        if (isSearch) {
+          setSearchLoading(false);
+        } else {
+          setIsLoading(false);
+        }
       }
     },
-    [currentPage] // Include currentPage back as dependency
+    [currentPage, selectedStatus] // Include selectedStatus as dependency
   );
 
   const fetchFilteredSurveyResponses = async (filters: FilterState) => {
@@ -1014,7 +1039,7 @@ export const SurveyResponsePage = () => {
         return (
           <button
             onClick={() => handleViewDetails(item)}
-            className="text-gray-600 hover:text-[#C72030] transition-colors"
+            className="text-black hover:text-[#C72030] transition-colors"
           >
             <Eye className="w-4 h-4" />
           </button>
@@ -1022,9 +1047,9 @@ export const SurveyResponsePage = () => {
       // case 'survey_id':
       //   return item.survey_id;
       case "survey_name":
-        return item.survey_name || "N/A";
+        return item.survey_name || "-";
       case "site_name":
-        return item.site_name || "N/A";
+        return item.site_name || "-";
       case "building_name":
         return renderLocation(item.building_name);
       case "wing_name":
@@ -1065,7 +1090,7 @@ export const SurveyResponsePage = () => {
         // });
         return (
           <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
+            className={`px-3 py-1 text-xs font-medium ${
               item.active
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800"
@@ -1077,7 +1102,7 @@ export const SurveyResponsePage = () => {
       case "answer_type":
         return (
           <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            {item.answer_type || "N/A"}
+            {item.answer_type || "-"}
           </span>
         );
       case "responded_by":
@@ -1132,20 +1157,46 @@ export const SurveyResponsePage = () => {
     return count;
   };
 
-  // Helper: show only first location; show full value on hover with ellipsis
+  const getInactiveSurveysCount = () => {
+    const count = summaryStats.inactive_surveys;
+    // console.log('❌ Inactive Surveys count from state:', count);
+    return count;
+  };
+
+  // Helper: show only first location; show full value on hover with styled badge
   const renderLocation = (value?: string) => {
     const safe = (value || "").trim();
-    if (!safe) return "N/A";
+    if (!safe) return "-";
     // Split by comma or pipe or slash common delimiters
     const parts = safe.split(/\s*,\s*|\s*\|\s*|\s*\/\s*/).filter(Boolean);
     const first = parts[0] || safe;
     const hasMore = parts.length > 1;
+    const additionalCount = parts.length - 1;
+    
     return (
-      <span title={safe} className="truncate inline-block max-w-[220px] align-middle">
-        {first}
-        {hasMore ? " ..." : ""}
-      </span>
+      <div className="flex items-center gap-2" title={safe}>
+        <span className="text-sm text-black truncate inline-block max-w-[180px] align-middle">
+          {first}
+        </span>
+        {hasMore && (
+          <span 
+            className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full"
+            style={{ 
+              backgroundColor: '#E6E0D3', 
+              color: '#C72030' 
+            }}
+          >
+            +{additionalCount}
+          </span>
+        )}
+      </div>
     );
+  };
+
+  // Handle status card click
+  const handleStatusCardClick = (status: string | null) => {
+    setSelectedStatus(status);
+    setCurrentPage(1); // Reset to first page when filtering by status
   };
 
   // Fetch survey responses when component mounts, page changes, or filters change
@@ -1154,9 +1205,9 @@ export const SurveyResponsePage = () => {
 
 
     
-    // console.log('� Data fetch triggered - page:', currentPage, 'filters:', appliedFilters, 'search:', debouncedSearchTerm, 'isSearchOperation:', isSearchOperation);
-    fetchSurveyResponses(appliedFilters, debouncedSearchTerm, currentPage);
-  }, [currentPage, appliedFilters, debouncedSearchTerm, fetchSurveyResponses]); // Include all dependencies
+    // console.log('📊 Data fetch triggered - page:', currentPage, 'filters:', appliedFilters, 'search:', debouncedSearchTerm, 'status:', selectedStatus);
+    fetchSurveyResponses(appliedFilters, debouncedSearchTerm, currentPage, selectedStatus);
+  }, [currentPage, appliedFilters, debouncedSearchTerm, selectedStatus, fetchSurveyResponses]); // Include all dependencies
 
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
@@ -1208,7 +1259,7 @@ export const SurveyResponsePage = () => {
 
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200 mb-6">
+        {/* <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200 mb-6">
           <TabsTrigger
             value="list"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
@@ -1249,99 +1300,114 @@ export const SurveyResponsePage = () => {
             </svg>
             Analytics
           </TabsTrigger>
-        </TabsList>
+        </TabsList> */}
 
         {/* Tab Content */}
         <TabsContent value="list" className="mt-0">
-          {/* AMC List-Style Statistics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mb-6">
-            {/* Active Surveys */}
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Activity
-                  className="w-4 h-4 sm:w-6 sm:h-6"
-                  style={{ color: "#C72030" }}
-                />
+          {/* Survey Statistics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            {/* Total Surveys Card - Click to show all */}
+            <div 
+              onClick={() => handleStatusCardClick(null)}
+              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
+                selectedStatus === null
+                  ? "shadow-lg transition-shadow shadow-[0px_1px_8px_rgba(45,45,45,0.05)]"
+                  : ""
+              }`}
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <ClipboardList className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="flex flex-col min-w-0 justify-start">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {getTotalActiveCount()}
-                  {isLoading && (
-                    <span className="ml-1 text-xs animate-pulse">...</span>
-                  )}
-                </div>
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                  Active Surveys
-                </span>
-              </div>
-            </div>
-
-            {/* Total Surveys */}
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <ClipboardList
-                  className="w-4 h-4 sm:w-6 sm:h-6"
-                  style={{ color: "#C72030" }}
-                />
-              </div>
-              <div className="flex flex-col min-w-0 justify-start">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
                   {getSurveyCount()}
                   {isLoading && (
                     <span className="ml-1 text-xs animate-pulse">...</span>
                   )}
                 </div>
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                <div className="text-sm font-medium text-[#1A1A1A]">
                   Total Surveys
-                </span>
+                </div>
               </div>
             </div>
 
-            {/* Total Responses */}
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <ThumbsUp
-                  className="w-4 h-4 sm:w-6 sm:h-6"
-                  style={{ color: "#C72030" }}
-                />
+            {/* Active Surveys Card */}
+            <div 
+              onClick={() => handleStatusCardClick('active')}
+              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
+                selectedStatus === 'active'
+                  ? "shadow-lg transition-shadow shadow-[0px_1px_8px_rgba(45,45,45,0.05)]"
+                  : ""
+              }`}
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <Activity className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="flex flex-col min-w-0 justify-start">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {getTotalResponsesCount()}
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
+                  {getTotalActiveCount()}
                   {isLoading && (
                     <span className="ml-1 text-xs animate-pulse">...</span>
                   )}
                 </div>
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                  Total Responses
-                </span>
+                <div className="text-sm font-medium text-[#1A1A1A]">
+                  Active Surveys
+                </div>
+              </div>
+            </div>
+
+            {/* Inactive Surveys Card */}
+            <div 
+              onClick={() => handleStatusCardClick('inactive')}
+              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${
+                selectedStatus === 'inactive'
+                  ? "shadow-lg transition-shadow shadow-[0px_1px_8px_rgba(45,45,45,0.05)]"
+                  : ""
+              }`}
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <HelpCircle className="w-6 h-6 text-[#C72030]" />
+              </div>
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
+                  {getInactiveSurveysCount()}
+                  {isLoading && (
+                    <span className="ml-1 text-xs animate-pulse">...</span>
+                  )}
+                </div>
+                <div className="text-sm font-medium text-[#1A1A1A]">
+                  Inactive Surveys
+                </div>
               </div>
             </div>
           </div>
 
           {/* Enhanced Data Table */}
-          <div>
-            {isLoading ? (
-              <div className="flex justify-center items-center p-8">
-                <div className="text-gray-500">Loading survey responses...</div>
+          <div className="overflow-x-auto animate-fade-in">
+            {/* {searchLoading && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
+                <div className="flex items-center gap-2 text-blue-600">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-sm">Searching survey responses...</span>
+                </div>
               </div>
-            ) : (
-              <>
-                <EnhancedTable
-                  data={filteredResponses}
-                  columns={enhancedTableColumns}
-                  renderCell={renderCell}
-                  storageKey="survey-response-table"
-                  enableExport={true}
-                  exportFileName="survey-response-data"
-                  handleExport={handleSurveyResponseExport}
-                  searchTerm={searchTerm}
-                  onSearchChange={handleSearchChange}
-                  searchPlaceholder="Search responses..."
-                  pagination={false} // Disable client-side pagination since we're doing server-side
-                  pageSize={pagination.per_page}
-                  hideColumnsButton={true}
-                  leftActions={
+            )} */}
+            <EnhancedTable
+              data={filteredResponses}
+              columns={enhancedTableColumns}
+              renderCell={renderCell}
+              storageKey="survey-response-table"
+              enableExport={true}
+              exportFileName="survey-response-data"
+              handleExport={handleSurveyResponseExport}
+              searchTerm={searchTerm}
+              onSearchChange={handleSearchChange}
+              searchPlaceholder="Search responses..."
+              pagination={false} // Disable client-side pagination since we're doing server-side
+              pageSize={pagination.per_page}
+              hideColumnsButton={true}
+              loading={isLoading}
+              leftActions={
                     <div className="flex flex-wrap gap-2">
                       {/* Filter button is now positioned next to search input in EnhancedTable */}
                     </div>
@@ -1375,11 +1441,11 @@ export const SurveyResponsePage = () => {
                         <PaginationItem>
                           <PaginationPrevious
                             onClick={() => {
-                              if (currentPage > 1)
+                              if (currentPage > 1 && !isLoading && !searchLoading)
                                 handlePageChange(currentPage - 1);
                             }}
                             className={
-                              currentPage === 1
+                              currentPage === 1 || isLoading || searchLoading
                                 ? "pointer-events-none opacity-50"
                                 : ""
                             }
@@ -1391,8 +1457,17 @@ export const SurveyResponsePage = () => {
                         ).map((page) => (
                           <PaginationItem key={page}>
                             <PaginationLink
-                              onClick={() => handlePageChange(page)}
+                              onClick={() => {
+                                if (!isLoading && !searchLoading) {
+                                  handlePageChange(page);
+                                }
+                              }}
                               isActive={currentPage === page}
+                              className={
+                                isLoading || searchLoading
+                                  ? "pointer-events-none opacity-50"
+                                  : ""
+                              }
                             >
                               {page}
                             </PaginationLink>
@@ -1406,11 +1481,11 @@ export const SurveyResponsePage = () => {
                         <PaginationItem>
                           <PaginationNext
                             onClick={() => {
-                              if (currentPage < pagination.total_pages)
+                              if (currentPage < pagination.total_pages && !isLoading && !searchLoading)
                                 handlePageChange(currentPage + 1);
                             }}
                             className={
-                              currentPage === pagination.total_pages
+                              currentPage === pagination.total_pages || isLoading || searchLoading
                                 ? "pointer-events-none opacity-50"
                                 : ""
                             }
@@ -1424,8 +1499,6 @@ export const SurveyResponsePage = () => {
                     </div>
                   </div>
                 )}
-              </>
-            )}
           </div>
         </TabsContent>
 

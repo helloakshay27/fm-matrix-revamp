@@ -112,7 +112,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 }) => {
   const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
-  
+
   // State management
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -138,7 +138,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
-  
+
   // Dropdowns and permissions
   const [organizationsDropdown, setOrganizationsDropdown] = useState<any[]>([]);
   const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
@@ -153,7 +153,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const checkEditPermission = () => {
     const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'your-specific-email@domain.com'];
+    const allowedEmails = ['abhishek.sharma@lockated.com', 'adhip.shetty@lockated.com'];
     setCanEditCompany(allowedEmails.includes(userEmail));
   };
 
@@ -276,46 +276,26 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/headquarters.json'), {
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch('https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU');
 
       if (response.ok) {
         const data = await response.json();
         console.log('Countries API response:', data);
-        
+
+        // Map the API response to the expected dropdown format
+        // API returns array of objects with id and name properties
         if (Array.isArray(data)) {
-          // Handle direct array format
-          const uniqueCountries = new Map();
-          data.forEach((country: any) => {
-            const id = country?.country_id || country?.id;
-            const name = country?.country_name || country?.name;
-            if (id && name && !uniqueCountries.has(id)) {
-              uniqueCountries.set(id, name);
-            }
-          });
-          
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
-          setCountriesDropdown(countriesArray);
-        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
-          // Handle nested headquarters format
-          const uniqueCountries = new Map();
-          data.headquarters.forEach((hq: any) => {
-            const id = hq?.country_id;
-            const name = hq?.country_name;
-            if (id && name && !uniqueCountries.has(id)) {
-              uniqueCountries.set(id, name);
-            }
-          });
-          
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
-          setCountriesDropdown(countriesArray);
+          const mappedCountries = data
+            .filter((country) => country?.id && country?.name) // Filter out invalid entries
+            .map((country) => ({
+              id: Number(country.id),
+              name: String(country.name)
+            }));
+          setCountriesDropdown(mappedCountries);
         } else {
           console.error('Countries data format unexpected:', data);
           setCountriesDropdown([]);
+          toast.error('Invalid countries data format');
         }
       } else {
         toast.error('Failed to fetch countries');
@@ -388,7 +368,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const totalRecords = pagination.total_count;
   const totalPages = pagination.total_pages;
-  
+
   // Use API data directly instead of client-side filtering
   const displayedData = companies;
 
@@ -545,35 +525,35 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
             leftActions={(
-              <Button 
-                className='bg-primary text-primary-foreground hover:bg-primary/90'  
+              <Button
+                className='bg-primary text-primary-foreground hover:bg-primary/90'
                 onClick={() => setIsAddModalOpen(true)}
                 disabled={!canEditCompany}
               >
                 <Plus className="w-4 h-4 mr-2" /> Add Company
               </Button>
             )}
-            rightActions={(
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsBulkUploadOpen(true)}
-                  disabled={!canEditCompany}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Bulk Upload
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsExportOpen(true)}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </Button>
-              </div>
-            )}
+          // rightActions={(
+          //   <div className="flex items-center gap-2">
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsBulkUploadOpen(true)}
+          //       disabled={!canEditCompany}
+          //     >
+          //       <Upload className="w-4 h-4 mr-2" />
+          //       Bulk Upload
+          //     </Button>
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsExportOpen(true)}
+          //     >
+          //       <Download className="w-4 h-4 mr-2" />
+          //       Export
+          //     </Button>
+          //   </div>
+          // )}
           />
 
           <TicketPagination

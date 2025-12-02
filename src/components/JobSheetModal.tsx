@@ -7,6 +7,7 @@ import { TextField } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
 import { taskService } from '@/services/taskService';
 import { JobSheetPDFGenerator } from './JobSheetPDFGenerator';
+import { toast as sonnerToast } from 'sonner';
 
 interface JobSheetModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface JobSheetModalProps {
   taskDetails: any;
   jobSheetData: any;
   jobSheetLoading: boolean;
+  onRefresh?: () => Promise<void>;
 }
 
 export const JobSheetModal: React.FC<JobSheetModalProps> = ({
@@ -23,34 +25,57 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
   taskId,
   taskDetails,
   jobSheetData,
-  jobSheetLoading
+  jobSheetLoading,
+  onRefresh
 }) => {
   const { toast } = useToast();
   const [jobSheetComments, setJobSheetComments] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const pdfGenerator = new JobSheetPDFGenerator();
 
-  React.useEffect(() => {
-    if (jobSheetData?.data?.job_sheet?.task_details?.task_comments) {
-      setJobSheetComments(jobSheetData.data.job_sheet.task_details.task_comments);
-    }
-  }, [jobSheetData]);
+  // React.useEffect(() => {
+  //   if (jobSheetData?.data?.job_sheet?.task_details?.task_comments || jobSheetData?.job_sheet?.task_details?.task_comments) {
+  //     setJobSheetComments(
+  //       jobSheetData?.data?.job_sheet?.task_details?.task_comments || 
+  //       jobSheetData?.job_sheet?.task_details?.task_comments
+  //     );
+  //   }
+  // }, [jobSheetData]);
 
   const handleJobSheetUpdate = async () => {
     if (!taskId) return;
+    
+    if (!jobSheetComments.trim()) {
+      sonnerToast.error('Please enter a comment before updating');
+      return;
+    }
+
+    const loadingToastId = sonnerToast.loading('Updating task comments...', {
+      duration: Infinity,
+    });
+
+    setIsUpdating(true);
+    
     try {
       await taskService.updateTaskComments(taskId, jobSheetComments);
-      onClose();
-      toast({
-        title: 'Success',
-        description: 'Comments updated successfully!'
-      });
+      
+      sonnerToast.dismiss(loadingToastId);
+      sonnerToast.success('Comments updated successfully!');
+      
+      // Clear the comment field
+      setJobSheetComments('');
+      
+      // Reload the job sheet data if onRefresh is provided
+      if (onRefresh) {
+        await onRefresh();
+      }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update comments. Please try again.',
-        variant: 'destructive'
-      });
+      console.error('Failed to update comments:', error);
+      sonnerToast.dismiss(loadingToastId);
+      sonnerToast.error('Failed to update comments. Please try again.');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -164,19 +189,19 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <label className="text-sm text-gray-600">Created Date</label>
-                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.basic_info?.created_date || taskDetails?.task_details?.created_on}</p>
+                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.basic_info?.created_date || jobSheetData?.job_sheet?.basic_info?.created_date || taskDetails?.task_details?.created_on}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Job Card No</label>
-                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.basic_info?.job_card_no || taskDetails?.task_details?.id}</p>
+                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.basic_info?.job_card_no || jobSheetData?.job_sheet?.basic_info?.job_card_no || taskDetails?.task_details?.id}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Scheduled Date</label>
-                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.basic_info?.scheduled_date || taskDetails?.task_details?.scheduled_on}</p>
+                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.basic_info?.scheduled_date || jobSheetData?.job_sheet?.basic_info?.scheduled_date || taskDetails?.task_details?.scheduled_on}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Job ID</label>
-                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.basic_info?.job_id || taskDetails?.task_details?.id}</p>
+                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.basic_info?.job_id || jobSheetData?.job_sheet?.basic_info?.job_id || taskDetails?.task_details?.id}</p>
                   </div>
                 </div>
 
@@ -186,7 +211,7 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                       <input 
                         type="radio" 
                         disabled 
-                        checked={jobSheetData?.data?.job_sheet?.metadata?.checklist_for?.includes('Asset')} 
+                        checked={(jobSheetData?.data?.job_sheet?.metadata?.checklist_for || jobSheetData?.job_sheet?.metadata?.checklist_for)?.includes('Asset')} 
                       />
                       <label className="text-sm">Assets</label>
                     </div>
@@ -194,14 +219,14 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                       <input 
                         type="radio" 
                         disabled 
-                        checked={jobSheetData?.data?.job_sheet?.metadata?.checklist_for?.includes('Service')} 
+                        checked={(jobSheetData?.data?.job_sheet?.metadata?.checklist_for || jobSheetData?.job_sheet?.metadata?.checklist_for)?.includes('Service')} 
                       />
                       <label className="text-sm">Services</label>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <label className="text-sm">Priority:</label>
-                    <span className="text-sm font-medium">{jobSheetData?.data?.job_sheet?.basic_info?.priority || 'Medium'}</span>
+                    <span className="text-sm font-medium">{jobSheetData?.data?.job_sheet?.basic_info?.priority || jobSheetData?.job_sheet?.basic_info?.priority || 'Medium'}</span>
                   </div>
                   <div className="flex items-center gap-4">
                     <label className="text-sm">Breakdown:</label>
@@ -209,7 +234,7 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                       <input 
                         type="radio" 
                         disabled 
-                        checked={jobSheetData?.data?.job_sheet?.basic_info?.breakdown_status === 'Yes'} 
+                        checked={(jobSheetData?.data?.job_sheet?.basic_info?.breakdown_status || jobSheetData?.job_sheet?.basic_info?.breakdown_status) === 'Yes'} 
                       />
                       <label className="text-sm">Yes</label>
                     </div>
@@ -217,7 +242,7 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                       <input 
                         type="radio" 
                         disabled 
-                        checked={jobSheetData?.data?.job_sheet?.basic_info?.breakdown_status === 'No'} 
+                        checked={(jobSheetData?.data?.job_sheet?.basic_info?.breakdown_status || jobSheetData?.job_sheet?.basic_info?.breakdown_status) === 'No'} 
                       />
                       <label className="text-sm">No</label>
                     </div>
@@ -228,43 +253,100 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t">
                   <div>
                     <label className="text-sm text-gray-600">Completion</label>
-                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.metadata?.completion_percentage || 0}%</p>
+                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.metadata?.completion_percentage || jobSheetData?.job_sheet?.metadata?.completion_percentage || 0}%</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Total Items</label>
-                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.metadata?.total_checklist_items || 0}</p>
+                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.metadata?.total_checklist_items || jobSheetData?.job_sheet?.metadata?.total_checklist_items || 0}</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Score</label>
-                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.metadata?.scoring?.total_score || 0}/{jobSheetData?.data?.job_sheet?.metadata?.scoring?.max_possible_score || 0}</p>
+                    <p className="font-medium">
+                      {jobSheetData?.data?.job_sheet?.metadata?.scoring?.total_score || jobSheetData?.job_sheet?.metadata?.scoring?.total_score || 0}/
+                      {jobSheetData?.data?.job_sheet?.metadata?.scoring?.max_possible_score || jobSheetData?.job_sheet?.metadata?.scoring?.max_possible_score || 0}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-600">Performance</label>
-                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.metadata?.scoring?.overall_percentage || 0}%</p>
+                    <p className="font-medium">{jobSheetData?.data?.job_sheet?.metadata?.scoring?.overall_percentage || jobSheetData?.job_sheet?.metadata?.scoring?.overall_percentage || 0}%</p>
                   </div>
                 </div>
               </div>
 
-              {/* Checklist Responses Table */}
-              <div className="border rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="text-left bg-gray-50">
-                        <th className="p-3 border-b border-r">Help Text</th>
-                        <th className="p-3 border-b border-r">Activities</th>
-                        <th className="p-3 border-b border-r">Input</th>
-                        <th className="p-3 border-b border-r">Comments</th>
-                        <th className="p-3 border-b border-r">Weightage</th>
-                        <th className="p-3 border-b border-r">Rating</th>
-                        <th className="p-3 border-b border-r">Score</th>
-                        <th className="p-3 border-b border-r">Status</th>
-                        <th className="p-3 border-b">Attachments</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {jobSheetData?.data?.job_sheet?.checklist_responses?.length > 0 ? (
-                        jobSheetData.data.job_sheet.checklist_responses.map((response: any, index: number) => {
+              {/* Checklist Responses Table - Grouped by Sections */}
+              <div className="space-y-6">
+                {(() => {
+                  const responses = jobSheetData?.data?.job_sheet?.checklist_responses || jobSheetData?.job_sheet?.checklist_responses || [];
+                  
+                  if (responses.length === 0) {
+                    return (
+                      <div className="border rounded-lg p-8 text-center text-gray-500">
+                        No checklist responses found for this job sheet.
+                      </div>
+                    );
+                  }
+
+                  // Group responses by group_id and sub_group_id
+                  const grouped: { [key: string]: any[] } = {};
+                  responses.forEach((response: any) => {
+                    const groupId = response.group_id || 'ungrouped';
+                    const subGroupId = response.sub_group_id || 'ungrouped';
+                    const key = `${groupId}_${subGroupId}`;
+                    
+                    if (!grouped[key]) {
+                      grouped[key] = [];
+                    }
+                    grouped[key].push(response);
+                  });
+
+                  // Convert to array of sections
+                  const sections = Object.keys(grouped).map(key => ({
+                    sectionKey: key,
+                    group_name: grouped[key][0]?.group_name || 'Ungrouped',
+                    sub_group_name: grouped[key][0]?.sub_group_name || '',
+                    responses: grouped[key]
+                  }));
+
+                  return sections.map((section, sectionIndex) => (
+                    <div key={section.sectionKey} className="space-y-3">
+                      {/* Section Header */}
+                      <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-2 rounded-lg border-l-4 border-[#C72030AD]">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-base font-semibold text-gray-800">
+                              {section.group_name}
+                            </h4>
+                            {section.sub_group_name && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {section.sub_group_name}
+                              </p>
+                            )}
+                          </div>
+                          <Badge className="bg-[rgba(196,184,157,0.33)] text-black-700 px-3 py-1">
+                            Section {sectionIndex + 1}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {/* Section Table */}
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="text-left bg-gray-50">
+                                <th className="p-3 border-b border-r">Help Text</th>
+                                <th className="p-3 border-b border-r">Activities</th>
+                                <th className="p-3 border-b border-r">Input</th>
+                                <th className="p-3 border-b border-r">Comments</th>
+                                <th className="p-3 border-b border-r">Weightage</th>
+                                <th className="p-3 border-b border-r">Rating</th>
+                                <th className="p-3 border-b border-r">Score</th>
+                                <th className="p-3 border-b border-r">Status</th>
+                                <th className="p-3 border-b">Attachments</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {section.responses.map((response: any, index: number) => {
                           const files = response.attachments || [];
                           
                           // Display input value or "-" if null/empty
@@ -306,26 +388,46 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                                 }
                               </td>
                               <td className="p-3 border-b border-r">
-                                <Badge className={getStatusColor(jobSheetData?.data?.job_sheet?.task_details?.task_status)}>
-                                  {jobSheetData?.data?.job_sheet?.task_details?.task_status || 'Pending'}
+                                <Badge className={getStatusColor(
+                                  jobSheetData?.data?.job_sheet?.task_details?.task_status || 
+                                  jobSheetData?.job_sheet?.task_details?.task_status
+                                )}>
+                                  {jobSheetData?.data?.job_sheet?.task_details?.task_status || 
+                                   jobSheetData?.job_sheet?.task_details?.task_status || 'Pending'}
                                 </Badge>
                               </td>
                               <td className="p-3 border-b">
                                 {files.length > 0 ? (
-                                  <div className="space-y-1">
-                                    {files.map((file: any, fileIndex: number) => (
-                                      <div key={fileIndex} className="flex items-center gap-2">
-                                        <a
-                                          href={file.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
-                                          title={file.filename || `Attachment ${fileIndex + 1}`}
-                                        >
-                                          {file.filename || `Attachment ${fileIndex + 1}`}
-                                        </a>
-                                      </div>
-                                    ))}
+                                  <div className="flex flex-wrap gap-2">
+                                    {files.map((file: any, fileIndex: number) => {
+                                      // Handle both string URLs and object formats
+                                      const fileUrl = typeof file === 'string' ? file : (file.url || file.file_url);
+                                      const fileName = typeof file === 'string' 
+                                        ? `Attachment ${fileIndex + 1}` 
+                                        : (file.filename || file.name || `Attachment ${fileIndex + 1}`);
+                                      
+                                      return (
+                                        <div key={fileIndex} className="flex items-center gap-1">
+                                          <a
+                                            href={fileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="hover:opacity-80 transition-opacity"
+                                            title={fileName}
+                                          >
+                                            <img 
+                                              src={fileUrl} 
+                                              alt={fileName} 
+                                              className="w-12 h-12 object-cover rounded border border-gray-200"
+                                              onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZTwvdGV4dD48L3N2Zz4=';
+                                              }}
+                                            />
+                                          </a>
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 ) : (
                                   <span className="text-sm text-gray-500">No attachments</span>
@@ -333,27 +435,26 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                               </td>
                             </tr>
                           );
-                        })
-                      ) : (
-                        <tr>
-                          <td colSpan={9} className="p-3 text-center text-gray-500">
-                            No checklist responses found for this job sheet.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
+            ));
+          })()}
+        </div>
 
               {/* Existing Task Comments Display */}
-              {jobSheetData?.data?.job_sheet?.task_details?.task_comments && (
+              {(jobSheetData?.data?.job_sheet?.task_details?.task_comments || jobSheetData?.job_sheet?.task_details?.task_comments) && (
                 <div className="mb-6">
                   <h3 className="font-medium mb-2" style={{ color: '#C72030' }}>
                     Existing Task Comments:
                   </h3>
                   <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm whitespace-pre-wrap">{jobSheetData.data.job_sheet.task_details.task_comments}</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {jobSheetData?.data?.job_sheet?.task_details?.task_comments || jobSheetData?.job_sheet?.task_details?.task_comments}
+                    </p>
                   </div>
                 </div>
               )}
@@ -382,8 +483,16 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                   onClick={handleJobSheetUpdate}
                   style={{ backgroundColor: '#22c55e' }}
                   className="text-white hover:bg-green-600"
+                  disabled={isUpdating}
                 >
-                  Update
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update'
+                  )}
                 </Button>
               </div>
 
@@ -392,39 +501,49 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                 <div>
                   <label className="text-sm text-gray-600">Performed By</label>
                   <p className="font-medium">
-                    {jobSheetData?.data?.job_sheet?.personnel?.performed_by?.full_name || 'Not specified'}
+                    {jobSheetData?.data?.job_sheet?.personnel?.performed_by?.full_name || 
+                     jobSheetData?.job_sheet?.personnel?.performed_by?.full_name || 'Not specified'}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {jobSheetData?.data?.job_sheet?.personnel?.performed_by?.type || ''}
+                    {jobSheetData?.data?.job_sheet?.personnel?.performed_by?.type || 
+                     jobSheetData?.job_sheet?.personnel?.performed_by?.type || ''}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Task Status</label>
                   <p className="font-medium">
-                    {jobSheetData?.data?.job_sheet?.summary?.task_completion_status || 'Pending'}
+                    {jobSheetData?.data?.job_sheet?.summary?.task_completion_status || 
+                     jobSheetData?.job_sheet?.summary?.task_completion_status || 'Pending'}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Completion: {jobSheetData?.data?.job_sheet?.metadata?.completion_percentage || 0}%
+                    Completion: {jobSheetData?.data?.job_sheet?.metadata?.completion_percentage || 
+                                 jobSheetData?.job_sheet?.metadata?.completion_percentage || 0}%
                   </p>
                 </div>
               </div>
 
               {/* Time Tracking Info */}
-              {jobSheetData?.data?.job_sheet?.summary?.time_tracking && (
+              {(jobSheetData?.data?.job_sheet?.summary?.time_tracking || jobSheetData?.job_sheet?.summary?.time_tracking) && (
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h4 className="font-medium mb-2">Time Tracking</h4>
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div>
                       <label className="text-gray-600">Start Time</label>
-                      <p className="font-medium">{jobSheetData.data.job_sheet.summary.time_tracking.start_time || '-'}</p>
+                      <p className="font-medium">
+                        {(jobSheetData?.data?.job_sheet?.summary?.time_tracking || jobSheetData?.job_sheet?.summary?.time_tracking)?.start_time || '-'}
+                      </p>
                     </div>
                     <div>
                       <label className="text-gray-600">End Time</label>
-                      <p className="font-medium">{jobSheetData.data.job_sheet.summary.time_tracking.end_time || '-'}</p>
+                      <p className="font-medium">
+                        {(jobSheetData?.data?.job_sheet?.summary?.time_tracking || jobSheetData?.job_sheet?.summary?.time_tracking)?.end_time || '-'}
+                      </p>
                     </div>
                     <div>
                       <label className="text-gray-600">Duration</label>
-                      <p className="font-medium">{jobSheetData.data.job_sheet.summary.time_tracking.duration_minutes?.toFixed(1) || 0} minutes</p>
+                      <p className="font-medium">
+                        {(jobSheetData?.data?.job_sheet?.summary?.time_tracking || jobSheetData?.job_sheet?.summary?.time_tracking)?.duration_minutes?.toFixed(1) || 0} minutes
+                      </p>
                     </div>
                   </div>
                 </div>

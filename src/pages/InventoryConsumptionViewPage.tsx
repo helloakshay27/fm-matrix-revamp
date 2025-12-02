@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, X, PlusCircle } from 'lucide-react';
+import { ArrowLeft, X, PlusCircle, Download } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchInventoryConsumptionDetails } from '@/store/slices/inventoryConsumptionDetailsSlice';
@@ -39,6 +39,7 @@ const InventoryConsumptionViewPage = () => {
   const [dateRange, setDateRange] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [formData, setFormData] = useState({
     quantity: '',
     moveType: '',
@@ -63,6 +64,63 @@ const InventoryConsumptionViewPage = () => {
       return 'Quantity exceeds available stock';
     }
     return normalized || '';
+  };
+
+  const handleExport = async () => {
+    try {
+      if (!id) {
+        toast.error('Invalid inventory id');
+        return;
+      }
+      setIsExporting(true);
+      // Use query range if provided, else fallback to current month-to-date
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const fallbackStart = `${yyyy}-${mm}-01`;
+      const fallbackEnd = `${yyyy}-${mm}-${dd}`;
+      const effectiveStart = startDate || fallbackStart;
+      const effectiveEnd = endDate || fallbackEnd;
+
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      if (!baseUrl || !token) {
+        toast.error('Missing base URL or auth token');
+        setIsExporting(false);
+        return;
+      }
+
+      const exportUrl = `https://${baseUrl}/pms/inventories/inventory_assets_consumption_details.xlsx?resource_id=${encodeURIComponent(
+        String(id)
+      )}&q[start_date]=${encodeURIComponent(effectiveStart)}&q[end_date]=${encodeURIComponent(
+        effectiveEnd
+      )}&token=${encodeURIComponent(token)}`;
+
+      const resp = await fetch(exportUrl, {
+        // token is passed in query as required by export endpoint
+        method: 'GET',
+      });
+      if (!resp.ok) {
+        throw new Error(`Export failed (${resp.status})`);
+      }
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      // filename hint
+      link.download = `inventory_consumption_${id}_${effectiveStart}_to_${effectiveEnd}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Export started');
+    } catch (e: any) {
+      console.error('Export error:', e);
+      toast.error(e?.message || 'Failed to export');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // EnhancedTable: columns config
@@ -310,12 +368,32 @@ const InventoryConsumptionViewPage = () => {
           getItemId={(item) => (item as any)?.id?.toString?.() ?? ''}
           emptyMessage="No consumption data available"
           leftActions={
-            <Button
-            onClick={handleAddConsume}
-            className="inline-flex items-center gap-1 bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-md px-3 py-2 h-9 text-sm"
-          >
-            Add / Consume
-          </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleAddConsume}
+                className="inline-flex items-center gap-1 bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-md px-3 py-2 h-9 text-sm"
+              >
+                Add / Consume
+              </Button>
+              <Button
+                onClick={handleExport}
+                disabled={isExporting || loading}
+                className="inline-flex items-center gap-1 bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-md px-3 py-2 h-9 text-sm"
+                variant="outline"
+              >
+                {isExporting ? (
+                  <>
+                    <CircularProgress size={16} />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Export
+                  </>
+                )}
+              </Button>
+            </div>
           }
         />
       )}

@@ -6,6 +6,16 @@ import { UnitCategorywiseData } from '@/services/ticketAnalyticsAPI';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
+// Color palette with lighter shades
+const CHART_COLORS = {
+  primary: '#C4B99D',
+  secondary: '#DAD6CA',
+  tertiary: '#D5DBDB',
+  primaryLight: '#DDD4C4',    // Lighter shade of primary
+  secondaryLight: '#E8E5DD',  // Lighter shade of secondary
+  tertiaryLight: '#E5E9E9',   // Lighter shade of tertiary
+};
+
 interface UnitCategoryWiseCardProps {
   data: UnitCategorywiseData | null;
   dateRange: {
@@ -54,8 +64,20 @@ export const UnitCategoryWiseCard: React.FC<UnitCategoryWiseCardProps> = ({
             Unit Category-wise Tickets
           </CardTitle>
           <Download
-            className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors"
-            onClick={handleDownload}
+            data-no-drag="true"
+            className="w-5 h-5 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDownload();
+            }}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            style={{ pointerEvents: 'auto' }}
           />
         </div>
       </CardHeader>
@@ -86,22 +108,26 @@ export const UnitCategoryWiseCard: React.FC<UnitCategoryWiseCardProps> = ({
                 <Tooltip 
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
+                      const openValue = payload.find(p => p.dataKey === 'open')?.value || 0;
+                      const closedValue = payload.find(p => p.dataKey === 'closed')?.value || 0;
+                      const totalValue = Number(openValue) + Number(closedValue);
+                      
                       return (
                         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
                           <p className="font-semibold text-gray-800 mb-2">{label}</p>
                           <div className="space-y-1">
                             <div className="flex justify-between items-center">
                               <span className="text-yellow-600 font-medium">Open:</span>
-                              <span className="text-gray-700">{payload.find(p => p.dataKey === 'open')?.value || 0}</span>
+                              <span className="text-gray-700">{openValue}</span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-green-600 font-medium">Closed:</span>
-                              <span className="text-gray-700">{payload.find(p => p.dataKey === 'closed')?.value || 0}</span>
+                              <span className="text-gray-700">{closedValue}</span>
                             </div>
                             <div className="pt-1 border-t border-gray-200">
                               <div className="flex justify-between items-center font-semibold">
                                 <span>Total:</span>
-                                <span>{payload.find(p => p.dataKey === 'total')?.value || 0}</span>
+                                <span>{totalValue}</span>
                               </div>
                             </div>
                           </div>
@@ -111,8 +137,8 @@ export const UnitCategoryWiseCard: React.FC<UnitCategoryWiseCardProps> = ({
                     return null;
                   }}
                 />
-                <Bar dataKey="open" fill="#f59e0b" name="Open" />
-                <Bar dataKey="closed" fill="#10b981" name="Closed" />
+                <Bar dataKey="open" fill={CHART_COLORS.primary} name="Open" />
+                <Bar dataKey="closed" fill={CHART_COLORS.secondary} name="Closed" />
               </BarChart>
             ) : (
               <div className="flex items-center justify-center h-full">

@@ -278,17 +278,17 @@ export const UtilityWaterDashboard = () => {
             <StatsCard
               title="Total Asset"
               value={stats.total.toString()}
-              icon={<Package className="w-8 h-8" />}
+              icon={<Package className="w-8 h-8" color='#c72030' />}
             />
             <StatsCard
               title="In Use"
               value={stats.inUse.toString()}
-              icon={<CheckCircle className="w-8 h-8" />}
+              icon={<CheckCircle className="w-8 h-8" color='#c72030' />}
             />
             <StatsCard
               title="Breakdown"
               value={stats.breakdown.toString()}
-              icon={<AlertTriangle className="w-8 h-8" />}
+              icon={<AlertTriangle className="w-8 h-8" color='#c72030' />}
             />
           </div>
 

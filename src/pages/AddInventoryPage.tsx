@@ -42,6 +42,8 @@ interface FormErrors {
   inventoryName?: string;
   inventoryCode?: string;
   quantity?: string;
+  unit?: string;
+  category?: string;
   cost?: string;
   minStockLevel?: string;
   maxStockLevel?: string;
@@ -92,7 +94,11 @@ export const AddInventoryPage = () => {
     sacHsnCode: '',
     sgstRate: '',
     cgstRate: '',
-    igstRate: ''
+    igstRate: '',
+    // New fields
+    plantCode: '',
+    categoryCode: '',
+    taxCategory: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [sacList, setSacList] = useState([])
@@ -106,6 +112,8 @@ export const AddInventoryPage = () => {
   const [invSubTypeId, setInvSubTypeId] = useState<string>('');
   // Suggestions state for inventory name
   const [nameSuggestions, setNameSuggestions] = useState<{ id: number; name: string }[]>([]);
+  // Plants list for PlantCode dropdown
+  const [plants, setPlants] = useState<Array<{ id?: string | number; name?: string }>>([]);
   const [nameSuggestLoading, setNameSuggestLoading] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const nameDebounceRef = useRef<number | null>(null);
@@ -115,6 +123,31 @@ export const AddInventoryPage = () => {
     dispatch(fetchInventoryAssets());
     dispatch(fetchSuppliersData());
   }, [dispatch]);
+
+  // Fetch plants for PlantCode dropdown
+  useEffect(() => {
+    const loadPlants = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const url = `https://${baseUrl}/pms/purchase_orders/get_plant_detail?token=${encodeURIComponent(token)}`;
+        const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+        if (!res.ok) return;
+        const data = await res.json();
+        // Normalize to [{name: string}]
+        const arr: Array<{ id?: string | number; name?: string }> = Array.isArray(data)
+          ? data
+          : Array.isArray((data as any)?.data)
+            ? (data as any).data
+            : Array.isArray((data as any)?.plants)
+              ? (data as any).plants
+              : [];
+        setPlants(arr);
+      } catch {/* ignore */ }
+    };
+    loadPlants();
+  }, []);
 
   // Pre-select asset if asset_id query param is present (coming from asset details / E-BOM add flow)
   const location = useLocation();
@@ -164,9 +197,17 @@ export const AddInventoryPage = () => {
         newErrors.inventoryCode = !value ? 'Inventory Code is required' : '';
         break;
       case 'quantity':
-        newErrors.quantity = value && !isValidPositiveNumber(value)
-          ? 'Quantity must be a valid number'
-          : '';
+        newErrors.quantity = !value
+          ? 'Quantity is required'
+          : !isValidPositiveNumber(value)
+            ? 'Quantity must be a valid number'
+            : '';
+        break;
+      case 'unit':
+        newErrors.unit = !value ? 'Unit is required' : '';
+        break;
+      case 'category':
+        newErrors.category = !value ? 'Category is required' : '';
         break;
       case 'cost':
         newErrors.cost = value && !isValidPositiveNumber(value) ? 'Cost must be a valid number' : '';
@@ -174,7 +215,7 @@ export const AddInventoryPage = () => {
       case 'minStockLevel':
         // Clear any existing error first
         newErrors.minStockLevel = '';
-        
+
         // Basic validation
         if (!value) {
           newErrors.minStockLevel = 'Min Stock Level is required';
@@ -187,7 +228,7 @@ export const AddInventoryPage = () => {
             newErrors.minStockLevel = 'Min Stock Level cannot be greater than Max Stock Level';
           }
         }
-        
+
         // Clear maxStockLevel error if it exists and the relationship is now valid
         if (value && currentFormData.maxStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.maxStockLevel)) {
           if (parseFloat(value) <= parseFloat(currentFormData.maxStockLevel)) {
@@ -198,18 +239,20 @@ export const AddInventoryPage = () => {
       case 'maxStockLevel':
         // Clear any existing error first
         newErrors.maxStockLevel = '';
-        
+
         // Basic validation
-        if (value && !isValidPositiveNumber(value)) {
+        if (!value) {
+          newErrors.maxStockLevel = 'Max Stock Level is required';
+        } else if (!isValidPositiveNumber(value)) {
           newErrors.maxStockLevel = 'Max Stock Level must be a valid number';
         }
         // Cross-field validation: Max Stock Level should be >= Min Stock Level
-        else if (value && currentFormData.minStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.minStockLevel)) {
+        else if (currentFormData.minStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.minStockLevel)) {
           if (parseFloat(value) < parseFloat(currentFormData.minStockLevel)) {
             newErrors.maxStockLevel = 'Max Stock Level cannot be less than Min Stock Level';
           }
         }
-        
+
         // Clear minStockLevel error if it exists and the relationship is now valid
         if (value && currentFormData.minStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.minStockLevel)) {
           if (parseFloat(currentFormData.minStockLevel) <= parseFloat(value)) {
@@ -220,7 +263,7 @@ export const AddInventoryPage = () => {
       case 'minOrderLevel':
         // First, clear any existing error for this field
         newErrors.minOrderLevel = '';
-        
+
         // Basic validation
         if (value && !isValidPositiveNumber(value)) {
           newErrors.minOrderLevel = 'Min Order Level must be a valid number';
@@ -281,17 +324,23 @@ export const AddInventoryPage = () => {
     newErrors.criticality = !criticality ? 'Criticality is required' : '';
     newErrors.inventoryName = !formData.inventoryName ? 'Inventory Name is required' : '';
     newErrors.inventoryCode = !formData.inventoryCode ? 'Inventory Code is required' : '';
-    newErrors.quantity = formData.quantity && (isNaN(parseFloat(formData.quantity)) || parseFloat(formData.quantity) < 0)
-      ? 'Quantity must be a valid number'
-      : '';
+    newErrors.quantity = !formData.quantity
+      ? 'Quantity is required'
+      : (isNaN(parseFloat(formData.quantity)) || parseFloat(formData.quantity) < 0)
+        ? 'Quantity must be a valid number'
+        : '';
+    newErrors.unit = !formData.unit ? 'Unit is required' : '';
+    newErrors.category = !formData.category ? 'Category is required' : '';
     newErrors.minStockLevel = !formData.minStockLevel
       ? 'Min Stock Level is required'
       : !isNaN(parseFloat(formData.minStockLevel)) && parseFloat(formData.minStockLevel) >= 0
         ? ''
         : 'Min Stock Level must be a valid number';
-    newErrors.maxStockLevel = formData.maxStockLevel && (isNaN(parseFloat(formData.maxStockLevel)) || parseFloat(formData.maxStockLevel) < 0)
-      ? 'Max Stock Level must be a valid number'
-      : '';
+    newErrors.maxStockLevel = !formData.maxStockLevel
+      ? 'Max Stock Level is required'
+      : !isNaN(parseFloat(formData.maxStockLevel)) && parseFloat(formData.maxStockLevel) >= 0
+        ? ''
+        : 'Max Stock Level must be a valid number';
     newErrors.minOrderLevel = formData.minOrderLevel && (isNaN(parseFloat(formData.minOrderLevel)) || parseFloat(formData.minOrderLevel) < 0)
       ? 'Min Order Level must be a valid number'
       : '';
@@ -401,11 +450,15 @@ export const AddInventoryPage = () => {
         max_stock_level: parseInt(formData.maxStockLevel) || 0,
         min_stock_level: formData.minStockLevel,
         min_order_level: formData.minOrderLevel,
-  // New master fields
-  pms_inventory_type_id: invTypeId ? parseInt(invTypeId, 10) : null,
-  pms_inventory_sub_type_id: invSubTypeId ? parseInt(invSubTypeId, 10) : null,
+        // New master fields
+        pms_inventory_type_id: invTypeId ? parseInt(invTypeId, 10) : null,
+        pms_inventory_sub_type_id: invSubTypeId ? parseInt(invSubTypeId, 10) : null,
         green_product: ecoFriendly ? 1 : 0,
+        // New fields in payload
+        sap_plant_code: formData.plantCode || null, // send plant NAME per requirement
+        category_code: formData.categoryCode || null,
         ...(taxApplicable && {
+          tax_category: formData.taxCategory || null,
           hsn_id: formData.sacHsnCode ? parseInt(String(formData.sacHsnCode), 10) : null,
           sgst_rate: parseFloat(formData.sgstRate) || 0,
           cgst_rate: parseFloat(formData.cgstRate) || 0,
@@ -553,7 +606,7 @@ export const AddInventoryPage = () => {
 
   // Fetch Inventory Types on mount
   useEffect(() => {
-  const fetchInventoryTypes = async () => {
+    const fetchInventoryTypes = async () => {
       setInvTypeLoading(true);
       try {
         const res = await fetch(getFullUrl('/pms/inventory_types/autocomplete.json'), {
@@ -564,15 +617,15 @@ export const AddInventoryPage = () => {
         });
         if (!res.ok) throw new Error('Failed to load inventory types');
         const data = await res.json();
-    let arr: any[] = [];
-    if (Array.isArray(data)) arr = data;
-    else if (Array.isArray(data?.inventory_types)) arr = data.inventory_types;
-    else if (Array.isArray(data?.item_types)) arr = data.item_types;
-    else if (Array.isArray(data?.data)) arr = data.data;
-    else if (Array.isArray(data?.items)) arr = data.items;
-    else if (Array.isArray(data?.inventory_types?.data)) arr = data.inventory_types.data;
-    else if (Array.isArray(data?.item_types?.data)) arr = data.item_types.data;
-    else if (Array.isArray(data?.payload)) arr = data.payload;
+        let arr: any[] = [];
+        if (Array.isArray(data)) arr = data;
+        else if (Array.isArray(data?.inventory_types)) arr = data.inventory_types;
+        else if (Array.isArray(data?.item_types)) arr = data.item_types;
+        else if (Array.isArray(data?.data)) arr = data.data;
+        else if (Array.isArray(data?.items)) arr = data.items;
+        else if (Array.isArray(data?.inventory_types?.data)) arr = data.inventory_types.data;
+        else if (Array.isArray(data?.item_types?.data)) arr = data.item_types.data;
+        else if (Array.isArray(data?.payload)) arr = data.payload;
         setInvTypeOptions(arr);
       } catch (e) {
         console.error('Error fetching inventory types', e);
@@ -586,7 +639,7 @@ export const AddInventoryPage = () => {
 
   // Fetch Inventory Sub Types when type changes
   useEffect(() => {
-  const fetchSubTypes = async () => {
+    const fetchSubTypes = async () => {
       if (!invTypeId) { setInvSubTypeOptions([]); setInvSubTypeId(''); return; }
       setInvSubTypeLoading(true);
       try {
@@ -599,17 +652,17 @@ export const AddInventoryPage = () => {
         });
         if (!res.ok) throw new Error('Failed to load inventory sub types');
         const data = await res.json();
-  let arr: any[] = [];
-  if (Array.isArray(data)) arr = data;
-  else if (Array.isArray(data?.inventory_sub_types)) arr = data.inventory_sub_types;
-  else if (Array.isArray(data?.item_sub_types)) arr = data.item_sub_types;
-  else if (Array.isArray(data?.item_categories)) arr = data.item_categories;
-  else if (Array.isArray(data?.sub_types)) arr = data.sub_types;
-  else if (Array.isArray(data?.data)) arr = data.data;
-  else if (Array.isArray(data?.items)) arr = data.items;
-  else if (Array.isArray(data?.inventory_sub_types?.data)) arr = data.inventory_sub_types.data;
-  else if (Array.isArray(data?.item_sub_types?.data)) arr = data.item_sub_types.data;
-  else if (Array.isArray(data?.item_categories?.data)) arr = data.item_categories.data;
+        let arr: any[] = [];
+        if (Array.isArray(data)) arr = data;
+        else if (Array.isArray(data?.inventory_sub_types)) arr = data.inventory_sub_types;
+        else if (Array.isArray(data?.item_sub_types)) arr = data.item_sub_types;
+        else if (Array.isArray(data?.item_categories)) arr = data.item_categories;
+        else if (Array.isArray(data?.sub_types)) arr = data.sub_types;
+        else if (Array.isArray(data?.data)) arr = data.data;
+        else if (Array.isArray(data?.items)) arr = data.items;
+        else if (Array.isArray(data?.inventory_sub_types?.data)) arr = data.inventory_sub_types.data;
+        else if (Array.isArray(data?.item_sub_types?.data)) arr = data.item_sub_types.data;
+        else if (Array.isArray(data?.item_categories?.data)) arr = data.item_categories.data;
         setInvSubTypeOptions(arr);
       } catch (e) {
         console.error('Error fetching inventory sub types', e);
@@ -682,7 +735,7 @@ export const AddInventoryPage = () => {
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         {/* Inventory Details Section */}
-        <div className="border-b border-[#D9D9D9] bg-[#F6F7F7]">
+        <div className="border-b bg-white rounded-lg border border-gray-200 shadow-sm">
           <button
             onClick={() => setInventoryDetailsExpanded(!inventoryDetailsExpanded)}
             className="w-full flex items-center justify-between p-4 text-left bg-[#F6F4EE] mb-3"
@@ -889,7 +942,7 @@ export const AddInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label={<>Quantity</>}
+                    label={<>Quantity<span className="text-red-500">*</span></>}
                     placeholder="Qty"
                     value={formData.quantity}
                     onChange={(e) => handleInputChange('quantity', e.target.value)}
@@ -901,10 +954,12 @@ export const AddInventoryPage = () => {
                     helperText={errors.quantity}
                   />
                 </div>
+
+
               </div>
 
               {/* Form Grid - Second Row */}
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <div>
                   <TextField
                     label="Cost"
@@ -942,8 +997,36 @@ export const AddInventoryPage = () => {
                 </div>
 
                 <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Select Unit</InputLabel>
+                  <TextField
+                    label="Total Value"
+                    placeholder="Total Value"
+                    value={(() => {
+                      const qty = parseFloat(formData.quantity) || 0;
+                      const cost = parseFloat(formData.cost) || 0;
+                      const total = qty * cost;
+                      return total > 0 ? total.toFixed(2) : '';
+                    })()}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={{
+                      ...fieldStyles,
+                      '& .MuiOutlinedInput-root': {
+                        ...fieldStyles['& .MuiOutlinedInput-root'],
+                        backgroundColor: '#F5F5F5',
+                      },
+                      '& .MuiInputBase-input': {
+                        ...fieldStyles['& .MuiInputBase-input'],
+                        cursor: 'not-allowed',
+                      },
+                    }}
+                    disabled
+                  />
+                </div>
+
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.unit}>
+                    <InputLabel shrink>Select Unit<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={formData.unit}
                       onChange={handleSelectChange('unit')}
@@ -983,6 +1066,9 @@ export const AddInventoryPage = () => {
                       <MenuItem value="Brass">Brass</MenuItem>
                       <MenuItem value="Tonnes">Tonnes</MenuItem>
                     </MuiSelect>
+                    {errors.unit && (
+                      <p className="text-red-500 text-sm mt-1">{errors.unit}</p>
+                    )}
                   </FormControl>
                 </div>
 
@@ -1015,34 +1101,9 @@ export const AddInventoryPage = () => {
                   </LocalizationProvider>
                 </div>
 
-                {/* Inventory Type moved here before Select Category */}
                 <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Inventory Type</InputLabel>
-                    <MuiSelect
-                      value={invTypeId}
-                      onChange={(e) => {
-                        setInvTypeId(e.target.value as string);
-                        setInvSubTypeId('');
-                      }}
-                      label="Inventory Type"
-                      notched
-                      displayEmpty
-                    >
-                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
-                      {invTypeOptions.map((opt) => (
-                        <MenuItem key={opt.id} value={String(opt.id)}>
-                          {opt.name || opt.title || opt.label || String(opt.id)}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-
-
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Select Category</InputLabel>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles} error={!!errors.category}>
+                    <InputLabel shrink>Select Category<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={formData.category}
                       onChange={handleSelectChange('category')}
@@ -1058,6 +1119,44 @@ export const AddInventoryPage = () => {
                       <MenuItem value="Houskeeping">Houskeeping</MenuItem>
                       <MenuItem value="Stationary">Stationary</MenuItem>
                       <MenuItem value="Pantry">Pantry</MenuItem>
+                    </MuiSelect>
+                    {errors.category && (
+                      <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+                    )}
+                  </FormControl>
+                </div>
+
+                {/* Category Code input (moved below Category) */}
+                <div>
+                  <TextField
+                    label="Category Code"
+                    placeholder="Enter Category Code"
+                    value={formData.categoryCode}
+                    onChange={(e) => handleInputChange('categoryCode', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                  />
+                </div>
+
+                {/* Plant Code dropdown (moved below Category Code) */}
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
+                    <InputLabel shrink>Plant Code</InputLabel>
+                    <MuiSelect
+                      value={formData.plantCode}
+                      onChange={handleSelectChange('plantCode')}
+                      label="Plant Code"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Plant</MenuItem>
+                      {plants.map((p, idx) => (
+                        <MenuItem key={p.id ?? idx} value={(p as any).plant_name || ''}>
+                          {(p as any).plant_name || 'Unnamed Plant'}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                 </div>
@@ -1090,7 +1189,7 @@ export const AddInventoryPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <TextField
-                    label="Max.Stock Level"
+                    label={<>Max.Stock Level<span style={{ color: '#C72030' }}>*</span></>}
                     placeholder="Max Stock"
                     value={formData.maxStockLevel}
                     onChange={(e) => handleInputChange('maxStockLevel', e.target.value)}
@@ -1141,12 +1240,12 @@ export const AddInventoryPage = () => {
         </div>
 
         {/* Tax Details Section */}
-        <div className="border-b border-[#D9D9D9] bg-[#F6F7F7]">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <button
             onClick={() => setTaxDetailsExpanded(!taxDetailsExpanded)}
             className="w-full flex items-center justify-between p-4 text-left bg-[#F6F4EE] mb-4"
           >
-            <div className="flex items-center gap-3 ">
+            <div className="flex items-center gap-3  ">
               <div className="w-8 h8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
                 2
               </div>
@@ -1207,6 +1306,20 @@ export const AddInventoryPage = () => {
 
                   </div>
 
+                  {/* Tax Category input */}
+                  <div>
+                    <TextField
+                      label="Tax Category"
+                      placeholder="Enter Tax Category"
+                      value={formData.taxCategory}
+                      onChange={(e) => handleInputChange('taxCategory', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  </div>
+
                   <div>
                     <TextField
                       label="SGST Rate"
@@ -1258,7 +1371,7 @@ export const AddInventoryPage = () => {
         </div>
 
         {/* Submit Button */}
-        <div className="p-6 border-b border-[#D9D9D9] bg-[#F6F7F7]">
+        <div className="p-6 bg-white   ">
           <Button
             onClick={handleSubmit}
             disabled={submitting}

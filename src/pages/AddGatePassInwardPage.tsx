@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Typography, IconButton, Button as MuiButton, Autocomplete } from '@mui/material';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus } from 'lucide-react';
 import { AttachFile, Close } from '@mui/icons-material';
 import { useToast } from '@/hooks/use-toast';
 import { gateNumberService } from '@/services/gateNumberService';
@@ -12,6 +12,7 @@ import { API_CONFIG } from '@/config/apiConfig';
 import { useSelector } from 'react-redux';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
+import { AddCustomFieldModal } from '@/components/AddCustomFieldModal';
 
 interface AttachmentFile {
   id: string;
@@ -72,6 +73,9 @@ export const AddGatePassInwardPage = () => {
     vendorId: null as number | null, // Add vendorId
     quantity: '', // Add quantity
     unit: '', // Add unit
+    invoiceId: '', // Add invoice ID
+    invoiceDate: '', // Add invoice date
+    invoiceAmount: '', // Add invoice amount
   });
 
   const [companies, setCompanies] = useState<DropdownOption[]>([]);
@@ -85,6 +89,15 @@ export const AddGatePassInwardPage = () => {
   const [vendors, setVendors] = useState<DropdownOption[]>([]);
   const [vendorCompanyName, setVendorCompanyName] = useState<string>('');
   const [loading, setLoading] = useState(true);
+
+  // Custom fields state
+  const [customFieldModalOpen, setCustomFieldModalOpen] = useState(false);
+  const [currentSection, setCurrentSection] = useState("");
+  const [customFields, setCustomFields] = useState<{ [key: string]: any[] }>({
+    visitorDetails: [],
+    gatePassDetails: [],
+    goodsDetails: [],
+  });
 
   // Get selected company and site from Redux (Header)
   const selectedCompany = useSelector((state: any) => state.project.selectedCompany);
@@ -223,6 +236,46 @@ export const AddGatePassInwardPage = () => {
     setAttachments(prev => prev.filter(a => a.id !== id));
   };
 
+  // Custom field handlers
+  const openCustomFieldModal = (section: string) => {
+    setCurrentSection(section);
+    setCustomFieldModalOpen(true);
+  };
+
+  const handleAddCustomField = (fieldName: string) => {
+    if (!fieldName.trim()) {
+      toast.error("Field name cannot be empty");
+      return;
+    }
+
+    setCustomFields((prev) => ({
+      ...prev,
+      [currentSection]: [
+        ...(prev[currentSection] || []),
+        { name: fieldName, value: "" },
+      ],
+    }));
+    setCustomFieldModalOpen(false);
+    toast.success(`Custom field "${fieldName}" added successfully`);
+  };
+
+  const handleCustomFieldChange = (section: string, index: number, value: string) => {
+    setCustomFields((prev) => ({
+      ...prev,
+      [section]: prev[section].map((field, i) =>
+        i === index ? { ...field, value } : field
+      ),
+    }));
+  };
+
+  const handleRemoveCustomField = (section: string, index: number) => {
+    setCustomFields((prev) => ({
+      ...prev,
+      [section]: prev[section].filter((_, i) => i !== index),
+    }));
+    toast.success("Custom field removed");
+  };
+
   const fieldStyles = {
     height: '40px',
     backgroundColor: '#fff',
@@ -354,6 +407,17 @@ export const AddGatePassInwardPage = () => {
 
     // Vendor Company Name
     if (vendorCompanyName) formData.append('gate_pass[vendor_company_name]', vendorCompanyName);
+
+    // Append Invoice fields
+    if (gatePassDetails.invoiceId) formData.append('gate_pass[invoice_no]', gatePassDetails.invoiceId);
+    if (gatePassDetails.invoiceDate) formData.append('gate_pass[invoice_date]', gatePassDetails.invoiceDate);
+    if (gatePassDetails.invoiceAmount) formData.append('gate_pass[invoice_amount]', gatePassDetails.invoiceAmount);
+
+    // Append custom fields as extra_fields_attributes
+    customFields.gatePassDetails.forEach((field, index) => {
+      formData.append(`gate_pass[extra_fields_attributes][${index}][field_name]`, field.name);
+      formData.append(`gate_pass[extra_fields_attributes][${index}][field_value]`, field.value);
+    });
 
     // Append material details
     materialRows.forEach((row, index) => {
@@ -498,17 +562,22 @@ export const AddGatePassInwardPage = () => {
               </MuiSelect>
               {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
             </FormControl>
-            {/* <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) => handleVisitorChange('driverName', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-            <TextField label="Driver Contact No." placeholder="Enter Driver Contact No." fullWidth variant="outlined" value={visitorDetails.driverContactNo} onChange={(e) => handleVisitorChange('driverContactNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-            <TextField label="Contact Person" placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => handleVisitorChange('contactPerson', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-            <TextField label="Contact Person No." placeholder="Enter Contact Person No." fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) => handleVisitorChange('contactPersonNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} /> */}
-            
           </div>
         </div>
 
         {/* Gate Pass Details Section */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Gate Pass Details</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">Gate Pass Details</h2>
+            <button
+              type="button"
+              onClick={() => openCustomFieldModal("gatePassDetails")}
+              className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+            >
+              <Plus className="w-4 h-4" />
+              Custom Field
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Move Site and Building fields to the top */}
             {/* <TextField
@@ -590,6 +659,58 @@ export const AddGatePassInwardPage = () => {
                 min: new Date().toISOString().split('T')[0]
               }}
             />
+
+            <TextField
+              label="Invoice ID"
+              placeholder="Enter Invoice ID"
+              fullWidth
+              variant="outlined"
+              value={gatePassDetails.invoiceId}
+              onChange={(e) => handleGatePassChange('invoiceId', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
+
+            <TextField
+              label="Invoice Date"
+              type="date"
+              fullWidth
+              variant="outlined"
+              value={gatePassDetails.invoiceDate}
+              onChange={(e) => handleGatePassChange('invoiceDate', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
+
+            <TextField
+              label="Invoice Amount"
+              placeholder="Enter Amount"
+              fullWidth
+              variant="outlined"
+              type="text"
+              value={gatePassDetails.invoiceAmount}
+              onChange={(e) => {
+                // allow digits and a single dot, limit to two decimals
+                const raw = e.target.value.replace(/[^\d.]/g, '');
+                const match = raw.match(/^(\d+(\.\d{0,2})?|\.\d{0,2})/);
+                const next = match ? match[0] : '';
+                handleGatePassChange('invoiceAmount', next);
+              }}
+              onBlur={(e) => {
+                let v = e.target.value;
+                if (!v) return;
+                if (v.startsWith('.')) v = '0' + v;   // ".5" -> "0.5"
+                if (v.endsWith('.')) v = v + '00';    // "10." -> "10.00"
+                const num = Number(v);
+                if (!isNaN(num)) {
+                  handleGatePassChange('invoiceAmount', num.toFixed(2)); // normalize to 2 decimals
+                }
+              }}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              inputProps={{ inputMode: 'decimal', pattern: '^\\d*(\\.\\d{0,2})?$' }}
+            />
+
             <div className="lg:col-span-3">
               <TextField
                 label="Remarks"
@@ -603,6 +724,52 @@ export const AddGatePassInwardPage = () => {
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               />
             </div>
+
+            {/* Render custom fields for gate pass details */}
+            {customFields.gatePassDetails?.map((field, index) => (
+              <div key={index} style={{ position: "relative" }}>
+                <TextField
+                  label={field.name}
+                  placeholder={`Enter ${field.name}`}
+                  fullWidth
+                  variant="outlined"
+                  value={field.value}
+                  onChange={(e) => handleCustomFieldChange("gatePassDetails", index, e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleRemoveCustomField("gatePassDetails", index);
+                  }}
+                  style={{
+                    position: "absolute",
+                    top: "-8px",
+                    right: "-8px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    color: "#000",
+                    cursor: "pointer",
+                    lineHeight: "1",
+                    border: "1.5px solid #000",
+                    borderRadius: "50%",
+                    padding: "4px",
+                    backgroundColor: "#fff",
+                    width: "20px",
+                    height: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 10
+                  }}
+                  title="Remove field"
+                >
+                  ✕
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -707,7 +874,7 @@ export const AddGatePassInwardPage = () => {
                           value={row.otherMaterialName || ''}
                           onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
                           required
-                        
+
                         />
                       ) : (
                         <FormControl fullWidth variant="outlined" size="small">
@@ -751,7 +918,7 @@ export const AddGatePassInwardPage = () => {
                         size="small"
                         type="number"
                         value={row.quantity}
-                      
+
                         placeholder='Quantity'
                         onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
                       />
@@ -761,7 +928,7 @@ export const AddGatePassInwardPage = () => {
                         variant="outlined"
                         size="small"
                         placeholder="Unit"
-                      
+
                         value={row.unit}
                         onChange={e => {
                           const value = e.target.value;
@@ -903,6 +1070,14 @@ export const AddGatePassInwardPage = () => {
           <Button type="button" variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8 py-2" onClick={() => navigate('/security/gate-pass/inwards')}>Cancel</Button>
         </div>
       </form>
+
+      {/* Custom Field Modal */}
+      <AddCustomFieldModal
+        isOpen={customFieldModalOpen}
+        onClose={() => setCustomFieldModalOpen(false)}
+        onAddField={handleAddCustomField}
+        isItAsset={false}
+      />
     </div>
   );
 };

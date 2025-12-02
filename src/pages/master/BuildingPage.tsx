@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Plus, Search, Edit, X, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Plus, Search, Edit, X, Check, ChevronLeft, ChevronRight, Download, Upload } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { fetchSites, fetchBuildings, createBuilding, updateBuilding } from '@/store/slices/locationSlice';
 import { useForm } from 'react-hook-form';
@@ -26,6 +26,10 @@ export function BuildingPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingBuilding, setEditingBuilding] = useState<any>(null);
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<string>('all');
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -191,6 +195,105 @@ export function BuildingPage() {
     return site ? site.name : siteId;
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem('token') || '';
+      let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+      baseUrl = baseUrl.replace(/^https?:\/\//, '');
+      const templateUrl = `https://${baseUrl}/assets/building.xlsx`;
+      
+      toast.info('Downloading template...');
+      
+      const response = await fetch(templateUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download template: ${response.status} ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'building.xlsx';
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Template downloaded successfully');
+    } catch (error: any) {
+      console.error('Error downloading template:', error);
+      toast.error(`Failed to download template: ${error.message}`);
+    }
+  };
+
+  const handleImportBuildings = async () => {
+    if (!importFile) {
+      toast.error('Please select a file to import');
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('pms_building[file]', importFile);
+
+      const token = localStorage.getItem('token') || '';
+      let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+      baseUrl = baseUrl.replace(/^https?:\/\//, '');
+      const apiUrl = `https://${baseUrl}/pms/account_setups/building_import.json?token=${token}`;
+      
+      toast.info('Starting import...');
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Import failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      toast.success(`Buildings imported successfully! ${result.imported_count || ''} records processed.`);
+      setShowImportDialog(false);
+      setImportFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      dispatch(fetchBuildings());
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast.error(error.message || 'Failed to import buildings');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const allowedTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'text/csv'
+      ];
+      
+      if (allowedTypes.includes(file.type)) {
+        setImportFile(file);
+      } else {
+        toast.error('Please select a valid Excel or CSV file');
+        event.target.value = '';
+      }
+    }
+  };
+
   return (
     <div className="w-full min-h-screen bg-gray-50">
       <div className="w-full">
@@ -200,6 +303,76 @@ export function BuildingPage() {
             <h1 className="text-2xl font-bold text-gray-900">BUILDINGS</h1>
 
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleDownloadTemplate}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+              
+                Download Sample Format
+              </Button>
+
+              <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Import Buildings
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Import Buildings</DialogTitle>
+                    <button
+                      className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                      onClick={() => setShowImportDialog(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Select Excel or CSV file
+                      </label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".xlsx,.xls,.csv"
+                        onChange={handleFileSelect}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      {importFile && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          Selected: {importFile.name}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowImportDialog(false);
+                          setImportFile(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleImportBuildings}
+                        disabled={!importFile || isImporting}
+                      >
+                        {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Import
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogTrigger asChild>
                   <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">

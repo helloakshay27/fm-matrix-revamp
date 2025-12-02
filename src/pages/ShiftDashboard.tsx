@@ -304,7 +304,7 @@ export const ShiftDashboard = () => {
       <div className="flex items-center gap-2">
         <button 
           onClick={() => handleEdit(shift.id)} 
-          className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
+          className="p-1 text-black hover:bg-gray-100 rounded" 
           title="Edit"
         >
           <Edit className="w-4 h-4" />

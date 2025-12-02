@@ -206,7 +206,7 @@ export const AddInjuryModal: React.FC<AddInjuryModalProps> = ({
   return (
     <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 2 }}>
-        Add Injury
+        <h1 className="font-bold text-xl">Add Injury</h1>
         <Button
           variant="ghost"
           size="sm"
@@ -235,7 +235,7 @@ export const AddInjuryModal: React.FC<AddInjuryModalProps> = ({
 
               <div className="space-y-2">
                 <FormControl size="small" fullWidth>
-                  <InputLabel id={`injury-type-label-${injury.id}`}>Injury Type</InputLabel>
+                  <InputLabel id={`injury-type-label-${injury.id}`}>Injury Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
                   <Select
                     labelId={`injury-type-label-${injury.id}`}
                     value={injury.injuryType}
@@ -261,7 +261,7 @@ export const AddInjuryModal: React.FC<AddInjuryModalProps> = ({
 
               <div className="space-y-2">
                 <FormControl size="small" fullWidth disabled={loading}>
-                  <InputLabel id={`who-got-injured-label-${injury.id}`}>Who got injured</InputLabel>
+                  <InputLabel id={`who-got-injured-label-${injury.id}`}>Who got injured<span style={{ color: '#C72030' }}>*</span></InputLabel>
                   <Select
                     labelId={`who-got-injured-label-${injury.id}`}
                     value={injury.whoGotInjured}
@@ -282,7 +282,7 @@ export const AddInjuryModal: React.FC<AddInjuryModalProps> = ({
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label>Name</Label>
+                  <Label>Name<span style={{ color: '#C72030' }}>*</span></Label>
                   <Input
                     value={injury.name}
                     onChange={(e) => handleInputChange(injury.id, 'name', e.target.value)}

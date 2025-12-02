@@ -522,7 +522,7 @@ export const EditServicePRPage = () => {
                 <Settings className="w-4 h-4 text-white" />
               </div>
               <h2 className="text-lg font-semibold text-foreground">
-                WORK ORDER DETAILS
+                SERVICE PR DETAILS
               </h2>
             </div>
           </div>
@@ -878,6 +878,9 @@ export const EditServicePRPage = () => {
                       type="date"
                       InputLabelProps={{ shrink: true }}
                       sx={fieldStyles}
+                      inputProps={{
+                        min: new Date().toISOString().split("T")[0],
+                      }}
                     />
 
                     <TextField

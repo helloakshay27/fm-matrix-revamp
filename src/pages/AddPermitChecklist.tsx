@@ -1,13 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel, Checkbox, FormControlLabel } from '@mui/material';
 import { Plus, X } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface AnswerOption {
     text: string;
@@ -24,6 +21,7 @@ interface Question {
 
 export const AddPermitChecklist = () => {
     const { setCurrentSection } = useLayout();
+    const navigate = useNavigate();
 
     React.useEffect(() => {
         setCurrentSection('Safety');
@@ -33,6 +31,66 @@ export const AddPermitChecklist = () => {
         category: '',
         title: ''
     });
+
+    const [categories, setCategories] = useState<Array<{ id: number; name: string }>>([]);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Fetch categories on mount
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                setIsLoadingCategories(true);
+                let baseUrl = localStorage.getItem('baseUrl') || '';
+                const token = localStorage.getItem('token') || '';
+
+                if (!baseUrl || !token) {
+                    toast.warning('Authentication credentials not found');
+                    setIsLoadingCategories(false);
+                    return;
+                }
+
+                // Ensure baseUrl has the correct format
+                if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+                    baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+                }
+
+                const url = `${baseUrl}/pms/permit_tags.json?q[tag_type_eq]=PermitType`;
+                console.log('Fetching categories from:', url);
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch categories: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Categories API Response:', data);
+
+                // Map the response to extract id and name
+                const mappedCategories = (Array.isArray(data) ? data : data.data || []).map((item: any) => ({
+                    id: item.id,
+                    name: item.name || item.tag_name || ''
+                }));
+
+                setCategories(mappedCategories);
+                console.log(`Loaded ${mappedCategories.length} categories`);
+            } catch (error: any) {
+                console.error('Error fetching categories:', error);
+                toast.error('Failed to load categories');
+                setCategories([]);
+            } finally {
+                setIsLoadingCategories(false);
+            }
+        };
+
+        fetchCategories();
+    }, []);
 
     const [questions, setQuestions] = useState<Question[]>([
         {
@@ -44,20 +102,10 @@ export const AddPermitChecklist = () => {
                 { text: '', type: 'P' },
                 { text: '', type: 'P' }
             ]
-        },
-        {
-            id: '2',
-            question: '',
-            answerType: 'Multiple Choice',
-            mandatory: false,
-            options: [
-                { text: '', type: 'P' },
-                { text: '', type: 'P' }
-            ]
         }
     ]);
 
-    const [questionCount, setQuestionCount] = useState(2);
+    const [questionCount, setQuestionCount] = useState(1);
 
     const addQuestion = () => {
         const newQuestion: Question = {
@@ -123,7 +171,8 @@ export const AddPermitChecklist = () => {
         ));
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
+        // Validate form
         if (!formData.category || !formData.title) {
             toast.error('Please fill in all required fields');
             return;
@@ -135,196 +184,293 @@ export const AddPermitChecklist = () => {
             return;
         }
 
-        // Add your submit logic here
-        console.log('Form Data:', formData);
-        console.log('Questions:', questions);
-        toast.success('Permit checklist created successfully!');
+        // Validate multiple choice options
+        const hasInvalidOptions = questions.some(q =>
+            q.answerType === 'Multiple Choice' &&
+            (q.options.length === 0 || q.options.some(opt => !opt.text.trim()))
+        );
+        if (hasInvalidOptions) {
+            toast.error('Please provide all answer options for multiple choice questions');
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+
+            let baseUrl = localStorage.getItem('baseUrl') || '';
+            const token = localStorage.getItem('token') || '';
+
+            if (!baseUrl || !token) {
+                toast.error('Authentication required. Please login again.');
+                return;
+            }
+
+            // Ensure baseUrl has the correct format
+            if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+                baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+            }
+
+            // Build the API payload
+            const payload = {
+                snag_checklist: {
+                    name: formData.title,
+                    snag_audit_category_id: parseInt(formData.category),
+                    check_type: 'Permit'
+                },
+                question: questions.map(q => {
+                    const questionData: any = {
+                        descr: q.question,
+                        qtype: q.answerType === 'Multiple Choice' ? 'multiple' :
+                            q.answerType === 'Input Box' ? 'input' : 'description',
+                        quest_mandatory: q.mandatory ? 'on' : 'off',
+                        image_mandatory: false
+                    };
+
+                    // Add options only for multiple choice
+                    if (q.answerType === 'Multiple Choice' && q.options.length > 0) {
+                        questionData.quest_options = q.options.map(opt => ({
+                            option_name: opt.text,
+                            option_type: opt.type.toLowerCase()
+                        }));
+                    }
+
+                    return questionData;
+                })
+            };
+
+            const url = `${baseUrl}/pms/admin/snag_checklists/create_permit_checklist.json`;
+            console.log('Creating permit checklist at:', url);
+            console.log('Payload:', payload);
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('API Response:', result);
+
+            toast.success('Permit checklist created successfully!');
+
+            // Navigate to list page to show the updated list
+            setTimeout(() => {
+                navigate('/safety/permit/checklist');
+            }, 1000);
+
+        } catch (error: any) {
+            console.error('Error creating permit checklist:', error);
+            toast.error(error.message || 'Failed to create permit checklist. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
-        <div className="p-6 max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="mb-6">
-                <div className="bg-[#F6F4EE] text-[#C72030] px-4 py-2 rounded mb-4 inline-flex items-center">
-                    <span className="mr-2 text-lg">✓</span>
-                    Add checklist
-                </div>
-            </div>
-
-            {/* Form Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                {/* Category */}
-                <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                        Category<span className="text-red-500">*</span>
-                    </Label>
-                    <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="safety">Safety</SelectItem>
-                            <SelectItem value="maintenance">Maintenance</SelectItem>
-                            <SelectItem value="compliance">Compliance</SelectItem>
-                            <SelectItem value="environmental">Environmental</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {/* Title */}
-                <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                        Title<span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                        placeholder="Enter the title"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    />
-                </div>
-            </div>
-
-            {/* Question Count Section */}
-            <div className="mb-8">
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium">Add No. of Question</Label>
-                        <span className="text-sm text-gray-600">No. of Questions</span>
+        <div className="p-6  mx-auto">
+            {/* Main Card */}
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+                {/* Header */}
+                <div className="flex items-center mb-6 border-b pb-3">
+                    <div className="flex items-center bg-[#F6F4EE] !text-[#C72030] px-4 py-2 rounded-md">
+                        <span className="mr-2 text-[28px]">✓</span>
+                        <span className=" font-semibold !text-[#C72030]">Add checklist</span>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4 mb-6">
-                    <Select value={questionCount.toString().padStart(2, '0')} onValueChange={(value) => {
-                        const newCount = parseInt(value);
-                        setQuestionCount(newCount);
-
-                        // Adjust questions array based on count
-                        if (newCount > questions.length) {
-                            // Add new questions
-                            const questionsToAdd = newCount - questions.length;
-                            for (let i = 0; i < questionsToAdd; i++) {
-                                addQuestion();
-                            }
-                        } else if (newCount < questions.length) {
-                            // Remove questions from the end
-                            setQuestions(questions.slice(0, newCount));
-                        }
-                    }}>
-                        <SelectTrigger className="w-24">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {Array.from({ length: 20 }, (_, i) => (
-                                <SelectItem key={i + 1} value={(i + 1).toString().padStart(2, '0')}>
-                                    {(i + 1).toString().padStart(2, '0')}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <Button
-                        type="button"
-                        onClick={addQuestion}
-                        className="bg-teal-600 hover:bg-teal-700 text-white h-8 w-8 rounded-full p-0"
-                    >
-                        <Plus className="w-4 h-4" />
-                    </Button>
-
-                    <span className="text-sm text-gray-600">{questions.length}</span>
-                </div>
-            </div>
-
-            {/* Questions */}
-            <div className="space-y-6">
-                {questions.map((question, index) => (
-                    <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-6 relative">
-                        {/* Remove Question Button */}
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeQuestion(question.id)}
-                            className="absolute top-4 right-4 text-red-500 hover:text-red-700 p-1"
+                {/* Category & Title */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <FormControl fullWidth size="small" disabled={isLoadingCategories}>
+                        <InputLabel>Category *</InputLabel>
+                        <MuiSelect
+                            value={formData.category}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                            label="Category *"
                         >
-                            <X className="w-4 h-4" />
-                        </Button>
+                            {isLoadingCategories ? (
+                                <MenuItem value="" disabled>Loading categories...</MenuItem>
+                            ) : categories.length === 0 ? (
+                                <MenuItem value="" disabled>No categories available</MenuItem>
+                            ) : (
+                                categories.map((category) => (
+                                    <MenuItem key={category.id} value={category.id.toString()}>
+                                        {category.name}
+                                    </MenuItem>
+                                ))
+                            )}
+                        </MuiSelect>
+                    </FormControl>
 
-                        <div className="mb-4">
-                            <h3 className="text-lg font-medium mb-4">New Question</h3>
+                    <TextField
+                        label="Title"
+                        placeholder="Enter the title"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        fullWidth
+                        size="small"
+                        required
+                    />
+                </div>
+
+                {/* Question Count */}
+                <div className="mb-8 border-t pt-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-base font-medium">Add No. of Questions</h3>
+                        <div className="flex items-center gap-4">
+                            <FormControl size="small" style={{ width: '80px' }}>
+                                <MuiSelect
+                                    value={questionCount.toString().padStart(2, '0')}
+                                    onChange={(e) => {
+                                        const newCount = parseInt(e.target.value);
+                                        setQuestionCount(newCount);
+                                        if (newCount > questions.length) {
+                                            for (let i = 0; i < newCount - questions.length; i++) addQuestion();
+                                        } else setQuestions(questions.slice(0, newCount));
+                                    }}
+                                >
+                                    {Array.from({ length: 20 }, (_, i) => (
+                                        <MenuItem key={i + 1} value={(i + 1).toString().padStart(2, '0')}>
+                                            {(i + 1).toString().padStart(2, '0')}
+                                        </MenuItem>
+                                    ))}
+                                </MuiSelect>
+                            </FormControl>
+
+                            <Button
+                                type="button"
+                                onClick={addQuestion}
+                                className="bg-[#C72030] hover:bg-[#B8252F] text-white h-8 w-8 rounded-full p-0"
+                            >
+                                <Plus className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Question Blocks */}
+                <div className="space-y-6">
+                    {questions.map((question, index) => (
+                        <div
+                            key={question.id}
+                            className="bg-[#F9F9F9] border border-gray-200 rounded-lg p-6 relative"
+                        >
+                            {/* Remove Question */}
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeQuestion(question.id)}
+                                className="absolute top-4 right-4 text-red-500 hover:text-red-700 p-1"
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+
+                            <h4 className="text-base font-medium mb-4">
+                                Question {index + 1}
+                            </h4>
 
                             {/* Question Input */}
-                            <div className="mb-4">
-                                <Textarea
-                                    placeholder="Enter your Question"
-                                    value={question.question}
-                                    onChange={(e) => updateQuestion(question.id, 'question', e.target.value)}
-                                    className="min-h-[80px]"
-                                />
-                            </div>
+                            <TextField
+                                placeholder="Enter your Question"
+                                value={question.question}
+                                onChange={(e) => updateQuestion(question.id, 'question', e.target.value)}
+                                fullWidth
+                                multiline
+                                rows={3}
+                                size="small"
+                                className="mb-4"
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        height: "auto !important",
+                                        padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& .MuiInputBase-input": {
+                                        resize: "none !important",
+                                    },
+                                }}
+                            />
 
-                            {/* Answer Type and Mandatory */}
+                            {/* Answer Type + Mandatory */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-medium">Select Answer Type</Label>
-                                    <Select
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>Select Answer Type</InputLabel>
+                                    <MuiSelect
                                         value={question.answerType}
-                                        onValueChange={(value: 'Multiple Choice' | 'Input Box' | 'Description Box') =>
-                                            updateQuestion(question.id, 'answerType', value)
+                                        onChange={(e) =>
+                                            updateQuestion(question.id, 'answerType', e.target.value as 'Multiple Choice' | 'Input Box' | 'Description Box')
                                         }
+                                        label="Select Answer Type"
                                     >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Choose Answer Type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
-                                            <SelectItem value="Input Box">Input Box</SelectItem>
-                                            <SelectItem value="Description Box">Description Box</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                        <MenuItem value="Multiple Choice">Multiple Choice</MenuItem>
+                                        {/* <MenuItem value="Input Box">Input Box</MenuItem>
+                                        <MenuItem value="Description Box">Description Box</MenuItem> */}
+                                    </MuiSelect>
+                                </FormControl>
 
-                                <div className="flex items-center space-x-2 mt-6">
-                                    <Checkbox
-                                        id={`mandatory-${question.id}`}
-                                        checked={question.mandatory}
-                                        onCheckedChange={(checked) => updateQuestion(question.id, 'mandatory', checked)}
+                                <div className="flex items-center mt-2">
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={question.mandatory}
+                                                onChange={(e) =>
+                                                    updateQuestion(question.id, 'mandatory', e.target.checked)
+                                                }
+                                            />
+                                        }
+                                        label="Mandatory"
                                     />
-                                    <Label htmlFor={`mandatory-${question.id}`} className="text-sm">
-                                        Mandatory
-                                    </Label>
                                 </div>
                             </div>
 
                             {/* Multiple Choice Options */}
                             {question.answerType === 'Multiple Choice' && (
                                 <div className="space-y-3">
-                                    {question.options.map((option, optionIndex) => (
-                                        <div key={optionIndex} className="flex items-center gap-2">
-                                            <Input
+                                    {question.options.map((option, i) => (
+                                        <div key={i} className="flex items-center gap-2">
+                                            <TextField
                                                 placeholder="Answer Option"
                                                 value={option.text}
-                                                onChange={(e) => updateOption(question.id, optionIndex, 'text', e.target.value)}
-                                                className="flex-1"
+                                                onChange={(e) =>
+                                                    updateOption(question.id, i, 'text', e.target.value)
+                                                }
+                                                size="small"
+                                                fullWidth
                                             />
 
-                                            <Select
-                                                value={option.type}
-                                                onValueChange={(value: 'P' | 'N') => updateOption(question.id, optionIndex, 'type', value)}
-                                            >
-                                                <SelectTrigger className="w-16 bg-green-500 text-white">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="P">P</SelectItem>
-                                                    <SelectItem value="N">N</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            <FormControl size="small" style={{ width: '70px' }}>
+                                                <MuiSelect
+                                                    value={option.type}
+                                                    onChange={(e) =>
+                                                        updateOption(question.id, i, 'type', e.target.value)
+                                                    }
+                                                >
+                                                    <MenuItem value="P">P</MenuItem>
+                                                    <MenuItem value="N">N</MenuItem>
+                                                </MuiSelect>
+                                            </FormControl>
 
                                             <Button
                                                 type="button"
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => removeOption(question.id, optionIndex)}
+                                                onClick={() => removeOption(question.id, i)}
                                                 className="text-red-500 hover:text-red-700 p-1"
                                             >
                                                 <X className="w-4 h-4" />
@@ -332,59 +478,63 @@ export const AddPermitChecklist = () => {
                                         </div>
                                     ))}
 
-                                    {/* Add Option Button - styled like a plus icon in a box */}
-                                    <div className="flex justify-start">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => addOption(question.id)}
-                                            className="h-10 w-10 p-0 border-2 border-dashed border-gray-300 hover:border-gray-400"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                        </Button>
-                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => addOption(question.id)}
+                                        className="mt-2 h-9 w-9 p-0 border-2 border-dashed border-gray-300 hover:border-gray-400"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </Button>
                                 </div>
                             )}
 
-                            {/* Input Box Preview */}
+                            {/* Input / Description Preview */}
                             {question.answerType === 'Input Box' && (
-                                <div className="border border-gray-200 rounded p-3 bg-gray-50">
-                                    <Input placeholder="Input will appear here" disabled />
-                                </div>
+                                <TextField
+                                    placeholder="Input will appear here"
+                                    disabled
+                                    fullWidth
+                                    size="small"
+                                    className="mt-2"
+                                />
                             )}
-
-                            {/* Description Box Preview */}
                             {question.answerType === 'Description Box' && (
-                                <div className="border border-gray-200 rounded p-3 bg-gray-50">
-                                    <Textarea placeholder="Description text area will appear here" disabled className="min-h-[80px]" />
-                                </div>
+                                <TextField
+                                    placeholder="Description box will appear here"
+                                    disabled
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    size="small"
+                                    className="mt-2"
+                                />
                             )}
                         </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
 
-            {/* Add Question Button */}
-            <div className="flex justify-center mt-8">
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={addQuestion}
-                    className="h-12 w-12 p-0 border-2 border-dashed border-gray-400 hover:border-gray-500 rounded"
-                >
-                    <Plus className="w-6 h-6" />
-                </Button>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-4 mt-8 pt-6 border-t">
-                <Button variant="outline" className="px-8">
-                    Cancel
-                </Button>
-                <Button onClick={handleSubmit} className="bg-[#C72030] hover:bg-[#B8252F] text-white px-8">
-                    Save Checklist
-                </Button>
+                {/* Bottom Buttons */}
+                <div className="flex justify-end space-x-4 mt-8 pt-6 border-t">
+                    <Button
+                        variant="outline"
+                        className="px-8"
+                        disabled={isSubmitting}
+                        onClick={() => navigate('/safety/permit/checklist')}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        className="bg-[#C72030] hover:bg-[#B8252F] text-white px-8"
+                        disabled={isSubmitting || isLoadingCategories}
+                    >
+                        {isSubmitting ? 'Saving...' : 'Save Checklist'}
+                    </Button>
+                </div>
             </div>
         </div>
     );
+
+
 };

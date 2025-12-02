@@ -1,8 +1,18 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
-import { UserRoleResponse, permissionService } from '@/services/permissionService';
-import { permissionCache } from '@/services/simplePermissionCache';
-import { isAuthenticated } from '@/utils/auth';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useCallback,
+} from "react";
+import { useLocation } from "react-router-dom";
+import {
+  UserRoleResponse,
+  permissionService,
+} from "@/services/permissionService";
+import { permissionCache } from "@/services/simplePermissionCache";
+import { isAuthenticated } from "@/utils/auth";
 
 interface PermissionsContextType {
   userRole: UserRoleResponse | null;
@@ -11,16 +21,28 @@ interface PermissionsContextType {
   refreshPermissions: () => Promise<void>;
   isModuleEnabled: (moduleName: string) => boolean;
   isFunctionEnabled: (moduleName: string, functionName: string) => boolean;
-  isSubFunctionEnabled: (moduleName: string, functionName: string, subFunctionName: string) => boolean;
+  isSubFunctionEnabled: (
+    moduleName: string,
+    functionName: string,
+    subFunctionName: string
+  ) => boolean;
   hasPermissionForPath: (path: string) => boolean;
+  // NEW: Function-only methods (ignoring module)
+  isFunctionEnabledAnywhere: (functionName: string) => boolean;
+  isSubFunctionEnabledAnywhere: (
+    functionName: string,
+    subFunctionName: string
+  ) => boolean;
 }
 
-const PermissionsContext = createContext<PermissionsContextType | undefined>(undefined);
+const PermissionsContext = createContext<PermissionsContextType | undefined>(
+  undefined
+);
 
 export const usePermissions = () => {
   const context = useContext(PermissionsContext);
   if (context === undefined) {
-    throw new Error('usePermissions must be used within a PermissionsProvider');
+    throw new Error("usePermissions must be used within a PermissionsProvider");
   }
   return context;
 };
@@ -29,7 +51,9 @@ interface PermissionsProviderProps {
   children: ReactNode;
 }
 
-export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({ children }) => {
+export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({
+  children,
+}) => {
   const [userRole, setUserRole] = useState<UserRoleResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +69,7 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({ childr
 
     setLoading(true);
     setError(null);
-    
+
     try {
       const role = await permissionService.getUserRole();
       if (role) {
@@ -54,9 +78,10 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({ childr
         permissionCache.store(role);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch user permissions';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch user permissions";
       setError(errorMessage);
-      console.error('Error fetching user permissions:', err);
+      console.error("Error fetching user permissions:", err);
     } finally {
       setLoading(false);
     }
@@ -78,48 +103,121 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({ childr
     await fetchUserPermissions();
   }, [fetchUserPermissions]);
 
-  const isModuleEnabled = useCallback((moduleName: string): boolean => {
-    // Try cache first for better performance
-    const cached = permissionCache.isModuleEnabled(moduleName);
-    if (cached !== false || !userRole) return cached;
-    
-    // Fallback to service
-    return permissionService.isModuleEnabled(userRole, moduleName);
-  }, [userRole]);
+  const isModuleEnabled = useCallback(
+    (moduleName: string): boolean => {
+      // Prioritize fresh data if available
+      if (userRole) {
+        return permissionService.isModuleEnabled(userRole, moduleName);
+      }
 
-  const isFunctionEnabled = useCallback((moduleName: string, functionName: string): boolean => {
-    // Try cache first for better performance
-    const cached = permissionCache.isFunctionEnabled(moduleName, functionName);
-    if (cached !== false || !userRole) return cached;
-    
-    // Fallback to service
-    return permissionService.isFunctionEnabled(userRole, moduleName, functionName);
-  }, [userRole]);
+      // Fallback to cache if loading
+      const cached = permissionCache.isModuleEnabled(moduleName);
+      return cached;
+    },
+    [userRole]
+  );
 
-  const isSubFunctionEnabled = useCallback((moduleName: string, functionName: string, subFunctionName: string): boolean => {
-    // Try cache first for better performance
-    const cached = permissionCache.isSubFunctionEnabled(moduleName, functionName, subFunctionName);
-    if (cached !== false || !userRole) return cached;
-    
-    // Fallback to service
-    return permissionService.isSubFunctionEnabled(userRole, moduleName, functionName, subFunctionName);
-  }, [userRole]);
+  const isFunctionEnabled = useCallback(
+    (moduleName: string, functionName: string): boolean => {
+      // Prioritize fresh data if available
+      if (userRole) {
+        return permissionService.isFunctionEnabled(
+          userRole,
+          moduleName,
+          functionName
+        );
+      }
 
-  const hasPermissionForPath = useCallback((path: string): boolean => {
-    return permissionService.hasPermissionForPath(userRole, path);
-  }, [userRole]);
+      // Fallback to cache if loading
+      const cached = permissionCache.isFunctionEnabled(
+        moduleName,
+        functionName
+      );
+      return cached;
+    },
+    [userRole]
+  );
+
+  const isSubFunctionEnabled = useCallback(
+    (
+      moduleName: string,
+      functionName: string,
+      subFunctionName: string
+    ): boolean => {
+      // Prioritize fresh data if available
+      if (userRole) {
+        return permissionService.isSubFunctionEnabled(
+          userRole,
+          moduleName,
+          functionName,
+          subFunctionName
+        );
+      }
+
+      // Fallback to cache if loading
+      const cached = permissionCache.isSubFunctionEnabled(
+        moduleName,
+        functionName,
+        subFunctionName
+      );
+      return cached;
+    },
+    [userRole]
+  );
+
+  const isFunctionEnabledAnywhere = useCallback(
+    (functionName: string): boolean => {
+      // Try cache first for better performance
+      // TODO: Add cache support for function-only checks
+      if (!userRole) return false;
+
+      // Use new service method
+      return permissionService.isFunctionEnabledAnywhere(
+        userRole,
+        functionName
+      );
+    },
+    [userRole]
+  );
+
+  const isSubFunctionEnabledAnywhere = useCallback(
+    (functionName: string, subFunctionName: string): boolean => {
+      // Try cache first for better performance
+      // TODO: Add cache support for sub-function-only checks
+      if (!userRole) return true; // Fallback when no role data
+
+      // Use new service method
+      return permissionService.isSubFunctionEnabledAnywhere(
+        userRole,
+        functionName,
+        subFunctionName
+      );
+    },
+    [userRole]
+  );
+
+  const hasPermissionForPath = useCallback(
+    (path: string): boolean => {
+      return permissionService.hasPermissionForPath(userRole, path);
+    },
+    [userRole]
+  );
 
   return (
-    <PermissionsContext.Provider value={{
-      userRole,
-      loading,
-      error,
-      refreshPermissions,
-      isModuleEnabled,
-      isFunctionEnabled,
-      isSubFunctionEnabled,
-      hasPermissionForPath
-    }}>
+    <PermissionsContext.Provider
+      value={{
+        userRole,
+        loading,
+        error,
+        refreshPermissions,
+        isModuleEnabled,
+        isFunctionEnabled,
+        isSubFunctionEnabled,
+        hasPermissionForPath,
+        isFunctionEnabledAnywhere,
+        isSubFunctionEnabledAnywhere,
+      }}
+    >
       {children}
     </PermissionsContext.Provider>
   );
