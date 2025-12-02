@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { X } from 'lucide-react';
+import ReactSelect from 'react-select';
 import { apiClient } from '@/utils/apiClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,10 +27,25 @@ interface Status {
   active: number;
 }
 
+interface CommunicationTemplate {
+  id: number;
+  identifier: string;
+  identifier_action: string;
+  body: string;
+  resource_id: number;
+  resource_type: string;
+  active: boolean;
+}
+
 interface Complaint {
   id: number;
   complaint_status_id: number;
   issue_status: string;
+  rca_template_ids?: number[];
+  corrective_action_template_ids?: number[];
+  preventive_action_template_ids?: number[];
+  asset_service?: string;
+  asset_or_service_id?: number;
 }
 
 export const EditStatusDialog = ({ 
@@ -43,10 +59,12 @@ export const EditStatusDialog = ({
   const { toast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState('');
   const [statuses, setStatuses] = useState<Status[]>([]);
-  const [rootCause, setRootCause] = useState('');
-  const [correctiveAction, setCorrectiveAction] = useState('');
-  const [preventiveAction, setPreventiveAction] = useState('');
+  const [communicationTemplates, setCommunicationTemplates] = useState<CommunicationTemplate[]>([]);
+  const [rcaTemplateIds, setRcaTemplateIds] = useState<number[]>([]);
+  const [correctiveActionTemplateIds, setCorrectiveActionTemplateIds] = useState<number[]>([]);
+  const [preventiveActionTemplateIds, setPreventiveActionTemplateIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
+  const [ticketData, setTicketData] = useState<Complaint | null>(null);
 
   useEffect(() => {
     const fetchStatuses = async () => {
@@ -63,14 +81,58 @@ export const EditStatusDialog = ({
       }
     };
 
+    const fetchCommunicationTemplates = async () => {
+      try {
+        const response = await apiClient.get('/communication_templates.json');
+        setCommunicationTemplates(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch communication templates:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch templates",
+          variant: "destructive"
+        });
+      }
+    };
+
+    const fetchTicketData = async () => {
+      if (!complaintId) return;
+      
+      try {
+        const response = await apiClient.get(`/pms/admin/complaints/${complaintId}.json`);
+        const data = response.data;
+        setTicketData(data);
+        
+        // Pre-populate template IDs if they exist
+        if (data.rca_template_ids && Array.isArray(data.rca_template_ids)) {
+          setRcaTemplateIds(data.rca_template_ids);
+        }
+        if (data.corrective_action_template_ids && Array.isArray(data.corrective_action_template_ids)) {
+          setCorrectiveActionTemplateIds(data.corrective_action_template_ids);
+        }
+        if (data.preventive_action_template_ids && Array.isArray(data.preventive_action_template_ids)) {
+          setPreventiveActionTemplateIds(data.preventive_action_template_ids);
+        }
+      } catch (error) {
+        console.error('Failed to fetch ticket data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch ticket data",
+          variant: "destructive"
+        });
+      }
+    };
+
     if (open) {
       fetchStatuses();
+      fetchCommunicationTemplates();
+      fetchTicketData();
       // Set initial status if provided
       if (currentStatusId) {
         setSelectedStatus(currentStatusId.toString());
       }
     }
-  }, [open, currentStatusId, toast]);
+  }, [open, currentStatusId, complaintId, toast]);
 
   const handleApply = async () => {
     if (!complaintId || !selectedStatus) {
@@ -84,18 +146,40 @@ export const EditStatusDialog = ({
 
     setLoading(true);
     try {
-      // Create URL-encoded data for the PATCH request
-      const params = new URLSearchParams();
-      params.append('complaint[issue_status]', selectedStatus);
-      params.append('complaint[root_cause]', rootCause);
-      params.append('complaint[corrective_action]', correctiveAction);
-      params.append('complaint[preventive_action]', preventiveAction);
-
-      await apiClient.patch(`/pms/admin/complaints/${complaintId}.json`, params, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+      // Create FormData to match TicketDetailsPage format exactly
+      const formDataToSend = new FormData();
+      formDataToSend.append('complaint_log[complaint_id]', complaintId.toString());
+      
+      // Add issue_status
+      formDataToSend.append('issue_status', selectedStatus);
+      
+      // Add template IDs using the exact format from TicketDetailsPage
+      rcaTemplateIds.forEach(templateId => {
+        formDataToSend.append('root_cause[template_ids][]', String(templateId));
       });
+      
+      preventiveActionTemplateIds.forEach(templateId => {
+        formDataToSend.append('preventive_action[template_ids][]', String(templateId));
+      });
+      
+      correctiveActionTemplateIds.forEach(templateId => {
+        formDataToSend.append('corrective_action[template_ids][]', String(templateId));
+      });
+
+      // Add asset_id and service_id based on current ticket's association
+      if (ticketData?.asset_service === 'Asset' && ticketData?.asset_or_service_id) {
+        formDataToSend.append('asset_id', ticketData.asset_or_service_id.toString());
+        formDataToSend.append('service_id', '');
+      } else if (ticketData?.asset_service === 'Service' && ticketData?.asset_or_service_id) {
+        formDataToSend.append('asset_id', '');
+        formDataToSend.append('service_id', ticketData.asset_or_service_id.toString());
+      } else {
+        formDataToSend.append('asset_id', '');
+        formDataToSend.append('service_id', '');
+      }
+
+      // Use apiClient.post with FormData (apiClient handles authorization header)
+      await apiClient.post('/complaint_logs.json', formDataToSend);
 
       toast({
         title: "Success",
@@ -120,9 +204,9 @@ export const EditStatusDialog = ({
 
   const handleReset = () => {
     setSelectedStatus('');
-    setRootCause('');
-    setCorrectiveAction('');
-    setPreventiveAction('');
+    setRcaTemplateIds([]);
+    setCorrectiveActionTemplateIds([]);
+    setPreventiveActionTemplateIds([]);
   };
 
   return (
@@ -161,26 +245,82 @@ export const EditStatusDialog = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="rootCause" className="text-sm font-medium">
-                Root Cause
+                Root Cause Analysis
               </Label>
-              <Textarea
-                id="rootCause"
-                value={rootCause}
-                onChange={(e) => setRootCause(e.target.value)}
-                className="mt-1 min-h-[80px]"
-                placeholder=""
+              <ReactSelect
+                isMulti
+                value={communicationTemplates
+                  .filter(template => 
+                    rcaTemplateIds.includes(template.id) && 
+                    template.identifier === "Root Cause Analysis" &&
+                    template.active === true
+                  )
+                  .map(t => ({ value: t.id, label: t.identifier_action }))}
+                onChange={(selected) => {
+                  setRcaTemplateIds(selected ? selected.map((s) => s.value as number) : []);
+                }}
+                options={communicationTemplates
+                  .filter(template => 
+                    template.identifier === "Root Cause Analysis" && 
+                    template.active === true
+                  )
+                  .map(t => ({ value: t.id, label: t.identifier_action }))}
+                placeholder="Select Root Cause Analysis"
+                className="mt-1"
+                styles={{
+                  control: (provided, state) => ({
+                    ...provided,
+                    minHeight: "44px",
+                    borderColor: state.isFocused ? "#C72030" : "#dcdcdc",
+                    boxShadow: "none",
+                    fontSize: "14px",
+                    "&:hover": { borderColor: "#C72030" },
+                  }),
+                  menu: (provided) => ({
+                    ...provided,
+                    zIndex: 9999,
+                  }),
+                }}
               />
             </div>
             <div>
               <Label htmlFor="correctiveAction" className="text-sm font-medium">
                 Corrective Action
               </Label>
-              <Textarea
-                id="correctiveAction"
-                value={correctiveAction}
-                onChange={(e) => setCorrectiveAction(e.target.value)}
-                className="mt-1 min-h-[80px]"
-                placeholder=""
+              <ReactSelect
+                isMulti
+                value={communicationTemplates
+                  .filter(template => 
+                    correctiveActionTemplateIds.includes(template.id) && 
+                    template.identifier === "Corrective Action" &&
+                    template.active === true
+                  )
+                  .map(t => ({ value: t.id, label: t.identifier_action }))}
+                onChange={(selected) => {
+                  setCorrectiveActionTemplateIds(selected ? selected.map((s) => s.value as number) : []);
+                }}
+                options={communicationTemplates
+                  .filter(template => 
+                    template.identifier === "Corrective Action" && 
+                    template.active === true
+                  )
+                  .map(t => ({ value: t.id, label: t.identifier_action }))}
+                placeholder="Select Corrective Action"
+                className="mt-1"
+                styles={{
+                  control: (provided, state) => ({
+                    ...provided,
+                    minHeight: "44px",
+                    borderColor: state.isFocused ? "#C72030" : "#dcdcdc",
+                    boxShadow: "none",
+                    fontSize: "14px",
+                    "&:hover": { borderColor: "#C72030" },
+                  }),
+                  menu: (provided) => ({
+                    ...provided,
+                    zIndex: 9999,
+                  }),
+                }}
               />
             </div>
           </div>
@@ -189,12 +329,40 @@ export const EditStatusDialog = ({
             <Label htmlFor="preventiveAction" className="text-sm font-medium">
               Preventive Action
             </Label>
-            <Textarea
-              id="preventiveAction"
-              value={preventiveAction}
-              onChange={(e) => setPreventiveAction(e.target.value)}
-              className="mt-1 min-h-[80px]"
-              placeholder=""
+            <ReactSelect
+              isMulti
+              value={communicationTemplates
+                .filter(template => 
+                  preventiveActionTemplateIds.includes(template.id) && 
+                  template.identifier === "Preventive Action" &&
+                  template.active === true
+                )
+                .map(t => ({ value: t.id, label: t.identifier_action }))}
+              onChange={(selected) => {
+                setPreventiveActionTemplateIds(selected ? selected.map((s) => s.value as number) : []);
+              }}
+              options={communicationTemplates
+                .filter(template => 
+                  template.identifier === "Preventive Action" && 
+                  template.active === true
+                )
+                .map(t => ({ value: t.id, label: t.identifier_action }))}
+              placeholder="Select Preventive Action"
+              className="mt-1"
+              styles={{
+                control: (provided, state) => ({
+                  ...provided,
+                  minHeight: "44px",
+                  borderColor: state.isFocused ? "#C72030" : "#dcdcdc",
+                  boxShadow: "none",
+                  fontSize: "14px",
+                  "&:hover": { borderColor: "#C72030" },
+                }),
+                menu: (provided) => ({
+                  ...provided,
+                  zIndex: 9999,
+                }),
+              }}
             />
           </div>
 
