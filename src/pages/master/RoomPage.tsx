@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Square, Check, Plus, FileDown, X, ChevronLeft, ChevronRight, Upload, Download, Loader2 } from 'lucide-react';
+import { Edit, Square, Check, Plus, FileDown, X, ChevronLeft, ChevronRight, Upload, Download, Loader2, QrCode } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { 
   fetchBuildings, 
@@ -36,6 +36,8 @@ export const RoomPage = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<any>(null);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [selectedQrCode, setSelectedQrCode] = useState<string>('');
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -753,25 +755,26 @@ export const RoomPage = () => {
                   <TableHead>Floor</TableHead>
                   <TableHead>Unit</TableHead>
                   <TableHead>Room</TableHead>
+                  <TableHead>QR Code</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rooms.loading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-4">
+                    <TableCell colSpan={10} className="text-center py-4">
                       Loading rooms...
                     </TableCell>
                   </TableRow>
                 ) : rooms.error ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-4 text-red-500">
+                    <TableCell colSpan={10} className="text-center py-4 text-red-500">
                       Error: {rooms.error}
                     </TableCell>
                   </TableRow>
                 ) : filteredRooms.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-4">
+                    <TableCell colSpan={10} className="text-center py-4">
                       {rooms.data.length === 0 ? 'No rooms available' : 'No rooms match your search'}
                     </TableCell>
                   </TableRow>
@@ -791,6 +794,23 @@ export const RoomPage = () => {
                         {room.unit?.unit_name || (room.unit_id ? `Unit ${room.unit_id}` : '-')}
                       </TableCell>
                       <TableCell>{room.name}</TableCell>
+                      <TableCell>
+                        {room.room_qr_code ? (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedQrCode(room.room_qr_code);
+                              setIsQrModalOpen(true);
+                            }}
+                            className="text-[#C72030] hover:text-[#C72030]/80"
+                          >
+                            <QrCode className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </TableCell>
                        <TableCell>
                          <button onClick={() => toggleRoomStatus(room.id)} className="cursor-pointer">
                            {room.active ? (
@@ -1063,6 +1083,45 @@ export const RoomPage = () => {
                 >
                   Submit
                 </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* QR Code Modal */}
+          <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Room QR Code</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center space-y-4 py-4">
+                {selectedQrCode ? (
+                  <>
+                    <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
+                      <img 
+                        src={selectedQrCode} 
+                        alt="Room QR Code" 
+                        className="w-64 h-64 object-contain"
+                      />
+                    </div>
+                    <Button
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = selectedQrCode;
+                        link.download = `room-qr-code-${Date.now()}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        toast.success('QR Code downloaded successfully');
+                      }}
+                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download QR Code
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-gray-500">No QR code available</p>
+                )}
               </div>
             </DialogContent>
           </Dialog>

@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Plus, X, Edit, Check, ChevronLeft, ChevronRight, Download, Upload, Loader2 } from 'lucide-react';
+import { Plus, X, Edit, Check, ChevronLeft, ChevronRight, Download, Upload, Loader2, QrCode } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { 
   fetchBuildings, 
@@ -31,6 +31,8 @@ export function WingPage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [selectedQrCode, setSelectedQrCode] = useState<string>('');
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -450,19 +452,20 @@ export function WingPage() {
                   <TableHead className="px-4 py-3 text-left font-medium">Actions</TableHead>
                   <TableHead className="px-4 py-3 text-left font-medium">Building</TableHead>
                   <TableHead className="px-4 py-3 text-left font-medium">Wing Name</TableHead>
+                  <TableHead className="px-4 py-3 text-left font-medium">QR Code</TableHead>
                   <TableHead className="px-4 py-3 text-left font-medium">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {wings.loading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-4">
+                    <TableCell colSpan={5} className="text-center py-4">
                       Loading wings...
                     </TableCell>
                   </TableRow>
                 ) : filteredWings.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-4">
+                    <TableCell colSpan={5} className="text-center py-4">
                       {wings.data.length === 0 ? 'No wings available' : 'No wings match your search'}
                     </TableCell>
                   </TableRow>
@@ -476,6 +479,23 @@ export function WingPage() {
                       </TableCell>
                       <TableCell>{wing.building?.name || 'N/A'}</TableCell>
                       <TableCell>{wing.name}</TableCell>
+                      <TableCell>
+                        {wing.qr_code_url ? (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedQrCode(wing.qr_code_url);
+                              setIsQrModalOpen(true);
+                            }}
+                            className="text-[#C72030] hover:text-[#C72030]/80"
+                          >
+                            <QrCode className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <button onClick={() => handleToggleStatus(wing.id, wing.active)} className="cursor-pointer">
                           {wing.active ? (
@@ -661,6 +681,45 @@ export function WingPage() {
                   </div>
                 </form>
               </Form>
+            </DialogContent>
+          </Dialog>
+
+          {/* QR Code Modal */}
+          <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Wing QR Code</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center space-y-4 py-4">
+                {selectedQrCode ? (
+                  <>
+                    <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
+                      <img 
+                        src={selectedQrCode} 
+                        alt="Wing QR Code" 
+                        className="w-64 h-64 object-contain"
+                      />
+                    </div>
+                    <Button
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = selectedQrCode;
+                        link.download = `wing-qr-code-${Date.now()}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        toast('QR Code downloaded successfully');
+                      }}
+                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download QR Code
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-gray-500">No QR code available</p>
+                )}
+              </div>
             </DialogContent>
           </Dialog>
         </div>
