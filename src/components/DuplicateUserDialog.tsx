@@ -38,8 +38,10 @@ export const DuplicateUserDialog: React.FC<DuplicateUserDialogProps> = ({
   companies,
   errorMessage,
 }) => {
-  const userType = localStorage.getItem("user_type");
+  const userType = localStorage.getItem("userType");
   const isOrgAdmin = userType === "pms_organization_admin";
+
+  console.log("isOrgAdmin", userType);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
