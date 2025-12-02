@@ -269,7 +269,7 @@ export const CreateAdminUserPage = () => {
   };
 
   const handleCancel = () => {
-    navigate("/ops-console/master/user/fm-users");
+    navigate("/ops-console/admin/users");
   };
 
   return (
