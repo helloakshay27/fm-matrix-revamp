@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download } from 'lucide-react';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
-// Color palette with lighter shades
+// Color palette matching CategoryWiseProactiveReactiveCard
 const CHART_COLORS = {
-  primary: '#C4B99D',
-  secondary: '#DAD6CA',
-  tertiary: '#D5DBDB',
-  primaryLight: '#DDD4C4',    // Lighter shade of primary
-  secondaryLight: '#E8E5DD',  // Lighter shade of secondary
-  tertiaryLight: '#E5E9E9',   // Lighter shade of tertiary
+  openAchieved: '#8B7355',      // Darker brown for Open Achieved
+  openBreached: '#C4B99D',      // Original primary for Open Breached
+  closeAchieved: '#B8AFA0',     // Medium shade for Close Achieved
+  closeBreached: '#DAD6CA',     // Original secondary for Close Breached
 };
 
 interface ResponseTATData {
@@ -110,72 +108,46 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
     );
   }
 
-  // Prepare data for Response TAT chart (4 separate segments)
-  const responseTATData = [
+  // Prepare data for Response TAT bar chart - Two categories: Open and Close
+  const responseTATChartData = [
     {
-      name: 'Open - Achieved',
-      value: data.response.response_tat.open.achieved,
-      color: CHART_COLORS.primary,
-      status: 'Achieved',
-      state: 'Open'
+      name: 'Open',
+      achieved: data.response.response_tat.open.achieved,
+      breached: data.response.response_tat.open.breached,
     },
     {
-      name: 'Open - Breached',
-      value: data.response.response_tat.open.breached,
-      color: CHART_COLORS.secondary,
-      status: 'Breached',
-      state: 'Open'
-    },
-    {
-      name: 'Close - Achieved',
-      value: data.response.response_tat.close.achieved,
-      color: CHART_COLORS.primaryLight,
-      status: 'Achieved',
-      state: 'Close'
-    },
-    {
-      name: 'Close - Breached',
-      value: data.response.response_tat.close.breached,
-      color: CHART_COLORS.secondaryLight,
-      status: 'Breached',
-      state: 'Close'
+      name: 'Close',
+      achieved: data.response.response_tat.close.achieved,
+      breached: data.response.response_tat.close.breached,
     }
   ];
 
-  // Prepare data for Resolution TAT chart (4 separate segments)
-  const resolutionTATData = [
+  // Prepare data for Resolution TAT bar chart - Two categories: Open and Close
+  const resolutionTATChartData = [
     {
-      name: 'Open - Achieved',
-      value: data.response.resolution_tat.open.achieved,
-      color: CHART_COLORS.primary,
-      status: 'Achieved',
-      state: 'Open'
+      name: 'Open',
+      achieved: data.response.resolution_tat.open.achieved,
+      breached: data.response.resolution_tat.open.breached,
     },
     {
-      name: 'Open - Breached',
-      value: data.response.resolution_tat.open.breached,
-      color: CHART_COLORS.secondary,
-      status: 'Breached',
-      state: 'Open'
-    },
-    {
-      name: 'Close - Achieved',
-      value: data.response.resolution_tat.close.achieved,
-      color: CHART_COLORS.primaryLight,
-      status: 'Achieved',
-      state: 'Close'
-    },
-    {
-      name: 'Close - Breached',
-      value: data.response.resolution_tat.close.breached,
-      color: CHART_COLORS.secondaryLight,
-      status: 'Breached',
-      state: 'Close'
+      name: 'Close',
+      achieved: data.response.resolution_tat.close.achieved,
+      breached: data.response.resolution_tat.close.breached,
     }
   ];
 
-  const responseTotalValue = responseTATData.reduce((sum, item) => sum + item.value, 0);
-  const resolutionTotalValue = resolutionTATData.reduce((sum, item) => sum + item.value, 0);
+  // Calculate totals for display
+  const responseTotalValue = 
+    data.response.response_tat.open.achieved +
+    data.response.response_tat.open.breached +
+    data.response.response_tat.close.achieved +
+    data.response.response_tat.close.breached;
+
+  const resolutionTotalValue = 
+    data.response.resolution_tat.open.achieved +
+    data.response.resolution_tat.open.breached +
+    data.response.resolution_tat.close.achieved +
+    data.response.resolution_tat.close.breached;
 
   return (
     <Card className={`bg-white ${className} relative z-0`}>
@@ -204,63 +176,46 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Response TAT Chart */}
           <div className="text-center">
-            <h3 className="text-md font-semibold text-gray-700">Response TAT</h3>
-            <div className="relative flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={responseTATData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                    label={({ value, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                      const RADIAN = Math.PI / 180;
-                      const radius = innerRadius + (outerRadius - innerRadius) * 0.6  ;
-                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                      return (
-                        <text
-                          x={x}
-                          y={y}
-                          fill="white"
-                          textAnchor={x > cx ? 'start' : 'end'}
-                          dominantBaseline="central"
-                          fontSize="11"
-                          fontWeight="bold"
-                        >
-                          {value}
-                        </text>
-                      );
-                    }}
-                    labelLine={false}
-                  >
-                    {responseTATData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
+            <h3 className="text-md font-semibold text-gray-700 mb-2">Response TAT</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={responseTATChartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
+                  <XAxis
+                    dataKey="name"
+                    fontSize={12}
+                    tick={{ fill: '#374151' }}
+                  />
+                  <YAxis
+                    fontSize={12}
+                    tick={{ fill: '#374151' }}
+                    allowDecimals={false}
+                    domain={[0, Math.max(3, Math.ceil(responseTotalValue * 0.6))]}
+                  />
+                  <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
+                        const total = data.achieved + data.breached;
                         return (
-                          <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg z-50">
+                          <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
                             <p className="font-semibold text-gray-800 mb-2">{data.name}</p>
                             <div className="space-y-1">
                               <div className="flex justify-between items-center gap-4">
-                                <span className="text-gray-600 font-medium">Status:</span>
-                                <span className="text-gray-700">{data.status}</span>
+                                <span className="font-medium" style={{ color: CHART_COLORS.openAchieved }}>Achieved:</span>
+                                <span className="text-gray-700">{data.achieved}</span>
                               </div>
                               <div className="flex justify-between items-center gap-4">
-                                <span className="text-gray-600 font-medium">State:</span>
-                                <span className="text-gray-700">{data.state}</span>
+                                <span className="font-medium" style={{ color: CHART_COLORS.openBreached }}>Breached:</span>
+                                <span className="text-gray-700">{data.breached}</span>
                               </div>
                               <div className="pt-1 border-t border-gray-200">
                                 <div className="flex justify-between items-center font-semibold gap-4">
-                                  <span>Count:</span>
-                                  <span>{data.value}</span>
+                                  <span>Total:</span>
+                                  <span>{total}</span>
                                 </div>
                               </div>
                             </div>
@@ -269,79 +224,56 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
                       }
                       return null;
                     }}
-                    wrapperStyle={{ zIndex: 1000 }}
                   />
-                </PieChart>
+                  <Bar dataKey="achieved" stackId="a" fill={CHART_COLORS.openAchieved} name="Achieved" />
+                  <Bar dataKey="breached" stackId="a" fill={CHART_COLORS.openBreached} name="Breached" />
+                </BarChart>
               </ResponsiveContainer>
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <div className="text-center">
-                  <div className="text-xl font-extrabold">{responseTotalValue}</div>
-                  <div className="text-base font-semibold text-gray-700">Total</div>
-                </div>
-              </div>
             </div>
-           
           </div>
 
           {/* Resolution TAT Chart */}
           <div className="text-center">
-            <h3 className="text-md font-semibold text-gray-700">Resolution TAT</h3>
-            <div className="relative flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={resolutionTATData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                    label={({ value, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                      const RADIAN = Math.PI / 180;
-                      const radius = innerRadius + (outerRadius - innerRadius) * 0.6  ;
-                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                      return (
-                        <text
-                          x={x}
-                          y={y}
-                          fill="white"
-                          textAnchor={x > cx ? 'start' : 'end'}
-                          dominantBaseline="central"
-                          fontSize="11"
-                          fontWeight="bold"
-                        >
-                          {value}
-                        </text>
-                      );
-                    }}
-                    labelLine={false}
-                  >
-                    {resolutionTATData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
+            <h3 className="text-md font-semibold text-gray-700 mb-2">Resolution TAT</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={resolutionTATChartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
+                  <XAxis
+                    dataKey="name"
+                    fontSize={12}
+                    tick={{ fill: '#374151' }}
+                  />
+                  <YAxis
+                    fontSize={12}
+                    tick={{ fill: '#374151' }}
+                    allowDecimals={false}
+                    domain={[0, Math.max(3, Math.ceil(resolutionTotalValue * 0.6))]}
+                  />
+                  <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
+                        const total = data.achieved + data.breached;
                         return (
-                          <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg z-50">
+                          <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
                             <p className="font-semibold text-gray-800 mb-2">{data.name}</p>
                             <div className="space-y-1">
                               <div className="flex justify-between items-center gap-4">
-                                <span className="text-gray-600 font-medium">Status:</span>
-                                <span className="text-gray-700">{data.status}</span>
+                                <span className="font-medium" style={{ color: CHART_COLORS.openAchieved }}>Achieved:</span>
+                                <span className="text-gray-700">{data.achieved}</span>
                               </div>
                               <div className="flex justify-between items-center gap-4">
-                                <span className="text-gray-600 font-medium">State:</span>
-                                <span className="text-gray-700">{data.state}</span>
+                                <span className="font-medium" style={{ color: CHART_COLORS.openBreached }}>Breached:</span>
+                                <span className="text-gray-700">{data.breached}</span>
                               </div>
                               <div className="pt-1 border-t border-gray-200">
                                 <div className="flex justify-between items-center font-semibold gap-4">
-                                  <span>Count:</span>
-                                  <span>{data.value}</span>
+                                  <span>Total:</span>
+                                  <span>{total}</span>
                                 </div>
                               </div>
                             </div>
@@ -350,32 +282,32 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
                       }
                       return null;
                     }}
-                    wrapperStyle={{ zIndex: 1000 }}
                   />
-                </PieChart>
+                  <Bar dataKey="achieved" stackId="a" fill={CHART_COLORS.openAchieved} name="Achieved" />
+                  <Bar dataKey="breached" stackId="a" fill={CHART_COLORS.openBreached} name="Breached" />
+                </BarChart>
               </ResponsiveContainer>
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <div className="text-center">
-                  <div className="text-xl font-extrabold ">{resolutionTotalValue}</div>
-                  <div className="text-base font-semibold text-gray-700">Total</div>
-                </div>
-              </div>
             </div>
-           
           </div>
-         
         </div>
-          <div className="flex flex-wrap justify-center gap-x-10 gap-y-1 mt-2 px-2">
-              {responseTATData.map((item, index) => (
-                <div key={index} className="flex items-center gap-1.5">
-                  <div 
-                    className="w-3 h-3 rounded-sm flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{item.name}</span>
-                </div>
-              ))}
-            </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap justify-center gap-x-10 gap-y-1 mt-4 px-2">
+          <div className="flex items-center gap-1.5">
+            <div 
+              className="w-3 h-3 rounded-sm flex-shrink-0"
+              style={{ backgroundColor: CHART_COLORS.openAchieved }}
+            />
+            <span className="text-xs font-medium text-gray-700 whitespace-nowrap">Achieved</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div 
+              className="w-3 h-3 rounded-sm flex-shrink-0"
+              style={{ backgroundColor: CHART_COLORS.openBreached }}
+            />
+            <span className="text-xs font-medium text-gray-700 whitespace-nowrap">Breached</span>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
