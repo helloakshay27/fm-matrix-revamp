@@ -5,7 +5,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Plus, X } from 'lucide-react';
+import { Eye, Plus, X, Flag } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,8 +21,9 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { getAuthHeader, getFullUrl, API_CONFIG } from '@/config/apiConfig';
+import { OutboundStats } from '@/components/OutboundStats';
 import {
   Pagination,
   PaginationContent,
@@ -44,6 +45,7 @@ interface OutboundMail {
   type: string;
   dateOfSending: string;
   statusType: string;
+  is_flagged?: boolean;
 }
 
 const OUTBOUND_ENDPOINT = '/pms/admin/mail_outbounds.json';
@@ -94,11 +96,11 @@ const mapOutboundRecord = (item: any): OutboundMail => ({
     item.sending_date || item.date_of_sending || item.send_date || item.receive_date,
   ),
   statusType: formatStatus(item.status),
+  is_flagged: item.is_flagged || false,
 });
 
 export const OutboundListPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const [outboundMails, setOutboundMails] = useState<OutboundMail[]>([]);
   const [loading, setLoading] = useState(false);
@@ -131,6 +133,20 @@ export const OutboundListPage = () => {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Stats state
+  const [stats, setStats] = useState({ sent: 0, inTransit: 0, delivered: 0, overdue: 0 });
+
+  // Counts from API
+  const [counts, setCounts] = useState({
+    sent_count: 0,
+    in_transit_count: 0,
+    delivered_count: 0,
+    overdue_count: 0
+  });
+
+  // Refresh trigger for flag updates
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const formatDateForApi = (dateString: string): string => {
     if (!dateString) return '';
@@ -188,6 +204,16 @@ export const OutboundListPage = () => {
 
         setOutboundMails(records.map(mapOutboundRecord));
 
+        // Extract counts from API response
+        if (data?.counts) {
+          setCounts({
+            sent_count: data.counts.sent_count || 0,
+            in_transit_count: data.counts.in_transit_count || 0,
+            delivered_count: data.counts.delivered_count || 0,
+            overdue_count: data.counts.overdue_count || 0
+          });
+        }
+
         const paginationInfo =
           data?.meta?.pagination ||
           data?.pagination ||
@@ -210,18 +236,24 @@ export const OutboundListPage = () => {
         setTotalPages(derivedTotalPages);
       } catch (error) {
         console.error(error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load outbound mails',
-          variant: 'destructive',
-        });
+        toast.error('Failed to load outbound mails');
       } finally {
         setLoading(false);
       }
     };
 
     fetchOutboundMails();
-  }, [toast, currentPage, appliedFilterStatus, appliedFilterSender, appliedFilterVendor, appliedFilterCreatedDateFrom, appliedFilterCreatedDateTo, searchQuery]);
+  }, [currentPage, appliedFilterStatus, appliedFilterSender, appliedFilterVendor, appliedFilterCreatedDateFrom, appliedFilterCreatedDateTo, searchQuery, refreshTrigger]);
+
+  // Calculate stats using counts from API
+  useEffect(() => {
+    setStats({
+      sent: counts.sent_count,
+      inTransit: counts.in_transit_count,
+      delivered: counts.delivered_count,
+      overdue: counts.overdue_count
+    });
+  }, [counts]);
 
   // Fetch vendors and senders when filter modal opens
   useEffect(() => {
@@ -308,7 +340,7 @@ export const OutboundListPage = () => {
   };
 
   const columns: ColumnConfig[] = [
-    { key: 'view', label: 'View', sortable: false, draggable: false },
+    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'senderName', label: 'Sender Name', sortable: true, draggable: true },
     { key: 'unit', label: 'Unit', sortable: true, draggable: true },
@@ -319,21 +351,57 @@ export const OutboundListPage = () => {
     { key: 'type', label: 'Type', sortable: true, draggable: true },
     { key: 'dateOfSending', label: 'Date of Sending', sortable: true, draggable: true },
     { key: 'statusType', label: 'Status Type', sortable: true, draggable: true },
+    { key: 'flag', label: 'Flag', sortable: false, draggable: false },
   ];
 
   const renderCell = (item: OutboundMail, columnKey: string) => {
-    if (columnKey === 'view') {
+    if (columnKey === 'actions') {
       return (
-        <button onClick={() => handleViewOutbound(item.id)} className="text-stone-800">
-          <Eye className="w-5 h-5" />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleViewOutbound(item.id)}
+            className="text-stone-800 hover:text-[#C72030] transition-colors"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+          <div title="Flag Mail">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleFlag(item.id);
+              }}
+              className={`${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'} hover:text-[#C72030] transition-colors cursor-pointer`}
+            >
+              <Flag className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (columnKey === 'flag') {
+      const isFlagged = item.is_flagged || false;
+      return (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggleFlag(item.id);
+          }}
+          className={`${isFlagged ? 'text-red-500' : 'text-gray-400'} hover:scale-110 transition-transform`}
+        >
+          <Flag className="w-5 h-5" fill={isFlagged ? 'currentColor' : 'none'} />
         </button>
       );
     }
+
     if (columnKey === 'statusType') {
       const statusColors: Record<string, string> = {
         Collected: 'bg-green-100 text-green-800',
         Overdue: 'bg-red-100 text-red-800',
         Pending: 'bg-yellow-100 text-yellow-800',
+        Sent: 'bg-blue-100 text-blue-800',
+        'In Transit': 'bg-purple-100 text-purple-800',
+        Delivered: 'bg-green-100 text-green-800',
       };
       return (
         <Badge className={`${statusColors[item.statusType] || 'bg-gray-100 text-gray-800'}`}>
@@ -377,8 +445,60 @@ export const OutboundListPage = () => {
     setAppliedFilterCreatedDateTo('');
   };
 
+  // Handle flag toggle
+  const handleToggleFlag = async (id: number) => {
+    try {
+      const response = await fetch(
+        getFullUrl(`/pms/admin/mail_outbounds/${id}/flag_unflag`),
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': getAuthHeader(),
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle flag');
+      }
+
+      // Get the current flag status before refresh
+      const mail = outboundMails.find(m => m.id === id);
+      const wasFlagged = mail?.is_flagged || false;
+
+      toast.dismiss();
+      toast.success(`Flag ${wasFlagged ? 'Deactivated' : 'Activated'}`);
+
+      // Refresh the list to show updated is_flagged status from API
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error('Error toggling flag:', error);
+      toast.error('Failed to update flag status');
+    }
+  };
+
+  // Handle card click
+  const handleCardClick = (status: 'sent' | 'in_transit' | 'delivered' | 'overdue') => {
+    // Map the status to the API filter value
+    const statusMap = {
+      'sent': 'sent',
+      'in_transit': 'in_transit',
+      'delivered': 'delivered',
+      'overdue': 'overdue'
+    };
+
+    const apiStatus = statusMap[status];
+    setFilterStatus(apiStatus);
+    setAppliedFilterStatus(apiStatus);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
   return (
     <div className="p-[30px]">
+      {/* Stats Cards */}
+      <OutboundStats stats={stats} onCardClick={handleCardClick} />
+
       {showActionPanel && (
         <SelectionPanel
           onAdd={() => navigate('/vas/mailroom/outbound/create')}

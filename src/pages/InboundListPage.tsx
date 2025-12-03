@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { getFullUrl, getAuthHeader, API_CONFIG } from '@/config/apiConfig';
 import {
     Pagination,
@@ -52,6 +52,7 @@ interface InboundMail {
     collectedOn: string;
     collectedBy: string;
     image?: string;
+    is_flagged?: boolean;
 }
 
 const MAIL_INBOUND_LIST_ENDPOINT = '/pms/admin/mail_inbounds.json';
@@ -129,11 +130,11 @@ const mapInboundRecord = (item: any): InboundMail => ({
     collectedOn: formatDate(item.collected_on),
     collectedBy: item.collected_by || item.collected_by_name || '',
     image: item.attachments?.[0]?.document_url || item.attachments?.[0]?.document?.url,
+    is_flagged: item.is_flagged || false,
 });
 
 export const InboundListPage = () => {
     const navigate = useNavigate();
-    const { toast } = useToast();
     const [inboundMails, setInboundMails] = useState<InboundMail[]>([]);
     const [showActionPanel, setShowActionPanel] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -165,6 +166,13 @@ export const InboundListPage = () => {
     // Stats state
     const [stats, setStats] = useState({ receives: 0, collected: 0, overdue: 0 });
 
+    // Counts from API
+    const [counts, setCounts] = useState({
+        recieved_count: 0,
+        collected_count: 0,
+        overdue_count: 0
+    });
+
     // Selection and action modal state
     const [selectedMails, setSelectedMails] = useState<number[]>([]);
     // const [isActionModalOpen, setIsActionModalOpen] = useState(false); // Removed in favor of panel
@@ -185,11 +193,8 @@ export const InboundListPage = () => {
     const [isLoadingCollectEmployees, setIsLoadingCollectEmployees] = useState(false);
     const [isCollectingPackage, setIsCollectingPackage] = useState(false);
 
-    // Flag state (stored in localStorage)
-    const [flaggedMails, setFlaggedMails] = useState<number[]>(() => {
-        const stored = localStorage.getItem('flaggedInboundMails');
-        return stored ? JSON.parse(stored) : [];
-    });
+    // Refresh trigger state
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     useEffect(() => {
         const fetchInboundMails = async () => {
@@ -238,6 +243,15 @@ export const InboundListPage = () => {
                 const mapped = records.map(mapInboundRecord);
                 setInboundMails(mapped);
 
+                // Extract counts from API response
+                if (data?.counts) {
+                    setCounts({
+                        recieved_count: data.counts.recieved_count || 0,
+                        collected_count: data.counts.collected_count || 0,
+                        overdue_count: data.counts.overdue_count || 0
+                    });
+                }
+
                 const paginationInfo =
                     data?.meta?.pagination ||
                     data?.pagination ||
@@ -260,30 +274,22 @@ export const InboundListPage = () => {
                 setTotalPages(derivedTotalPages);
             } catch (error) {
                 console.error('Error fetching inbound mails:', error);
-                toast({
-                    title: 'Error',
-                    description: 'Failed to load inbound mails',
-                    variant: 'destructive',
-                });
+                toast.error('Failed to load inbound mails');
             } finally {
                 setLoading(false);
             }
         };
         fetchInboundMails();
-    }, [toast, currentPage, appliedFilterStatus, appliedFilterVendor, appliedFilterReceivedOn, appliedFilterCollectedOn, searchQuery]);
+    }, [toast, currentPage, appliedFilterStatus, appliedFilterVendor, appliedFilterReceivedOn, appliedFilterCollectedOn, searchQuery, refreshTrigger]);
 
-    // Calculate stats whenever inboundMails changes
+    // Calculate stats using counts from API
     useEffect(() => {
-        const receives = inboundMails.filter(m => m.status.toLowerCase() !== 'collected').length;
-        const collected = inboundMails.filter(m => m.status.toLowerCase() === 'collected').length;
-        const overdue = inboundMails.filter(m => m.status.toLowerCase() === 'overdue').length;
-        setStats({ receives, collected, overdue });
-    }, [inboundMails]);
-
-    // Save flagged mails to localStorage whenever it changes
-    useEffect(() => {
-        localStorage.setItem('flaggedInboundMails', JSON.stringify(flaggedMails));
-    }, [flaggedMails]);
+        setStats({
+            receives: counts.recieved_count,
+            collected: counts.collected_count,
+            overdue: counts.overdue_count
+        });
+    }, [counts]);
 
     // Fetch vendors when filter modal opens
     useEffect(() => {
@@ -308,18 +314,14 @@ export const InboundListPage = () => {
                 setVendors(data.delivery_vendors || data || []);
             } catch (error) {
                 console.error('Error fetching vendors:', error);
-                toast({
-                    title: 'Error',
-                    description: 'Failed to load vendors',
-                    variant: 'destructive',
-                });
+                toast.error('Failed to load vendors');
             } finally {
                 setIsLoadingVendors(false);
             }
         };
 
         fetchVendors();
-    }, [isFilterModalOpen, toast]);
+    }, [isFilterModalOpen]);
 
     const statusOptions = useMemo(() => {
         const uniqueStatuses = new Set(
@@ -519,7 +521,7 @@ export const InboundListPage = () => {
                                 e.stopPropagation();
                                 handleToggleFlag(item.id);
                             }}
-                            className={`${flaggedMails.includes(item.id) ? 'text-red-500 fill-red-500' : 'text-gray-600'} hover:text-[#C72030] transition-colors cursor-pointer`}
+                            className={`${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'} hover:text-[#C72030] transition-colors cursor-pointer`}
                         >
                             <Flag className="w-4 h-4" />
                         </button>
@@ -529,7 +531,7 @@ export const InboundListPage = () => {
         }
 
         if (columnKey === 'flag') {
-            const isFlagged = flaggedMails.includes(item.id);
+            const isFlagged = item.is_flagged || false;
             return (
                 <button
                     onClick={(e) => {
@@ -584,14 +586,36 @@ export const InboundListPage = () => {
     };
 
     // Handle flag toggle
-    const handleToggleFlag = (id: number) => {
-        setFlaggedMails(prev => {
-            if (prev.includes(id)) {
-                return prev.filter(mailId => mailId !== id);
-            } else {
-                return [...prev, id];
+    const handleToggleFlag = async (id: number) => {
+        try {
+            const response = await fetch(
+                getFullUrl(`/pms/admin/mail_inbounds/${id}/flag_unflag`),
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': getAuthHeader(),
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to toggle flag');
             }
-        });
+
+            // Get the current flag status before refresh
+            const mail = inboundMails.find(m => m.id === id);
+            const wasFlagged = mail?.is_flagged || false;
+            
+            toast.dismiss();
+            toast.success(`Flag ${wasFlagged ? 'Deactivated' : 'Activated'}`);
+            
+            // Refresh the list to show updated is_flagged status from API
+            setRefreshTrigger(prev => prev + 1);
+        } catch (error) {
+            console.error('Error toggling flag:', error);
+            toast.error('Failed to update flag status');
+        }
     };
 
     // Handle checkbox change
@@ -629,11 +653,7 @@ export const InboundListPage = () => {
             setDelegateEmployees(data.users || data || []);
         } catch (error) {
             console.error('Employee list fetch failed:', error);
-            toast({
-                title: 'Error',
-                description: 'Unable to load employees',
-                variant: 'destructive',
-            });
+            toast.error('Unable to load employees');
         } finally {
             setIsLoadingDelegateEmployees(false);
         }
@@ -665,11 +685,7 @@ export const InboundListPage = () => {
             setCollectEmployees(data.users || data || []);
         } catch (error) {
             console.error('Employee list fetch failed:', error);
-            toast({
-                title: 'Error',
-                description: 'Unable to load employees',
-                variant: 'destructive',
-            });
+            toast.error('Unable to load employees');
         } finally {
             setIsLoadingCollectEmployees(false);
         }
@@ -694,27 +710,15 @@ export const InboundListPage = () => {
     // Submit delegate package
     const handleSubmitDelegate = async () => {
         if (!selectedDelegateEmployee) {
-            toast({
-                title: 'Error',
-                description: 'Please select an employee',
-                variant: 'destructive',
-            });
+            toast.error('Please select an employee');
             return;
         }
         if (!delegateReason) {
-            toast({
-                title: 'Error',
-                description: 'Please select a reason',
-                variant: 'destructive',
-            });
+            toast.error('Please select a reason');
             return;
         }
         if (selectedMails.length === 0) {
-            toast({
-                title: 'Error',
-                description: 'No mail selected',
-                variant: 'destructive',
-            });
+            toast.error('No mail selected');
             return;
         }
 
@@ -742,18 +746,11 @@ export const InboundListPage = () => {
 
             if (!response.ok) {
                 const message = responseData?.message || 'Failed to delegate package';
-                toast({
-                    title: 'Error',
-                    description: message,
-                    variant: 'destructive',
-                });
+                toast.error(message);
                 throw new Error(message);
             }
 
-            toast({
-                title: 'Success',
-                description: responseData?.message || 'Package delegated successfully',
-            });
+            toast.success(responseData?.message || 'Package delegated successfully');
             setIsDelegateModalOpen(false);
             setSelectedDelegateEmployee('');
             setDelegateReason('');
@@ -819,36 +816,20 @@ export const InboundListPage = () => {
     // Submit collect package
     const handleSubmitCollect = async () => {
         if (!selectedCollectEmployee) {
-            toast({
-                title: 'Error',
-                description: 'Please select an employee',
-                variant: 'destructive',
-            });
+            toast.error('Please select an employee');
             return;
         }
         const trimmedPasscode = passcode.trim();
         if (!trimmedPasscode) {
-            toast({
-                title: 'Error',
-                description: 'Please enter passcode',
-                variant: 'destructive',
-            });
+            toast.error('Please enter passcode');
             return;
         }
         if (!/^\d{6}$/.test(trimmedPasscode)) {
-            toast({
-                title: 'Error',
-                description: 'Passcode must be a 6-digit number',
-                variant: 'destructive',
-            });
+            toast.error('Passcode must be a 6-digit number');
             return;
         }
         if (selectedMails.length === 0) {
-            toast({
-                title: 'Error',
-                description: 'No mail selected',
-                variant: 'destructive',
-            });
+            toast.error('No mail selected');
             return;
         }
 
@@ -875,11 +856,7 @@ export const InboundListPage = () => {
             if (!response.ok) {
                 const message =
                     responseData?.message || 'Failed to mark as collected';
-                toast({
-                    title: 'Error',
-                    description: message,
-                    variant: 'destructive',
-                });
+                toast.error(message);
                 throw new Error(message);
             }
 
@@ -887,18 +864,11 @@ export const InboundListPage = () => {
                 responseData?.message &&
                 responseData.message.toLowerCase().includes('passcode')
             ) {
-                toast({
-                    title: 'Error',
-                    description: responseData.message,
-                    variant: 'destructive',
-                });
+                toast.error(responseData.message);
                 return;
             }
 
-            toast({
-                title: 'Success',
-                description: responseData?.message || 'Package marked as collected',
-            });
+            toast.success(responseData?.message || 'Package marked as collected');
             setIsCollectModalOpen(false);
             setPasscode('');
             setSelectedCollectEmployee('');
@@ -961,6 +931,20 @@ export const InboundListPage = () => {
         }
     };
 
+    const handleCardClick = (status: 'received' | 'collected' | 'overdue') => {
+        // Map the status to the API filter value
+        const statusMap = {
+            'received': 'received',
+            'collected': 'collected',
+            'overdue': 'overdue'
+        };
+
+        const apiStatus = statusMap[status];
+        setFilterStatus(apiStatus);
+        setAppliedFilterStatus(apiStatus);
+        setCurrentPage(1); // Reset to first page when filtering
+    };
+
     const leftActions = (
         <Button
             onClick={() => setShowActionPanel(true)}
@@ -974,7 +958,7 @@ export const InboundListPage = () => {
     return (
         <div className="p-[30px]">
             {/* Stats Cards */}
-            <InboundStats stats={stats} />
+            <InboundStats stats={stats} onCardClick={handleCardClick} />
 
             {showActionPanel && (
                 <SelectionPanel
