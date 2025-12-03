@@ -3687,8 +3687,12 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
 
   console.log("ticketData:-", ticketData);
 
-  // Process complaint logs for table display
-  const complaintLogs = ticketData?.complaint_logs || [];
+  // Process complaint logs for table display - filter out logs with both null log_comment and log_status
+  const complaintLogs = (ticketData?.complaint_logs || []).filter((log: any) => {
+    const hasComment = log.log_comment && log.log_comment.trim() !== '';
+    const hasStatus = log.log_status && log.log_status.trim() !== '';
+    return hasComment || hasStatus;
+  });
 
   // Calculate balance TATs with exceeded check
   const responseBalanceTAT = calculateBalanceTAT(ticketData.response_tat_time, ticketData.balance_reponse_tat);
@@ -7801,7 +7805,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                                               {formatLogTime(log.created_at)}
                                             </span>
                                             <span className="font-semibold text-[#1A1A1A] text-[16px]">
-                                              {log.log_status === null || log.log_status === undefined || log.log_status === '' ? 'Status Changed' : log.log_status}
+                                              {log.log_status === null || log.log_status === undefined || log.log_status === '' ? 'Commented' : log.log_status}
                                             </span>
                                             {log.log_by && (
                                               <span className="text-[#1A1A1A] text-[16px]">
@@ -10720,7 +10724,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                                               {formatLogTime(log.created_at)}
                                             </span>
                                             <span className="font-semibold text-[#1A1A1A] text-[16px]">
-                                              {log.log_status === null || log.log_status === undefined || log.log_status === '' ? 'Status Changed' : log.log_status}
+                                              {log.log_status === null || log.log_status === undefined || log.log_status === '' ? 'Commented' : log.log_status}
                                             </span>
                                             {log.log_by && (
                                               <span className="text-[#1A1A1A] text-[16px]">
