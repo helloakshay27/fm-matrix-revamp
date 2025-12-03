@@ -112,6 +112,7 @@ interface InboundMail {
     image?: string;
     attachments?: InboundAttachment[];
     logs?: InboundLog[];
+    delegate_id?: number | null;
 }
 
 const MAIL_INBOUND_DETAIL_ENDPOINT = (recordId: string | number) => `/pms/admin/mail_inbounds/${recordId}.json`;
@@ -276,6 +277,7 @@ export const InboundDetailPage = () => {
                 address: buildAddress(detail),
                 attachments,
                 logs,
+                delegate_id: (detail.delegate_id && detail.delegate_id !== 0) ? Number(detail.delegate_id) : null,
             };
 
             setInboundData(mapped);
@@ -641,28 +643,34 @@ export const InboundDetailPage = () => {
                             <span className="text-sm text-gray-600">{inboundData.ageing}</span>
                         </div>
                     </div>
-                    {inboundData.status.toLowerCase() !== 'collected' && (
-                        <div className="flex gap-2 flex-wrap justify-end">
+                    <div className="flex gap-2 flex-wrap justify-end">
+                        {inboundData.status.toLowerCase() !== 'collected' && (
                             <Button
                                 onClick={handleAddAttachments}
                                 className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white"
                             >
                                 Add Attachments
                             </Button>
+                        )}
+
+                        {['received', 'overdue'].includes(inboundData.status.toLowerCase()) && !inboundData.delegate_id && (
                             <Button
                                 onClick={handleDelegatePackage}
                                 className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white"
                             >
                                 Delegate Package
                             </Button>
+                        )}
+
+                        {inboundData.status.toLowerCase() !== 'collected' && (
                             <Button
                                 onClick={handleMarkAsCollected}
                                 className="bg-white hover:bg-gray-50 text-[#1a1a1a] border border-gray-300"
                             >
                                 Mark As Collected
                             </Button>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
 

@@ -351,7 +351,6 @@ export const OutboundListPage = () => {
     { key: 'type', label: 'Type', sortable: true, draggable: true },
     { key: 'dateOfSending', label: 'Date of Sending', sortable: true, draggable: true },
     { key: 'statusType', label: 'Status Type', sortable: true, draggable: true },
-    { key: 'flag', label: 'Flag', sortable: false, draggable: false },
   ];
 
   const renderCell = (item: OutboundMail, columnKey: string) => {
@@ -379,20 +378,7 @@ export const OutboundListPage = () => {
       );
     }
 
-    if (columnKey === 'flag') {
-      const isFlagged = item.is_flagged || false;
-      return (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleToggleFlag(item.id);
-          }}
-          className={`${isFlagged ? 'text-red-500' : 'text-gray-400'} hover:scale-110 transition-transform`}
-        >
-          <Flag className="w-5 h-5" fill={isFlagged ? 'currentColor' : 'none'} />
-        </button>
-      );
-    }
+
 
     if (columnKey === 'statusType') {
       const statusColors: Record<string, string> = {

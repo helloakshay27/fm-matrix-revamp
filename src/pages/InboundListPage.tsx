@@ -53,6 +53,7 @@ interface InboundMail {
     collectedBy: string;
     image?: string;
     is_flagged?: boolean;
+    delegate_id?: number | null;
 }
 
 const MAIL_INBOUND_LIST_ENDPOINT = '/pms/admin/mail_inbounds.json';
@@ -131,6 +132,7 @@ const mapInboundRecord = (item: any): InboundMail => ({
     collectedBy: item.collected_by || item.collected_by_name || '',
     image: item.attachments?.[0]?.document_url || item.attachments?.[0]?.document?.url,
     is_flagged: item.is_flagged || false,
+    delegate_id: (item.delegate_id && item.delegate_id !== 0) ? Number(item.delegate_id) : null,
 });
 
 export const InboundListPage = () => {
@@ -497,12 +499,6 @@ export const InboundListPage = () => {
             sortable: true,
             draggable: true,
         },
-        {
-            key: 'flag',
-            label: 'Flag',
-            sortable: false,
-            draggable: false,
-        },
     ];
 
     const renderCell = (item: InboundMail, columnKey: string) => {
@@ -530,20 +526,7 @@ export const InboundListPage = () => {
             );
         }
 
-        if (columnKey === 'flag') {
-            const isFlagged = item.is_flagged || false;
-            return (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleFlag(item.id);
-                    }}
-                    className={`${isFlagged ? 'text-red-500' : 'text-gray-400'} hover:scale-110 transition-transform`}
-                >
-                    <Flag className="w-5 h-5" fill={isFlagged ? 'currentColor' : 'none'} />
-                </button>
-            );
-        }
+
 
         if (columnKey === 'status') {
             const statusColors: { [key: string]: string } = {
@@ -606,10 +589,10 @@ export const InboundListPage = () => {
             // Get the current flag status before refresh
             const mail = inboundMails.find(m => m.id === id);
             const wasFlagged = mail?.is_flagged || false;
-            
+
             toast.dismiss();
             toast.success(`Flag ${wasFlagged ? 'Deactivated' : 'Activated'}`);
-            
+
             // Refresh the list to show updated is_flagged status from API
             setRefreshTrigger(prev => prev + 1);
         } catch (error) {
@@ -1170,7 +1153,12 @@ export const InboundListPage = () => {
                     selectedCount={selectedMails.length}
                     selectedItems={inboundMails
                         .filter(mail => selectedMails.includes(mail.id))
-                        .map(mail => ({ id: mail.id, name: mail.recipientName || `Package #${mail.id}` }))
+                        .map(mail => ({
+                            id: mail.id,
+                            name: mail.recipientName || `Package #${mail.id}`,
+                            status: mail.status,
+                            delegate_id: mail.delegate_id
+                        }))
                     }
                     onDelegate={handleDelegatePackageAction}
                     onCollect={handleMarkAsCollectedAction}
