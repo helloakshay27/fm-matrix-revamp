@@ -359,7 +359,7 @@ export const PatrollingDashboard = () => {
       </button>
     </div>,
     name: <div className="font-medium">{patrol.name}</div>,
-    checkpoints: <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+    checkpoints: <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-black">
       {patrol.checkpoints.length}
     </span>,
     start_date: <span className="text-sm text-gray-600">
