@@ -8,7 +8,7 @@ import {
 
 interface InboundSelectionPanelProps {
     selectedCount: number;
-    selectedItems: Array<{ id: number; name: string }>;
+    selectedItems: Array<{ id: number; name: string; status: string; delegate_id?: number | null }>;
     onDelegate: () => void;
     onCollect: () => void;
     onClearSelection: () => void;
@@ -38,6 +38,15 @@ export const InboundSelectionPanel: React.FC<InboundSelectionPanelProps> = ({
         );
     };
 
+    // Check if all selected items meet the criteria
+    const showDelegate = selectedItems.every(item =>
+        ['received', 'overdue'].includes(item.status.toLowerCase()) && !item.delegate_id
+    );
+
+    const showCollect = selectedItems.every(item =>
+        item.status.toLowerCase() !== 'collected'
+    );
+
     return (
         <div
             className="fixed bg-white border border-gray-200 rounded-sm shadow-lg z-50"
@@ -59,25 +68,29 @@ export const InboundSelectionPanel: React.FC<InboundSelectionPanelProps> = ({
                 </div>
 
                 <div className="flex items-center ml-auto">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onDelegate}
-                        className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-2 h-auto mr-5"
-                    >
-                        <UserCheck className="w-6 h-6 mt-2" />
-                        <span className="text-xs font-medium">Delegate</span>
-                    </Button>
+                    {showDelegate && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onDelegate}
+                            className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-2 h-auto mr-5"
+                        >
+                            <UserCheck className="w-6 h-6 mt-2" />
+                            <span className="text-xs font-medium">Delegate</span>
+                        </Button>
+                    )}
 
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onCollect}
-                        className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-2 h-auto mr-5"
-                    >
-                        <CheckCircle className="w-6 h-6 mt-2" />
-                        <span className="text-xs font-medium">Collect</span>
-                    </Button>
+                    {showCollect && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onCollect}
+                            className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-2 h-auto mr-5"
+                        >
+                            <CheckCircle className="w-6 h-6 mt-2" />
+                            <span className="text-xs font-medium">Collect</span>
+                        </Button>
+                    )}
 
                     <div className="w-px h-8 bg-gray-300 mr-5"></div>
 
