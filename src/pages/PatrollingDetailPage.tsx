@@ -1397,7 +1397,11 @@ export const PatrollingDetailPage: React.FC = () => {
                         <TableHead>Order</TableHead>
                         <TableHead>Name</TableHead>
                         <TableHead>Description</TableHead>
-                        <TableHead>Location</TableHead>
+                        <TableHead>Building</TableHead>
+                        <TableHead>Wing</TableHead>
+                        <TableHead>Area</TableHead>
+                        <TableHead>Floor</TableHead>
+                        <TableHead>Room</TableHead>
                         {/* <TableHead>QR Code</TableHead> */}
                         <TableHead>Created On</TableHead>
                       </TableRow>
@@ -1420,26 +1424,20 @@ export const PatrollingDetailPage: React.FC = () => {
                               <TableCell>
                                 {checkpoint.description || "—"}
                               </TableCell>
-                             
-                              <TableCell>
-                                <div className="text-sm">
-                                  <div>
-                                    Building:{" "}
-                                    {checkpoint.building_name || "N/A"}
-                                  </div>
-                                  <div>
-                                    Wing: {checkpoint.wing_name || "N/A"}
-                                  </div>
-                                  <div>
-                                    Floor: {checkpoint.floor_name || "N/A"}
-                                  </div>
-                                  <div>
-                                    Room: {checkpoint.room_name || "N/A"}
-                                  </div>
-                                  {checkpoint.area_name && (
-                                    <div>Area: {checkpoint.area_name}</div>
-                                  )}
-                                </div>
+                              <TableCell className="text-sm">
+                                {checkpoint.building_name || "—"}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {checkpoint.wing_name || "—"}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {checkpoint.area_name || "—"}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {checkpoint.floor_name || "—"}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {checkpoint.room_name || "—"}
                               </TableCell>
                             
                               {/* <TableCell>

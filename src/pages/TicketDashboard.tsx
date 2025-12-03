@@ -1,8 +1,12 @@
+// ticket dahboard
+
+
 import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star, Calendar } from 'lucide-react';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
 import { TicketAnalyticsFilterDialog } from '@/components/TicketAnalyticsFilterDialog';
 import { EditStatusDialog } from '@/components/EditStatusDialog';
@@ -28,7 +32,6 @@ import {
   UnitCategoryWiseCard,
   TicketAgingMatrixCard
 } from '@/components/ticket-analytics';
-import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast as sonnerToast } from 'sonner';
 
@@ -112,9 +115,8 @@ const SectionLoader: React.FC<{
 
 export const TicketDashboard = () => {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  // Initialize permission hook
+  const { shouldShow } = useDynamicPermissions();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'responseTat', 'categoryWiseProactiveReactive', 'categoryChart', 'agingMatrix', 'resolutionTat']);
@@ -310,15 +312,11 @@ export const TicketDashboard = () => {
         resolutionTat: false
       });
       
-      toast({
-        title: "Error",
-        description: "Failed to fetch analytics data. Please try again.",
-        variant: "destructive"
-      });
+      sonnerToast.error("Failed to fetch analytics data. Please try again.");
     } finally {
       setAnalyticsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   // Handle analytics filter apply
   const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
@@ -356,13 +354,9 @@ export const TicketDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching ticket summary:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch ticket summary. Please try again.",
-        variant: "destructive"
-      });
+      sonnerToast.error("Failed to fetch ticket summary. Please try again.");
     }
-  }, [initialTotalTickets, toast]);
+  }, [initialTotalTickets]);
 
   // Fetch tickets from API - Optimized for faster loading
   const fetchTickets = useCallback(async (page: number = 1) => {
@@ -407,11 +401,7 @@ export const TicketDashboard = () => {
       });
     } catch (error) {
       console.error('Error fetching tickets:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch tickets. Please try again.",
-        variant: "destructive"
-      });
+      sonnerToast.error("Failed to fetch tickets. Please try again.");
     } finally {
       // Clear loading states immediately
       if (isSearch) {
@@ -420,7 +410,7 @@ export const TicketDashboard = () => {
         setLoading(false);
       }
     }
-  }, [filters, perPage, toast]);
+  }, [filters, perPage]);
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
@@ -480,16 +470,12 @@ export const TicketDashboard = () => {
         setInitialTotalTickets(summary.total_tickets);
       } catch (error) {
         console.error('Error fetching initial ticket summary:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch ticket summary. Please try again.",
-          variant: "destructive"
-        });
+        sonnerToast.error("Failed to fetch ticket summary. Please try again.");
       }
     };
     
     loadInitialData();
-  }, [toast]);
+  }, []);
 
   // Use ticket summary data from API
   const openTickets = ticketSummary.open_tickets || 0;
@@ -662,18 +648,11 @@ export const TicketDashboard = () => {
     if (window.confirm('Are you sure you want to delete this ticket?')) {
       try {
         // Add delete API call here when available
-        toast({
-          title: "Success",
-          description: "Ticket deleted successfully"
-        });
+        sonnerToast.success("Ticket deleted successfully!");
         await fetchTickets(currentPage);
       } catch (error) {
         console.error('Delete ticket failed:', error);
-        toast({
-          title: "Error",
-          description: "Failed to delete ticket",
-          variant: "destructive"
-        });
+        sonnerToast.error("Failed to delete ticket");
       }
     }
   };
@@ -734,30 +713,19 @@ export const TicketDashboard = () => {
         return sortedTickets;
       });
 
-      toast({
-        title: "Success",
-        description: "Tickets marked as Golden Ticket successfully"
-      });
+      sonnerToast.success("Tickets marked as Golden Ticket successfully!");
 
       setSelectedTickets([]);
       fetchTicketSummary();
     } catch (error) {
       console.error('Golden Ticket action failed:', error);
-      toast({
-        title: "Error",
-        description: "Failed to mark tickets as Golden Ticket",
-        variant: "destructive"
-      });
+      sonnerToast.error("Failed to mark tickets as Golden Ticket");
     }
   };
   const handleFlag = async () => {
     // console.log('TicketDashboard - Flag action for tickets:', selectedTickets);
     if (selectedTickets.length === 0) {
-      toast({
-        title: "No tickets selected",
-        description: "Please select tickets to flag",
-        variant: "destructive"
-      });
+      sonnerToast.error("Please select tickets to flag");
       return;
     }
 
@@ -767,20 +735,13 @@ export const TicketDashboard = () => {
       // Refresh from API to get proper positioning after flag toggle
       await fetchTickets(currentPage);
 
-      toast({
-        title: "Success",
-        description: `${selectedTickets.length} ticket(s) flag status updated successfully`
-      });
+      sonnerToast.success(`${selectedTickets.length} ticket(s) flag status updated successfully!`);
 
       setSelectedTickets([]);
       fetchTicketSummary();
     } catch (error) {
       console.error('Flag action failed:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update flag status",
-        variant: "destructive"
-      });
+      sonnerToast.error("Failed to update flag status");
     }
   };
 
@@ -822,20 +783,13 @@ export const TicketDashboard = () => {
         await fetchTickets(currentPage);
       }
 
-      toast({
-        title: "Success",
-        description: response.message || `Ticket ${!currentFlagStatus ? 'flagged' : 'unflagged'} successfully`
-      });
+      sonnerToast.success(response.message || `Ticket ${!currentFlagStatus ? 'flagged' : 'unflagged'} successfully!`);
 
       // Refresh ticket summary to keep counts in sync
       fetchTicketSummary();
     } catch (error) {
       console.error('Single flag action failed:', error);
-      toast({
-        title: "Error",
-        description: "Failed to flag ticket",
-        variant: "destructive"
-      });
+      sonnerToast.error("Failed to flag ticket");
     }
   };
 
@@ -881,20 +835,13 @@ export const TicketDashboard = () => {
         }
       });
 
-      toast({
-        title: "Success",
-        description: response.message || `Golden Ticket ${!currentGoldenStatus ? 'marked' : 'unmarked'} successfully!`
-      });
+      sonnerToast.success(response.message || `Golden Ticket ${!currentGoldenStatus ? 'marked' : 'unmarked'} successfully!`);
 
       // Optionally refresh ticket summary to keep counts in sync
       fetchTicketSummary();
     } catch (error) {
       console.error('Single golden ticket action failed:', error);
-      toast({
-        title: "Error",
-        description: "Failed to mark as golden ticket",
-        variant: "destructive"
-      });
+      sonnerToast.error("Failed to mark as golden ticket");
     }
   };
   const handleExport = async () => {
@@ -1163,12 +1110,14 @@ export const TicketDashboard = () => {
   }];
   const renderCustomActions = () => (
     <div className="flex gap-3">
-      <Button
-        onClick={handleAddButton}
-        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
-      >
-        <Plus className="w-4 h-4 mr-2" /> Add
-      </Button>
+      {shouldShow("tickets", "add") && (
+        <Button
+          onClick={handleAddButton}
+          className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+        >
+          <Plus className="w-4 h-4 mr-2" /> Add
+        </Button>
+      )}
     </div>
   );
 
@@ -1300,6 +1249,7 @@ export const TicketDashboard = () => {
       return (
         <div className="flex items-center justify-center gap-1 w-full h-full min-h-[40px]">
           <div title="View ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
+             {shouldShow("tickets", "view") && (
             <Eye
               className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
               onClick={(e) => {
@@ -1307,6 +1257,7 @@ export const TicketDashboard = () => {
                 handleViewDetails(item.id);
               }}
             />
+             )}
           </div>
           {/* <div title="Update ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Edit
@@ -1669,14 +1620,14 @@ export const TicketDashboard = () => {
 
           {/* Tickets Table */}
           <div className="overflow-x-auto animate-fade-in">
-            {searchLoading && (
+            {/* {searchLoading && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
                 <div className="flex items-center gap-2 text-blue-600">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                   <span className="text-sm">Searching tickets...</span>
                 </div>
               </div>
-            )}
+            )} */}
             <EnhancedTable
               data={tickets || []}
               columns={columns}
@@ -1884,14 +1835,16 @@ export const TicketDashboard = () => {
       />
 
       {/* Ticket Selection Panel */}
-      <TicketSelectionPanel
-        selectedTickets={selectedTickets}
-        selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))}
-        onGoldenTicket={handleGoldenTicket}
-        onFlag={handleFlag}
-        onExport={handleExport}
-        onClearSelection={handleClearSelection}
-      />
+      {selectedTickets.length > 0 && shouldShow("tickets", "manage") && (
+        <TicketSelectionPanel
+          selectedTickets={selectedTickets}
+          selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))}
+          onGoldenTicket={handleGoldenTicket}
+          onFlag={handleFlag}
+          onExport={handleExport}
+          onClearSelection={handleClearSelection}
+        />
+      )}
     </div>
   );
 };

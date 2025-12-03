@@ -90,7 +90,9 @@ export const IncidentNewDetails = () => {
     const [error, setError] = useState<string | null>(null);
     const [investigators, setInvestigators] = useState<Investigator[]>([]);
     const [conditions, setConditions] = useState<Condition[]>([]);
-    const [rootCauses, setRootCauses] = useState<RootCause[]>([]);
+    const [rootCauses, setRootCauses] = useState<RootCause[]>([
+        { id: Date.now().toString(), causeId: '', description: '' }
+    ]);
     const [injuredPersons, setInjuredPersons] = useState<InjuredPerson[]>([]);
     const [propertyDamages, setPropertyDamages] = useState<PropertyDamage[]>([]);
     const [showInvestigateDetails, setShowInvestigateDetails] = useState(false);
@@ -431,12 +433,12 @@ export const IncidentNewDetails = () => {
         fetchSubstandardActCategories();
     }, [id]);
 
-    // Fetch internal users when form is shown
+    // Fetch internal users when form is shown or when reaching step 3 (for responsible person dropdowns)
     useEffect(() => {
-        if (showInvestigatorForm && investigatorTab === 'internal') {
+        if ((showInvestigatorForm && investigatorTab === 'internal') || currentStep === 3) {
             fetchInternalUsers();
         }
-    }, [showInvestigatorForm, investigatorTab]);
+    }, [showInvestigatorForm, investigatorTab, currentStep]);
 
     // Fetch corrective and preventive actions when user reaches step 3
     useEffect(() => {
@@ -454,6 +456,10 @@ export const IncidentNewDetails = () => {
             const incidentData = await incidentService.getIncidentById(id!);
             if (incidentData) {
                 setIncident(incidentData);
+                // Set incident over time from API data
+                if (incidentData.incident_over_time) {
+                    setIncidentOverTime(incidentData.incident_over_time);
+                }
                 // Map investigators from API data if available
                 if (incidentData.incident_investigations && incidentData.incident_investigations.length > 0) {
                     const mappedInvestigators = incidentData.incident_investigations.map((inv) => ({
@@ -483,6 +489,43 @@ export const IncidentNewDetails = () => {
         { number: 3, label: 'Provisional' },
         { number: 4, label: 'Final Closure' },
     ];
+
+    // Helper function to format time in IST
+    const formatTime = (dateTimeString: string | null | undefined) => {
+        if (!dateTimeString) return '-';
+        try {
+            const date = new Date(dateTimeString);
+            return date.toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Kolkata'
+            });
+        } catch (e) {
+            return '-';
+        }
+    };
+
+    // Helper function to format incident over time from HH:mm to 12-hour format
+    const formatIncidentOverTime = (timeString: string | null | undefined) => {
+        if (!timeString) return '-';
+        try {
+            // If it's already in HH:mm format
+            if (timeString.includes(':') && !timeString.includes('T')) {
+                return dayjs(timeString, "HH:mm").format("hh:mm A");
+            }
+            // If it's a full ISO date string
+            const date = new Date(timeString);
+            return date.toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Kolkata'
+            });
+        } catch (e) {
+            return '-';
+        }
+    };
 
     // Handlers
     const handleAddInvestigator = () => {
@@ -583,24 +626,24 @@ export const IncidentNewDetails = () => {
         setConditions([...conditions, newCondition]);
     };
 
-    const handleAddRootCause = () => {
+    const handleAddRootCause = useCallback(() => {
         const newCause: RootCause = {
             id: Date.now().toString(),
             causeId: '',
             description: '',
         };
-        setRootCauses([...rootCauses, newCause]);
-    };
+        setRootCauses(prev => [...prev, newCause]);
+    }, []);
 
-    const updateRootCause = (id: string, field: string, value: any) => {
-        setRootCauses(rootCauses.map(cause =>
+    const updateRootCause = useCallback((id: string, field: string, value: any) => {
+        setRootCauses(prev => prev.map(cause =>
             cause.id === id ? { ...cause, [field]: value } : cause
         ));
-    };
+    }, []);
 
-    const removeRootCause = (id: string) => {
-        setRootCauses(rootCauses.filter(cause => cause.id !== id));
-    };
+    const removeRootCause = useCallback((id: string) => {
+        setRootCauses(prev => prev.filter(cause => cause.id !== id));
+    }, []);
 
     const handleAddInjuredPerson = () => {
         const newPerson: InjuredPerson = {
@@ -625,14 +668,14 @@ export const IncidentNewDetails = () => {
         setInjuredPersons([...injuredPersons, newPerson]);
     };
 
-    const updateInjuredPerson = (id: string, field: string, value: any) => {
-        setInjuredPersons(injuredPersons.map(person =>
+    const updateInjuredPerson = useCallback((id: string, field: string, value: any) => {
+        setInjuredPersons(prev => prev.map(person =>
             person.id === id ? { ...person, [field]: value } : person
         ));
-    };
+    }, []);
 
-    const updateInjuredPersonBodyPart = (id: string, part: keyof InjuredPerson['bodyParts']) => {
-        setInjuredPersons(injuredPersons.map(person => {
+    const updateInjuredPersonBodyPart = useCallback((id: string, part: keyof InjuredPerson['bodyParts']) => {
+        setInjuredPersons(prev => prev.map(person => {
             if (person.id === id) {
                 return {
                     ...person,
@@ -644,16 +687,16 @@ export const IncidentNewDetails = () => {
             }
             return person;
         }));
-    };
+    }, []);
 
-    const handleInjuredPersonFileChange = (id: string, files: FileList | null) => {
+    const handleInjuredPersonFileChange = useCallback((id: string, files: FileList | null) => {
         if (files) {
             const newFiles = Array.from(files);
-            setInjuredPersons(injuredPersons.map(person =>
+            setInjuredPersons(prev => prev.map(person =>
                 person.id === id ? { ...person, attachments: [...person.attachments, ...newFiles] } : person
             ));
         }
-    };
+    }, []);
 
     const handleAddCorrectiveAction = () => {
         const newAction: CorrectiveAction = {
@@ -808,14 +851,13 @@ export const IncidentNewDetails = () => {
                     });
                 }
 
-                // Prepare root causes
-                const inc_root_causes = [];
-                if (selectedRootCause && rootCauseDescription) {
-                    inc_root_causes.push({
-                        rca_category_id: parseInt(selectedRootCause),
-                        description: rootCauseDescription
-                    });
-                }
+                // Prepare root causes - send all root causes from the array
+                const inc_root_causes = rootCauses
+                    .filter(rc => rc.causeId && rc.description) // Only include root causes with both fields filled
+                    .map(rc => ({
+                        rca_category_id: parseInt(rc.causeId),
+                        description: rc.description
+                    }));
 
                 // Prepare property damages
                 const property_damages = [];
@@ -897,8 +939,27 @@ export const IncidentNewDetails = () => {
                     baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
                 }
 
-                // Prepare corrective actions
+                // Prepare corrective actions - handle both arrays and single actions
                 const corrective_fields = [];
+
+                // Add actions from correctiveActions array (if using repeatable form)
+                if (correctiveActions && correctiveActions.length > 0) {
+                    correctiveActions.forEach(action => {
+                        if (action.action && action.description) {
+                            corrective_fields.push({
+                                tag_type_id: parseInt(action.action),
+                                tag_type: 'corrective',
+                                description: action.description,
+                                responsible_person_id: action.responsiblePerson
+                                    ? parseInt(action.responsiblePerson)
+                                    : (investigators[0]?.id ? parseInt(investigators[0].id) : null),
+                                date: action.targetDate || new Date().toISOString().split('T')[0]
+                            });
+                        }
+                    });
+                }
+
+                // Add single corrective action if exists
                 if (selectedCorrectiveAction && correctiveActionDescription) {
                     corrective_fields.push({
                         tag_type_id: parseInt(selectedCorrectiveAction),
@@ -911,8 +972,27 @@ export const IncidentNewDetails = () => {
                     });
                 }
 
-                // Prepare preventive actions
+                // Prepare preventive actions - handle both arrays and single actions
                 const preventive_fields = [];
+
+                // Add actions from preventiveActions array (if using repeatable form)
+                if (preventiveActions && preventiveActions.length > 0) {
+                    preventiveActions.forEach(action => {
+                        if (action.action && action.description) {
+                            preventive_fields.push({
+                                tag_type_id: parseInt(action.action),
+                                tag_type: 'preventive',
+                                description: action.description,
+                                responsible_person_id: action.responsiblePerson
+                                    ? parseInt(action.responsiblePerson)
+                                    : (investigators[0]?.id ? parseInt(investigators[0].id) : null),
+                                date: action.targetDate || new Date().toISOString().split('T')[0]
+                            });
+                        }
+                    });
+                }
+
+                // Add single preventive action if exists
                 if (selectedPreventiveAction && preventiveActionDescription) {
                     preventive_fields.push({
                         tag_type_id: parseInt(selectedPreventiveAction),
@@ -937,7 +1017,7 @@ export const IncidentNewDetails = () => {
                     assigned_to: investigators[0]?.id ? parseInt(investigators[0].id) : null
                 };
 
-                console.log('Sending provisional closure payload:', payload);
+                console.log('Sending provisional closure payload:', JSON.stringify(payload, null, 2));
 
                 const response = await fetch(`${baseUrl}/pms/incidents/inc_clousure_details.json?access_token=${token}`, {
                     method: 'POST',
@@ -955,6 +1035,8 @@ export const IncidentNewDetails = () => {
 
                 const result = await response.json();
                 console.log('Provisional closure submitted successfully:', result);
+
+                alert('Provisional closure submitted successfully!');
 
                 // Move to final closure
                 setCurrentStep(4);
@@ -1205,7 +1287,7 @@ export const IncidentNewDetails = () => {
                 <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">Occurred Time</span>
-                    <span className="font-medium text-sm">09:26 AM</span>
+                    <span className="font-medium text-sm">{incident?.inci_date_time ? formatTime(incident.inci_date_time) : '-'}</span>
                 </div>
                 <div className="text-sm">
                     <span className="text-red-500 font-medium">Total Duration</span>
@@ -1214,23 +1296,27 @@ export const IncidentNewDetails = () => {
                 <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">Incident Over Time</span>
-                    <span className="font-medium text-sm">09:26 AM</span>
+                    <span className="font-medium text-sm">
+                        {formatIncidentOverTime(incidentOverTime)}
+                    </span>
                 </div>
             </div>
 
             {/* Investigators */}
             <div className=" p-3 rounded">
                 <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-sm">
+                    <div className="flex flex-wrap gap-2 items-center">
                         {investigators.length > 0 ? (
-                            <>
-                                {investigators.slice(0, 2).map(inv => inv.name).join(', ')}
-                                {investigators.length > 2 && ` +${investigators.length - 2} other${investigators.length > 3 ? 's' : ''}`}
-                            </>
+                            investigators.map((inv, idx) => (
+                                <React.Fragment key={inv.id}>
+                                    <span className="font-medium text-sm">{inv.name}</span>
+                                    {idx < investigators.length - 1 && <span className="text-gray-400">,</span>}
+                                </React.Fragment>
+                            ))
                         ) : (
-                            'No investigators added yet'
+                            <span className="font-medium text-sm text-gray-400">No investigators added yet</span>
                         )}
-                    </span>
+                    </div>
                     <Button
                         variant="outline"
                         size="sm"
@@ -1247,31 +1333,40 @@ export const IncidentNewDetails = () => {
                 <InvestigatorRepeater
                     internalUsers={internalUsers}
                     onInvestigatorsChange={(data) => {
+                        console.log('[Summary] Received investigator data:', data);
                         // Convert InvestigatorData[] to Investigator[]
                         const newInvestigators = data.map((inv, idx) => {
+                            console.log('[Summary] Processing investigator:', inv);
                             if (inv.type === 'internal' && inv.internal) {
-                                return {
+                                const investigator = {
                                     id: inv.internal.userId || Date.now().toString() + idx,
-                                    name: inv.internal.name,
+                                    name: inv.internal.name || 'Unknown',
                                     email: inv.internal.email,
                                     role: inv.internal.role,
                                     contactNo: inv.internal.contactNo,
                                     type: 'internal' as const,
                                 };
+                                console.log('[Summary] Created internal investigator:', investigator);
+                                return investigator;
                             } else if (inv.type === 'external' && inv.external) {
-                                return {
+                                const investigator = {
                                     id: Date.now().toString() + idx,
-                                    name: inv.external.name,
+                                    name: inv.external.name || 'Unknown',
                                     email: inv.external.email,
                                     role: inv.external.role,
                                     contactNo: inv.external.contactNo,
                                     type: 'external' as const,
+                                    company: inv.external.company || '',
                                 };
+                                console.log('[Summary] Created external investigator:', investigator);
+                                return investigator;
                             }
                             return null;
                         }).filter(Boolean) as Investigator[];
 
+                        console.log('[Summary] Final investigators list:', newInvestigators);
                         setInvestigators([...investigators, ...newInvestigators]);
+                        setShowInvestigatorForm(false);
                     }}
                 />
             )}
@@ -1365,49 +1460,69 @@ export const IncidentNewDetails = () => {
                     </Button>
 
                     {/* Root Cause */}
-                    <div className="space-y-2 border-t border-gray-300 pt-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold">Root Cause:</span>
+                    <div className="mt-4 border-t border-gray-300 pt-3">
+                        <div className="text-sm font-semibold mb-3">Root Cause:</div>
 
-                        </div>
-                        <div className="space-y-3">
-                            <FormControl fullWidth size="small">
-                                <InputLabel>Select root cause</InputLabel>
-                                <MuiSelect
-                                    value={selectedRootCause}
-                                    onChange={(e) => setSelectedRootCause(e.target.value)}
-                                    label="Select root cause"
-                                    sx={{ backgroundColor: 'white' }}
-                                >
-                                    {rcaCategories.length > 0 ? (
-                                        rcaCategories.map((category) => (
-                                            <MenuItem key={category.id} value={category.id.toString()}>
-                                                {category.name}
-                                            </MenuItem>
-                                        ))
-                                    ) : (
-                                        <MenuItem value="no-data" disabled>
-                                            No root causes available
-                                        </MenuItem>
-                                    )}
-                                </MuiSelect>
-                            </FormControl>
-                        </div>
-                    </div>
+                        <div className="space-y-4">
+                            {rootCauses.map((rootCause, index) => (
+                                <div key={rootCause.id} className="p-4 rounded-lg border border-gray-200 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-sm font-semibold">Root Cause #{index + 1}</h4>
+                                        {rootCauses.length > 1 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => removeRootCause(rootCause.id)}
+                                                className="h-6 text-red-500 hover:text-red-700"
+                                            >
+                                                Remove
+                                            </Button>
+                                        )}
+                                    </div>
 
-                    {/* Description for Root Cause */}
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold">Description:</span>
+                                    <FormControl fullWidth size="small">
+                                        <InputLabel>Select root cause</InputLabel>
+                                        <MuiSelect
+                                            value={rootCause.causeId}
+                                            onChange={(e) => updateRootCause(rootCause.id, 'causeId', e.target.value)}
+                                            label="Select root cause"
+                                            sx={{ backgroundColor: 'white' }}
+                                        >
+                                            {rcaCategories.length > 0 ? (
+                                                rcaCategories.map((category) => (
+                                                    <MenuItem key={category.id} value={category.id.toString()}>
+                                                        {category.name}
+                                                    </MenuItem>
+                                                ))
+                                            ) : (
+                                                <MenuItem value="no-data" disabled>
+                                                    No root causes available
+                                                </MenuItem>
+                                            )}
+                                        </MuiSelect>
+                                    </FormControl>
 
-                        </div>
-                        <div className="bg-white p-3 rounded text-sm">
-                            <Textarea
-                                value={rootCauseDescription}
-                                onChange={handleRootCauseDescriptionChange}
-                                placeholder="Give a brief description of the issue..."
-                                className="bg-white min-h-[80px]"
-                            />
+                                    <div>
+                                        <div className="text-sm text-gray-500 mb-2">Description</div>
+                                        <div className="relative">
+                                            <Textarea
+                                                value={rootCause.description}
+                                                onChange={(e) => updateRootCause(rootCause.id, 'description', e.target.value)}
+                                                placeholder="Give a brief description of the issue..."
+                                                className="bg-white min-h-[80px]"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            <Button
+                                variant="outline"
+                                className="w-full border-[#BF213E] text-[#BF213E]"
+                                onClick={handleAddRootCause}
+                            >
+                                + Add Clause
+                            </Button>
                         </div>
                     </div>
 
@@ -1706,7 +1821,7 @@ export const IncidentNewDetails = () => {
                 <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">Occurred Time</span>
-                    <span className="font-medium text-sm">09:26 AM</span>
+                    <span className="font-medium text-sm">{incident?.inci_date_time ? formatTime(incident.inci_date_time) : '-'}</span>
                 </div>
                 <div className="text-sm">
                     <span className="text-red-500 font-medium">Total Duration</span>
@@ -1715,7 +1830,7 @@ export const IncidentNewDetails = () => {
                 <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">Incident Over Time</span>
-                    <span className="font-medium text-sm">09:26 AM</span>
+                    <span className="font-medium text-sm">{formatIncidentOverTime(incidentOverTime)}</span>
                 </div>
             </div>
 
@@ -1743,31 +1858,40 @@ export const IncidentNewDetails = () => {
                 <InvestigatorRepeater
                     internalUsers={internalUsers}
                     onInvestigatorsChange={(data) => {
+                        console.log('[Form] Received investigator data:', data);
                         // Convert InvestigatorData[] to Investigator[]
                         const newInvestigators = data.map((inv, idx) => {
+                            console.log('[Form] Processing investigator:', inv);
                             if (inv.type === 'internal' && inv.internal) {
-                                return {
+                                const investigator = {
                                     id: inv.internal.userId || Date.now().toString() + idx,
-                                    name: inv.internal.name,
+                                    name: inv.internal.name || 'Unknown',
                                     email: inv.internal.email,
                                     role: inv.internal.role,
                                     contactNo: inv.internal.contactNo,
                                     type: 'internal' as const,
                                 };
+                                console.log('[Form] Created internal investigator:', investigator);
+                                return investigator;
                             } else if (inv.type === 'external' && inv.external) {
-                                return {
+                                const investigator = {
                                     id: Date.now().toString() + idx,
-                                    name: inv.external.name,
+                                    name: inv.external.name || 'Unknown',
                                     email: inv.external.email,
                                     role: inv.external.role,
                                     contactNo: inv.external.contactNo,
                                     type: 'external' as const,
+                                    company: inv.external.company || '',
                                 };
+                                console.log('[Form] Created external investigator:', investigator);
+                                return investigator;
                             }
                             return null;
                         }).filter(Boolean) as Investigator[];
 
+                        console.log('[Form] Final investigators list:', newInvestigators);
                         setInvestigators([...investigators, ...newInvestigators]);
+                        setShowInvestigatorForm(false);
                     }}
                 />
             )}
@@ -1788,11 +1912,15 @@ export const IncidentNewDetails = () => {
             {investigators.length > 0 && (
                 <div className=" p-3 rounded">
                     <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">
-                            {investigators.map(inv => inv.name).join(', ')}
-                            {investigators.length > 2 && ` +${investigators.length - 2} other`}
-                        </span>
-                        <Button variant="outline" size="sm" className="border-[#BF213E] text-[#BF213E]">
+                        <div className="flex flex-wrap gap-2 items-center">
+                            {investigators.map((inv, idx) => (
+                                <React.Fragment key={inv.id}>
+                                    <span className="font-medium text-sm">{inv.name}</span>
+                                    {idx < investigators.length - 1 && <span className="text-gray-400">,</span>}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                        <Button variant="outline" size="sm" className="border-[#BF213E] text-[#BF213E]" onClick={() => setShowInvestigatorForm(true)}>
                             + Investigator
                         </Button>
                     </div>
@@ -2285,7 +2413,7 @@ export const IncidentNewDetails = () => {
                     <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4" />
                         <span className="text-sm">Occurred Time</span>
-                        <span className="font-medium text-sm">09:26 AM</span>
+                        <span className="font-medium text-sm">{incident?.inci_date_time ? formatTime(incident.inci_date_time) : '-'}</span>
                     </div>
                     <div className="text-sm">
                         <span className="text-red-500 font-medium">Total Duration</span>
@@ -2294,16 +2422,25 @@ export const IncidentNewDetails = () => {
                     <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4" />
                         <span className="text-sm">Incident Over Time</span>
-                        <span className="font-medium text-sm">09:26 AM</span>
+                        <span className="font-medium text-sm">{formatIncidentOverTime(incidentOverTime)}</span>
                     </div>
                 </div>
 
                 {/* Investigators */}
                 <div className=" p-3 rounded">
                     <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">
-                            Abdul Ghaffar, Kshitij Rasal, Aman +2
-                        </span>
+                        <div className="flex flex-wrap gap-2 items-center">
+                            {investigators.length > 0 ? (
+                                investigators.map((inv, idx) => (
+                                    <React.Fragment key={inv.id}>
+                                        <span className="font-medium text-sm">{inv.name}</span>
+                                        {idx < investigators.length - 1 && <span className="text-gray-400">,</span>}
+                                    </React.Fragment>
+                                ))
+                            ) : (
+                                <span className="font-medium text-sm text-gray-400">No investigators added yet</span>
+                            )}
+                        </div>
                         <Button variant="outline" size="sm" className="border-[#BF213E] text-[#BF213E]">
                             + Investigator
                         </Button>
@@ -2351,13 +2488,22 @@ export const IncidentNewDetails = () => {
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Responsible Person</InputLabel>
                                         <MuiSelect
-                                            value=""
-                                            onChange={(e) => { }}
+                                            value={correctiveActionResponsiblePerson}
+                                            onChange={(e) => setCorrectiveActionResponsiblePerson(e.target.value)}
                                             label="Responsible Person"
                                             sx={{ backgroundColor: 'white' }}
                                         >
-                                            <MenuItem value="person1">John Doe</MenuItem>
-                                            <MenuItem value="person2">Jane Smith</MenuItem>
+                                            {internalUsers.length > 0 ? (
+                                                internalUsers.map((user) => (
+                                                    <MenuItem key={user.id} value={user.id?.toString() || ''}>
+                                                        {user.full_name || user.name}
+                                                    </MenuItem>
+                                                ))
+                                            ) : (
+                                                <MenuItem value="" disabled>
+                                                    No users available
+                                                </MenuItem>
+                                            )}
                                         </MuiSelect>
                                     </FormControl>
 
@@ -2366,12 +2512,11 @@ export const IncidentNewDetails = () => {
                                             fullWidth
                                             size="small"
                                             type="date"
-                                            defaultValue="2025-08-24"
+                                            value={correctiveActionDate}
+                                            onChange={(e) => setCorrectiveActionDate(e.target.value)}
                                             sx={{ backgroundColor: 'white', flex: 1 }}
                                         />
-                                        <Button variant="ghost" size="icon">
-                                            <span className="text-xl">📅</span>
-                                        </Button>
+
                                     </div>
 
                                     <div className="text-sm text-gray-600 mb-1">Description:</div>
@@ -2424,13 +2569,22 @@ export const IncidentNewDetails = () => {
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Responsible Person</InputLabel>
                                         <MuiSelect
-                                            value=""
-                                            onChange={(e) => { }}
+                                            value={preventiveActionResponsiblePerson}
+                                            onChange={(e) => setPreventiveActionResponsiblePerson(e.target.value)}
                                             label="Responsible Person"
                                             sx={{ backgroundColor: 'white' }}
                                         >
-                                            <MenuItem value="person1">John Doe</MenuItem>
-                                            <MenuItem value="person2">Jane Smith</MenuItem>
+                                            {internalUsers.length > 0 ? (
+                                                internalUsers.map((user) => (
+                                                    <MenuItem key={user.id} value={user.id?.toString() || ''}>
+                                                        {user.full_name || user.name}
+                                                    </MenuItem>
+                                                ))
+                                            ) : (
+                                                <MenuItem value="" disabled>
+                                                    No users available
+                                                </MenuItem>
+                                            )}
                                         </MuiSelect>
                                     </FormControl>
 
@@ -2443,9 +2597,7 @@ export const IncidentNewDetails = () => {
                                             onChange={(e) => setPreventiveActionDate(e.target.value)}
                                             sx={{ backgroundColor: 'white', flex: 1 }}
                                         />
-                                        <Button variant="ghost" size="icon">
-                                            <span className="text-xl">📅</span>
-                                        </Button>
+
                                     </div>
 
                                     <div className="text-sm text-gray-600 mb-1">Description:</div>
@@ -2480,8 +2632,17 @@ export const IncidentNewDetails = () => {
                                         label="Responsible Person"
                                         sx={{ backgroundColor: 'white' }}
                                     >
-                                        <MenuItem value="person1">John Doe</MenuItem>
-                                        <MenuItem value="person2">Jane Smith</MenuItem>
+                                        {internalUsers.length > 0 ? (
+                                            internalUsers.map((user) => (
+                                                <MenuItem key={user.id} value={user.id?.toString() || ''}>
+                                                    {user.full_name || user.name}
+                                                </MenuItem>
+                                            ))
+                                        ) : (
+                                            <MenuItem value="" disabled>
+                                                No users available
+                                            </MenuItem>
+                                        )}
                                     </MuiSelect>
                                 </FormControl>
 
@@ -2495,9 +2656,7 @@ export const IncidentNewDetails = () => {
                                         defaultValue="2025-10-30"
                                         sx={{ backgroundColor: 'white', flex: 1 }}
                                     />
-                                    <Button variant="ghost" size="icon">
-                                        <span className="text-xl">📅</span>
-                                    </Button>
+
                                 </div>
                             </div>
                         </div>
@@ -2515,7 +2674,7 @@ export const IncidentNewDetails = () => {
                 <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">Occurred Time</span>
-                    <span className="font-medium text-sm">09:26 AM</span>
+                    <span className="font-medium text-sm">{incident?.inci_date_time ? formatTime(incident.inci_date_time) : '-'}</span>
                 </div>
                 <div className="text-sm">
                     <span className="text-red-500 font-medium">Total Duration</span>
@@ -2524,16 +2683,25 @@ export const IncidentNewDetails = () => {
                 <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">Incident Over Time</span>
-                    <span className="font-medium text-sm">09:26 AM</span>
+                    <span className="font-medium text-sm">{formatIncidentOverTime(incidentOverTime)}</span>
                 </div>
             </div>
 
             {/* Investigators */}
             <div className=" p-3 rounded">
                 <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">
-                        Abdul Ghaffar, Kshitij Rasal, Aman +2
-                    </span>
+                    <div className="flex flex-wrap gap-2 items-center">
+                        {investigators.length > 0 ? (
+                            investigators.map((inv, idx) => (
+                                <React.Fragment key={inv.id}>
+                                    <span className="font-medium text-sm">{inv.name}</span>
+                                    {idx < investigators.length - 1 && <span className="text-gray-400">,</span>}
+                                </React.Fragment>
+                            ))
+                        ) : (
+                            <span className="font-medium text-sm text-gray-400">No investigators added yet</span>
+                        )}
+                    </div>
                     <Button variant="outline" size="sm" className="border-[#BF213E] text-[#BF213E]">
                         + Investigator
                     </Button>
@@ -2583,9 +2751,7 @@ export const IncidentNewDetails = () => {
                                     defaultValue="2025-08-24"
                                     sx={{ backgroundColor: 'rgb(249, 250, 251)', flex: 1 }}
                                 />
-                                <Button variant="ghost" size="icon" className="h-9 w-9">
-                                    <span className="text-lg">📅</span>
-                                </Button>
+
                             </div>
 
                             <div className="text-xs text-gray-600 mb-1">Description:</div>
@@ -2634,9 +2800,7 @@ export const IncidentNewDetails = () => {
                                     defaultValue="2025-08-24"
                                     sx={{ backgroundColor: 'white', flex: 1 }}
                                 />
-                                <Button variant="ghost" size="icon">
-                                    <span className="text-xl">📅</span>
-                                </Button>
+
                             </div>
 
                             <div className="text-sm text-gray-600 mb-1">Description:</div>
@@ -2697,9 +2861,7 @@ export const IncidentNewDetails = () => {
                                     defaultValue="2025-08-24"
                                     sx={{ backgroundColor: 'white', flex: 1 }}
                                 />
-                                <Button variant="ghost" size="icon">
-                                    <span className="text-xl">📅</span>
-                                </Button>
+
                             </div>
 
                             <div className="text-sm text-gray-600 mb-1">Description:</div>
@@ -2748,9 +2910,7 @@ export const IncidentNewDetails = () => {
                                     defaultValue="2025-10-30"
                                     sx={{ backgroundColor: 'white', flex: 1 }}
                                 />
-                                <Button variant="ghost" size="icon">
-                                    <span className="text-xl">📅</span>
-                                </Button>
+
                             </div>
                         </div>
                     </div>

@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { X } from 'lucide-react';
 import ReactSelect from 'react-select';
 import { apiClient } from '@/utils/apiClient';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface EditStatusDialogProps {
   open: boolean;
@@ -56,7 +56,6 @@ export const EditStatusDialog = ({
   currentStatus,
   onSuccess 
 }: EditStatusDialogProps) => {
-  const { toast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState('');
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [communicationTemplates, setCommunicationTemplates] = useState<CommunicationTemplate[]>([]);
@@ -73,11 +72,7 @@ export const EditStatusDialog = ({
         setStatuses(response.data || []);
       } catch (error) {
         console.error('Failed to fetch statuses:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch status options",
-          variant: "destructive"
-        });
+        toast.error("Failed to fetch status options");
       }
     };
 
@@ -87,11 +82,7 @@ export const EditStatusDialog = ({
         setCommunicationTemplates(response.data || []);
       } catch (error) {
         console.error('Failed to fetch communication templates:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch templates",
-          variant: "destructive"
-        });
+        toast.error("Failed to fetch templates");
       }
     };
 
@@ -103,27 +94,35 @@ export const EditStatusDialog = ({
         const data = response.data;
         setTicketData(data);
         
-        // Pre-populate template IDs if they exist
+        // Pre-populate template IDs if they exist, otherwise set empty arrays
         if (data.rca_template_ids && Array.isArray(data.rca_template_ids)) {
           setRcaTemplateIds(data.rca_template_ids);
+        } else {
+          setRcaTemplateIds([]);
         }
         if (data.corrective_action_template_ids && Array.isArray(data.corrective_action_template_ids)) {
           setCorrectiveActionTemplateIds(data.corrective_action_template_ids);
+        } else {
+          setCorrectiveActionTemplateIds([]);
         }
         if (data.preventive_action_template_ids && Array.isArray(data.preventive_action_template_ids)) {
           setPreventiveActionTemplateIds(data.preventive_action_template_ids);
+        } else {
+          setPreventiveActionTemplateIds([]);
         }
       } catch (error) {
         console.error('Failed to fetch ticket data:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch ticket data",
-          variant: "destructive"
-        });
+        toast.error("Failed to fetch ticket data");
       }
     };
 
     if (open) {
+      // Reset state when dialog opens with new complaint
+      setRcaTemplateIds([]);
+      setCorrectiveActionTemplateIds([]);
+      setPreventiveActionTemplateIds([]);
+      setSelectedStatus('');
+      
       fetchStatuses();
       fetchCommunicationTemplates();
       fetchTicketData();
@@ -132,15 +131,11 @@ export const EditStatusDialog = ({
         setSelectedStatus(currentStatusId.toString());
       }
     }
-  }, [open, currentStatusId, complaintId, toast]);
+  }, [open, currentStatusId, complaintId]);
 
   const handleApply = async () => {
     if (!complaintId || !selectedStatus) {
-      toast({
-        title: "Error",
-        description: "Please select a status",
-        variant: "destructive"
-      });
+      toast.error("Please select a status");
       return;
     }
 
@@ -179,12 +174,12 @@ export const EditStatusDialog = ({
       }
 
       // Use apiClient.post with FormData (apiClient handles authorization header)
+      const loadingToastId = toast.loading("Updating status...");
+      
       await apiClient.post('/complaint_logs.json', formDataToSend);
 
-      toast({
-        title: "Success",
-        description: "Status updated successfully"
-      });
+      toast.dismiss(loadingToastId);
+      toast.success("Status updated successfully!");
 
       onOpenChange(false);
       if (onSuccess) {
@@ -192,11 +187,7 @@ export const EditStatusDialog = ({
       }
     } catch (error) {
       console.error('Failed to update status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update status. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Failed to update status. Please try again.");
     } finally {
       setLoading(false);
     }
