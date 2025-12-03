@@ -71,7 +71,7 @@ import { createMilestoneReducer, fetchDependentMilestonesReducer, fetchMilestone
 import { createProjectTeamReducer, fetchProjectTeamByIdReducer, fetchProjectTeamsReducer, updateProjectTeamReducer } from './slices/projectTeamsSlice'
 import { createProjectTypesReducer, fetchProjectTypesReducer, updateProjectTypesReducer } from './slices/projectTypeSlice'
 import { createProjectsTagsReducer, fetchProjectsTagsReducer, updateProjectsTagsReducer } from './slices/projectTagSlice'
-import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer } from './slices/projectTasksSlice'
+import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer, filterTasksReducer, updateTaskStatusReducer } from './slices/projectTasksSlice'
 
 export const store = configureStore({
   reducer: {
@@ -355,6 +355,8 @@ export const store = configureStore({
     fetchUserAvailability: fetchUserAvailabilityReducer,
     fetchTargetDateTasks: fetchTargetDateTasksReducer,
     editProjectTask: editProjectTaskReducer,
+    filterTasks: filterTasksReducer,
+    updateTaskStatus: updateTaskStatusReducer,
 
     // Project Team
     fetchProjectTeams: fetchProjectTeamsReducer,

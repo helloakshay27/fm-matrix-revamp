@@ -1,7 +1,7 @@
-import { useEffect, useState, forwardRef } from "react";
+import { useEffect, useState, forwardRef, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ScrollText, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, PencilIcon, Plus, ScrollText, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -15,7 +15,7 @@ import {
 import { Dialog, DialogContent, Slide } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { useAppDispatch } from "@/store/hooks";
-import { fetchProjectTasksById } from "@/store/slices/projectTasksSlice";
+import { updateTaskStatus, fetchProjectTasksById } from "@/store/slices/projectTasksSlice";
 import ProjectTaskEditModal from "@/components/ProjectTaskEditModal";
 
 const Transition = forwardRef(function Transition(
@@ -123,6 +123,50 @@ const subtaskColumns: ColumnConfig[] = [
   },
 ];
 
+function formatToDDMMYYYY_AMPM(dateString) {
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  hours = Number(String(hours).padStart(2, "0"));
+  return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+}
+
+const STATUS_COLORS = {
+  active: "bg-[#E4636A] text-white",
+  "in_progress": "bg-[#08AEEA] text-white",
+  "on_hold": "bg-[#7BD2B5] text-black",
+  overdue: "bg-[#FF2733] text-white",
+  completed: "bg-[#83D17A] text-black",
+};
+
+const mapStatusToDisplay = (rawStatus) => {
+  const statusMap = {
+    open: "Open",
+    in_progress: "In Progress",
+    on_hold: "On Hold",
+    overdue: "Overdue",
+    completed: "Completed",
+  };
+  return statusMap[rawStatus?.toLowerCase()] || "Open";
+};
+
+const mapDisplayToApiStatus = (displayStatus) => {
+  const reverseStatusMap = {
+    Active: "active",
+    "In Progress": "in_progress",
+    "On Hold": "on_hold",
+    Overdue: "overdue",
+    Completed: "completed",
+  };
+  return reverseStatusMap[displayStatus] || "open";
+};
+
 export const ProjectTaskDetails = () => {
   const navigate = useNavigate();
   const { id, mid, taskId } = useParams<{ id: string; mid: string; taskId: string }>();
@@ -130,21 +174,20 @@ export const ProjectTaskDetails = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
+  const dropdownRef = useRef(null);
+
   const [taskDetails, setTaskDetails] = useState<TaskDetails>({});
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [activeTab, setActiveTab] = useState("subtasks");
   const [openEditModal, setOpenEditModal] = useState(false);
+  const [selectedOption, setSelectedOption] = useState("Open");
+  const [openDropdown, setOpenDropdown] = useState(false);
 
   const fetchData = async () => {
     try {
       const response = await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
-      setTaskDetails({
-        ...response,
-        created_by: "System", // You can get this from response if available
-        created_on: new Date().toLocaleString(), // You can get this from response if available
-        workflow_status: response.status || "Open",
-      });
-      // TODO: Fetch subtasks from API
+      setTaskDetails(response);
+      setSelectedOption(mapStatusToDisplay(response.status) || "Open");
       setSubtasks([]);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to load task details";
@@ -220,6 +263,26 @@ export const ProjectTaskDetails = () => {
     { id: "workflow_status_log", label: "Workflow Status Log" },
   ];
 
+  const dropdownOptions = ["Open", "In Progress", "On Hold", "Overdue", "Completed"];
+
+  const handleOptionSelect = async (option) => {
+    setSelectedOption(option);
+    setOpenDropdown(false);
+
+    await dispatch(
+      updateTaskStatus({
+        baseUrl,
+        token,
+        id: taskId,
+        data: {
+          status: mapDisplayToApiStatus(option)
+        },
+      })
+    ).unwrap();
+    toast.dismiss();
+    toast.success("Status updated successfully");
+  };
+
   const handleOpenEditModal = () => {
     setOpenEditModal(true);
   };
@@ -231,33 +294,34 @@ export const ProjectTaskDetails = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
+    <div className="my-4 m-8">
       <Button
         variant="ghost"
         onClick={() => navigate(-1)}
-        className="mb-2 p-0"
+        className="p-0"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
+      <div className="pt-1">
+        <h2 className="text-[15px] p-3 px-0">
+          <span className="mr-3">Task-{taskDetails.id}</span>
+          <span>{taskDetails.title}</span>
+        </h2>
+        <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
 
-      {/* Header */}
-      <div className="flex justify-between items-start mb-6">
-        <h1 className="text-2xl font-semibold">
-          T-{taskDetails.id} {taskDetails.title}
-        </h1>
-        <div className="flex gap-2 flex-wrap items-center">
+        {/* <div className="flex gap-2 flex-wrap items-center">
           <div className="text-sm text-gray-600">
-            <span className="font-medium">Created By:</span> {taskDetails.created_by}
+            <span className="font-medium">Created By:</span> {taskDetails?.created_by?.name}
           </div>
           <div className="text-sm text-gray-600">
-            <span className="font-medium">Created On:</span> {taskDetails.created_on}
+            <span className="font-medium">Created On:</span> {taskDetails?.created_at}
           </div>
           <Button
             size="sm"
-            className={`${getStatusColor(taskDetails.status || "")} border-none hover:opacity-80`}
+            className={`${getStatusColor(taskDetails?.status || "")} border-none hover:opacity-80`}
           >
-            {taskDetails.status}
+            {taskDetails?.status || "-"}
           </Button>
           <Button
             size="sm"
@@ -272,11 +336,87 @@ export const ProjectTaskDetails = () => {
           >
             Add Subtask
           </Button>
+        </div> */}
+
+        <div className="flex items-center justify-between my-3 text-[13px]">
+          <div className="flex items-center gap-3 text-[#323232]">
+            <span>Created By : {taskDetails?.created_by?.name}</span>
+            <span className="h-6 w-[1px] border border-gray-300"></span>
+            <span className="flex items-center gap-3">
+              Created On : {formatToDDMMYYYY_AMPM(taskDetails.created_at)}
+            </span>
+            <span className="h-6 w-[1px] border border-gray-300"></span>
+            <span className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] || "bg-gray-400 text-white"}`}>
+              <div className="relative" ref={dropdownRef}>
+                <div
+                  className="flex items-center gap-1 cursor-pointer px-2 py-1"
+                  onClick={() => setOpenDropdown(!openDropdown)}
+                  role="button"
+                  aria-haspopup="true"
+                  aria-expanded={openDropdown}
+                  tabIndex={0}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && setOpenDropdown(!openDropdown)
+                  }
+                >
+                  <span className="text-[13px]">{selectedOption}</span>{" "}
+                  {/* Display selected option */}
+                  <ChevronDown
+                    size={15}
+                    className={`${openDropdown ? "rotate-180" : ""
+                      } transition-transform`}
+                  />
+                </div>
+                <ul
+                  className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"
+                    }`}
+                  role="menu"
+                  style={{
+                    minWidth: "150px",
+                    maxHeight: "400px",
+                    overflowY: "auto",
+                    zIndex: 1000,
+                  }}
+                >
+                  {dropdownOptions.map((option, idx) => (
+                    <li key={idx} role="menuitem">
+                      <button
+                        className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
+                          ? "bg-gray-100 font-semibold"
+                          : ""
+                          }`}
+                        onClick={() => handleOptionSelect(option)}
+                      >
+                        {option}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </span>
+            <span className="h-6 w-[1px] border border-gray-300"></span>
+            <span
+              className="flex items-center gap-1 cursor-pointer"
+            // onClick={() => setIsEditModalOpen(true)}
+            >
+              <PencilIcon size={15} />
+              <span>Edit Project</span>
+            </span>
+            <span className="h-6 w-[1px] border border-gray-300"></span>
+            <span
+              className="flex items-center gap-1 cursor-pointer"
+            // onClick={() => setIsEditModalOpen(true)}
+            >
+              <Plus size={15} />
+              <span>Add Subtask</span>
+            </span>
+          </div>
         </div>
+        <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
       </div>
 
       {/* Description Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6 mt-4">
         <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
           <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
             <ScrollText className="w-5 h-5" />
@@ -285,7 +425,7 @@ export const ProjectTaskDetails = () => {
         </div>
 
         <div className="mt-4">
-          <p className="text-sm text-gray-900">{taskDetails.description || taskDetails.title || "-"}</p>
+          <p className="text-sm text-gray-900">{taskDetails.description}</p>
         </div>
       </div>
 
@@ -304,7 +444,7 @@ export const ProjectTaskDetails = () => {
               <p className="text-sm font-medium text-gray-600">Responsible Person:</p>
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-900">{taskDetails.responsible_person_name || "-"}</p>
+              <p className="text-sm text-gray-900">{taskDetails.responsible_person?.name || "-"}</p>
             </div>
           </div>
 
@@ -331,7 +471,7 @@ export const ProjectTaskDetails = () => {
               <p className="text-sm font-medium text-gray-600">MileStones:</p>
             </div>
             <div className="flex-1">
-              <p className="text-sm text-gray-900">{taskDetails.milestone_title || "-"}</p>
+              <p className="text-sm text-gray-900">{taskDetails.milestone?.title || "-"}</p>
             </div>
           </div>
 
@@ -443,7 +583,7 @@ export const ProjectTaskDetails = () => {
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="px-6 pb-6">
           {/* Subtasks Tab */}
           {activeTab === "subtasks" && (
             <div className="overflow-x-auto">

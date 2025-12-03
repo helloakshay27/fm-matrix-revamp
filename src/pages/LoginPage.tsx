@@ -230,7 +230,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     setLoginLoading(true);
     try {
       const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
-      const response = await loginUser(email, password, baseUrl);
+      const organizationId = selectedOrganization.id;
+      const response = await loginUser(email, password, baseUrl, organizationId);
 
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");

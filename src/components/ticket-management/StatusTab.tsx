@@ -63,6 +63,8 @@ export const StatusTab: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [allowReopen, setAllowReopen] = useState(false);
+  const [periodType, setPeriodType] = useState<'days' | 'hours' | 'minutes'>('days');
+  const [timePeriod, setTimePeriod] = useState('');
   const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<StatusType | null>(null);
@@ -85,6 +87,7 @@ export const StatusTab: React.FC = () => {
   useEffect(() => {
     fetchStatuses();
     loadUserAccount();
+    fetchReopenData();
   }, []);
 
   const loadUserAccount = async () => {
@@ -94,6 +97,34 @@ export const StatusTab: React.FC = () => {
     } catch (error) {
       console.error('Error loading user account:', error);
       toast.error('Failed to load user account');
+    }
+  };
+
+  const fetchReopenData = async () => {
+    try {
+      const url = getFullUrl('/pms/admin/reopen_data.json');
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Check if data exists and populate the form
+        if (data && data.period_type && data.time_period) {
+          setAllowReopen(true);
+          setPeriodType(data.period_type as 'days' | 'hours' | 'minutes');
+          setTimePeriod(data.time_period.toString());
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching reopen data:', error);
+      // Don't show error toast as this might be expected if no data exists yet
     }
   };
 
@@ -185,8 +216,48 @@ export const StatusTab: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-  const handleAllowReopenChange = (checked: boolean | "indeterminate") => {
-    setAllowReopen(checked === true);
+  const handleAllowReopenChange = async (checked: boolean | "indeterminate") => {
+    const isChecked = checked === true;
+    setAllowReopen(isChecked);
+    
+    // If unchecking, clear the period values
+    if (!isChecked) {
+      setPeriodType('days');
+      setTimePeriod('');
+    }
+  };
+
+  const handleSaveReopen = async () => {
+    if (!timePeriod || parseInt(timePeriod) <= 0) {
+      toast.error('Please enter a valid time period');
+      return;
+    }
+
+    try {
+      const url = getFullUrl('/pms/admin/create_reopen.json');
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          period_type: periodType,
+          time_period: timePeriod,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Reopen settings saved successfully!');
+      } else {
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.message || 'Failed to save reopen settings');
+      }
+    } catch (error) {
+      console.error('Error saving reopen settings:', error);
+      toast.error('Failed to save reopen settings');
+    }
   };
 
   const handleEdit = (status: StatusType) => {
@@ -385,15 +456,61 @@ export const StatusTab: React.FC = () => {
           </Form>
 
           <div className="mt-6 pt-6 border-t">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="allowReopen"
-                checked={allowReopen}
-                onCheckedChange={handleAllowReopenChange}
-              />
-              <label htmlFor="allowReopen" className="text-sm font-medium">
-                Allow User to reopen ticket after closure
-              </label>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="allowReopen"
+                  checked={allowReopen}
+                  onCheckedChange={handleAllowReopenChange}
+                />
+                <label htmlFor="allowReopen" className="text-sm font-medium">
+                  Allow User to reopen ticket after closure
+                </label>
+              </div>
+
+              {allowReopen && (
+                <div className="ml-6 space-y-4 p-4 bg-gray-50 rounded-lg border">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Period Type <span className="text-red-500">*</span>
+                      </label>
+                      <Select value={periodType} onValueChange={(value: 'days' | 'hours' | 'minutes') => setPeriodType(value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select period type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="days">Days</SelectItem>
+                          <SelectItem value="hours">Hours</SelectItem>
+                          <SelectItem value="minutes">Minutes</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Time Period <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="Enter time period"
+                        value={timePeriod}
+                        onChange={(e) => setTimePeriod(e.target.value)}
+                        min="1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button 
+                      onClick={handleSaveReopen}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      Save Reopen Settings
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
