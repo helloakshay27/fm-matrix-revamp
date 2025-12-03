@@ -37,6 +37,7 @@ export const API_CONFIG = {
     SERVICES: '/pms/services.json',
     SERVICE_DETAILS: '/pms/services', // Base path, will append /:id.json
     SUPPLIERS: '/pms/suppliers.json',
+    SUPPLIERS_EXPORT: '/pms/suppliers.xlsx',
     DEPARTMENTS: '/pms/departments.json',
     SITES: '/pms/sites.json',
     UNITS: '/pms/units.json',
