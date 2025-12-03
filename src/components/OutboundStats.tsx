@@ -1,31 +1,39 @@
 import React from "react";
 import {
-    Package,
+    TruckIcon,
+    PackageCheck,
     CheckCircle,
     AlertTriangle,
 } from "lucide-react";
 
-interface InboundStatsProps {
+interface OutboundStatsProps {
     stats: {
-        receives: number;
-        collected: number;
+        sent: number;
+        inTransit: number;
+        delivered: number;
         overdue: number;
     };
-    onCardClick?: (status: 'received' | 'collected' | 'overdue') => void;
+    onCardClick?: (status: 'sent' | 'in_transit' | 'delivered' | 'overdue') => void;
 }
 
-export const InboundStats: React.FC<InboundStatsProps> = ({ stats, onCardClick }) => {
+export const OutboundStats: React.FC<OutboundStatsProps> = ({ stats, onCardClick }) => {
     const statData = [
         {
-            label: "Received",
-            value: stats.receives,
-            status: 'received' as const,
-            icon: <Package className="w-6 h-6 text-[#C72030]" />,
+            label: "Sent",
+            value: stats.sent,
+            status: 'sent' as const,
+            icon: <PackageCheck className="w-6 h-6 text-[#C72030]" />,
         },
         {
-            label: "Collected",
-            value: stats.collected,
-            status: 'collected' as const,
+            label: "In Transit",
+            value: stats.inTransit,
+            status: 'in_transit' as const,
+            icon: <TruckIcon className="w-6 h-6 text-[#C72030]" />,
+        },
+        {
+            label: "Delivered",
+            value: stats.delivered,
+            status: 'delivered' as const,
             icon: <CheckCircle className="w-6 h-6 text-[#C72030]" />,
         },
         {
@@ -37,7 +45,7 @@ export const InboundStats: React.FC<InboundStatsProps> = ({ stats, onCardClick }
     ];
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 mb-6">
             {statData.map((item, i) => (
                 <div
                     key={i}
