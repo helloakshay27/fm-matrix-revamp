@@ -33,7 +33,7 @@ import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 const statusSchema = z.object({
   name: z.string().min(1, 'Status is required'),
-  fixedState: z.enum(['closed', 'reopen', 'complete'], { errorMap: () => ({ message: 'Fixed state is required' }) }),
+  fixedState: z.enum(['closed', 'reopen', 'complete']).optional(),
   colorCode: z.string().min(1, 'Color code is required'),
   position: z.number().min(1, 'Order must be positive'),
 });
@@ -151,11 +151,6 @@ export const StatusTab: React.FC = () => {
     // Check for required fields with specific messages
     if (!statusNameInput?.value?.trim()) {
       toast.error('Please enter a status name');
-      return;
-    }
-    
-    if (!fixedStateValue) {
-      toast.error('Please select a fixed state');
       return;
     }
     
@@ -379,7 +374,7 @@ export const StatusTab: React.FC = () => {
                   name="fixedState"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fixed State <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>Fixed State</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -475,7 +470,10 @@ export const StatusTab: React.FC = () => {
                       <label className="text-sm font-medium mb-2 block">
                         Period Type <span className="text-red-500">*</span>
                       </label>
-                      <Select value={periodType} onValueChange={(value: 'days' | 'hours' | 'minutes') => setPeriodType(value)}>
+                      <Select value={periodType} onValueChange={(value: 'days' | 'hours' | 'minutes') => {
+                        setPeriodType(value);
+                        setTimePeriod(''); // Reset time period when period type changes
+                      }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select period type" />
                         </SelectTrigger>
