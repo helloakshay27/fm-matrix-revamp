@@ -26,6 +26,7 @@ import {
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { UpdateIncidentModal } from '@/components/UpdateIncidentModal';
 import { AddInjuryModal } from '@/components/AddInjuryModal';
+import { FinalClosureModal } from '@/components/FinalClosureModal';
 import { incidentService, type Incident } from '@/services/incidentService';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
@@ -57,6 +58,7 @@ export const IncidentDetailsPage = () => {
   const location = useLocation();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showInjuryModal, setShowInjuryModal] = useState(false);
+  const [showFinalClosureModal, setShowFinalClosureModal] = useState(false);
   const [incident, setIncident] = useState<Incident | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloadLoading, setDownloadLoading] = useState(false);
@@ -298,6 +300,14 @@ export const IncidentDetailsPage = () => {
             >
               <Settings className="w-4 h-4 mr-2" style={{ color: '#C72030', background: '#E5E0D3' }} />
               Update Status
+            </Button>
+            <Button
+              onClick={() => setShowFinalClosureModal(true)}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:opacity-90"
+            >
+              <Settings className="w-4 h-4 mr-2" style={{ color: '#C72030', background: '#E5E0D3' }} />
+              Final Closure
             </Button>
             <Button
               onClick={() => setShowInjuryModal(true)}
@@ -1006,6 +1016,20 @@ export const IncidentDetailsPage = () => {
           fetchIncidentDetails(); // Refresh the incident details to show updated data
         }}
         incidentId={incident.id.toString()}
+      />
+
+      <FinalClosureModal
+        isOpen={showFinalClosureModal}
+        onClose={() => {
+          setShowFinalClosureModal(false);
+          fetchIncidentDetails(); // Refresh the incident details to show updated data
+        }}
+        incidentId={incident.id.toString()}
+        initialData={{
+          rca: incident.rca || '',
+          corrective_action: incident.corrective_action || '',
+          preventive_action: incident.preventive_action || ''
+        }}
       />
     </div >
   );

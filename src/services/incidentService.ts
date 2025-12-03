@@ -117,6 +117,7 @@ export interface Incident {
   probability?: number;
   inc_sub_sub_sub_category_id?: number;
   inc_sec_sub_sub_sub_category_id?: number;
+  incident_over_time?: string | null;
 }
 
 export interface IncidentResponse {
