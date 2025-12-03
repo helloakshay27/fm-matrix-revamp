@@ -868,6 +868,12 @@ export const TicketDetailsPage = () => {
     }));
   };
 
+  // State to track if ticket details have been loaded
+  // This optimizes page load by ensuring ticket details API is called first
+  // before loading other secondary APIs (templates, modes, status, etc.)
+  const [ticketDetailsLoaded, setTicketDetailsLoaded] = useState(false);
+
+  // PRIORITY 1: Fetch ticket details first (main data)
   useEffect(() => {
     const fetchTicketDetails = async () => {
       if (!id) return;
@@ -876,6 +882,7 @@ export const TicketDetailsPage = () => {
         setLoading(true);
         const data = await ticketManagementAPI.getTicketDetails(id);
         setTicketData(data);
+        setTicketDetailsLoaded(true); // Mark details as loaded
       } catch (err) {
         console.error('Error fetching ticket details:', err);
         setError('Failed to fetch ticket details');
@@ -901,9 +908,9 @@ export const TicketDetailsPage = () => {
     }
   }, [id]);
 
-  // Fetch extra TAT timings (response & resolution) when ticket details are available
+  // PRIORITY 2: Fetch extra TAT timings (response & resolution) after ticket details are loaded
   useEffect(() => {
-    if (!ticketData?.id) return;
+    if (!ticketData?.id || !ticketDetailsLoaded) return;
 
     const fetchTatTimings = async () => {
       try {
@@ -935,11 +942,13 @@ export const TicketDetailsPage = () => {
     };
 
     fetchTatTimings();
-  }, [ticketData?.id, id]);
+  }, [ticketData?.id, id, ticketDetailsLoaded]);
  console.log("responce tat time ------------------",responseTatTimings)
   console.log("resolution  tat time ------------------",resolutionTatTimings)
-  // Fetch communication templates
+  // PRIORITY 3: Fetch communication templates after ticket details are loaded
   useEffect(() => {
+    if (!ticketDetailsLoaded) return;
+    
     const fetchCommunicationTemplates = async () => {
       try {
         setLoadingTemplates(true);
@@ -971,9 +980,12 @@ export const TicketDetailsPage = () => {
     };
 
     fetchCommunicationTemplates();
-  }, []);
+  }, [ticketDetailsLoaded]);
 
+  // PRIORITY 3: Fetch complaint modes after ticket details are loaded
   useEffect(() => {
+    if (!ticketDetailsLoaded) return;
+    
     const fetchComplaintModes = async () => {
       try {
         setLoadingComplaintModes(true);
@@ -1004,8 +1016,11 @@ export const TicketDetailsPage = () => {
     };
 
     fetchComplaintModes();
-  }, []);
+  }, [ticketDetailsLoaded]);
+  // PRIORITY 3: Fetch complaint status after ticket details are loaded
   useEffect(() => {
+    if (!ticketDetailsLoaded) return;
+    
     const fetchComplaintStatus = async () => {
       try {
         setLoadingComplaintStatus(true);
@@ -1036,10 +1051,12 @@ export const TicketDetailsPage = () => {
     };
 
     fetchComplaintStatus();
-  }, []);
+  }, [ticketDetailsLoaded]);
 
-  // Fetch responsible persons
+  // PRIORITY 3: Fetch responsible persons after ticket details are loaded
   useEffect(() => {
+    if (!ticketDetailsLoaded) return;
+    
     const fetchResponsiblePersons = async () => {
       try {
         setLoadingResponsiblePersons(true);
@@ -1070,15 +1087,17 @@ export const TicketDetailsPage = () => {
     };
 
     fetchResponsiblePersons();
-  }, []);
+  }, [ticketDetailsLoaded]);
 
   console.log("corrective:-------------------", communicationTemplates
     .filter(template => template.identifier === "Corrective Action" && template?.active === true)
     .map(t => ({ value: t.id, label: t.identifier_action })));
 
 
-  // Fetch suppliers
+  // PRIORITY 3: Fetch suppliers after ticket details are loaded
   useEffect(() => {
+    if (!ticketDetailsLoaded) return;
+    
     const fetchSuppliers = async () => {
       try {
         setLoadingSuppliers(true);
@@ -1110,7 +1129,7 @@ export const TicketDetailsPage = () => {
     };
 
     fetchSuppliers();
-  }, []);
+  }, [ticketDetailsLoaded]);
 
   // Fetch Assets for association functionality
   const fetchAssets = useCallback(async (shouldSetSelectedValue = true) => {
@@ -1211,8 +1230,10 @@ export const TicketDetailsPage = () => {
   const hasLoadedAssets = useRef(false);
   const hasLoadedServices = useRef(false);
 
-  // Initialize assets and services data on component mount
+  // PRIORITY 3: Initialize assets and services data after ticket details are loaded
   useEffect(() => {
+    if (!ticketDetailsLoaded) return;
+    
     // Only fetch if we haven't already loaded the data
     if (!hasLoadedAssets.current && assetOptions.length === 0 && !isLoadingAssets) {
       fetchAssets(false);
@@ -1222,7 +1243,7 @@ export const TicketDetailsPage = () => {
       fetchServices(false);
       hasLoadedServices.current = true;
     }
-  }, [assetOptions.length, serviceOptions.length, isLoadingAssets, isLoadingServices, fetchAssets, fetchServices]);
+  }, [ticketDetailsLoaded, assetOptions.length, serviceOptions.length, isLoadingAssets, isLoadingServices, fetchAssets, fetchServices]);
 
   // Handle association changes for the new formData (similar to UpdateTicketsPage)
   useEffect(() => {
@@ -1240,8 +1261,10 @@ export const TicketDetailsPage = () => {
     }
   }, [formData.associatedTo, assetOptions.length, serviceOptions.length, isLoadingAssets, isLoadingServices, fetchAssets, fetchServices]);
 
-  // Load location data
+  // PRIORITY 3: Load location data after ticket details are loaded
   useEffect(() => {
+    if (!ticketDetailsLoaded) return;
+    
     const loadLocationData = async () => {
       await Promise.all([
         loadBuildings(),
@@ -1253,7 +1276,7 @@ export const TicketDetailsPage = () => {
     };
 
     loadLocationData();
-  }, []);
+  }, [ticketDetailsLoaded]);
 
   // Initialize form data based on ticket data (runs once when ticket data and options are available)
   useEffect(() => {
