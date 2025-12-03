@@ -337,14 +337,7 @@ export const PatrollingCreatePage: React.FC = () => {
     endDate: false,
   });
 
-  const [questions, setQuestions] = useState<Question[]>([{
-    id: `q-${Date.now()}`,
-    task: '',
-    inputType: '',
-    mandatory: false,
-    options: [],
-    optionsText: ''
-  }]);
+  const [questions, setQuestions] = useState<Question[]>([]);
 
   // Checklist dropdown state
   const [checklistOptions, setChecklistOptions] = useState<{ id: string; name: string; raw?: any }[]>([]);
@@ -1230,9 +1223,9 @@ export const PatrollingCreatePage: React.FC = () => {
               <div className="mt-2 text-xs text-gray-600">Selected: <span className="font-semibold">{selectedChecklist.name}</span></div>
             )}
           </div>
-          {questions.map((q, idx) => (
+          {selectedChecklist && questions.map((q, idx) => (
             <div key={q.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
-              {/* First Row - Mandatory Checkbox */}
+            
               <div className="mb-6">
                 <div className="flex items-center gap-2">
                   <input

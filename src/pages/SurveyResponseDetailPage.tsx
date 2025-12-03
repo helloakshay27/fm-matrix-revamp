@@ -3957,30 +3957,73 @@ export const SurveyResponseDetailPage = () => {
           <head>
             <style>
               ${JobSheetPDFGenerator}
+              * { box-sizing: border-box; }
               .header { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #D9D9D9; background-color: #F6F4EE; }
               .logo { margin: 0 10px; }
               .header-text { margin: 0 0 18px 0 !important; }
+              
               /* Force card header alignment */
               [class*="MuiCardHeader-root"] { display: flex !important; align-items: center !important; min-height: 60px !important; padding: 16px !important; }
               [class*="MuiCardHeader-content"] { flex: 1 !important; display: flex !important; align-items: center !important; gap: 12px !important; }
-              [class*="MuiCardHeader-title"] { font-size: 18px !important; font-weight: 600 !important; color: #000 !important; margin: 0 !important; display: flex !important; align-items: center !important; gap: 12px !important; }
+              [class*="MuiCardHeader-title"] { font-size: 18px !important; font-weight: 600 !important; color: #000 !important; margin: 0 !important; display: flex !important; align-items: center !important; gap: 12px !important; flex-wrap: wrap !important; }
               [class*="MuiCardHeader-title"] div[class*="rounded-full"] { margin-right: 0 !important; }
+              
               /* Additional fallback selectors */
               .text-lg { font-size: 18px !important; }
               div[class*="flex items-center"] { align-items: center !important; }
 
+              /* PDF Card styles with improved page break handling */
               .my-pdf-card {
                 display: block !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
-                margin-bottom: 20px !important;
+                margin-bottom: 30px !important;
                 background-color: #fff !important;
                 box-shadow: none !important;
+                padding-top: 0 !important;
               }
 
+              /* Ensure proper spacing when card appears at top of new page */
+              .my-pdf-card:first-child,
+              .my-pdf-card {
+                margin-top: 20px !important;
+              }
+
+              /* Force page break before certain cards if needed */
               .my-pdf-card + .my-pdf-card {
-                page-break-before: always !important;
-                break-before: page !important;
+                page-break-before: auto !important;
+                break-before: auto !important;
+              }
+
+              /* Fix alignment for Positive/Negative labels */
+              .flex.items-center.gap-2.justify-between {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                width: 100% !important;
+              }
+
+              .flex.items-center.gap-2 {
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+              }
+
+              /* Ensure emoji container alignment */
+              .flex.justify-center.items-center.gap-8 {
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                gap: 32px !important;
+                flex-wrap: wrap !important;
+              }
+
+              /* Page break rules */
+              @media print {
+                .my-pdf-card {
+                  page-break-inside: avoid !important;
+                  margin-top: 20px !important;
+                }
               }
             </style>
           </head>
@@ -5122,26 +5165,26 @@ export const SurveyResponseDetailPage = () => {
                           <CardContent>
                             <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
                               <div className="relative text-center py-6">
-                                <div className="absolute top-2 right-4 flex flex-col gap-2 mr-4 mt-4">
-                                  <div className="flex items-center gap-2 justify-between w-32">
+                                <div className="absolute top-6 right-8 flex flex-col gap-3">
+                                  <div className="flex items-center gap-3" style={{ minWidth: '150px' }}>
                                     <div className="flex items-center gap-2">
-                                      <span className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5]"></span>
-                                      <span className="text-gray-600 font-small">Positive:</span>
+                                      <span className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5]" style={{ flexShrink: 0 }}></span>
+                                      <span className="text-gray-600 text-sm" style={{ whiteSpace: 'nowrap' }}>Positive:</span>
                                     </div>
-                                    <span className="text-gray-600 font-small">{positivePercent != null ? positivePercent : 0}%</span>
+                                    <span className="text-gray-600 text-sm font-medium" style={{ marginLeft: 'auto' }}>{positivePercent != null ? positivePercent : 0}%</span>
                                   </div>
-                                  <div className="flex items-center gap-2 justify-between w-32">
+                                  <div className="flex items-center gap-3" style={{ minWidth: '150px' }}>
                                     <div className="flex items-center gap-2">
-                                      <span className="inline-block w-4 h-4 rounded-full bg-[#C4B99D]"></span>
-                                      <span className="text-gray-600 font-small">Negative:</span>
+                                      <span className="inline-block w-4 h-4 rounded-full bg-[#C4B99D]" style={{ flexShrink: 0 }}></span>
+                                      <span className="text-gray-600 text-sm" style={{ whiteSpace: 'nowrap' }}>Negative:</span>
                                     </div>
-                                    <span className="text-gray-600 font-small">{negativePercent != null ? negativePercent : 0}%</span>
+                                    <span className="text-gray-600 text-sm font-medium" style={{ marginLeft: 'auto' }}>{negativePercent != null ? negativePercent : 0}%</span>
                                   </div>
                                 </div>
 
 
                                 {displayData.length > 0 ? (
-                                  <div className="flex justify-center items-center gap-8 mb-4 mt-12">
+                                  <div className="flex justify-center items-center gap-8 mb-4" style={{ marginTop: '60px', paddingTop: '20px' }}>
                                     {displayData.map((item, index) => (
                                       <div
                                         key={index}

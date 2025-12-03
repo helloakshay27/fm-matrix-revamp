@@ -344,7 +344,7 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-between pt-6">
+          <div className="flex justify-end gap-4 pt-6">
             <Button 
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 border-0"
               onClick={handleApply}
