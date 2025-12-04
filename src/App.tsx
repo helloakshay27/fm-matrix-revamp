@@ -248,6 +248,12 @@ import { RestaurantOrderDetailPage } from "./pages/RestaurantOrderDetailPage";
 import { FnBDiscountsPage } from "./pages/FnBDiscountsPage";
 import { AddRestaurantPage } from "./pages/AddRestaurantPage";
 import ParkingDashboard from "./pages/ParkingDashboard";
+
+// Import Membership Plan pages
+import { MembershipPlanDashboard } from "./pages/MembershipPlanDashboard";
+import { AddMembershipPlanPage } from "./pages/AddMembershipPlanPage";
+import { EditMembershipPlanPage } from "./pages/EditMembershipPlanPage";
+import { MembershipPlanDetailsPage } from "./pages/MembershipPlanDetailsPage";
 import ParkingDetailsPage from "./pages/ParkingDetailsPage";
 import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
 import ParkingCreatePage from "./pages/ParkingCreatePage";
@@ -1485,6 +1491,22 @@ function App() {
                   <Route
                     path="/club-management/vas/booking/setup/edit/:id"
                     element={<EditBookingSetupPage />}
+                  />
+                  <Route
+                    path="/club-management/vas/membership-plan/setup"
+                    element={<MembershipPlanDashboard />}
+                  />
+                  <Route
+                    path="/club-management/vas/membership-plan/setup/add"
+                    element={<AddMembershipPlanPage />}
+                  />
+                  <Route
+                    path="/club-management/vas/membership-plan/setup/edit/:id"
+                    element={<EditMembershipPlanPage />}
+                  />
+                  <Route
+                    path="/club-management/vas/membership-plan/setup/details/:id"
+                    element={<MembershipPlanDetailsPage />}
                   />
                   <Route
                     path="/club-management/membership"

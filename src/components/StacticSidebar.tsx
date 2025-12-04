@@ -362,6 +362,11 @@ const modulesByPackage = {
       icon: Calculator,
       href: "/club-management/vas/booking/setup",
     },
+    // {
+    //   name: "Membership Plan Setup",
+    //   icon: Calculator,
+    //   href: "/club-management/vas/membership-plan/setup",
+    // },
     
   ],
   Master: [
