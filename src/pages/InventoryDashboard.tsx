@@ -6,6 +6,7 @@ import { fetchInventoryData, setCurrentPage } from "@/store/slices/inventorySlic
 import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import { DateFilterModal } from "@/components/DateFilterModal";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import {
   Upload,
   FileText,
@@ -149,6 +150,7 @@ const SortableChartItem = ({
 export const InventoryDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const { shouldShow } = useDynamicPermissions();
 
   // Redux state
   const {
@@ -670,24 +672,28 @@ export const InventoryDashboard = () => {
       const itemId = typeof item.id === "string" ? item.id : String(item.id || "");
       return (
         <div className="flex items-center justify-center w-full gap-2" onClick={(e) => e.stopPropagation()}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 flex items-center justify-center"
-            onClick={() => handleViewItem(itemId)}
-            title="View"
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 flex items-center justify-center"
-            onClick={() => navigate(`/maintenance/inventory/edit/${itemId}`)}
-            title="Edit"
-          >
-            <Pencil className="w-4 h-4" />
-          </Button>
+          {shouldShow("inventory", "view") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 flex items-center justify-center"
+              onClick={() => handleViewItem(itemId)}
+              title="View"
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          )}
+          {shouldShow("inventory", "edit") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 flex items-center justify-center"
+              onClick={() => navigate(`/maintenance/inventory/edit/${itemId}`)}
+              title="Edit"
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+          )}
           {item.greenProduct && (
             <img
               src={bio}
@@ -857,13 +863,26 @@ export const InventoryDashboard = () => {
 
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-3 items-center">
-      <Button
-        onClick={handleActionClick}
-        className="bg-primary text-primary-foreground hover:bg-primary/90"
-        variant="default"
-      >
-        <Plus className="w-4 h-4" /> Action
-      </Button>
+      {shouldShow("inventory", "add") && (
+        <Button
+          onClick={handleActionClick}
+          className="bg-[#C72030] hover:bg-[#A01020] text-white"
+          variant="default"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
+      )}
+      {shouldShow("inventory", "export") && (
+        <Button
+          onClick={handleExport}
+          className="bg-gray-600 hover:bg-gray-700 text-white"
+          variant="default"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Export
+        </Button>
+      )}
     </div>
   );
 

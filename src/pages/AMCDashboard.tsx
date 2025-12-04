@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // MUI components for revamped Filter dialog
 import { Box, Typography, FormControl, InputLabel, Select as MUISelect, MenuItem, TextField } from '@mui/material';
 import { Plus, Eye, Trash2, BarChart3, Download, Settings, Flag, Filter, Pencil } from 'lucide-react';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { AMCAnalyticsFilterDialog } from '@/components/AMCAnalyticsFilterDialog';
 import { amcAnalyticsAPI, AMCStatusData, AMCStatusSummary, AMCTypeDistribution, AMCExpiryAnalysis, AMCServiceTrackingLog, AMCVendorPerformance, AMCComplianceReport, AMCUnitResourceData, AMCServiceStatsData, AMCLocationCoverageNode } from '@/services/amcAnalyticsAPI';
 import { amcAnalyticsDownloadAPI } from '@/services/amcAnalyticsDownloadAPI';
@@ -167,6 +168,7 @@ export const AMCDashboard = () => {
   const amcTypeControlRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
   const { data: apiData, loading: reduxLoading, error } = useAppSelector((state) => state.amc);
@@ -659,13 +661,15 @@ export const AMCDashboard = () => {
       case 'actions':
         return (
           <div className="flex items-center justify-center gap-1">
-            <div
-              onClick={() => handleViewDetails(item.id)}
-              className="p-1 cursor-pointer hover:text-gray-700"
-              title="View"
-            >
-              <Eye className="w-4 h-4" />
-            </div>
+            {shouldShow("amc", "view") && (
+              <div
+                onClick={() => handleViewDetails(item.id)}
+                className="p-1 cursor-pointer hover:text-gray-700"
+                title="View"
+              >
+                <Eye className="w-4 h-4" />
+              </div>
+            )}
             <div
               title="Flag AMC"
               onClick={(e) => {
@@ -678,13 +682,15 @@ export const AMCDashboard = () => {
                 className={`w-4 h-4 ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
               />
             </div>
-            <Link
-              to={`/maintenance/amc/edit/${item.id}`}
-              className="p-1 text-gray-600"
-              title="Edit AMC"
-            >
-              <Pencil className="w-4 h-4" />
-            </Link>
+            {shouldShow("amc", "edit") && (
+              <Link
+                to={`/maintenance/amc/edit/${item.id}`}
+                className="p-1 text-gray-600"
+                title="Edit AMC"
+              >
+                <Pencil className="w-4 h-4" />
+              </Link>
+            )}
           </div>
         );
       case 'id':
@@ -1434,13 +1440,26 @@ export const AMCDashboard = () => {
               pagination={false}
               onFilterClick={handleFiltersClick}
               leftActions={
-                <Button
-                  onClick={handleActionClick}
-                  className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-                >
-                  <Plus className="w-4 h-4" />
-                  Action
-                </Button>
+                <div className="flex flex-wrap gap-3 items-center">
+                  {shouldShow("amc", "add") && (
+                    <Button
+                      onClick={handleActionClick}
+                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add
+                    </Button>
+                  )}
+                  {shouldShow("amc", "export") && (
+                    <Button
+                      onClick={handleExport}
+                      className="bg-gray-600 hover:bg-gray-700 text-white"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export
+                    </Button>
+                  )}
+                </div>
               }
               enableSearch={true}
               searchTerm={searchQuery}
