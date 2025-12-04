@@ -513,6 +513,7 @@ export const PatrollingDashboard = () => {
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
         onFilterClick={() => setIsFilterOpen(true)}
+        loading={loading}
         leftActions={(
           <Button className='bg-primary text-primary-foreground hover:bg-primary/90'  onClick={() => navigate('/security/patrolling/create')}>
             <Plus className="w-4 h-4 mr-2" /> Add
