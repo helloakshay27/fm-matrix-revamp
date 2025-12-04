@@ -17,6 +17,8 @@ import { TransitionProps } from "@mui/material/transitions";
 import { useAppDispatch } from "@/store/hooks";
 import { updateTaskStatus, fetchProjectTasksById } from "@/store/slices/projectTasksSlice";
 import ProjectTaskEditModal from "@/components/ProjectTaskEditModal";
+import SubtasksTable from "@/components/SubtasksTable";
+import AddSubtaskModal from "@/components/AddSubtaskModal";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -45,7 +47,7 @@ interface TaskDetails {
   workflow_status?: string;
 }
 
-interface Subtask {
+export interface Subtask {
   id?: string;
   subtask_title?: string;
   status?: string;
@@ -56,72 +58,6 @@ interface Subtask {
   priority?: string;
   tags?: string;
 }
-
-const subtaskColumns: ColumnConfig[] = [
-  {
-    key: "id",
-    label: "ID",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "subtask_title",
-    label: "Subtask Title",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "status",
-    label: "Status",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "responsible_person",
-    label: "Responsible Person",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "start_date",
-    label: "Start Date",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "end_date",
-    label: "End Date",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "duration",
-    label: "Duration",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "priority",
-    label: "Priority",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "tags",
-    label: "Tags",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-];
 
 function formatToDDMMYYYY_AMPM(dateString) {
   const date = new Date(dateString);
@@ -177,18 +113,19 @@ export const ProjectTaskDetails = () => {
   const dropdownRef = useRef(null);
 
   const [taskDetails, setTaskDetails] = useState<TaskDetails>({});
-  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [activeTab, setActiveTab] = useState("subtasks");
   const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedOption, setSelectedOption] = useState("Open");
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
+  const [openSubTaskModal, setOpenSubTaskModal] = useState(false);
 
   const fetchData = async () => {
     try {
       const response = await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
       setTaskDetails(response);
       setSelectedOption(mapStatusToDisplay(response.status) || "Open");
-      setSubtasks([]);
+      setSubtasks(response.sub_tasks_managements || []);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to load task details";
       toast.error(errorMessage);
@@ -210,48 +147,6 @@ export const ProjectTaskDetails = () => {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   }
-
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "open":
-        return "bg-red-100 text-red-800";
-      case "in_progress":
-        return "bg-blue-100 text-blue-800";
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "on_hold":
-        return "bg-yellow-100 text-yellow-800";
-      case "overdue":
-        return "bg-orange-100 text-orange-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const renderSubtaskCell = (item: Subtask, columnKey: string) => {
-    if (columnKey === "status") {
-      return (
-        <span
-          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-            item.status || ""
-          )}`}
-        >
-          <span
-            className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status?.toLowerCase() === "open"
-              ? "bg-red-500"
-              : item.status?.toLowerCase() === "in_progress"
-                ? "bg-blue-500"
-                : item.status?.toLowerCase() === "completed"
-                  ? "bg-green-500"
-                  : "bg-gray-400"
-              }`}
-          ></span>
-          {item.status}
-        </span>
-      );
-    }
-    return item[columnKey as keyof Subtask] || "-";
-  };
 
   const tabs = [
     { id: "subtasks", label: "Subtasks" },
@@ -309,35 +204,6 @@ export const ProjectTaskDetails = () => {
           <span>{taskDetails.title}</span>
         </h2>
         <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
-
-        {/* <div className="flex gap-2 flex-wrap items-center">
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">Created By:</span> {taskDetails?.created_by?.name}
-          </div>
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">Created On:</span> {taskDetails?.created_at}
-          </div>
-          <Button
-            size="sm"
-            className={`${getStatusColor(taskDetails?.status || "")} border-none hover:opacity-80`}
-          >
-            {taskDetails?.status || "-"}
-          </Button>
-          <Button
-            size="sm"
-            className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-            onClick={handleOpenEditModal}
-          >
-            Edit Task
-          </Button>
-          <Button
-            size="sm"
-            className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            Add Subtask
-          </Button>
-        </div> */}
-
         <div className="flex items-center justify-between my-3 text-[13px]">
           <div className="flex items-center gap-3 text-[#323232]">
             <span>Created By : {taskDetails?.created_by?.name}</span>
@@ -405,7 +271,7 @@ export const ProjectTaskDetails = () => {
             <span className="h-6 w-[1px] border border-gray-300"></span>
             <span
               className="flex items-center gap-1 cursor-pointer"
-            // onClick={() => setIsEditModalOpen(true)}
+              onClick={() => setOpenSubTaskModal(true)}
             >
               <Plus size={15} />
               <span>Add Subtask</span>
@@ -564,6 +430,8 @@ export const ProjectTaskDetails = () => {
         </div>
       </div>
 
+      <AddSubtaskModal openTaskModal={openSubTaskModal} setOpenTaskModal={setOpenSubTaskModal} />
+
       {/* Tabs Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
         <div className="border-b border-gray-200">
@@ -586,23 +454,7 @@ export const ProjectTaskDetails = () => {
         <div className="px-6 pb-6">
           {/* Subtasks Tab */}
           {activeTab === "subtasks" && (
-            <div className="overflow-x-auto">
-              <EnhancedTable
-                data={subtasks}
-                columns={subtaskColumns}
-                storageKey="task-subtasks-table"
-                hideColumnsButton={true}
-                hideTableExport={true}
-                hideTableSearch={true}
-                exportFileName="task-subtasks"
-                pagination={true}
-                pageSize={10}
-                emptyMessage="No Subtask"
-                className="min-w-[1200px] h-max"
-                renderCell={renderSubtaskCell}
-                canAddRow={true}
-              />
-            </div>
+            <SubtasksTable subtasks={subtasks} fetchData={fetchData} />
           )}
 
           {/* Dependency Tab */}

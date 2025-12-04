@@ -175,9 +175,11 @@ export const ProjectsDashboard = () => {
   const [owners, setOwners] = useState([])
   const [teams, setTeams] = useState([])
   const [tags, setTags] = useState([])
+  const [loading, setLoading] = useState(false)
 
   const fetchData = async () => {
     try {
+      setLoading(true)
       let filters = {};
       if (selectedFilterOption !== "all") {
         filters["q[status_eq]"] = selectedFilterOption;
@@ -188,6 +190,8 @@ export const ProjectsDashboard = () => {
       setProjects(transformedProjects(response));
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -674,6 +678,7 @@ export const ProjectsDashboard = () => {
         }}
         renderEditableCell={renderEditableCell}
         newRowPlaceholder="Click to add new project"
+        loading={loading}
       />
 
       <AddProjectModal
