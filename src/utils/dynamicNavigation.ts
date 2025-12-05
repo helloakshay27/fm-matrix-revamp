@@ -7,6 +7,7 @@ import { SidebarItem } from "@/utils/sidebarPermissionFilter";
 
 /**
  * Check if a sidebar item is accessible based on user permissions
+ * If an item has sub-items, it will be shown if ANY of its sub-items have permission
  */
 export const checkPermission = (
   checkItem: any,
@@ -66,97 +67,129 @@ export const checkPermission = (
     return Array.from(variants);
   };
 
-  // Get the item name for checking
-  const itemNameLower = checkItem.name.toLowerCase();
-  const itemVariants = createSearchVariants(checkItem.name);
+  // Helper function to check if item directly matches permissions
+  const checkDirectMatch = (item: any): boolean => {
+    const itemNameLower = item.name.toLowerCase();
+    const itemVariants = createSearchVariants(item.name);
 
-  // Check if this sidebar item matches any active function
-  const directMatch = activeFunctions.find((activeFunc) => {
-    const funcNameLower = activeFunc.functionName.toLowerCase();
-    const actionNameLower = activeFunc.actionName
-      ? activeFunc.actionName.toLowerCase()
-      : "";
-
-    // Direct function name match
-    const functionNameMatch = itemVariants.some(
-      (variant) =>
-        variant === funcNameLower ||
-        funcNameLower.includes(variant) ||
-        variant.includes(funcNameLower)
-    );
-
-    // Direct action name match
-    const actionNameMatch =
-      actionNameLower &&
-      itemVariants.some(
-        (variant) =>
-          variant === actionNameLower ||
-          actionNameLower.includes(variant) ||
-          variant.includes(actionNameLower)
-      );
-
-    return functionNameMatch || actionNameMatch;
-  });
-
-  if (directMatch) {
-    console.log("Smart Permission Check:", {
-      item: checkItem.name,
-      matchType: "DIRECT_MATCH",
-      matchedFunction: directMatch,
-    });
-    return true;
-  }
-
-  // Fallback to mapping-based check
-  const potentialMatches =
-    sidebarToApiFunctionMapping[
-      itemNameLower as keyof typeof sidebarToApiFunctionMapping
-    ] || [];
-
-  const mappingMatch = activeFunctions.find((activeFunc) => {
-    return potentialMatches.some((match) => {
-      const matchLower = match.toLowerCase();
+    // Check if this sidebar item matches any active function
+    const directMatch = activeFunctions.find((activeFunc) => {
       const funcNameLower = activeFunc.functionName.toLowerCase();
       const actionNameLower = activeFunc.actionName
         ? activeFunc.actionName.toLowerCase()
         : "";
 
-      // For short mapping keys (likely abbreviations like "po", "wo"), require strict equality
-      // or check if it is a distinct word in the function name
-      if (matchLower.length < 4) {
-        // Strict equality check or word boundary check
-        const isStrictMatch =
-          funcNameLower === matchLower ||
-          actionNameLower === matchLower ||
-          funcNameLower.split(/[\s-_]+/).includes(matchLower) ||
-          actionNameLower.split(/[\s-_]+/).includes(matchLower);
-
-        return isStrictMatch;
-      }
-
-      // For longer keys, allow substring matching but be careful
-      return (
-        funcNameLower.includes(matchLower) ||
-        actionNameLower.includes(matchLower) ||
-        matchLower.includes(funcNameLower) ||
-        matchLower.includes(actionNameLower)
+      // Direct function name match
+      const functionNameMatch = itemVariants.some(
+        (variant) =>
+          variant === funcNameLower ||
+          funcNameLower.includes(variant) ||
+          variant.includes(funcNameLower)
       );
-    });
-  });
 
-  if (mappingMatch) {
-    console.log("Smart Permission Check:", {
-      item: checkItem.name,
-      matchType: "MAPPING_MATCH",
-      matchedFunction: mappingMatch,
-      mappingMatches: potentialMatches,
+      // Direct action name match
+      const actionNameMatch =
+        actionNameLower &&
+        itemVariants.some(
+          (variant) =>
+            variant === actionNameLower ||
+            actionNameLower.includes(variant) ||
+            variant.includes(actionNameLower)
+        );
+
+      return functionNameMatch || actionNameMatch;
     });
+
+    if (directMatch) {
+      console.log("Smart Permission Check:", {
+        item: item.name,
+        matchType: "DIRECT_MATCH",
+        matchedFunction: directMatch,
+      });
+      return true;
+    }
+
+    // Fallback to mapping-based check
+    const potentialMatches =
+      sidebarToApiFunctionMapping[
+        itemNameLower as keyof typeof sidebarToApiFunctionMapping
+      ] || [];
+
+    const mappingMatch = activeFunctions.find((activeFunc) => {
+      return potentialMatches.some((match) => {
+        const matchLower = match.toLowerCase();
+        const funcNameLower = activeFunc.functionName.toLowerCase();
+        const actionNameLower = activeFunc.actionName
+          ? activeFunc.actionName.toLowerCase()
+          : "";
+
+        // For short mapping keys (likely abbreviations like "po", "wo"), require strict equality
+        if (matchLower.length < 4) {
+          const isStrictMatch =
+            funcNameLower === matchLower ||
+            actionNameLower === matchLower ||
+            funcNameLower.split(/[\s-_]+/).includes(matchLower) ||
+            actionNameLower.split(/[\s-_]+/).includes(matchLower);
+          return isStrictMatch;
+        }
+
+        // For longer keys, allow substring matching
+        return (
+          funcNameLower.includes(matchLower) ||
+          actionNameLower.includes(matchLower) ||
+          matchLower.includes(funcNameLower) ||
+          matchLower.includes(actionNameLower)
+        );
+      });
+    });
+
+    if (mappingMatch) {
+      console.log("Smart Permission Check:", {
+        item: item.name,
+        matchType: "MAPPING_MATCH",
+        matchedFunction: mappingMatch,
+        mappingMatches: potentialMatches,
+      });
+      return true;
+    }
+
+    return false;
+  };
+
+  // Check if current item has direct permission
+  if (checkDirectMatch(checkItem)) {
     return true;
   }
 
-  // If item has no specific mapping and no href, show it (likely a parent category)
-  if (!checkItem.href && potentialMatches.length === 0) {
-    return true;
+  // IMPORTANT: If item has sub-items, check if ANY sub-item has permission
+  // This ensures parent items (like M-Safe) show when children (like Training List) have permission
+  if (checkItem.subItems && checkItem.subItems.length > 0) {
+    const hasAccessibleSubItem = checkItem.subItems.some((subItem: any) => {
+      // Check if sub-item has direct permission
+      if (checkDirectMatch(subItem)) {
+        console.log(
+          `✅ Parent "${checkItem.name}" shown because child "${subItem.name}" has permission`
+        );
+        return true;
+      }
+      // Recursively check nested sub-items
+      if (subItem.subItems && subItem.subItems.length > 0) {
+        return subItem.subItems.some((nestedItem: any) => {
+          if (checkDirectMatch(nestedItem)) {
+            console.log(
+              `✅ Parent "${checkItem.name}" shown because nested child "${nestedItem.name}" has permission`
+            );
+            return true;
+          }
+          return false;
+        });
+      }
+      return false;
+    });
+
+    if (hasAccessibleSubItem) {
+      return true;
+    }
   }
 
   console.log("Smart Permission Check: Not Found", {
