@@ -1,15 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Edit, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import { useApiConfig } from '@/hooks/useApiConfig';
-import { getUser } from '@/utils/auth';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Search, Edit, X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { useApiConfig } from "@/hooks/useApiConfig";
+import { getUser } from "@/utils/auth";
 
 interface RegionTabProps {
   searchQuery: string;
@@ -22,7 +42,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   searchQuery,
   setSearchQuery,
   entriesPerPage,
-  setEntriesPerPage
+  setEntriesPerPage,
 }) => {
   const { getFullUrl, getAuthHeader } = useApiConfig();
 
@@ -32,20 +52,24 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   const [isAddRegionOpen, setIsAddRegionOpen] = useState(false);
   const [isEditRegionOpen, setIsEditRegionOpen] = useState(false);
   const [newRegionData, setNewRegionData] = useState({
-    name: '',
-    company_id: '',
-    headquarter_id: ''
+    name: "",
+    company_id: "",
+    headquarter_id: "",
   });
   const [editRegionData, setEditRegionData] = useState({
-    id: '',
-    name: '',
-    company_id: '',
-    headquarter_id: ''
+    id: "",
+    name: "",
+    company_id: "",
+    headquarter_id: "",
   });
 
   // Maps for displaying related data
-  const [companiesMap, setCompaniesMap] = useState<Map<number, string>>(new Map());
-  const [headquartersMap, setHeadquartersMap] = useState<Map<number, string>>(new Map());
+  const [companiesMap, setCompaniesMap] = useState<Map<number, string>>(
+    new Map()
+  );
+  const [headquartersMap, setHeadquartersMap] = useState<Map<number, string>>(
+    new Map()
+  );
   const [companiesDropdown, setCompaniesDropdown] = useState<any[]>([]);
   const [headquartersDropdown, setHeadquartersDropdown] = useState<any[]>([]);
   const [canEditRegion, setCanEditRegion] = useState(false);
@@ -58,8 +82,12 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   };
 
   const checkEditPermission = () => {
-    const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'adhip.shetty@lockated.com'];
+    const userEmail = user.email || "";
+    const allowedEmails = [
+      "abhishek.sharma@lockated.com",
+      "adhip.shetty@lockated.com",
+      "helloakshay27@gmail.com",
+    ];
     setCanEditRegion(allowedEmails.includes(userEmail));
   };
 
@@ -77,14 +105,18 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   // Filter companies based on selected headquarter (country) for ADD mode
   useEffect(() => {
     if (newRegionData.headquarter_id) {
-      const filtered = companiesDropdown.filter(company =>
-        company.country_id === parseInt(newRegionData.headquarter_id)
+      const filtered = companiesDropdown.filter(
+        (company) =>
+          company.country_id === parseInt(newRegionData.headquarter_id)
       );
       setFilteredCompaniesAdd(filtered);
 
       // Reset company if current selection is not valid
-      if (newRegionData.company_id && !filtered.find(c => c.id.toString() === newRegionData.company_id)) {
-        setNewRegionData(prev => ({ ...prev, company_id: '' }));
+      if (
+        newRegionData.company_id &&
+        !filtered.find((c) => c.id.toString() === newRegionData.company_id)
+      ) {
+        setNewRegionData((prev) => ({ ...prev, company_id: "" }));
       }
     } else {
       setFilteredCompaniesAdd(companiesDropdown);
@@ -94,14 +126,18 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   // Filter companies based on selected headquarter (country) for EDIT mode
   useEffect(() => {
     if (editRegionData.headquarter_id) {
-      const filtered = companiesDropdown.filter(company =>
-        company.country_id === parseInt(editRegionData.headquarter_id)
+      const filtered = companiesDropdown.filter(
+        (company) =>
+          company.country_id === parseInt(editRegionData.headquarter_id)
       );
       setFilteredCompaniesEdit(filtered);
 
       // Reset company if current selection is not valid
-      if (editRegionData.company_id && !filtered.find(c => c.id.toString() === editRegionData.company_id)) {
-        setEditRegionData(prev => ({ ...prev, company_id: '' }));
+      if (
+        editRegionData.company_id &&
+        !filtered.find((c) => c.id.toString() === editRegionData.company_id)
+      ) {
+        setEditRegionData((prev) => ({ ...prev, company_id: "" }));
       }
     } else {
       setFilteredCompaniesEdit(companiesDropdown);
@@ -111,16 +147,16 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   const fetchRegions = async () => {
     setIsLoadingRegions(true);
     try {
-      const response = await fetch(getFullUrl('/pms/regions.json'), {
+      const response = await fetch(getFullUrl("/pms/regions.json"), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
         },
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Regions API response:', data);
+        console.log("Regions API response:", data);
 
         if (Array.isArray(data)) {
           setRegions(data);
@@ -129,17 +165,17 @@ export const RegionTab: React.FC<RegionTabProps> = ({
         } else if (data && data.data && Array.isArray(data.data)) {
           setRegions(data.data);
         } else {
-          console.error('Regions data format unexpected:', data);
+          console.error("Regions data format unexpected:", data);
           setRegions([]);
-          toast.error('Invalid regions data format');
+          toast.error("Invalid regions data format");
         }
       } else {
-        toast.error('Failed to fetch regions');
+        toast.error("Failed to fetch regions");
         setRegions([]);
       }
     } catch (error) {
-      console.error('Error fetching regions:', error);
-      toast.error('Error fetching regions');
+      console.error("Error fetching regions:", error);
+      toast.error("Error fetching regions");
       setRegions([]);
     } finally {
       setIsLoadingRegions(false);
@@ -148,16 +184,23 @@ export const RegionTab: React.FC<RegionTabProps> = ({
 
   const fetchCompanies = async () => {
     try {
-      const response = await fetch(getFullUrl('/pms/company_setups/company_index.json'), {
-        method: 'GET',
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
-      });
+      const response = await fetch(
+        getFullUrl("/pms/company_setups/company_index.json"),
+        {
+          method: "GET",
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        }
+      );
 
       if (response.ok) {
         const responseData = await response.json();
-        if (responseData && responseData.code === 200 && Array.isArray(responseData.data)) {
+        if (
+          responseData &&
+          responseData.code === 200 &&
+          Array.isArray(responseData.data)
+        ) {
           setCompaniesDropdown(responseData.data);
           const compMap = new Map();
           responseData.data.forEach((company: any) => {
@@ -181,16 +224,16 @@ export const RegionTab: React.FC<RegionTabProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error fetching companies:', error);
+      console.error("Error fetching companies:", error);
     }
   };
 
   const fetchHeadquarters = async () => {
     try {
-      const response = await fetch(getFullUrl('/headquarters.json'), {
+      const response = await fetch(getFullUrl("/headquarters.json"), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
         },
       });
 
@@ -205,7 +248,11 @@ export const RegionTab: React.FC<RegionTabProps> = ({
             }
           });
           setHeadquartersMap(hqMap);
-        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
+        } else if (
+          data &&
+          data.headquarters &&
+          Array.isArray(data.headquarters)
+        ) {
           setHeadquartersDropdown(data.headquarters);
           const hqMap = new Map();
           data.headquarters.forEach((hq: any) => {
@@ -226,108 +273,131 @@ export const RegionTab: React.FC<RegionTabProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error fetching headquarters:', error);
+      console.error("Error fetching headquarters:", error);
     }
   };
 
   const handleAddRegion = async () => {
-    if (!newRegionData.name.trim() || !newRegionData.company_id || !newRegionData.headquarter_id) {
-      toast.error('Please fill in all required fields');
+    if (
+      !newRegionData.name.trim() ||
+      !newRegionData.company_id ||
+      !newRegionData.headquarter_id
+    ) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
     try {
-      const response = await fetch(getFullUrl('/pms/regions.json'), {
-        method: 'POST',
+      const response = await fetch(getFullUrl("/pms/regions.json"), {
+        method: "POST",
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           pms_region: {
             name: newRegionData.name,
             company_id: parseInt(newRegionData.company_id),
-            headquarter_id: parseInt(newRegionData.headquarter_id)
-          }
+            headquarter_id: parseInt(newRegionData.headquarter_id),
+          },
         }),
       });
 
       if (response.ok) {
         const result = await response.json();
-        console.log('Region created successfully:', result);
+        console.log("Region created successfully:", result);
         toast.success(`Region "${newRegionData.name}" added successfully`);
 
         await fetchRegions();
 
-        setNewRegionData({ name: '', company_id: '', headquarter_id: '' });
+        setNewRegionData({ name: "", company_id: "", headquarter_id: "" });
         setIsAddRegionOpen(false);
       } else {
         const errorData = await response.json();
-        console.error('Failed to create region:', errorData);
-        toast.error('Failed to create region');
+        console.error("Failed to create region:", errorData);
+        toast.error("Failed to create region");
       }
     } catch (error) {
-      console.error('Error creating region:', error);
-      toast.error('Error creating region');
+      console.error("Error creating region:", error);
+      toast.error("Error creating region");
     }
   };
 
   const handleEditRegion = (region: any) => {
     setEditRegionData({
       id: region.id,
-      name: region.name || region.region || '',
-      company_id: region.company_id || '',
-      headquarter_id: region.headquarter_id || ''
+      name: region.name || region.region || "",
+      company_id: region.company_id || "",
+      headquarter_id: region.headquarter_id || "",
     });
     setIsEditRegionOpen(true);
   };
 
   const handleUpdateRegion = async () => {
-    if (!editRegionData.name.trim() || !editRegionData.company_id || !editRegionData.headquarter_id) {
-      toast.error('Please fill in all required fields');
+    if (
+      !editRegionData.name.trim() ||
+      !editRegionData.company_id ||
+      !editRegionData.headquarter_id
+    ) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
     try {
-      const response = await fetch(getFullUrl(`/pms/regions/${editRegionData.id}.json`), {
-        method: 'PATCH',
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          pms_region: {
-            name: editRegionData.name,
-            company_id: parseInt(editRegionData.company_id),
-            headquarter_id: parseInt(editRegionData.headquarter_id)
-          }
-        }),
-      });
+      const response = await fetch(
+        getFullUrl(`/pms/regions/${editRegionData.id}.json`),
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: getAuthHeader(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            pms_region: {
+              name: editRegionData.name,
+              company_id: parseInt(editRegionData.company_id),
+              headquarter_id: parseInt(editRegionData.headquarter_id),
+            },
+          }),
+        }
+      );
 
       if (response.ok) {
         const result = await response.json();
-        console.log('Region updated successfully:', result);
+        console.log("Region updated successfully:", result);
         toast.success(`Region "${editRegionData.name}" updated successfully`);
 
         await fetchRegions();
 
-        setEditRegionData({ id: '', name: '', company_id: '', headquarter_id: '' });
+        setEditRegionData({
+          id: "",
+          name: "",
+          company_id: "",
+          headquarter_id: "",
+        });
         setIsEditRegionOpen(false);
       } else {
         const errorData = await response.json();
-        console.error('Failed to update region:', errorData);
-        toast.error('Failed to update region');
+        console.error("Failed to update region:", errorData);
+        toast.error("Failed to update region");
       }
     } catch (error) {
-      console.error('Error updating region:', error);
-      toast.error('Error updating region');
+      console.error("Error updating region:", error);
+      toast.error("Error updating region");
     }
   };
 
-  const filteredRegions = regions.filter(region =>
-    region.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    companiesMap.get(region.company_id)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    headquartersMap.get(region.headquarter_id)?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRegions = regions.filter(
+    (region) =>
+      region.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      companiesMap
+        .get(region.company_id)
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      headquartersMap
+        .get(region.headquarter_id)
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -358,7 +428,9 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                 <Input
                   id="region_name"
                   value={newRegionData.name}
-                  onChange={(e) => setNewRegionData({ ...newRegionData, name: e.target.value })}
+                  onChange={(e) =>
+                    setNewRegionData({ ...newRegionData, name: e.target.value })
+                  }
                   placeholder="Enter region name"
                 />
               </div>
@@ -370,7 +442,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                     setNewRegionData({
                       ...newRegionData,
                       headquarter_id: value,
-                      company_id: '' // Reset company when country changes
+                      company_id: "", // Reset company when country changes
                     });
                   }}
                 >
@@ -390,29 +462,35 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                 <Label htmlFor="company">Company *</Label>
                 <Select
                   value={newRegionData.company_id}
-                  onValueChange={(value) => setNewRegionData({ ...newRegionData, company_id: value })}
+                  onValueChange={(value) =>
+                    setNewRegionData({ ...newRegionData, company_id: value })
+                  }
                   disabled={!newRegionData.headquarter_id}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={
-                      !newRegionData.headquarter_id
-                        ? "Select country first"
-                        : filteredCompaniesAdd.length === 0
-                          ? "No companies available for selected country"
-                          : "Select company"
-                    } />
+                    <SelectValue
+                      placeholder={
+                        !newRegionData.headquarter_id
+                          ? "Select country first"
+                          : filteredCompaniesAdd.length === 0
+                            ? "No companies available for selected country"
+                            : "Select company"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {filteredCompaniesAdd.length === 0 ? (
                       <SelectItem value="no-data" disabled>
                         {!newRegionData.headquarter_id
                           ? "Please select a country first"
-                          : "No companies available for selected country"
-                        }
+                          : "No companies available for selected country"}
                       </SelectItem>
                     ) : (
                       filteredCompaniesAdd.map((company) => (
-                        <SelectItem key={company.id} value={company.id.toString()}>
+                        <SelectItem
+                          key={company.id}
+                          value={company.id.toString()}
+                        >
                           {company.name}
                         </SelectItem>
                       ))
@@ -421,16 +499,23 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                 </Select>
                 {newRegionData.headquarter_id && (
                   <p className="text-xs text-gray-400 mt-1">
-                    {filteredCompaniesAdd.length} companies available for selected country
+                    {filteredCompaniesAdd.length} companies available for
+                    selected country
                   </p>
                 )}
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddRegionOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddRegionOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleAddRegion} className="bg-[#C72030] hover:bg-[#A01020] text-white">
+              <Button
+                onClick={handleAddRegion}
+                className="bg-[#C72030] hover:bg-[#A01020] text-white"
+              >
                 Add Region
               </Button>
             </DialogFooter>
@@ -491,8 +576,16 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                   <TableRow key={region.id}>
                     <TableCell>{region.id}</TableCell>
                     <TableCell>{region.name}</TableCell>
-                    <TableCell>{companiesMap.get(region.company_id) || region.company_name || '-'}</TableCell>
-                    <TableCell>{headquartersMap.get(region.headquarter_id) || region.headquarter_name || '-'}</TableCell>
+                    <TableCell>
+                      {companiesMap.get(region.company_id) ||
+                        region.company_name ||
+                        "-"}
+                    </TableCell>
+                    <TableCell>
+                      {headquartersMap.get(region.headquarter_id) ||
+                        region.headquarter_name ||
+                        "-"}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button
@@ -533,7 +626,9 @@ export const RegionTab: React.FC<RegionTabProps> = ({
               <Input
                 id="edit_region_name"
                 value={editRegionData.name}
-                onChange={(e) => setEditRegionData({ ...editRegionData, name: e.target.value })}
+                onChange={(e) =>
+                  setEditRegionData({ ...editRegionData, name: e.target.value })
+                }
                 placeholder="Enter region name"
               />
             </div>
@@ -545,7 +640,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                   setEditRegionData({
                     ...editRegionData,
                     headquarter_id: value,
-                    company_id: '' // Reset company when country changes
+                    company_id: "", // Reset company when country changes
                   });
                 }}
               >
@@ -565,29 +660,35 @@ export const RegionTab: React.FC<RegionTabProps> = ({
               <Label htmlFor="edit_company">Company *</Label>
               <Select
                 value={editRegionData.company_id}
-                onValueChange={(value) => setEditRegionData({ ...editRegionData, company_id: value })}
+                onValueChange={(value) =>
+                  setEditRegionData({ ...editRegionData, company_id: value })
+                }
                 disabled={!editRegionData.headquarter_id}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={
-                    !editRegionData.headquarter_id
-                      ? "Select country first"
-                      : filteredCompaniesEdit.length === 0
-                        ? "No companies available for selected country"
-                        : "Select company"
-                  } />
+                  <SelectValue
+                    placeholder={
+                      !editRegionData.headquarter_id
+                        ? "Select country first"
+                        : filteredCompaniesEdit.length === 0
+                          ? "No companies available for selected country"
+                          : "Select company"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {filteredCompaniesEdit.length === 0 ? (
                     <SelectItem value="no-data" disabled>
                       {!editRegionData.headquarter_id
                         ? "Please select a country first"
-                        : "No companies available for selected country"
-                      }
+                        : "No companies available for selected country"}
                     </SelectItem>
                   ) : (
                     filteredCompaniesEdit.map((company) => (
-                      <SelectItem key={company.id} value={company.id.toString()}>
+                      <SelectItem
+                        key={company.id}
+                        value={company.id.toString()}
+                      >
                         {company.name}
                       </SelectItem>
                     ))
@@ -596,16 +697,23 @@ export const RegionTab: React.FC<RegionTabProps> = ({
               </Select>
               {editRegionData.headquarter_id && (
                 <p className="text-xs text-gray-400 mt-1">
-                  {filteredCompaniesEdit.length} companies available for selected country
+                  {filteredCompaniesEdit.length} companies available for
+                  selected country
                 </p>
               )}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditRegionOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditRegionOpen(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleUpdateRegion} className="bg-[#C72030] hover:bg-[#A01020] text-white">
+            <Button
+              onClick={handleUpdateRegion}
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            >
               Update Region
             </Button>
           </DialogFooter>
