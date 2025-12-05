@@ -189,31 +189,64 @@ export const DynamicHeader = () => {
         ? activeFunc.actionName.toLowerCase()
         : "";
 
-      // Check function name mapping
+      // 1. Priority: Check API module name directly
+      // This handles cases like "Asset Setup" having moduleName: "Settings"
+      if (activeFunc.moduleName) {
+        // Normalize parsing (e.g. "Settings" -> "Settings")
+        // We check if the moduleName matches one of our known packages
+        // This allows dynamic enabling based on API response
+        const apiModule = activeFunc.moduleName;
+        // Check exact match or case-insensitive match against packages
+        const matchedPackage = packages.find(
+          (pkg) => pkg.toLowerCase() === apiModule.toLowerCase()
+        );
+        if (matchedPackage) {
+          enabledSections.add(matchedPackage);
+        }
+      }
+
+      // 2. Fallback: Check function name mapping
       Object.entries(functionToHeaderMapping).forEach(([keyword, section]) => {
-        if (
-          funcNameLower.includes(keyword) ||
-          keyword.includes(funcNameLower)
-        ) {
+        const isShortKeyword = keyword.length < 4;
+        let isMatch = false;
+
+        if (isShortKeyword) {
+          // Strict match or word boundary for short keywords (e.g. "po", "wo")
+          isMatch =
+            funcNameLower === keyword ||
+            funcNameLower.split(/[\s-_]+/).includes(keyword);
+        } else {
+          // Standard loose match for longer keywords
+          isMatch =
+            funcNameLower.includes(keyword) || keyword.includes(funcNameLower);
+        }
+
+        if (isMatch) {
           enabledSections.add(section);
-          console.log(
-            `🎯 Header Section "${section}" enabled by function: "${activeFunc.functionName}"`
-          );
         }
       });
 
-      // Check action name mapping
+      // 3. Fallback: Check action name mapping
       if (actionNameLower) {
         Object.entries(functionToHeaderMapping).forEach(
           ([keyword, section]) => {
-            if (
-              actionNameLower.includes(keyword) ||
-              keyword.includes(actionNameLower)
-            ) {
+            const isShortKeyword = keyword.length < 4;
+            let isMatch = false;
+
+            if (isShortKeyword) {
+              // Strict match or word boundary for short keywords
+              isMatch =
+                actionNameLower === keyword ||
+                actionNameLower.split(/[\s-_]+/).includes(keyword);
+            } else {
+              // Standard loose match for longer keywords
+              isMatch =
+                actionNameLower.includes(keyword) ||
+                keyword.includes(actionNameLower);
+            }
+
+            if (isMatch) {
               enabledSections.add(section);
-              console.log(
-                `🎯 Header Section "${section}" enabled by action: "${activeFunc.actionName}"`
-              );
             }
           }
         );
