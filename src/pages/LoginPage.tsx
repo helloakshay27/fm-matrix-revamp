@@ -532,11 +532,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           </h2>
         )}
       </div>
-      <p className="text-black-400 text-sm mb-6 ">
-        Email: <span className="text-black-300 font-bold">{email}</span>
+      <p className="text-grey-300 text-sm mb-6 ">
+        Email: <span className="text-grey-500 font-bold">{email}</span>
       </p>
 
-      <p className="text-gray-800 text-sm ">
+      <p className="text-gray-500 text-sm">
         Select your organization to continue :
       </p>
 

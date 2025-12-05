@@ -95,6 +95,7 @@ interface UserData {
   urgency_email_enabled?: boolean;
   user_category_id?: number;
   lock_user_permission?: LockUserPermission;
+  profile_type?: string;
 }
 
 interface FormData {
@@ -119,6 +120,7 @@ interface FormData {
   selectedCompanies: string[];
   lastWorkingDate: string;
   selectUserCategory: string | number;
+  selectProfileType: string;
 }
 
 interface Payload {
@@ -147,6 +149,7 @@ interface Payload {
     supplier_id: string | number;
     employee_type: string;
     user_category_id: string | number;
+    profile_type?: string;
   };
   lock_user_permission?: number;
 }
@@ -234,7 +237,8 @@ export const EditFMUserPage = () => {
     selectedSites: [],
     selectedCompanies: [],
     lastWorkingDate: "",
-    selectUserCategory: ""
+    selectUserCategory: "",
+    selectProfileType: "",
   });
   const [userData, setUserData] = useState<UserData>({});
 
@@ -329,7 +333,8 @@ export const EditFMUserPage = () => {
             ? userData.lock_user_permission?.access_to || []
             : [],
         lastWorkingDate: userData.lock_user_permission?.last_working_date || "",
-        selectUserCategory: userData.user_category_id
+        selectUserCategory: userData.user_category_id,
+        selectProfileType: userData.profile_type || "",
       });
     } else {
       console.log("userData not found for id:", id);
@@ -418,6 +423,7 @@ export const EditFMUserPage = () => {
         supplier_id: formData.supplier,
         employee_type: formData.employeeType,
         user_category_id: formData.selectUserCategory,
+        profile_type: formData.selectProfileType,
       },
       lock_user_permission: lockId,
     };
@@ -944,6 +950,25 @@ export const EditFMUserPage = () => {
                           </MenuItem>
                         ))
                       }
+                    </Select>
+                  </FormControl>
+                </div>
+
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select Profile Type</InputLabel>
+                    <Select
+                      value={formData.selectProfileType}
+                      onChange={(e) =>
+                        handleInputChange("selectProfileType", e.target.value)
+                      }
+                      label="Select Profile Type"
+                      displayEmpty
+                      required
+                    >
+                      <MenuItem value="">Select Profile Type</MenuItem>
+                      <MenuItem value="Technical">Technical</MenuItem>
+                      <MenuItem value="NonTechnical">NonTechnical</MenuItem>
                     </Select>
                   </FormControl>
                 </div>

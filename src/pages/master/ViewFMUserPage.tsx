@@ -42,7 +42,8 @@ interface FormData {
   company_cluster: string;
   last_working_day: string;
   email_preference: string;
-  access: string[]
+  access: string[],
+  profile_type?: string,
 }
 
 export const ViewFMUserPage = () => {
@@ -139,7 +140,8 @@ export const ViewFMUserPage = () => {
         company_cluster: '',
         last_working_day: userData.lock_user_permission?.last_working_date,
         email_preference: userData.urgency_email_enabled?.toString(),
-        access: userData.access_to_array || []
+        access: userData.access_to_array || [],
+        profile_type: userData.profile_type || '',
       });
     } else {
       console.log('userData not found for id:', id);
@@ -303,6 +305,20 @@ export const ViewFMUserPage = () => {
                       <SelectItem value="0">All Emails</SelectItem>
                       <SelectItem value="1">Critical Emails Only</SelectItem>
                       <SelectItem value="2">No Emails</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Profile Type</Label>
+                  <Select value={formData.profile_type} onValueChange={(value) => handleInputChange('profile_type', value)} disabled>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Profile Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Profile">Profile Type</SelectItem>
+                      <SelectItem value="Technical">Technical</SelectItem>
+                      <SelectItem value="NonTechnical">NonTechnical</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

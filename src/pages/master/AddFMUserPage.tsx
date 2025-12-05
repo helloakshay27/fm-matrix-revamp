@@ -143,6 +143,7 @@ export const AddFMUserPage = () => {
     selectEmailPreference: "",
     selectedSites: [] as string[],
     selectedCompanies: [] as string[],
+    selectProfileType: "",
   });
 
   const [duplicateUserDialog, setDuplicateUserDialog] = useState({
@@ -247,6 +248,7 @@ export const AddFMUserPage = () => {
         entity_id: formData.selectEntity,
         supplier_id: formData.supplier,
         user_category_id: formData.selectUserCategory,
+        profile_type: formData.selectProfileType,
       },
     };
     try {
@@ -720,11 +722,11 @@ export const AddFMUserPage = () => {
                         renderValue={(selected) =>
                           selected.length > 0
                             ? sites
-                                ?.filter((site) =>
-                                  selected.includes(site.id.toString())
-                                )
-                                .map((site) => site.name || site.full_name)
-                                .join(", ")
+                              ?.filter((site) =>
+                                selected.includes(site.id.toString())
+                              )
+                              .map((site) => site.name || site.full_name)
+                              .join(", ")
                             : "Select Sites"
                         }
                       >
@@ -793,6 +795,24 @@ export const AddFMUserPage = () => {
                           {category.name}
                         </MenuItem>
                       ))}
+                    </Select>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select Profile Type</InputLabel>
+                    <Select
+                      value={formData.selectProfileType}
+                      onChange={(e) =>
+                        handleInputChange("selectProfileType", e.target.value)
+                      }
+                      label="Select Profile Type"
+                      displayEmpty
+                      required
+                    >
+                      <MenuItem value="">Select Profile Type</MenuItem>
+                      <MenuItem value="Technical">Technical</MenuItem>
+                      <MenuItem value="NonTechnical">NonTechnical</MenuItem>
                     </Select>
                   </FormControl>
                 </div>
