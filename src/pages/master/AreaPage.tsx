@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Edit, Trash2, Plus, ChevronLeft, ChevronRight, Check, X, Download, Upload, Loader2 } from "lucide-react";
+import { Edit, Trash2, Plus, ChevronLeft, ChevronRight, Check, X, Download, Upload, Loader2, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { useToast } from "@/components/ui/use-toast"
 import {
@@ -48,6 +48,8 @@ export const AreaPage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedArea, setSelectedArea] = useState<any | null>(null);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [selectedQrCode, setSelectedQrCode] = useState<string>('');
   const [name, setName] = useState('');
   const [buildingId, setBuildingId] = useState('');
   const [wingId, setWingId] = useState('');
@@ -422,19 +424,20 @@ export const AreaPage = () => {
                   <TableHead className="px-4 py-3 text-left font-medium">Name</TableHead>
                   <TableHead className="px-4 py-3 text-left font-medium">Building</TableHead>
                   <TableHead className="px-4 py-3 text-left font-medium">Wing</TableHead>
+                  <TableHead className="px-4 py-3 text-left font-medium">QR Code</TableHead>
                   <TableHead className="px-4 py-3 text-left font-medium">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {areas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">
+                    <TableCell colSpan={6} className="text-center py-4">
                       No areas found
                     </TableCell>
                   </TableRow>
                 ) : filteredAreas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">
+                    <TableCell colSpan={6} className="text-center py-4">
                       No areas match your search
                     </TableCell>
                   </TableRow>
@@ -449,6 +452,23 @@ export const AreaPage = () => {
                       <TableCell className="font-medium">{area.name}</TableCell>
                       <TableCell>{area.building?.name || 'N/A'}</TableCell>
                       <TableCell>{area.wing?.name || 'N/A'}</TableCell>
+                      <TableCell>
+                        {area.qr_code_url ? (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedQrCode(area.qr_code_url);
+                              setIsQrModalOpen(true);
+                            }}
+                            className="text-[#C72030] hover:text-[#C72030]/80"
+                          >
+                            <QrCode className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <button onClick={() => handleToggleStatus(area)} className="cursor-pointer">
                           {area.active ? (
@@ -648,6 +668,45 @@ export const AreaPage = () => {
           onOpenChange={setIsAddModalOpen}
           onAreaAdded={fetchAreas}
         />
+
+        {/* QR Code Modal */}
+        <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Area QR Code</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col items-center space-y-4 py-4">
+              {selectedQrCode ? (
+                <>
+                  <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
+                    <img 
+                      src={selectedQrCode} 
+                      alt="Area QR Code" 
+                      className="w-64 h-64 object-contain"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = selectedQrCode;
+                      link.download = `area-qr-code-${Date.now()}.png`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      toast.success('QR Code downloaded successfully');
+                    }}
+                    className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download QR Code
+                  </Button>
+                </>
+              ) : (
+                <p className="text-gray-500">No QR code available</p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

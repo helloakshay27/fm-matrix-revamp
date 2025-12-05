@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import {
   Eye,
   Upload,
@@ -185,6 +186,7 @@ export const SurveyResponsePage = () => {
   // console.log('SurveyResponsePage component loaded successfully with EnhancedTable');
   const navigate = useNavigate();
   const location = useLocation();
+  const { shouldShow } = useDynamicPermissions();
 
   // Note: survey_id filtering has been removed as requested
   // console.log('🔍 Fetching all survey responses without survey_id filter');
@@ -1037,12 +1039,17 @@ export const SurveyResponsePage = () => {
     switch (columnKey) {
       case "actions":
         return (
-          <button
-            onClick={() => handleViewDetails(item)}
-            className="text-black hover:text-[#C72030] transition-colors"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
+          <div className="flex justify-center items-center gap-2">
+            {shouldShow("survey_response", "view") && (
+              <button
+                onClick={() => handleViewDetails(item)}
+                className="p-1 text-black-600 hover:text-black-800 transition-colors"
+                title="View Details"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         );
       // case 'survey_id':
       //   return item.survey_id;
@@ -1405,23 +1412,13 @@ export const SurveyResponsePage = () => {
               searchPlaceholder="Search responses..."
               pagination={false} // Disable client-side pagination since we're doing server-side
               pageSize={pagination.per_page}
-              hideColumnsButton={true}
+              hideColumnsButton={false}
+              hideTableExport={false}
               loading={isLoading}
-              leftActions={
-                    <div className="flex flex-wrap gap-2">
-                      {/* Filter button is now positioned next to search input in EnhancedTable */}
-                    </div>
-                  }
-                  rightActions={
-                    <div className="flex items-center gap-2">
-                      <ColumnVisibilityDropdown
-                        columns={dropdownColumns}
-                        onColumnToggle={handleColumnToggle}
-                      />
-                    </div>
-                  }
-                  onFilterClick={handleFilterClick}
-                />
+              leftActions={null}
+              rightActions={null}
+              onFilterClick={handleFilterClick}
+            />
 
                 {/* Debug info for status column */}
                 {/* {process.env.NODE_ENV === 'development' && (

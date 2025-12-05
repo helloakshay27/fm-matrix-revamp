@@ -1137,6 +1137,29 @@ export const EditAssetDetailsPage = () => {
     }>,
   });
 
+  // Track existing attachment IDs that user marked for deletion
+  const [attachmentsToDestroy, setAttachmentsToDestroy] = useState<{
+    asset_image: number[];
+  }>({
+    asset_image: [],
+  });
+
+  const markExistingAttachmentForDeletion = (
+    categoryKey: keyof typeof attachmentsToDestroy,
+    id: number
+  ) => {
+    setAttachmentsToDestroy((prev) => ({
+      ...prev,
+      [categoryKey]: [...(prev[categoryKey] || []), id],
+    }));
+
+    // Remove from visible existingAttachments so the UI updates immediately
+    setExistingAttachments((prev: any) => ({
+      ...prev,
+      [categoryKey === "asset_image" ? "asset_image" : categoryKey]: null,
+    }));
+  };
+
   const [selectedAssetCategory, setSelectedAssetCategory] = useState("");
 
   const handleGoBack = () => {
@@ -4405,6 +4428,24 @@ export const EditAssetDetailsPage = () => {
       },
     };
 
+    // If user marked any existing attachments for deletion, include them
+    // as nested-attributes (for FormData) and as top-level arrays for JSON payloads
+    try {
+      const assetImageDeletes = attachmentsToDestroy.asset_image || [];
+      if (assetImageDeletes && assetImageDeletes.length > 0) {
+        const deletes = assetImageDeletes.map((id) => ({ id, _destroy: true }));
+        // Nested attributes for Rails-style nested-attributes handling
+        (payload.pms_asset as any).asset_image_attributes = deletes;
+
+        // Also include top-level asset_image array in JSON payload when not uploading files
+        if (!hasFiles()) {
+          (payload.pms_asset as any).asset_image = deletes;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to attach deletion metadata:", e);
+    }
+
     console.log("Final payload:", payload);
     console.log("AMC Detail being sent:", payload.pms_asset.amc_detail);
     console.log(
@@ -4573,6 +4614,33 @@ export const EditAssetDetailsPage = () => {
           .replace(/\s+/g, "")
           .replace(/&/g, "");
         const categoryAttachments = getCategoryAttachments();
+
+        // If user marked any existing attachments for deletion, append nested attributes and
+        // a JSON entry for top-level asset_image so backend can process deletions.
+        try {
+          const deletes = attachmentsToDestroy.asset_image || [];
+          if (deletes && deletes.length > 0) {
+            // Append nested attributes for FormData: pms_asset[asset_image_attributes][i][id/_destroy]
+            deletes.forEach((id, idx) => {
+              formDataObj.append(
+                `pms_asset[asset_image_attributes][${idx}][id]`,
+                String(id)
+              );
+              formDataObj.append(
+                `pms_asset[asset_image_attributes][${idx}][_destroy]`,
+                "true"
+              );
+            });
+
+            // Also append a JSON string for top-level asset_image array (helps when backend expects top-level)
+            formDataObj.append(
+              "pms_asset[asset_image]",
+              JSON.stringify(deletes.map((id) => ({ id, _destroy: true })))
+            );
+          }
+        } catch (e) {
+          console.warn("Failed to append deletion fields to FormData:", e);
+        }
 
         // Add asset image
         if (
@@ -14072,14 +14140,31 @@ export const EditAssetDetailsPage = () => {
                             {existingAttachments.asset_image.document_name}
                           </span>
                         </div>
-                        <button
-                          onClick={() =>
-                            downloadAttachment(existingAttachments.asset_image!)
-                          }
-                          className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
-                        >
-                          <Download className="w-3 h-3" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() =>
+                              downloadAttachment(existingAttachments.asset_image!)
+                            }
+                            className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
+                          >
+                            <Download className="w-3 h-3" />
+                          </button>
+                          {existingAttachments.asset_image &&
+                            (existingAttachments as any).asset_image.id && (
+                              <button
+                                onClick={() =>
+                                  markExistingAttachmentForDeletion(
+                                    "asset_image",
+                                    (existingAttachments as any).asset_image.id
+                                  )
+                                }
+                                title="Remove existing image"
+                                className="text-red-500 hover:text-red-700 p-1 rounded"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
+                        </div>
                       </div>
                     </div>
                   )}

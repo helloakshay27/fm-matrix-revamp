@@ -3330,7 +3330,7 @@ const CloneSchedulePage = () => {
                 >
                   <MenuItem value="">Select Users</MenuItem>
                   {Array.isArray(users) && users.map((option) => (
-                    <MenuItem key={option.id} value={option.id}>{option.name || option.full_name} ({option.email})</MenuItem>
+                    <MenuItem key={option.id} value={option.id}>{option.name || option.full_name}</MenuItem>
                   ))}
                 </Select>
               </FormControl>

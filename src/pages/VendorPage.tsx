@@ -202,7 +202,35 @@ export const VendorPage = () => {
       }
     }
   };
-  const handleExport = () => { console.log("Export action triggered"); toast.info("Export functionality not yet implemented."); };
+  const handleExport = async () => {
+    try {
+      toast.loading('Preparing export...', { id: 'export-loading' });
+      // Use API config helpers
+      const { BASE_URL, TOKEN, ENDPOINTS } = await import('@/config/apiConfig');
+      const token = TOKEN;
+      const baseUrl = BASE_URL;
+      if (!token || !baseUrl) {
+        toast.dismiss('export-loading');
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
+      // Use the endpoint from config
+      const exportUrl = `${baseUrl}${ENDPOINTS.SUPPLIERS_EXPORT}?access_token=${token}`;
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `suppliers_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.dismiss('export-loading');
+      toast.success('Export started successfully');
+    } catch (error) {
+      toast.dismiss('export-loading');
+      console.error('Export error:', error);
+      toast.error('Failed to export suppliers data');
+    }
+  };
   const handleClearSelection = () => { setShowActionPanel(false); };
   console.log("vendors:---", vendors);
   
@@ -214,10 +242,11 @@ export const VendorPage = () => {
     { key: 'gstin_number', label: 'GSTIN Number', sortable: true },
     { key: 'pan_number', label: 'PAN Number', sortable: true },
     { key: 'supplier_type', label: 'Supplier Type', sortable: true },
-    { key: 'average_rating', label: 'Ratings', sortable: true },
-    { key: 'signed_on_contract', label: 'Signed On Contract', sortable: true },
+    // { key: 'average_rating', label: 'Ratings', sortable: true },
+    // { key: 'signed_on_contract', label: 'Signed On Contract', sortable: true },
     { key: 'kyc_end_in_days', label: 'KYC End In Days', sortable: true },
   ];
+console.log("vendors:-",vendors);
 
   const renderCell = (item: Vendor, columnKey: string) => {
     switch (columnKey) {

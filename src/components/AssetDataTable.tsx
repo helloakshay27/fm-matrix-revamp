@@ -162,13 +162,13 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
 
   const selectionActions = shouldShow("assets", "schedule")
     ? [
-        {
-          label: "Add Schedule",
-          icon: Plus,
-          onClick: handleAddSchedule,
-          variant: "primary" as const,
-        },
-      ]
+      {
+        label: "Add Schedule",
+        icon: Plus,
+        onClick: handleAddSchedule,
+        variant: "primary" as const,
+      },
+    ]
     : [];
 
   const columns: ColumnConfig[] = [
@@ -671,9 +671,15 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         if (columnKey.startsWith("custom_")) {
           const fieldKey = columnKey.replace("custom_", "");
           const customFieldValue = asset[fieldKey];
+
+          let displayValue = customFieldValue;
+          if (customFieldValue && typeof customFieldValue === 'object') {
+            displayValue = customFieldValue.name || customFieldValue.field_value || '';
+          }
+
           return (
             <span className="text-sm text-gray-600">
-              {customFieldValue || "-"}
+              {displayValue || "-"}
             </span>
           );
         }
@@ -698,7 +704,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
           onAdd={shouldShow("assets", "add") ? handleAddAsset : undefined}
           onClearSelection={() => setShowActionPanel(false)}
           onImport={shouldShow("assets", "import") ? handleImport : undefined}
-          // onChecklist={onChecklist}
+        // onChecklist={onChecklist}
         />
       )}
       <EnhancedTable

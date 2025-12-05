@@ -230,7 +230,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     setLoginLoading(true);
     try {
       const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
-      const response = await loginUser(email, password, baseUrl);
+      const organizationId = selectedOrganization.id;
+      const response = await loginUser(email, password, baseUrl, organizationId);
 
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");
@@ -474,6 +475,12 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
             "& .MuiOutlinedInput-root": {
               borderRadius: "0.5rem",
             },
+            "& .MuiOutlinedInput-input::placeholder": {
+              fontSize: "17px",
+              color: "#424651ff",
+              opacity: 1,
+              fontWeight: 500,
+            },
             ...(isViSite && {
               "& .MuiOutlinedInput-input": {
                 fontSize: "16px",
@@ -510,8 +517,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           variant="ghost"
           size="sm"
           className="text-gray-300 hover:text-white p-1"
+          style={{ marginTop: '10px' }}
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={30} />
         </Button>
 
         {isViSite ? (
@@ -524,8 +532,12 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           </h2>
         )}
       </div>
-      <p className="text-black-400 text-sm mb-6">
-        Email: <span className="text-black-300">{email}</span>
+      <p className="text-black-400 text-sm mb-6 ">
+        Email: <span className="text-black-300 font-bold">{email}</span>
+      </p>
+
+      <p className="text-gray-800 text-sm ">
+        Select your organization to continue :
       </p>
 
       <div className="space-y-3 mb-6 max-h-[250px] overflow-y-auto scrollbar">

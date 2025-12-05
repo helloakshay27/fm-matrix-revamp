@@ -40,6 +40,7 @@ export const createOrganizationAdmin = async (
   success: boolean;
   data?: CreateAdminUserResponse;
   error?: string;
+  errorData?: any;
 }> => {
   try {
     const token = localStorage.getItem("token");
@@ -75,8 +76,10 @@ export const createOrganizationAdmin = async (
 
       let errorMessage = "Failed to create admin user";
 
+      let errorJson: any = null;
+
       try {
-        const errorJson = JSON.parse(errorText) as AdminUserAPIError;
+        errorJson = JSON.parse(errorText) as AdminUserAPIError;
         if (errorJson.error) {
           errorMessage = errorJson.error;
         } else if (errorJson.errors && Array.isArray(errorJson.errors)) {
@@ -105,6 +108,7 @@ export const createOrganizationAdmin = async (
       return {
         success: false,
         error: errorMessage,
+        errorData: errorJson,
       };
     }
 
@@ -125,6 +129,7 @@ export const createOrganizationAdmin = async (
           responseData.message ||
           responseData.error ||
           "Failed to create admin user",
+        errorData: responseData,
       };
     }
 

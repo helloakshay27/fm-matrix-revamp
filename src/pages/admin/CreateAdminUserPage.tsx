@@ -17,6 +17,8 @@ import {
   getOrganizations,
   getCompanies,
 } from "@/services/adminUserAPI";
+import { DuplicateUserDialog } from "@/components/DuplicateUserDialog";
+import axios from "axios";
 
 const fieldStyles = {
   height: "45px",
@@ -89,6 +91,11 @@ export const CreateAdminUserPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingOrganizations, setLoadingOrganizations] = useState(false);
   const [loadingCompanies, setLoadingCompanies] = useState(false);
+  const [duplicateUserDialog, setDuplicateUserDialog] = useState({
+    open: false,
+    companies: [],
+    errorMessage: "",
+  });
 
   // Fetch organizations on component mount
   useEffect(() => {
@@ -234,8 +241,15 @@ export const CreateAdminUserPage = () => {
 
         // Handle specific error messages
         const errorMessage = result.error || "Failed to create admin user";
+        const errorData = result.errorData;
 
-        if (
+        if (errorData?.companies && errorData.companies.length > 0) {
+          setDuplicateUserDialog({
+            open: true,
+            companies: errorData.companies,
+            errorMessage: errorMessage,
+          });
+        } else if (
           errorMessage.toLowerCase().includes("user is already exists") ||
           errorMessage.toLowerCase().includes("user already exists")
         ) {
@@ -269,7 +283,42 @@ export const CreateAdminUserPage = () => {
   };
 
   const handleCancel = () => {
-    navigate("/ops-console/master/user/fm-users");
+    navigate("/ops-console/admin/users");
+  };
+
+  const handleAssignPermission = async () => {
+    try {
+      setIsSubmitting(true);
+      const token = localStorage.getItem("token");
+      const baseUrl = localStorage.getItem("baseUrl");
+
+      const payload = {
+        user: {
+          email: formData.email,
+          mobile: formData.mobile,
+          organization_id: parseInt(formData.organization_id),
+          company_id: parseInt(formData.company_id),
+        },
+      };
+
+      const response = await axios.post(
+        `https://${baseUrl}/pms/users/create_lock_for_admin.json?access_token=${token}`,
+        payload
+      );
+
+      if (response.data) {
+        toast.success("Permissions assigned successfully");
+        setDuplicateUserDialog((prev) => ({ ...prev, open: false }));
+        navigate("/ops-console/master/user/fm-users");
+      }
+    } catch (error: any) {
+      console.error("Error assigning permissions:", error);
+      toast.error(
+        error.response?.data?.error || "Failed to assign permissions"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -485,6 +534,16 @@ export const CreateAdminUserPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      <DuplicateUserDialog
+        open={duplicateUserDialog.open}
+        onClose={() =>
+          setDuplicateUserDialog((prev) => ({ ...prev, open: false }))
+        }
+        onConfirm={handleAssignPermission}
+        companies={duplicateUserDialog.companies}
+        errorMessage={duplicateUserDialog.errorMessage}
+      />
     </div>
   );
 };

@@ -23,6 +23,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { ImportOccupantUsers } from "@/components/ImportOccupantUsers";
 import axios from "axios";
 import {
   Dialog,
@@ -43,10 +44,10 @@ const columns: ColumnConfig[] =  [
   { key: "gender", label: "Gender", sortable: true, draggable: true },
   { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
   { key: "email", label: "Email", sortable: true, draggable: true },
-  { key: "company", label: "Vendor Company Name", sortable: true, draggable: true },
+  // { key: "company", label: "Vendor Company Name", sortable: true, draggable: true },
   { key: "entity", label: "Entity Name", sortable: true, draggable: true },
   { key: "department", label: "Unit", sortable: true, draggable: true },
-  { key: "role", label: "Role", sortable: true, draggable: true },
+  // { key: "role", label: "Role", sortable: true, draggable: true },
   { key: "employeeId", label: "Employee ID", sortable: true, draggable: true },
   { key: "createdBy", label: "Created By", sortable: true, draggable: true },
   { key: "accessLevel", label: "Access Level", sortable: true, draggable: true },
@@ -63,6 +64,7 @@ export const OccupantUserMasterDashboard = () => {
   const [statusDialogOpen, setStatusDialogOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false);
   const [occupantUser, setOccupantUser] = useState([]);
   const [occupantUsersState, setOccupantUsersState] = useState<any[]>([]);
   const [pagination, setPagination] = useState({
@@ -672,7 +674,10 @@ export const OccupantUserMasterDashboard = () => {
           onAdd={() => location.pathname.includes("/club-management/")
             ? navigate("/club-management/users/occupant-users/add")
             : navigate("/master/user/occupant-users/add")}
-          onImport={() => { }}
+          onImport={() => {
+            setShowActionPanel(false);
+            setIsImportModalOpen(true);
+          }}
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
@@ -735,6 +740,15 @@ export const OccupantUserMasterDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ImportOccupantUsers
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onRefresh={() => {
+          fetchUsers();
+          dispatch(fetchOccupantUserCounts());
+        }}
+      />
     </div>
   );
 };

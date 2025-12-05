@@ -1,20 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { AddCountryModal } from '@/components/AddCountryModal';
-import { EditCountryModal } from '@/components/EditCountryModal';
-import { DeleteCountryModal } from '@/components/DeleteCountryModal';
-import { CountryFilterModal, CountryFilters } from '@/components/CountryFilterModal';
-import { ExportModal } from '@/components/ExportModal';
-import { BulkUploadModal } from '@/components/BulkUploadModal';
-import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { TicketPagination } from '@/components/TicketPagination';
-import { toast } from 'sonner';
-import { useApiConfig } from '@/hooks/useApiConfig';
-import { getUser } from '@/utils/auth';
-import { useDebounce } from '@/hooks/useDebounce';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Plus,
+  Download,
+  Filter,
+  Upload,
+  Printer,
+  QrCode,
+  Eye,
+  Edit,
+  Trash2,
+  Loader2,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { AddCountryModal } from "@/components/AddCountryModal";
+import { EditCountryModal } from "@/components/EditCountryModal";
+import { DeleteCountryModal } from "@/components/DeleteCountryModal";
+import {
+  CountryFilterModal,
+  CountryFilters,
+} from "@/components/CountryFilterModal";
+import { ExportModal } from "@/components/ExportModal";
+import { BulkUploadModal } from "@/components/BulkUploadModal";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { TicketPagination } from "@/components/TicketPagination";
+import { toast } from "sonner";
+import { useApiConfig } from "@/hooks/useApiConfig";
+import { getUser } from "@/utils/auth";
+import { useDebounce } from "@/hooks/useDebounce";
 
 // Type definitions for the API response
 interface CountryItem {
@@ -53,54 +67,54 @@ interface CountryTabProps {
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
   {
-    key: 'actions',
-    label: 'Action',
+    key: "actions",
+    label: "Action",
     sortable: false,
     hideable: false,
-    draggable: false
+    draggable: false,
   },
   {
-    key: 'id',
-    label: 'ID',
+    key: "id",
+    label: "ID",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'country_name',
-    label: 'Country',
+    key: "country_name",
+    label: "Country",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'company_name',
-    label: 'Company',
+    key: "company_name",
+    label: "Company",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'active',
-    label: 'Status',
+    key: "active",
+    label: "Status",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'created_at',
-    label: 'Created At',
+    key: "created_at",
+    label: "Created At",
     sortable: true,
     hideable: true,
-    draggable: true
-  }
+    draggable: true,
+  },
 ];
 
 export const CountryTab: React.FC<CountryTabProps> = ({
   searchQuery,
   setSearchQuery,
   entriesPerPage,
-  setEntriesPerPage
+  setEntriesPerPage,
 }) => {
   const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
@@ -110,7 +124,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
   const [appliedFilters, setAppliedFilters] = useState<CountryFilters>({});
   const [pagination, setPagination] = useState({
@@ -119,7 +133,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
     total_pages: 1,
     total_count: 0,
     has_next_page: false,
-    has_prev_page: false
+    has_prev_page: false,
   });
 
   // Modal states
@@ -129,11 +143,17 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
-  const [selectedCountryId, setSelectedCountryId] = useState<number | null>(null);
+  const [selectedCountryId, setSelectedCountryId] = useState<number | null>(
+    null
+  );
 
   // Maps for displaying related data
-  const [countriesMap, setCountriesMap] = useState<Map<number, string>>(new Map());
-  const [companiesMap, setCompaniesMap] = useState<Map<number, string>>(new Map());
+  const [countriesMap, setCountriesMap] = useState<Map<number, string>>(
+    new Map()
+  );
+  const [companiesMap, setCompaniesMap] = useState<Map<number, string>>(
+    new Map()
+  );
   const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
   const [companiesDropdown, setCompaniesDropdown] = useState<any[]>([]);
   const [canEditCountry, setCanEditCountry] = useState(false);
@@ -146,8 +166,12 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   };
 
   const checkEditPermission = () => {
-    const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'adhip.shetty@lockated.com'];
+    const userEmail = user.email || "";
+    const allowedEmails = [
+      "abhishek.sharma@lockated.com",
+      "adhip.shetty@lockated.com",
+      "helloakshay27@gmail.com",
+    ];
     setCanEditCountry(allowedEmails.includes(userEmail));
   };
 
@@ -163,21 +187,24 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
 
   // Fetch countries data from API
-  const fetchCountries = async (page = 1, per_page = 10, search = '', filters: CountryFilters = {}) => {
+  const fetchCountries = async (
+    page = 1,
+    per_page = 10,
+    search = "",
+    filters: CountryFilters = {}
+  ) => {
     setLoading(true);
     try {
       // Build API URL with parameters
-      let apiUrl = getFullUrl('/headquarters.json');
-
-
+      const apiUrl = getFullUrl("/headquarters.json");
 
       const response = await fetch(apiUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': getAuthHeader()
-        }
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
       });
 
       if (!response.ok) {
@@ -186,39 +213,41 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
       const result: CountryApiResponse = await response.json();
 
-
       let countryData: CountryItem[] = [];
 
       if (Array.isArray(result)) {
         countryData = result;
-      } else if (result && result.headquarters && Array.isArray(result.headquarters)) {
+      } else if (
+        result &&
+        result.headquarters &&
+        Array.isArray(result.headquarters)
+      ) {
         countryData = result.headquarters;
       } else if (result && result.data && Array.isArray(result.data)) {
         countryData = result.data;
       }
-
-
 
       // Apply client-side filtering and searching
       let filteredData = countryData;
 
       if (search.trim()) {
         const searchLower = search.toLowerCase();
-        filteredData = filteredData.filter(country =>
-          country.country_name?.toLowerCase().includes(searchLower) ||
-          country.company_name?.toLowerCase().includes(searchLower)
+        filteredData = filteredData.filter(
+          (country) =>
+            country.country_name?.toLowerCase().includes(searchLower) ||
+            country.company_name?.toLowerCase().includes(searchLower)
         );
       }
 
       if (filters.countryId) {
-        filteredData = filteredData.filter(country =>
-          country.country_id === parseInt(filters.countryId!)
+        filteredData = filteredData.filter(
+          (country) => country.country_id === parseInt(filters.countryId!)
         );
       }
 
       if (filters.companyId) {
-        filteredData = filteredData.filter(country =>
-          country.company_setup_id === parseInt(filters.companyId!)
+        filteredData = filteredData.filter(
+          (country) => country.company_setup_id === parseInt(filters.companyId!)
         );
       }
 
@@ -228,8 +257,6 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       const endIndex = startIndex + per_page;
       const paginatedData = filteredData.slice(startIndex, endIndex);
 
-
-
       setCountries(paginatedData);
 
       setPagination({
@@ -238,12 +265,11 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         total_pages: totalPages,
         total_count: filteredData.length,
         has_next_page: page < totalPages,
-        has_prev_page: page > 1
+        has_prev_page: page > 1,
       });
-
     } catch (error) {
-      console.error('Error fetching countries:', error);
-      toast.error('Error fetching countries');
+      console.error("Error fetching countries:", error);
+      toast.error("Error fetching countries");
       setCountries([]);
     } finally {
       setLoading(false);
@@ -252,16 +278,23 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
   const fetchCompanies = async () => {
     try {
-      const response = await fetch(getFullUrl('/pms/company_setups/company_index.json'), {
-        method: 'GET',
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
-      });
+      const response = await fetch(
+        getFullUrl("/pms/company_setups/company_index.json"),
+        {
+          method: "GET",
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        }
+      );
 
       if (response.ok) {
         const responseData = await response.json();
-        if (responseData && responseData.code === 200 && Array.isArray(responseData.data)) {
+        if (
+          responseData &&
+          responseData.code === 200 &&
+          Array.isArray(responseData.data)
+        ) {
           setCompaniesDropdown(responseData.data);
           const compMap = new Map();
           responseData.data.forEach((company: any) => {
@@ -285,17 +318,19 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error fetching companies:', error);
+      console.error("Error fetching companies:", error);
     }
   };
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch('https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU');
+      const response = await fetch(
+        "https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU"
+      );
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Countries API response:', data);
+        console.log("Countries API response:", data);
 
         // Map the API response to the expected dropdown format
         // API returns array of objects with id and name properties
@@ -304,7 +339,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
             .filter((country) => country?.id && country?.name) // Filter out invalid entries
             .map((country) => ({
               id: Number(country.id),
-              name: String(country.name)
+              name: String(country.name),
             }));
           setCountriesDropdown(mappedCountries);
 
@@ -315,17 +350,17 @@ export const CountryTab: React.FC<CountryTabProps> = ({
           });
           setCountriesMap(countryMap);
         } else {
-          console.error('Countries data format unexpected:', data);
+          console.error("Countries data format unexpected:", data);
           setCountriesDropdown([]);
           setCountriesMap(new Map());
         }
       } else {
-        console.error('Failed to fetch countries');
+        console.error("Failed to fetch countries");
         setCountriesDropdown([]);
         setCountriesMap(new Map());
       }
     } catch (error) {
-      console.error('Error fetching countries:', error);
+      console.error("Error fetching countries:", error);
       setCountriesDropdown([]);
       setCountriesMap(new Map());
     }
@@ -334,7 +369,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   // Modal handlers
   const handleEdit = (countryId: number) => {
     if (!canEditCountry) {
-      toast.error('You do not have permission to edit countries');
+      toast.error("You do not have permission to edit countries");
       return;
     }
     setSelectedCountryId(countryId);
@@ -343,7 +378,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
   const handleDelete = (countryId: number) => {
     if (!canEditCountry) {
-      toast.error('You do not have permission to delete countries');
+      toast.error("You do not have permission to delete countries");
       return;
     }
     setSelectedCountryId(countryId);
@@ -426,27 +461,30 @@ export const CountryTab: React.FC<CountryTabProps> = ({
             )}
             renderCell={(country: CountryItem, columnKey: string) => {
               switch (columnKey) {
-                case 'id':
+                case "id":
                   return country.id;
-                case 'country_name':
-                  return country.country_name || '-';
-                case 'company_name':
-                  return country.company_name || '-';
-                case 'active':
+                case "country_name":
+                  return country.country_name || "-";
+                case "company_name":
+                  return country.company_name || "-";
+                case "active":
                   return (
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${country.active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                        }`}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        country.active
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
                     >
-                      {country.active ? 'Active' : 'Inactive'}
+                      {country.active ? "Active" : "Inactive"}
                     </span>
                   );
-                case 'created_at':
-                  return country.created_at ? new Date(country.created_at).toLocaleDateString() : '-';
+                case "created_at":
+                  return country.created_at
+                    ? new Date(country.created_at).toLocaleDateString()
+                    : "-";
                 default:
-                  return '-';
+                  return "-";
               }
             }}
             leftActions={
@@ -458,34 +496,34 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 Add Headquarter
               </Button>
             }
-          // rightActions={(
-          //   <div className="flex items-center gap-2">
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsFilterOpen(true)}
-          //     >
-          //       <Filter className="w-4 h-4 mr-2" />
-          //       Filter
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsBulkUploadOpen(true)}
-          //     >
-          //       <Upload className="w-4 h-4 mr-2" />
-          //       Import
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsExportOpen(true)}
-          //     >
-          //       <Download className="w-4 h-4 mr-2" />
-          //       Export
-          //     </Button>
-          //   </div>
-          // )}
+            // rightActions={(
+            //   <div className="flex items-center gap-2">
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsFilterOpen(true)}
+            //     >
+            //       <Filter className="w-4 h-4 mr-2" />
+            //       Filter
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsBulkUploadOpen(true)}
+            //     >
+            //       <Upload className="w-4 h-4 mr-2" />
+            //       Import
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsExportOpen(true)}
+            //     >
+            //       <Download className="w-4 h-4 mr-2" />
+            //       Export
+            //     </Button>
+            //   </div>
+            // )}
           />
 
           <TicketPagination
@@ -505,7 +543,12 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={() => {
-          fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+          fetchCountries(
+            currentPage,
+            perPage,
+            debouncedSearchQuery,
+            appliedFilters
+          );
           setIsAddModalOpen(false);
         }}
         countriesDropdown={countriesDropdown}
@@ -522,7 +565,12 @@ export const CountryTab: React.FC<CountryTabProps> = ({
               setSelectedCountryId(null);
             }}
             onSuccess={() => {
-              fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+              fetchCountries(
+                currentPage,
+                perPage,
+                debouncedSearchQuery,
+                appliedFilters
+              );
               setIsEditModalOpen(false);
               setSelectedCountryId(null);
             }}
@@ -559,9 +607,14 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         description="Upload a CSV file to import countries"
         onImport={async (file: File) => {
           // Handle bulk upload logic here
-          console.log('Uploading countries file:', file);
-          toast.success('Countries uploaded successfully');
-          fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+          console.log("Uploading countries file:", file);
+          toast.success("Countries uploaded successfully");
+          fetchCountries(
+            currentPage,
+            perPage,
+            debouncedSearchQuery,
+            appliedFilters
+          );
           setIsBulkUploadOpen(false);
         }}
       />

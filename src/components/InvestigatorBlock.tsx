@@ -28,6 +28,7 @@ export interface InvestigatorData {
         email: string;
         role: string;
         contactNo: string;
+        company?: string;
     };
 }
 
@@ -52,7 +53,8 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
         name: '',
         email: '',
         role: '',
-        contactNo: ''
+        contactNo: '',
+        company: ''
     });
     const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
@@ -116,7 +118,7 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
                     }
                 };
                 onSubmit(data);
-                setExternalForm({ name: '', email: '', role: '', contactNo: '' });
+                setExternalForm({ name: '', email: '', role: '', contactNo: '', company: '' });
                 setValidationErrors({});
             }
         }
@@ -206,6 +208,14 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
                         placeholder="Role"
                         value={externalForm.role}
                         onChange={(e) => setExternalForm({ ...externalForm, role: e.target.value })}
+                        sx={{ backgroundColor: 'white' }}
+                    />
+                    <TextField
+                        fullWidth
+                        size="small"
+                        placeholder="Company"
+                        value={externalForm.company}
+                        onChange={(e) => setExternalForm({ ...externalForm, company: e.target.value })}
                         sx={{ backgroundColor: 'white' }}
                     />
                     <div>

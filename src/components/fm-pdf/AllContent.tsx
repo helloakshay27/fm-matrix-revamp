@@ -3292,7 +3292,7 @@ const AllContent = () => {
                     {/* Table 1 */}
                     <div className="center-metrics-table border px-3 border-gray-300  overflow-x-auto print:overflow-visible no-break print:p-1 print:mb-1">
                         <h2 className="text-lg md:text-lg font-bold py-4 border-b border-black mb-4 tracking-wide print:text-[14px] print:py-1 print:mb-1">
-                            Center Wise – Assets And Downtime Metrics
+                            Site Wise – Assets And Downtime Metrics
                         </h2>
 
                         <table className="min-w-full border border-black text-sm text-center print:table-fixed print:w-full print:text-[10px] print:leading-tight">
@@ -3602,7 +3602,8 @@ const AllContent = () => {
                             {/* Table 1: Checklist Progress Status */}
                             <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
                                 <div className="p-4 text-lg md:text-lg font-bold border-b border-gray-300 print:p-2 print:text-[14px] ">
-                                    Checklist Progress Status – Center-Wise {periodUnit}ly Comparison
+                                    Checklist Progress Status – Site-Wise 
+                                    {/* {periodUnit}ly Comparison */}
                                 </div>
                                 <div className="print:flex-1">
                                     <table className="w-full border border-black border-collapse print:table-fixed print:w-full print:text-[10px] print:h-full">
@@ -3719,7 +3720,7 @@ const AllContent = () => {
                             {/* Table 2: Top 10 Overdue Checklists */}
                             <div className="border border-gray-300 px-3 rounded comment overdue-table min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
                                 <div className="p-4 text-lg font-bold md:text-lg border-b border-gray-300 print:p-2 print:text-[14px] ">
-                                    Top 10 Overdue Checklists – Center-wise Contribution Comparison
+                                    Top 10 Overdue Checklists – Site-wise Contribution Comparison
                                 </div>
                                 <div className="print:flex-1">
                                     <table className="w-full border border-black border-collapse text-sm print:table-fixed print:w-full print:text-[10px] print:h-full ">

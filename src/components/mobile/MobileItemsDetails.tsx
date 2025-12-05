@@ -420,7 +420,7 @@ export const MobileItemsDetails: React.FC = () => {
                   item.price !== undefined &&
                   item.price > 0 && (
                     <div className="text-sm text-gray-600 mt-1">
-                      ORM{item.price} × {item.quantity} = ORM
+                      OMR{item.price} × {item.quantity} = OMR
                       {item.price * item.quantity}
                     </div>
                   )}
@@ -453,7 +453,7 @@ export const MobileItemsDetails: React.FC = () => {
                   Total Amount
                 </span>
                 <span className="text-xl font-bold text-red-600">
-                  ORM{getTotalPrice()}
+                  OMR{getTotalPrice()}
                 </span>
               </div>
               <div className="text-sm text-gray-600 mt-1">
