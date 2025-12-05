@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, DollarSign } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, ThemeProvider, createTheme } from "@mui/material";
 import { toast } from "sonner";
+import axios from "axios";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -94,8 +95,9 @@ export const AddMembershipPlanPage = () => {
   const navigate = useNavigate();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [amenities, setAmenities] = useState([])
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     price: "",
@@ -103,6 +105,26 @@ export const AddMembershipPlanPage = () => {
     renewalTerms: "",
     amenities: [] as string[],
   });
+
+  const getAmenities = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/membership_plans/amenitiy_list.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      setAmenities(response.data.ameneties)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  console.log(amenities)
+
+  useEffect(() => {
+    getAmenities()
+  }, [])
 
   const validateForm = () => {
     if (!formData.name) {
@@ -129,36 +151,29 @@ export const AddMembershipPlanPage = () => {
     setIsSubmitting(true);
 
     try {
-      const dataToSubmit = {
+      const payload = {
         membership_plan: {
           name: formData.name,
+          site_id: localStorage.getItem("selectedSiteId"),
           price: formData.price,
           user_limit: formData.userLimit,
           renewal_terms: formData.renewalTerms,
-          amenities: formData.amenities,
-          active: true,
-          created_by: JSON.parse(localStorage.getItem("user") || "{}").id,
-        },
+          plan_amenities_attributes: formData.amenities.map(amenity => ({
+            facility_setup_id: amenity,
+            access: "free"
+          }))
+        }
       };
 
-      const response = await fetch(
-        `https://${baseUrl}/pms/admin/membership_plans.json`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(dataToSubmit),
+      await axios.post(`https://${baseUrl}/membership_plans.json`, payload, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      );
+      })
 
-      if (response.ok) {
-        toast.success("Membership plan created successfully!");
-        navigate("/club-management/vas/membership-plan/setup");
-      } else {
-        toast.error("Failed to create membership plan");
-      }
+      toast.success("Membership plan created successfully!");
+      navigate(-1);
     } catch (error) {
       console.error("Error saving membership plan:", error);
       toast.error("An error occurred while saving");
@@ -249,7 +264,7 @@ export const AddMembershipPlanPage = () => {
                     <em>Select Renewal Terms</em>
                   </MenuItem>
                   <MenuItem value="monthly">Monthly</MenuItem>
-                  <MenuItem value="quarterly">Quarterly</MenuItem>
+                  <MenuItem value="quaterly">Quarterly</MenuItem>
                   <MenuItem value="yearly">Yearly</MenuItem>
                 </Select>
               </FormControl>
@@ -268,13 +283,13 @@ export const AddMembershipPlanPage = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {AMENITIES_OPTIONS.map((amenity) => (
+              {amenities.map((amenity) => (
                 <FormControlLabel
-                  key={amenity}
+                  key={amenity.value}
                   control={
                     <Checkbox
-                      checked={formData.amenities.includes(amenity)}
-                      onChange={() => handleAmenityToggle(amenity)}
+                      checked={formData.amenities.includes(amenity.value)}
+                      onChange={() => handleAmenityToggle(amenity.value)}
                       sx={{
                         color: "#C72030",
                         "&.Mui-checked": {
@@ -283,7 +298,7 @@ export const AddMembershipPlanPage = () => {
                       }}
                     />
                   }
-                  label={amenity}
+                  label={amenity.name}
                 />
               ))}
             </div>

@@ -350,24 +350,24 @@ const modulesByPackage = {
       icon: Package,
       href: "/club-management/accounting",
     },
-     {
+    {
       name: "Accounting",
       icon: Calculator,
       href: "https://app.lockated.com/lock_accounts",
       blank: true,
     },
 
-      {
+    {
       name: "Amenities Setup",
       icon: Calculator,
       href: "/club-management/vas/booking/setup",
     },
-    // {
-    //   name: "Membership Plan Setup",
-    //   icon: Calculator,
-    //   href: "/club-management/vas/membership-plan/setup",
-    // },
-    
+    {
+      name: "Membership Plan Setup",
+      icon: Calculator,
+      href: "/club-management/vas/membership-plan/setup",
+    },
+
   ],
   Master: [
     {

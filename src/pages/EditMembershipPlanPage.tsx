@@ -92,12 +92,15 @@ const AMENITIES_OPTIONS = [
 ];
 
 export const EditMembershipPlanPage = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
+  const navigate = useNavigate();
+
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [amenities, setAmenities] = useState([])
 
   const [formData, setFormData] = useState({
     name: "",
@@ -108,50 +111,44 @@ export const EditMembershipPlanPage = () => {
     active: true,
   });
 
+  const getAmenities = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/membership_plans/amenitiy_list.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      setAmenities(response.data.ameneties)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    getAmenities()
+  }, [])
+
   const fetchMembershipPlanDetails = async () => {
     try {
       setLoading(true);
-      
-      // Static data for testing
-      const staticData: any = {
-        "1": { name: "Gold Membership", price: "50000", user_limit: "4", renewal_terms: "yearly", amenities: ["Swimming Pool", "Gym", "Spa", "Tennis Court", "Restaurant"], active: true },
-        "2": { name: "Silver Membership", price: "30000", user_limit: "2", renewal_terms: "quarterly", amenities: ["Swimming Pool", "Gym", "Cafe"], active: true },
-        "3": { name: "Platinum Membership", price: "100000", user_limit: "6", renewal_terms: "yearly", amenities: ["Swimming Pool", "Gym", "Spa", "Tennis Court", "Basketball Court", "Sauna", "Steam Room", "Jacuzzi", "Restaurant", "Bar"], active: true },
-        "4": { name: "Bronze Membership", price: "15000", user_limit: "1", renewal_terms: "monthly", amenities: ["Gym", "Yoga Studio"], active: false },
-        "5": { name: "Family Membership", price: "75000", user_limit: "8", renewal_terms: "yearly", amenities: ["Swimming Pool", "Gym", "Kids Play Area", "Game Room", "Restaurant", "Cafe"], active: true },
-      };
+      const response = await axios.get(`https://${baseUrl}/membership_plans/${id}.json`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        }
+      })
 
-      const data = staticData[id || "1"];
-      if (data) {
-        setFormData({
-          name: data.name || "",
-          price: data.price || "",
-          userLimit: data.user_limit || "",
-          renewalTerms: data.renewal_terms || "",
-          amenities: data.amenities || [],
-          active: data.active || false,
-        });
-      }
+      const data = response.data;
+      console.log(data)
 
-      // Uncomment below to use API
-      // const response = await axios.get(
-      //   `https://${baseUrl}/pms/admin/membership_plans/${id}.json`,
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${token}`,
-      //       "Content-Type": "application/json",
-      //     },
-      //   }
-      // );
-      // const data = response.data.membership_plan;
-      // setFormData({
-      //   name: data.name || "",
-      //   price: data.price || "",
-      //   userLimit: data.user_limit || "",
-      //   renewalTerms: data.renewal_terms || "",
-      //   amenities: data.amenities || [],
-      //   active: data.active || false,
-      // });
+      setFormData({
+        ...formData,
+        name: data.name,
+        price: data.price,
+        userLimit: data.user_limit,
+        renewalTerms: data.renewal_terms,
+        amenities: data.plan_amenities.map((amenity) => amenity.id),
+      })
     } catch (error) {
       console.error("Error fetching membership plan details:", error);
       toast.error("Failed to fetch membership plan details");
@@ -159,6 +156,8 @@ export const EditMembershipPlanPage = () => {
       setLoading(false);
     }
   };
+
+  console.log(formData)
 
   useEffect(() => {
     fetchMembershipPlanDetails();
@@ -189,38 +188,30 @@ export const EditMembershipPlanPage = () => {
     setIsSubmitting(true);
 
     try {
-      const dataToSubmit = {
+      const payload = {
         membership_plan: {
           name: formData.name,
           price: formData.price,
           user_limit: formData.userLimit,
           renewal_terms: formData.renewalTerms,
-          amenities: formData.amenities,
-          active: formData.active,
-        },
+          plan_amenities_attributes: formData.amenities.map(amenity => ({
+            facility_setup_id: amenity,
+            access: "free"
+          }))
+        }
       };
 
-      const response = await fetch(
-        `https://${baseUrl}/pms/admin/membership_plans/${id}.json`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(dataToSubmit),
+      await axios.put(`https://${baseUrl}/membership_plans/${id}.json`, payload, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      );
+      })
 
-      if (response.ok) {
-        toast.success("Membership plan updated successfully!");
-        navigate("/club-management/vas/membership-plan/setup");
-      } else {
-        toast.error("Failed to update membership plan");
-      }
+      toast.success("Membership plan updated successfully!");
+      navigate(-1);
     } catch (error) {
       console.error("Error updating membership plan:", error);
-      toast.error("An error occurred while updating");
     } finally {
       setIsSubmitting(false);
     }
@@ -337,13 +328,13 @@ export const EditMembershipPlanPage = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {AMENITIES_OPTIONS.map((amenity) => (
+              {amenities.map((amenity) => (
                 <FormControlLabel
-                  key={amenity}
+                  key={amenity.value}
                   control={
                     <Checkbox
-                      checked={formData.amenities.includes(amenity)}
-                      onChange={() => handleAmenityToggle(amenity)}
+                      checked={formData.amenities.includes(amenity.value)}
+                      onChange={() => handleAmenityToggle(amenity.value)}
                       sx={{
                         color: "#C72030",
                         "&.Mui-checked": {
@@ -352,7 +343,7 @@ export const EditMembershipPlanPage = () => {
                       }}
                     />
                   }
-                  label={amenity}
+                  label={amenity.name}
                 />
               ))}
             </div>

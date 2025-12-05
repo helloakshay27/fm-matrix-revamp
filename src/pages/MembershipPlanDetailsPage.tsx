@@ -96,78 +96,69 @@ export const MembershipPlanDetailsPage = () => {
   const { id } = useParams();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
+  const [amenities, setAmenities] = useState([])
   const [formData, setFormData] = useState({
     name: "",
     price: "",
     userLimit: "",
     renewalTerms: "",
-    amenities: [] as string[],
+    amenities: [],
     active: true,
     createdAt: "",
     createdBy: "",
   });
 
-  const fetchMembershipPlanDetails = async () => {
+  const getAmenities = async () => {
     try {
-      setLoading(true);
-      
-      // Static data for testing
-      const staticData: any = {
-        "1": { name: "Gold Membership", price: "50000", user_limit: "4", renewal_terms: "yearly", amenities: ["Swimming Pool", "Gym", "Spa", "Tennis Court", "Restaurant"], active: true, created_at: "2024-01-15", created_by: "Admin User" },
-        "2": { name: "Silver Membership", price: "30000", user_limit: "2", renewal_terms: "quarterly", amenities: ["Swimming Pool", "Gym", "Cafe"], active: true, created_at: "2024-02-20", created_by: "Admin User" },
-        "3": { name: "Platinum Membership", price: "100000", user_limit: "6", renewal_terms: "yearly", amenities: ["Swimming Pool", "Gym", "Spa", "Tennis Court", "Basketball Court", "Sauna", "Steam Room", "Jacuzzi", "Restaurant", "Bar"], active: true, created_at: "2024-01-10", created_by: "John Doe" },
-        "4": { name: "Bronze Membership", price: "15000", user_limit: "1", renewal_terms: "monthly", amenities: ["Gym", "Yoga Studio"], active: false, created_at: "2024-03-05", created_by: "Jane Smith" },
-        "5": { name: "Family Membership", price: "75000", user_limit: "8", renewal_terms: "yearly", amenities: ["Swimming Pool", "Gym", "Kids Play Area", "Game Room", "Restaurant", "Cafe"], active: true, created_at: "2024-02-01", created_by: "Admin User" },
-      };
-
-      const data = staticData[id || "1"];
-      if (data) {
-        setFormData({
-          name: data.name || "",
-          price: data.price || "",
-          userLimit: data.user_limit || "",
-          renewalTerms: data.renewal_terms || "",
-          amenities: data.amenities || [],
-          active: data.active || false,
-          createdAt: data.created_at || "",
-          createdBy: data.created_by || "",
-        });
-      }
-
-      // Uncomment below to use API
-      // const response = await axios.get(
-      //   `https://${baseUrl}/pms/admin/membership_plans/${id}.json`,
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${token}`,
-      //       "Content-Type": "application/json",
-      //     },
-      //   }
-      // );
-      // const data = response.data.membership_plan;
-      // setFormData({
-      //   name: data.name || "",
-      //   price: data.price || "",
-      //   userLimit: data.user_limit || "",
-      //   renewalTerms: data.renewal_terms || "",
-      //   amenities: data.amenities || [],
-      //   active: data.active || false,
-      //   createdAt: data.created_at || "",
-      //   createdBy: data.created_by || "",
-      // });
+      const response = await axios.get(`https://${baseUrl}/membership_plans/amenitiy_list.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      setAmenities(response.data.ameneties)
     } catch (error) {
-      console.error("Error fetching membership plan details:", error);
-      toast.error("Failed to fetch membership plan details");
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    getAmenities()
+  }, [])
+
+  const fetchMembershipPlanDetails = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`https://${baseUrl}/membership_plans/${id}.json`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        }
+      })
+
+      const data = response.data;
+
+      setFormData({
+        name: data.name,
+        price: data.price,
+        userLimit: data.user_limit,
+        renewalTerms: data.renewal_terms,
+        amenities: data.plan_amenities.map((amenity) => amenity.id),
+        active: data.status,
+        createdAt: data.created_at,
+        createdBy: data.created_by,
+      })
+    } catch (error) {
+      console.log(error)
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   useEffect(() => {
     fetchMembershipPlanDetails();
-  }, [id]);
+  }, [id])
 
   const handleEditClick = () => {
     navigate(`/club-management/vas/membership-plan/setup/edit/${id}`);
@@ -213,7 +204,6 @@ export const MembershipPlanDetailsPage = () => {
         </div>
 
         <div className="space-y-6">
-          {/* Basic Info */}
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -224,61 +214,56 @@ export const MembershipPlanDetailsPage = () => {
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TextField
-                label="Plan Name"
-                value={formData.name}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-              />
-
-              <TextField
-                label="Price"
-                value={`₹${formData.price}`}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-              />
-
-              <TextField
-                label="User Limit"
-                value={formData.userLimit}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-              />
-
-              <TextField
-                label="Renewal Terms"
-                value={formData.renewalTerms ? formData.renewalTerms.charAt(0).toUpperCase() + formData.renewalTerms.slice(1) : ""}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-              />
-
-              <TextField
-                label="Created On"
-                value={formData.createdAt ? new Date(formData.createdAt).toLocaleDateString() : ""}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-              />
-
-              <TextField
-                label="Created By"
-                value={formData.createdBy}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Status:</span>
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  formData.active
-                    ? "bg-green-100 text-green-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {formData.active ? "Active" : "Inactive"}
-              </span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Plan Name</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.name || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Price</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.price || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">User Limit</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.userLimit || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Renewal Terms</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.renewalTerms ? formData.renewalTerms.charAt(0).toUpperCase() + formData.renewalTerms.slice(1) : "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Created On</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.createdAt ? new Date(formData.createdAt).toLocaleDateString() : "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Created By</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.createdBy || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Status</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.active ? "Active" : "Inactive"}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -294,13 +279,12 @@ export const MembershipPlanDetailsPage = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {AMENITIES_OPTIONS.map((amenity) => (
+              {amenities.map((amenity) => (
                 <FormControlLabel
-                  key={amenity}
+                  key={amenity.value}
                   control={
                     <Checkbox
-                      checked={formData.amenities.includes(amenity)}
-                      disabled
+                      checked={formData.amenities.includes(amenity.value)}
                       sx={{
                         color: "#C72030",
                         "&.Mui-checked": {
@@ -309,7 +293,7 @@ export const MembershipPlanDetailsPage = () => {
                       }}
                     />
                   }
-                  label={amenity}
+                  label={amenity.name}
                 />
               ))}
             </div>

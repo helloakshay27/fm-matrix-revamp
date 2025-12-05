@@ -22,7 +22,7 @@ export const oaganizationsByEmail = createAsyncThunk(
     async ({ email }: { email: string }, { rejectWithValue }) => {
         try {
             const response = await axios.get(
-                `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+                `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
             );
             return response.data.organizations;
         } catch (error) {
@@ -83,7 +83,7 @@ export const fetchCompanyList = createAsyncThunk(
             if (response.data.selected_company) {
                 localStorage.setItem('selected_company', JSON.stringify(response.data.selected_company));
                 localStorage.setItem('selected_company_id', response.data.selected_company.id.toString());
-                
+
                 // Also update the user's company_id in localStorage
                 const userData = localStorage.getItem('user');
                 if (userData) {
@@ -124,7 +124,7 @@ export const changeCompany = createAsyncThunk(
             if (response.data.selected_company) {
                 localStorage.setItem('selected_company', JSON.stringify(response.data.selected_company));
                 localStorage.setItem('selected_company_id', response.data.selected_company.id.toString());
-                
+
                 // Also update the user's company_id in localStorage
                 const userData = localStorage.getItem('user');
                 if (userData) {
@@ -135,7 +135,7 @@ export const changeCompany = createAsyncThunk(
             } else {
                 // If selected_company is not in response, store the id that was changed to
                 localStorage.setItem('selected_company_id', id.toString());
-                
+
                 const userData = localStorage.getItem('user');
                 if (userData) {
                     const user = JSON.parse(userData);

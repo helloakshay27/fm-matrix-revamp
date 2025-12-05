@@ -35,7 +35,7 @@ baseClient.interceptors.request.use(
       }
 
       // Call organizations API with the email from URL
-      const response = await axios.get(`https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`);
+      const response = await axios.get(`https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`);
       const { organizations } = response.data;
 
       if (organizations && organizations.length > 0) {
