@@ -1,14 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus, Download, Filter, Upload, Eye, Edit, Trash2, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { TicketPagination } from '@/components/TicketPagination';
-import { toast } from 'sonner';
-import { useApiConfig } from '@/hooks/useApiConfig';
-import { getUser } from '@/utils/auth';
-import { useDebounce } from '@/hooks/useDebounce';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Plus,
+  Download,
+  Filter,
+  Upload,
+  Eye,
+  Edit,
+  Trash2,
+  Loader2,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { TicketPagination } from "@/components/TicketPagination";
+import { toast } from "sonner";
+import { useApiConfig } from "@/hooks/useApiConfig";
+import { getUser } from "@/utils/auth";
+import { useDebounce } from "@/hooks/useDebounce";
 
 // Type definitions for the API response
 interface CompanyItem {
@@ -50,61 +59,61 @@ interface CompanyTabProps {
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
   {
-    key: 'actions',
-    label: 'Action',
+    key: "actions",
+    label: "Action",
     sortable: false,
     hideable: false,
-    draggable: false
+    draggable: false,
   },
   {
-    key: 'name',
-    label: 'Company Name',
+    key: "name",
+    label: "Company Name",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'organization',
-    label: 'Organization',
+    key: "organization",
+    label: "Organization",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'country',
-    label: 'Country',
+    key: "country",
+    label: "Country",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'billing_rate',
-    label: 'Billing Rate',
+    key: "billing_rate",
+    label: "Billing Rate",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'live_date',
-    label: 'Live Date',
+    key: "live_date",
+    label: "Live Date",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'created_at',
-    label: 'Created At',
+    key: "created_at",
+    label: "Created At",
     sortable: true,
     hideable: true,
-    draggable: true
-  }
+    draggable: true,
+  },
 ];
 
 export const CompanyTab: React.FC<CompanyTabProps> = ({
   searchQuery,
   setSearchQuery,
   entriesPerPage,
-  setEntriesPerPage
+  setEntriesPerPage,
 }) => {
   const { getFullUrl, getAuthHeader } = useApiConfig();
 
@@ -115,7 +124,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -123,7 +132,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
     total_pages: 1,
     total_count: 0,
     has_next_page: false,
-    has_prev_page: false
+    has_prev_page: false,
   });
 
   // Modal states
@@ -133,7 +142,9 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
+    null
+  );
 
   // Dropdowns and permissions
   const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
@@ -141,18 +152,18 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   const [canEditCompany, setCanEditCompany] = useState(false);
 
   const [companyFormData, setCompanyFormData] = useState({
-    name: '',
-    organization_id: '',
-    country_id: '',
-    billing_term: '',
-    billing_rate: '',
-    live_date: '',
-    remarks: '',
+    name: "",
+    organization_id: "",
+    country_id: "",
+    billing_term: "",
+    billing_rate: "",
+    live_date: "",
+    remarks: "",
     logo: null as File | null,
-    bill_to_address: { address: '', email: '' },
-    postal_address: { address: '', email: '' },
-    finance_spoc: { name: '', designation: '', email: '', mobile: '' },
-    operation_spoc: { name: '', designation: '', email: '', mobile: '' }
+    bill_to_address: { address: "", email: "" },
+    postal_address: { address: "", email: "" },
+    finance_spoc: { name: "", designation: "", email: "", mobile: "" },
+    operation_spoc: { name: "", designation: "", email: "", mobile: "" },
   });
 
   const user = getUser() || {
@@ -163,8 +174,12 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   };
 
   const checkEditPermission = () => {
-    const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'adhip.shetty@lockated.com'];
+    const userEmail = user.email || "";
+    const allowedEmails = [
+      "abhishek.sharma@lockated.com",
+      "adhip.shetty@lockated.com",
+      "helloakshay27@gmail.com",
+    ];
     setCanEditCompany(allowedEmails.includes(userEmail));
   };
 
@@ -182,36 +197,43 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   const fetchCompanies = async () => {
     setIsLoadingCompanies(true);
     try {
-      const response = await fetch(getFullUrl('/pms/company_setups/company_index.json'), {
-        method: 'GET',
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
-      });
+      const response = await fetch(
+        getFullUrl("/pms/company_setups/company_index.json"),
+        {
+          method: "GET",
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        }
+      );
 
       if (response.ok) {
         const responseData = await response.json();
-        console.log('Companies API response:', responseData);
+        console.log("Companies API response:", responseData);
 
-        if (responseData && responseData.code === 200 && Array.isArray(responseData.data)) {
+        if (
+          responseData &&
+          responseData.code === 200 &&
+          Array.isArray(responseData.data)
+        ) {
           setCompanies(responseData.data);
         } else if (responseData && Array.isArray(responseData.companies)) {
           setCompanies(responseData.companies);
         } else if (Array.isArray(responseData)) {
           setCompanies(responseData);
         } else {
-          console.warn('Companies data format unexpected:', responseData);
+          console.warn("Companies data format unexpected:", responseData);
           setCompanies([]);
-          toast.error('Invalid companies data format');
+          toast.error("Invalid companies data format");
         }
       } else {
-        console.error('Failed to fetch companies:', response.statusText);
-        toast.error('Failed to fetch companies');
+        console.error("Failed to fetch companies:", response.statusText);
+        toast.error("Failed to fetch companies");
         setCompanies([]);
       }
     } catch (error) {
-      console.error('Error fetching companies:', error);
-      toast.error('Error fetching companies');
+      console.error("Error fetching companies:", error);
+      toast.error("Error fetching companies");
       setCompanies([]);
     } finally {
       setIsLoadingCompanies(false);
@@ -220,10 +242,10 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const fetchOrganizations = async () => {
     try {
-      const response = await fetch(getFullUrl('/organizations.json'), {
+      const response = await fetch(getFullUrl("/organizations.json"), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
         },
       });
 
@@ -246,29 +268,31 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error fetching organizations:', error);
+      console.error("Error fetching organizations:", error);
     }
   };
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/headquarters.json'), {
+      const response = await fetch(getFullUrl("/headquarters.json"), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
         },
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Countries API response:', data);
+        console.log("Countries API response:", data);
 
         if (Array.isArray(data)) {
           // Handle direct array format
-          setCountriesDropdown(data.map((country: any) => ({
-            id: country.id || country.country_id,
-            name: country.country_name || country.name
-          })));
+          setCountriesDropdown(
+            data.map((country: any) => ({
+              id: country.id || country.country_id,
+              name: country.country_name || country.name,
+            }))
+          );
           const countryMap = new Map();
           data.forEach((country: any) => {
             const id = country.id || country.country_id;
@@ -278,7 +302,11 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
             }
           });
           setCountriesMap(countryMap);
-        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
+        } else if (
+          data &&
+          data.headquarters &&
+          Array.isArray(data.headquarters)
+        ) {
           // Handle nested headquarters format
           const uniqueCountries = new Map();
           data.headquarters.forEach((hq: any) => {
@@ -289,12 +317,17 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
             }
           });
 
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id, name }));
+          const countriesArray = Array.from(uniqueCountries.entries()).map(
+            ([id, name]) => ({ id, name })
+          );
           setCountriesDropdown(countriesArray);
           setCountriesMap(uniqueCountries);
         } else if (data && data.countries && Array.isArray(data.countries)) {
           // Handle existing format as fallback
-          const mappedCountries = data.countries.map(([id, name]) => ({ id, name }));
+          const mappedCountries = data.countries.map(([id, name]) => ({
+            id,
+            name,
+          }));
           setCountriesDropdown(mappedCountries);
           const countryMap = new Map();
           data.countries.forEach(([id, name]) => {
@@ -302,19 +335,19 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
           });
           setCountriesMap(countryMap);
         } else {
-          console.warn('Unexpected countries data format:', data);
+          console.warn("Unexpected countries data format:", data);
           setCountriesDropdown([]);
           setCountriesMap(new Map());
         }
       }
     } catch (error) {
-      console.error('Error fetching countries:', error);
+      console.error("Error fetching countries:", error);
     }
   };
 
   const createCompany = async () => {
     if (!canEditCompany) {
-      toast.error('You do not have permission to create companies');
+      toast.error("You do not have permission to create companies");
       return;
     }
 
@@ -323,64 +356,130 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       const formData = new FormData();
 
       // Company setup data
-      formData.append('pms_company_setup[name]', companyFormData.name);
-      formData.append('pms_company_setup[organization_id]', companyFormData.organization_id);
-      formData.append('pms_company_setup[country_id]', companyFormData.country_id);
-      formData.append('pms_company_setup[billing_term]', companyFormData.billing_term);
-      formData.append('pms_company_setup[billing_rate]', companyFormData.billing_rate);
-      formData.append('pms_company_setup[live_date]', companyFormData.live_date);
-      formData.append('pms_company_setup[remarks]', companyFormData.remarks);
+      formData.append("pms_company_setup[name]", companyFormData.name);
+      formData.append(
+        "pms_company_setup[organization_id]",
+        companyFormData.organization_id
+      );
+      formData.append(
+        "pms_company_setup[country_id]",
+        companyFormData.country_id
+      );
+      formData.append(
+        "pms_company_setup[billing_term]",
+        companyFormData.billing_term
+      );
+      formData.append(
+        "pms_company_setup[billing_rate]",
+        companyFormData.billing_rate
+      );
+      formData.append(
+        "pms_company_setup[live_date]",
+        companyFormData.live_date
+      );
+      formData.append("pms_company_setup[remarks]", companyFormData.remarks);
 
       // Address data with nested attributes structure
-      formData.append('pms_company_setup[bill_to_address_attributes][address]', companyFormData.bill_to_address.address);
-      formData.append('pms_company_setup[bill_to_address_attributes][email]', companyFormData.bill_to_address.email);
-      formData.append('pms_company_setup[bill_to_address_attributes][address_type]', 'BillTo');
+      formData.append(
+        "pms_company_setup[bill_to_address_attributes][address]",
+        companyFormData.bill_to_address.address
+      );
+      formData.append(
+        "pms_company_setup[bill_to_address_attributes][email]",
+        companyFormData.bill_to_address.email
+      );
+      formData.append(
+        "pms_company_setup[bill_to_address_attributes][address_type]",
+        "BillTo"
+      );
 
-      formData.append('pms_company_setup[postal_address_attributes][address]', companyFormData.postal_address.address);
-      formData.append('pms_company_setup[postal_address_attributes][email]', companyFormData.postal_address.email);
-      formData.append('pms_company_setup[postal_address_attributes][address_type]', 'Postal');
+      formData.append(
+        "pms_company_setup[postal_address_attributes][address]",
+        companyFormData.postal_address.address
+      );
+      formData.append(
+        "pms_company_setup[postal_address_attributes][email]",
+        companyFormData.postal_address.email
+      );
+      formData.append(
+        "pms_company_setup[postal_address_attributes][address_type]",
+        "Postal"
+      );
 
       // SPOC data with nested attributes structure
-      formData.append('pms_company_setup[finance_spoc_attributes][name]', companyFormData.finance_spoc.name);
-      formData.append('pms_company_setup[finance_spoc_attributes][designation]', companyFormData.finance_spoc.designation);
-      formData.append('pms_company_setup[finance_spoc_attributes][email]', companyFormData.finance_spoc.email);
-      formData.append('pms_company_setup[finance_spoc_attributes][mobile]', companyFormData.finance_spoc.mobile);
-      formData.append('pms_company_setup[finance_spoc_attributes][spoc_type]', 'Finance');
+      formData.append(
+        "pms_company_setup[finance_spoc_attributes][name]",
+        companyFormData.finance_spoc.name
+      );
+      formData.append(
+        "pms_company_setup[finance_spoc_attributes][designation]",
+        companyFormData.finance_spoc.designation
+      );
+      formData.append(
+        "pms_company_setup[finance_spoc_attributes][email]",
+        companyFormData.finance_spoc.email
+      );
+      formData.append(
+        "pms_company_setup[finance_spoc_attributes][mobile]",
+        companyFormData.finance_spoc.mobile
+      );
+      formData.append(
+        "pms_company_setup[finance_spoc_attributes][spoc_type]",
+        "Finance"
+      );
 
-      formData.append('pms_company_setup[operation_spoc_attributes][name]', companyFormData.operation_spoc.name);
-      formData.append('pms_company_setup[operation_spoc_attributes][designation]', companyFormData.operation_spoc.designation);
-      formData.append('pms_company_setup[operation_spoc_attributes][email]', companyFormData.operation_spoc.email);
-      formData.append('pms_company_setup[operation_spoc_attributes][mobile]', companyFormData.operation_spoc.mobile);
-      formData.append('pms_company_setup[operation_spoc_attributes][spoc_type]', 'Operation');
+      formData.append(
+        "pms_company_setup[operation_spoc_attributes][name]",
+        companyFormData.operation_spoc.name
+      );
+      formData.append(
+        "pms_company_setup[operation_spoc_attributes][designation]",
+        companyFormData.operation_spoc.designation
+      );
+      formData.append(
+        "pms_company_setup[operation_spoc_attributes][email]",
+        companyFormData.operation_spoc.email
+      );
+      formData.append(
+        "pms_company_setup[operation_spoc_attributes][mobile]",
+        companyFormData.operation_spoc.mobile
+      );
+      formData.append(
+        "pms_company_setup[operation_spoc_attributes][spoc_type]",
+        "Operation"
+      );
 
       // Logo
       if (companyFormData.logo) {
-        formData.append('logo', companyFormData.logo);
+        formData.append("logo", companyFormData.logo);
       } else {
-        formData.append('logo', '');
+        formData.append("logo", "");
       }
 
-      const response = await fetch(getFullUrl('/pms/company_setups/create_company.json'), {
-        method: 'POST',
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        getFullUrl("/pms/company_setups/create_company.json"),
+        {
+          method: "POST",
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+          body: formData,
+        }
+      );
 
       if (response.ok) {
-        toast.success('Company created successfully');
+        toast.success("Company created successfully");
         setIsAddCompanyOpen(false);
         resetCompanyForm();
         fetchCompanies();
       } else {
         const errorData = await response.json();
-        console.error('Failed to create company:', errorData);
-        toast.error('Failed to create company');
+        console.error("Failed to create company:", errorData);
+        toast.error("Failed to create company");
       }
     } catch (error) {
-      console.error('Error creating company:', error);
-      toast.error('Error creating company');
+      console.error("Error creating company:", error);
+      toast.error("Error creating company");
     } finally {
       setIsCreatingCompany(false);
     }
@@ -388,7 +487,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const updateCompany = async () => {
     if (!canEditCompany || !selectedCompany) {
-      toast.error('You do not have permission to update companies');
+      toast.error("You do not have permission to update companies");
       return;
     }
 
@@ -397,72 +496,140 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       const formData = new FormData();
 
       // Company setup data
-      formData.append('pms_company_setup[name]', companyFormData.name);
-      formData.append('pms_company_setup[organization_id]', companyFormData.organization_id);
-      formData.append('pms_company_setup[country_id]', companyFormData.country_id);
-      formData.append('pms_company_setup[billing_term]', companyFormData.billing_term);
-      formData.append('pms_company_setup[billing_rate]', companyFormData.billing_rate);
-      formData.append('pms_company_setup[live_date]', companyFormData.live_date);
-      formData.append('pms_company_setup[remarks]', companyFormData.remarks);
+      formData.append("pms_company_setup[name]", companyFormData.name);
+      formData.append(
+        "pms_company_setup[organization_id]",
+        companyFormData.organization_id
+      );
+      formData.append(
+        "pms_company_setup[country_id]",
+        companyFormData.country_id
+      );
+      formData.append(
+        "pms_company_setup[billing_term]",
+        companyFormData.billing_term
+      );
+      formData.append(
+        "pms_company_setup[billing_rate]",
+        companyFormData.billing_rate
+      );
+      formData.append(
+        "pms_company_setup[live_date]",
+        companyFormData.live_date
+      );
+      formData.append("pms_company_setup[remarks]", companyFormData.remarks);
 
       // Address data with nested attributes structure (include IDs for updates)
       if (selectedCompany.bill_to_address?.id) {
-        formData.append('pms_company_setup[bill_to_address_attributes][id]', selectedCompany.bill_to_address.id.toString());
+        formData.append(
+          "pms_company_setup[bill_to_address_attributes][id]",
+          selectedCompany.bill_to_address.id.toString()
+        );
       }
-      formData.append('pms_company_setup[bill_to_address_attributes][address]', companyFormData.bill_to_address.address);
-      formData.append('pms_company_setup[bill_to_address_attributes][email]', companyFormData.bill_to_address.email);
+      formData.append(
+        "pms_company_setup[bill_to_address_attributes][address]",
+        companyFormData.bill_to_address.address
+      );
+      formData.append(
+        "pms_company_setup[bill_to_address_attributes][email]",
+        companyFormData.bill_to_address.email
+      );
 
       if (selectedCompany.postal_address?.id) {
-        formData.append('pms_company_setup[postal_address_attributes][id]', selectedCompany.postal_address.id.toString());
+        formData.append(
+          "pms_company_setup[postal_address_attributes][id]",
+          selectedCompany.postal_address.id.toString()
+        );
       }
-      formData.append('pms_company_setup[postal_address_attributes][address]', companyFormData.postal_address.address);
-      formData.append('pms_company_setup[postal_address_attributes][email]', companyFormData.postal_address.email);
+      formData.append(
+        "pms_company_setup[postal_address_attributes][address]",
+        companyFormData.postal_address.address
+      );
+      formData.append(
+        "pms_company_setup[postal_address_attributes][email]",
+        companyFormData.postal_address.email
+      );
 
       // SPOC data with nested attributes structure (include IDs for updates)
       if (selectedCompany.finance_spoc?.id) {
-        formData.append('pms_company_setup[finance_spoc_attributes][id]', selectedCompany.finance_spoc.id.toString());
+        formData.append(
+          "pms_company_setup[finance_spoc_attributes][id]",
+          selectedCompany.finance_spoc.id.toString()
+        );
       }
-      formData.append('pms_company_setup[finance_spoc_attributes][name]', companyFormData.finance_spoc.name);
-      formData.append('pms_company_setup[finance_spoc_attributes][designation]', companyFormData.finance_spoc.designation);
-      formData.append('pms_company_setup[finance_spoc_attributes][email]', companyFormData.finance_spoc.email);
-      formData.append('pms_company_setup[finance_spoc_attributes][mobile]', companyFormData.finance_spoc.mobile);
+      formData.append(
+        "pms_company_setup[finance_spoc_attributes][name]",
+        companyFormData.finance_spoc.name
+      );
+      formData.append(
+        "pms_company_setup[finance_spoc_attributes][designation]",
+        companyFormData.finance_spoc.designation
+      );
+      formData.append(
+        "pms_company_setup[finance_spoc_attributes][email]",
+        companyFormData.finance_spoc.email
+      );
+      formData.append(
+        "pms_company_setup[finance_spoc_attributes][mobile]",
+        companyFormData.finance_spoc.mobile
+      );
 
       if (selectedCompany.operation_spoc?.id) {
-        formData.append('pms_company_setup[operation_spoc_attributes][id]', selectedCompany.operation_spoc.id.toString());
+        formData.append(
+          "pms_company_setup[operation_spoc_attributes][id]",
+          selectedCompany.operation_spoc.id.toString()
+        );
       }
-      formData.append('pms_company_setup[operation_spoc_attributes][name]', companyFormData.operation_spoc.name);
-      formData.append('pms_company_setup[operation_spoc_attributes][designation]', companyFormData.operation_spoc.designation);
-      formData.append('pms_company_setup[operation_spoc_attributes][email]', companyFormData.operation_spoc.email);
-      formData.append('pms_company_setup[operation_spoc_attributes][mobile]', companyFormData.operation_spoc.mobile);
+      formData.append(
+        "pms_company_setup[operation_spoc_attributes][name]",
+        companyFormData.operation_spoc.name
+      );
+      formData.append(
+        "pms_company_setup[operation_spoc_attributes][designation]",
+        companyFormData.operation_spoc.designation
+      );
+      formData.append(
+        "pms_company_setup[operation_spoc_attributes][email]",
+        companyFormData.operation_spoc.email
+      );
+      formData.append(
+        "pms_company_setup[operation_spoc_attributes][mobile]",
+        companyFormData.operation_spoc.mobile
+      );
 
       // Logo
       if (companyFormData.logo) {
-        formData.append('logo', companyFormData.logo);
+        formData.append("logo", companyFormData.logo);
       } else {
-        formData.append('logo', '');
+        formData.append("logo", "");
       }
 
-      const response = await fetch(getFullUrl(`/pms/company_setups/${selectedCompany.id}/company_update.json`), {
-        method: 'PATCH',
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        getFullUrl(
+          `/pms/company_setups/${selectedCompany.id}/company_update.json`
+        ),
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+          body: formData,
+        }
+      );
 
       if (response.ok) {
-        toast.success('Company updated successfully');
+        toast.success("Company updated successfully");
         setIsEditCompanyOpen(false);
         resetCompanyForm();
         fetchCompanies();
       } else {
         const errorData = await response.json();
-        console.error('Failed to update company:', errorData);
-        toast.error('Failed to update company');
+        console.error("Failed to update company:", errorData);
+        toast.error("Failed to update company");
       }
     } catch (error) {
-      console.error('Error updating company:', error);
-      toast.error('Error updating company');
+      console.error("Error updating company:", error);
+      toast.error("Error updating company");
     } finally {
       setIsUpdatingCompany(false);
     }
@@ -470,32 +637,35 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const handleDeleteCompany = async (companyId: number) => {
     if (!canEditCompany) {
-      toast.error('You do not have permission to delete companies');
+      toast.error("You do not have permission to delete companies");
       return;
     }
 
-    if (!confirm('Are you sure you want to delete this company?')) {
+    if (!confirm("Are you sure you want to delete this company?")) {
       return;
     }
 
     setIsDeletingCompany(true);
     try {
-      const response = await fetch(getFullUrl(`/pms/company_setups/${companyId}/company_update.json`), {
-        method: 'DELETE',
-        headers: {
-          'Authorization': getAuthHeader(),
-        },
-      });
+      const response = await fetch(
+        getFullUrl(`/pms/company_setups/${companyId}/company_update.json`),
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: getAuthHeader(),
+          },
+        }
+      );
 
       if (response.ok) {
-        toast.success('Company deleted successfully');
+        toast.success("Company deleted successfully");
         fetchCompanies();
       } else {
-        toast.error('Failed to delete company');
+        toast.error("Failed to delete company");
       }
     } catch (error) {
-      console.error('Error deleting company:', error);
-      toast.error('Error deleting company');
+      console.error("Error deleting company:", error);
+      toast.error("Error deleting company");
     } finally {
       setIsDeletingCompany(false);
     }
@@ -503,58 +673,58 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const handleEditCompany = (company: any) => {
     if (!canEditCompany) {
-      toast.error('You do not have permission to edit companies');
+      toast.error("You do not have permission to edit companies");
       return;
     }
 
     setSelectedCompany(company);
     setCompanyFormData({
-      name: company.name || '',
-      organization_id: company.organization_id?.toString() || '',
-      country_id: company.country_id?.toString() || '',
-      billing_term: company.billing_term || '',
-      billing_rate: company.billing_rate || '',
-      live_date: company.live_date || '',
-      remarks: company.remarks || '',
+      name: company.name || "",
+      organization_id: company.organization_id?.toString() || "",
+      country_id: company.country_id?.toString() || "",
+      billing_term: company.billing_term || "",
+      billing_rate: company.billing_rate || "",
+      live_date: company.live_date || "",
+      remarks: company.remarks || "",
       logo: null,
       bill_to_address: {
-        address: company.bill_to_address?.address || '',
-        email: company.bill_to_address?.email || ''
+        address: company.bill_to_address?.address || "",
+        email: company.bill_to_address?.email || "",
       },
       postal_address: {
-        address: company.postal_address?.address || '',
-        email: company.postal_address?.email || ''
+        address: company.postal_address?.address || "",
+        email: company.postal_address?.email || "",
       },
       finance_spoc: {
-        name: company.finance_spoc?.name || '',
-        designation: company.finance_spoc?.designation || '',
-        email: company.finance_spoc?.email || '',
-        mobile: company.finance_spoc?.mobile || ''
+        name: company.finance_spoc?.name || "",
+        designation: company.finance_spoc?.designation || "",
+        email: company.finance_spoc?.email || "",
+        mobile: company.finance_spoc?.mobile || "",
       },
       operation_spoc: {
-        name: company.operation_spoc?.name || '',
-        designation: company.operation_spoc?.designation || '',
-        email: company.operation_spoc?.email || '',
-        mobile: company.operation_spoc?.mobile || ''
-      }
+        name: company.operation_spoc?.name || "",
+        designation: company.operation_spoc?.designation || "",
+        email: company.operation_spoc?.email || "",
+        mobile: company.operation_spoc?.mobile || "",
+      },
     });
     setIsEditCompanyOpen(true);
   };
 
   const resetCompanyForm = () => {
     setCompanyFormData({
-      name: '',
-      organization_id: '',
-      country_id: '',
-      billing_term: '',
-      billing_rate: '',
-      live_date: '',
-      remarks: '',
+      name: "",
+      organization_id: "",
+      country_id: "",
+      billing_term: "",
+      billing_rate: "",
+      live_date: "",
+      remarks: "",
       logo: null,
-      bill_to_address: { address: '', email: '' },
-      postal_address: { address: '', email: '' },
-      finance_spoc: { name: '', designation: '', email: '', mobile: '' },
-      operation_spoc: { name: '', designation: '', email: '', mobile: '' }
+      bill_to_address: { address: "", email: "" },
+      postal_address: { address: "", email: "" },
+      finance_spoc: { name: "", designation: "", email: "", mobile: "" },
+      operation_spoc: { name: "", designation: "", email: "", mobile: "" },
     });
   };
 
@@ -565,10 +735,17 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
     }
   };
 
-  const filteredCompanies = companies.filter(company =>
-    company.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    organizationsMap.get(company.organization_id)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    countriesMap.get(company.country_id)?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCompanies = companies.filter(
+    (company) =>
+      company.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      organizationsMap
+        .get(company.organization_id)
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      countriesMap
+        .get(company.country_id)
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -591,13 +768,26 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="name"
                   value={companyFormData.name}
-                  onChange={(e) => setCompanyFormData({ ...companyFormData, name: e.target.value })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      name: e.target.value,
+                    })
+                  }
                   placeholder="Enter company name"
                 />
               </div>
               <div>
                 <Label htmlFor="organization">Organization *</Label>
-                <Select value={companyFormData.organization_id} onValueChange={(value) => setCompanyFormData({ ...companyFormData, organization_id: value })}>
+                <Select
+                  value={companyFormData.organization_id}
+                  onValueChange={(value) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      organization_id: value,
+                    })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select organization" />
                   </SelectTrigger>
@@ -612,13 +802,24 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
               </div>
               <div>
                 <Label htmlFor="country">Country *</Label>
-                <Select value={companyFormData.country_id} onValueChange={(value) => setCompanyFormData({ ...companyFormData, country_id: value })}>
+                <Select
+                  value={companyFormData.country_id}
+                  onValueChange={(value) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      country_id: value,
+                    })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
                   <SelectContent>
                     {countriesDropdown.map((country) => (
-                      <SelectItem key={country.id} value={country.id.toString()}>
+                      <SelectItem
+                        key={country.id}
+                        value={country.id.toString()}
+                      >
                         {country.name}
                       </SelectItem>
                     ))}
@@ -630,7 +831,12 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="billing_term"
                   value={companyFormData.billing_term}
-                  onChange={(e) => setCompanyFormData({ ...companyFormData, billing_term: e.target.value })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      billing_term: e.target.value,
+                    })
+                  }
                   placeholder="Enter billing term"
                 />
               </div>
@@ -639,7 +845,12 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="billing_rate"
                   value={companyFormData.billing_rate}
-                  onChange={(e) => setCompanyFormData({ ...companyFormData, billing_rate: e.target.value })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      billing_rate: e.target.value,
+                    })
+                  }
                   placeholder="Enter billing rate"
                 />
               </div>
@@ -649,7 +860,12 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                   id="live_date"
                   type="date"
                   value={companyFormData.live_date}
-                  onChange={(e) => setCompanyFormData({ ...companyFormData, live_date: e.target.value })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      live_date: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div className="col-span-2">
@@ -657,7 +873,12 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="remarks"
                   value={companyFormData.remarks}
-                  onChange={(e) => setCompanyFormData({ ...companyFormData, remarks: e.target.value })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      remarks: e.target.value,
+                    })
+                  }
                   placeholder="Enter remarks"
                 />
               </div>
@@ -675,10 +896,15 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="bill_to_address"
                   value={companyFormData.bill_to_address.address}
-                  onChange={(e) => setCompanyFormData({
-                    ...companyFormData,
-                    bill_to_address: { ...companyFormData.bill_to_address, address: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      bill_to_address: {
+                        ...companyFormData.bill_to_address,
+                        address: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Enter bill to address"
                 />
               </div>
@@ -687,10 +913,15 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="bill_to_email"
                   value={companyFormData.bill_to_address.email}
-                  onChange={(e) => setCompanyFormData({
-                    ...companyFormData,
-                    bill_to_address: { ...companyFormData.bill_to_address, email: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      bill_to_address: {
+                        ...companyFormData.bill_to_address,
+                        email: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Enter bill to email"
                 />
               </div>
@@ -699,10 +930,15 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="postal_address"
                   value={companyFormData.postal_address.address}
-                  onChange={(e) => setCompanyFormData({
-                    ...companyFormData,
-                    postal_address: { ...companyFormData.postal_address, address: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      postal_address: {
+                        ...companyFormData.postal_address,
+                        address: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Enter postal address"
                 />
               </div>
@@ -711,27 +947,39 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="postal_email"
                   value={companyFormData.postal_address.email}
-                  onChange={(e) => setCompanyFormData({
-                    ...companyFormData,
-                    postal_address: { ...companyFormData.postal_address, email: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      postal_address: {
+                        ...companyFormData.postal_address,
+                        email: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Enter postal email"
                 />
               </div>
 
               {/* Finance SPOC */}
               <div className="col-span-2">
-                <h3 className="font-semibold text-lg mt-4 mb-2">Finance SPOC</h3>
+                <h3 className="font-semibold text-lg mt-4 mb-2">
+                  Finance SPOC
+                </h3>
               </div>
               <div>
                 <Label htmlFor="finance_name">Name</Label>
                 <Input
                   id="finance_name"
                   value={companyFormData.finance_spoc.name}
-                  onChange={(e) => setCompanyFormData({
-                    ...companyFormData,
-                    finance_spoc: { ...companyFormData.finance_spoc, name: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      finance_spoc: {
+                        ...companyFormData.finance_spoc,
+                        name: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Enter finance SPOC name"
                 />
               </div>
@@ -740,10 +988,15 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="finance_designation"
                   value={companyFormData.finance_spoc.designation}
-                  onChange={(e) => setCompanyFormData({
-                    ...companyFormData,
-                    finance_spoc: { ...companyFormData.finance_spoc, designation: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      finance_spoc: {
+                        ...companyFormData.finance_spoc,
+                        designation: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Enter finance SPOC designation"
                 />
               </div>
@@ -752,10 +1005,15 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="finance_email"
                   value={companyFormData.finance_spoc.email}
-                  onChange={(e) => setCompanyFormData({
-                    ...companyFormData,
-                    finance_spoc: { ...companyFormData.finance_spoc, email: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      finance_spoc: {
+                        ...companyFormData.finance_spoc,
+                        email: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Enter finance SPOC email"
                 />
               </div>
@@ -764,27 +1022,39 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="finance_mobile"
                   value={companyFormData.finance_spoc.mobile}
-                  onChange={(e) => setCompanyFormData({
-                    ...companyFormData,
-                    finance_spoc: { ...companyFormData.finance_spoc, mobile: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      finance_spoc: {
+                        ...companyFormData.finance_spoc,
+                        mobile: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Enter finance SPOC mobile"
                 />
               </div>
 
               {/* Operation SPOC */}
               <div className="col-span-2">
-                <h3 className="font-semibold text-lg mt-4 mb-2">Operation SPOC</h3>
+                <h3 className="font-semibold text-lg mt-4 mb-2">
+                  Operation SPOC
+                </h3>
               </div>
               <div>
                 <Label htmlFor="operation_name">Name</Label>
                 <Input
                   id="operation_name"
                   value={companyFormData.operation_spoc.name}
-                  onChange={(e) => setCompanyFormData({
-                    ...companyFormData,
-                    operation_spoc: { ...companyFormData.operation_spoc, name: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      operation_spoc: {
+                        ...companyFormData.operation_spoc,
+                        name: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Enter operation SPOC name"
                 />
               </div>
@@ -793,10 +1063,15 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="operation_designation"
                   value={companyFormData.operation_spoc.designation}
-                  onChange={(e) => setCompanyFormData({
-                    ...companyFormData,
-                    operation_spoc: { ...companyFormData.operation_spoc, designation: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      operation_spoc: {
+                        ...companyFormData.operation_spoc,
+                        designation: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Enter operation SPOC designation"
                 />
               </div>
@@ -805,10 +1080,15 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="operation_email"
                   value={companyFormData.operation_spoc.email}
-                  onChange={(e) => setCompanyFormData({
-                    ...companyFormData,
-                    operation_spoc: { ...companyFormData.operation_spoc, email: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      operation_spoc: {
+                        ...companyFormData.operation_spoc,
+                        email: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Enter operation SPOC email"
                 />
               </div>
@@ -817,16 +1097,24 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Input
                   id="operation_mobile"
                   value={companyFormData.operation_spoc.mobile}
-                  onChange={(e) => setCompanyFormData({
-                    ...companyFormData,
-                    operation_spoc: { ...companyFormData.operation_spoc, mobile: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      operation_spoc: {
+                        ...companyFormData.operation_spoc,
+                        mobile: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="Enter operation SPOC mobile"
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddCompanyOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddCompanyOpen(false)}
+              >
                 Cancel
               </Button>
               <Button
@@ -834,7 +1122,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
                 disabled={isCreatingCompany}
               >
-                {isCreatingCompany ? 'Creating...' : 'Create Company'}
+                {isCreatingCompany ? "Creating..." : "Create Company"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -895,9 +1183,13 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                   <TableRow key={company.id}>
                     <TableCell>{company.id}</TableCell>
                     <TableCell>{company.name}</TableCell>
-                    <TableCell>{organizationsMap.get(company.organization_id) || '-'}</TableCell>
-                    <TableCell>{countriesMap.get(company.country_id) || '-'}</TableCell>
-                    <TableCell>{company.live_date || '-'}</TableCell>
+                    <TableCell>
+                      {organizationsMap.get(company.organization_id) || "-"}
+                    </TableCell>
+                    <TableCell>
+                      {countriesMap.get(company.country_id) || "-"}
+                    </TableCell>
+                    <TableCell>{company.live_date || "-"}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button
@@ -939,13 +1231,26 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
               <Input
                 id="edit_name"
                 value={companyFormData.name}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, name: e.target.value })}
+                onChange={(e) =>
+                  setCompanyFormData({
+                    ...companyFormData,
+                    name: e.target.value,
+                  })
+                }
                 placeholder="Enter company name"
               />
             </div>
             <div>
               <Label htmlFor="edit_organization">Organization *</Label>
-              <Select value={companyFormData.organization_id} onValueChange={(value) => setCompanyFormData({ ...companyFormData, organization_id: value })}>
+              <Select
+                value={companyFormData.organization_id}
+                onValueChange={(value) =>
+                  setCompanyFormData({
+                    ...companyFormData,
+                    organization_id: value,
+                  })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select organization" />
                 </SelectTrigger>
@@ -960,7 +1265,12 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
             </div>
             <div>
               <Label htmlFor="edit_country">Country *</Label>
-              <Select value={companyFormData.country_id} onValueChange={(value) => setCompanyFormData({ ...companyFormData, country_id: value })}>
+              <Select
+                value={companyFormData.country_id}
+                onValueChange={(value) =>
+                  setCompanyFormData({ ...companyFormData, country_id: value })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
@@ -978,7 +1288,12 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
               <Input
                 id="edit_billing_term"
                 value={companyFormData.billing_term}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, billing_term: e.target.value })}
+                onChange={(e) =>
+                  setCompanyFormData({
+                    ...companyFormData,
+                    billing_term: e.target.value,
+                  })
+                }
                 placeholder="Enter billing term"
               />
             </div>
@@ -987,7 +1302,12 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
               <Input
                 id="edit_billing_rate"
                 value={companyFormData.billing_rate}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, billing_rate: e.target.value })}
+                onChange={(e) =>
+                  setCompanyFormData({
+                    ...companyFormData,
+                    billing_rate: e.target.value,
+                  })
+                }
                 placeholder="Enter billing rate"
               />
             </div>
@@ -997,7 +1317,12 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 id="edit_live_date"
                 type="date"
                 value={companyFormData.live_date}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, live_date: e.target.value })}
+                onChange={(e) =>
+                  setCompanyFormData({
+                    ...companyFormData,
+                    live_date: e.target.value,
+                  })
+                }
               />
             </div>
             <div className="col-span-2">
@@ -1005,13 +1330,21 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
               <Input
                 id="edit_remarks"
                 value={companyFormData.remarks}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, remarks: e.target.value })}
+                onChange={(e) =>
+                  setCompanyFormData({
+                    ...companyFormData,
+                    remarks: e.target.value,
+                  })
+                }
                 placeholder="Enter remarks"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditCompanyOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditCompanyOpen(false)}
+            >
               Cancel
             </Button>
             <Button
@@ -1019,7 +1352,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
               className="bg-[#C72030] hover:bg-[#A01020] text-white"
               disabled={isUpdatingCompany}
             >
-              {isUpdatingCompany ? 'Updating...' : 'Update Company'}
+              {isUpdatingCompany ? "Updating..." : "Update Company"}
             </Button>
           </DialogFooter>
         </DialogContent>

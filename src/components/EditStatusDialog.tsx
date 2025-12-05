@@ -46,6 +46,7 @@ interface Complaint {
   preventive_action_template_ids?: number[];
   asset_service?: string;
   asset_or_service_id?: number;
+  reopen_status?: boolean;
 }
 
 export const EditStatusDialog = ({ 
@@ -224,11 +225,19 @@ export const EditStatusDialog = ({
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
               <SelectContent>
-                {statuses.map((status) => (
-                  <SelectItem key={status.id} value={status.id.toString()}>
-                    {status.name}
-                  </SelectItem>
-                ))}
+                {statuses
+                  .filter((status) => {
+                    // If ticket's reopen_status is false, hide statuses with fixed_state "reopen"
+                    if (ticketData?.reopen_status === false && status.fixed_state === 'reopen') {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((status) => (
+                    <SelectItem key={status.id} value={status.id.toString()}>
+                      {status.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

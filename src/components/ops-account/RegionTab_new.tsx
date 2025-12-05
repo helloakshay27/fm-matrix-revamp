@@ -1,14 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus, Download, Filter, Upload, Eye, Edit, Trash2, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { TicketPagination } from '@/components/TicketPagination';
-import { toast } from 'sonner';
-import { useApiConfig } from '@/hooks/useApiConfig';
-import { getUser } from '@/utils/auth';
-import { useDebounce } from '@/hooks/useDebounce';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Plus,
+  Download,
+  Filter,
+  Upload,
+  Eye,
+  Edit,
+  Trash2,
+  Loader2,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { TicketPagination } from "@/components/TicketPagination";
+import { toast } from "sonner";
+import { useApiConfig } from "@/hooks/useApiConfig";
+import { getUser } from "@/utils/auth";
+import { useDebounce } from "@/hooks/useDebounce";
 
 // Type definitions for the API response
 interface RegionItem {
@@ -48,61 +57,61 @@ interface RegionTabProps {
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
   {
-    key: 'actions',
-    label: 'Action',
+    key: "actions",
+    label: "Action",
     sortable: false,
     hideable: false,
-    draggable: false
+    draggable: false,
   },
   {
-    key: 'name',
-    label: 'Region Name',
+    key: "name",
+    label: "Region Name",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'code',
-    label: 'Code',
+    key: "code",
+    label: "Code",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'company',
-    label: 'Company',
+    key: "company",
+    label: "Company",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'country',
-    label: 'Country',
+    key: "country",
+    label: "Country",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'status',
-    label: 'Status',
+    key: "status",
+    label: "Status",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'created_at',
-    label: 'Created At',
+    key: "created_at",
+    label: "Created At",
     sortable: true,
     hideable: true,
-    draggable: true
-  }
+    draggable: true,
+  },
 ];
 
 export const RegionTab: React.FC<RegionTabProps> = ({
   searchQuery,
   setSearchQuery,
   entriesPerPage,
-  setEntriesPerPage
+  setEntriesPerPage,
 }) => {
   const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
@@ -112,7 +121,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -120,7 +129,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     total_pages: 1,
     total_count: 0,
     has_next_page: false,
-    has_prev_page: false
+    has_prev_page: false,
   });
 
   // Modal states
@@ -145,8 +154,12 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   };
 
   const checkEditPermission = () => {
-    const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'adhip.shetty@lockated.com'];
+    const userEmail = user.email || "";
+    const allowedEmails = [
+      "abhishek.sharma@lockated.com",
+      "adhip.shetty@lockated.com",
+      "helloakshay27@gmail.com",
+    ];
     setCanEditRegion(allowedEmails.includes(userEmail));
   };
 
@@ -162,26 +175,28 @@ export const RegionTab: React.FC<RegionTabProps> = ({
   }, [currentPage, perPage, debouncedSearchQuery]);
 
   // Fetch regions data from API
-  const fetchRegions = async (page = 1, per_page = 10, search = '') => {
+  const fetchRegions = async (page = 1, per_page = 10, search = "") => {
     setLoading(true);
     try {
       // Build API URL with parameters
-      let apiUrl = getFullUrl(`/pms/regions.json?page=${page}&per_page=${per_page}`);
+      let apiUrl = getFullUrl(
+        `/pms/regions.json?page=${page}&per_page=${per_page}`
+      );
 
       // Add search parameter
       if (search.trim()) {
         apiUrl += `&q[search_all_fields_cont]=${encodeURIComponent(search.trim())}`;
       }
 
-      console.log('🔗 API URL:', apiUrl);
+      console.log("🔗 API URL:", apiUrl);
 
       const response = await fetch(apiUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': getAuthHeader()
-        }
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
       });
 
       if (!response.ok) {
@@ -189,7 +204,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       }
 
       const result: RegionApiResponse = await response.json();
-      console.log('Regions API response:', result);
+      console.log("Regions API response:", result);
 
       if (result && Array.isArray(result.regions)) {
         setRegions(result.regions);
@@ -203,7 +218,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
             total_pages: Math.ceil(result.regions.length / per_page),
             total_count: result.regions.length,
             has_next_page: false,
-            has_prev_page: false
+            has_prev_page: false,
           });
         }
       } else if (result && Array.isArray(result.data)) {
@@ -211,10 +226,10 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       } else if (Array.isArray(result)) {
         setRegions(result);
       } else {
-        throw new Error('Invalid regions data format');
+        throw new Error("Invalid regions data format");
       }
     } catch (error: any) {
-      console.error('Error fetching regions:', error);
+      console.error("Error fetching regions:", error);
       toast.error(`Failed to load regions: ${error.message}`, {
         duration: 5000,
       });
@@ -226,12 +241,15 @@ export const RegionTab: React.FC<RegionTabProps> = ({
 
   const fetchCompaniesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/pms/company_setups/company_index.json'), {
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        getFullUrl("/pms/company_setups/company_index.json"),
+        {
+          headers: {
+            Authorization: getAuthHeader(),
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -244,22 +262,22 @@ export const RegionTab: React.FC<RegionTabProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error fetching companies:', error);
+      console.error("Error fetching companies:", error);
     }
   };
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/headquarters.json'), {
+      const response = await fetch(getFullUrl("/headquarters.json"), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
         },
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Countries API response:', data);
+        console.log("Countries API response:", data);
 
         if (Array.isArray(data)) {
           // Handle direct array format
@@ -272,9 +290,15 @@ export const RegionTab: React.FC<RegionTabProps> = ({
             }
           });
 
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
+          const countriesArray = Array.from(uniqueCountries.entries()).map(
+            ([id, name]) => ({ id: Number(id), name: String(name) })
+          );
           setCountriesDropdown(countriesArray);
-        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
+        } else if (
+          data &&
+          data.headquarters &&
+          Array.isArray(data.headquarters)
+        ) {
           // Handle nested headquarters format
           const uniqueCountries = new Map();
           data.headquarters.forEach((hq: any) => {
@@ -285,31 +309,33 @@ export const RegionTab: React.FC<RegionTabProps> = ({
             }
           });
 
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
+          const countriesArray = Array.from(uniqueCountries.entries()).map(
+            ([id, name]) => ({ id: Number(id), name: String(name) })
+          );
           setCountriesDropdown(countriesArray);
         } else {
-          console.error('Countries data format unexpected:', data);
+          console.error("Countries data format unexpected:", data);
           setCountriesDropdown([]);
         }
       } else {
-        toast.error('Failed to fetch countries');
+        toast.error("Failed to fetch countries");
         setCountriesDropdown([]);
       }
     } catch (error) {
-      console.error('Error fetching countries:', error);
-      toast.error('Error fetching countries');
+      console.error("Error fetching countries:", error);
+      toast.error("Error fetching countries");
       setCountriesDropdown([]);
     }
   };
 
   // Handle search
   const handleSearch = (term: string) => {
-    console.log('Search query:', term);
+    console.log("Search query:", term);
     setSearchTerm(term);
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
     if (!term.trim()) {
-      fetchRegions(1, perPage, '');
+      fetchRegions(1, perPage, "");
     }
   };
 
@@ -326,30 +352,34 @@ export const RegionTab: React.FC<RegionTabProps> = ({
 
   // Helper function to get company name
   const getCompanyName = (companyId: number | null | undefined) => {
-    if (!companyId) return 'Unknown';
-    const company = companiesDropdown.find(c => c.id && c.id.toString() === companyId.toString());
-    return company ? company.name : 'Unknown';
+    if (!companyId) return "Unknown";
+    const company = companiesDropdown.find(
+      (c) => c.id && c.id.toString() === companyId.toString()
+    );
+    return company ? company.name : "Unknown";
   };
 
   // Helper function to get country name
   const getCountryName = (countryId: number | null | undefined) => {
-    if (!countryId) return 'Unknown';
-    const country = countriesDropdown.find(c => c.id && c.id.toString() === countryId.toString());
-    return country ? country.name : 'Unknown';
+    if (!countryId) return "Unknown";
+    const country = countriesDropdown.find(
+      (c) => c.id && c.id.toString() === countryId.toString()
+    );
+    return country ? country.name : "Unknown";
   };
 
   // Format date helper
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
       });
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid date';
+      console.error("Error formatting date:", error);
+      return "Invalid date";
     }
   };
 
@@ -392,7 +422,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     name: (
       <div className="flex items-center gap-3">
         <div>
-          <div className="font-medium">{region?.name || 'N/A'}</div>
+          <div className="font-medium">{region?.name || "N/A"}</div>
           {region?.description && (
             <div className="text-sm text-gray-500">{region.description}</div>
           )}
@@ -401,7 +431,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     ),
     code: (
       <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-        {region?.code || '-'}
+        {region?.code || "-"}
       </span>
     ),
     company: (
@@ -416,35 +446,36 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     ),
     status: (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${region?.active
-            ? 'bg-green-100 text-green-800'
-            : 'bg-red-100 text-red-800'
-          }`}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          region?.active
+            ? "bg-green-100 text-green-800"
+            : "bg-red-100 text-red-800"
+        }`}
       >
-        {region?.active ? 'Active' : 'Inactive'}
+        {region?.active ? "Active" : "Inactive"}
       </span>
     ),
     created_at: (
       <span className="text-sm text-gray-600">
         {formatDate(region?.created_at)}
       </span>
-    )
+    ),
   });
 
   const handleView = (id: number) => {
-    console.log('View region:', id);
+    console.log("View region:", id);
     // Navigate to region details page
     navigate(`/ops-account/regions/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
-    console.log('Edit region:', id);
+    console.log("Edit region:", id);
     setSelectedRegionId(id);
     setIsEditModalOpen(true);
   };
 
   const handleDelete = (id: number) => {
-    console.log('Delete region:', id);
+    console.log("Delete region:", id);
     setSelectedRegionId(id);
     setIsDeleteModalOpen(true);
   };
@@ -453,25 +484,28 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     if (!selectedRegionId) return;
 
     if (!canEditRegion) {
-      toast.error('You do not have permission to delete regions');
+      toast.error("You do not have permission to delete regions");
       return;
     }
 
     try {
-      const response = await fetch(getFullUrl(`/pms/regions/${selectedRegionId}.json`), {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': getAuthHeader()
+      const response = await fetch(
+        getFullUrl(`/pms/regions/${selectedRegionId}.json`),
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
         }
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      toast.success('Region deleted successfully!', {
+      toast.success("Region deleted successfully!", {
         duration: 3000,
       });
 
@@ -480,7 +514,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       setIsDeleteModalOpen(false);
       setSelectedRegionId(null);
     } catch (error: any) {
-      console.error('Error deleting region:', error);
+      console.error("Error deleting region:", error);
       toast.error(`Failed to delete region: ${error.message}`, {
         duration: 5000,
       });
@@ -513,16 +547,16 @@ export const RegionTab: React.FC<RegionTabProps> = ({
             searchTerm={searchTerm}
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
-            leftActions={(
+            leftActions={
               <Button
-                className='bg-primary text-primary-foreground hover:bg-primary/90'
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={() => setIsAddModalOpen(true)}
                 disabled={!canEditRegion}
               >
                 <Plus className="w-4 h-4 mr-2" /> Add Region
               </Button>
-            )}
-            rightActions={(
+            }
+            rightActions={
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -542,7 +576,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                   Export
                 </Button>
               </div>
-            )}
+            }
           />
 
           <TicketPagination

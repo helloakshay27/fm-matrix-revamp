@@ -5409,11 +5409,19 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                                     {loadingComplaintStatus ? 'Loading statuses...' : 'Select status'}
                                   </span>
                                 </MenuItem>
-                                {complaintStatus.map((status) => (
-                                  <MenuItem key={status.id} value={status.id.toString()}>
-                                    {status.name}
-                                  </MenuItem>
-                                ))}
+                                {complaintStatus
+                                  .filter((status) => {
+                                    // If reopen_status is false, don't show statuses with fixed_state === 'reopen'
+                                    if (ticketData?.reopen_status === false && status.fixed_state === 'reopen') {
+                                      return false;
+                                    }
+                                    return true;
+                                  })
+                                  .map((status) => (
+                                    <MenuItem key={status.id} value={status.id.toString()}>
+                                      {status.name}
+                                    </MenuItem>
+                                  ))}
                               </MuiSelect>
                             </FormControl>
 
@@ -8502,11 +8510,19 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                                     {loadingComplaintStatus ? 'Loading statuses...' : 'Select status'}
                                   </span>
                                 </MenuItem>
-                                {complaintStatus.map((status) => (
-                                  <MenuItem key={status.id} value={status.id.toString()}>
-                                    {status.name}
-                                  </MenuItem>
-                                ))}
+                                {complaintStatus
+                                  .filter((status) => {
+                                    // If reopen_status is false, don't show statuses with fixed_state === 'reopen'
+                                    if (ticketData?.reopen_status === false && status.fixed_state === 'reopen') {
+                                      return false;
+                                    }
+                                    return true;
+                                  })
+                                  .map((status) => (
+                                    <MenuItem key={status.id} value={status.id.toString()}>
+                                      {status.name}
+                                    </MenuItem>
+                                  ))}
                               </MuiSelect>
                             </FormControl>
 
