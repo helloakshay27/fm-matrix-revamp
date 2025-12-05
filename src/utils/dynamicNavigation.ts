@@ -116,13 +116,30 @@ export const checkPermission = (
   const mappingMatch = activeFunctions.find((activeFunc) => {
     return potentialMatches.some((match) => {
       const matchLower = match.toLowerCase();
+      const funcNameLower = activeFunc.functionName.toLowerCase();
+      const actionNameLower = activeFunc.actionName
+        ? activeFunc.actionName.toLowerCase()
+        : "";
+
+      // For short mapping keys (likely abbreviations like "po", "wo"), require strict equality
+      // or check if it is a distinct word in the function name
+      if (matchLower.length < 4) {
+        // Strict equality check or word boundary check
+        const isStrictMatch =
+          funcNameLower === matchLower ||
+          actionNameLower === matchLower ||
+          funcNameLower.split(/[\s-_]+/).includes(matchLower) ||
+          actionNameLower.split(/[\s-_]+/).includes(matchLower);
+
+        return isStrictMatch;
+      }
+
+      // For longer keys, allow substring matching but be careful
       return (
-        activeFunc.functionName.toLowerCase().includes(matchLower) ||
-        (activeFunc.actionName &&
-          activeFunc.actionName.toLowerCase().includes(matchLower)) ||
-        matchLower.includes(activeFunc.functionName.toLowerCase()) ||
-        (activeFunc.actionName &&
-          matchLower.includes(activeFunc.actionName.toLowerCase()))
+        funcNameLower.includes(matchLower) ||
+        actionNameLower.includes(matchLower) ||
+        matchLower.includes(funcNameLower) ||
+        matchLower.includes(actionNameLower)
       );
     });
   });

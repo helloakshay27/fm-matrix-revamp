@@ -207,10 +207,21 @@ export const DynamicHeader = () => {
 
       // 2. Fallback: Check function name mapping
       Object.entries(functionToHeaderMapping).forEach(([keyword, section]) => {
-        if (
-          funcNameLower.includes(keyword) ||
-          keyword.includes(funcNameLower)
-        ) {
+        const isShortKeyword = keyword.length < 4;
+        let isMatch = false;
+
+        if (isShortKeyword) {
+          // Strict match or word boundary for short keywords (e.g. "po", "wo")
+          isMatch =
+            funcNameLower === keyword ||
+            funcNameLower.split(/[\s-_]+/).includes(keyword);
+        } else {
+          // Standard loose match for longer keywords
+          isMatch =
+            funcNameLower.includes(keyword) || keyword.includes(funcNameLower);
+        }
+
+        if (isMatch) {
           enabledSections.add(section);
         }
       });
@@ -219,10 +230,22 @@ export const DynamicHeader = () => {
       if (actionNameLower) {
         Object.entries(functionToHeaderMapping).forEach(
           ([keyword, section]) => {
-            if (
-              actionNameLower.includes(keyword) ||
-              keyword.includes(actionNameLower)
-            ) {
+            const isShortKeyword = keyword.length < 4;
+            let isMatch = false;
+
+            if (isShortKeyword) {
+              // Strict match or word boundary for short keywords
+              isMatch =
+                actionNameLower === keyword ||
+                actionNameLower.split(/[\s-_]+/).includes(keyword);
+            } else {
+              // Standard loose match for longer keywords
+              isMatch =
+                actionNameLower.includes(keyword) ||
+                keyword.includes(actionNameLower);
+            }
+
+            if (isMatch) {
               enabledSections.add(section);
             }
           }
