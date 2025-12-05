@@ -1,5 +1,5 @@
-import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
-import { toast } from 'sonner';
+import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
+import { toast } from "sonner";
 
 export interface SiteData {
   id?: number;
@@ -163,6 +163,22 @@ export interface SiteFormData {
   city?: string;
   district?: string;
   zone_id?: string;
+  // Boolean configuration fields
+  skip_host_approval?: boolean;
+  survey_enabled?: boolean;
+  fitout_enabled?: boolean;
+  mailroom_enabled?: boolean;
+  create_breakdown_ticket?: boolean;
+  parking_enabled?: boolean;
+  default_visitor_pass?: boolean;
+  ecommerce_service_enabled?: boolean;
+  operational_audit_enabled?: boolean;
+  steps_enabled?: boolean;
+  transportation_enabled?: boolean;
+  business_card_enabled?: boolean;
+  visitor_enabled?: boolean;
+  govt_id_enabled?: boolean;
+  visitor_host_mandatory?: boolean;
 }
 
 export interface SiteResponse {
@@ -209,8 +225,8 @@ class SiteService {
   private getFullUrl(endpoint: string): string {
     const baseUrl = API_CONFIG.BASE_URL;
     const token = API_CONFIG.TOKEN;
-    
-    if (!baseUrl.startsWith('http')) {
+
+    if (!baseUrl.startsWith("http")) {
       return `https://${baseUrl}${endpoint}?access_token=${token}`;
     }
     return `${baseUrl}${endpoint}?access_token=${token}`;
@@ -220,11 +236,11 @@ class SiteService {
     try {
       const token = API_CONFIG.TOKEN;
       if (!token) {
-        toast.error('Authentication token missing');
-        return { success: false, error: 'Authentication token missing' };
+        toast.error("Authentication token missing");
+        return { success: false, error: "Authentication token missing" };
       }
 
-      const url = this.getFullUrl('/pms/sites/site_create.json');
+      const url = this.getFullUrl("/pms/sites/site_create.json");
 
       const payload = {
         pms_site: {
@@ -239,51 +255,74 @@ class SiteService {
           state: siteData.state || "",
           city: siteData.city || "",
           district: siteData.district || "",
-          zone_id: siteData.zone_id || ""
-        }
+          zone_id: siteData.zone_id || "",
+          // Boolean configuration fields
+          skip_host_approval: siteData.skip_host_approval ?? false,
+          survey_enabled: siteData.survey_enabled ?? false,
+          fitout_enabled: siteData.fitout_enabled ?? false,
+          mailroom_enabled: siteData.mailroom_enabled ?? false,
+          create_breakdown_ticket: siteData.create_breakdown_ticket ?? false,
+          parking_enabled: siteData.parking_enabled ?? false,
+          default_visitor_pass: siteData.default_visitor_pass ?? false,
+          ecommerce_service_enabled:
+            siteData.ecommerce_service_enabled ?? false,
+          operational_audit_enabled:
+            siteData.operational_audit_enabled ?? false,
+          steps_enabled: siteData.steps_enabled ?? false,
+          transportation_enabled: siteData.transportation_enabled ?? false,
+          business_card_enabled: siteData.business_card_enabled ?? false,
+          visitor_enabled: siteData.visitor_enabled ?? false,
+          govt_id_enabled: siteData.govt_id_enabled ?? false,
+          visitor_host_mandatory: siteData.visitor_host_mandatory ?? false,
+        },
       };
 
-      console.log('Creating site with URL:', url);
-      console.log('Payload:', payload);
+      console.log("Creating site with URL:", url);
+      console.log("Payload:", payload);
 
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getAuthHeader(),
+          "Content-Type": "application/json",
+          Authorization: getAuthHeader(),
         },
         body: JSON.stringify(payload),
       });
 
       const result = await response.json();
-      console.log('Create site response:', result);
+      console.log("Create site response:", result);
 
       if (response.ok) {
-        toast.success('Site created successfully');
-        return { 
-          success: true, 
+        toast.success("Site created successfully");
+        return {
+          success: true,
           data: result.data || result,
-          message: result.message || 'Site created successfully'
+          message: result.message || "Site created successfully",
         };
       } else {
-        const errorMessage = result.message || result.error || 'Failed to create site';
+        const errorMessage =
+          result.message || result.error || "Failed to create site";
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       }
     } catch (error) {
-      console.error('Error creating site:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create site';
+      console.error("Error creating site:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create site";
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
   }
 
-  async updateSite(siteId: number, siteData: SiteFormData): Promise<SiteResponse> {
+  async updateSite(
+    siteId: number,
+    siteData: SiteFormData
+  ): Promise<SiteResponse> {
     try {
       const token = API_CONFIG.TOKEN;
       if (!token) {
-        toast.error('Authentication token missing');
-        return { success: false, error: 'Authentication token missing' };
+        toast.error("Authentication token missing");
+        return { success: false, error: "Authentication token missing" };
       }
 
       const url = this.getFullUrl(`/pms/sites/${siteId}/site_update.json`);
@@ -301,40 +340,60 @@ class SiteService {
           state: siteData.state || "",
           city: siteData.city || "",
           district: siteData.district || "",
-          zone_id: siteData.zone_id || ""
-        }
+          zone_id: siteData.zone_id || "",
+          // Boolean configuration fields
+          skip_host_approval: siteData.skip_host_approval ?? false,
+          survey_enabled: siteData.survey_enabled ?? false,
+          fitout_enabled: siteData.fitout_enabled ?? false,
+          mailroom_enabled: siteData.mailroom_enabled ?? false,
+          create_breakdown_ticket: siteData.create_breakdown_ticket ?? false,
+          parking_enabled: siteData.parking_enabled ?? false,
+          default_visitor_pass: siteData.default_visitor_pass ?? false,
+          ecommerce_service_enabled:
+            siteData.ecommerce_service_enabled ?? false,
+          operational_audit_enabled:
+            siteData.operational_audit_enabled ?? false,
+          steps_enabled: siteData.steps_enabled ?? false,
+          transportation_enabled: siteData.transportation_enabled ?? false,
+          business_card_enabled: siteData.business_card_enabled ?? false,
+          visitor_enabled: siteData.visitor_enabled ?? false,
+          govt_id_enabled: siteData.govt_id_enabled ?? false,
+          visitor_host_mandatory: siteData.visitor_host_mandatory ?? false,
+        },
       };
 
-      console.log('Updating site with URL:', url);
-      console.log('Payload:', payload);
+      console.log("Updating site with URL:", url);
+      console.log("Payload:", payload);
 
       const response = await fetch(url, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getAuthHeader(),
+          "Content-Type": "application/json",
+          Authorization: getAuthHeader(),
         },
         body: JSON.stringify(payload),
       });
 
       const result = await response.json();
-      console.log('Update site response:', result);
+      console.log("Update site response:", result);
 
       if (response.ok) {
-        toast.success('Site updated successfully');
-        return { 
-          success: true, 
+        toast.success("Site updated successfully");
+        return {
+          success: true,
           data: result.data || result,
-          message: result.message || 'Site updated successfully'
+          message: result.message || "Site updated successfully",
         };
       } else {
-        const errorMessage = result.message || result.error || 'Failed to update site';
+        const errorMessage =
+          result.message || result.error || "Failed to update site";
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       }
     } catch (error) {
-      console.error('Error updating site:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update site';
+      console.error("Error updating site:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update site";
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -344,23 +403,23 @@ class SiteService {
     try {
       const token = API_CONFIG.TOKEN;
       if (!token) {
-        toast.error('Authentication token missing');
+        toast.error("Authentication token missing");
         return [];
       }
 
-      const url = this.getFullUrl('/pms/sites.json?all_sites=true');
-      console.log('Fetching sites from URL:', url);
+      const url = this.getFullUrl("/pms/sites.json?all_sites=true");
+      console.log("Fetching sites from URL:", url);
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getAuthHeader(),
+          "Content-Type": "application/json",
+          Authorization: getAuthHeader(),
         },
       });
 
       const result = await response.json();
-      console.log('Get sites response:', result);
+      console.log("Get sites response:", result);
 
       if (response.ok) {
         // Handle different response formats
@@ -371,17 +430,19 @@ class SiteService {
         } else if (result.data && Array.isArray(result.data)) {
           return result.data;
         } else {
-          console.log('Unexpected sites response format:', result);
+          console.log("Unexpected sites response format:", result);
           return [];
         }
       } else {
-        const errorMessage = result.message || result.error || 'Failed to fetch sites';
+        const errorMessage =
+          result.message || result.error || "Failed to fetch sites";
         toast.error(errorMessage);
         return [];
       }
     } catch (error) {
-      console.error('Error fetching sites:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch sites';
+      console.error("Error fetching sites:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch sites";
       toast.error(errorMessage);
       return [];
     }
@@ -391,34 +452,36 @@ class SiteService {
     try {
       const token = API_CONFIG.TOKEN;
       if (!token) {
-        toast.error('Authentication token missing');
+        toast.error("Authentication token missing");
         return null;
       }
 
       const url = this.getFullUrl(`/pms/sites/${siteId}.json`);
-      console.log('Fetching site by ID from URL:', url);
+      console.log("Fetching site by ID from URL:", url);
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getAuthHeader(),
+          "Content-Type": "application/json",
+          Authorization: getAuthHeader(),
         },
       });
 
       const result = await response.json();
-      console.log('Get site by ID response:', result);
+      console.log("Get site by ID response:", result);
 
       if (response.ok) {
         return result.data || result;
       } else {
-        const errorMessage = result.message || result.error || 'Failed to fetch site';
+        const errorMessage =
+          result.message || result.error || "Failed to fetch site";
         toast.error(errorMessage);
         return null;
       }
     } catch (error) {
-      console.error('Error fetching site:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch site';
+      console.error("Error fetching site:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch site";
       toast.error(errorMessage);
       return null;
     }
@@ -428,23 +491,23 @@ class SiteService {
     try {
       const token = API_CONFIG.TOKEN;
       if (!token) {
-        toast.error('Authentication token missing');
+        toast.error("Authentication token missing");
         return [];
       }
 
-      const url = this.getFullUrl('/pms/company_setups/company_index.json');
-      console.log('Fetching companies from URL:', url);
+      const url = this.getFullUrl("/pms/company_setups/company_index.json");
+      console.log("Fetching companies from URL:", url);
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getAuthHeader(),
+          "Content-Type": "application/json",
+          Authorization: getAuthHeader(),
         },
       });
 
       const result = await response.json();
-      console.log('Get companies response:', result);
+      console.log("Get companies response:", result);
 
       if (response.ok) {
         if (result && result.code === 200 && Array.isArray(result.data)) {
@@ -457,13 +520,15 @@ class SiteService {
           return [];
         }
       } else {
-        const errorMessage = result.message || result.error || 'Failed to fetch companies';
+        const errorMessage =
+          result.message || result.error || "Failed to fetch companies";
         toast.error(errorMessage);
         return [];
       }
     } catch (error) {
-      console.error('Error fetching companies:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch companies';
+      console.error("Error fetching companies:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch companies";
       toast.error(errorMessage);
       return [];
     }
@@ -473,28 +538,32 @@ class SiteService {
     try {
       const token = API_CONFIG.TOKEN;
       if (!token) {
-        toast.error('Authentication token missing');
+        toast.error("Authentication token missing");
         return [];
       }
 
-      const url = this.getFullUrl('/headquarters.json');
-      console.log('Fetching headquarters from URL:', url);
+      const url = this.getFullUrl("/headquarters.json");
+      console.log("Fetching headquarters from URL:", url);
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getAuthHeader(),
+          "Content-Type": "application/json",
+          Authorization: getAuthHeader(),
         },
       });
 
       const result = await response.json();
-      console.log('Get headquarters response:', result);
+      console.log("Get headquarters response:", result);
 
       if (response.ok) {
         if (Array.isArray(result)) {
           return result;
-        } else if (result && result.headquarters && Array.isArray(result.headquarters)) {
+        } else if (
+          result &&
+          result.headquarters &&
+          Array.isArray(result.headquarters)
+        ) {
           return result.headquarters;
         } else if (result && result.data && Array.isArray(result.data)) {
           return result.data;
@@ -502,13 +571,15 @@ class SiteService {
           return [];
         }
       } else {
-        const errorMessage = result.message || result.error || 'Failed to fetch headquarters';
+        const errorMessage =
+          result.message || result.error || "Failed to fetch headquarters";
         toast.error(errorMessage);
         return [];
       }
     } catch (error) {
-      console.error('Error fetching headquarters:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch headquarters';
+      console.error("Error fetching headquarters:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch headquarters";
       toast.error(errorMessage);
       return [];
     }
@@ -518,23 +589,23 @@ class SiteService {
     try {
       const token = API_CONFIG.TOKEN;
       if (!token) {
-        toast.error('Authentication token missing');
+        toast.error("Authentication token missing");
         return [];
       }
 
-      const url = this.getFullUrl('/pms/regions.json');
-      console.log('Fetching regions from URL:', url);
+      const url = this.getFullUrl("/pms/regions.json");
+      console.log("Fetching regions from URL:", url);
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getAuthHeader(),
+          "Content-Type": "application/json",
+          Authorization: getAuthHeader(),
         },
       });
 
       const result = await response.json();
-      console.log('Get regions response:', result);
+      console.log("Get regions response:", result);
 
       if (response.ok) {
         if (Array.isArray(result)) {
@@ -547,13 +618,15 @@ class SiteService {
           return [];
         }
       } else {
-        const errorMessage = result.message || result.error || 'Failed to fetch regions';
+        const errorMessage =
+          result.message || result.error || "Failed to fetch regions";
         toast.error(errorMessage);
         return [];
       }
     } catch (error) {
-      console.error('Error fetching regions:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch regions';
+      console.error("Error fetching regions:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch regions";
       toast.error(errorMessage);
       return [];
     }
