@@ -80,8 +80,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
-      selectedCompany?.id === 199  
-
+      selectedCompany?.id === 298 ||
+      selectedCompany?.id === 300
     ) {
       return <Sidebar />;
     }
@@ -118,7 +118,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
-      selectedCompany?.id === 199  
+      selectedCompany?.id === 298 ||
+      selectedCompany?.id === 300
     ) {
       return <DynamicHeader />;
     }
