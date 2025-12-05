@@ -478,7 +478,7 @@ export const AMCDashboard = () => {
     }
 
     if (searchTerm && searchTerm.trim()) {
-      queryParams.push(`q[id_value_or_amc_assets_resource_name_or_amc_type_cont]=${encodeURIComponent(searchTerm.trim())}`);
+      queryParams.push(`q[id_value_or_amc_assets_resource_name_or_amc_type_or_supplier_company_name_or_contract_name_cont]=${encodeURIComponent(searchTerm.trim())}`);
     }
 
     if (queryParams.length > 0) {
