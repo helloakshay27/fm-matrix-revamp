@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronUp,
+  DollarSign,
   User,
   CalendarDays,
   CreditCard,
@@ -29,6 +30,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Radio,
 } from "@mui/material";
 import { useAppDispatch } from "@/store/hooks";
 import { facilityBookingSetupDetails } from "@/store/slices/facilityBookingsSlice";
@@ -186,6 +188,19 @@ export const BookingSetupDetailPage = () => {
         wrapTime: "",
       },
     ],
+    chargeSetup: {
+      member: { selected: false, adult: "", child: "" },
+      guest: { selected: false, adult: "", child: "" },
+      minimumPersonAllowed: "1",
+      maximumPersonAllowed: "1",
+      gst: "0.0",
+    },
+    blockDays: {
+      startDate: "",
+      endDate: "",
+      dayType: "entireDay",
+      blockReason: "",
+    },
   });
   const [departments, setDepartments] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
@@ -335,6 +350,19 @@ export const BookingSetupDetailPage = () => {
           slotBy: slot.facility_slot.breakminutes_label,
           wrapTime: slot.facility_slot.wrap_time,
         })),
+        chargeSetup: {
+          member: { selected: false, adult: "", child: "" },
+          guest: { selected: false, adult: "", child: "" },
+          minimumPersonAllowed: "1",
+          maximumPersonAllowed: "1",
+          gst: "0.0",
+        },
+        blockDays: {
+          startDate: "",
+          endDate: "",
+          dayType: "entireDay",
+          blockReason: "",
+        },
       });
       const transformedRules = response.cancellation_rules.map((rule: any) => ({
         description: rule.description,
@@ -487,6 +515,127 @@ export const BookingSetupDetailPage = () => {
                   />
                   <label htmlFor="request">Request</label>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Charge Setup Card */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <DollarSign className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CHARGE SETUP</h3>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Member Type</th>
+                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Adult</th>
+                    {/* <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Child</th> */}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-300 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Checkbox disabled checked={formData.chargeSetup.member.selected} />
+                        <span>Member</span>
+                      </div>
+                    </td>
+                    <td className="border border-gray-300 px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <Checkbox disabled checked={!!formData.chargeSetup.member.adult} />
+                        <TextField
+                          size="small"
+                          variant="outlined"
+                          value={formData.chargeSetup.member.adult}
+                          InputProps={{ readOnly: true }}
+                          className="w-full max-w-[200px]"
+                        />
+                      </div>
+                    </td>
+                    {/* <td className="border border-gray-300 px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <Checkbox disabled checked={!!formData.chargeSetup.member.child} />
+                        <TextField
+                          size="small"
+                          variant="outlined"
+                          value={formData.chargeSetup.member.child}
+                          InputProps={{ readOnly: true }}
+                          className="w-full max-w-[200px]"
+                        />
+                      </div>
+                    </td> */}
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Checkbox disabled checked={formData.chargeSetup.guest.selected} />
+                        <span>Guest</span>
+                      </div>
+                    </td>
+                    <td className="border border-gray-300 px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <Checkbox disabled checked={!!formData.chargeSetup.guest.adult} />
+                        <TextField
+                          size="small"
+                          variant="outlined"
+                          value={formData.chargeSetup.guest.adult}
+                          InputProps={{ readOnly: true }}
+                          className="w-full max-w-[200px]"
+                        />
+                      </div>
+                    </td>
+                    {/* <td className="border border-gray-300 px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <Checkbox disabled checked={!!formData.chargeSetup.guest.child} />
+                        <TextField
+                          size="small"
+                          variant="outlined"
+                          value={formData.chargeSetup.guest.child}
+                          InputProps={{ readOnly: true }}
+                          className="w-full max-w-[200px]"
+                        />
+                      </div>
+                    </td> */}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-semibold whitespace-nowrap">Minimum Person Allowed</label>
+                <TextField
+                  size="small"
+                  variant="outlined"
+                  value={formData.chargeSetup.minimumPersonAllowed}
+                  InputProps={{ readOnly: true }}
+                  className="w-32"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-semibold whitespace-nowrap">Maximum Person Allowed</label>
+                <TextField
+                  size="small"
+                  variant="outlined"
+                  value={formData.chargeSetup.maximumPersonAllowed}
+                  InputProps={{ readOnly: true }}
+                  className="w-32"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-semibold whitespace-nowrap">GST</label>
+                <TextField
+                  size="small"
+                  variant="outlined"
+                  value={formData.chargeSetup.gst}
+                  InputProps={{ readOnly: true }}
+                  className="w-32"
+                />
               </div>
             </div>
           </div>
@@ -1241,6 +1390,73 @@ export const BookingSetupDetailPage = () => {
                   />
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Block Days Section */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <CalendarDays className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <TextField
+                label="Start Date"
+                type="date"
+                value={formData.blockDays.startDate}
+                variant="outlined"
+                InputProps={{ readOnly: true }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+              <TextField
+                label="End Date"
+                type="date"
+                value={formData.blockDays.endDate}
+                variant="outlined"
+                InputProps={{ readOnly: true }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </div>
+
+            <div className="flex gap-6 px-1">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="entireDay"
+                  name="dayType"
+                  checked={formData.blockDays.dayType === "entireDay"}
+                  disabled
+                  className="text-blue-600"
+                />
+                <label htmlFor="entireDay">Entire Day</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="selectedSlots"
+                  name="dayType"
+                  checked={formData.blockDays.dayType === "selectedSlots"}
+                  disabled
+                  className="text-blue-600"
+                />
+                <label htmlFor="selectedSlots">Selected Slots</label>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
+              <Textarea
+                value={formData.blockDays.blockReason}
+                className="min-h-[100px]"
+                readOnly
+              />
             </div>
           </div>
         </div>

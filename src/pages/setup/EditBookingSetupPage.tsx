@@ -3,13 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, ReceiptText, Settings, Share2, Tv, Upload, User, X } from "lucide-react";
+import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, DollarSign, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, ReceiptText, Settings, Share2, Tv, Upload, User, X } from "lucide-react";
 import {
     TextField,
     Select,
     MenuItem,
     FormControl,
     InputLabel,
+    Radio,
 } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
@@ -151,6 +152,19 @@ export const EditBookingSetupPage = () => {
                 wrapTime: "",
             },
         ],
+        chargeSetup: {
+            member: { selected: false, adult: "", child: "" },
+            guest: { selected: false, adult: "", child: "" },
+            minimumPersonAllowed: "1",
+            maximumPersonAllowed: "1",
+            gst: "0.0",
+        },
+        blockDays: {
+            startDate: "",
+            endDate: "",
+            dayType: "entireDay",
+            blockReason: "",
+        },
     });
 
     const [cancellationRules, setCancellationRules] = useState([
@@ -297,6 +311,19 @@ export const EditBookingSetupPage = () => {
                     dayofweek: slot.facility_slot.dayofweek || "",
                     _destroy: false,
                 })),
+                chargeSetup: {
+                    member: { selected: false, adult: "", child: "" },
+                    guest: { selected: false, adult: "", child: "" },
+                    minimumPersonAllowed: "1",
+                    maximumPersonAllowed: "1",
+                    gst: "0.0",
+                },
+                blockDays: {
+                    startDate: "",
+                    endDate: "",
+                    dayType: "entireDay",
+                    blockReason: "",
+                },
             });
             const transformedRules = responseData.cancellation_rules.map((rule) => ({
                 description: rule.description,
@@ -761,6 +788,287 @@ export const EditBookingSetupPage = () => {
                                     />
                                     <label htmlFor="request">Request</label>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Charge Setup Card */}
+                    <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                <DollarSign className="w-4 h-4" />
+                            </div>
+                            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CHARGE SETUP</h3>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50">
+                                        <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Member Type</th>
+                                        <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Adult</th>
+                                        {/* <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Child</th> */}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                                <Checkbox 
+                                                    checked={formData.chargeSetup.member.selected}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                member: {
+                                                                    ...formData.chargeSetup.member,
+                                                                    selected: e.target.checked,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                />
+                                                <span>Member</span>
+                                            </div>
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Checkbox 
+                                                    checked={!!formData.chargeSetup.member.adult}
+                                                    onChange={(e) => {
+                                                        if (!e.target.checked) {
+                                                            setFormData({
+                                                                ...formData,
+                                                                chargeSetup: {
+                                                                    ...formData.chargeSetup,
+                                                                    member: {
+                                                                        ...formData.chargeSetup.member,
+                                                                        adult: "",
+                                                                    },
+                                                                },
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                                <TextField
+                                                    size="small"
+                                                    variant="outlined"
+                                                    value={formData.chargeSetup.member.adult}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                member: {
+                                                                    ...formData.chargeSetup.member,
+                                                                    adult: e.target.value,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                    className="w-full max-w-[200px]"
+                                                />
+                                            </div>
+                                        </td>
+                                        {/* <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Checkbox 
+                                                    checked={!!formData.chargeSetup.member.child}
+                                                    onChange={(e) => {
+                                                        if (!e.target.checked) {
+                                                            setFormData({
+                                                                ...formData,
+                                                                chargeSetup: {
+                                                                    ...formData.chargeSetup,
+                                                                    member: {
+                                                                        ...formData.chargeSetup.member,
+                                                                        child: "",
+                                                                    },
+                                                                },
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                                <TextField
+                                                    size="small"
+                                                    variant="outlined"
+                                                    value={formData.chargeSetup.member.child}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                member: {
+                                                                    ...formData.chargeSetup.member,
+                                                                    child: e.target.value,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                    className="w-full max-w-[200px]"
+                                                />
+                                            </div>
+                                        </td> */}
+                                    </tr>
+                                    <tr>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                                <Checkbox 
+                                                    checked={formData.chargeSetup.guest.selected}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                guest: {
+                                                                    ...formData.chargeSetup.guest,
+                                                                    selected: e.target.checked,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                />
+                                                <span>Guest</span>
+                                            </div>
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Checkbox 
+                                                    checked={!!formData.chargeSetup.guest.adult}
+                                                    onChange={(e) => {
+                                                        if (!e.target.checked) {
+                                                            setFormData({
+                                                                ...formData,
+                                                                chargeSetup: {
+                                                                    ...formData.chargeSetup,
+                                                                    guest: {
+                                                                        ...formData.chargeSetup.guest,
+                                                                        adult: "",
+                                                                    },
+                                                                },
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                                <TextField
+                                                    size="small"
+                                                    variant="outlined"
+                                                    value={formData.chargeSetup.guest.adult}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                guest: {
+                                                                    ...formData.chargeSetup.guest,
+                                                                    adult: e.target.value,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                    className="w-full max-w-[200px]"
+                                                />
+                                            </div>
+                                        </td>
+                                        {/* <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Checkbox 
+                                                    checked={!!formData.chargeSetup.guest.child}
+                                                    onChange={(e) => {
+                                                        if (!e.target.checked) {
+                                                            setFormData({
+                                                                ...formData,
+                                                                chargeSetup: {
+                                                                    ...formData.chargeSetup,
+                                                                    guest: {
+                                                                        ...formData.chargeSetup.guest,
+                                                                        child: "",
+                                                                    },
+                                                                },
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                                <TextField
+                                                    size="small"
+                                                    variant="outlined"
+                                                    value={formData.chargeSetup.guest.child}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                guest: {
+                                                                    ...formData.chargeSetup.guest,
+                                                                    child: e.target.value,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                    className="w-full max-w-[200px]"
+                                                />
+                                            </div>
+                                        </td> */}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-semibold whitespace-nowrap">Minimum Person Allowed</label>
+                                <TextField
+                                    size="small"
+                                    variant="outlined"
+                                    value={formData.chargeSetup.minimumPersonAllowed}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            chargeSetup: {
+                                                ...formData.chargeSetup,
+                                                minimumPersonAllowed: e.target.value,
+                                            },
+                                        })
+                                    }
+                                    className="w-32"
+                                />
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-semibold whitespace-nowrap">Maximum Person Allowed</label>
+                                <TextField
+                                    size="small"
+                                    variant="outlined"
+                                    value={formData.chargeSetup.maximumPersonAllowed}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            chargeSetup: {
+                                                ...formData.chargeSetup,
+                                                maximumPersonAllowed: e.target.value,
+                                            },
+                                        })
+                                    }
+                                    className="w-32"
+                                />
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-semibold whitespace-nowrap">GST</label>
+                                <TextField
+                                    size="small"
+                                    variant="outlined"
+                                    value={formData.chargeSetup.gst}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            chargeSetup: {
+                                                ...formData.chargeSetup,
+                                                gst: e.target.value,
+                                            },
+                                        })
+                                    }
+                                    className="w-32"
+                                />
                             </div>
                         </div>
                     </div>
@@ -1741,6 +2049,115 @@ export const EditBookingSetupPage = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Block Days Section */}
+                    <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                <CalendarDays className="w-4 h-4" />
+                            </div>
+                            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days</h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <TextField
+                                label="Start Date"
+                                type="date"
+                                value={formData.blockDays.startDate}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        blockDays: {
+                                            ...formData.blockDays,
+                                            startDate: e.target.value,
+                                        },
+                                    })
+                                }
+                                variant="outlined"
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                            />
+                            <TextField
+                                label="End Date"
+                                type="date"
+                                value={formData.blockDays.endDate}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        blockDays: {
+                                            ...formData.blockDays,
+                                            endDate: e.target.value,
+                                        },
+                                    })
+                                }
+                                variant="outlined"
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                            />
+                        </div>
+
+                        <div className="flex gap-6 px-1">
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="radio"
+                                    id="entireDay"
+                                    name="dayType"
+                                    checked={formData.blockDays.dayType === "entireDay"}
+                                    onChange={() =>
+                                        setFormData({
+                                            ...formData,
+                                            blockDays: {
+                                                ...formData.blockDays,
+                                                dayType: "entireDay",
+                                            },
+                                        })
+                                    }
+                                    className="text-blue-600"
+                                />
+                                <label htmlFor="entireDay">Entire Day</label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="radio"
+                                    id="selectedSlots"
+                                    name="dayType"
+                                    checked={formData.blockDays.dayType === "selectedSlots"}
+                                    onChange={() =>
+                                        setFormData({
+                                            ...formData,
+                                            blockDays: {
+                                                ...formData.blockDays,
+                                                dayType: "selectedSlots",
+                                            },
+                                        })
+                                    }
+                                    className="text-blue-600"
+                                />
+                                <label htmlFor="selectedSlots">Selected Slots</label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
+                            <Textarea
+                                placeholder="Please mention block reason"
+                                value={formData.blockDays.blockReason}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        blockDays: {
+                                            ...formData.blockDays,
+                                            blockReason: e.target.value,
+                                        },
+                                    })
+                                }
+                                className="min-h-[100px]"
+                            />
+                        </div>
+                    </div>
+
                     <div className="flex gap-4 pt-6 border-t justify-center">
                         <Button
                             onClick={handleSave}
