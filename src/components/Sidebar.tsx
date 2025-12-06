@@ -381,14 +381,13 @@ export const Sidebar = () => {
             const hasAccessibleSubItems =
               item.subItems && item.subItems.length > 0;
 
-            // Log for debugging
-            if (hasDirectPermission) {
-              console.log(`✅ "${item.name}" - DIRECT permission`);
-            } else if (hasAccessibleSubItems) {
-              console.log(
-                `✅ "${item.name}" - shown for navigation to children`
-              );
-            }
+            // Detailed logging for debugging
+            console.log(`🔍 Checking "${item.name}":`, {
+              hasDirectPermission,
+              hasAccessibleSubItems,
+              subItemsCount: item.subItems?.length || 0,
+              kept: hasDirectPermission || hasAccessibleSubItems,
+            });
 
             return hasDirectPermission || hasAccessibleSubItems;
           })
@@ -417,7 +416,7 @@ export const Sidebar = () => {
     );
 
     return filtered;
-  }, [modulesByPackage, userRole, checkPermission]);
+  }, [modulesByPackage, userRole, checkItemPermission]);
 
   // Reset expanded items on page load/refresh
   React.useEffect(() => {
@@ -587,7 +586,10 @@ export const Sidebar = () => {
     // console.log("expandedItems:", JSON.stringify({ expandedItems }, null, 2));
     // console.log("currentSectionItems:", JSON.stringify({ currentSectionItems }, null, 2));
     // console.log("locationPathname:", JSON.stringify({ locationPathname: location.pathname }, null, 2));
-    // console.log("filteredModulesByPackage:", JSON.stringify({ filteredModulesByPackage }, null, 2));
+    console.log(
+      "🔍 Debug - Safety section after filtering:",
+      JSON.stringify(filteredModulesByPackage["Safety"], null, 2)
+    );
     // console.log("modulesByPackage:", JSON.stringify({ modulesByPackage }, null, 2));
     // console.log("userRole:", JSON.stringify({ userRole }, null, 2));
     // console.log("hasPermissionForPath:", JSON.stringify({ hasPermissionForPath }, null, 2));
@@ -601,10 +603,8 @@ export const Sidebar = () => {
       item.hasDropdowns && item.href && location.pathname === item.href;
     const isActive = item.href ? isActiveRoute(item.href) : false;
 
-    // Check permission for current item
-    if (!checkPermission(item)) {
-      return null; // Don't render if no permission
-    }
+    // NOTE: Permission check is already done by filteredModulesByPackage
+    // Items here are either: 1) have direct permission, or 2) have accessible children
 
     if (hasSubItems) {
       return (
@@ -643,7 +643,7 @@ export const Sidebar = () => {
                     key={subItem.name}
                     className={level === 0 ? "ml-8" : "ml-4"}
                   >
-                    {subItem.subItems ? (
+                    {subItem.subItems && subItem.subItems.length > 0 ? (
                       <div>
                         <button
                           onClick={() => toggleExpanded(subItem.name)}
