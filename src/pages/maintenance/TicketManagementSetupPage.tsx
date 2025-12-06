@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoryTypeTab } from '@/components/ticket-management/CategoryTypeTab';
 import { SubCategoryTab } from '@/components/ticket-management/SubCategoryTab';
@@ -10,6 +10,16 @@ import { AgingRuleTab } from '@/components/ticket-management/AgingRuleTab';
 
 export const TicketManagementSetupPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('category-type');
+
+  useEffect(() => {
+    // Check if there's a saved tab in localStorage
+    const savedTab = localStorage.getItem('ticketManagementActiveTab');
+    if (savedTab) {
+      setActiveTab(savedTab);
+      // Clear the saved tab after restoring
+      localStorage.removeItem('ticketManagementActiveTab');
+    }
+  }, []);
 
   return (
     <div className="p-6 space-y-6">

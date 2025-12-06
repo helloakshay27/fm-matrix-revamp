@@ -245,6 +245,11 @@ export const StatusTab: React.FC = () => {
 
       if (response.ok) {
         toast.success('Reopen settings saved successfully!');
+        // Store current tab and refresh page
+        localStorage.setItem('ticketManagementActiveTab', 'status');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         const errorData = await response.json().catch(() => null);
         toast.error(errorData?.message || 'Failed to save reopen settings');
@@ -507,6 +512,14 @@ export const StatusTab: React.FC = () => {
                       Save Reopen Settings
                     </Button>
                   </div>
+
+                  {timePeriod && (
+                    <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      <p className="text-sm text-black-800">
+                        <span className="font-semibold">Selected Time Period:</span> {timePeriod} {periodType}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
