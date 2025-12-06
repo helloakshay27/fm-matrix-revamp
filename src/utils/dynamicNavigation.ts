@@ -6,8 +6,8 @@ import {
 import { SidebarItem } from "@/utils/sidebarPermissionFilter";
 
 /**
- * Check if a sidebar item is accessible based on user permissions
- * If an item has sub-items, it will be shown if ANY of its sub-items have permission
+ * Check if a sidebar item is accessible based on user permissions.
+ * This only checks the item itself - parent-child visibility logic is handled by Sidebar's filterSubItemsRecursively.
  */
 export const checkPermission = (
   checkItem: any,
@@ -69,33 +69,41 @@ export const checkPermission = (
 
   // Helper function to check if item directly matches permissions
   const checkDirectMatch = (item: any): boolean => {
-    const itemNameLower = item.name.toLowerCase();
+    const itemNameLower = item.name.toLowerCase().trim();
     const itemVariants = createSearchVariants(item.name);
 
     // Check if this sidebar item matches any active function
     const directMatch = activeFunctions.find((activeFunc) => {
-      const funcNameLower = activeFunc.functionName.toLowerCase();
+      const funcNameLower = activeFunc.functionName.toLowerCase().trim();
       const actionNameLower = activeFunc.actionName
-        ? activeFunc.actionName.toLowerCase()
+        ? activeFunc.actionName.toLowerCase().trim()
         : "";
 
-      // Direct function name match
-      const functionNameMatch = itemVariants.some(
-        (variant) =>
-          variant === funcNameLower ||
-          funcNameLower.includes(variant) ||
-          variant.includes(funcNameLower)
+      // STRICT matching to prevent false positives like "Permit" matching "Permit Setup"
+      // Rule 1: Exact match (after normalization)
+      const isExactFunctionMatch = itemVariants.some(
+        (variant) => variant === funcNameLower
       );
 
-      // Direct action name match
-      const actionNameMatch =
+      // Rule 2: Exact action name match
+      const isExactActionMatch =
         actionNameLower &&
-        itemVariants.some(
-          (variant) =>
-            variant === actionNameLower ||
-            actionNameLower.includes(variant) ||
-            variant.includes(actionNameLower)
-        );
+        itemVariants.some((variant) => variant === actionNameLower);
+
+      // Rule 3: For longer function names (4+ chars), allow if:
+      //   - The sidebar item name EQUALS the function name (not just contains)
+      //   - OR the function name equals the sidebar item (not just substring)
+      // This prevents "Permit" from matching "Permit Setup"
+      const functionNameMatch =
+        isExactFunctionMatch ||
+        (funcNameLower.length >= 4 && itemNameLower === funcNameLower);
+
+      // Rule 4: For action name, use similar strict matching
+      const actionNameMatch =
+        isExactActionMatch ||
+        (actionNameLower &&
+          actionNameLower.length >= 4 &&
+          itemNameLower.replace(/[\s-_]+/g, "_") === actionNameLower);
 
       return functionNameMatch || actionNameMatch;
     });
@@ -133,13 +141,21 @@ export const checkPermission = (
           return isStrictMatch;
         }
 
-        // For longer keys, allow substring matching
-        return (
-          funcNameLower.includes(matchLower) ||
-          actionNameLower.includes(matchLower) ||
-          matchLower.includes(funcNameLower) ||
-          matchLower.includes(actionNameLower)
-        );
+        // For longer keys, use STRICT matching (exact or word boundary)
+        // This prevents "permit" from matching "permit setup"
+        const isExactMatch =
+          funcNameLower === matchLower || actionNameLower === matchLower;
+
+        // Also allow if the match exactly equals a word in the function/action name
+        const funcWords = funcNameLower.split(/[\s-_]+/);
+        const actionWords = actionNameLower.split(/[\s-_]+/);
+        const matchWords = matchLower.split(/[\s-_]+/);
+
+        const isWordMatch =
+          matchWords.every((mw) => funcWords.includes(mw)) ||
+          matchWords.every((mw) => actionWords.includes(mw));
+
+        return isExactMatch || isWordMatch;
       });
     });
 
@@ -157,39 +173,9 @@ export const checkPermission = (
   };
 
   // Check if current item has direct permission
+  // Note: Parent-child recursive checking is now handled by Sidebar's filterSubItemsRecursively
   if (checkDirectMatch(checkItem)) {
     return true;
-  }
-
-  // IMPORTANT: If item has sub-items, check if ANY sub-item has permission
-  // This ensures parent items (like M-Safe) show when children (like Training List) have permission
-  if (checkItem.subItems && checkItem.subItems.length > 0) {
-    const hasAccessibleSubItem = checkItem.subItems.some((subItem: any) => {
-      // Check if sub-item has direct permission
-      if (checkDirectMatch(subItem)) {
-        console.log(
-          `✅ Parent "${checkItem.name}" shown because child "${subItem.name}" has permission`
-        );
-        return true;
-      }
-      // Recursively check nested sub-items
-      if (subItem.subItems && subItem.subItems.length > 0) {
-        return subItem.subItems.some((nestedItem: any) => {
-          if (checkDirectMatch(nestedItem)) {
-            console.log(
-              `✅ Parent "${checkItem.name}" shown because nested child "${nestedItem.name}" has permission`
-            );
-            return true;
-          }
-          return false;
-        });
-      }
-      return false;
-    });
-
-    if (hasAccessibleSubItem) {
-      return true;
-    }
   }
 
   console.log("Smart Permission Check: Not Found", {
