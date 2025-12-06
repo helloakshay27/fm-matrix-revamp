@@ -72,9 +72,8 @@ export const checkPermission = (
   const checkDirectMatch = (item: any): boolean => {
     const itemNameLower = item.name.toLowerCase().trim();
 
-    // Create normalized variants for exact matching
-    const itemNormalized = itemNameLower.replace(/[\s-]+/g, "_"); // "task escalation" -> "task_escalation"
-    const itemNoSpaces = itemNameLower.replace(/[\s-_]+/g, ""); // "task escalation" -> "taskescalation"
+    // Normalize spaces and dashes to underscores for comparison
+    const itemNormalized = itemNameLower.replace(/[\s-]+/g, "_");
 
     // Check if this sidebar item EXACTLY matches any active function
     const directMatch = activeFunctions.find((activeFunc) => {
@@ -85,20 +84,15 @@ export const checkPermission = (
 
       // Normalize function name for comparison
       const funcNormalized = funcNameLower.replace(/[\s-]+/g, "_");
-      const funcNoSpaces = funcNameLower.replace(/[\s-_]+/g, "");
 
-      // EXACT MATCH ONLY - the sidebar item name must exactly equal the function name
+      // STRICT EXACT MATCH ONLY - no removing all separators
+      // The sidebar item name must exactly equal the function name
       const isExactFunctionMatch =
-        itemNameLower === funcNameLower ||
-        itemNormalized === funcNormalized ||
-        itemNoSpaces === funcNoSpaces;
+        itemNameLower === funcNameLower || itemNormalized === funcNormalized;
 
-      // EXACT MATCH for action name - sidebar item name must exactly equal the action name
-      // Note: action_name is typically snake_case like "task_escalation"
+      // EXACT MATCH for action name - sidebar item normalized must exactly equal action name
       const isExactActionMatch =
-        actionNameLower &&
-        (itemNormalized === actionNameLower ||
-          itemNoSpaces === actionNameLower.replace(/_/g, ""));
+        actionNameLower && itemNormalized === actionNameLower;
 
       return isExactFunctionMatch || isExactActionMatch;
     });
@@ -126,28 +120,23 @@ export const checkPermission = (
     const mappingMatch = activeFunctions.find((activeFunc) => {
       return potentialMatches.some((match) => {
         const matchLower = match.toLowerCase().trim();
+        // Normalize spaces and dashes to underscores for comparison
         const matchNormalized = matchLower.replace(/[\s-]+/g, "_");
-        const matchNoSpaces = matchLower.replace(/[\s-_]+/g, "");
 
         const funcNameLower = activeFunc.functionName.toLowerCase().trim();
         const funcNormalized = funcNameLower.replace(/[\s-]+/g, "_");
-        const funcNoSpaces = funcNameLower.replace(/[\s-_]+/g, "");
 
         const actionNameLower = activeFunc.actionName
           ? activeFunc.actionName.toLowerCase().trim()
           : "";
-        const actionNoSpaces = actionNameLower.replace(/_/g, "");
 
-        // EXACT MATCH ONLY via mapping
+        // STRICT EXACT MATCH ONLY - no removing underscores
+        // This prevents "msafe" from matching "m_safe"
         const isFunctionMatch =
-          matchLower === funcNameLower ||
-          matchNormalized === funcNormalized ||
-          matchNoSpaces === funcNoSpaces;
+          matchLower === funcNameLower || matchNormalized === funcNormalized;
 
         const isActionMatch =
-          actionNameLower &&
-          (matchNormalized === actionNameLower ||
-            matchNoSpaces === actionNoSpaces);
+          actionNameLower && matchNormalized === actionNameLower;
 
         return isFunctionMatch || isActionMatch;
       });
