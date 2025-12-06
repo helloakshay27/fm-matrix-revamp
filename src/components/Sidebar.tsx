@@ -358,15 +358,45 @@ export const Sidebar = () => {
     // Convert object to format that can be filtered
     const filtered = {};
 
+    // Recursive function to filter subItems at ALL levels
+    const filterSubItemsRecursively = (items: any[]): any[] => {
+      return (
+        items
+          .map((item) => {
+            // First, recursively filter any nested subItems
+            const filteredSubItems = item.subItems
+              ? filterSubItemsRecursively(item.subItems)
+              : [];
+
+            return {
+              ...item,
+              subItems: filteredSubItems,
+            };
+          })
+          // After filtering children, keep item if:
+          // 1. It has direct permission, OR
+          // 2. It has any accessible subItems remaining (so users can navigate to them)
+          .filter((item) => {
+            const hasDirectPermission = checkItemPermission(item);
+            const hasAccessibleSubItems =
+              item.subItems && item.subItems.length > 0;
+
+            // Log for debugging
+            if (hasDirectPermission) {
+              console.log(`✅ "${item.name}" - DIRECT permission`);
+            } else if (hasAccessibleSubItems) {
+              console.log(
+                `✅ "${item.name}" - shown for navigation to children`
+              );
+            }
+
+            return hasDirectPermission || hasAccessibleSubItems;
+          })
+      );
+    };
+
     Object.entries(modulesByPackage).forEach(([sectionName, items]) => {
-      const filteredItems = items
-        .map((item) => ({
-          ...item,
-          subItems: item.subItems
-            ? item.subItems.filter(checkItemPermission)
-            : [],
-        }))
-        .filter(checkItemPermission);
+      const filteredItems = filterSubItemsRecursively(items);
 
       if (filteredItems.length > 0) {
         filtered[sectionName] = filteredItems;

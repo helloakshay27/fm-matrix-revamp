@@ -68,44 +68,39 @@ export const checkPermission = (
   };
 
   // Helper function to check if item directly matches permissions
+  // STRICT EXACT MATCH ONLY - no fuzzy matching, no word matching
   const checkDirectMatch = (item: any): boolean => {
     const itemNameLower = item.name.toLowerCase().trim();
-    const itemVariants = createSearchVariants(item.name);
 
-    // Check if this sidebar item matches any active function
+    // Create normalized variants for exact matching
+    const itemNormalized = itemNameLower.replace(/[\s-]+/g, "_"); // "task escalation" -> "task_escalation"
+    const itemNoSpaces = itemNameLower.replace(/[\s-_]+/g, ""); // "task escalation" -> "taskescalation"
+
+    // Check if this sidebar item EXACTLY matches any active function
     const directMatch = activeFunctions.find((activeFunc) => {
       const funcNameLower = activeFunc.functionName.toLowerCase().trim();
       const actionNameLower = activeFunc.actionName
         ? activeFunc.actionName.toLowerCase().trim()
         : "";
 
-      // STRICT matching to prevent false positives like "Permit" matching "Permit Setup"
-      // Rule 1: Exact match (after normalization)
-      const isExactFunctionMatch = itemVariants.some(
-        (variant) => variant === funcNameLower
-      );
+      // Normalize function name for comparison
+      const funcNormalized = funcNameLower.replace(/[\s-]+/g, "_");
+      const funcNoSpaces = funcNameLower.replace(/[\s-_]+/g, "");
 
-      // Rule 2: Exact action name match
+      // EXACT MATCH ONLY - the sidebar item name must exactly equal the function name
+      const isExactFunctionMatch =
+        itemNameLower === funcNameLower ||
+        itemNormalized === funcNormalized ||
+        itemNoSpaces === funcNoSpaces;
+
+      // EXACT MATCH for action name - sidebar item name must exactly equal the action name
+      // Note: action_name is typically snake_case like "task_escalation"
       const isExactActionMatch =
         actionNameLower &&
-        itemVariants.some((variant) => variant === actionNameLower);
+        (itemNormalized === actionNameLower ||
+          itemNoSpaces === actionNameLower.replace(/_/g, ""));
 
-      // Rule 3: For longer function names (4+ chars), allow if:
-      //   - The sidebar item name EQUALS the function name (not just contains)
-      //   - OR the function name equals the sidebar item (not just substring)
-      // This prevents "Permit" from matching "Permit Setup"
-      const functionNameMatch =
-        isExactFunctionMatch ||
-        (funcNameLower.length >= 4 && itemNameLower === funcNameLower);
-
-      // Rule 4: For action name, use similar strict matching
-      const actionNameMatch =
-        isExactActionMatch ||
-        (actionNameLower &&
-          actionNameLower.length >= 4 &&
-          itemNameLower.replace(/[\s-_]+/g, "_") === actionNameLower);
-
-      return functionNameMatch || actionNameMatch;
+      return isExactFunctionMatch || isExactActionMatch;
     });
 
     if (directMatch) {
@@ -117,45 +112,44 @@ export const checkPermission = (
       return true;
     }
 
-    // Fallback to mapping-based check
+    // Fallback to sidebarToApiFunctionMapping for special cases
+    // (e.g., sidebar name differs from API function name)
     const potentialMatches =
       sidebarToApiFunctionMapping[
         itemNameLower as keyof typeof sidebarToApiFunctionMapping
       ] || [];
 
+    if (potentialMatches.length === 0) {
+      return false;
+    }
+
     const mappingMatch = activeFunctions.find((activeFunc) => {
       return potentialMatches.some((match) => {
-        const matchLower = match.toLowerCase();
-        const funcNameLower = activeFunc.functionName.toLowerCase();
+        const matchLower = match.toLowerCase().trim();
+        const matchNormalized = matchLower.replace(/[\s-]+/g, "_");
+        const matchNoSpaces = matchLower.replace(/[\s-_]+/g, "");
+
+        const funcNameLower = activeFunc.functionName.toLowerCase().trim();
+        const funcNormalized = funcNameLower.replace(/[\s-]+/g, "_");
+        const funcNoSpaces = funcNameLower.replace(/[\s-_]+/g, "");
+
         const actionNameLower = activeFunc.actionName
-          ? activeFunc.actionName.toLowerCase()
+          ? activeFunc.actionName.toLowerCase().trim()
           : "";
+        const actionNoSpaces = actionNameLower.replace(/_/g, "");
 
-        // For short mapping keys (likely abbreviations like "po", "wo"), require strict equality
-        if (matchLower.length < 4) {
-          const isStrictMatch =
-            funcNameLower === matchLower ||
-            actionNameLower === matchLower ||
-            funcNameLower.split(/[\s-_]+/).includes(matchLower) ||
-            actionNameLower.split(/[\s-_]+/).includes(matchLower);
-          return isStrictMatch;
-        }
+        // EXACT MATCH ONLY via mapping
+        const isFunctionMatch =
+          matchLower === funcNameLower ||
+          matchNormalized === funcNormalized ||
+          matchNoSpaces === funcNoSpaces;
 
-        // For longer keys, use STRICT matching (exact or word boundary)
-        // This prevents "permit" from matching "permit setup"
-        const isExactMatch =
-          funcNameLower === matchLower || actionNameLower === matchLower;
+        const isActionMatch =
+          actionNameLower &&
+          (matchNormalized === actionNameLower ||
+            matchNoSpaces === actionNoSpaces);
 
-        // Also allow if the match exactly equals a word in the function/action name
-        const funcWords = funcNameLower.split(/[\s-_]+/);
-        const actionWords = actionNameLower.split(/[\s-_]+/);
-        const matchWords = matchLower.split(/[\s-_]+/);
-
-        const isWordMatch =
-          matchWords.every((mw) => funcWords.includes(mw)) ||
-          matchWords.every((mw) => actionWords.includes(mw));
-
-        return isExactMatch || isWordMatch;
+        return isFunctionMatch || isActionMatch;
       });
     });
 
