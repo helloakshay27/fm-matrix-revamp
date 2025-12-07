@@ -3,10 +3,61 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Save, X } from "lucide-react";
+import { ArrowLeft, Save, AlertCircle, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { roleService, LockModule } from "@/services/roleService";
+
+// Validation constants
+const ROLE_NAME_MAX_LENGTH = 50;
+const DISPLAY_NAME_MAX_LENGTH = 50;
+// Allow alphanumeric, spaces, hyphens, and underscores only
+const VALID_NAME_REGEX = /^[a-zA-Z0-9\s\-_]+$/;
+
+// Validation helper functions
+const validateRoleName = (
+  name: string
+): { isValid: boolean; error: string } => {
+  if (!name.trim()) {
+    return { isValid: false, error: "Role name is required" };
+  }
+  if (name.trim().length > ROLE_NAME_MAX_LENGTH) {
+    return {
+      isValid: false,
+      error: `Role name must be ${ROLE_NAME_MAX_LENGTH} characters or less`,
+    };
+  }
+  if (!VALID_NAME_REGEX.test(name.trim())) {
+    return {
+      isValid: false,
+      error:
+        "Role name can only contain letters, numbers, spaces, hyphens (-), and underscores (_)",
+    };
+  }
+  return { isValid: true, error: "" };
+};
+
+const validateDisplayName = (
+  name: string
+): { isValid: boolean; error: string } => {
+  if (!name.trim()) {
+    return { isValid: false, error: "Display name is required" };
+  }
+  if (name.trim().length > DISPLAY_NAME_MAX_LENGTH) {
+    return {
+      isValid: false,
+      error: `Display name must be ${DISPLAY_NAME_MAX_LENGTH} characters or less`,
+    };
+  }
+  if (!VALID_NAME_REGEX.test(name.trim())) {
+    return {
+      isValid: false,
+      error:
+        "Display name can only contain letters, numbers, spaces, hyphens (-), and underscores (_)",
+    };
+  }
+  return { isValid: true, error: "" };
+};
 import {
   Table,
   TableBody,
@@ -37,6 +88,8 @@ export const AddRolePage = () => {
   const navigate = useNavigate();
   const [roleName, setRoleName] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [roleNameError, setRoleNameError] = useState("");
+  const [displayNameError, setDisplayNameError] = useState("");
   const [loading, setLoading] = useState(false);
   const [modulesLoading, setModulesLoading] = useState(true);
   const [modules, setModules] = useState<LockModule[]>([]);
@@ -200,13 +253,19 @@ export const AddRolePage = () => {
   };
 
   const handleSaveRole = async () => {
-    if (!roleName.trim()) {
-      toast.error("Please enter a role name");
+    // Validate role name
+    const roleNameValidation = validateRoleName(roleName);
+    if (!roleNameValidation.isValid) {
+      setRoleNameError(roleNameValidation.error);
+      toast.error(roleNameValidation.error);
       return;
     }
 
-    if (!displayName.trim()) {
-      toast.error("Please enter a display name");
+    // Validate display name
+    const displayNameValidation = validateDisplayName(displayName);
+    if (!displayNameValidation.isValid) {
+      setDisplayNameError(displayNameValidation.error);
+      toast.error(displayNameValidation.error);
       return;
     }
 
@@ -364,24 +423,78 @@ export const AddRolePage = () => {
           <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="roleName">Role Name *</Label>
+              <Label htmlFor="roleName">
+                Role Name <span className="text-red-500">*</span>
+                <span className="text-xs text-gray-500 ml-2">
+                  ({roleName.length}/{ROLE_NAME_MAX_LENGTH})
+                </span>
+              </Label>
               <Input
                 id="roleName"
                 value={roleName}
-                onChange={(e) => setRoleName(e.target.value)}
-                placeholder="Enter role name"
-                className="w-full"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Restrict input length
+                  if (value.length <= ROLE_NAME_MAX_LENGTH) {
+                    setRoleName(value);
+                    // Validate on change and update error state
+                    const validation = validateRoleName(value);
+                    setRoleNameError(
+                      value.trim()
+                        ? validation.isValid
+                          ? ""
+                          : validation.error
+                        : ""
+                    );
+                  }
+                }}
+                placeholder="Enter role name (letters, numbers, spaces, - and _)"
+                className={`w-full ${roleNameError ? "border-red-500 focus:ring-red-500" : ""}`}
+                maxLength={ROLE_NAME_MAX_LENGTH}
               />
+              {roleNameError && (
+                <p className="text-sm text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {roleNameError}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name *</Label>
+              <Label htmlFor="displayName">
+                Display Name <span className="text-red-500">*</span>
+                <span className="text-xs text-gray-500 ml-2">
+                  ({displayName.length}/{DISPLAY_NAME_MAX_LENGTH})
+                </span>
+              </Label>
               <Input
                 id="displayName"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Enter display name"
-                className="w-full"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Restrict input length
+                  if (value.length <= DISPLAY_NAME_MAX_LENGTH) {
+                    setDisplayName(value);
+                    // Validate on change and update error state
+                    const validation = validateDisplayName(value);
+                    setDisplayNameError(
+                      value.trim()
+                        ? validation.isValid
+                          ? ""
+                          : validation.error
+                        : ""
+                    );
+                  }
+                }}
+                placeholder="Enter display name (letters, numbers, spaces, - and _)"
+                className={`w-full ${displayNameError ? "border-red-500 focus:ring-red-500" : ""}`}
+                maxLength={DISPLAY_NAME_MAX_LENGTH}
               />
+              {displayNameError && (
+                <p className="text-sm text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {displayNameError}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -443,8 +556,8 @@ export const AddRolePage = () => {
                       <span className="font-semibold text-sm">
                         {currentModulePermissions.moduleName} Module
                       </span>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-600">
+                      <div className="flex items-center space-x-3 bg-white px-3 py-1.5 rounded-md border border-gray-200 shadow-sm whitespace-nowrap">
+                        <span className="text-sm font-medium text-gray-700">
                           Enable All
                         </span>
                         <Checkbox
@@ -455,7 +568,7 @@ export const AddRolePage = () => {
                               checked as boolean
                             )
                           }
-                          className="w-4 h-4"
+                          className="w-5 h-5 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                         />
                       </div>
                     </div>
@@ -465,12 +578,12 @@ export const AddRolePage = () => {
                 <div className="overflow-x-auto">
                   <div className="max-h-64 lg:max-h-96 overflow-y-auto">
                     <Table className="min-w-full">
-                      <TableHeader className="sticky top-0 bg-white z-10">
-                        <TableRow className="bg-gray-50">
-                          <TableHead className="font-semibold text-gray-700 min-w-[200px] lg:w-48 text-xs lg:text-sm">
+                      <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead className="w-[70%] pl-6">
                             Function / Sub-function
                           </TableHead>
-                          <TableHead className="font-semibold text-gray-700 text-center min-w-[80px] text-xs lg:text-sm">
+                          <TableHead className="w-[30%] text-center">
                             Enabled
                           </TableHead>
                         </TableRow>
@@ -499,12 +612,19 @@ export const AddRolePage = () => {
                             // Function row
                             <TableRow
                               key={`func-${func.functionId}`}
-                              className="hover:bg-gray-50 bg-gray-25"
+                              className="bg-gray-50/50 hover:bg-gray-100/50 border-b border-gray-100"
                             >
-                              <TableCell className="font-semibold text-sm py-3 pl-4">
-                                📁 {func.functionName}
+                              <TableCell className="py-4 pl-6">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                                    <Shield className="w-4 h-4" />
+                                  </div>
+                                  <span className="font-semibold text-gray-800">
+                                    {func.functionName}
+                                  </span>
+                                </div>
                               </TableCell>
-                              <TableCell className="text-center py-3">
+                              <TableCell className="text-center py-4">
                                 <div className="flex justify-center">
                                   <Checkbox
                                     checked={func.enabled}
@@ -515,7 +635,7 @@ export const AddRolePage = () => {
                                         checked as boolean
                                       )
                                     }
-                                    className="w-4 h-4"
+                                    className="w-5 h-5 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                                   />
                                 </div>
                               </TableCell>
@@ -524,12 +644,18 @@ export const AddRolePage = () => {
                             ...func.subFunctions.map((subFunc) => (
                               <TableRow
                                 key={`subfunc-${subFunc.subFunctionId}`}
-                                className="hover:bg-gray-50"
+                                className="hover:bg-gray-50 border-b border-gray-50 last:border-0"
                               >
-                                <TableCell className="text-sm py-2 pl-8 text-gray-600">
-                                  ↳ {subFunc.subFunctionName}
+                                <TableCell className="py-3 pl-16">
+                                  <div className="flex items-center gap-2 relative">
+                                    <div className="absolute -left-6 top-1/2 -translate-y-1/2 w-4 h-px bg-gray-300"></div>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                                    <span className="text-sm text-gray-600">
+                                      {subFunc.subFunctionName}
+                                    </span>
+                                  </div>
                                 </TableCell>
-                                <TableCell className="text-center py-2">
+                                <TableCell className="text-center py-3">
                                   <div className="flex justify-center">
                                     <Checkbox
                                       checked={subFunc.enabled}
@@ -541,7 +667,7 @@ export const AddRolePage = () => {
                                           checked as boolean
                                         )
                                       }
-                                      className="w-4 h-4"
+                                      className="w-4 h-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
                                     />
                                   </div>
                                 </TableCell>
@@ -565,7 +691,6 @@ export const AddRolePage = () => {
             onClick={handleBack}
             className="w-full sm:w-auto"
           >
-            <X className="w-4 h-4 mr-2" />
             Cancel
           </Button>
           <Button
