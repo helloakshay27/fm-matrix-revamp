@@ -246,6 +246,9 @@ export const AddBookingSetupPage = () => {
     if (!formData.facilityName) {
       toast.error("Please enter Facility Name");
       return false;
+    } else if (!formData.facilityBookedTimes) {
+      toast.error("Please enter how many times facility can be booked per day");
+      return false;
     } else if (!formData.termsConditions) {
       toast.error("Please enter Terms and Conditions");
       return false;
