@@ -1476,36 +1476,36 @@ function App() {
                   />
 
                   {/* Club Management Routes */}
-                   <Route
-                    path="/club-management/vas/booking/setup"
+                  <Route
+                    path="/settings/vas/booking/setup"
                     element={<BookingSetupDashboard />}
                   />
                   <Route
-                    path="/club-management/vas/booking/setup/add"
+                    path="/settings/vas/booking/setup/add"
                     element={<AddBookingSetupPage />}
                   />
                   <Route
-                    path="/club-management/vas/booking/setup/details/:id"
+                    path="/settings/vas/booking/setup/details/:id"
                     element={<BookingSetupDetailPage />}
                   />
                   <Route
-                    path="/club-management/vas/booking/setup/edit/:id"
+                    path="/settings/vas/booking/setup/edit/:id"
                     element={<EditBookingSetupPage />}
                   />
                   <Route
-                    path="/club-management/vas/membership-plan/setup"
+                    path="/settings/vas/membership-plan/setup"
                     element={<MembershipPlanDashboard />}
                   />
                   <Route
-                    path="/club-management/vas/membership-plan/setup/add"
+                    path="/settings/vas/membership-plan/setup/add"
                     element={<AddMembershipPlanPage />}
                   />
                   <Route
-                    path="/club-management/vas/membership-plan/setup/edit/:id"
+                    path="/settings/vas/membership-plan/setup/edit/:id"
                     element={<EditMembershipPlanPage />}
                   />
                   <Route
-                    path="/club-management/vas/membership-plan/setup/details/:id"
+                    path="/settings/vas/membership-plan/setup/details/:id"
                     element={<MembershipPlanDetailsPage />}
                   />
                   <Route
@@ -3368,7 +3368,7 @@ function App() {
                     path="/settings/vas/fnb/details/:id"
                     element={<FnBRestaurantDetailsPage />}
                   />
-                  
+
                   <Route
                     path="/settings/vas/booking/setup"
                     element={<BookingSetupDashboard />}

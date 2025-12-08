@@ -98,10 +98,7 @@ export const BookingSetupDashboard = () => {
   }, []);
 
   const handleAddBooking = () => {
-
-    location.pathname.includes("/club-management/") ?
-      navigate("/club-management/vas/booking/setup/add") :
-      navigate("/settings/vas/booking/setup/add");
+    navigate("/settings/vas/booking/setup/add");
   };
 
   const handleStatusToggle = async (id: string) => {
@@ -143,9 +140,7 @@ export const BookingSetupDashboard = () => {
   };
 
   const handleViewDetails = (id: string) => {
-    location.pathname.includes("/club-management/") ?
-      navigate(`/club-management/vas/booking/setup/details/${id}`) :
-      navigate(`/settings/vas/booking/setup/details/${id}`);
+    navigate(`/settings/vas/booking/setup/details/${id}`);
   };
 
   const columns: ColumnConfig[] = [

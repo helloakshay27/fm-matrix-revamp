@@ -3,8 +3,8 @@ import React, { useEffect } from 'react';
 import { useLayout } from '../contexts/LayoutContext';
 
 const packages = [
-
-
+  "Club Management",
+  "Settings"
 ];
 
 export const StaticDynamicHeader = () => {
@@ -21,14 +21,14 @@ export const StaticDynamicHeader = () => {
       <div className="flex items-center h-full px-4 overflow-x-auto">
         <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
           {/* Mobile & Tablet: scroll + spacing; Desktop: full width and justify-between */}
-          <div className="flex w-max lg:w-full space-x-4 md:space-x-6 lg:space-x-0 md:justify-start lg:justify-between whitespace-nowrap">
+          <div className="flex w-max lg:w-full space-x-4 md:space-x-6 lg:space-x-0 md:justify-start gap-10 whitespace-nowrap">
             {packages.map((packageName) => (
               <button
                 key={packageName}
                 onClick={() => setCurrentSection(packageName)}
                 className={`pb-3 text-sm transition-colors whitespace-nowrap flex-shrink-0 ${currentSection === packageName
-                    ? 'text-[#C72030] border-b-2 border-[#C72030] font-medium'
-                    : 'text-[#1a1a1a] opacity-70 hover:opacity-100'
+                  ? 'text-[#C72030] border-b-2 border-[#C72030] font-medium'
+                  : 'text-[#1a1a1a] opacity-70 hover:opacity-100'
                   }`}
               >
                 {packageName}

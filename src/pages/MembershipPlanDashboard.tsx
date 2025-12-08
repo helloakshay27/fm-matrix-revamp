@@ -110,7 +110,7 @@ export const MembershipPlanDashboard = () => {
   }, []);
 
   const handleAddMembership = () => {
-    navigate("/club-management/vas/membership-plan/setup/add");
+    navigate("/settings/vas/membership-plan/setup/add");
   };
 
   const handleStatusToggle = async (id: string) => {
@@ -118,11 +118,11 @@ export const MembershipPlanDashboard = () => {
   };
 
   const handleViewDetails = (id: string) => {
-    navigate(`/club-management/vas/membership-plan/setup/details/${id}`);
+    navigate(`/settings/vas/membership-plan/setup/details/${id}`);
   };
 
   const handleEditDetails = (id: string) => {
-    navigate(`/club-management/vas/membership-plan/setup/edit/${id}`);
+    navigate(`/settings/vas/membership-plan/setup/edit/${id}`);
   };
 
   const renderCell = (item: MembershipPlan, columnKey: string) => {

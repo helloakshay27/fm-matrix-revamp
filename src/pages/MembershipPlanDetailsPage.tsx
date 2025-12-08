@@ -5,6 +5,8 @@ import { ArrowLeft, User, DollarSign } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, ThemeProvider, createTheme } from "@mui/material";
 import { toast } from "sonner";
 import axios from "axios";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -104,7 +106,17 @@ export const MembershipPlanDetailsPage = () => {
     price: "",
     userLimit: "",
     renewalTerms: "",
-    amenities: [],
+    usageLimits: "",
+    discountEligibility: "",
+    amenities: [] as string[],
+    amenityDetails: {} as Record<string, {
+      frequency: string;
+      slotLimit: string;
+      canBookAfterSlotLimit: boolean;
+      price: string;
+      allowMultipleSlots: boolean;
+      multipleSlots: string;
+    }>,
     active: true,
     createdAt: "",
     createdBy: "",
@@ -138,13 +150,27 @@ export const MembershipPlanDetailsPage = () => {
       })
 
       const data = response.data;
+      const amenityDetailsMap = {};
+      data.plan_amenities.forEach((amenity) => {
+        amenityDetailsMap[amenity.facility_setup_id] = {
+          frequency: amenity.frequency || "",
+          slotLimit: amenity.slot_limit || "",
+          canBookAfterSlotLimit: amenity.can_book_after_slot_limit || false,
+          price: amenity.price || "",
+          allowMultipleSlots: amenity.allow_multiple_slots || false,
+          multipleSlots: amenity.multiple_slots || "",
+        };
+      });
 
       setFormData({
         name: data.name,
         price: data.price,
         userLimit: data.user_limit,
         renewalTerms: data.renewal_terms,
-        amenities: data.plan_amenities.map((amenity) => amenity.id),
+        usageLimits: data.usage_limits || "",
+        discountEligibility: data.discount_eligibility || "",
+        amenities: data.plan_amenities.map((amenity) => amenity.facility_setup_id),
+        amenityDetails: amenityDetailsMap,
         active: data.status,
         createdAt: data.created_at,
         createdBy: data.created_by,
@@ -161,11 +187,11 @@ export const MembershipPlanDetailsPage = () => {
   }, [id])
 
   const handleEditClick = () => {
-    navigate(`/club-management/vas/membership-plan/setup/edit/${id}`);
+    navigate(`/settings/vas/membership-plan/setup/edit/${id}`);
   };
 
   const handleClose = () => {
-    navigate("/club-management/vas/membership-plan/setup");
+    navigate("/settings/vas/membership-plan/setup");
   };
 
   if (loading) {
@@ -244,6 +270,20 @@ export const MembershipPlanDetailsPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Usage Limits</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.usageLimits || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Discount Eligibility</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.discountEligibility || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Created On</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
@@ -278,31 +318,90 @@ export const MembershipPlanDetailsPage = () => {
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {amenities.map((amenity) => (
-                <FormControlLabel
-                  key={amenity.value}
-                  control={
-                    <Checkbox
-                      checked={formData.amenities.includes(amenity.value)}
-                      sx={{
-                        color: "#C72030",
-                        "&.Mui-checked": {
-                          color: "#C72030",
-                        },
-                      }}
-                    />
-                  }
-                  label={amenity.name}
-                />
-              ))}
-            </div>
+            <EnhancedTaskTable
+              data={amenities.filter((a) => formData.amenities.includes(a.value))}
+              hideColumnsButton={true}
+              columns={[
+                { key: "name", label: "Amenity Name", sortable: true },
+                { key: "frequency", label: "Frequency", sortable: false },
+                { key: "slotLimit", label: "Slot Limit", sortable: false },
+                { key: "canBookAfterSlotLimit", label: "Can Book After Limit", sortable: false },
+                { key: "price", label: "Price", sortable: false },
+                { key: "allowMultipleSlots", label: "Allow Multiple Slots", sortable: false },
+                { key: "multipleSlots", label: "Multiple Slots Count", sortable: false },
+              ] as ColumnConfig[]}
+              renderCell={(item, columnKey) => {
+                const amenityId = item.value;
+                const details = formData.amenityDetails[amenityId] || {
+                  frequency: "",
+                  slotLimit: "",
+                  canBookAfterSlotLimit: false,
+                  price: "",
+                  allowMultipleSlots: false,
+                  multipleSlots: "",
+                };
 
-            {formData.amenities.length === 0 && (
-              <p className="text-gray-500 text-center py-4">
-                No amenities selected
-              </p>
-            )}
+                if (columnKey === "name") return item.name;
+
+                if (columnKey === "frequency") {
+                  return (
+                    <span className="text-sm text-gray-700">
+                      {details.frequency || "-"}
+                    </span>
+                  );
+                }
+
+                if (columnKey === "slotLimit") {
+                  return (
+                    <span className="text-sm text-gray-700">
+                      {details.slotLimit || "-"}
+                    </span>
+                  );
+                }
+
+                if (columnKey === "price") {
+                  return (
+                    <span className="text-sm text-gray-700">
+                      {details.canBookAfterSlotLimit ? details.price || "-" : "-"}
+                    </span>
+                  );
+                }
+
+                if (columnKey === "canBookAfterSlotLimit") {
+                  return (
+                    <input
+                      type="checkbox"
+                      checked={details.canBookAfterSlotLimit}
+                      disabled
+                      className="cursor-not-allowed"
+                    />
+                  );
+                }
+
+                if (columnKey === "allowMultipleSlots") {
+                  return (
+                    <input
+                      type="checkbox"
+                      checked={details.allowMultipleSlots}
+                      disabled
+                      className="cursor-not-allowed"
+                    />
+                  );
+                }
+
+                if (columnKey === "multipleSlots") {
+                  return (
+                    <span className="text-sm text-gray-700">
+                      {details.allowMultipleSlots ? details.multipleSlots || "-" : "-"}
+                    </span>
+                  );
+                }
+
+                return "";
+              }}
+              emptyMessage="No amenities selected"
+              className="w-full"
+            />
           </div>
         </div>
       </div>

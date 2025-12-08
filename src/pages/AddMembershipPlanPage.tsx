@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, DollarSign } from "lucide-react";
-import { TextField, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel, ThemeProvider, createTheme } from "@mui/material";
+import { ArrowLeft, User, DollarSign, Trash2 } from "lucide-react";
+import { TextField, FormControl, InputLabel, Select, MenuItem, ThemeProvider, createTheme } from "@mui/material";
 import { toast } from "sonner";
 import axios from "axios";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -103,7 +105,17 @@ export const AddMembershipPlanPage = () => {
     price: "",
     userLimit: "",
     renewalTerms: "",
+    usageLimits: "Unlimited",
+    discountEligibility: "No",
     amenities: [] as string[],
+    amenityDetails: {} as Record<string, {
+      frequency: string;
+      slotLimit: string;
+      canBookAfterSlotLimit: boolean;
+      price: string;
+      allowMultipleSlots: boolean;
+      multipleSlots: string;
+    }>,
   });
 
   const getAmenities = async () => {
@@ -158,10 +170,23 @@ export const AddMembershipPlanPage = () => {
           price: formData.price,
           user_limit: formData.userLimit,
           renewal_terms: formData.renewalTerms,
-          plan_amenities_attributes: formData.amenities.map(amenity => ({
-            facility_setup_id: amenity,
-            access: "free"
-          }))
+          usage_limits: formData.usageLimits,
+          discount_eligibility: formData.discountEligibility,
+          plan_amenities_attributes: formData.amenities.map(amenityId => {
+            const details = formData.amenityDetails[amenityId];
+            return {
+              id: null,
+              facility_setup_id: amenityId,
+              access: "s",
+              frequency: details.frequency,
+              slot_limit: details.slotLimit ? parseInt(details.slotLimit) : 0,
+              can_book_after_slot_limit: details.canBookAfterSlotLimit,
+              price: details.price ? parseFloat(details.price) : 0,
+              allow_multiple_slots: details.allowMultipleSlots,
+              multiple_slots: details.multipleSlots ? parseInt(details.multipleSlots) : 0,
+              _destroy: false
+            };
+          })
         }
       };
 
@@ -183,16 +208,7 @@ export const AddMembershipPlanPage = () => {
   };
 
   const handleClose = () => {
-    navigate("/club-management/vas/membership-plan/setup");
-  };
-
-  const handleAmenityToggle = (amenity: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter((a) => a !== amenity)
-        : [...prev.amenities, amenity],
-    }));
+    navigate(-1);
   };
 
   return (
@@ -283,26 +299,269 @@ export const AddMembershipPlanPage = () => {
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {amenities.map((amenity) => (
-                <FormControlLabel
-                  key={amenity.value}
-                  control={
-                    <Checkbox
-                      checked={formData.amenities.includes(amenity.value)}
-                      onChange={() => handleAmenityToggle(amenity.value)}
-                      sx={{
-                        color: "#C72030",
-                        "&.Mui-checked": {
-                          color: "#C72030",
-                        },
+            <EnhancedTaskTable
+              data={amenities}
+              hideColumnsButton={true}
+              columns={[
+                { key: "name", label: "Amenity Name", sortable: true },
+                { key: "frequency", label: "Frequency", sortable: false },
+                { key: "slotLimit", label: "Slot Limit", sortable: false },
+                { key: "canBookAfterSlotLimit", label: "Can Book After Limit", sortable: false },
+                { key: "price", label: "Price", sortable: false },
+                { key: "allowMultipleSlots", label: "Allow Multiple Slots", sortable: false },
+                { key: "multipleSlots", label: "Multiple Slots Count", sortable: false },
+              ] as ColumnConfig[]}
+              renderCell={(item, columnKey) => {
+                const amenityId = item.value;
+                const details = formData.amenityDetails[amenityId] || {
+                  frequency: "",
+                  slotLimit: "",
+                  canBookAfterSlotLimit: false,
+                  price: "",
+                  allowMultipleSlots: false,
+                  multipleSlots: "",
+                };
+
+                if (columnKey === "name") return item.name;
+
+                if (columnKey === "frequency") {
+                  return (
+                    <select
+                      value={details.frequency}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          amenityDetails: {
+                            ...prev.amenityDetails,
+                            [amenityId]: {
+                              ...details,
+                              frequency: e.target.value,
+                            },
+                          },
+                        }));
                       }}
+                      className="px-2 py-1 border border-gray-300 rounded text-sm"
+                    >
+                      <option value="">Select Frequency</option>
+                      {formData.renewalTerms && (
+                        <>
+                          {formData.renewalTerms === "monthly" && (
+                            <>
+                              <option value="monthly">Monthly</option>
+                            </>
+                          )}
+                          {formData.renewalTerms === "quaterly" && (
+                            <>
+                              <option value="monthly">Monthly</option>
+                              <option value="quaterly">Quarterly</option>
+                            </>
+                          )}
+                          {formData.renewalTerms === "half_yearly" && (
+                            <>
+                              <option value="monthly">Monthly</option>
+                              <option value="quaterly">Quarterly</option>
+                              <option value="half_yearly">Half Yearly</option>
+                            </>
+                          )}
+                          {formData.renewalTerms === "yearly" && (
+                            <>
+                              <option value="monthly">Monthly</option>
+                              <option value="quaterly">Quarterly</option>
+                              <option value="half_yearly">Half Yearly</option>
+                              <option value="yearly">Yearly</option>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </select>
+                  );
+                }
+
+                if (columnKey === "slotLimit") {
+                  return (
+                    <input
+                      type="number"
+                      min="0"
+                      value={details.slotLimit}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          amenityDetails: {
+                            ...prev.amenityDetails,
+                            [amenityId]: {
+                              ...details,
+                              slotLimit: e.target.value,
+                            },
+                          },
+                        }));
+                      }}
+                      className="px-2 py-1 border border-gray-300 rounded text-sm w-20"
+                      placeholder="0"
                     />
-                  }
-                  label={amenity.name}
-                />
-              ))}
-            </div>
+                  );
+                }
+
+                if (columnKey === "price") {
+                  return (
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={details.price}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          amenityDetails: {
+                            ...prev.amenityDetails,
+                            [amenityId]: {
+                              ...details,
+                              price: e.target.value,
+                            },
+                          },
+                        }));
+                      }}
+                      disabled={!details.canBookAfterSlotLimit}
+                      className={`px-2 py-1 border border-gray-300 rounded text-sm w-24 ${!details.canBookAfterSlotLimit ? "bg-gray-100 cursor-not-allowed" : ""
+                        }`}
+                      placeholder="0.00"
+                    />
+                  );
+                }
+
+                if (columnKey === "canBookAfterSlotLimit") {
+                  return (
+                    <input
+                      type="checkbox"
+                      checked={details.canBookAfterSlotLimit}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          amenityDetails: {
+                            ...prev.amenityDetails,
+                            [amenityId]: {
+                              ...details,
+                              canBookAfterSlotLimit: e.target.checked,
+                            },
+                          },
+                        }));
+                      }}
+                      className="cursor-pointer"
+                    />
+                  );
+                }
+
+                if (columnKey === "allowMultipleSlots") {
+                  return (
+                    <input
+                      type="checkbox"
+                      checked={details.allowMultipleSlots}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          amenityDetails: {
+                            ...prev.amenityDetails,
+                            [amenityId]: {
+                              ...details,
+                              allowMultipleSlots: e.target.checked,
+                              multipleSlots: e.target.checked ? details.multipleSlots : "",
+                            },
+                          },
+                        }));
+                      }}
+                      className="cursor-pointer"
+                    />
+                  );
+                }
+
+                if (columnKey === "multipleSlots") {
+                  return (
+                    <input
+                      type="number"
+                      min="0"
+                      value={details.multipleSlots}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          amenityDetails: {
+                            ...prev.amenityDetails,
+                            [amenityId]: {
+                              ...details,
+                              multipleSlots: e.target.value,
+                            },
+                          },
+                        }));
+                      }}
+                      disabled={!details.allowMultipleSlots}
+                      className={`px-2 py-1 border border-gray-300 rounded text-sm w-24 ${!details.allowMultipleSlots ? "bg-gray-100 cursor-not-allowed" : ""
+                        }`}
+                      placeholder="0"
+                    />
+                  );
+                }
+
+                return "";
+              }}
+              selectable={true}
+              selectedItems={formData.amenities}
+              getItemId={(item) => item.value}
+              onSelectItem={(itemId, checked) => {
+                if (checked) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    amenities: [...prev.amenities, itemId],
+                    amenityDetails: {
+                      ...prev.amenityDetails,
+                      [itemId]: {
+                        frequency: "",
+                        slotLimit: "",
+                        canBookAfterSlotLimit: false,
+                        price: "",
+                        allowMultipleSlots: false,
+                        multipleSlots: "",
+                      },
+                    },
+                  }));
+                } else {
+                  setFormData((prev) => ({
+                    ...prev,
+                    amenities: prev.amenities.filter((a) => a !== itemId),
+                    amenityDetails: (() => {
+                      const newDetails = { ...prev.amenityDetails };
+                      delete newDetails[itemId];
+                      return newDetails;
+                    })(),
+                  }));
+                }
+              }}
+              onSelectAll={(checked) => {
+                if (checked) {
+                  const newDetails = {};
+                  amenities.forEach((a) => {
+                    newDetails[a.value] = {
+                      frequency: "",
+                      slotLimit: "",
+                      canBookAfterSlotLimit: false,
+                      price: "",
+                      allowMultipleSlots: false,
+                      multipleSlots: "",
+                    };
+                  });
+                  setFormData((prev) => ({
+                    ...prev,
+                    amenities: amenities.map((a) => a.value),
+                    amenityDetails: newDetails,
+                  }));
+                } else {
+                  setFormData((prev) => ({
+                    ...prev,
+                    amenities: [],
+                    amenityDetails: {},
+                  }));
+                }
+              }}
+              emptyMessage="Select amenities to configure"
+              className="w-full"
+            />
           </div>
 
           {/* Action Buttons */}

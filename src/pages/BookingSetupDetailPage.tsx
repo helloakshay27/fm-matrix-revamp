@@ -259,7 +259,7 @@ export const BookingSetupDetailPage = () => {
   };
 
   const handleEditClick = (id) => {
-    navigate(`/club-management/vas/booking/setup/edit/${id}`);
+    navigate(`/settings/vas/booking/setup/edit/${id}`);
   }
 
   const fetchFacilityBookingDetails = async () => {
