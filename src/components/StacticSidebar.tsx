@@ -876,7 +876,18 @@ const modulesByPackage = {
         },
       ],
     },
-    { name: "Patrolling", icon: Shield, href: "/security/patrolling" },
+    { name: "Patrolling", icon: Shield, href: "/security/patrolling", subItems: [
+      {
+        name: "Patrolling Info",
+        href: "/security/patrolling",
+        color: "text-[#1a1a1a]",
+      },
+      {
+        name: "Response",
+        href: "/security/patrolling/response",
+        color: "text-[#1a1a1a]",
+      },
+    ] },
   ],
   "Value Added Services": [
     { name: "F&B", icon: Coffee, href: "/vas/fnb" },
