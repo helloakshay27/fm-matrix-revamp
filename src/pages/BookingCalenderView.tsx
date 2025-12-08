@@ -168,7 +168,7 @@ const BookingCalenderView = () => {
 
     const fetchBookingsForDate = async (date, facilityId) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/facility_bookings/slots_status?facility_id=${facilityId}&date=${date}`, {
+            const response = await axios.get(`https://${baseUrl}/pms/facility_bookings/slots_status.json?facility_id=${facilityId}&date=${date}`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -205,10 +205,19 @@ const BookingCalenderView = () => {
         });
     };
 
-    const handleSlotClick = (facilityId, slotId, isBooked) => {
-        if (isBooked) {
-            console.log("View/Cancel booking:", { facilityId, slotId, date: selectedDate });
-        } else {
+    const handleSlotClick = (facilityId, slotId, isBooked, facilityBookingId) => {
+        if (isBooked && facilityBookingId) {
+            // Redirect to booking details page
+            const currentPath = window.location.pathname;
+            if (currentPath.includes("bookings")) {
+                navigate(`/bookings/${facilityBookingId}`);
+            } else if (currentPath.includes("club-management")) {
+                navigate(`/club-management/amenities-booking/${facilityBookingId}`);
+            } else {
+                navigate(`/vas/booking/${facilityBookingId}`);
+            }
+        } else if (!isBooked) {
+            // Create new booking
             console.log("Create new booking:", { facilityId, slotId, date: selectedDate });
         }
     };
@@ -411,17 +420,25 @@ const BookingCalenderView = () => {
                                                 {/* Four 15-minute slots */}
                                                 <div className="flex h-16">
                                                     {hourSlots.map((slot) => {
-                                                        const slotBooked = isBooked(facility.id, slot);
                                                         const facilityBookings = bookings[facility.id] || { booked: [], vacant: [] };
-                                                        const bookedSlot = facilityBookings.booked.find(
-                                                            b => b.start_hour === slot.start_hour &&
-                                                                b.start_minute === slot.start_minute
-                                                        );
+                                                        const bookedSlot = facilityBookings.booked.find(bookedBooking => {
+                                                            // Convert booking times to minutes since midnight for easier comparison
+                                                            const bookedStart = bookedBooking.start_hour * 60 + bookedBooking.start_minute;
+                                                            const bookedEnd = bookedBooking.end_hour * 60 + bookedBooking.end_minute;
+                                                            const slotStart = slot.start_hour * 60 + slot.start_minute;
+                                                            const slotEnd = slot.end_hour * 60 + slot.end_minute;
+
+                                                            // Check if the current 15-minute slot overlaps with any booked slot
+                                                            return (slotStart >= bookedStart && slotStart < bookedEnd) ||
+                                                                (slotEnd > bookedStart && slotEnd <= bookedEnd) ||
+                                                                (slotStart <= bookedStart && slotEnd >= bookedEnd);
+                                                        });
+                                                        const slotBooked = !!bookedSlot;
 
                                                         return (
                                                             <div
                                                                 key={slot.id}
-                                                                onClick={() => handleSlotClick(facility.id, slot.id, slotBooked)}
+                                                                onClick={() => handleSlotClick(facility.id, slot.id, slotBooked, bookedSlot?.facility_booking_id)}
                                                                 className={`flex-1 border border-gray-200 transition-colors
                                                                     ${selectedDateInfo?.isOff
                                                                         ? "bg-gray-100 cursor-not-allowed"

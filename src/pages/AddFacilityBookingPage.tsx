@@ -25,6 +25,8 @@ export const AddFacilityBookingPage = () => {
   const occupantUsersLoading = occupantUsersState?.loading;
   const occupantUsersError = occupantUsersState?.error;
 
+  console.log(occupantUsersState)
+
   const { data: entitiesResponse, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
   const entities = Array.isArray(entitiesResponse?.entities) ? entitiesResponse.entities :
     Array.isArray(entitiesResponse) ? entitiesResponse : [];

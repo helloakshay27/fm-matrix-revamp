@@ -463,9 +463,67 @@ export const EditBookingSetupPage = () => {
                 "facility_setup[facility_charge_attributes][per_slot_charge]",
                 formData.perSlotCharge
             );
+
+            // Charge Setup - Member charges
+            if (formData.chargeSetup.member.selected) {
+                formDataToSend.append(
+                    "facility_setup[facility_charge_attributes][member_adult_charge]",
+                    formData.chargeSetup.member.adult || "0"
+                );
+            }
+
+            // Charge Setup - Guest charges
+            if (formData.chargeSetup.guest.selected) {
+                formDataToSend.append(
+                    "facility_setup[facility_charge_attributes][guest_adult_charge]",
+                    formData.chargeSetup.guest.adult || "0"
+                );
+            }
+
+            // Charge Setup - Person limits and GST
+            formDataToSend.append(
+                "faciloty_setup[min_people]",
+                formData.chargeSetup.minimumPersonAllowed || "1"
+            );
+            formDataToSend.append(
+                "faciloty_setup[max_people]",
+                formData.chargeSetup.maximumPersonAllowed || "1"
+            );
+            formDataToSend.append(
+                "faciloty_setup[sgst]",
+                formData.chargeSetup.gst || "0"
+            );
+
+            // Block Days - Date range
+            if (formData.blockDays.startDate) {
+                formDataToSend.append(
+                    "facility_blockings_attributes[0][ondate]",
+                    formData.blockDays.startDate
+                );
+            }
+
+            // Block Days - Reason
+            if (formData.blockDays.blockReason) {
+                formDataToSend.append(
+                    "facility_blockings_attributes[0][reason]",
+                    formData.blockDays.blockReason
+                );
+            }
+
+            // Default values for facility blockings
+            formDataToSend.append(
+                "facility_blockings_attributes[0][order_allowed]",
+                "false"
+            );
+
+            formDataToSend.append(
+                "facility_blockings_attributes[0][booking_allowed]",
+                "false"
+            );
+
             formDataToSend.append(
                 "facility_setup[multi_slot]",
-                formData.allowMultipleSlots
+                formData.allowMultipleSlots ? "1" : "0"
             )
             formDataToSend.append(
                 "facility_setup[max_slots]",
@@ -814,7 +872,7 @@ export const EditBookingSetupPage = () => {
                                     <tr>
                                         <td className="border border-gray-300 px-4 py-3">
                                             <div className="flex items-center gap-2">
-                                                <Checkbox 
+                                                <Checkbox
                                                     checked={formData.chargeSetup.member.selected}
                                                     onChange={(e) =>
                                                         setFormData({
@@ -834,7 +892,7 @@ export const EditBookingSetupPage = () => {
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3">
                                             <div className="flex items-center justify-center gap-2">
-                                                <Checkbox 
+                                                <Checkbox
                                                     checked={!!formData.chargeSetup.member.adult}
                                                     onChange={(e) => {
                                                         if (!e.target.checked) {
@@ -914,7 +972,7 @@ export const EditBookingSetupPage = () => {
                                     <tr>
                                         <td className="border border-gray-300 px-4 py-3">
                                             <div className="flex items-center gap-2">
-                                                <Checkbox 
+                                                <Checkbox
                                                     checked={formData.chargeSetup.guest.selected}
                                                     onChange={(e) =>
                                                         setFormData({
@@ -934,7 +992,7 @@ export const EditBookingSetupPage = () => {
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3">
                                             <div className="flex items-center justify-center gap-2">
-                                                <Checkbox 
+                                                <Checkbox
                                                     checked={!!formData.chargeSetup.guest.adult}
                                                     onChange={(e) => {
                                                         if (!e.target.checked) {

@@ -10,6 +10,15 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { API_CONFIG } from '@/config/apiConfig';
 import { ClubMembershipFilterDialog, ClubMembershipFilters } from '@/components/ClubMembershipFilterDialog';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface MembershipData {
   id: number;
@@ -40,7 +49,7 @@ interface MembershipData {
 export const ClubMembershipDashboard = () => {
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
-  
+
   // State management
   const [memberships, setMemberships] = useState<MembershipData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,7 +59,6 @@ export const ClubMembershipDashboard = () => {
   const [totalMembers, setTotalMembers] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const isSearchingRef = useRef(false);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState<ClubMembershipFilters>({
@@ -60,7 +68,7 @@ export const ClubMembershipDashboard = () => {
     startDate: '',
     endDate: ''
   });
-  
+
   const perPage = 20;
 
   // Fetch memberships data
@@ -69,28 +77,28 @@ export const ClubMembershipDashboard = () => {
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
-      
-      console.log('Fetching club members...', { baseUrl, hasToken: !!token, page, filters });
-      
+
+      console.log('Fetching club members...', { baseUrl, hasToken: !!token, page });
+
       // baseUrl already includes protocol (https://)
       const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members.json`);
       url.searchParams.append('access_token', token || '');
-      
+
       // Add search filter - search by firstname, lastname, email, or mobile
       if (filters.search) {
         url.searchParams.append('q[user_firstname_or_user_email_or_user_lastname_or_user_mobile_cont]', filters.search);
       }
-      
+
       // Add club member enabled filter
       if (filters.clubMemberEnabled) {
         url.searchParams.append('q[club_member_enabled_eq]', filters.clubMemberEnabled);
       }
-      
+
       // Add access card enabled filter
       if (filters.accessCardEnabled) {
         url.searchParams.append('q[access_card_enabled_eq]', filters.accessCardEnabled);
       }
-      
+
       // Add start date filter
       if (filters.startDate) {
         // Convert YYYY-MM-DD to DD/MM/YYYY
@@ -98,7 +106,7 @@ export const ClubMembershipDashboard = () => {
         const formattedDate = `${day}/${month}/${year}`;
         url.searchParams.append('q[start_date_eq]', formattedDate);
       }
-      
+
       // Add end date filter
       if (filters.endDate) {
         // Convert YYYY-MM-DD to DD/MM/YYYY
@@ -106,40 +114,40 @@ export const ClubMembershipDashboard = () => {
         const formattedDate = `${day}/${month}/${year}`;
         url.searchParams.append('q[end_date_eq]', formattedDate);
       }
-      
-      // Pagination (commented out for now as per your code)
-      // url.searchParams.append('page', page.toString());
-      // url.searchParams.append('per_page', perPage.toString());
-      
+
+      // Pagination - enable pagination
+      url.searchParams.append('page', page.toString());
+      url.searchParams.append('per_page', perPage.toString());
+
       console.log('API URL:', url.toString());
-      
+
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       console.log('Response status:', response.status);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch club members: ${response.status} ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       console.log('Received data:', data);
-      
-      if (Array.isArray(data)) {
-        setMemberships(data);
-        setTotalMembers(data.length);
-        setTotalPages(Math.ceil(data.length / perPage));
-        toast.success(`Loaded ${data.length} members`);
+
+      if (Array.isArray(data.club_members)) {
+        setMemberships(data.club_members);
+        setTotalMembers(data.pagination?.total_count || 0);
+        setTotalPages(Math.ceil((data.pagination?.total_count || 0) / perPage));
+        // toast.success(`Loaded ${data.length} members`);
       } else {
         setMemberships([]);
         setTotalMembers(0);
         setTotalPages(1);
       }
-      
+
     } catch (error) {
       console.error('Error fetching memberships:', error);
       toast.error('Failed to fetch membership data');
@@ -153,7 +161,6 @@ export const ClubMembershipDashboard = () => {
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
-    isSearchingRef.current = true;
     setSearchQuery(query);
   }, []);
 
@@ -171,16 +178,13 @@ export const ClubMembershipDashboard = () => {
       search: newSearch
     }));
 
-    if (isSearchingRef.current || (newSearch && !currentSearch)) {
-      setCurrentPage(1);
-      isSearchingRef.current = false;
-    }
-  }, [debouncedSearchQuery, filters.search]);
+    setCurrentPage(1);
+  }, [debouncedSearchQuery]);
 
   // Fetch on mount and when dependencies change
   useEffect(() => {
-    console.log('Effect triggered - fetching memberships', { 
-      currentPage, 
+    console.log('Effect triggered - fetching memberships', {
+      currentPage,
       filters
     });
     fetchMemberships(currentPage);
@@ -192,71 +196,71 @@ export const ClubMembershipDashboard = () => {
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
-      
+
       // Build the export URL
       const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members.xlsx`);
       url.searchParams.append('access_token', token || '');
-      
+
       // Add the same filters that are applied to the table
       if (filters.search) {
         url.searchParams.append('q[user_firstname_or_user_email_or_user_lastname_or_user_mobile_cont]', filters.search);
       }
-      
+
       if (filters.clubMemberEnabled) {
         url.searchParams.append('q[club_member_enabled_eq]', filters.clubMemberEnabled);
       }
-      
+
       if (filters.accessCardEnabled) {
         url.searchParams.append('q[access_card_enabled_eq]', filters.accessCardEnabled);
       }
-      
+
       if (filters.startDate) {
         const [year, month, day] = filters.startDate.split('-');
         const formattedDate = `${day}/${month}/${year}`;
         url.searchParams.append('q[start_date_eq]', formattedDate);
       }
-      
+
       if (filters.endDate) {
         const [year, month, day] = filters.endDate.split('-');
         const formattedDate = `${day}/${month}/${year}`;
         url.searchParams.append('q[end_date_eq]', formattedDate);
       }
-      
+
       console.log('Export URL:', url.toString());
-      
+
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
       });
-      
+
       if (!response.ok) {
         throw new Error(`Export failed: ${response.status} ${response.statusText}`);
       }
-      
+
       // Get the blob from response
       const blob = await response.blob();
-      
+
       // Create download link
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      
+
       // Generate filename with current date
       const date = new Date().toISOString().split('T')[0];
       link.download = `club_memberships_${date}.xlsx`;
-      
+
       // Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Cleanup
       window.URL.revokeObjectURL(downloadUrl);
-      
+
       toast.success('Excel file downloaded successfully', { id: loadingToast });
-      
+
     } catch (error) {
       console.error('Error exporting data:', error);
       toast.error('Failed to export data', { id: loadingToast });
@@ -267,17 +271,17 @@ export const ClubMembershipDashboard = () => {
   const handleDownloadSocietyQR = async () => {
     try {
       toast.loading('Generating Society QR Code...');
-      
+
       // TODO: Replace with actual API call
       // const response = await apiClient.get('/club-management/society-qr', {
       //   responseType: 'blob'
       // });
-      
+
       // Mock download
       setTimeout(() => {
         toast.success('Society QR Code downloaded successfully');
       }, 1000);
-      
+
     } catch (error) {
       console.error('Error downloading Society QR:', error);
       toast.error('Failed to download Society QR');
@@ -292,11 +296,147 @@ export const ClubMembershipDashboard = () => {
     setIsFilterOpen(false);
   };
 
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage || loading) {
+      return;
+    }
+    setCurrentPage(page);
+  };
+
+  // Render pagination items
+  const renderPaginationItems = () => {
+    if (!totalPages || totalPages <= 0) {
+      return null;
+    }
+
+    const items = [];
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      // First page
+      items.push(
+        <PaginationItem key={1} className="cursor-pointer">
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+            aria-disabled={loading}
+            className={loading ? "pointer-events-none opacity-50" : ""}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      // Ellipsis before current page
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                aria-disabled={loading}
+                className={loading ? "pointer-events-none opacity-50" : ""}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      // Current page and neighbors
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                aria-disabled={loading}
+                className={loading ? "pointer-events-none opacity-50" : ""}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      // Ellipsis after current page
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find((item) => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i} className="cursor-pointer">
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                  aria-disabled={loading}
+                  className={loading ? "pointer-events-none opacity-50" : ""}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      // Last page
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages} className="cursor-pointer">
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+              aria-disabled={loading}
+              className={loading ? "pointer-events-none opacity-50" : ""}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Show all pages if less than 7
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i} className="cursor-pointer">
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+              aria-disabled={loading}
+              className={loading ? "pointer-events-none opacity-50" : ""}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
   // Handle member selection
   const handleMemberSelection = (memberIdString: string, isSelected: boolean) => {
     const memberId = parseInt(memberIdString);
-    setSelectedMembers(prev => 
-      isSelected 
+    setSelectedMembers(prev =>
+      isSelected
         ? [...prev, memberId]
         : prev.filter(id => id !== memberId)
     );
@@ -326,7 +466,7 @@ export const ClubMembershipDashboard = () => {
         </Badge>
       );
     }
-    
+
     if (!endDate && startDate) {
       return (
         <Badge className="bg-red-100 text-red-800 border-0">
@@ -334,7 +474,7 @@ export const ClubMembershipDashboard = () => {
         </Badge>
       );
     }
-    
+
     return (
       <Badge className="bg-green-100 text-green-800 border-0">
         Approved
@@ -377,16 +517,16 @@ export const ClubMembershipDashboard = () => {
     if (columnKey === 'actions') {
       return (
         <div className="flex gap-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => navigate(`/club-management/membership/${item.id}`)}
             title="View Details"
             className=" p-0"
           >
             <Eye className="w-4 h-4" />
           </Button>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => navigate(`/club-management/membership/${item.id}/edit`)}
             title="Edit"
             className=" p-0"
@@ -413,14 +553,14 @@ export const ClubMembershipDashboard = () => {
     }
 
     if (columnKey === 'avatar') {
-      const avatarUrl = item.avatar?.startsWith('%2F') 
-        ? `https://fm-uat-api.lockated.com${decodeURIComponent(item.avatar)}` 
+      const avatarUrl = item.avatar?.startsWith('%2F')
+        ? `https://fm-uat-api.lockated.com${decodeURIComponent(item.avatar)}`
         : item.avatar;
-      
+
       return avatarUrl && !avatarUrl.includes('profile.png') ? (
-        <img 
-          src={avatarUrl} 
-          alt="User" 
+        <img
+          src={avatarUrl}
+          alt="User"
           className="w-10 h-10 rounded-full object-cover"
         />
       ) : (
@@ -433,9 +573,9 @@ export const ClubMembershipDashboard = () => {
     if (columnKey === 'identification_image') {
       return item.identification_image ? (
         <a href={item.identification_image} target="_blank" rel="noopener noreferrer">
-          <img 
-            src={item.identification_image} 
-            alt="ID Card" 
+          <img
+            src={item.identification_image}
+            alt="ID Card"
             className="w-10 h-10 object-cover cursor-pointer hover:opacity-80"
           />
         </a>
@@ -467,11 +607,11 @@ export const ClubMembershipDashboard = () => {
     if (columnKey === 'access_card_id') {
       return item.access_card_id || <span className="text-gray-400">-</span>;
     }
-    
+
     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
       return <span className="text-gray-400">--</span>;
     }
-    
+
     return item[columnKey];
   };
 
@@ -504,7 +644,7 @@ export const ClubMembershipDashboard = () => {
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       {/* Header Section */}
-    
+
 
       {/* Memberships Table */}
       <div className="overflow-x-auto animate-fade-in">
@@ -547,122 +687,33 @@ export const ClubMembershipDashboard = () => {
           loadingMessage="Loading members..."
         />
 
-        {/* Custom Pagination */}
-        <div className="flex items-center justify-center mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
-          <div className="flex items-center space-x-1">
-            {/* Previous Button */}
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1 || loading || searchLoading}
-              className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+        {/* Pagination Section */}
+        {totalPages > 1 && (
+          <div className="flex flex-col items-center gap-4 mt-6 pb-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    className={currentPage === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                {renderPaginationItems()}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    className={currentPage === totalPages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
 
-            {/* Page Numbers */}
-            <div className="flex items-center space-x-1">
-              {/* First page */}
-              {currentPage > 3 && (
-                <>
-                  <button
-                    onClick={() => setCurrentPage(1)}
-                    disabled={loading || searchLoading}
-                    className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
-                  >
-                    1
-                  </button>
-                  {currentPage > 4 && (
-                    <span className="px-2 text-gray-500">...</span>
-                  )}
-                </>
-              )}
-
-              {/* Previous pages */}
-              {currentPage > 2 && (
-                <button
-                  onClick={() => setCurrentPage(currentPage - 2)}
-                  disabled={loading || searchLoading}
-                  className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
-                >
-                  {currentPage - 2}
-                </button>
-              )}
-
-              {currentPage > 1 && (
-                <button
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={loading || searchLoading}
-                  className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
-                >
-                  {currentPage - 1}
-                </button>
-              )}
-
-              {/* Current page */}
-              <button
-                disabled
-                className="w-8 h-8 flex items-center justify-center text-sm font-medium bg-[#C72030] text-white rounded"
-              >
-                {currentPage}
-              </button>
-
-              {/* Next pages */}
-              {currentPage < totalPages && (
-                <button
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={loading || searchLoading}
-                  className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
-                >
-                  {currentPage + 1}
-                </button>
-              )}
-
-              {currentPage < totalPages - 1 && (
-                <button
-                  onClick={() => setCurrentPage(currentPage + 2)}
-                  disabled={loading || searchLoading}
-                  className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
-                >
-                  {currentPage + 2}
-                </button>
-              )}
-
-              {/* Last page */}
-              {currentPage < totalPages - 2 && (
-                <>
-                  {currentPage < totalPages - 3 && (
-                    <span className="px-2 text-gray-500">...</span>
-                  )}
-                  <button
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={loading || searchLoading}
-                    className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
-                  >
-                    {totalPages}
-                  </button>
-                </>
-              )}
+            {/* Page Info */}
+            <div className="text-sm text-gray-600">
+              Page {currentPage} of {totalPages} | Showing {memberships.length} of {totalMembers} members
             </div>
-
-            {/* Next Button */}
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages || loading || searchLoading}
-              className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
           </div>
-
-          {/* Page Info */}
-          <div className="ml-4 text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Filter Dialog */}

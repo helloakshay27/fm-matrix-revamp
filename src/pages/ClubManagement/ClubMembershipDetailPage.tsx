@@ -33,15 +33,64 @@ interface MembershipDetail {
   attachments: Attachment[];
   identification_image: string | null;
   avatar: string;
+  // Additional fields from add page
+  emergency_contact_name?: string;
+  referred_by?: string;
+  membership_plan_id?: number;
+  membership_plan_name?: string;
+  date_of_birth?: string;
+  gender?: string;
+  address?: string;
+  address_line_two?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  pin_code?: string;
+  // Amenities and payment details
+  plan_amenities?: Array<{
+    id: number;
+    facility_setup_id: number;
+    facility_setup_name?: string;
+    access: string;
+  }>;
+  custom_amenities?: Array<{
+    id: number;
+    facility_setup_id: number;
+    facility_setup_name?: string;
+    access: string;
+  }>;
+  member_payment_detail?: {
+    id: number;
+    base_amount: string;
+    discount: string;
+    cgst: string;
+    sgst: string;
+    total_tax: string;
+    total_amount: string;
+  };
+  user: {
+    birth_date: string | null;
+    gender: string | null;
+    addresses: Array<{
+      address: string | null;
+      address_line_two: string | null;
+      city: string | null;
+      state: string | null;
+      country: string | null;
+      pin_code: string | null;
+    }>
+  }
 }
 
 export const ClubMembershipDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
+
   const [membershipData, setMembershipData] = useState<MembershipDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  console.log(membershipData)
 
   // Fetch membership details
   useEffect(() => {
@@ -53,25 +102,25 @@ export const ClubMembershipDetailPage = () => {
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
-      
+
       // baseUrl already includes protocol (https://)
       const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members/${id}.json`);
       url.searchParams.append('access_token', token || '');
-      
+
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch membership details');
       }
-      
+
       const data = await response.json();
       setMembershipData(data);
-      
+
     } catch (error) {
       console.error('Error fetching membership details:', error);
       toast.error('Failed to fetch membership details');
@@ -108,9 +157,9 @@ export const ClubMembershipDetailPage = () => {
 
   const renderStatusBadge = () => {
     if (!membershipData) return null;
-    
+
     const { start_date, end_date } = membershipData;
-    
+
     if (!start_date && !end_date) {
       return (
         <Badge className="bg-red-100 text-red-800 border-0">
@@ -118,7 +167,7 @@ export const ClubMembershipDetailPage = () => {
         </Badge>
       );
     }
-    
+
     if (!end_date && start_date) {
       return (
         <Badge className="bg-red-100 text-red-800 border-0">
@@ -126,7 +175,7 @@ export const ClubMembershipDetailPage = () => {
         </Badge>
       );
     }
-    
+
     return (
       <Badge className="bg-green-100 text-green-800 border-0">
         Approved
@@ -251,7 +300,7 @@ export const ClubMembershipDetailPage = () => {
                     {membershipData.user_name}
                   </span>
                 </div>
-                
+
                 <div className="task-info-row">
                   <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                     Email
@@ -261,7 +310,7 @@ export const ClubMembershipDetailPage = () => {
                     {membershipData.user_email}
                   </span>
                 </div>
-                
+
                 <div className="task-info-row">
                   <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                     Mobile
@@ -271,7 +320,7 @@ export const ClubMembershipDetailPage = () => {
                     {membershipData.user_mobile}
                   </span>
                 </div>
-                
+
                 <div className="task-info-row">
                   <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                     Site
@@ -306,7 +355,7 @@ export const ClubMembershipDetailPage = () => {
                     {membershipData.membership_number}
                   </span>
                 </div>
-                
+
                 <div className="task-info-row">
                   <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                     Club Member
@@ -318,7 +367,7 @@ export const ClubMembershipDetailPage = () => {
                     </Badge>
                   </span>
                 </div>
-                
+
                 <div className="task-info-row">
                   <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                     Start Date
@@ -328,7 +377,7 @@ export const ClubMembershipDetailPage = () => {
                     {formatDate(membershipData.start_date)}
                   </span>
                 </div>
-                
+
                 <div className="task-info-row">
                   <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                     End Date
@@ -338,7 +387,7 @@ export const ClubMembershipDetailPage = () => {
                     {formatDate(membershipData.end_date)}
                   </span>
                 </div>
-                
+
                 <div className="task-info-row">
                   <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                     Access Card
@@ -350,7 +399,7 @@ export const ClubMembershipDetailPage = () => {
                     </Badge>
                   </span>
                 </div>
-                
+
                 <div className="task-info-row">
                   <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                     Access Card ID
@@ -358,6 +407,278 @@ export const ClubMembershipDetailPage = () => {
                   <span className="task-info-separator-enhanced">:</span>
                   <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
                     {membershipData.access_card_id || '-'}
+                  </span>
+                </div>
+
+                {membershipData.referred_by && (
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                      Referred By
+                    </span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                      {membershipData.referred_by}
+                    </span>
+                  </div>
+                )}
+
+                {membershipData.emergency_contact_name && (
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                      Emergency Contact
+                    </span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                      {membershipData.emergency_contact_name}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          {/* Additional Personal Information */}
+
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <User className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Additional Information</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Date of Birth
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {formatDate(membershipData.user.birth_date)}
+                  </span>
+                </div>
+
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Gender
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.user.gender}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Address Information */}
+
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <Building2 className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Address Information</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Address
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.user.addresses[0]?.address || '-'}
+                  </span>
+                </div>
+
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Address Line 2
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.user.addresses[0]?.address_line_two || '-'}
+                  </span>
+                </div>
+
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    City
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.user.addresses[0]?.city || '-'}
+                  </span>
+                </div>
+
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    State
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.user.addresses[0]?.state}
+                  </span>
+                </div>
+
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Country
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.user.addresses[0]?.country}
+                  </span>
+                </div>
+
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    PIN Code
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.user.addresses[0]?.pin_code}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Plan & Amenities Information */}
+
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <CreditCard className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Plan & Amenities</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Plan
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    {membershipData.membership_plan_name}
+                  </span>
+                </div>
+
+                {membershipData.plan_amenities && membershipData.plan_amenities.length > 0 && (
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                      Included Amenities
+                    </span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                      <ul className="list-disc list-inside space-y-1">
+                        {membershipData.plan_amenities.map((amenity) => (
+                          <li key={amenity.id}>{amenity.facility_setup_name || `Amenity ${amenity.facility_setup_id}`}</li>
+                        ))}
+                      </ul>
+                    </span>
+                  </div>
+                )}
+
+                {membershipData.custom_amenities && membershipData.custom_amenities.length > 0 && (
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                      Custom Amenities
+                    </span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                      <ul className="list-disc list-inside space-y-1">
+                        {membershipData.custom_amenities.map((amenity) => (
+                          <li key={amenity.id}>{amenity.facility_setup_name || `Amenity ${amenity.facility_setup_id}`}</li>
+                        ))}
+                      </ul>
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          {/* Payment Information */}
+
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <CreditCard className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Payment Information</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="task-info-enhanced">
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Base Amount
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    ₹ {membershipData?.member_payment_detail?.base_amount}
+                  </span>
+                </div>
+
+                {membershipData?.member_payment_detail?.discount && membershipData.member_payment_detail.discount !== '0' && (
+                  <div className="task-info-row">
+                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                      Discount
+                    </span>
+                    <span className="task-info-separator-enhanced">:</span>
+                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                      -₹ {membershipData?.member_payment_detail?.discount}
+                    </span>
+                  </div>
+                )}
+
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    CGST
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    ₹ {membershipData?.member_payment_detail?.cgst}
+                  </span>
+                </div>
+
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    SGST
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    ₹ {membershipData?.member_payment_detail?.sgst}
+                  </span>
+                </div>
+
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Total Tax
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    ₹ {membershipData?.member_payment_detail?.total_tax}
+                  </span>
+                </div>
+
+                <div className="task-info-row">
+                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
+                    Total Amount
+                  </span>
+                  <span className="task-info-separator-enhanced">:</span>
+                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                    ₹ {membershipData?.member_payment_detail?.total_amount}
                   </span>
                 </div>
               </div>
@@ -486,7 +807,7 @@ export const ClubMembershipDetailPage = () => {
                     {membershipData.user_id}
                   </span>
                 </div>
-                
+
                 <div className="task-info-row">
                   <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                     Site ID
@@ -496,7 +817,7 @@ export const ClubMembershipDetailPage = () => {
                     {membershipData.pms_site_id}
                   </span>
                 </div>
-                
+
                 <div className="task-info-row">
                   <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                     Created At
@@ -506,7 +827,7 @@ export const ClubMembershipDetailPage = () => {
                     {formatDateTime(membershipData.created_at)}
                   </span>
                 </div>
-                
+
                 <div className="task-info-row">
                   <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
                     Last Updated

@@ -387,6 +387,85 @@ export const AddBookingSetupPage = () => {
         "facility_setup[facility_charge_attributes][per_slot_charge]",
         formData.perSlotCharge
       );
+
+      // Charge Setup - Member charges
+      if (formData.chargeSetup.member.selected) {
+        formDataToSend.append(
+          "facility_setup[facility_charge_attributes][member_adult_charge]",
+          formData.chargeSetup.member.adult || "0"
+        );
+        // formDataToSend.append(
+        //   "facility_setup[facility_charge_attributes][member_child_charge]",
+        //   formData.chargeSetup.member.child || "0"
+        // );
+      }
+
+      // Charge Setup - Guest charges
+      if (formData.chargeSetup.guest.selected) {
+        formDataToSend.append(
+          "facility_setup[facility_charge_attributes][guest_adult_charge]",
+          formData.chargeSetup.guest.adult || "0"
+        );
+        // formDataToSend.append(
+        //   "facility_setup[facility_charge_attributes][guest_child_charge]",
+        //   formData.chargeSetup.guest.child || "0"
+        // );
+      }
+
+      // Charge Setup - Person limits and GST
+      formDataToSend.append(
+        "faciloty_setup[min_people]",
+        formData.chargeSetup.minimumPersonAllowed || "1"
+      );
+      formDataToSend.append(
+        "faciloty_setup[max_people]",
+        formData.chargeSetup.maximumPersonAllowed || "1"
+      );
+      formDataToSend.append(
+        "faciloty_setup[sgst]",
+        formData.chargeSetup.gst || "0"
+      );
+
+      // Block Days - Date range
+      if (formData.blockDays.startDate) {
+        formDataToSend.append(
+          "facility_blockings_attributes[0][ondate]",
+          formData.blockDays.startDate
+        );
+      }
+
+      // if (formData.blockDays.endDate) {
+      //   formDataToSend.append(
+      //     "facility_blockings_attributes[0][end_date]",
+      //     formData.blockDays.endDate
+      //   );
+      // }
+
+      // Block Days - Type (entire day or selected slots)
+      // formDataToSend.append(
+      //   "facility_blockings_attributes[0][block_type]",
+      //   formData.blockDays.dayType === "entireDay" ? "entire_day" : "selected_slots"
+      // );
+
+      // Block Days - Reason
+      if (formData.blockDays.blockReason) {
+        formDataToSend.append(
+          "facility_blockings_attributes[0][reason]",
+          formData.blockDays.blockReason
+        );
+      }
+
+      // Default values for facility blockings
+      formDataToSend.append(
+        "facility_blockings_attributes[0][order_allowed]",
+        "false"
+      );
+
+      formDataToSend.append(
+        "facility_blockings_attributes[0][booking_allowed]",
+        "false"
+      );
+
       formDataToSend.append(
         "facility_setup[description]",
         formData.termsConditions || ""
@@ -540,7 +619,7 @@ export const AddBookingSetupPage = () => {
 
       formDataToSend.append(
         "facility_setup[multi_slot]",
-        formData.allowMultipleSlots
+        formData.allowMultipleSlots ? "1" : "0"
       )
       formDataToSend.append(
         "facility_setup[max_slots]",
@@ -603,7 +682,7 @@ export const AddBookingSetupPage = () => {
 
       if (response.ok) {
         toast.success("Booking setup saved successfully");
-        navigate("/settings/vas/booking/setup");
+        navigate(-1);
       } else {
         console.error("Failed to save booking setup:", response.statusText);
       }
@@ -615,7 +694,7 @@ export const AddBookingSetupPage = () => {
   };
 
   const handleClose = () => {
-    navigate("/settings/vas/booking/setup");
+    navigate(-1);
   };
 
   const addSlot = () => {
@@ -759,16 +838,16 @@ export const AddBookingSetupPage = () => {
                   <tr>
                     <td className="border border-gray-300 px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <Checkbox 
+                        <Checkbox
                           checked={formData.chargeSetup.member.selected}
-                          onChange={(e) =>
+                          onCheckedChange={(checked) =>
                             setFormData({
                               ...formData,
                               chargeSetup: {
                                 ...formData.chargeSetup,
                                 member: {
                                   ...formData.chargeSetup.member,
-                                  selected: e.target.checked,
+                                  selected: !!checked,
                                 },
                               },
                             })
@@ -779,10 +858,10 @@ export const AddBookingSetupPage = () => {
                     </td>
                     <td className="border border-gray-300 px-4 py-3">
                       <div className="flex items-center justify-center gap-2">
-                        <Checkbox 
+                        <Checkbox
                           checked={!!formData.chargeSetup.member.adult}
-                          onChange={(e) => {
-                            if (!e.target.checked) {
+                          onCheckedChange={(checked) => {
+                            if (!checked) {
                               setFormData({
                                 ...formData,
                                 chargeSetup: {
@@ -859,16 +938,16 @@ export const AddBookingSetupPage = () => {
                   <tr>
                     <td className="border border-gray-300 px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <Checkbox 
+                        <Checkbox
                           checked={formData.chargeSetup.guest.selected}
-                          onChange={(e) =>
+                          onCheckedChange={(checked) =>
                             setFormData({
                               ...formData,
                               chargeSetup: {
                                 ...formData.chargeSetup,
                                 guest: {
                                   ...formData.chargeSetup.guest,
-                                  selected: e.target.checked,
+                                  selected: !!checked,
                                 },
                               },
                             })
@@ -879,10 +958,10 @@ export const AddBookingSetupPage = () => {
                     </td>
                     <td className="border border-gray-300 px-4 py-3">
                       <div className="flex items-center justify-center gap-2">
-                        <Checkbox 
+                        <Checkbox
                           checked={!!formData.chargeSetup.guest.adult}
-                          onChange={(e) => {
-                            if (!e.target.checked) {
+                          onCheckedChange={(checked) => {
+                            if (!checked) {
                               setFormData({
                                 ...formData,
                                 chargeSetup: {
@@ -1490,6 +1569,114 @@ export const AddBookingSetupPage = () => {
                   <span>times per day by User</span>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Block Days Section */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <CalendarDays className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <TextField
+                label="Date"
+                type="date"
+                value={formData.blockDays.startDate}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    blockDays: {
+                      ...formData.blockDays,
+                      startDate: e.target.value,
+                    },
+                  })
+                }
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+              {/* <TextField
+                label="End Date"
+                type="date"
+                value={formData.blockDays.endDate}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    blockDays: {
+                      ...formData.blockDays,
+                      endDate: e.target.value,
+                    },
+                  })
+                }
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              /> */}
+            </div>
+
+            <div className="flex gap-6 px-1">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="entireDay"
+                  name="dayType"
+                  checked={formData.blockDays.dayType === "entireDay"}
+                  onChange={() =>
+                    setFormData({
+                      ...formData,
+                      blockDays: {
+                        ...formData.blockDays,
+                        dayType: "entireDay",
+                      },
+                    })
+                  }
+                  className="text-blue-600"
+                />
+                <label htmlFor="entireDay">Entire Day</label>
+              </div>
+              {/* <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="selectedSlots"
+                  name="dayType"
+                  checked={formData.blockDays.dayType === "selectedSlots"}
+                  onChange={() =>
+                    setFormData({
+                      ...formData,
+                      blockDays: {
+                        ...formData.blockDays,
+                        dayType: "selectedSlots",
+                      },
+                    })
+                  }
+                  className="text-blue-600"
+                />
+                <label htmlFor="selectedSlots">Selected Slots</label>
+              </div> */}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
+              <Textarea
+                placeholder="Please mention block reason"
+                value={formData.blockDays.blockReason}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    blockDays: {
+                      ...formData.blockDays,
+                      blockReason: e.target.value,
+                    },
+                  })
+                }
+                className="min-h-[100px]"
+              />
             </div>
           </div>
 
@@ -2111,114 +2298,6 @@ export const AddBookingSetupPage = () => {
                   />
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Block Days Section */}
-          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                <CalendarDays className="w-4 h-4" />
-              </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days</h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TextField
-                label="Start Date"
-                type="date"
-                value={formData.blockDays.startDate}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    blockDays: {
-                      ...formData.blockDays,
-                      startDate: e.target.value,
-                    },
-                  })
-                }
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-              <TextField
-                label="End Date"
-                type="date"
-                value={formData.blockDays.endDate}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    blockDays: {
-                      ...formData.blockDays,
-                      endDate: e.target.value,
-                    },
-                  })
-                }
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </div>
-
-            <div className="flex gap-6 px-1">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="entireDay"
-                  name="dayType"
-                  checked={formData.blockDays.dayType === "entireDay"}
-                  onChange={() =>
-                    setFormData({
-                      ...formData,
-                      blockDays: {
-                        ...formData.blockDays,
-                        dayType: "entireDay",
-                      },
-                    })
-                  }
-                  className="text-blue-600"
-                />
-                <label htmlFor="entireDay">Entire Day</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="selectedSlots"
-                  name="dayType"
-                  checked={formData.blockDays.dayType === "selectedSlots"}
-                  onChange={() =>
-                    setFormData({
-                      ...formData,
-                      blockDays: {
-                        ...formData.blockDays,
-                        dayType: "selectedSlots",
-                      },
-                    })
-                  }
-                  className="text-blue-600"
-                />
-                <label htmlFor="selectedSlots">Selected Slots</label>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
-              <Textarea
-                placeholder="Please mention block reason"
-                value={formData.blockDays.blockReason}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    blockDays: {
-                      ...formData.blockDays,
-                      blockReason: e.target.value,
-                    },
-                  })
-                }
-                className="min-h-[100px]"
-              />
             </div>
           </div>
 

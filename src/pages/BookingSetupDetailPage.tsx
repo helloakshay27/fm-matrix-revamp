@@ -30,15 +30,14 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Radio,
 } from "@mui/material";
 import { useAppDispatch } from "@/store/hooks";
 import { facilityBookingSetupDetails } from "@/store/slices/facilityBookingsSlice";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { QRCodeModal } from "@/components/QRCodeModal";
 import axios from "axios";
-import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
-import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -101,37 +100,6 @@ const muiTheme = createTheme({
   },
 });
 
-const columns: ColumnConfig[] = [
-  {
-    key: "start_hour",
-    label: "Start Hour",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "start_min",
-    label: "Start Minute",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "end_hour",
-    label: "End Hour",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "end_min",
-    label: "End Minute",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-]
-
 export const BookingSetupDetailPage = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -143,7 +111,11 @@ export const BookingSetupDetailPage = () => {
   const [showQr, setShowQr] = useState(false);
   const [qrUrl, setQrUrl] = useState("");
   const [additionalOpen, setAdditionalOpen] = useState(false);
-  const [slotsConfigured, setSlotsConfigured] = useState([])
+  const [slotsConfigured, setSlotsConfigured] = useState([]);
+  const [selectedSlots, setSelectedSlots] = useState<{ [key: string]: boolean }>({});
+  const [popoverOpen, setPopoverOpen] = useState<{ [key: string]: boolean }>({});
+  const [premiumPercentage, setPremiumPercentage] = useState<{ [key: string]: string }>({});
+  const [isPremiumSlots, setIsPremiumSlots] = useState<{ [key: string]: boolean }>({});
   const [formData, setFormData] = useState({
     facilityName: "",
     isBookable: true,
@@ -376,14 +348,27 @@ export const BookingSetupDetailPage = () => {
 
       setCancellationRules([...transformedRules]);
 
-      setSlotsConfigured(response.facility_slots.map(slot => (
-        {
-          start_hour: slot.facility_slot.start_hour.toString().padStart(2, "0"),
-          start_min: slot.facility_slot.start_min.toString().padStart(2, "0"),
-          end_hour: slot.facility_slot.end_hour.toString().padStart(2, "0"),
-          end_min: slot.facility_slot.end_min.toString().padStart(2, "0"),
-        }
-      )));
+      const slots = response.facility_slots.map(slot => (
+        slot?.facility_slot?.slot_times.map(time => ({
+          id: time.slot_time.id,
+          isPremium: time.slot_time.is_premium,
+          premium_percentage: time.slot_time.premium_percentage || 0,
+          startTime: { hour: time.slot_time.start_hour, minute: time.slot_time.start_minute },
+          endTime: { hour: time.slot_time.end_hour, minute: time.slot_time.end_minute },
+        }))
+      ));
+      setSlotsConfigured(slots);
+
+      // Initialize premium slots and percentage
+      const premiumMap: { [key: string]: boolean } = {};
+      const percentageMap: { [key: string]: string } = {};
+      slots[0]?.forEach((slot: any, idx: number) => {
+        const slotKey = `${slot.id}-${idx}`;
+        premiumMap[slotKey] = slot.isPremium || false;
+        percentageMap[slotKey] = slot.premium_percentage?.toString() || '';
+      });
+      setIsPremiumSlots(premiumMap);
+      setPremiumPercentage(percentageMap);
 
       // setCancellationRules(response.cancellation_rules)
       setSelectedFile(response?.cover_image?.document);
@@ -396,19 +381,63 @@ export const BookingSetupDetailPage = () => {
     }
   };
 
-  console.log(cancellationRules)
+  console.log(slotsConfigured)
+
+  const handleSlotCheckboxChange = (slotId: string) => {
+    setIsPremiumSlots(prev => ({
+      ...prev,
+      [slotId]: !prev[slotId]
+    }));
+
+    // Open popover when checkbox is checked
+    if (!isPremiumSlots[slotId]) {
+      setPopoverOpen(prev => ({
+        ...prev,
+        [slotId]: true
+      }));
+    }
+  };
+
+  const handleSendData = async (slotId: string) => {
+    try {
+      const payload = {
+        slot_time_id: slotId,
+        is_premium: true,
+        premium_percentage: parseFloat(premiumPercentage[slotId]) || 0
+      };
+
+      const response = await axios.patch(
+        `https://${baseUrl}/pms/admin/facility_setups/${id}/update_slot_premium.json`,
+        payload,
+        {
+          headers: {
+            Authorization: `${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Data sent successfully:", response.data);
+
+      // Update isPremiumSlots to reflect the premium status
+      setIsPremiumSlots(prev => ({
+        ...prev,
+        [slotId]: true
+      }));
+
+      setPopoverOpen(prev => ({
+        ...prev,
+        [slotId]: false
+      }));
+    } catch (error) {
+      console.error("Error sending data:", error);
+    }
+  };
 
   useEffect(() => {
     fetchDepartments();
     fetchFacilityBookingDetails();
   }, []);
-
-  const renderCell = (item: any, columnKey: string) => {
-    switch (columnKey) {
-      default:
-        return item[columnKey] || "-";
-    }
-  }
 
   return (
     <ThemeProvider theme={muiTheme}>
@@ -419,7 +448,7 @@ export const BookingSetupDetailPage = () => {
             <Button
               variant="ghost"
               onClick={() => location.pathname.includes("/club-management/") ?
-                navigate("/club-management/vas/booking/setup") :  navigate("/settings/vas/booking/setup")
+                navigate("/club-management/vas/booking/setup") : navigate("/settings/vas/booking/setup")
               }
               className="p-0"
             >
@@ -952,15 +981,79 @@ export const BookingSetupDetailPage = () => {
               <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">SLOTS CONFIGURED</h3>
             </div>
 
-            <EnhancedTable
-              data={slotsConfigured}
-              columns={columns}
-              renderCell={renderCell}
-              storageKey="slots-configured-table"
-              hideColumnsButton={true}
-              hideTableExport={true}
-              hideTableSearch={true}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {slotsConfigured[0]?.map((slot, idx) => {
+                const slotKey = `${slot.id}-${idx}`;
+                return (
+                  <Popover key={idx} open={popoverOpen[slotKey]} onOpenChange={(open) => {
+                    if (selectedSlots[slotKey]) {
+                      setPopoverOpen(prev => ({
+                        ...prev,
+                        [slotKey]: open
+                      }));
+                    }
+                  }}>
+                    <PopoverTrigger asChild>
+                      <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isPremiumSlots[slotKey] || false}
+                          onChange={() => handleSlotCheckboxChange(slotKey)}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        />
+                        <Label
+                          className="cursor-pointer text-sm font-medium"
+                        >
+                          {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
+                          {isPremiumSlots[slotKey] && premiumPercentage[slotKey] && (
+                            <span className="ml-2 text-xs text-gray-600">
+                              ({premiumPercentage[slotKey]}%)
+                            </span>
+                          )}
+                        </Label>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-sm">Set Premium Percentage</h4>
+                          <p className="text-xs text-gray-500">
+                            {slot.startTime.hour}:{slot.startTime.minute} - {slot.endTime.hour}:{slot.endTime.minute}
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`premium-${slotKey}`} className="text-sm">
+                            Premium Percentage (%)
+                          </Label>
+                          <TextField
+                            id={`premium-${slotKey}`}
+                            type="number"
+                            placeholder="Enter percentage"
+                            value={premiumPercentage[slotKey] || ""}
+                            onChange={(e) => {
+                              setPremiumPercentage(prev => ({
+                                ...prev,
+                                [slotKey]: e.target.value
+                              }));
+                            }}
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            inputProps={{ min: "0", max: "100", step: "0.01" }}
+                          />
+                        </div>
+                        <Button
+                          onClick={() => handleSendData(slotKey)}
+                          className="w-full bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                );
+              })}
+            </div>
           </div>
 
           {/* Configure Payment */}

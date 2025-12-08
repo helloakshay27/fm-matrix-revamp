@@ -107,9 +107,12 @@ export const EditMembershipPlanPage = () => {
     price: "",
     userLimit: "",
     renewalTerms: "",
-    amenities: [] as string[],
+    amenities: [],
     active: true,
   });
+  const [removedAmenities, setRemovedAmenities] = useState([]);
+
+  console.log(formData)
 
   const getAmenities = async () => {
     try {
@@ -147,7 +150,7 @@ export const EditMembershipPlanPage = () => {
         price: data.price,
         userLimit: data.user_limit,
         renewalTerms: data.renewal_terms,
-        amenities: data.plan_amenities.map((amenity) => amenity.id),
+        amenities: data.plan_amenities.map((amenity) => amenity),
       })
     } catch (error) {
       console.error("Error fetching membership plan details:", error);
@@ -194,10 +197,18 @@ export const EditMembershipPlanPage = () => {
           price: formData.price,
           user_limit: formData.userLimit,
           renewal_terms: formData.renewalTerms,
-          plan_amenities_attributes: formData.amenities.map(amenity => ({
-            facility_setup_id: amenity,
-            access: "free"
-          }))
+          plan_amenities_attributes: [
+            ...formData.amenities.map(amenity => ({
+              id: amenity.id,
+              facility_setup_id: amenity.facility_setup_id,
+              access: "free",
+              _destroy: false
+            })),
+            ...removedAmenities.map(id => ({
+              id: id,
+              _destroy: true
+            }))
+          ]
         }
       };
 
@@ -221,13 +232,45 @@ export const EditMembershipPlanPage = () => {
     navigate("/club-management/vas/membership-plan/setup");
   };
 
-  const handleAmenityToggle = (amenity: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter((a) => a !== amenity)
-        : [...prev.amenities, amenity],
-    }));
+  const handleAmenityToggle = (amenityValue: string) => {
+    setFormData((prev) => {
+      const amenityToRemove = prev.amenities.find(
+        (item) => item.facility_setup_id === amenityValue
+      );
+
+      if (amenityToRemove) {
+        // Track removed amenity if it has an id (from existing plan)
+        if (amenityToRemove.id) {
+          setRemovedAmenities((prevRemoved) => [
+            ...prevRemoved,
+            amenityToRemove.id,
+          ]);
+        }
+        return {
+          ...prev,
+          amenities: prev.amenities.filter(
+            (a) => a.facility_setup_id !== amenityValue
+          ),
+        };
+      } else {
+        const selectedAmenity = amenities.find(
+          (a) => a.value === amenityValue
+        );
+        return {
+          ...prev,
+          amenities: selectedAmenity
+            ? [
+              ...prev.amenities,
+              {
+                id: null,
+                facility_setup_id: selectedAmenity.value,
+                access: "free",
+              },
+            ]
+            : prev.amenities,
+        };
+      }
+    });
   };
 
   if (loading) {
@@ -333,7 +376,7 @@ export const EditMembershipPlanPage = () => {
                   key={amenity.value}
                   control={
                     <Checkbox
-                      checked={formData.amenities.includes(amenity.value)}
+                      checked={formData.amenities.some(item => item.facility_setup_id === amenity.value)}
                       onChange={() => handleAmenityToggle(amenity.value)}
                       sx={{
                         color: "#C72030",

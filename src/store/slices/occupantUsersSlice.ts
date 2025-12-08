@@ -128,14 +128,14 @@ export const fetchOccupantUsers = createAsyncThunk(
         email: user.email,
         gender: user.gender,
         department: user.department?.department_name,
-        status: user.lock_user_permission.status,
+        status: user.lock_user_permission?.status,
         employeeId: user.lock_user_permission?.employee_id,
         accessLevel: user.lock_user_permission?.access_level,
         type: user.user_type === "pms_occupant_admin" ? "Admin" : "Member",
         active: user.active ? "Yes" : "No",
         faceRecognition: user.face_added ? "Yes" : "No",
         appDownloaded: user.app_downloaded,
-        lockUserId: user.lock_user_permission.id ?? null,
+        lockUserId: user.lock_user_permission?.id ?? null,
         entity: user.entity_name
       })
     );
