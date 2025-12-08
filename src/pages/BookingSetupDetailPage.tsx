@@ -328,10 +328,10 @@ export const BookingSetupDetailPage = () => {
           maximumPersonAllowed: response.max_people,
         },
         blockDays: {
-          startDate: "",
+          startDate: response?.facility_blockings[0]?.facility_blocking?.ondate,
           endDate: "",
           dayType: "entireDay",
-          blockReason: "",
+          blockReason: response?.facility_blockings[0]?.facility_blocking?.reason,
         },
       });
       const transformedRules = response.cancellation_rules.map((rule: any) => ({
@@ -1055,7 +1055,7 @@ export const BookingSetupDetailPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <TextField
-                label="Start Date"
+                label="Date"
                 type="date"
                 value={formData.blockDays.startDate}
                 variant="outlined"
@@ -1064,7 +1064,7 @@ export const BookingSetupDetailPage = () => {
                   shrink: true,
                 }}
               />
-              <TextField
+              {/* <TextField
                 label="End Date"
                 type="date"
                 value={formData.blockDays.endDate}
@@ -1073,7 +1073,7 @@ export const BookingSetupDetailPage = () => {
                 InputLabelProps={{
                   shrink: true,
                 }}
-              />
+              /> */}
             </div>
 
             <div className="flex gap-6 px-1">
@@ -1088,7 +1088,7 @@ export const BookingSetupDetailPage = () => {
                 />
                 <label htmlFor="entireDay">Entire Day</label>
               </div>
-              <div className="flex items-center space-x-2">
+              {/* <div className="flex items-center space-x-2">
                 <input
                   type="radio"
                   id="selectedSlots"
@@ -1098,7 +1098,7 @@ export const BookingSetupDetailPage = () => {
                   className="text-blue-600"
                 />
                 <label htmlFor="selectedSlots">Selected Slots</label>
-              </div>
+              </div> */}
             </div>
 
             <div>
@@ -1121,14 +1121,14 @@ export const BookingSetupDetailPage = () => {
             </div>
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex items-center space-x-2">
+                {/* <div className="flex items-center space-x-2">
                   <Checkbox
                     id="postpaid"
                     checked={formData.postpaid}
                     disabled
                   />
                   <label htmlFor="postpaid">Postpaid</label>
-                </div>
+                </div> */}
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="prepaid"
@@ -1145,14 +1145,14 @@ export const BookingSetupDetailPage = () => {
                   />
                   <label htmlFor="payOnFacility">Pay on Facility</label>
                 </div>
-                <div className="flex items-center space-x-2">
+                {/* <div className="flex items-center space-x-2">
                   <Checkbox
                     id="complimentary"
                     checked={formData.complimentary}
                     disabled
                   />
                   <label htmlFor="complimentary">Complimentary</label>
-                </div>
+                </div> */}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <TextField

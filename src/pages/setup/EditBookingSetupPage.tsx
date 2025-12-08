@@ -317,10 +317,10 @@ export const EditBookingSetupPage = () => {
                     maximumPersonAllowed: responseData.max_people,
                 },
                 blockDays: {
-                    startDate: "",
+                    startDate: responseData?.facility_blockings[0]?.facility_blocking?.ondate,
                     endDate: "",
                     dayType: "entireDay",
-                    blockReason: "",
+                    blockReason: responseData?.facility_blockings[0]?.facility_blocking?.reason,
                 },
             });
             const transformedRules = responseData.cancellation_rules.map((rule) => ({
@@ -491,7 +491,7 @@ export const EditBookingSetupPage = () => {
             // Block Days - Date range
             if (formData.blockDays.startDate) {
                 formDataToSend.append(
-                    "facility_blockings_attributes[0][ondate]",
+                    "facility_setup[facility_blockings_attributes][0][ondate]",
                     formData.blockDays.startDate
                 );
             }
@@ -499,19 +499,19 @@ export const EditBookingSetupPage = () => {
             // Block Days - Reason
             if (formData.blockDays.blockReason) {
                 formDataToSend.append(
-                    "facility_blockings_attributes[0][reason]",
+                    "facility_setup[facility_blockings_attributes][0][reason]",
                     formData.blockDays.blockReason
                 );
             }
 
             // Default values for facility blockings
             formDataToSend.append(
-                "facility_blockings_attributes[0][order_allowed]",
+                "facility_setup[facility_blockings_attributes][0][order_allowed]",
                 "false"
             );
 
             formDataToSend.append(
-                "facility_blockings_attributes[0][booking_allowed]",
+                "facility_setup[facility_blockings_attributes][0][booking_allowed]",
                 "false"
             );
 
@@ -1558,7 +1558,7 @@ export const EditBookingSetupPage = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <TextField
-                                label="Start Date"
+                                label="Date"
                                 type="date"
                                 value={formData.blockDays.startDate}
                                 onChange={(e) =>
@@ -1575,7 +1575,7 @@ export const EditBookingSetupPage = () => {
                                     shrink: true,
                                 }}
                             />
-                            <TextField
+                            {/* <TextField
                                 label="End Date"
                                 type="date"
                                 value={formData.blockDays.endDate}
@@ -1592,7 +1592,7 @@ export const EditBookingSetupPage = () => {
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
-                            />
+                            /> */}
                         </div>
 
                         <div className="flex gap-6 px-1">
@@ -1615,7 +1615,7 @@ export const EditBookingSetupPage = () => {
                                 />
                                 <label htmlFor="entireDay">Entire Day</label>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            {/* <div className="flex items-center space-x-2">
                                 <input
                                     type="radio"
                                     id="selectedSlots"
@@ -1633,7 +1633,7 @@ export const EditBookingSetupPage = () => {
                                     className="text-blue-600"
                                 />
                                 <label htmlFor="selectedSlots">Selected Slots</label>
-                            </div>
+                            </div> */}
                         </div>
 
                         <div>
@@ -1665,7 +1665,7 @@ export const EditBookingSetupPage = () => {
 
                         <div className="space-y-6">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="flex items-center space-x-2">
+                                {/* <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="postpaid"
                                         checked={formData.postpaid}
@@ -1674,7 +1674,7 @@ export const EditBookingSetupPage = () => {
                                         }
                                     />
                                     <label htmlFor="postpaid">Postpaid</label>
-                                </div>
+                                </div> */}
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="prepaid"
@@ -1695,7 +1695,7 @@ export const EditBookingSetupPage = () => {
                                     />
                                     <label htmlFor="payOnFacility">Pay on Facility</label>
                                 </div>
-                                <div className="flex items-center space-x-2">
+                                {/* <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="complimentary"
                                         checked={formData.complimentary}
@@ -1704,7 +1704,7 @@ export const EditBookingSetupPage = () => {
                                         }
                                     />
                                     <label htmlFor="complimentary">Complimentary</label>
-                                </div>
+                                </div> */}
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <TextField
