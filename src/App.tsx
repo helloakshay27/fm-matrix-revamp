@@ -149,6 +149,7 @@ import { VisitorsDashboard } from "./pages/VisitorsDashboard";
 import { VisitorsHistoryDashboard } from "./pages/VisitorsHistoryDashboard";
 import { VisitorDetailsPage } from "./pages/VisitorDetailsPage";
 import { PatrollingDashboard } from "./pages/PatrollingDashboard";
+import { PatrollingResponsePage } from "./pages/PatrollingResponsePage";
 import { PatrollingDetailsPage } from "./pages/PatrollingDetailsPage";
 import { PatrollingCreatePage } from "./pages/PatrollingCreatePage";
 import { PatrollingEditPage } from "./pages/PatrollingEditPage";
@@ -2587,7 +2588,23 @@ function App() {
                     element={<PatrollingDashboard />}
                   />
                   <Route
+                    path="/security/patrolling/response"
+                    element={<PatrollingResponsePage />}
+                  />
+                  <Route
+                    path="/security/patrolling/create"
+                    element={<PatrollingCreatePage />}
+                  />
+                  <Route
+                    path="/security/patrolling/edit/:id"
+                    element={<PatrollingCreatePage />}
+                  />
+                  <Route
                     path="/security/patrolling/details/:id"
+                    element={<PatrollingDetailPage />}
+                  />
+                  <Route
+                    path="/security/patrolling/response/details/:id"
                     element={<PatrollingDetailPage />}
                   />
                   <Route
@@ -2601,10 +2618,6 @@ function App() {
                   <Route
                     path="/security/staff/add"
                     element={<AddStaffPage />}
-                  />
-                  <Route
-                    path="/security/patrolling"
-                    element={<PatrollingDashboard />}
                   />
                   <Route
                     path="/security/patrolling/create"

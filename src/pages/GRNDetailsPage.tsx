@@ -152,6 +152,7 @@ export const GRNDetailsPage = () => {
     amount: "",
     description: "",
   });
+  const [externalApiCalls, setExternalApiCalls] = useState<any[]>([]);
 
   const fetchData = async () => {
     try {
@@ -160,6 +161,10 @@ export const GRNDetailsPage = () => {
       ).unwrap();
       setGrnDetails(response.grn || {});
       setSendToSap(response.show_send_sap_yes);
+      // Set external API calls if available
+      if (response.grn?.external_api_calls && Array.isArray(response.grn.external_api_calls)) {
+        setExternalApiCalls(response.grn.external_api_calls);
+      }
     } catch (error) {
       console.log(error);
       toast.error(error);
@@ -894,6 +899,49 @@ export const GRNDetailsPage = () => {
         selectedDoc={selectedAttachment}
         setSelectedDoc={setSelectedAttachment}
       />
+
+      {/* External API Calls Logs Section */}
+      {externalApiCalls && externalApiCalls.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6 p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Rss className="w-5 h-5" />
+            External API Calls
+          </h3>
+          <div className="space-y-4">
+            {externalApiCalls.map((apiCall, index) => (
+              <div key={apiCall.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600 font-semibold">Provider</p>
+                    <p className="text-sm font-medium">{apiCall.api_provider || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
+                    <p className={`text-sm font-medium ${
+                      apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {apiCall.response_status || '-'}
+                    </p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-gray-600 font-semibold">Message</p>
+                    <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
+                      {apiCall.eval_status && apiCall.eval_status.trim() 
+                        ? apiCall.eval_status 
+                        : (apiCall.response_string ? JSON.stringify(JSON.parse(apiCall.response_string), null, 2) : '-')}
+                    </p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <p className="text-xs text-gray-500">
+                      Created: {apiCall.created_at ? new Date(apiCall.created_at).toLocaleString() : '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
