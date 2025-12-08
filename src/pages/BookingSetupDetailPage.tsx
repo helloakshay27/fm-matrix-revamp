@@ -165,7 +165,6 @@ export const BookingSetupDetailPage = () => {
       guest: { selected: false, adult: "", child: "" },
       minimumPersonAllowed: "1",
       maximumPersonAllowed: "1",
-      gst: "0.0",
     },
     blockDays: {
       startDate: "",
@@ -323,11 +322,10 @@ export const BookingSetupDetailPage = () => {
           wrapTime: slot.facility_slot.wrap_time,
         })),
         chargeSetup: {
-          member: { selected: false, adult: "", child: "" },
-          guest: { selected: false, adult: "", child: "" },
-          minimumPersonAllowed: "1",
-          maximumPersonAllowed: "1",
-          gst: "0.0",
+          member: { selected: response.facility_charge.adult_member_charge, adult: response.facility_charge.adult_member_charge, child: "" },
+          guest: { selected: response.facility_charge.adult_guest_charge, adult: response.facility_charge.adult_guest_charge, child: "" },
+          minimumPersonAllowed: response.min_people,
+          maximumPersonAllowed: response.max_people,
         },
         blockDays: {
           startDate: "",
@@ -652,16 +650,6 @@ export const BookingSetupDetailPage = () => {
                   size="small"
                   variant="outlined"
                   value={formData.chargeSetup.maximumPersonAllowed}
-                  InputProps={{ readOnly: true }}
-                  className="w-32"
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-semibold whitespace-nowrap">GST</label>
-                <TextField
-                  size="small"
-                  variant="outlined"
-                  value={formData.chargeSetup.gst}
                   InputProps={{ readOnly: true }}
                   className="w-32"
                 />
@@ -1222,7 +1210,7 @@ export const BookingSetupDetailPage = () => {
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Booking Summary Image</h3>
               </div>
               <div>
-                {selectedBookingFiles.length > 0 && (
+                {selectedBookingFiles.length > 0 ? (
                   <div className="flex gap-2 flex-wrap">
                     {selectedBookingFiles.map((file, index) => (
                       <img
@@ -1232,6 +1220,10 @@ export const BookingSetupDetailPage = () => {
                         className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
                       />
                     ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    No image selected
                   </div>
                 )}
               </div>

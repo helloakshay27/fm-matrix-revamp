@@ -394,7 +394,7 @@ export const AddBookingSetupPage = () => {
       // Charge Setup - Member charges
       if (formData.chargeSetup.member.selected) {
         formDataToSend.append(
-          "facility_setup[facility_charge_attributes][member_adult_charge]",
+          "facility_setup[facility_charge_attributes][adult_member_charge]",
           formData.chargeSetup.member.adult || "0"
         );
         // formDataToSend.append(
@@ -406,7 +406,7 @@ export const AddBookingSetupPage = () => {
       // Charge Setup - Guest charges
       if (formData.chargeSetup.guest.selected) {
         formDataToSend.append(
-          "facility_setup[facility_charge_attributes][guest_adult_charge]",
+          "facility_setup[facility_charge_attributes][adult_guest_charge]",
           formData.chargeSetup.guest.adult || "0"
         );
         // formDataToSend.append(
@@ -417,16 +417,12 @@ export const AddBookingSetupPage = () => {
 
       // Charge Setup - Person limits and GST
       formDataToSend.append(
-        "faciloty_setup[min_people]",
+        "facility_setup[min_people]",
         formData.chargeSetup.minimumPersonAllowed || "1"
       );
       formDataToSend.append(
-        "faciloty_setup[max_people]",
+        "facility_setup[max_people]",
         formData.chargeSetup.maximumPersonAllowed || "1"
-      );
-      formDataToSend.append(
-        "faciloty_setup[sgst]",
-        formData.chargeSetup.gst || "0"
       );
 
       // Block Days - Date range
@@ -1073,24 +1069,6 @@ export const AddBookingSetupPage = () => {
                       chargeSetup: {
                         ...formData.chargeSetup,
                         maximumPersonAllowed: e.target.value,
-                      },
-                    })
-                  }
-                  className="w-32"
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-semibold whitespace-nowrap">GST</label>
-                <TextField
-                  size="small"
-                  variant="outlined"
-                  value={formData.chargeSetup.gst}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      chargeSetup: {
-                        ...formData.chargeSetup,
-                        gst: e.target.value,
                       },
                     })
                   }

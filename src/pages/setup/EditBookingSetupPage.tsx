@@ -157,7 +157,6 @@ export const EditBookingSetupPage = () => {
             guest: { selected: false, adult: "", child: "" },
             minimumPersonAllowed: "1",
             maximumPersonAllowed: "1",
-            gst: "0.0",
         },
         blockDays: {
             startDate: "",
@@ -312,11 +311,10 @@ export const EditBookingSetupPage = () => {
                     _destroy: false,
                 })),
                 chargeSetup: {
-                    member: { selected: false, adult: "", child: "" },
-                    guest: { selected: false, adult: "", child: "" },
-                    minimumPersonAllowed: "1",
-                    maximumPersonAllowed: "1",
-                    gst: "0.0",
+                    member: { selected: responseData.facility_charge.adult_member_charge, adult: responseData.facility_charge.adult_member_charge, child: "" },
+                    guest: { selected: responseData.facility_charge.adult_guest_charge, adult: responseData.facility_charge.adult_guest_charge, child: "" },
+                    minimumPersonAllowed: responseData.min_people,
+                    maximumPersonAllowed: responseData.max_people,
                 },
                 blockDays: {
                     startDate: "",
@@ -467,7 +465,7 @@ export const EditBookingSetupPage = () => {
             // Charge Setup - Member charges
             if (formData.chargeSetup.member.selected) {
                 formDataToSend.append(
-                    "facility_setup[facility_charge_attributes][member_adult_charge]",
+                    "facility_setup[facility_charge_attributes][adult_member_charge]",
                     formData.chargeSetup.member.adult || "0"
                 );
             }
@@ -475,23 +473,19 @@ export const EditBookingSetupPage = () => {
             // Charge Setup - Guest charges
             if (formData.chargeSetup.guest.selected) {
                 formDataToSend.append(
-                    "facility_setup[facility_charge_attributes][guest_adult_charge]",
+                    "facility_setup[facility_charge_attributes][adult_guest_charge]",
                     formData.chargeSetup.guest.adult || "0"
                 );
             }
 
             // Charge Setup - Person limits and GST
             formDataToSend.append(
-                "faciloty_setup[min_people]",
+                "facility_setup[min_people]",
                 formData.chargeSetup.minimumPersonAllowed || "1"
             );
             formDataToSend.append(
-                "faciloty_setup[max_people]",
+                "facility_setup[max_people]",
                 formData.chargeSetup.maximumPersonAllowed || "1"
-            );
-            formDataToSend.append(
-                "faciloty_setup[sgst]",
-                formData.chargeSetup.gst || "0"
             );
 
             // Block Days - Date range
@@ -1104,24 +1098,6 @@ export const EditBookingSetupPage = () => {
                                             chargeSetup: {
                                                 ...formData.chargeSetup,
                                                 maximumPersonAllowed: e.target.value,
-                                            },
-                                        })
-                                    }
-                                    className="w-32"
-                                />
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <label className="text-sm font-semibold whitespace-nowrap">GST</label>
-                                <TextField
-                                    size="small"
-                                    variant="outlined"
-                                    value={formData.chargeSetup.gst}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            chargeSetup: {
-                                                ...formData.chargeSetup,
-                                                gst: e.target.value,
                                             },
                                         })
                                     }
