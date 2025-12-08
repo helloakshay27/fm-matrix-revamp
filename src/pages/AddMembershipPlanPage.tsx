@@ -265,6 +265,7 @@ export const AddMembershipPlanPage = () => {
                   </MenuItem>
                   <MenuItem value="monthly">Monthly</MenuItem>
                   <MenuItem value="quaterly">Quarterly</MenuItem>
+                  <MenuItem value="half_yearly">Half Yearly</MenuItem>
                   <MenuItem value="yearly">Yearly</MenuItem>
                 </Select>
               </FormControl>
