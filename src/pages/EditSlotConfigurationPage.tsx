@@ -55,6 +55,9 @@ export const EditSlotConfigurationPage = () => {
     parking_image_url: '',
     parking_config_id: 0
   });
+  
+  // Track custom slot names - key format: "category_type_index"
+  const [customSlotNames, setCustomSlotNames] = useState<Record<string, string>>({});
 
   const fetchBuildingsData = useCallback(async () => {
     try {
@@ -155,18 +158,36 @@ export const EditSlotConfigurationPage = () => {
             console.log('Four Wheeler Config found:', fourWheelerConfig.category_name, 'ID:', fourWheelerConfig.parking_category_id);
           }
           
-          // Count different parking types for each category
+          // Count different parking types for each category and populate custom slot names
           const get2WheelerCounts = (config: ParkingConfiguration | undefined) => {
             if (!config) return { nonStack: 0, stack: 0, reserved: 0, parkingNumbers: [] };
             
-            const nonStackCount = config.parking_numbers.filter(p => !p.stacked && !p.reserved).length;
-            const stackCount = config.parking_numbers.filter(p => p.stacked && !p.reserved).length / 2; // Stack comes in pairs
-            const reservedCount = config.parking_numbers.filter(p => p.reserved).length;
+            const nonStackSlots = config.parking_numbers.filter(p => !p.stacked && !p.reserved);
+            const stackSlots = config.parking_numbers.filter(p => p.stacked && !p.reserved);
+            const reservedSlots = config.parking_numbers.filter(p => p.reserved);
+            
+            // Populate custom slot names from API data
+            const customNames: Record<string, string> = {};
+            
+            nonStackSlots.forEach((slot, index) => {
+              customNames[`twoWheeler_nonStack_${index}`] = slot.name;
+            });
+            
+            stackSlots.forEach((slot, index) => {
+              customNames[`twoWheeler_stack_${index}`] = slot.name;
+            });
+            
+            reservedSlots.forEach((slot, index) => {
+              customNames[`twoWheeler_reserved_${index}`] = slot.name;
+            });
+            
+            // Update customSlotNames state
+            setCustomSlotNames(prev => ({ ...prev, ...customNames }));
             
             return {
-              nonStack: nonStackCount,
-              stack: stackCount,
-              reserved: reservedCount,
+              nonStack: nonStackSlots.length,
+              stack: stackSlots.length / 2, // Stack comes in pairs
+              reserved: reservedSlots.length,
               parkingNumbers: config.parking_numbers
             };
           };
@@ -174,14 +195,32 @@ export const EditSlotConfigurationPage = () => {
           const get4WheelerCounts = (config: ParkingConfiguration | undefined) => {
             if (!config) return { nonStack: 0, stack: 0, reserved: 0, parkingNumbers: [] };
             
-            const nonStackCount = config.parking_numbers.filter(p => !p.stacked && !p.reserved).length;
-            const stackCount = config.parking_numbers.filter(p => p.stacked && !p.reserved).length / 2; // Stack comes in pairs
-            const reservedCount = config.parking_numbers.filter(p => p.reserved).length;
+            const nonStackSlots = config.parking_numbers.filter(p => !p.stacked && !p.reserved);
+            const stackSlots = config.parking_numbers.filter(p => p.stacked && !p.reserved);
+            const reservedSlots = config.parking_numbers.filter(p => p.reserved);
+            
+            // Populate custom slot names from API data
+            const customNames: Record<string, string> = {};
+            
+            nonStackSlots.forEach((slot, index) => {
+              customNames[`fourWheeler_nonStack_${index}`] = slot.name;
+            });
+            
+            stackSlots.forEach((slot, index) => {
+              customNames[`fourWheeler_stack_${index}`] = slot.name;
+            });
+            
+            reservedSlots.forEach((slot, index) => {
+              customNames[`fourWheeler_reserved_${index}`] = slot.name;
+            });
+            
+            // Update customSlotNames state
+            setCustomSlotNames(prev => ({ ...prev, ...customNames }));
             
             return {
-              nonStack: nonStackCount,
-              stack: stackCount,
-              reserved: reservedCount,
+              nonStack: nonStackSlots.length,
+              stack: stackSlots.length / 2, // Stack comes in pairs
+              reserved: reservedSlots.length,
               parkingNumbers: config.parking_numbers
             };
           };
@@ -324,8 +363,10 @@ export const EditSlotConfigurationPage = () => {
 
     // Non-stack slots
     for (let i = 0; i < categoryData.nonStack; i++) {
+      const key = `${category}_nonStack_${i}`;
+      const customName = customSlotNames[key];
       slots.push({
-        parking_name: `${prefix}${slotNumber}`,
+        parking_name: customName || `${prefix}${slotNumber}`,
         reserved: false
       });
       slotNumber++;
@@ -333,13 +374,17 @@ export const EditSlotConfigurationPage = () => {
 
     // Stack slots (come in pairs)
     for (let i = 0; i < categoryData.stack; i++) {
+      const keyA = `${category}_stack_${i * 2}`;
+      const keyB = `${category}_stack_${i * 2 + 1}`;
+      const customNameA = customSlotNames[keyA];
+      const customNameB = customSlotNames[keyB];
       slots.push({
-        parking_name: `${prefix}${slotNumber}A`,
+        parking_name: customNameA || `${prefix}${slotNumber}A`,
         reserved: false,
         stacked: true
       });
       slots.push({
-        parking_name: `${prefix}${slotNumber}B`,
+        parking_name: customNameB || `${prefix}${slotNumber}B`,
         reserved: false,
         stacked: true
       });
@@ -348,8 +393,10 @@ export const EditSlotConfigurationPage = () => {
 
     // Reserved slots
     for (let i = 0; i < categoryData.reserved; i++) {
+      const key = `${category}_reserved_${i}`;
+      const customName = customSlotNames[key];
       slots.push({
-        parking_name: `${prefix}${slotNumber}`,
+        parking_name: customName || `${prefix}${slotNumber}`,
         reserved: true
       });
       slotNumber++;
@@ -416,6 +463,10 @@ export const EditSlotConfigurationPage = () => {
   }) => {
 
     const generateSlotName = (index: number) => {
+        const key = `${category}_${type}_${index}`;
+        const customName = customSlotNames[key];
+        if (customName) return customName;
+        
         const prefix = category === 'twoWheeler' ? 'P' : 'P';
         
         if (isStack) {
@@ -435,21 +486,52 @@ export const EditSlotConfigurationPage = () => {
         
         return `${prefix}${baseNumber + index}`;
     };
+    
+    const handleSlotNameChange = (index: number, newName: string) => {
+      const key = `${category}_${type}_${index}`;
+      setCustomSlotNames(prev => ({
+        ...prev,
+        [key]: newName
+      }));
+    };
 
     return (
       <div>
         <h4 className="font-medium mb-4">{title}</h4>
         <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-y-auto">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {Array.from({ length: isStack ? count * 2 : count }, (_, index) => (
+            {Array.from({ length: isStack ? count * 2 : count }, (_, index) => index)
+              .sort((a, b) => {
+                // Sort slots by their display names
+                const nameA = generateSlotName(a);
+                const nameB = generateSlotName(b);
+                
+                // Extract numeric part for proper sorting
+                const matchA = nameA.match(/(\d+)([A-Z]?)/);
+                const matchB = nameB.match(/(\d+)([A-Z]?)/);
+                
+                if (matchA && matchB) {
+                  const numA = parseInt(matchA[1]);
+                  const numB = parseInt(matchB[1]);
+                  
+                  if (numA !== numB) return numA - numB;
+                  
+                  // If numbers are same, sort by suffix (A before B)
+                  const suffixA = matchA[2] || '';
+                  const suffixB = matchB[2] || '';
+                  return suffixA.localeCompare(suffixB);
+                }
+                
+                return nameA.localeCompare(nameB);
+              })
+              .map((index) => (
               <div key={index} className="relative">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full h-10 text-xs bg-white border-gray-300 hover:bg-gray-50 rounded-lg font-medium"
-                >
-                  {generateSlotName(index)}
-                </Button>
+                <Input
+                  value={generateSlotName(index)}
+                  onChange={(e) => handleSlotNameChange(index, e.target.value)}
+                  className="w-full h-10 text-xs text-center bg-white border-gray-300 rounded-lg font-medium"
+                  placeholder="Slot name"
+                />
                 <button
                   className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
                   onClick={() => handleSlotCountChange(category, type, count - 1)}
