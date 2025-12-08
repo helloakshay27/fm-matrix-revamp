@@ -1,11 +1,18 @@
 import { UserRoleResponse } from "@/services/permissionService";
-import { modulesByPackage, sidebarToApiFunctionMapping } from "@/config/navigationConfig";
+import {
+  modulesByPackage,
+  sidebarToApiFunctionMapping,
+} from "@/config/navigationConfig";
 import { SidebarItem } from "@/utils/sidebarPermissionFilter";
 
 /**
- * Check if a sidebar item is accessible based on user permissions
+ * Check if a sidebar item is accessible based on user permissions.
+ * This only checks the item itself - parent-child visibility logic is handled by Sidebar's filterSubItemsRecursively.
  */
-export const checkPermission = (checkItem: any, userRole: UserRoleResponse | null): boolean => {
+export const checkPermission = (
+  checkItem: any,
+  userRole: UserRoleResponse | null
+): boolean => {
   // If no user role data, show all items (or hide depending on security policy)
   if (!userRole) {
     console.log("checkPermission: No user role, showing all items");
@@ -13,7 +20,11 @@ export const checkPermission = (checkItem: any, userRole: UserRoleResponse | nul
   }
 
   // Extract active functions from the API response (only from active modules)
-  const activeFunctions: { functionName: string; actionName?: string; moduleName: string }[] = [];
+  const activeFunctions: {
+    functionName: string;
+    actionName?: string;
+    moduleName: string;
+  }[] = [];
 
   // Process lock_modules structure - IGNORE module_active, only check function_active
   if (userRole.lock_modules && Array.isArray(userRole.lock_modules)) {
@@ -56,86 +67,120 @@ export const checkPermission = (checkItem: any, userRole: UserRoleResponse | nul
     return Array.from(variants);
   };
 
-  // Get the item name for checking
-  const itemNameLower = checkItem.name.toLowerCase();
-  const itemVariants = createSearchVariants(checkItem.name);
+  // Helper function to check if item directly matches permissions
+  // STRICT EXACT MATCH ONLY - no fuzzy matching, no word matching
+  const checkDirectMatch = (item: any): boolean => {
+    const itemNameLower = item.name.toLowerCase().trim();
 
-  // Check if this sidebar item matches any active function
-  const hasDirectMatch = activeFunctions.some((activeFunc) => {
-    const funcNameLower = activeFunc.functionName.toLowerCase();
-    const actionNameLower = activeFunc.actionName
-      ? activeFunc.actionName.toLowerCase()
-      : "";
+    // Normalize spaces and dashes to underscores for comparison
+    const itemNormalized = itemNameLower.replace(/[\s-]+/g, "_");
 
-    // Direct function name match
-    const functionNameMatch = itemVariants.some(
-      (variant) =>
-        variant === funcNameLower ||
-        funcNameLower.includes(variant) ||
-        variant.includes(funcNameLower)
-    );
+    // Check if this sidebar item EXACTLY matches any active function
+    const directMatch = activeFunctions.find((activeFunc) => {
+      const funcNameLower = activeFunc.functionName.toLowerCase().trim();
+      const actionNameLower = activeFunc.actionName
+        ? activeFunc.actionName.toLowerCase().trim()
+        : "";
 
-    // Direct action name match
-    const actionNameMatch =
-      actionNameLower &&
-      itemVariants.some(
-        (variant) =>
-          variant === actionNameLower ||
-          actionNameLower.includes(variant) ||
-          variant.includes(actionNameLower)
-      );
+      // Normalize function name for comparison
+      const funcNormalized = funcNameLower.replace(/[\s-]+/g, "_");
 
-    if (functionNameMatch || actionNameMatch) {
+      // STRICT EXACT MATCH ONLY - no removing all separators
+      // The sidebar item name must exactly equal the function name
+      const isExactFunctionMatch =
+        itemNameLower === funcNameLower || itemNormalized === funcNormalized;
+
+      // EXACT MATCH for action name - sidebar item normalized must exactly equal action name
+      const isExactActionMatch =
+        actionNameLower && itemNormalized === actionNameLower;
+
+      return isExactFunctionMatch || isExactActionMatch;
+    });
+
+    if (directMatch) {
+      console.log("Smart Permission Check:", {
+        item: item.name,
+        matchType: "DIRECT_MATCH",
+        matchedFunction: directMatch,
+      });
+      return true;
+    }
+
+    // Fallback to sidebarToApiFunctionMapping for special cases
+    // (e.g., sidebar name differs from API function name)
+    const potentialMatches =
+      sidebarToApiFunctionMapping[
+        itemNameLower as keyof typeof sidebarToApiFunctionMapping
+      ] || [];
+
+    if (potentialMatches.length === 0) {
+      return false;
+    }
+
+    const mappingMatch = activeFunctions.find((activeFunc) => {
+      return potentialMatches.some((match) => {
+        const matchLower = match.toLowerCase().trim();
+        // Normalize spaces and dashes to underscores for comparison
+        const matchNormalized = matchLower.replace(/[\s-]+/g, "_");
+
+        const funcNameLower = activeFunc.functionName.toLowerCase().trim();
+        const funcNormalized = funcNameLower.replace(/[\s-]+/g, "_");
+
+        const actionNameLower = activeFunc.actionName
+          ? activeFunc.actionName.toLowerCase().trim()
+          : "";
+
+        // STRICT EXACT MATCH ONLY - no removing underscores
+        // This prevents "msafe" from matching "m_safe"
+        const isFunctionMatch =
+          matchLower === funcNameLower || matchNormalized === funcNormalized;
+
+        const isActionMatch =
+          actionNameLower && matchNormalized === actionNameLower;
+
+        return isFunctionMatch || isActionMatch;
+      });
+    });
+
+    if (mappingMatch) {
+      console.log("Smart Permission Check:", {
+        item: item.name,
+        matchType: "MAPPING_MATCH",
+        matchedFunction: mappingMatch,
+        mappingMatches: potentialMatches,
+      });
       return true;
     }
 
     return false;
+  };
+
+  // Check if current item has direct permission
+  // Note: Parent-child recursive checking is now handled by Sidebar's filterSubItemsRecursively
+  if (checkDirectMatch(checkItem)) {
+    return true;
+  }
+
+  console.log("Smart Permission Check: Not Found", {
+    item: checkItem.name,
   });
-
-  // If direct match found, return true
-  if (hasDirectMatch) {
-    return true;
-  }
-
-  // Fallback to mapping-based check
-  const potentialMatches = sidebarToApiFunctionMapping[itemNameLower as keyof typeof sidebarToApiFunctionMapping] || [];
-
-  const hasMappingMatch = activeFunctions.some((activeFunc) => {
-    return potentialMatches.some((match) => {
-      const matchLower = match.toLowerCase();
-      return (
-        activeFunc.functionName.toLowerCase().includes(matchLower) ||
-        (activeFunc.actionName &&
-          activeFunc.actionName.toLowerCase().includes(matchLower)) ||
-        matchLower.includes(activeFunc.functionName.toLowerCase()) ||
-        (activeFunc.actionName &&
-          matchLower.includes(activeFunc.actionName.toLowerCase()))
-      );
-    });
-  });
-
-  if (hasMappingMatch) {
-    return true;
-  }
-
-  // If item has no specific mapping and no href, show it (likely a parent category)
-  if (!checkItem.href && potentialMatches.length === 0) {
-    return true;
-  }
-
   return false;
 };
 
 /**
  * Find the first accessible route for the user
  */
-export const findFirstAccessibleRoute = (userRole: UserRoleResponse | null): string | null => {
+export const findFirstAccessibleRoute = (
+  userRole: UserRoleResponse | null
+): string | null => {
   if (!userRole) return null;
 
   // Iterate through all packages and their items
   for (const packageName of Object.keys(modulesByPackage)) {
-    const items = modulesByPackage[packageName as keyof typeof modulesByPackage] as SidebarItem[];
-    
+    const items = modulesByPackage[
+      packageName as keyof typeof modulesByPackage
+    ] as SidebarItem[];
+
     for (const item of items) {
       // Check if the item itself is accessible
       if (checkPermission(item, userRole)) {
@@ -144,17 +189,17 @@ export const findFirstAccessibleRoute = (userRole: UserRoleResponse | null): str
           for (const subItem of item.subItems) {
             if (checkPermission(subItem, userRole)) {
               if (subItem.href) return subItem.href;
-              
+
               // Check deeper nesting if needed (though usually 2 levels is max)
               if (subItem.subItems && subItem.subItems.length > 0) {
-                 for (const deepSubItem of subItem.subItems) {
-                    if (deepSubItem.href) return deepSubItem.href;
-                 }
+                for (const deepSubItem of subItem.subItems) {
+                  if (deepSubItem.href) return deepSubItem.href;
+                }
               }
             }
           }
         }
-        
+
         // If no sub-items or none accessible, but parent is accessible and has href
         if (item.href) {
           return item.href;

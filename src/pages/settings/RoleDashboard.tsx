@@ -11,7 +11,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Shield, Check, AlertCircle } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Shield,
+  Check,
+  AlertCircle,
+  Edit2,
+  X,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   roleService,
@@ -62,6 +70,7 @@ export const RoleDashboard = () => {
   );
   const [allModules, setAllModules] = useState<LockModule[]>([]);
   const [modulesLoading, setModulesLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Fetch roles with modules from new API
   useEffect(() => {
@@ -620,20 +629,46 @@ export const RoleDashboard = () => {
                   </span>
                 </p>
               </div>
-              <Button
-                onClick={handleUpdatePermissions}
-                className="bg-[#C72030] hover:bg-[#A11D2A] text-white min-w-[140px]"
-                disabled={updating || !currentRole}
-              >
-                {updating ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Saving...
-                  </>
+              <div className="flex gap-2">
+                {!isEditMode ? (
+                  <Button
+                    onClick={() => setIsEditMode(true)}
+                    variant="outline"
+                    className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                    disabled={!currentRole}
+                  >
+                    <Edit2 className="w-4 h-4 mr-2" />
+                    Edit Permissions
+                  </Button>
                 ) : (
-                  "Save Changes"
+                  <>
+                    <Button
+                      onClick={() => setIsEditMode(false)}
+                      variant="outline"
+                      className="border-gray-300 text-gray-600 hover:bg-gray-100"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={async () => {
+                        await handleUpdatePermissions();
+                        setIsEditMode(false);
+                      }}
+                      className="bg-[#C72030] hover:bg-[#A11D2A] text-white min-w-[140px]"
+                      disabled={updating || !currentRole}
+                    >
+                      {updating ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save Changes"
+                      )}
+                    </Button>
+                  </>
                 )}
-              </Button>
+              </div>
             </div>
 
             {/* Module Tabs */}
@@ -714,7 +749,7 @@ export const RoleDashboard = () => {
                             );
                           }}
                           className="w-5 h-5 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
-                          disabled={updating || !currentModule}
+                          disabled={!isEditMode || updating || !currentModule}
                         />
                       </div>
                     </div>
@@ -731,7 +766,7 @@ export const RoleDashboard = () => {
                           Function / Sub-function
                         </TableHead>
                         <TableHead className="w-[30%] text-center">
-                          Access Status
+                          Enabled
                         </TableHead>
                       </TableRow>
                     </TableHeader>
@@ -802,7 +837,9 @@ export const RoleDashboard = () => {
                                     }
                                   }}
                                   className="w-5 h-5 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
-                                  disabled={updating || !currentModule}
+                                  disabled={
+                                    !isEditMode || updating || !currentModule
+                                  }
                                 />
                               </div>
                             </TableCell>
@@ -852,7 +889,9 @@ export const RoleDashboard = () => {
                                       }
                                     }}
                                     className="w-4 h-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
-                                    disabled={updating || !currentModule}
+                                    disabled={
+                                      !isEditMode || updating || !currentModule
+                                    }
                                   />
                                 </div>
                               </TableCell>
