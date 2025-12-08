@@ -1056,6 +1056,73 @@ export const BookingSetupDetailPage = () => {
             </div>
           </div>
 
+          {/* Block Days Section */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <CalendarDays className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <TextField
+                label="Start Date"
+                type="date"
+                value={formData.blockDays.startDate}
+                variant="outlined"
+                InputProps={{ readOnly: true }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+              <TextField
+                label="End Date"
+                type="date"
+                value={formData.blockDays.endDate}
+                variant="outlined"
+                InputProps={{ readOnly: true }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </div>
+
+            <div className="flex gap-6 px-1">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="entireDay"
+                  name="dayType"
+                  checked={formData.blockDays.dayType === "entireDay"}
+                  disabled
+                  className="text-blue-600"
+                />
+                <label htmlFor="entireDay">Entire Day</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="selectedSlots"
+                  name="dayType"
+                  checked={formData.blockDays.dayType === "selectedSlots"}
+                  disabled
+                  className="text-blue-600"
+                />
+                <label htmlFor="selectedSlots">Selected Slots</label>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
+              <Textarea
+                value={formData.blockDays.blockReason}
+                className="min-h-[100px]"
+                readOnly
+              />
+            </div>
+          </div>
+
           {/* Configure Payment */}
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
             <div className="flex items-center gap-3">
@@ -1483,73 +1550,6 @@ export const BookingSetupDetailPage = () => {
                   />
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Block Days Section */}
-          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                <CalendarDays className="w-4 h-4" />
-              </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days</h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TextField
-                label="Start Date"
-                type="date"
-                value={formData.blockDays.startDate}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-              <TextField
-                label="End Date"
-                type="date"
-                value={formData.blockDays.endDate}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </div>
-
-            <div className="flex gap-6 px-1">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="entireDay"
-                  name="dayType"
-                  checked={formData.blockDays.dayType === "entireDay"}
-                  disabled
-                  className="text-blue-600"
-                />
-                <label htmlFor="entireDay">Entire Day</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="selectedSlots"
-                  name="dayType"
-                  checked={formData.blockDays.dayType === "selectedSlots"}
-                  disabled
-                  className="text-blue-600"
-                />
-                <label htmlFor="selectedSlots">Selected Slots</label>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
-              <Textarea
-                value={formData.blockDays.blockReason}
-                className="min-h-[100px]"
-                readOnly
-              />
             </div>
           </div>
         </div>
