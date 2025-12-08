@@ -492,12 +492,17 @@ export const getOrganizationsByEmailAndAutoSelect = async (
     hostname.includes("fm-uat.gophygital.work") ||
     hostname.includes("fm.gophygital.work");
 
+  const isDevSite =
+    hostname.includes("dev-fm-matrix.lockated.com");
+
   let apiUrl = "";
 
   if (isOmanSite || isFmSite) {
     apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
   } else if (isViSite) {
     apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`;
+  } else if (isDevSite) {
+    apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
   } else {
     // Default fallback
     apiUrl = `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
