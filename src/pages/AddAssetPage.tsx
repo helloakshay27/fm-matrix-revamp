@@ -1136,19 +1136,49 @@ const AddAssetPage = () => {
         newLocation.area = "";
         newLocation.floor = "";
         newLocation.room = "";
-        if (value) fetchWings(parseInt(value));
+        if (value) {
+          const buildingId = parseInt(value);
+          fetchWings(buildingId);
+          // Also fetch areas, floors, and rooms with buildingId filter
+          fetchAreas(0, buildingId);
+          fetchFloors(0, buildingId);
+          fetchRooms(0, buildingId);
+        }
       } else if (field === "wing") {
         newLocation.area = "";
         newLocation.floor = "";
         newLocation.room = "";
-        if (value) fetchAreas(parseInt(value));
+        if (value && newLocation.building) {
+          const wingId = parseInt(value);
+          const buildingId = parseInt(newLocation.building);
+          // Fetch areas for this wing
+          fetchAreas(wingId, buildingId);
+          // Also fetch floors and rooms with wing_id
+          fetchFloors(0, buildingId, wingId);
+          fetchRooms(0, buildingId, wingId);
+        }
       } else if (field === "area") {
         newLocation.floor = "";
         newLocation.room = "";
-        if (value) fetchFloors(parseInt(value));
+        if (value && newLocation.building) {
+          const areaId = parseInt(value);
+          const buildingId = parseInt(newLocation.building);
+          const wingId = newLocation.wing ? parseInt(newLocation.wing) : undefined;
+          // Fetch floors for this area, passing wing_id if available
+          fetchFloors(areaId, buildingId, wingId);
+          // Also fetch rooms with area_id and wing_id
+          fetchRooms(0, buildingId, wingId, areaId);
+        }
       } else if (field === "floor") {
         newLocation.room = "";
-        if (value) fetchRooms(parseInt(value));
+        if (value && newLocation.building) {
+          const floorId = parseInt(value);
+          const buildingId = parseInt(newLocation.building);
+          const wingId = newLocation.wing ? parseInt(newLocation.wing) : undefined;
+          const areaId = newLocation.area ? parseInt(newLocation.area) : undefined;
+          // Fetch rooms for this floor, passing all parent IDs
+          fetchRooms(floorId, buildingId, wingId, areaId);
+        }
       }
 
       return newLocation;
@@ -2082,7 +2112,7 @@ const AddAssetPage = () => {
   useEffect(() => {
     // Priority: selectedLocation.site, then formData.pms_site_id
     const siteIdToUse = selectedLocation.site || formData.pms_site_id;
-    
+
     if (siteIdToUse) {
       const siteId = parseInt(siteIdToUse);
       if (siteId) {
@@ -3055,15 +3085,15 @@ const AddAssetPage = () => {
     // and only for asset categories that have useful life fields
     const categoriesWithUsefulLife = [
       // "Leasehold Improvement",
-      "Furniture & Fixtures", 
+      "Furniture & Fixtures",
       "IT Equipment",
       "Machinery & Equipment",
       "Meter",
       "Tools & Instruments"
     ];
-    
-    if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0 && 
-        categoriesWithUsefulLife.includes(selectedAssetCategory)) {
+
+    if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0 &&
+      categoriesWithUsefulLife.includes(selectedAssetCategory)) {
       if (!formData.useful_life) {
         toast.error("Useful Life Required", {
           description:
@@ -8132,9 +8162,9 @@ const AddAssetPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <TextField
-                     label={<span>Asset Name <span style={{ color: '#C72030' }}>*</span></span>}
-                     
+                    <TextField
+                      label={<span>Asset Name <span style={{ color: '#C72030' }}>*</span></span>}
+
                       placeholder="Enter name"
                       variant="outlined"
                       fullWidth
@@ -10039,7 +10069,7 @@ const AddAssetPage = () => {
                             handleFieldChange("pms_area_id", e.target.value);
                           }}
                           sx={fieldStyles}
-                          disabled={!selectedLocation.wing || loading.areas}
+                          disabled={!selectedLocation.building || loading.areas}
                         >
                           <MenuItem value="">
                             <em>Select Area</em>
@@ -10071,7 +10101,7 @@ const AddAssetPage = () => {
                             handleFieldChange("pms_floor_id", e.target.value);
                           }}
                           sx={fieldStyles}
-                          disabled={!selectedLocation.area || loading.floors}
+                          disabled={!selectedLocation.building || loading.floors}
                         >
                           <MenuItem value="">
                             <em>Select Floor</em>
@@ -10105,7 +10135,7 @@ const AddAssetPage = () => {
                             handleFieldChange("pms_room_id", e.target.value);
                           }}
                           sx={fieldStyles}
-                          disabled={!selectedLocation.floor || loading.rooms}
+                          disabled={!selectedLocation.building || loading.rooms}
                         >
                           <MenuItem value="">
                             <em>Select Room</em>
@@ -12820,7 +12850,7 @@ const AddAssetPage = () => {
           <button
             onClick={handleSaveAndShow}
             className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md   text-sm sm:text-base"
-            // disabled={submitting}
+          // disabled={submitting}
           >
             Save & Show Details
           </button>
