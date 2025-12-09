@@ -2,4 +2,4 @@
 cd /var/www/html/development/fm-matrix-revamp
 
 echo "---- Installing Dependencies ----"
-npm ci
+npm install --legacy-peer-deps
