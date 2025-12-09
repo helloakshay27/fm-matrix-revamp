@@ -52,7 +52,7 @@ export const DuplicateUserDialog: React.FC<DuplicateUserDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">{errorMessage}</p>
             <p className="text-sm font-medium">
