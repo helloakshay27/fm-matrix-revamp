@@ -32,8 +32,9 @@ const initialState: OccupantUserCountsState = {
 // Async thunk to fetch occupant user counts
 export const fetchOccupantUserCounts = createAsyncThunk(
   'occupantUserCounts/fetchOccupantUserCounts',
-  async () => {
-    const response = await apiClient.get<OccupantUserCountsResponse>('/pms/users/user_counts.json?user_type=occupant')
+  async (userType?: string) => {
+    const params = userType ? `?user_type=${userType}` : '?user_type=occupant';
+    const response = await apiClient.get<OccupantUserCountsResponse>(`/pms/users/user_counts.json${params}`)
     return response.data
   }
 )

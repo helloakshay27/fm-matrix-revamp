@@ -91,6 +91,7 @@ export const fetchOccupantUsers = createAsyncThunk(
     entity_id_eq = "",
     app_downloaded_eq,
     search_all_fields_cont = "",
+    lock_user_permissions_user_type_eq = "",
   }: {
     page: number;
     perPage: number;
@@ -102,6 +103,7 @@ export const fetchOccupantUsers = createAsyncThunk(
     entity_id_eq?: string;
     app_downloaded_eq?: boolean;
     search_all_fields_cont?: string;
+    lock_user_permissions_user_type_eq?: string;
   }) => {
     const params = new URLSearchParams({
       "q[lock_user_permission_status_eq]": lock_user_permission_status_eq,
@@ -111,6 +113,7 @@ export const fetchOccupantUsers = createAsyncThunk(
       "q[email_cont]": email_cont,
       "q[entity_id_eq]": entity_id_eq,
       "q[search_all_fields_cont]": search_all_fields_cont,
+      "q[lock_user_permissions_user_type_eq]": lock_user_permissions_user_type_eq,
     });
     if (app_downloaded_eq !== undefined) {
       params.append("q[app_downloaded_eq]", String(app_downloaded_eq));

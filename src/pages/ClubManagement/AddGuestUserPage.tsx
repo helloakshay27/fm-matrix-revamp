@@ -112,8 +112,6 @@ export const AddGuestUserPage: React.FC = () => {
   const handleCancel = () => navigate('/club-management/users/guest');
 
   const validateForm = () => {
-    const mobileRegex = /^[0-9]{10}$/;
-
     if (!formData.firstName) {
       toast.error("First Name is required.");
       return false;
@@ -122,30 +120,14 @@ export const AddGuestUserPage: React.FC = () => {
       toast.error("Last Name is required.");
       return false;
     }
-    if (!formData.mobileNumber) {
-      toast.error("Mobile Number is required.");
-      return false;
-    } else if (!mobileRegex.test(formData.mobileNumber)) {
-      toast.error("Mobile Number must be 10 digits.");
-      return false;
-    }
     if (!formData.email) {
       toast.error("Email is required.");
       return false;
     }
-   
-    if (!formData.accessLevel) {
-      toast.error("Access Level is required.");
-      return false;
-    }
 
-    if (formData.accessLevel === 'Company' && formData.selectedCompanies.length === 0) {
-      toast.error("Select at least one company.");
-      return false;
-    }
-
-    if (formData.accessLevel === 'Site' && formData.selectedSites.length === 0) {
-      toast.error("Select at least one site.");
+    // Optional validation: if mobile is provided, validate format
+    if (formData.mobileNumber && !/^[0-9]{10}$/.test(formData.mobileNumber)) {
+      toast.error("Mobile Number must be 10 digits.");
       return false;
     }
 
@@ -169,7 +151,7 @@ export const AddGuestUserPage: React.FC = () => {
               employee_id: formData.employeeId,
               designation: formData.designation,
               department_id: formData.department || undefined,
-              user_type: 'pms_occupant',
+              user_type: 'pms_guest',
               access_level: formData.accessLevel,
               access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
               status: "pending"
@@ -263,14 +245,12 @@ export const AddGuestUserPage: React.FC = () => {
                 InputProps={{ sx: fieldStyles }}
               />
               <TextField
-                label={<>Mobile Number <span className="text-red-500">*</span></>}
+                label="Mobile Number"
                 placeholder="Enter Mobile Number"
                 value={formData.mobileNumber}
                 onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
                 fullWidth
                 variant="outlined"
-                error={errors.mobileNumber}
-                helperText={errors.mobileNumber ? 'Mobile Number is required' : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
@@ -302,9 +282,9 @@ export const AddGuestUserPage: React.FC = () => {
                 </Select>
               </FormControl>
           
-              <FormControl fullWidth variant="outlined" error={errors.accessLevel} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                 <InputLabel shrink>
-                  Access Level <span className="text-red-500">*</span>
+                  Access Level
                 </InputLabel>
                 <Select
                   value={formData.accessLevel}
@@ -313,7 +293,7 @@ export const AddGuestUserPage: React.FC = () => {
                     handleInputChange('selectedSites', []);
                     handleInputChange('selectedCompanies', []);
                   }}
-                  label="Access Level *"
+                  label="Access Level"
                   notched
                 >
                   <MenuItem value="">
@@ -324,9 +304,9 @@ export const AddGuestUserPage: React.FC = () => {
                 </Select>
               </FormControl>
               {formData.accessLevel === 'Site' && (
-                <FormControl fullWidth variant="outlined" error={errors.selectedSites} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>
-                    Select Sites <span className="text-red-500">*</span>
+                    Select Sites
                   </InputLabel>
                   <Select
                     multiple
@@ -334,7 +314,7 @@ export const AddGuestUserPage: React.FC = () => {
                     onChange={(e) =>
                       handleInputChange('selectedSites', typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)
                     }
-                    label="Select Sites *"
+                    label="Select Sites"
                     renderValue={(selected) =>
                       sites
                         ?.filter((s) => (selected as string[]).includes(String(s.id)))
@@ -352,9 +332,9 @@ export const AddGuestUserPage: React.FC = () => {
                 </FormControl>
               )}
               {formData.accessLevel === 'Company' && (
-                <FormControl fullWidth variant="outlined" error={errors.selectedCompanies} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>
-                    Select Companies <span className="text-red-500">*</span>
+                    Select Companies
                   </InputLabel>
                   <Select
                     multiple
@@ -365,7 +345,7 @@ export const AddGuestUserPage: React.FC = () => {
                         typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value
                       )
                     }
-                    label="Select Companies *"
+                    label="Select Companies"
                     renderValue={(selected) => (selected as string[]).join(', ')}
                     notched
                   >

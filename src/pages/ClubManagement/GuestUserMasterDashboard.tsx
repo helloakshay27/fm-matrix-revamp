@@ -144,6 +144,7 @@ export const GuestUserMasterDashboard = () => {
         entity_id_eq: newFilters.entity,
         app_downloaded_eq: newFilters.downloaded,
         search_all_fields_cont: newFilters.search,
+        lock_user_permissions_user_type_eq: 'pms_guest',
       })
     );
     toast.success("Filters applied successfully");
@@ -183,7 +184,7 @@ export const GuestUserMasterDashboard = () => {
   const fetchUsers = () => {
     try {
       dispatch(
-        fetchOccupantUsers({ page: pagination.current_page, perPage: 10 })
+        fetchOccupantUsers({ page: pagination.current_page, perPage: 10, lock_user_permissions_user_type_eq: 'pms_guest' })
       );
     } catch (error) {
       console.log(error);
@@ -193,7 +194,7 @@ export const GuestUserMasterDashboard = () => {
   useEffect(() => {
     setCurrentSection("Club Management");
     fetchUsers();
-    dispatch(fetchOccupantUserCounts());
+    dispatch(fetchOccupantUserCounts('guest'));
   }, [setCurrentSection, dispatch]);
 
   const debouncedSearch = useCallback(
@@ -227,6 +228,7 @@ export const GuestUserMasterDashboard = () => {
           entity_id_eq: filters.entity,
           app_downloaded_eq: filters.downloaded,
           search_all_fields_cont: searchTerm,
+          lock_user_permissions_user_type_eq: 'pms_guest',
         })
       );
     } catch (error) {
@@ -416,7 +418,7 @@ export const GuestUserMasterDashboard = () => {
       );
 
       toast.success("User status updated successfully!");
-      dispatch(fetchOccupantUserCounts()); // Refresh counts
+      dispatch(fetchOccupantUserCounts('guest')); // Refresh counts
       setStatusDialogOpen(false);
       setSelectedUser(null);
       setSelectedStatus("");

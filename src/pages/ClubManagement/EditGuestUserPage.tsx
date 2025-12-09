@@ -224,7 +224,7 @@ export const EditGuestUserPage: React.FC = () => {
               employee_id: formData.employeeId,
               designation: formData.designation,
               department_id: formData.department || undefined,
-              user_type: 'pms_occupant',
+              user_type: 'pms_guest',
               access_level: formData.accessLevel,
               access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
             },

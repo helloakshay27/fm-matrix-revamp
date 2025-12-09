@@ -324,11 +324,11 @@ const modulesByPackage = {
           href: "/club-management/users/occupant-users",
           color: "text-[#1a1a1a]",
         },
-        //  {
-        //   name: "Guest",
-        //   href: "/club-management/users/guest",
-        //   color: "text-[#1a1a1a]",
-        // },
+         {
+          name: "Guest",
+          href: "/club-management/users/guest",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
     {
