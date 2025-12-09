@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { createTheme, ThemeProvider } from "@mui/material";
+import axios from "axios";
 import { ArrowLeft, User } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 const muiTheme = createTheme({
     components: {
@@ -64,7 +66,36 @@ const muiTheme = createTheme({
 });
 
 const AccessoriesDetailsPage = () => {
-    const [accessory, setAccessory] = useState({});
+    const { id } = useParams();
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+
+    const navigate = useNavigate();
+    const [accessory, setAccessory] = useState({
+        name: '',
+        quantity: '',
+        unit: '',
+        max_stock_level: '',
+        cost: '',
+    });
+
+    const fetchAccessory = async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/pms/inventories/${id}.json`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+
+            setAccessory(response.data);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    useEffect(() => {
+        fetchAccessory();
+    }, [id]);
 
     return (
         <ThemeProvider theme={muiTheme}>
@@ -73,7 +104,7 @@ const AccessoriesDetailsPage = () => {
                     <div className="flex items-end justify-between gap-2">
                         <Button
                             variant="ghost"
-                            //   onClick={handleClose}
+                            onClick={() => navigate(-1)}
                             className="p-0"
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -98,35 +129,35 @@ const AccessoriesDetailsPage = () => {
                                 <span className="text-gray-500 min-w-[140px]">Accessory Name</span>
                                 <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
-
+                                    {accessory?.name}
                                 </span>
                             </div>
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Quantity</span>
                                 <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
-
+                                    {accessory?.quantity}
                                 </span>
                             </div>
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Unit</span>
                                 <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
-
+                                    {accessory?.unit}
                                 </span>
                             </div>
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Maximum Stock Level</span>
                                 <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
-
+                                    {accessory?.max_stock_level}
                                 </span>
                             </div>
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Cost Per Unit</span>
                                 <span className="text-gray-500 mx-2">:</span>
                                 <span className="text-gray-900 font-medium">
-
+                                    {accessory?.cost}
                                 </span>
                             </div>
                         </div>

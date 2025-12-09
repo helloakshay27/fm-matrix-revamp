@@ -48,6 +48,7 @@ const AccessoriesSetup = () => {
     const navigate = useNavigate();
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [editingAccessory, setEditingAccessory] = useState(null);
     const [accessories, setAccessories] = useState([]);
 
     const fetchAccessories = async () => {
@@ -62,6 +63,22 @@ const AccessoriesSetup = () => {
         } catch (error) {
             console.log(error)
         }
+    }
+
+    const handleAddOpen = () => {
+        setEditingAccessory(null);
+        setIsAddModalOpen(true);
+    }
+
+    const handleEditOpen = (accessory) => {
+        setEditingAccessory(accessory);
+        setIsAddModalOpen(true);
+    }
+
+    const handleModalClose = () => {
+        setIsAddModalOpen(false);
+        setEditingAccessory(null);
+        fetchAccessories();
     }
 
     useEffect(() => {
@@ -87,7 +104,7 @@ const AccessoriesSetup = () => {
             <Button
                 size="sm"
                 variant="ghost"
-            // onClick={() => handleEditDetails(plan.id)}
+                onClick={() => handleEditOpen(accessory)}
             >
                 <Pencil className="w-4 h-4" />
             </Button>
@@ -97,7 +114,7 @@ const AccessoriesSetup = () => {
     const leftActions = (
         <div className="flex items-center gap-2">
             <Button
-                onClick={() => setIsAddModalOpen(true)}
+                onClick={handleAddOpen}
                 className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
             >
                 <Plus className="w-4 h-4" />
@@ -126,7 +143,8 @@ const AccessoriesSetup = () => {
 
             <AddAccessoriesModal
                 open={isAddModalOpen}
-                onOpenChange={setIsAddModalOpen}
+                onOpenChange={handleModalClose}
+                editingAccessory={editingAccessory}
             />
         </div>
     )

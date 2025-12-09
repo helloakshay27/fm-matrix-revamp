@@ -1,11 +1,12 @@
 import { useState } from "react";
+import React from "react";
 import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
 import { Button } from "./ui/button";
 import { X } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 
-const AddAccessoriesModal = ({ open, onOpenChange }) => {
+const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
 
@@ -17,6 +18,27 @@ const AddAccessoriesModal = ({ open, onOpenChange }) => {
         maxStockLevel: "",
         costPerUnit: "",
     });
+
+    // Update form data when editingAccessory changes
+    React.useEffect(() => {
+        if (editingAccessory) {
+            setFormData({
+                name: editingAccessory.name || "",
+                quantity: editingAccessory.quantity || "",
+                unit: editingAccessory.unit || "",
+                maxStockLevel: editingAccessory.max_stock_level || "",
+                costPerUnit: editingAccessory.cost || "",
+            });
+        } else {
+            setFormData({
+                name: "",
+                quantity: "",
+                unit: "",
+                maxStockLevel: "",
+                costPerUnit: "",
+            });
+        }
+    }, [editingAccessory, open]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -45,15 +67,27 @@ const AddAccessoriesModal = ({ open, onOpenChange }) => {
             }
         }
         try {
-            await axios.post(`https://${baseUrl}/pms/inventories.json`, payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
+            if (editingAccessory) {
+                // Update existing accessory
+                await axios.put(`https://${baseUrl}/pms/inventories/${editingAccessory.id}.json`, payload, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                toast.success("Accessories updated successfully")
+            } else {
+                // Create new accessory
+                await axios.post(`https://${baseUrl}/pms/inventories.json`, payload, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+                toast.success("Accessories added successfully")
+            }
             onOpenChange(false)
-            toast.success("Accessories added successfully")
         } catch (error) {
             console.log(error)
+            toast.error(editingAccessory ? "Failed to update accessories" : "Failed to add accessories")
         } finally {
             setIsSubmitting(false)
         }
@@ -62,7 +96,7 @@ const AddAccessoriesModal = ({ open, onOpenChange }) => {
     return (
         <Dialog open={open} onClose={onOpenChange} fullWidth>
             <div className="flex items-center justify-between px-6 pt-6">
-                <h5 className="text-lg font-semibold">Add Accessories</h5>
+                <h5 className="text-lg font-semibold">{editingAccessory ? "Edit Accessories" : "Add Accessories"}</h5>
                 <Button
                     variant="ghost"
                     size="sm"
@@ -142,7 +176,7 @@ const AddAccessoriesModal = ({ open, onOpenChange }) => {
                         style={{ backgroundColor: "#C72030" }}
                         className="text-white hover:bg-[#C72030]/90 flex-1"
                     >
-                        Add
+                        {isSubmitting ? (editingAccessory ? "Updating..." : "Adding...") : (editingAccessory ? "Update" : "Add")}
                     </Button>
                 </div>
             </DialogContent>
