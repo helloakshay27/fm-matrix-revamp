@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Phone, Mail, Globe, MapPin, User as UserIcon, ArrowLeft, Share2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { useSearchParams } from 'react-router-dom';
-import viBusinessCardBg from '../../assets/VI-businesscard.png';
-import { API_CONFIG } from '@/config/apiConfig';
+import React, { useState, useEffect } from "react";
+import {
+  Phone,
+  Mail,
+  Globe,
+  MapPin,
+  User as UserIcon,
+  ArrowLeft,
+  Share2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
+import viBusinessCardBg from "../../assets/VI-businesscard.png";
+import baseClient from "@/utils/withoutTokenBase";
 
 interface UserCardData {
   id: number;
@@ -45,23 +53,18 @@ export const ViBusinessCard: React.FC = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const card = searchParams.get('card');
+        const card = searchParams.get("card");
         if (!card) {
-          setError('No card token provided');
+          setError("No card token provided");
           setLoading(false);
           return;
         }
 
-        const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
-        const response = await fetch(
-          `https://${baseUrl}/pms/users/user_info.json?token=${card}`
+        const response = await baseClient.get(
+          `/pms/users/user_info.json?token=${card}`
         );
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch user data');
-        }
-
-        const data: ApiResponse = await response.json();
+        const data: ApiResponse = response.data;
 
         // Map API response to UserCardData
         const mappedData: UserCardData = {
@@ -69,21 +72,21 @@ export const ViBusinessCard: React.FC = () => {
           name: data.fullname,
           email: data.email,
           phone: `+${data.country_code} ${data.mobile}`,
-          designation: data.lock_user_permission?.department_name || '',
-          department: data.lock_user_permission?.department_name || '',
+          designation: data.lock_user_permission?.department_name || "",
+          department: data.lock_user_permission?.department_name || "",
           company: data.user_company_name,
           profileImage: data.avatar_url,
-          website: data.user_other_detail?.website_link || '',
+          website: data.user_other_detail?.website_link || "",
           address: data.site_name,
         };
 
         setUserData(mappedData);
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching user data:', err);
-        setError('Failed to load user data');
+        console.error("Error fetching user data:", err);
+        setError("Failed to load user data");
         setLoading(false);
-        toast.error('Failed to load user information');
+        toast.error("Failed to load user information");
       }
     };
 
@@ -98,25 +101,25 @@ VERSION:3.0
 FN:${userData.name}
 EMAIL:${userData.email}
 TEL:${userData.phone}
-ORG:${userData.company || ''}
-TITLE:${userData.designation || ''}
-ADR:;;${userData.address || ''};;;;
-URL:${userData.website || ''}
+ORG:${userData.company || ""}
+TITLE:${userData.designation || ""}
+ADR:;;${userData.address || ""};;;;
+URL:${userData.website || ""}
 END:VCARD`;
 
-    const blob = new Blob([vCard], { type: 'text/vcard' });
+    const blob = new Blob([vCard], { type: "text/vcard" });
     const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = `${userData.name.replace(/\s+/g, '_')}_contact.vcf`;
+    link.download = `${userData.name.replace(/\s+/g, "_")}_contact.vcf`;
     link.click();
     window.URL.revokeObjectURL(url);
-    toast.success('Contact saved to device!');
+    toast.success("Contact saved to device!");
   };
 
   const handleShare = async () => {
     if (!userData) return;
-    
+
     const shareData = {
       title: userData.name,
       text: `${userData.name}\n${userData.designation}\n${userData.phone}\n${userData.email}`,
@@ -125,155 +128,199 @@ END:VCARD`;
     try {
       if (navigator.share) {
         await navigator.share(shareData);
-        toast.success('Shared successfully!');
+        toast.success("Shared successfully!");
       } else {
         // Fallback: copy to clipboard
         navigator.clipboard.writeText(shareData.text);
-        toast.success('Contact info copied to clipboard!');
+        toast.success("Contact info copied to clipboard!");
       }
     } catch (error) {
-      console.error('Error sharing:', error);
+      console.error("Error sharing:", error);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
-      {loading ? (
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E31E24] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      ) : error ? (
-        <div className="text-center">
-          <p className="text-red-600">{error}</p>
-        </div>
-      ) : !userData ? (
-        <div className="text-center">
-          <p className="text-gray-600">No user data available</p>
-        </div>
-      ) : (
-      <div className="w-full max-w-[420px]">
-        {/* Business Card */}
-        <div className="relative bg-white overflow-hidden" style={{ boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)', borderRadius: '0' }}>
-          {/* Decorative background image */}
-          <div className="absolute top-0 left-0 w-full h-[240px] overflow-hidden pointer-events-none">
-            <img 
-              src={viBusinessCardBg} 
-              alt="VI Business Card Background" 
-              className="w-full h-full object-cover"
-            />
-          </div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
 
-          {/* Content Section */}
-          <div className="relative z-10">
-            {/* Profile Image - Positioned inside VI background area */}
-            <div className="absolute top-[130px] left-12">
-              <div className="w-[100px] h-[100px] overflow-hidden" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)', border: '5px solid white' }}>
-                {userData.profileImage ? (
-                  <img 
-                    src={userData.profileImage} 
-                    alt={userData.name}
-                    className="w-full h-full object-cover"
-                    style={{ imageRendering: '-webkit-optimize-contrast' }}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                    <UserIcon className="w-12 h-12 text-gray-500" />
-                  </div>
-                )}
-              </div>
+  if (error || !userData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="text-6xl mb-4">👤</div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          {error || "User Not Found"}
+        </h2>
+        <p className="text-gray-600 text-center">
+          {error || "The user data could not be loaded."}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="h-screen bg-gray-50 overflow-y-auto"
+      style={{
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      }}
+    >
+      <div className="w-full h-full">
+        {/* Business Card */}
+        <div
+          className="relative bg-white overflow-hidden w-full h-full"
+          style={{
+            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
+            borderRadius: "0",
+          }}
+        >
+            {/* Decorative background image */}
+            <div className="absolute top-0 left-0 w-full h-[240px] overflow-hidden pointer-events-none">
+              <img
+                src={viBusinessCardBg}
+                alt="VI Business Card Background"
+                className="w-full h-full object-cover"
+              />
             </div>
 
-            {/* Contact Information */}
-            <div className="pt-[240px] pb-8">
-              {/* Name and Designation */}
-              <div className="flex items-start gap-3 mb-4 py-3 px-6" style={{ backgroundColor: '#F5F5F5' }}>
-                <div className="mt-1 flex-shrink-0">
-                  <UserIcon className="w-5 h-5" style={{ color: '#666' }} />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-[15px] font-semibold leading-tight" style={{ color: '#000' }}>
-                    {userData.name}
-                  </h2>
-                  {userData.designation && (
-                    <p className="text-[13px] leading-tight mt-1" style={{ color: '#666' }}>
-                      {userData.designation}
-                    </p>
+            {/* Content Section */}
+            <div className="relative z-10">
+              {/* Profile Image - Positioned inside VI background area */}
+              <div className="absolute top-[130px] left-12">
+                <div
+                  className="w-[100px] h-[100px] overflow-hidden"
+                  style={{
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
+                    border: "5px solid white",
+                  }}
+                >
+                  {userData.profileImage ? (
+                    <img
+                      src={userData.profileImage}
+                      alt={userData.name}
+                      className="w-full h-full object-cover"
+                      style={{ imageRendering: "-webkit-optimize-contrast" }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                      <UserIcon className="w-12 h-12 text-gray-500" />
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* Phone */}
-              <div className="flex items-center gap-3 mb-4 px-6">
-                <div className="flex-shrink-0">
-                  <Phone className="w-5 h-5" style={{ color: '#666' }} />
-                </div>
-                <div className="flex-1">
-                  <a 
-                    href={`tel:${userData.phone}`}
-                    className="text-[14px]"
-                    style={{ color: '#000' }}
-                  >
-                    {userData.phone}
-                  </a>
-                </div>
-              </div>
-
-              {/* Email */}
-              <div className="flex items-center gap-3 mb-4 py-3 px-6" style={{ backgroundColor: '#F5F5F5' }}>
-                <div className="flex-shrink-0">
-                  <Mail className="w-5 h-5" style={{ color: '#666' }} />
-                </div>
-                <div className="flex-1">
-                  <a 
-                    href={`mailto:${userData.email}`}
-                    className="text-[14px] break-all"
-                    style={{ color: '#000' }}
-                  >
-                    {userData.email}
-                  </a>
-                </div>
-              </div>
-
-              {/* Website */}
-              {userData.website && (
-                <div className="flex items-center gap-3 mb-4 px-6">
-                  <div className="flex-shrink-0">
-                    <Globe className="w-5 h-5" style={{ color: '#666' }} />
+              {/* Contact Information */}
+              <div className="pt-[240px] pb-8">
+                {/* Name and Designation */}
+                <div
+                  className="flex items-start gap-3 mb-4 py-3 px-6"
+                  style={{ backgroundColor: "#F5F5F5" }}
+                >
+                  <div className="mt-1 flex-shrink-0">
+                    <UserIcon className="w-5 h-5" style={{ color: "#666" }} />
                   </div>
                   <div className="flex-1">
-                    <a 
-                      href={userData.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[14px] break-all"
-                      style={{ color: '#000' }}
+                    <h2
+                      className="text-[15px] font-semibold leading-tight"
+                      style={{ color: "#000" }}
                     >
-                      {userData.website}
+                      {userData.name}
+                    </h2>
+                    {userData.designation && (
+                      <p
+                        className="text-[13px] leading-tight mt-1"
+                        style={{ color: "#666" }}
+                      >
+                        {userData.designation}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div className="flex items-center gap-3 mb-4 px-6">
+                  <div className="flex-shrink-0">
+                    <Phone className="w-5 h-5" style={{ color: "#666" }} />
+                  </div>
+                  <div className="flex-1">
+                    <a
+                      href={`tel:${userData.phone}`}
+                      className="text-[14px]"
+                      style={{ color: "#000" }}
+                    >
+                      {userData.phone}
                     </a>
                   </div>
                 </div>
-              )}
 
-              {/* Address */}
-              {userData.address && (
-                <div className="flex items-start gap-3 py-3 px-6" style={{ backgroundColor: '#F5F5F5' }}>
-                  <div className="mt-1 flex-shrink-0">
-                    <MapPin className="w-5 h-5" style={{ color: '#666' }} />
+                {/* Email */}
+                <div
+                  className="flex items-center gap-3 mb-4 py-3 px-6"
+                  style={{ backgroundColor: "#F5F5F5" }}
+                >
+                  <div className="flex-shrink-0">
+                    <Mail className="w-5 h-5" style={{ color: "#666" }} />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[14px] leading-relaxed whitespace-pre-line" style={{ color: '#000' }}>
-                      {userData.address}
-                    </p>
+                    <a
+                      href={`mailto:${userData.email}`}
+                      className="text-[14px] break-all"
+                      style={{ color: "#000" }}
+                    >
+                      {userData.email}
+                    </a>
                   </div>
                 </div>
-              )}
+
+                {/* Website */}
+                {userData.website && (
+                  <div className="flex items-center gap-3 mb-4 px-6">
+                    <div className="flex-shrink-0">
+                      <Globe className="w-5 h-5" style={{ color: "#666" }} />
+                    </div>
+                    <div className="flex-1">
+                      <a
+                        href={userData.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[14px] break-all"
+                        style={{ color: "#000" }}
+                      >
+                        {userData.website}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Address */}
+                {userData.address && (
+                  <div
+                    className="flex items-start gap-3 py-3 px-6"
+                    style={{ backgroundColor: "#F5F5F5" }}
+                  >
+                    <div className="mt-1 flex-shrink-0">
+                      <MapPin className="w-5 h-5" style={{ color: "#666" }} />
+                    </div>
+                    <div className="flex-1">
+                      <p
+                        className="text-[14px] leading-relaxed whitespace-pre-line"
+                        style={{ color: "#000" }}
+                      >
+                        {userData.address}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Save Contact Button */}
-        {/* <button
+          {/* Save Contact Button */}
+          {/* <button
           onClick={handleDownloadVCard}
           className="w-full mt-7 text-white font-semibold text-[15px] py-[15px] px-6 rounded-full transition-all active:scale-[0.98]"
           style={{ 
@@ -285,7 +332,6 @@ END:VCARD`;
           Save Contact
         </button> */}
       </div>
-      )}
     </div>
   );
 };
