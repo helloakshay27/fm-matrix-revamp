@@ -412,10 +412,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           <div
             key={step}
             className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${step === currentStep
-                ? "bg-[#C72030] text-white shadow-lg scale-110"
-                : step < currentStep
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-100 text-gray-400"
+              ? "bg-[#C72030] text-white shadow-lg scale-110"
+              : step < currentStep
+                ? "bg-green-500 text-white"
+                : "bg-gray-100 text-gray-400"
               }`}
           >
             {step < currentStep ? (
@@ -454,7 +454,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           htmlFor="email"
           className="text-gray-700 font-medium text-base block mb-2"
         >
-          Emails Address
+          Email Address
         </Label>
 
         {/* Input Field */}
@@ -817,8 +817,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
               <p
                 className={`${isViSite
-                    ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
-                    : "text-gray-600 text-sm font-medium"
+                  ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
+                  : "text-gray-600 text-sm font-medium"
                   }`}
               >
                 Sign in to your account
