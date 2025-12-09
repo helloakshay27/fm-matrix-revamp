@@ -349,7 +349,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
       const from =
         (location.state as { from?: Location })?.from?.pathname +
-          (location.state as { from?: Location })?.from?.search ||
+        (location.state as { from?: Location })?.from?.search ||
         "/maintenance/asset";
 
       toast.success(`Welcome back, ${response.firstname}! Login successful.`);
@@ -411,13 +411,12 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         {[1, 2, 3].map((step) => (
           <div
             key={step}
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${
-              step === currentStep
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${step === currentStep
                 ? "bg-[#C72030] text-white shadow-lg scale-110"
                 : step < currentStep
-                ? "bg-green-500 text-white"
-                : "bg-gray-100 text-gray-400"
-            }`}
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-100 text-gray-400"
+              }`}
           >
             {step < currentStep ? (
               <Check className="w-5 h-5 stroke-[2.5]" />
@@ -429,19 +428,16 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       </div>
       <div className="flex justify-center items-center gap-2">
         <div
-          className={`h-1 w-16 rounded-full transition-all ${
-            currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"
-          }`}
+          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"
+            }`}
         ></div>
         <div
-          className={`h-1 w-16 rounded-full transition-all ${
-            currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"
-          }`}
+          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"
+            }`}
         ></div>
         <div
-          className={`h-1 w-16 rounded-full transition-all ${
-            currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"
-          }`}
+          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"
+            }`}
         ></div>
       </div>
       <p className="text-gray-400 text-sm mt-3 font-medium">
@@ -458,7 +454,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           htmlFor="email"
           className="text-gray-700 font-medium text-base block mb-2"
         >
-          Email Address
+          Emails Address
         </Label>
 
         {/* Input Field */}
@@ -699,9 +695,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           <div className=" rounded-2xl  p-8 sm:p-10 relative z-10 animate-fade-in">
             {/* Logo */}
             <div
-              className={`text-center mb-5 flex flex-col items-center space-y-2 ${
-                isViSite ? "-mt-4" : ""
-              }`}
+              className={`text-center mb-5 flex flex-col items-center space-y-2 ${isViSite ? "-mt-4" : ""
+                }`}
             >
               {isOmanSite ? (
                 <svg
@@ -821,11 +816,10 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
               )}
 
               <p
-                className={`${
-                  isViSite
+                className={`${isViSite
                     ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
                     : "text-gray-600 text-sm font-medium"
-                }`}
+                  }`}
               >
                 Sign in to your account
               </p>
