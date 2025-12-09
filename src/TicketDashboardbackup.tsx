@@ -22,7 +22,7 @@ import { ResponseTATCard } from '@/components/ResponseTATCard';
 import { ResolutionTATCard } from '@/components/ResolutionTATCard';
 import { useToast } from '@/hooks/use-toast';
 
-// Sortable Chart Item Component
+// Sortable Chart Item Components
 const SortableChartItem = ({
   id,
   children
