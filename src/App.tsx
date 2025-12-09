@@ -757,6 +757,7 @@ import EmployeeDeletionHistory from "./components/EmployeeDeletionHistory";
 import AddAddressMaster from "./pages/master/AddAddressMaster";
 import EditAddressMaster from "./pages/master/EditAddressMaster";
 import MobileLMCPage from "./pages/MobileLMCPage";
+import { ViBusinessCard } from "./pages/mobile/ViBusinessCard";
 import { CompanyPartnersSetupDashboard } from "./pages/CompanyPartnersSetupDashboard";
 import { TestimonialsSetupDashboard } from "./pages/TestimonialsSetupDashboard";
 import BannerSetupDashboard from "./pages/BannerSetupDashboard";
@@ -3496,6 +3497,7 @@ function App() {
                   }
                 />
                 <Route path="/mobile/lmc" element={<MobileLMCPage />} />
+                <Route path="/vi-business-card" element={<ViBusinessCard />} />
 
                 {/* Mobile Routes */}
                 <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
