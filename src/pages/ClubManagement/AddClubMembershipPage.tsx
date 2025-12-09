@@ -1477,7 +1477,7 @@ export const AddClubMembershipPage = () => {
                   <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">Membership Details</h2>
 
                   {/* Club Membership - Always Enabled */}
-                  <div className="mb-6">
+                  {/* <div className="mb-6">
                     <FormControlLabel
                       control={
                         <Checkbox
@@ -1496,7 +1496,7 @@ export const AddClubMembershipPage = () => {
                       }
                       label="Club Membership (Always Enabled)"
                     />
-                  </div>
+                  </div> */}
 
                   {/* Membership Type and Referred By */}
                   <div className="mb-6">
@@ -1830,7 +1830,7 @@ export const AddClubMembershipPage = () => {
 
                     {/* Question 1: Existing injuries or medical conditions */}
                     <div className="mb-6">
-                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2">
+                      <FormLabel component="legend" className="text-sm font-medium text-black mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Do you have any existing injuries or medical conditions?
                       </FormLabel>
                       <RadioGroup
@@ -1887,7 +1887,7 @@ export const AddClubMembershipPage = () => {
 
                     {/* Question 2: Physical restrictions */}
                     <div className="mb-6">
-                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2">
+                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Do you have any physical restrictions or movement limitations?
                       </FormLabel>
                       <RadioGroup
@@ -1910,7 +1910,7 @@ export const AddClubMembershipPage = () => {
 
                     {/* Question 3: Current medication */}
                     <div className="mb-6">
-                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2">
+                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Are you currently under medication?
                       </FormLabel>
                       <RadioGroup
@@ -1930,26 +1930,6 @@ export const AddClubMembershipPage = () => {
                         />
                       </RadioGroup>
                     </div>
-
-                    {/* Question 4: Pilates experience */}
-                    <div>
-                      <FormControl fullWidth sx={fieldStyles}>
-                        <InputLabel>Have you practiced Pilates before?</InputLabel>
-                        <Select
-                          value={pilatesExperience}
-                          onChange={(e) => setPilatesExperience(e.target.value)}
-                          label="Have you practiced Pilates before?"
-                        >
-                          <MenuItem value="">
-                            <em>Select Experience Level</em>
-                          </MenuItem>
-                          <MenuItem value="Never">Never</MenuItem>
-                          <MenuItem value="Beginner">Beginner</MenuItem>
-                          <MenuItem value="Intermediate">Intermediate</MenuItem>
-                          <MenuItem value="Advanced">Advanced</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </div>
                   </div>
 
                   {/* Card 6: Activity Interests */}
@@ -1959,7 +1939,7 @@ export const AddClubMembershipPage = () => {
 
                     {/* Primary Fitness Goals */}
                     <div className="mb-6">
-                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3">
+                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Primary Fitness Goals:
                       </FormLabel>
                       <div className="space-y-1">
@@ -2035,8 +2015,8 @@ export const AddClubMembershipPage = () => {
                     </div>
 
                     {/* Which sessions are you interested in? */}
-                    <div>
-                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3">
+                    <div className="mb-6">
+                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Which sessions are you interested in?
                       </FormLabel>
                       <div className="space-y-1">
@@ -2113,6 +2093,47 @@ export const AddClubMembershipPage = () => {
                         </div>
                       </div>
                     </div>
+
+                    <div>
+                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
+                        Have you practiced Pilates before?
+                      </FormLabel>
+                      <FormControl fullWidth sx={fieldStyles}>
+                        {/* <InputLabel>Have you practiced Pilates before?</InputLabel> */}
+                        <Select
+                          value={pilatesExperience}
+                          onChange={(e) => setPilatesExperience(e.target.value)}
+                          label="Have you practiced Pilates before?"
+                          displayEmpty
+                          sx={{
+                            border: "1px solid #000",
+                            borderRadius: "4px",
+
+                            // Remove blue outline
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              border: "none",
+                            },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                              border: "none",
+                            },
+
+                            // Remove box shadow
+                            "&.Mui-focused": {
+                              outline: "none",
+                              boxShadow: "none",
+                            },
+                          }}
+                        >
+                          <MenuItem value="">
+                            <em>Select Experience Level</em>
+                          </MenuItem>
+                          <MenuItem value="Never">Never</MenuItem>
+                          <MenuItem value="Beginner">Beginner</MenuItem>
+                          <MenuItem value="Intermediate">Intermediate</MenuItem>
+                          <MenuItem value="Advanced">Advanced</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </div>
                   </div>
 
                   {/* Card 7: Lifestyle & Communication Insights */}
@@ -2122,12 +2143,33 @@ export const AddClubMembershipPage = () => {
 
                     {/* How did you first hear about The Recess Club? */}
                     <div className="mb-6">
+                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
+                        How did you first hear about The Recess Club?
+                      </FormLabel>
                       <FormControl fullWidth sx={fieldStyles}>
-                        <InputLabel>How did you first hear about The Recess Club?</InputLabel>
                         <Select
                           value={heardAbout}
                           onChange={(e) => setHeardAbout(e.target.value)}
                           label="How did you first hear about The Recess Club?"
+                          displayEmpty
+                          sx={{
+                            border: "1px solid #000",
+                            borderRadius: "4px",
+
+                            // Remove blue outline
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              border: "none",
+                            },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                              border: "none",
+                            },
+
+                            // Remove box shadow
+                            "&.Mui-focused": {
+                              outline: "none",
+                              boxShadow: "none",
+                            },
+                          }}
                         >
                           <MenuItem value="">
                             <em>Select an option</em>
@@ -2145,7 +2187,7 @@ export const AddClubMembershipPage = () => {
 
                     {/* What motivates you to join a wellness club? */}
                     <div className="mb-6">
-                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3">
+                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
                         What motivates you to join a wellness club?
                       </FormLabel>
                       <div className="space-y-1">
@@ -2187,7 +2229,7 @@ export const AddClubMembershipPage = () => {
 
                     {/* What type of updates would you like to receive? */}
                     <div className="mb-6">
-                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3">
+                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
                         What type of updates would you like to receive?
                       </FormLabel>
                       <div className="space-y-1">
@@ -2228,7 +2270,7 @@ export const AddClubMembershipPage = () => {
 
                     {/* Preferred Communication Channel */}
                     <div>
-                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3">
+                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Preferred Communication Channel:
                       </FormLabel>
                       <div className="space-y-1">
@@ -2293,7 +2335,7 @@ export const AddClubMembershipPage = () => {
 
                     {/* Corporate Interest */}
                     <div>
-                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2">
+                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Are you interested in corporate/group plans for your workplace?
                       </FormLabel>
                       <RadioGroup

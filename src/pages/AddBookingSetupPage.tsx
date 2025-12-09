@@ -397,10 +397,10 @@ export const AddBookingSetupPage = () => {
           "facility_setup[facility_charge_attributes][adult_member_charge]",
           formData.chargeSetup.member.adult || "0"
         );
-        // formDataToSend.append(
-        //   "facility_setup[facility_charge_attributes][member_child_charge]",
-        //   formData.chargeSetup.member.child || "0"
-        // );
+        formDataToSend.append(
+          "facility_setup[facility_charge_attributes][child_member_charge]",
+          formData.chargeSetup.member.child || "0"
+        );
       }
 
       // Charge Setup - Guest charges
@@ -409,10 +409,10 @@ export const AddBookingSetupPage = () => {
           "facility_setup[facility_charge_attributes][adult_guest_charge]",
           formData.chargeSetup.guest.adult || "0"
         );
-        // formDataToSend.append(
-        //   "facility_setup[facility_charge_attributes][guest_child_charge]",
-        //   formData.chargeSetup.guest.child || "0"
-        // );
+        formDataToSend.append(
+          "facility_setup[facility_charge_attributes][child_guest_charge]",
+          formData.chargeSetup.guest.child || "0"
+        );
       }
 
       // Charge Setup - Person limits and GST
@@ -825,12 +825,12 @@ export const AddBookingSetupPage = () => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
+              <table className="w-full border">
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Member Type</th>
                     <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Adult</th>
-                    {/* <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Child</th> */}
+                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Child</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -894,23 +894,21 @@ export const AddBookingSetupPage = () => {
                         />
                       </div>
                     </td>
-                    {/* <td className="border border-gray-300 px-4 py-3">
+                    <td className="border border-gray-300 px-4 py-3">
                       <div className="flex items-center justify-center gap-2">
-                        <Checkbox 
+                        <Checkbox
                           checked={!!formData.chargeSetup.member.child}
-                          onChange={(e) => {
-                            if (!e.target.checked) {
-                              setFormData({
-                                ...formData,
-                                chargeSetup: {
-                                  ...formData.chargeSetup,
-                                  member: {
-                                    ...formData.chargeSetup.member,
-                                    child: "",
-                                  },
+                          onCheckedChange={(checked) => {
+                            setFormData({
+                              ...formData,
+                              chargeSetup: {
+                                ...formData.chargeSetup,
+                                member: {
+                                  ...formData.chargeSetup.member,
+                                  child: checked ? formData.chargeSetup.member.child || "" : "",
                                 },
-                              });
-                            }
+                              },
+                            });
                           }}
                         />
                         <TextField
@@ -932,7 +930,7 @@ export const AddBookingSetupPage = () => {
                           className="w-full max-w-[200px]"
                         />
                       </div>
-                    </td> */}
+                    </td>
                   </tr>
                   <tr>
                     <td className="border border-gray-300 px-4 py-3">
@@ -994,23 +992,21 @@ export const AddBookingSetupPage = () => {
                         />
                       </div>
                     </td>
-                    {/* <td className="border border-gray-300 px-4 py-3">
+                    <td className="border border-gray-300 px-4 py-3">
                       <div className="flex items-center justify-center gap-2">
-                        <Checkbox 
+                        <Checkbox
                           checked={!!formData.chargeSetup.guest.child}
-                          onChange={(e) => {
-                            if (!e.target.checked) {
-                              setFormData({
-                                ...formData,
-                                chargeSetup: {
-                                  ...formData.chargeSetup,
-                                  guest: {
-                                    ...formData.chargeSetup.guest,
-                                    child: "",
-                                  },
+                          onCheckedChange={(checked) => {
+                            setFormData({
+                              ...formData,
+                              chargeSetup: {
+                                ...formData.chargeSetup,
+                                guest: {
+                                  ...formData.chargeSetup.guest,
+                                  child: checked ? formData.chargeSetup.guest.child || "" : "",
                                 },
-                              });
-                            }
+                              },
+                            });
                           }}
                         />
                         <TextField
@@ -1032,7 +1028,7 @@ export const AddBookingSetupPage = () => {
                           className="w-full max-w-[200px]"
                         />
                       </div>
-                    </td> */}
+                    </td>
                   </tr>
                 </tbody>
               </table>
