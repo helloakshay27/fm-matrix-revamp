@@ -17,6 +17,8 @@ import { ZxSidebar } from "./ZxSidebar";
 import { ZxDynamicHeader } from "./ZxDynamicHeader";
 import { saveToken, saveUser, saveBaseUrl } from "../utils/auth";
 import { ProtectionLayer } from "./ProtectionLayer";
+import { PrimeSupportSidebar } from "./PrimeSupportSidebar";
+import { PrimeSupportDynamicHeader } from "./PrimeSupportDynamicHeader";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -76,6 +78,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ZxSidebar />;
     }
 
+    if (selectedCompany?.id === 304) {
+      return <PrimeSupportSidebar />;
+    }
+
     if (
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
@@ -113,6 +119,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Company-specific logic
     if (selectedCompany?.id === 189) {
       return <ZxDynamicHeader />;
+    }
+    if (selectedCompany?.id === 304) {
+      return <PrimeSupportDynamicHeader />;
     }
     if (
       selectedCompany?.id === 300 ||

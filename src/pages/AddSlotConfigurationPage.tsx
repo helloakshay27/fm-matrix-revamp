@@ -40,6 +40,9 @@ export const AddSlotConfigurationPage = () => {
       reserved: number;
     }>
   });
+  
+  // Track custom slot names - key format: "categoryId_type_index"
+  const [customSlotNames, setCustomSlotNames] = useState<Record<string, string>>({});
 
   const fetchBuildingsData = useCallback(async () => {
     try {
@@ -219,8 +222,10 @@ export const AddSlotConfigurationPage = () => {
 
     // Non-stack slots
     for (let i = 0; i < categoryData.nonStack; i++) {
+      const key = `${categoryId}_nonStack_${i}`;
+      const customName = customSlotNames[key];
       slots.push({
-        parking_name: `${prefix}${slotNumber}`,
+        parking_name: customName || `${prefix}${slotNumber}`,
         reserved: false
       });
       slotNumber++;
@@ -228,13 +233,17 @@ export const AddSlotConfigurationPage = () => {
 
     // Stack slots (come in pairs)
     for (let i = 0; i < categoryData.stack; i++) {
+      const keyA = `${categoryId}_stack_${i * 2}`;
+      const keyB = `${categoryId}_stack_${i * 2 + 1}`;
+      const customNameA = customSlotNames[keyA];
+      const customNameB = customSlotNames[keyB];
       slots.push({
-        parking_name: `${prefix}${slotNumber}A`,
+        parking_name: customNameA || `${prefix}${slotNumber}A`,
         reserved: false,
         stacked: true
       });
       slots.push({
-        parking_name: `${prefix}${slotNumber}B`,
+        parking_name: customNameB || `${prefix}${slotNumber}B`,
         reserved: false,
         stacked: true
       });
@@ -243,8 +252,10 @@ export const AddSlotConfigurationPage = () => {
 
     // Reserved slots
     for (let i = 0; i < categoryData.reserved; i++) {
+      const key = `${categoryId}_reserved_${i}`;
+      const customName = customSlotNames[key];
       slots.push({
-        parking_name: `${prefix}${slotNumber}`,
+        parking_name: customName || `${prefix}${slotNumber}`,
         reserved: true
       });
       slotNumber++;
@@ -314,6 +325,10 @@ export const AddSlotConfigurationPage = () => {
   }) => {
 
     const generateSlotName = (index: number) => {
+        const key = `${categoryId}_${type}_${index}`;
+        const customName = customSlotNames[key];
+        if (customName) return customName;
+        
         const prefix = 'P'; // Use 'P' prefix for all categories
         
         if (isStack) {
@@ -333,6 +348,14 @@ export const AddSlotConfigurationPage = () => {
         
         return `${prefix}${baseNumber + index}`;
     };
+    
+    const handleSlotNameChange = (index: number, newName: string) => {
+      const key = `${categoryId}_${type}_${index}`;
+      setCustomSlotNames(prev => ({
+        ...prev,
+        [key]: newName
+      }));
+    };
 
     return (
       <div>
@@ -341,13 +364,12 @@ export const AddSlotConfigurationPage = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {Array.from({ length: isStack ? count * 2 : count }, (_, index) => (
               <div key={index} className="relative">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full h-10 text-xs bg-white border-gray-300 hover:bg-gray-50 rounded-lg font-medium"
-                >
-                  {generateSlotName(index)}
-                </Button>
+                <Input
+                  value={generateSlotName(index)}
+                  onChange={(e) => handleSlotNameChange(index, e.target.value)}
+                  className="w-full h-10 text-xs text-center bg-white border-gray-300 rounded-lg font-medium"
+                  placeholder="Slot name"
+                />
                 <button
                   className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
                   onClick={() => handleSlotCountChange(categoryId, type, count - 1)}
