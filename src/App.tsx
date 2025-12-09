@@ -787,6 +787,8 @@ import ClubMembershipDashboard from "./pages/ClubManagement/ClubMembershipDashbo
 import ClubMembershipDetailPage from "./pages/ClubManagement/ClubMembershipDetailPage";
 import AddClubMembershipPage from "./pages/ClubManagement/AddClubMembershipPage";
 import BookingList from "./pages/BookingList";
+import AccessoriesSetup from "./pages/AccessoriesSetup";
+import AccessoriesDetailsPage from "./pages/AccessoriesDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1507,6 +1509,14 @@ function App() {
                   <Route
                     path="/settings/vas/membership-plan/setup/details/:id"
                     element={<MembershipPlanDetailsPage />}
+                  />
+                  <Route
+                    path="/settings/accessories"
+                    element={<AccessoriesSetup />}
+                  />
+                  <Route
+                    path="/settings/accessories/:id"
+                    element={<AccessoriesDetailsPage />}
                   />
                   <Route
                     path="/club-management/membership"

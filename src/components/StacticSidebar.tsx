@@ -1067,6 +1067,11 @@ const modulesByPackage = {
       icon: Calculator,
       href: "/settings/vas/membership-plan/setup",
     },
+    {
+      name: "Accessories Setup",
+      icon: Calculator,
+      href: "/settings/accessories",
+    },
   ],
 };
 
