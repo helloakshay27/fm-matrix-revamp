@@ -820,6 +820,7 @@ import { SprintDashboard } from "./pages/SprintDashboard";
 import SprintDetailsPage from "./pages/SprintDetailsPage";
 import MilestoneDetailsPage from "./pages/MilestoneDetailsPage";
 import ProjectTaskDetails from "./pages/ProjectTaskDetails";
+import { setupMemberRoutes } from "./routes/setupMemberRoutes";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1517,6 +1518,9 @@ function App() {
                     path="/communication/notifications"
                     element={<NotificationsPage />}
                   />
+
+                  {/* Setup Member Routes */}
+                  {setupMemberRoutes}
 
                   {/* Setup - Manage Flats Route */}
                   <Route

@@ -71,6 +71,7 @@
     "date-fns": "^3.6.0",
     "dhtmlx-gantt": "^9.1.0",
     "embla-carousel-react": "^8.3.0",
+    "formik": "^2.4.9",
     "html2canvas": "^1.4.1",
     "html2pdf.js": "^0.12.1",
     "input-otp": "^1.2.4",
@@ -86,6 +87,7 @@
     "react-datepicker": "^8.8.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
+    "react-easy-crop": "^5.5.6",
     "react-grid-layout": "^1.5.2",
     "react-hook-form": "^7.58.1",
     "react-redux": "^9.2.0",
@@ -98,6 +100,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
+    "yup": "^1.7.1",
     "zod": "^4.0.10"
   },
   "devDependencies": {

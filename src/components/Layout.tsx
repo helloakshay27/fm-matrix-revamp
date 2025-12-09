@@ -17,6 +17,7 @@ import { ZxSidebar } from "./ZxSidebar";
 import { ZxDynamicHeader } from "./ZxDynamicHeader";
 import { saveToken, saveUser, saveBaseUrl } from "../utils/auth";
 import { ProtectionLayer } from "./ProtectionLayer";
+import { SetupSidebar } from "./SetupSidebar";
 
 interface LayoutProps {
   children?: React.ReactNode;
