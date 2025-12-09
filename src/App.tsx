@@ -390,6 +390,15 @@ import { OccupantUserMasterDashboard } from "./pages/master/OccupantUserMasterDa
 import { AddFMUserPage } from "./pages/master/AddFMUserPage";
 import { EditFMUserPage } from "./pages/master/EditFMUserPage";
 import { ViewFMUserPage } from "./pages/master/ViewFMUserPage";
+import { AddOccupantUserPage } from "./pages/master/AddOccupantUserPage";
+import { EditOccupantUserPage } from "./pages/master/EditOccupantUserPage";
+import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
+
+// Import Club Management Guest User pages
+import { GuestUserMasterDashboard } from "./pages/ClubManagement/GuestUserMasterDashboard";
+import { AddGuestUserPage } from "./pages/ClubManagement/AddGuestUserPage";
+import { EditGuestUserPage } from "./pages/ClubManagement/EditGuestUserPage";
+import { ViewGuestUserPage } from "./pages/ClubManagement/ViewGuestUserPage";
 
 // Import Material Master page
 import { MaterialMasterPage } from "./pages/MaterialMasterPage";
@@ -733,8 +742,6 @@ import AddInventoryTypePage from "./pages/master/AddInventoryTypePage";
 import EditInventoryTypePage from "./pages/master/EditInventoryTypePage";
 import AddInventorySubTypePage from "./pages/master/AddInventorySubTypePage";
 import EditInventorySubTypePage from "./pages/master/EditInventorySubTypePage";
-import AddOccupantUserPage from "./pages/master/AddOccupantUserPage";
-import EditOccupantUserPage from "./pages/master/EditOccupantUserPage";
 import { AddCRMCustomerPage } from "./pages/AddCRMCustomerPage";
 import CheckHierarchy from "./components/CheckHierarchy";
 import { InvoiceFeeds } from "./pages/InvoiceFeeds";
@@ -758,7 +765,6 @@ import AmenitySetupDashboard from "./pages/AmenitySetupDashboard";
 import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
 import BannerDetailsPage from "./pages/BannerDetailsPage";
 import AmenityDetailsPage from "./pages/AmenityDetailsPage";
-import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
 import WeeklyReport from "./components/WeeklyReport";
 import useRouteLogger from "./hooks/useRouteLogger";
 import { LocationAccountPage } from "./pages/master/LocationAccountPage";
@@ -1573,6 +1579,24 @@ function App() {
                   <Route
                     path="/club-management/users/occupant-users/:id"
                     element={<CRMOccupantUserDetailPage />}
+                  />
+
+                  {/* Club Management - Guest Users */}
+                  <Route
+                    path="/club-management/users/guest"
+                    element={<GuestUserMasterDashboard />}
+                  />
+                  <Route
+                    path="/club-management/users/guest/add"
+                    element={<AddGuestUserPage />}
+                  />
+                  <Route
+                    path="/club-management/users/guest/view/:id"
+                    element={<ViewGuestUserPage />}
+                  />
+                  <Route
+                    path="/club-management/users/guest/edit/:id"
+                    element={<EditGuestUserPage />}
                   />
 
                   {/* Club Management - Helpdesk */}
