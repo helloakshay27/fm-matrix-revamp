@@ -348,6 +348,19 @@ export const Header = () => {
 
 
             )}
+            {!isViSite && (
+              <button
+                onClick={() =>
+                (window.location.href = "/maintenance/ticket")
+                }
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+              >
+                <ChartAreaIcon className="w-4 h-4" />
+                FM Dashboard
+              </button>
+
+
+            )}
 
             {isViSite && (
               <button
