@@ -11,7 +11,6 @@ import {
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import viBusinessCardBg from "../../assets/VI-businesscard.png";
-import { API_CONFIG } from "@/config/apiConfig";
 import baseClient from "@/utils/withoutTokenBase";
 
 interface UserCardData {
@@ -61,19 +60,11 @@ export const ViBusinessCard: React.FC = () => {
           return;
         }
 
-        const baseUrl = API_CONFIG.BASE_URL.replace(/^https?:\/\//, "").replace(
-          /\/$/,
-          ""
-        );
         const response = await baseClient.get(
           `/pms/users/user_info.json?token=${card}`
         );
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch user data");
-        }
-
-        const data: ApiResponse = await response.json();
+        const data: ApiResponse = response.data;
 
         // Map API response to UserCardData
         const mappedData: UserCardData = {
@@ -148,37 +139,45 @@ END:VCARD`;
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
+
+  if (error || !userData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="text-6xl mb-4">👤</div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          {error || "User Not Found"}
+        </h2>
+        <p className="text-gray-600 text-center">
+          {error || "The user data could not be loaded."}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div
-      className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4"
+      className="h-screen bg-gray-50 overflow-y-auto"
       style={{
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       }}
     >
-      {loading ? (
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E31E24] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      ) : error ? (
-        <div className="text-center">
-          <p className="text-red-600">{error}</p>
-        </div>
-      ) : !userData ? (
-        <div className="text-center">
-          <p className="text-gray-600">No user data available</p>
-        </div>
-      ) : (
-        <div className="w-full max-w-[420px]">
-          {/* Business Card */}
-          <div
-            className="relative bg-white overflow-hidden"
-            style={{
-              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
-              borderRadius: "0",
-            }}
-          >
+      <div className="w-full h-full">
+        {/* Business Card */}
+        <div
+          className="relative bg-white overflow-hidden w-full h-full"
+          style={{
+            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
+            borderRadius: "0",
+          }}
+        >
             {/* Decorative background image */}
             <div className="absolute top-0 left-0 w-full h-[240px] overflow-hidden pointer-events-none">
               <img
@@ -332,8 +331,7 @@ END:VCARD`;
         >
           Save Contact
         </button> */}
-        </div>
-      )}
+      </div>
     </div>
   );
 };
