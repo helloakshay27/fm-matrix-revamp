@@ -153,6 +153,8 @@ const isFmSite =
   hostname.includes("fm-uat.gophygital.work") ||
   hostname.includes("fm.gophygital.work");
 
+const isDevSite = hostname.includes("dev-fm-matrix.lockated.com");
+
 export const getOrganizationsByEmail = async (
   email: string
 ): Promise<Organization[]> => {
@@ -171,6 +173,19 @@ export const getOrganizationsByEmail = async (
   if (isViSite) {
     const response = await fetch(
       `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
+  if (isDevSite) {
+    const response = await fetch(
+      `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {
@@ -495,8 +510,7 @@ export const getOrganizationsByEmailAndAutoSelect = async (
     hostname.includes("fm-uat.gophygital.work") ||
     hostname.includes("fm.gophygital.work");
 
-  const isDevSite =
-    hostname.includes("dev-fm-matrix.lockated.com");
+  const isDevSite = hostname.includes("dev-fm-matrix.lockated.com");
 
   let apiUrl = "";
 
