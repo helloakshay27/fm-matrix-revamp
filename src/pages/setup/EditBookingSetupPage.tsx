@@ -560,7 +560,7 @@ export const EditBookingSetupPage = () => {
             formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
             // formDataToSend.append(
             //     "facility_setup[facility_charge_attributes][per_slot_charge]",
-            //     formData.perSlotCharge
+            // formData.perSlotChasrge
             // );
 
             // Charge Setup - Member charges
