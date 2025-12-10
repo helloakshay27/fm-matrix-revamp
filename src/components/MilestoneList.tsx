@@ -236,7 +236,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 size="sm"
                 variant="ghost"
                 className="p-1"
-                onClick={() => navigate(`/maintenance/projects/${id}/milestones/${item.id}`)}
+                onClick={() => navigate(`/vas/projects/${id}/milestones/${item.id}`)}
             >
                 <Eye className="w-4 h-4" />
             </Button>
@@ -244,7 +244,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 size="sm"
                 variant="ghost"
                 className="p-1"
-                onClick={() => navigate(`/maintenance/projects/${id}/milestones/${item.id}/tasks`)}
+                onClick={() => navigate(`/vas/projects/${id}/milestones/${item.id}/tasks`)}
             >
                 <LogOut className="w-4 h-4" />
             </Button>
