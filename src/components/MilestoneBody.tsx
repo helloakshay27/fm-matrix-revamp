@@ -357,6 +357,26 @@ const GanttChart = ({ selectedColumns = {} }) => {
     }, [navigate]);
 
     useEffect(() => {
+        const handleSubtaskLinkClick = (e) => {
+            const btn = e.target.closest(".gantt-subtask-link");
+            if (btn) {
+                const itemId = btn.getAttribute("data-id");
+                const parentId = btn.getAttribute("data-parent");
+                if (itemId && parentId) {
+                    navigate(`${parentId}/tasks/${itemId}`);
+                }
+            }
+        };
+
+        const container = ganttContainer.current;
+        container?.addEventListener("click", handleSubtaskLinkClick);
+
+        return () => {
+            container?.removeEventListener("click", handleSubtaskLinkClick);
+        };
+    }, [navigate]);
+
+    useEffect(() => {
         console.log("Gantt useEffect started, scale:", scale);
 
         // Configure compact row height
@@ -371,7 +391,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
                 label: "Actions",
                 tree: true,
                 align: "left",
-                width: 130,
+                width: 170,
                 resize: true,
                 template: function (task) {
                     const navType = task.type === "milestone" ? "milestone" : task.type;
@@ -414,7 +434,10 @@ const GanttChart = ({ selectedColumns = {} }) => {
                     if (task.type === "milestone") {
                         return `<span style="cursor: pointer; font-size: 14px;" title="${task.text}">M-${task.id.split('-')[1]}</span>`;
                     }
-                    return `<span style="cursor: pointer; font-size: 14px;" title="${task.text}">T-${task.id.split('-')[1]}</span>`;
+                    if (task.type === "task") {
+                        return `<span style="cursor: pointer; font-size: 14px;" title="${task.text}">T-${task.id.split('-')[1]}</span>`;
+                    }
+                    return `<span style="cursor: pointer; font-size: 14px;" title="${task.text}">S-${task.id.split('-')[1]}</span>`;
                 },
             },
             {
@@ -423,10 +446,26 @@ const GanttChart = ({ selectedColumns = {} }) => {
                 width: 280,
                 resize: true,
                 template: function (task) {
+                    console.log(task);
                     if (task.type === "milestone") {
-                        return `<span class="gantt-milestone-link" data-id="${task.navigationid}" style="cursor: pointer; font-size: 14px;" title="${task.text}">${task.text}</span>`;
+                        return `<span class="gantt-milestone-link" data-id="${task.navigationid}" style="cursor: pointer; font-size: 14px;" title="${task.text
+                            .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+                            .replace(/#\[(.*?)\]\(\d+\)/g, '#$1')}">${task.text
+                                .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+                                .replace(/#\[(.*?)\]\(\d+\)/g, '#$1')}</span>`;
                     }
-                    return `<span style="cursor: pointer; font-size: 14px;" title="${task.text}">${task.text}</span>`;
+                    if (task.type === "task") {
+                        return `<span class="gantt-milestone-link" data-id="${task.parent.split('-')[1]}" style="cursor: pointer; font-size: 14px;" title="${task.text
+                            .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+                            .replace(/#\[(.*?)\]\(\d+\)/g, '#$1')}">${task.text
+                                .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+                                .replace(/#\[(.*?)\]\(\d+\)/g, '#$1')}</span>`;
+                    }
+                    return `<span class="gantt-subtask-link" data-id="${task.navigationid}" data-parent="${task.parent.split('-')[1]}" style="cursor: pointer; font-size: 14px;" title="${task.text
+                        .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+                        .replace(/#\[(.*?)\]\(\d+\)/g, '#$1')}">${task.text
+                            .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+                            .replace(/#\[(.*?)\]\(\d+\)/g, '#$1')}</span>`;
                 },
             },
             {
@@ -436,8 +475,10 @@ const GanttChart = ({ selectedColumns = {} }) => {
                 width: 180,
                 template: function (task) {
                     if (task.type === "milestone" || task.type === "task") {
-                        const progressPercentage = Math.round(task.progress * 100);
-                        const isValidPercentage = !isNaN(progressPercentage) && progressPercentage >= 0 && progressPercentage <= 100;
+                        console.log(task);
+                        const progressPercentage = Math.round((task.completedTasks / task.totalTasks) * 100);
+                        const isValidPercentage =
+                            !isNaN(progressPercentage) && progressPercentage >= 0 && progressPercentage <= 100;
                         return `
                             <div class="gantt-progress-bar-container">
                                 <span>${task.completedTasks}</span>
@@ -454,7 +495,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
                             </div>
                         `;
                     }
-                    return "";
+                    return '';
                 },
             },
             {
@@ -674,22 +715,20 @@ const GanttChart = ({ selectedColumns = {} }) => {
                     const formattedEnd = item.end_date
                         ? formatEndDateDMYFromISO(item.end_date)
                         : formatEndDateDMYFromISO(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString());
+                    console.log(item);
                     tasksData.push({
                         navigationid: item.id,
                         id: milestoneId,
                         text: item.title || "Untitled Milestone",
                         start_date: formattedStart,
                         end_date: formattedEnd,
-                        duration: formattedStart && formattedEnd
-                            ? calculateDuration(formattedStart, formattedEnd)
-                            : 1,
+                        duration:
+                            formattedStart && formattedEnd ? calculateDuration(formattedStart, formattedEnd) : 1,
                         progress: 0.0,
-                        totalTasks: 0,
-                        completedTasks: 0,
+                        totalTasks: item.total_tasks,
+                        completedTasks: item.completed_tasks,
                         status: item.status,
-                        depends: item.depends_on_id
-                            ? `milestone-${item.depends_on_id}`
-                            : null,
+                        depends: item.depends_on_id ? `milestone-${item.depends_on_id}` : null,
                         type: "milestone",
                         owner: item.owner_name,
                         parent: 0,
@@ -730,12 +769,14 @@ const GanttChart = ({ selectedColumns = {} }) => {
                                 ? formatEndDateDMYFromISO(task.target_date)
                                 : formattedEnd;
 
-                            const taskDuration = formattedStartTask && formattedEndTask
-                                ? calculateDuration(formattedStartTask, formattedEndTask)
-                                : task.estimated_hour
-                                    ? task.estimated_hour + (task.estimated_min ? task.estimated_min / 60 : 0)
-                                    : 1;
+                            const taskDuration =
+                                formattedStartTask && formattedEndTask
+                                    ? calculateDuration(formattedStartTask, formattedEndTask)
+                                    : task.estimated_hour
+                                        ? task.estimated_hour + (task.estimated_min ? task.estimated_min / 60 : 0)
+                                        : 1;
 
+                            console.log(task);
                             tasksData.push({
                                 navigationid: task.id,
                                 id: uniqueTaskId,
@@ -744,12 +785,10 @@ const GanttChart = ({ selectedColumns = {} }) => {
                                 end_date: formattedEndTask,
                                 duration: taskDuration,
                                 progress: 0.0,
-                                totalTasks: 0,
-                                completedTasks: 0,
+                                totalTasks: task.total_sub_tasks,
+                                completedTasks: task.completed_sub_tasks,
                                 status: task.status || "Open",
-                                owner: task.responsible_person
-                                    ? task.responsible_person.name
-                                    : "",
+                                owner: task.responsible_person ? task.responsible_person.name : "",
                                 parent: milestoneId,
                                 type: "task",
                             });
@@ -864,43 +903,50 @@ const GanttChart = ({ selectedColumns = {} }) => {
 
                 const milestonesToUpdate = [];
 
-                tasksData.forEach(task => {
-                    if (task.type === "milestone") {
-                        const progressData = calculateProgress(task.id, tasksData, "milestone");
-                        task.progress = progressData.percentage / 100;
-                        task.totalTasks = progressData.total;
-                        task.completedTasks = progressData.completed;
+                // tasksData.forEach((task) => {
+                //     console.log(task)
+                //     if (task.type === "milestone") {
+                //         const progressData = calculateProgress(task.id, tasksData, "milestone");
+                //         task.progress = progressData.percentage / 100;
+                //         task.totalTasks = progressData.total;
+                //         task.completedTasks = progressData.completed;
 
-                        const calculatedStatus = calculateMilestoneStatus(task.id, tasksData);
-                        const originalStatus = task.status;
-                        task.status = calculatedStatus;
+                //         const calculatedStatus = calculateMilestoneStatus(task.id, tasksData);
+                //         const originalStatus = task.status;
+                //         task.status = calculatedStatus;
 
-                        if (originalStatus !== calculatedStatus) {
-                            milestonesToUpdate.push({
-                                id: task.navigationid,
-                                oldStatus: originalStatus,
-                                newStatus: calculatedStatus
-                            });
-                        }
+                //         if (originalStatus !== calculatedStatus) {
+                //             milestonesToUpdate.push({
+                //                 id: task.navigationid,
+                //                 oldStatus: originalStatus,
+                //                 newStatus: calculatedStatus,
+                //             });
+                //         }
 
-                        console.log(`Milestone ${task.text}: ${progressData.completed}/${progressData.total} = ${progressData.percentage}%, Status: ${calculatedStatus}`);
-                    } else if (task.type === "task") {
-                        const progressData = calculateProgress(task.id, tasksData, "task");
-                        task.progress = progressData.percentage / 100;
-                        task.totalTasks = progressData.total;
-                        task.completedTasks = progressData.completed;
-                        console.log(`Task ${task.text}: ${progressData.completed}/${progressData.total} = ${progressData.percentage}%`);
-                    }
-                });
+                //         console.log(
+                //             `Milestone ${task.text}: ${progressData.completed}/${progressData.total} = ${progressData.percentage}%, Status: ${calculatedStatus}`
+                //         );
+                //     } else if (task.type === "task") {
+                //         const progressData = calculateProgress(task.id, tasksData, "task");
+                //         task.progress = progressData.percentage / 100;
+                //         task.totalTasks = progressData.total;
+                //         task.completedTasks = progressData.completed;
+                //         console.log(
+                //             `Task ${task.text}: ${progressData.completed}/${progressData.total} = ${progressData.percentage}%`
+                //         );
+                //     }
+                // });
 
-                milestonesToUpdate.forEach(milestone => {
+                milestonesToUpdate.forEach((milestone) => {
                     const payload = {
                         milestone: {
                             status: milestone.newStatus,
-                        }
+                        },
                     };
 
-                    console.log(`Updating milestone ${milestone.id} status from ${milestone.oldStatus} to ${milestone.newStatus}`);
+                    console.log(
+                        `Updating milestone ${milestone.id} status from ${milestone.oldStatus} to ${milestone.newStatus}`
+                    );
 
                     axios.put(
                         `${baseURL}/milestones/${milestone.id}.json`,
@@ -1048,7 +1094,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
             if (entityType === 'milestone') {
                 isUpdating = true;
 
-                const payload = {
+                const payload: any = {
                     milestone: {
                         title: task.text,
                         start_date: formatDateToISO(task.start_date),
@@ -1059,8 +1105,8 @@ const GanttChart = ({ selectedColumns = {} }) => {
                     }
                 };
 
-                if (task.owner) {
-                    payload.milestone.owner_id = task.owner;
+                if (task.owner_id) {
+                    payload.milestone.owner_id = task.owner_id;
                 }
 
                 if (task.depends && task.depends.startsWith('milestone-')) {
@@ -1098,7 +1144,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
             else if (entityType === 'task' || entityType === 'subtask') {
                 isUpdating = true;
 
-                const payload = {
+                const payload: any = {
                     task_management: {
                         title: task.text,
                         started_at: formatDateToISO(task.start_date),
@@ -1106,6 +1152,11 @@ const GanttChart = ({ selectedColumns = {} }) => {
                         status: task.status || 'Open',
                     }
                 };
+
+                // Preserve responsible person if it exists
+                if (task.owner) {
+                    payload.task_management.responsible_person_id = task.owner;
+                }
 
                 axios.put(
                     `${baseURL}/task_managements/${entityId}.json`,
@@ -1119,7 +1170,9 @@ const GanttChart = ({ selectedColumns = {} }) => {
                 )
                     .then(response => {
                         console.log(`${entityType} updated successfully:`, response.data);
-                        toast.success(`${entityType.charAt(0).toUpperCase() + entityType.slice(1)} updated successfully!`);
+                        toast.success(
+                            `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} updated successfully!`
+                        );
 
                         if (entityType === 'task' && task.parent && task.parent.startsWith('milestone-')) {
                             updateParentMilestoneStatus(task.parent);
