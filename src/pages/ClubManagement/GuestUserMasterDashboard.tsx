@@ -583,39 +583,50 @@ export const GuestUserMasterDashboard = () => {
         maxWidth="xs"
         fullWidth
       >
-        <div className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Update Guest Status</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Select Status
-              </label>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              >
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
+        <DialogContent className="p-0 bg-white">
+          <div className="px-6 py-3 border-b mb-3">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-semibold">Update Guest Status</h1>
               <Button
-                variant="outline"
+                variant="ghost"
+                size="sm"
                 onClick={() => setStatusDialogOpen(false)}
+                className="h-6 w-6 p-0"
               >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleStatusUpdate}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-              >
-                Update
+                <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
-        </div>
+
+          <div className="px-6 py-3 space-y-6">
+            <FormControl fullWidth>
+              <InputLabel id="status-label">Select Status</InputLabel>
+              <Select
+                labelId="status-label"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                label="Select Status"
+              >
+                <MenuItem value="">
+                  Select Status
+                </MenuItem>
+                <MenuItem value="approved">Approved</MenuItem>
+                <MenuItem value="rejected">Rejected</MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
+              </Select>
+            </FormControl>
+
+            <div className="flex justify-center">
+              <Button
+                onClick={handleStatusUpdate}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 rounded-md"
+                disabled={!selectedStatus}
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
       </Dialog>
     </div>
   );

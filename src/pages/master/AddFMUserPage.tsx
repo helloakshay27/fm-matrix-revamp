@@ -92,6 +92,7 @@ export const AddFMUserPage = () => {
   console.log(userAccount)
 
   const [loadingSubmitting, setLoadingSubmitting] = useState(false)
+  const [emailError, setEmailError] = useState('')
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -119,6 +120,24 @@ export const AddFMUserPage = () => {
       ...prev,
       [field]: value,
     }));
+    
+    // Clear email error when user starts typing
+    if (field === 'emailAddress') {
+      setEmailError('');
+    }
+  };
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleEmailBlur = () => {
+    if (formData.emailAddress && !validateEmail(formData.emailAddress)) {
+      setEmailError('Please enter a valid email address');
+    } else {
+      setEmailError('');
+    }
   };
 
   const handleMobileNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,6 +172,9 @@ export const AddFMUserPage = () => {
       return false
     } else if (!formData.emailAddress) {
       toast.error('Please enter email address')
+      return false
+    } else if (!validateEmail(formData.emailAddress)) {
+      toast.error('Please enter a valid email address')
       return false
     } else if (!formData.selectUserType) {
       toast.error('Please select user type')
@@ -259,7 +281,13 @@ export const AddFMUserPage = () => {
                     label="First Name"
                     variant="outlined"
                     value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Only allow letters and spaces
+                      if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                        handleInputChange('firstName', value);
+                      }
+                    }}
                     required
                     InputLabelProps={{
                       classes: {
@@ -275,7 +303,13 @@ export const AddFMUserPage = () => {
                     label="Last Name"
                     variant="outlined"
                     value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Only allow letters and spaces
+                      if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                        handleInputChange('lastName', value);
+                      }
+                    }}
                     required
                     InputLabelProps={{
                       classes: {
@@ -316,6 +350,9 @@ export const AddFMUserPage = () => {
                     type="email"
                     value={formData.emailAddress}
                     onChange={(e) => handleInputChange('emailAddress', e.target.value)}
+                    onBlur={handleEmailBlur}
+                    error={!!emailError}
+                    helperText={emailError}
                     required
                     InputLabelProps={{
                       classes: {

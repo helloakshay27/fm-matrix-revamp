@@ -374,16 +374,16 @@ export const EditMembershipPlanPage = () => {
               />
 
               <FormControl variant="outlined">
-                <InputLabel>Renewal Terms*</InputLabel>
+                <InputLabel>Membership Type*</InputLabel>
                 <Select
                   value={formData.renewalTerms}
                   onChange={(e) =>
                     setFormData({ ...formData, renewalTerms: e.target.value })
                   }
-                  label="Renewal Terms*"
+                  label="Membership Type*"
                 >
                   <MenuItem value="">
-                    <em>Select Renewal Terms</em>
+                    <em>Select Membership Type</em>
                   </MenuItem>
                   <MenuItem value="monthly">Monthly</MenuItem>
                   <MenuItem value="quarterly">Quarterly</MenuItem>

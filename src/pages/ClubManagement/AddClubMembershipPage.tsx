@@ -1543,9 +1543,15 @@ export const AddClubMembershipPage = () => {
                     <TextField
                       label="Emergency Contact"
                       value={formData.emergencyContactName}
-                      onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Only allow numbers
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setFormData({ ...formData, emergencyContactName: value });
+                        }
+                      }}
                       sx={fieldStyles}
-                      placeholder='Name or Phone Number'
+                      placeholder='Phone Number'
                       fullWidth
                       InputLabelProps={{ shrink: true }}
                     />
@@ -1561,6 +1567,7 @@ export const AddClubMembershipPage = () => {
                         label="Start Date *"
                         value={startDate}
                         onChange={(newValue) => setStartDate(newValue as Dayjs | null)}
+                        format="DD/MM/YYYY"
                         slotProps={{
                           textField: {
                             fullWidth: true,
@@ -1579,6 +1586,7 @@ export const AddClubMembershipPage = () => {
                         label="End Date *"
                         value={endDate}
                         onChange={(newValue) => setEndDate(newValue as Dayjs | null)}
+                        format="DD/MM/YYYY"
                         slotProps={{
                           textField: {
                             fullWidth: true,
@@ -1854,34 +1862,32 @@ export const AddClubMembershipPage = () => {
                     {/* If yes, specify */}
                     {hasInjuries === 'yes' && (
                       <div className="mb-6">
-                        <TextField
-                          label="If yes, please specify"
-                          value={injuryDetails}
-                          onChange={(e) => setInjuryDetails(e.target.value)}
-                          multiline
-                          rows={3}
-                          fullWidth
-                          sx={{
-                            backgroundColor: '#fff',
-                            borderRadius: '4px',
-                            '& .MuiOutlinedInput-root': {
-                              '& fieldset': {
-                                borderColor: '#ddd',
-                              },
-                              '&:hover fieldset': {
-                                borderColor: '#C72030',
-                              },
-                              '&.Mui-focused fieldset': {
-                                borderColor: '#C72030',
-                              },
-                            },
-                            '& .MuiInputLabel-root': {
-                              '&.Mui-focused': {
-                                color: '#C72030',
-                              },
-                            },
-                          }}
-                        />
+                        <div className="relative w-full">
+                          <textarea
+                            id="injury-details"
+                            value={injuryDetails}
+                            onChange={(e) => setInjuryDetails(e.target.value)}
+                            rows={3}
+                            placeholder=" "
+                            className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+                              focus:outline-none 
+                              focus:border-[2px] 
+                              focus:border-[rgb(25,118,210)] 
+                              resize-vertical"
+                          />
+                          <label
+                            htmlFor="injury-details"
+                            className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+                              peer-placeholder-shown:top-4
+                              peer-placeholder-shown:text-base
+                              peer-placeholder-shown:text-gray-400
+                              peer-focus:-top-[10px]
+                              peer-focus:text-sm
+                              peer-focus:text-[rgb(25,118,210)]"
+                          >
+                            If yes, please specify
+                          </label>
+                        </div>
                       </div>
                     )}
 
@@ -2535,7 +2541,13 @@ export const AddClubMembershipPage = () => {
                           <div className="flex items-center gap-1 flex-1">
                             <TextField
                               value={discountPercentage}
-                              onChange={(e) => setDiscountPercentage(e.target.value)}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                // Only allow non-negative numbers
+                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                  setDiscountPercentage(value);
+                                }
+                              }}
                               type="number"
                               size="small"
                               sx={{

@@ -100,6 +100,7 @@ export const AddOccupantUserPage: React.FC = () => {
     fetchDepartments();
   }, []);
 
+  const [emailError, setEmailError] = useState('');
   const [errors, setErrors] = useState({
     firstName: false,
     lastName: false,
@@ -113,6 +114,24 @@ export const AddOccupantUserPage: React.FC = () => {
 
   const handleInputChange = (field: string, value: string | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    
+    // Clear email error when user starts typing
+    if (field === 'email') {
+      setEmailError('');
+    }
+  };
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleEmailBlur = () => {
+    if (formData.email && !validateEmail(formData.email)) {
+      setEmailError('Please enter a valid email address');
+    } else {
+      setEmailError('');
+    }
   };
 
   const handleCancel = () => navigate('/master/user/occupant-users');
@@ -137,6 +156,10 @@ export const AddOccupantUserPage: React.FC = () => {
     }
     if (!formData.email) {
       toast.error("Email is required.");
+      return false;
+    }
+    if (!validateEmail(formData.email)) {
+      toast.error("Please enter a valid email address.");
       return false;
     }
    
@@ -254,7 +277,13 @@ export const AddOccupantUserPage: React.FC = () => {
                 label={<><span>First Name</span><span className='text-red-600'>*</span></>}
                 placeholder="Enter First Name"
                 value={formData.firstName}
-                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Only allow letters and spaces
+                  if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                    handleInputChange('firstName', value);
+                  }
+                }}
                 fullWidth
                 variant="outlined"
                 error={errors.firstName}
@@ -266,7 +295,13 @@ export const AddOccupantUserPage: React.FC = () => {
                 label={<><span>Last Name</span><span className='text-red-600'>*</span></>}
                 placeholder="Enter Last Name"
                 value={formData.lastName}
-                onChange={(e) => handleInputChange('lastName', e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Only allow letters and spaces
+                  if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                    handleInputChange('lastName', value);
+                  }
+                }}
                 fullWidth
                 variant="outlined"
                 error={errors.lastName}
@@ -278,13 +313,24 @@ export const AddOccupantUserPage: React.FC = () => {
                 label={<><span>Mobile Number</span><span className='text-red-600'>*</span></>}
                 placeholder="Enter Mobile Number"
                 value={formData.mobileNumber}
-                onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Only allow digits and max 10 characters
+                  if (value === '' || /^\d{0,10}$/.test(value)) {
+                    handleInputChange('mobileNumber', value);
+                  }
+                }}
                 fullWidth
                 variant="outlined"
                 error={errors.mobileNumber}
                 helperText={errors.mobileNumber ? 'Mobile Number is required' : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
+                inputProps={{
+                  maxLength: 10,
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                }}
               />
 
               <TextField
@@ -293,10 +339,11 @@ export const AddOccupantUserPage: React.FC = () => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
+                onBlur={handleEmailBlur}
                 fullWidth
                 variant="outlined"
-                error={errors.email}
-                helperText={errors.email ? 'E-mail ID is required' : ''}
+                error={errors.email || !!emailError}
+                helperText={emailError || (errors.email ? 'E-mail ID is required' : '')}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
@@ -449,6 +496,9 @@ export const AddOccupantUserPage: React.FC = () => {
                   variant="outlined"
                   slotProps={{ inputLabel: { shrink: true } }}
                   InputProps={{ sx: fieldStyles }}
+                  inputProps={{
+                    max: new Date().toISOString().split('T')[0]
+                  }}
                 />
                 <TextField
                   label="Address"
@@ -464,11 +514,22 @@ export const AddOccupantUserPage: React.FC = () => {
                   label="Alternate Mobile Number"
                   placeholder="Enter Alternate Mobile Number"
                   value={formData.altMobileNumber}
-                  onChange={(e) => handleInputChange('altMobileNumber', e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Only allow digits and max 10 characters
+                    if (value === '' || /^\d{0,10}$/.test(value)) {
+                      handleInputChange('altMobileNumber', value);
+                    }
+                  }}
                   fullWidth
                   variant="outlined"
                   slotProps={{ inputLabel: { shrink: true } }}
                   InputProps={{ sx: fieldStyles }}
+                  inputProps={{
+                    maxLength: 10,
+                    inputMode: 'numeric',
+                    pattern: '[0-9]*',
+                  }}
                 />
  
               </div>

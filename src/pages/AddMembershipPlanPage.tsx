@@ -155,6 +155,10 @@ export const AddMembershipPlanPage = () => {
       toast.error("Please select Renewal Terms");
       return false;
     }
+    if (formData.amenities.length === 0) {
+      toast.error("Please select at least one amenity");
+      return false;
+    }
     return true;
   };
 
@@ -241,30 +245,44 @@ export const AddMembershipPlanPage = () => {
               <TextField
                 label="Plan Name*"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Only allow letters and spaces, no numbers
+                  if (/^[a-zA-Z\s]*$/.test(value)) {
+                    setFormData({ ...formData, name: value });
+                  }
+                }}
                 variant="outlined"
               />
 
               <TextField
                 label="Price*"
-                type="number"
+                type="text"
                 value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow only positive numbers with max 2 decimal places
+                  if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                    setFormData({ ...formData, price: value });
+                  }
+                }}
                 variant="outlined"
+                placeholder="0.00"
               />
 
               <TextField
                 label="User Limit*"
-                type="number"
+                type="text"
                 value={formData.userLimit}
-                onChange={(e) =>
-                  setFormData({ ...formData, userLimit: e.target.value })
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow only positive integers (no decimals, no negatives)
+                  if (value === '' || /^\d+$/.test(value)) {
+                    setFormData({ ...formData, userLimit: value });
+                  }
+                }}
                 variant="outlined"
+                placeholder="0"
               />
 
               <FormControl variant="outlined">
@@ -384,16 +402,20 @@ export const AddMembershipPlanPage = () => {
                       min="0"
                       value={details.slotLimit}
                       onChange={(e) => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          amenityDetails: {
-                            ...prev.amenityDetails,
-                            [amenityId]: {
-                              ...details,
-                              slotLimit: e.target.value,
+                        const value = e.target.value;
+                        // Only allow positive integers
+                        if (value === '' || (/^\d+$/.test(value) && parseInt(value) >= 0)) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            amenityDetails: {
+                              ...prev.amenityDetails,
+                              [amenityId]: {
+                                ...details,
+                                slotLimit: value,
+                              },
                             },
-                          },
-                        }));
+                          }));
+                        }
                       }}
                       className="px-2 py-1 border border-gray-300 rounded text-sm w-20"
                       placeholder="0"
@@ -409,16 +431,20 @@ export const AddMembershipPlanPage = () => {
                       step="0.01"
                       value={details.price}
                       onChange={(e) => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          amenityDetails: {
-                            ...prev.amenityDetails,
-                            [amenityId]: {
-                              ...details,
-                              price: e.target.value,
+                        const value = e.target.value;
+                        // Only allow positive numbers with max 2 decimal places
+                        if (value === '' || (/^\d*\.?\d{0,2}$/.test(value) && parseFloat(value || '0') >= 0)) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            amenityDetails: {
+                              ...prev.amenityDetails,
+                              [amenityId]: {
+                                ...details,
+                                price: value,
+                              },
                             },
-                          },
-                        }));
+                          }));
+                        }
                       }}
                       disabled={!details.canBookAfterSlotLimit}
                       className={`px-2 py-1 border border-gray-300 rounded text-sm w-24 ${!details.canBookAfterSlotLimit ? "bg-gray-100 cursor-not-allowed" : ""
@@ -480,16 +506,20 @@ export const AddMembershipPlanPage = () => {
                       min="0"
                       value={details.multipleSlots}
                       onChange={(e) => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          amenityDetails: {
-                            ...prev.amenityDetails,
-                            [amenityId]: {
-                              ...details,
-                              multipleSlots: e.target.value,
+                        const value = e.target.value;
+                        // Only allow positive integers
+                        if (value === '' || (/^\d+$/.test(value) && parseInt(value) >= 0)) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            amenityDetails: {
+                              ...prev.amenityDetails,
+                              [amenityId]: {
+                                ...details,
+                                multipleSlots: value,
+                              },
                             },
-                          },
-                        }));
+                          }));
+                        }
                       }}
                       disabled={!details.allowMultipleSlots}
                       className={`px-2 py-1 border border-gray-300 rounded text-sm w-24 ${!details.allowMultipleSlots ? "bg-gray-100 cursor-not-allowed" : ""

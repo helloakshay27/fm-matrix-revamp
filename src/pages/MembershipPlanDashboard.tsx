@@ -48,7 +48,7 @@ const columns: ColumnConfig[] = [
   },
   {
     key: 'renewalTerms',
-    label: 'Renewal Terms',
+    label: 'Membership Type',
     sortable: true,
     draggable: true,
   },

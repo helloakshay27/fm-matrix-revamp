@@ -478,16 +478,16 @@ export const FMUserMasterDashboard = () => {
     }
   };
 
-  const handleResetFilters = () => {
+  const handleResetFilters = async () => {
     setFilters({
       name: "",
       email: "",
+      status: "",
+      downloaded: undefined,
     });
-    setFilteredFMUsersData(fmUsersData);
-    setPagination({
-      ...pagination,
-      current_page: 1,
-    });
+    setSearchTerm("");
+    await fetchUsers(1);
+    setFilterDialogOpen(false);
   };
 
   const handleFilterChange = (field: "name" | "email", value: string) => {
