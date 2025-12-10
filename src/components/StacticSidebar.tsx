@@ -613,17 +613,6 @@ const modulesByPackage = {
       href: "/maintenance/vendor",
     },
 
-    // {
-    //   name: 'Projects & Tasks',
-    //   icon: Briefcase,
-    //   href: "/maintenance/projects"
-    // },
-    // {
-    //   name: 'Sprint',
-    //   icon: Briefcase,
-    //   href: "/maintenance/sprint"
-    // }
-
 
     // {
     //   name: "Msafe Report",
@@ -876,18 +865,20 @@ const modulesByPackage = {
         },
       ],
     },
-    { name: "Patrolling", icon: Shield, href: "/security/patrolling", subItems: [
-      {
-        name: "Patrolling Info",
-        href: "/security/patrolling",
-        color: "text-[#1a1a1a]",
-      },
-      {
-        name: "Response",
-        href: "/security/patrolling/response",
-        color: "text-[#1a1a1a]",
-      },
-    ] },
+    {
+      name: "Patrolling", icon: Shield, href: "/security/patrolling", subItems: [
+        {
+          name: "Patrolling Info",
+          href: "/security/patrolling",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Response",
+          href: "/security/patrolling/response",
+          color: "text-[#1a1a1a]",
+        },
+      ]
+    },
   ],
   "Value Added Services": [
     { name: "F&B", icon: Coffee, href: "/vas/fnb" },
@@ -1019,7 +1010,17 @@ const modulesByPackage = {
           color: "text-[#1a1a1a]",
         },
       ]
-    }
+    },
+    // {
+    //   name: 'Projects & Tasks',
+    //   icon: Briefcase,
+    //   href: "/vas/projects"
+    // },
+    // {
+    //   name: 'Sprint',
+    //   icon: Briefcase,
+    //   href: "/vas/sprint"
+    // }
   ],
   "Market Place": [
     {

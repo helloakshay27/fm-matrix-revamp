@@ -654,7 +654,7 @@ export const AreaPage = () => {
               <Button 
                 onClick={handleUpdateArea} 
                 className="bg-purple-600 hover:bg-purple-700 text-white px-8"
-                disabled={!name.trim() || !buildingId || !wingId}
+                disabled={!name.trim() || !buildingId }
               >
                 Submit
               </Button>

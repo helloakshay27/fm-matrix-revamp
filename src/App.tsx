@@ -2322,19 +2322,19 @@ function App() {
                     element={<DetailsVendorPage />}
                   />
                   <Route
-                    path="/maintenance/projects"
+                    path="/vas/projects"
                     element={<ProjectsDashboard />}
                   />
                   <Route
-                    path="/maintenance/projects/details/:id"
+                    path="/vas/projects/details/:id"
                     element={<ProjectDetailsPage />}
                   />
                   <Route
-                    path="/maintenance/projects/:id/milestones"
+                    path="/vas/projects/:id/milestones"
                     element={<ProjectMilestones />}
                   />
                   <Route
-                    path="/maintenance/projects/:id/milestones/:mid/tasks"
+                    path="/vas/projects/:id/milestones/:mid/tasks"
                     element={<ProjectTasksPage />}
                   />
                   <Route
@@ -2342,20 +2342,20 @@ function App() {
                     //   element={<ProjectTaskDetailsPage />}
                     // />
                     //   <Route
-                    path="/maintenance/projects/:id/milestones/:mid/tasks/:taskId"
+                    path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetails />}
                   />
                   <Route
-                    path="/maintenance/sprint"
+                    path="/vas/sprint"
                     element={<SprintDashboard />}
                   />
                   <Route
-                    path="/maintenance/sprint/details/:id"
+                    path="/vas/sprint/details/:id"
                     element={<SprintDetailsPage />}
                   />
 
                   <Route
-                    path="/maintenance/projects/:id/milestones/:mid"
+                    path="/vas/projects/:id/milestones/:mid"
                     element={<MilestoneDetailsPage />}
                   />
 

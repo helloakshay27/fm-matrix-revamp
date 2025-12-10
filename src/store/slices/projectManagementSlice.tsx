@@ -120,12 +120,52 @@ export const filterProjects = createAsyncThunk(
     }
 );
 
+export const attachFiles = createAsyncThunk(
+    'attachFiles',
+    async ({ token, baseUrl, id, payload }: { token: string, baseUrl: string, id: string, payload: FormData }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/project_managements/${id}.json`, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            return response.data;
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to upload files'
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const removeAttachment = createAsyncThunk(
+    'removeAttachment',
+    async ({ token, baseUrl, id, image_id }: { token: string, baseUrl: string, id: string, image_id: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.delete(
+                `https://${baseUrl}/project_managements/${id}/remove_attachemnts/${image_id}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to remove attachment'
+            return rejectWithValue(message);
+        }
+    }
+);
+
 const fetchProjectsSlice = createApiSlice("fetchProjects", fetchProjects);
 const createProjectSlice = createApiSlice("createProject", createProject);
 const fetchProjectByIdSlice = createApiSlice("fetchProjectById", fetchProjectById);
 const changeProjectStatusSlice = createApiSlice("changeProjectStatus", changeProjectStatus);
 const removeTagFromProjectSlice = createApiSlice("removeTagFromProject", removeTagFromProject);
 const filterProjectsSlice = createApiSlice("filterProjects", filterProjects);
+const attachFilesSlice = createApiSlice("attachFiles", attachFiles);
+const removeAttachmentSlice = createApiSlice("removeAttachment", removeAttachment);
 
 export const fetchProjectsReducer = fetchProjectsSlice.reducer;
 export const createProjectReducer = createProjectSlice.reducer;
@@ -133,3 +173,5 @@ export const fetchProjectByIdReducer = fetchProjectByIdSlice.reducer;
 export const changeProjectStatusReducer = changeProjectStatusSlice.reducer;
 export const removeTagFromProjectReducer = removeTagFromProjectSlice.reducer;
 export const filterProjectsReducer = filterProjectsSlice.reducer;
+export const attachFilesReducer = attachFilesSlice.reducer;
+export const removeAttachmentReducer = removeAttachmentSlice.reducer;

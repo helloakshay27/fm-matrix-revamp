@@ -11,6 +11,7 @@ import {
   List,
   LogOut,
   Plus,
+  Filter,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +23,7 @@ import { toast } from "sonner";
 import AddProjectModal from "@/components/AddProjectModal";
 import ProjectCreateModal from "@/components/ProjectCreateModal";
 import ProjectManagementKanban from "@/components/ProjectManagementKanban";
+import { ProjectFilterModal } from "@/components/ProjectFilterModal";
 
 const columns: ColumnConfig[] = [
   {
@@ -74,6 +76,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "subtasks",
+    label: "Subtasks",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "issues",
     label: "Issues",
     sortable: true,
@@ -120,6 +129,8 @@ const transformedProjects = (projects: any) => {
       milestonesCompleted: project.completed_milestone_count,
       tasks: project.total_task_management_count,
       tasksCompleted: project.completed_task_management_count,
+      subtasks: project.total_sub_task_count || 0,
+      subtasksCompleted: project.completed_sub_task_count || 0,
       issues: project.total_issues_count,
       resolvedIssues: project.completed_issues_count,
       start_date: project.start_date,
@@ -170,6 +181,7 @@ export const ProjectsDashboard = () => {
   const [openFormDialog, setOpenFormDialog] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [openStatusOptions, setOpenStatusOptions] = useState(false)
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedView, setSelectedView] = useState("List");
   const [projectTypes, setProjectTypes] = useState([]);
   const [owners, setOwners] = useState([])
@@ -284,7 +296,7 @@ export const ProjectsDashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => navigate(`/maintenance/projects/details/${item.id}`)}
+        onClick={() => navigate(`/vas/projects/details/${item.id}`)}
       >
         <Eye className="w-4 h-4" />
       </Button>
@@ -292,7 +304,7 @@ export const ProjectsDashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => navigate(`/maintenance/projects/${item.id}/milestones`)}
+        onClick={() => navigate(`/vas/projects/${item.id}/milestones`)}
       >
         <LogOut className="w-4 h-4" />
       </Button>
@@ -300,41 +312,54 @@ export const ProjectsDashboard = () => {
   );
 
   const renderCell = (item: any, columnKey: string) => {
+    const renderProgressBar = (completed: number, total: number, color: string) => {
+      const progress = total > 0 ? (completed / total) * 100 : 0;
+      return (
+        <div className="flex items-center gap-2">
+          <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
+            <div
+              className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{completed}/{total}</span>
+        </div>
+      );
+    };
+
     switch (columnKey) {
       case "milestones": {
         const completed = item.milestonesCompleted || 0;
-        const total = item.milestonesTotal || 0;
-        const progress = total > 0 ? (completed / total) * 100 : 0;
-
-        return (
-          <div className="relative w-[8rem] bg-gray-200 rounded-full h-3">
-            <div
-              className="absolute top-0 left-0 h-3 bg-[#84edba] rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            ></div>
-            <div className="absolute inset-0 flex !items-center !justify-center text-xs font-medium text-black">
-              {progress.toFixed(2)}%
-            </div>
-          </div>
-        );
+        const total = item.milestones || 0;
+        return renderProgressBar(completed, total, "bg-[#84edba]");
       }
       case "tasks": {
         const completed = item.tasksCompleted || 0;
-        const total = item.tasksTotal || 0;
-        const progress = total > 0 ? (completed / total) * 100 : 0;
-
-        return (
-          <div className="relative w-[8rem] bg-gray-200 rounded-full h-3">
-            <div
-              className="absolute top-0 left-0 h-3 bg-[#e9e575] rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            ></div>
-            <div className="absolute inset-0 flex !items-center !justify-center text-xs font-medium text-black">
-              {progress.toFixed(2)}%
-            </div>
-          </div>
-        );
+        const total = item.tasks || 0;
+        return renderProgressBar(completed, total, "bg-[#e9e575]");
       }
+      case "subtasks": {
+        const completed = item.subtasksCompleted || 0;
+        const total = item.subtasks || 0;
+        return renderProgressBar(completed, total, "bg-[#b4e7ff]");
+      }
+      case "issues": {
+        const completed = item.resolvedIssues || 0;
+        const total = item.issues || 0;
+        return renderProgressBar(completed, total, "bg-[#ff9a9e]");
+      }
+      case "id":
+        return (
+          <button
+            onClick={() => navigate(`/vas/projects/details/${item.id}`)}
+            className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+          >
+            {item.id}
+          </button>
+        );
+      case "start_date":
+      case "end_date":
+        return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString('en-GB') : "-";
       default:
         return item[columnKey] || "-";
     }
@@ -458,7 +483,14 @@ export const ProjectsDashboard = () => {
   }
 
   const rightActions = (
-    <div className="flex items-center">
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => setIsFilterModalOpen(true)}
+        className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200"
+      >
+        <Filter className="w-4 h-4 text-[#C72030]" />
+        <span className="text-sm font-medium text-gray-700">Filter</span>
+      </button>
       <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -656,6 +688,12 @@ export const ProjectsDashboard = () => {
           teams={teams}
           fetchProjects={fetchData}
         />
+
+        <ProjectFilterModal
+          isModalOpen={isFilterModalOpen}
+          setIsModalOpen={setIsFilterModalOpen}
+          onApplyFilters={fetchData}
+        />
       </div>
     )
   }
@@ -672,7 +710,7 @@ export const ProjectsDashboard = () => {
         storageKey="projects-table"
         onFilterClick={() => { }}
         canAddRow={true}
-        readonlyColumns={["id", "milestones", "tasks", "issues"]}
+        readonlyColumns={["id", "milestones", "tasks", "subtasks", "issues"]}
         onAddRow={(newRowData) => {
           handleSubmit(newRowData)
         }}
@@ -698,6 +736,12 @@ export const ProjectsDashboard = () => {
         tags={tags}
         teams={teams}
         fetchProjects={fetchData}
+      />
+
+      <ProjectFilterModal
+        isModalOpen={isFilterModalOpen}
+        setIsModalOpen={setIsFilterModalOpen}
+        onApplyFilters={fetchData}
       />
     </div>
   );
