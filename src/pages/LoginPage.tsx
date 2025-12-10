@@ -456,7 +456,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           htmlFor="email"
           className="text-gray-700 font-medium text-base block mb-2"
         >
-          Email Address
+          Emails Address
         </Label>
 
         {/* Input Field */}
