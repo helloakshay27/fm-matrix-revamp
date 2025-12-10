@@ -558,10 +558,10 @@ export const EditBookingSetupPage = () => {
             );
             formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
             formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
-            formDataToSend.append(
-                "facility_setup[facility_charge_attributes][per_slot_charge]",
-                formData.perSlotCharge
-            );
+            // formDataToSend.append(
+            //     "facility_setup[facility_charge_attributes][per_slot_charge]",
+            //     formData.perSlotCharge
+            // );
 
             // Charge Setup - Member charges
             if (formData.chargeSetup.member.selected) {
@@ -1900,14 +1900,14 @@ export const EditBookingSetupPage = () => {
                                     variant="outlined"
                                 />
                             </div>
-                            <TextField
+                            {/* <TextField
                                 label="Per Slot Charge"
                                 value={formData.perSlotCharge}
                                 onChange={(e) =>
                                     setFormData({ ...formData, perSlotCharge: e.target.value })
                                 }
                                 variant="outlined"
-                            />
+                            /> */}
                         </div>
                     </div>
 
