@@ -108,6 +108,12 @@ export const BookingSetupDetailPage = () => {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState();
   const [selectedBookingFiles, setSelectedBookingFiles] = useState([]);
+  const [galleryImages, setGalleryImages] = useState<Array<{ label: string; images: string[] }>>([
+    { label: '16:9', images: [] },
+    { label: '9:16', images: [] },
+    { label: '1:1', images: [] },
+    { label: '3:2', images: [] }
+  ]);
   const [showQr, setShowQr] = useState(false);
   const [qrUrl, setQrUrl] = useState("");
   const [additionalOpen, setAdditionalOpen] = useState(false);
@@ -322,8 +328,8 @@ export const BookingSetupDetailPage = () => {
           wrapTime: slot.facility_slot.wrap_time,
         })),
         chargeSetup: {
-          member: { selected: response.facility_charge.adult_member_charge, adult: response.facility_charge.adult_member_charge, child: "" },
-          guest: { selected: response.facility_charge.adult_guest_charge, adult: response.facility_charge.adult_guest_charge, child: "" },
+          member: { selected: response.facility_charge.adult_member_charge, adult: response.facility_charge.adult_member_charge, child: response.facility_charge.child_member_charge },
+          guest: { selected: response.facility_charge.adult_guest_charge, adult: response.facility_charge.adult_guest_charge, child: response.facility_charge.child_guest_charge },
           minimumPersonAllowed: response.min_people,
           maximumPersonAllowed: response.max_people,
         },
@@ -374,6 +380,27 @@ export const BookingSetupDetailPage = () => {
         response?.documents.map((doc) => doc.document.document)
       );
       setQrUrl(response?.qr_code.document);
+
+      // Setup gallery images
+      const galleryData = [
+        {
+          label: '1:1',
+          images: response?.gallery_image_1_by_1?.map((item: any) => item.gallery_image_1_by_1?.document) || []
+        },
+        {
+          label: '16:9',
+          images: response?.gallery_image_16_by_9?.map((item: any) => item.gallery_image_16_by_9?.document) || []
+        },
+        {
+          label: '9:16',
+          images: response?.gallery_image_9_by_16?.map((item: any) => item.gallery_image_9_by_16?.document) || []
+        },
+        {
+          label: '3:2',
+          images: response?.gallery_image_3_by_2?.map((item: any) => item.gallery_image_3_by_2?.document) || []
+        }
+      ];
+      setGalleryImages(galleryData);
     } catch (error) {
       console.log(error);
     }
@@ -485,63 +512,35 @@ export const BookingSetupDetailPage = () => {
         <div className="space-y-6">
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
             <div className="flex items-center gap-3">
-              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                 <User className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">BASIC INFo</h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                BASIC INFO
+              </h3>
             </div>
-            <div className="space-y-6 py-2">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <TextField
-                  label="Facility Name*"
-                  value={formData.facilityName}
-                  variant="outlined"
-                  InputProps={{ readOnly: true }}
-                />
-                <FormControl>
-                  <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
-                  <Select
-                    value={formData.department}
-                    label="Department"
-                    disabled
-                    displayEmpty
-                  >
-                    <MenuItem value="">
-                      {loadingDepartments ? "Loading..." : "All"}
-                    </MenuItem>
-                    {Array.isArray(departments) &&
-                      departments.map((dept, index) => (
-                        <MenuItem key={index} value={dept.id}>
-                          {dept.department_name}
-                        </MenuItem>
-                      ))}
-                  </Select>
-                </FormControl>
-              </div>
 
-              <div className="flex gap-6 py-2">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    id="bookable"
-                    name="type"
-                    checked={formData.isBookable}
-                    disabled
-                    className="text-blue-600"
-                  />
-                  <label htmlFor="bookable">Bookable</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    id="request"
-                    name="type"
-                    checked={formData.isRequest}
-                    disabled
-                    className="text-blue-600"
-                  />
-                  <label htmlFor="request">Request</label>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Facility Name</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.facilityName || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.isBookable ? "Bookable" : formData.isRequest ? "Request" : "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Department</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.department ? departments.find(d => d.id === formData.department)?.department_name || "-" : "-"}
+                </span>
               </div>
             </div>
           </div>
@@ -552,107 +551,53 @@ export const BookingSetupDetailPage = () => {
               <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                 <DollarSign className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CHARGE SETUP</h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                CHARGE SETUP
+              </h3>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Member Type</th>
-                    <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Adult</th>
-                    {/* <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Child</th> */}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Checkbox disabled checked={formData.chargeSetup.member.selected} />
-                        <span>Member</span>
-                      </div>
-                    </td>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <Checkbox disabled checked={!!formData.chargeSetup.member.adult} />
-                        <TextField
-                          size="small"
-                          variant="outlined"
-                          value={formData.chargeSetup.member.adult}
-                          InputProps={{ readOnly: true }}
-                          className="w-full max-w-[200px]"
-                        />
-                      </div>
-                    </td>
-                    {/* <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <Checkbox disabled checked={!!formData.chargeSetup.member.child} />
-                        <TextField
-                          size="small"
-                          variant="outlined"
-                          value={formData.chargeSetup.member.child}
-                          InputProps={{ readOnly: true }}
-                          className="w-full max-w-[200px]"
-                        />
-                      </div>
-                    </td> */}
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Checkbox disabled checked={formData.chargeSetup.guest.selected} />
-                        <span>Guest</span>
-                      </div>
-                    </td>
-                    <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <Checkbox disabled checked={!!formData.chargeSetup.guest.adult} />
-                        <TextField
-                          size="small"
-                          variant="outlined"
-                          value={formData.chargeSetup.guest.adult}
-                          InputProps={{ readOnly: true }}
-                          className="w-full max-w-[200px]"
-                        />
-                      </div>
-                    </td>
-                    {/* <td className="border border-gray-300 px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <Checkbox disabled checked={!!formData.chargeSetup.guest.child} />
-                        <TextField
-                          size="small"
-                          variant="outlined"
-                          value={formData.chargeSetup.guest.child}
-                          InputProps={{ readOnly: true }}
-                          className="w-full max-w-[200px]"
-                        />
-                      </div>
-                    </td> */}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-semibold whitespace-nowrap">Minimum Person Allowed</label>
-                <TextField
-                  size="small"
-                  variant="outlined"
-                  value={formData.chargeSetup.minimumPersonAllowed}
-                  InputProps={{ readOnly: true }}
-                  className="w-32"
-                />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Member Adult Charge</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.member.adult || "-"}
+                </span>
               </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-semibold whitespace-nowrap">Maximum Person Allowed</label>
-                <TextField
-                  size="small"
-                  variant="outlined"
-                  value={formData.chargeSetup.maximumPersonAllowed}
-                  InputProps={{ readOnly: true }}
-                  className="w-32"
-                />
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Guest Adult Charge</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.guest.adult || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Member Child Charge</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.member.child || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Guest Child Charge</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.guest.child || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Minimum Person Allowed</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.minimumPersonAllowed || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Maximum Person Allowed</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.maximumPersonAllowed || "-"}
+                </span>
               </div>
             </div>
           </div>
@@ -666,296 +611,112 @@ export const BookingSetupDetailPage = () => {
               <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE SLOT</h3>
             </div>
 
-            <div>
-              <Button
-                disabled
-                className="bg-purple-600 hover:bg-purple-700 mb-4 opacity-50 cursor-not-allowed"
-              >
-                Add
-              </Button>
-              <div className="grid grid-cols-7 gap-2 mb-2 text-sm font-medium text-gray-600">
-                <div>Start Time</div>
-                <div>Break Time Start</div>
-                <div>Break Time End</div>
-                <div>End Time</div>
-                <div>Concurrent Slots</div>
-                <div>Slot by</div>
-                <div>Wrap Time</div>
-              </div>
+            <div className="space-y-6">
               {formData.slots.map((slot, index) => (
-                <div key={index} className="grid grid-cols-7 gap-2 mb-2">
-                  <div className="flex gap-1">
-                    <FormControl size="small">
-                      <Select
-                        value={slot.startTime.hour}
-                        disabled
-                      >
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <FormControl size="small">
-                      <Select
-                        value={slot.startTime.minute}
-                        disabled
-                      >
-                        {Array.from({ length: 60 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                <div key={index} className="space-y-4">
+                  <h4 className="text-sm font-semibold text-gray-700">Slot {index + 1}</h4>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Start Time</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {slot.startTime.hour}:{slot.startTime.minute}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">End Time</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {slot.endTime.hour}:{slot.endTime.minute}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Break Time Start</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {slot.breakTimeStart.hour}:{slot.breakTimeStart.minute}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Break Time End</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {slot.breakTimeEnd.hour}:{slot.breakTimeEnd.minute}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Concurrent Slots</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {slot.concurrentSlots || "-"}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Slot By</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {slot.slotBy || "-"}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Wrap Time</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {slot.wrapTime || "-"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex gap-1">
-                    <FormControl size="small">
-                      <Select
-                        value={slot.breakTimeStart.hour}
-                        disabled
-                      >
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <FormControl size="small">
-                      <Select
-                        value={slot.breakTimeStart.minute}
-                        disabled
-                      >
-                        {Array.from({ length: 60 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </div>
-                  <div className="flex gap-1">
-                    <FormControl size="small">
-                      <Select
-                        value={slot.breakTimeEnd.hour}
-                        disabled
-                      >
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <FormControl size="small">
-                      <Select
-                        value={slot.breakTimeEnd.minute}
-                        disabled
-                      >
-                        {Array.from({ length: 60 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </div>
-                  <div className="flex gap-1">
-                    <FormControl size="small">
-                      <Select
-                        value={slot.endTime.hour}
-                        disabled
-                      >
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <FormControl size="small">
-                      <Select
-                        value={slot.endTime.minute}
-                        disabled
-                      >
-                        {Array.from({ length: 60 }, (_, i) => (
-                          <MenuItem key={i} value={i.toString()}>
-                            {i.toString().padStart(2, "0")}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </div>
-                  <TextField
-                    size="small"
-                    value={slot.concurrentSlots}
-                    variant="outlined"
-                    InputProps={{ readOnly: true }}
-                  />
-                  <FormControl size="small">
-                    <Select
-                      value={slot.slotBy}
-                      disabled
-                    >
-                      <MenuItem value={"15 Minutes"}>15 Minutes</MenuItem>
-                      <MenuItem value={"30 Minutes"}>Half hour</MenuItem>
-                      <MenuItem value={"45 Minutes"}>45 Minutes</MenuItem>
-                      <MenuItem value={"60 Minutes"}>1 hour</MenuItem>
-                      <MenuItem value={"90 Minutes"}>1 and a half hours</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <TextField
-                    size="small"
-                    value={slot.wrapTime}
-                    variant="outlined"
-                    InputProps={{ readOnly: true }}
-                  />
+                  {index < formData.slots.length - 1 && <hr className="mt-4" />}
                 </div>
               ))}
-              <div className="space-y-4 mt-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Booking Allowed before :
-                  </label>
-                  <p className="text-sm text-gray-600 mb-2">
-                    (Enter Time: DD Days, HH Hours, MM Minutes)
-                  </p>
-                  <div className="flex gap-2 items-center">
-                    <TextField
-                      placeholder="Day"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.bookingAllowedBefore.day}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>d</span>
-                    <TextField
-                      placeholder="Hour"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.bookingAllowedBefore.hour}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>h</span>
-                    <TextField
-                      placeholder="Mins"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.bookingAllowedBefore.minute}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>m</span>
+
+              <div className="border-t pt-6 space-y-4">
+                <h4 className="text-sm font-semibold text-gray-700">Booking Configuration</h4>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Booking Allowed Before</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {formData.bookingAllowedBefore.day}d {formData.bookingAllowedBefore.hour}h {formData.bookingAllowedBefore.minute}m
+                    </span>
                   </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Advance Booking :
-                  </label>
-                  <div className="flex gap-2 items-center">
-                    <TextField
-                      placeholder="Day"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.advanceBooking.day}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>d</span>
-                    <TextField
-                      placeholder="Hour"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.advanceBooking.hour}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>h</span>
-                    <TextField
-                      placeholder="Mins"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.advanceBooking.minute}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>m</span>
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Advance Booking</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {formData.advanceBooking.day}d {formData.advanceBooking.hour}h {formData.advanceBooking.minute}m
+                    </span>
                   </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Can Cancel Before Schedule :
-                  </label>
-                  <div className="flex gap-2 items-center">
-                    <TextField
-                      placeholder="Day"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.canCancelBefore.day}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>d</span>
-                    <TextField
-                      placeholder="Hour"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.canCancelBefore.hour}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>h</span>
-                    <TextField
-                      placeholder="Mins"
-                      size="small"
-                      style={{ width: "80px" }}
-                      variant="outlined"
-                      value={formData.canCancelBefore.minute}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <span>m</span>
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Can Cancel Before</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {formData.canCancelBefore.day}d {formData.canCancelBefore.hour}h {formData.canCancelBefore.minute}m
+                    </span>
                   </div>
-                </div>
-              </div>
-              <div className="space-y-4 flex items-center justify-between mt-4">
-                <div className="flex flex-col gap-5">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="allowMultipleSlots"
-                      checked={formData.allowMultipleSlots}
-                      disabled
-                    />
-                    <label htmlFor="allowMultipleSlots">
-                      Allow Multiple Slots
-                    </label>
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Allow Multiple Slots</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {formData.allowMultipleSlots ? "Yes" : "No"}
+                    </span>
                   </div>
                   {formData.allowMultipleSlots && (
-                    <div>
-                      <TextField
-                        label="Maximum no. of slots"
-                        value={formData.maximumSlots}
-                        variant="outlined"
-                        size="small"
-                        style={{ width: "200px" }}
-                        InputProps={{ readOnly: true }}
-                      />
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[160px]">Maximum Slots</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">
+                        {formData.maximumSlots || "-"}
+                      </span>
                     </div>
                   )}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>Facility can be booked</span>
-                  <TextField
-                    value={formData.facilityBookedTimes}
-                    variant="outlined"
-                    size="small"
-                    style={{ width: "80px" }}
-                    InputProps={{ readOnly: true }}
-                  />
-                  <span>times per day by User</span>
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[160px]">Facility Booked Times Per Day</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {formData.facilityBookedTimes || "-"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1088,7 +849,7 @@ export const BookingSetupDetailPage = () => {
                 />
                 <label htmlFor="entireDay">Entire Day</label>
               </div>
-              {/* <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2">
                 <input
                   type="radio"
                   id="selectedSlots"
@@ -1098,7 +859,7 @@ export const BookingSetupDetailPage = () => {
                   className="text-blue-600"
                 />
                 <label htmlFor="selectedSlots">Selected Slots</label>
-              </div> */}
+              </div>
             </div>
 
             <div>
@@ -1114,66 +875,50 @@ export const BookingSetupDetailPage = () => {
           {/* Configure Payment */}
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
             <div className="flex items-center gap-3">
-              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                 <CreditCard className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE PAYMENT</h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                CONFIGURE PAYMENT
+              </h3>
             </div>
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {/* <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="postpaid"
-                    checked={formData.postpaid}
-                    disabled
-                  />
-                  <label htmlFor="postpaid">Postpaid</label>
-                </div> */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="prepaid"
-                    checked={formData.prepaid}
-                    disabled
-                  />
-                  <label htmlFor="prepaid">Prepaid</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="payOnFacility"
-                    checked={formData.payOnFacility}
-                    disabled
-                  />
-                  <label htmlFor="payOnFacility">Pay on Facility</label>
-                </div>
-                {/* <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="complimentary"
-                    checked={formData.complimentary}
-                    disabled
-                  />
-                  <label htmlFor="complimentary">Complimentary</label>
-                </div> */}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Prepaid</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.prepaid ? "Yes" : "No"}
+                </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <TextField
-                  label="SGST(%)"
-                  value={formData.sgstPercentage}
-                  variant="outlined"
-                  InputProps={{ readOnly: true }}
-                />
-                <TextField
-                  label="GST(%)"
-                  value={formData.gstPercentage}
-                  variant="outlined"
-                  InputProps={{ readOnly: true }}
-                />
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Pay on Facility</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.payOnFacility ? "Yes" : "No"}
+                </span>
               </div>
-              <TextField
-                label="Per Slot Charge"
-                value={formData.perSlotCharge}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-              />
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">SGST (%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.sgstPercentage || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">GST (%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.gstPercentage || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Per Slot Charge</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.perSlotCharge || "-"}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1227,6 +972,37 @@ export const BookingSetupDetailPage = () => {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Gallery Images */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <Image className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GALLERY IMAGES</h3>
+            </div>
+
+            <div className="space-y-6">
+              {galleryImages.map((ratio) => (
+                ratio.images && ratio.images.length > 0 && (
+                  <div key={ratio.label} className="space-y-2">
+                    <h4 className="text-sm font-semibold text-gray-700">Aspect Ratio: {ratio.label}</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {ratio.images.map((image, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={image}
+                            alt={`gallery-${ratio.label}-${index}`}
+                            className="h-24 w-24 rounded border border-gray-200 object-fit"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              ))}
             </div>
           </div>
 

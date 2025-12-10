@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Armchair, ArrowLeft, BookKey, CalendarDays, ChevronDown, ChevronUp, CreditCard, DollarSign, FileCog, FileImage, Image, LampFloor, MessageSquareX, NotepadText, ReceiptText, Settings, Share, Share2, Tv, Upload, User, X } from "lucide-react";
+import { GalleryImageUpload } from "@/components/GalleryImageUpload";
 import {
   TextField,
   Select,
@@ -86,6 +87,8 @@ export const AddBookingSetupPage = () => {
   const bookingImageRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState<File[]>([]);
   const [selectedBookingFiles, setSelectedBookingFiles] = useState<File[]>([]);
+  const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+  const [selectedGalleryImages, setSelectedGalleryImages] = useState<any[]>([]);
 
   const [additionalOpen, setAdditionalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -200,6 +203,19 @@ export const AddBookingSetupPage = () => {
 
   const triggerBookingImgSelect = () => {
     bookingImageRef.current?.click();
+  };
+
+  const handleGalleryModalOpen = () => {
+    setGalleryModalOpen(true);
+  };
+
+  const handleGalleryModalClose = () => {
+    setGalleryModalOpen(false);
+  };
+
+  const handleGalleryModalContinue = (galleryImages: any[]) => {
+    setSelectedGalleryImages(galleryImages);
+    setGalleryModalOpen(false);
   };
 
   const handleAdditionalOpen = () => {
@@ -360,18 +376,18 @@ export const AddBookingSetupPage = () => {
       );
 
       // Find department ID from selected department name
-      if (formData.department) {
-        formDataToSend.append(
-          "facility_setup[department_id]",
-          formData.department
-        );
-      }
+      // if (formData.department) {
+      //   formDataToSend.append(
+      //     "facility_setup[department_id]",
+      //     formData.department
+      //   );
+      // }
 
       formDataToSend.append("facility_setup[app_key]", formData.appKey);
-      formDataToSend.append(
-        "facility_setup[postpaid]",
-        formData.postpaid ? "1" : "0"
-      );
+      // formDataToSend.append(
+      //   "facility_setup[postpaid]",
+      //   formData.postpaid ? "1" : "0"
+      // );
       formDataToSend.append(
         "facility_setup[prepaid]",
         formData.prepaid ? "1" : "0"
@@ -386,10 +402,10 @@ export const AddBookingSetupPage = () => {
       );
       formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
       formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
-      formDataToSend.append(
-        "facility_setup[facility_charge_attributes][per_slot_charge]",
-        formData.perSlotCharge
-      );
+      // formDataToSend.append(
+      //   "facility_setup[facility_charge_attributes][per_slot_charge]",
+      //   formData.perSlotCharge
+      // );
 
       // Charge Setup - Member charges
       if (formData.chargeSetup.member.selected) {
@@ -423,46 +439,6 @@ export const AddBookingSetupPage = () => {
       formDataToSend.append(
         "facility_setup[max_people]",
         formData.chargeSetup.maximumPersonAllowed || "1"
-      );
-
-      // Block Days - Date range
-      if (formData.blockDays.startDate) {
-        formDataToSend.append(
-          "facility_setup[facility_blockings_attributes][0][ondate]",
-          formData.blockDays.startDate
-        );
-      }
-
-      // if (formData.blockDays.endDate) {
-      //   formDataToSend.append(
-      //     "facility_blockings_attributes[0][end_date]",
-      //     formData.blockDays.endDate
-      //   );
-      // }
-
-      // Block Days - Type (entire day or selected slots)
-      // formDataToSend.append(
-      //   "facility_blockings_attributes[0][block_type]",
-      //   formData.blockDays.dayType === "entireDay" ? "entire_day" : "selected_slots"
-      // );
-
-      // Block Days - Reason
-      if (formData.blockDays.blockReason) {
-        formDataToSend.append(
-          "facility_setup[facility_blockings_attributes][0][reason]",
-          formData.blockDays.blockReason
-        );
-      }
-
-      // Default values for facility blockings
-      formDataToSend.append(
-        "facility_setup[facility_blockings_attributes][0][order_allowed]",
-        "false"
-      );
-
-      formDataToSend.append(
-        "facility_setup[facility_blockings_attributes][0][booking_allowed]",
-        "false"
       );
 
       formDataToSend.append(
@@ -537,6 +513,15 @@ export const AddBookingSetupPage = () => {
 
       selectedBookingFiles.forEach((file) => {
         formDataToSend.append(`attachments[]`, file);
+      });
+
+      selectedGalleryImages.forEach((image: any, index: number) => {
+        // Convert aspect ratio to format: 16_9, 9_16, 1_1, 3_2
+        const ratioKey = image.ratio.replace(':', '_by_');
+        formDataToSend.append(
+          `facility_setup[attach_file_${ratioKey}][${index}][file]`,
+          image.file
+        );
       });
 
       // Generic Tags (Amenities)
@@ -752,7 +737,7 @@ export const AddBookingSetupPage = () => {
                     shrink: true,
                   }}
                 />
-                <FormControl>
+                {/* <FormControl>
                   <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
                   <Select
                     value={formData.department}
@@ -773,7 +758,7 @@ export const AddBookingSetupPage = () => {
                         </MenuItem>
                       ))}
                   </Select>
-                </FormControl>
+                </FormControl> */}
               </div>
 
               <div className="flex gap-6 px-1">
@@ -1491,7 +1476,7 @@ export const AddBookingSetupPage = () => {
               </div>
 
               <div className="space-y-4 flex items-center justify-between mt-4  ">
-                <div className="flex flex-col gap-5">
+                {/* <div className="flex flex-col gap-5">
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="allowMultipleSlots"
@@ -1526,7 +1511,7 @@ export const AddBookingSetupPage = () => {
                       />
                     </div>
                   )}
-                </div>
+                </div> */}
 
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <span>Facility can be booked</span>
@@ -1546,114 +1531,6 @@ export const AddBookingSetupPage = () => {
                   <span>times per day by User</span>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Block Days Section */}
-          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                <CalendarDays className="w-4 h-4" />
-              </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days</h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TextField
-                label="Date"
-                type="date"
-                value={formData.blockDays.startDate}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    blockDays: {
-                      ...formData.blockDays,
-                      startDate: e.target.value,
-                    },
-                  })
-                }
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-              {/* <TextField
-                label="End Date"
-                type="date"
-                value={formData.blockDays.endDate}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    blockDays: {
-                      ...formData.blockDays,
-                      endDate: e.target.value,
-                    },
-                  })
-                }
-                variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              /> */}
-            </div>
-
-            <div className="flex gap-6 px-1">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="entireDay"
-                  name="dayType"
-                  checked={formData.blockDays.dayType === "entireDay"}
-                  onChange={() =>
-                    setFormData({
-                      ...formData,
-                      blockDays: {
-                        ...formData.blockDays,
-                        dayType: "entireDay",
-                      },
-                    })
-                  }
-                  className="text-blue-600"
-                />
-                <label htmlFor="entireDay">Entire Day</label>
-              </div>
-              {/* <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="selectedSlots"
-                  name="dayType"
-                  checked={formData.blockDays.dayType === "selectedSlots"}
-                  onChange={() =>
-                    setFormData({
-                      ...formData,
-                      blockDays: {
-                        ...formData.blockDays,
-                        dayType: "selectedSlots",
-                      },
-                    })
-                  }
-                  className="text-blue-600"
-                />
-                <label htmlFor="selectedSlots">Selected Slots</label>
-              </div> */}
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
-              <Textarea
-                placeholder="Please mention block reason"
-                value={formData.blockDays.blockReason}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    blockDays: {
-                      ...formData.blockDays,
-                      blockReason: e.target.value,
-                    },
-                  })
-                }
-                className="min-h-[100px]"
-              />
             </div>
           </div>
 
@@ -1726,15 +1603,6 @@ export const AddBookingSetupPage = () => {
                   variant="outlined"
                 />
               </div>
-
-              <TextField
-                label="Per Slot Charge"
-                value={formData.perSlotCharge}
-                onChange={(e) =>
-                  setFormData({ ...formData, perSlotCharge: e.target.value })
-                }
-                variant="outlined"
-              />
             </div>
           </div>
 
@@ -1747,9 +1615,9 @@ export const AddBookingSetupPage = () => {
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">COVER IMAGE</h3>
               </div>
 
-              <div className="p-6" style={{ border: "1px solid #D9D9D9" }}>
+              <div className="p-6" style={{ border: "1px dashed #C72030" }}>
                 <div
-                  className="border-2 border-dashed border-[#C72030]/30 rounded-lg text-center p-6"
+                  className="rounded-lg text-center p-6"
                   onClick={triggerFileSelect}
                 >
                   <div className="text-[#C72030] mb-2">
@@ -1774,27 +1642,26 @@ export const AddBookingSetupPage = () => {
                   ref={coverImageRef}
                   hidden
                 />
-
-                {selectedFile.length > 0 && (
-                  <div className="mt-4 flex gap-2 flex-wrap">
-                    {selectedFile.map((file, index) => (
-                      <div key={index} className="relative">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={`cover-preview-${index}`}
-                          className="h-[80px] w-20 rounded border border-gray-200"
-                        />
-                        <button
-                          onClick={() => removeCoverImage(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
+              {selectedFile.length > 0 && (
+                <div className="mt-4 flex gap-2 flex-wrap">
+                  {selectedFile.map((file, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`cover-preview-${index}`}
+                        className="h-[80px] w-20 rounded border border-gray-200"
+                      />
+                      <button
+                        onClick={() => removeCoverImage(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-lg border-2 p-6 space-y-6 w-full">
@@ -1805,9 +1672,9 @@ export const AddBookingSetupPage = () => {
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Booking Summary Image</h3>
               </div>
 
-              <div className="p-6" style={{ border: "1px solid #D9D9D9" }}>
+              <div className="p-6" style={{ border: "1px dashed #C72030" }}>
                 <div
-                  className="border-2 border-dashed border-[#C72030]/30 rounded-lg text-center p-6"
+                  className="rounded-lg text-center p-6"
                   onClick={triggerBookingImgSelect}
                 >
                   <div className="text-[#C72030] mb-2">
@@ -1832,28 +1699,78 @@ export const AddBookingSetupPage = () => {
                   ref={bookingImageRef}
                   hidden
                 />
+              </div>
+              {selectedBookingFiles.length > 0 && (
+                <div className="mt-4 flex gap-2 flex-wrap">
+                  {selectedBookingFiles.map((file, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`booking-preview-${index}`}
+                        className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
+                      />
+                      <button
+                        onClick={() => removeBookingImage(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
-                {selectedBookingFiles.length > 0 && (
-                  <div className="mt-4 flex gap-2 flex-wrap">
-                    {selectedBookingFiles.map((file, index) => (
-                      <div key={index} className="relative">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={`booking-preview-${index}`}
-                          className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
-                        />
-                        <button
-                          onClick={() => removeBookingImage(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          {/* Gallery Images Card */}
+          <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <Image className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GALLERY IMAGES</h3>
+            </div>
+
+            <div
+              onClick={handleGalleryModalOpen}
+              className="border border-dashed rounded-lg p-8 text-center cursor-pointer border-[#C72030] transition-colors"
+            >
+              <div className="flex flex-col items-center gap-2">
+                <Upload className="h-8 w-8 text-gray-400" />
+                <p className="text-sm text-gray-600">
+                  Click to add gallery images{selectedGalleryImages.length > 0 && ` (${selectedGalleryImages.length} selected)`}
+                </p>
               </div>
             </div>
+
+            {selectedGalleryImages.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-3">
+                  {selectedGalleryImages.length} image{selectedGalleryImages.length !== 1 ? 's' : ''} selected
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {selectedGalleryImages.map((image: any, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={image.preview}
+                        alt={`gallery-preview-${index}`}
+                        className="h-24 w-full rounded border border-gray-200 object-cover"
+                      />
+                      <button
+                        onClick={() => {
+                          setSelectedGalleryImages(
+                            selectedGalleryImages.filter((_: any, i: number) => i !== index)
+                          );
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
@@ -1877,7 +1794,7 @@ export const AddBookingSetupPage = () => {
           </div>
 
           {/* Terms & Conditions and Cancellation Text */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
             <div className="bg-white rounded-lg border-2 p-6 space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -1901,7 +1818,7 @@ export const AddBookingSetupPage = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+            {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                   <MessageSquareX className="w-4 h-4" />
@@ -1922,7 +1839,7 @@ export const AddBookingSetupPage = () => {
                   className="min-h-[100px]"
                 />
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
@@ -2022,6 +1939,23 @@ export const AddBookingSetupPage = () => {
                   />
                 </div>
               ))}
+            </div>
+
+            <div className="space-y-3">
+              <div className="font-medium text-gray-700">
+                Cancellation Policy
+              </div>
+              <Textarea
+                placeholder="Enter cancellation text"
+                value={formData.cancellationText}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    cancellationText: e.target.value,
+                  })
+                }
+                className="min-h-[100px]"
+              />
             </div>
           </div>
 
@@ -2154,7 +2088,7 @@ export const AddBookingSetupPage = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Armchair className="w-4 h-4" />
@@ -2191,10 +2125,10 @@ export const AddBookingSetupPage = () => {
                     </Select>
                   </FormControl>
                 </div>
-              </div>
+              </div> */}
 
               {/* Floor Info */}
-              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <LampFloor className="w-4 h-4" />
@@ -2231,9 +2165,9 @@ export const AddBookingSetupPage = () => {
                     </Select>
                   </FormControl>
                 </div>
-              </div>
+              </div> */}
 
-              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Share2 className="w-4 h-4" />
@@ -2254,9 +2188,9 @@ export const AddBookingSetupPage = () => {
                     className="min-h-[100px]"
                   />
                 </div>
-              </div>
+              </div> */}
 
-              <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+              {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <BookKey className="w-4 h-4" />
@@ -2274,7 +2208,7 @@ export const AddBookingSetupPage = () => {
                     variant="outlined"
                   />
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -2292,6 +2226,26 @@ export const AddBookingSetupPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Gallery Image Upload Modal */}
+      {galleryModalOpen && (
+        <GalleryImageUpload
+          showAsModal={galleryModalOpen}
+          onClose={handleGalleryModalClose}
+          onContinue={handleGalleryModalContinue}
+          label="Upload Gallery Images"
+          description="Upload images supporting multiple aspect ratios."
+          ratios={[
+            { label: '16:9', ratio: 16 / 9, width: 200, height: 112 },
+            { label: '9:16', ratio: 9 / 16, width: 120, height: 213 },
+            { label: '1:1', ratio: 1, width: 150, height: 150 },
+            { label: '3:2', ratio: 3 / 2, width: 180, height: 120 }
+          ]}
+          enableCropping={true}
+          initialImages={selectedGalleryImages}
+          onImagesChange={setSelectedGalleryImages}
+        />
+      )}
     </ThemeProvider >
   );
 };

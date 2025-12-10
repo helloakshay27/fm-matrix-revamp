@@ -15,6 +15,7 @@ import {
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 import axios from "axios";
+import { GalleryImageUpload } from "@/components/GalleryImageUpload";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -88,12 +89,14 @@ export const EditBookingSetupPage = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [selectedBookingFiles, setSelectedBookingFiles] = useState([]);
     const [imageIdsToRemove, setImageIdsToRemove] = useState([]);
+    const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+    const [selectedGalleryImages, setSelectedGalleryImages] = useState<any[]>([]);
+    const [existingGalleryImages, setExistingGalleryImages] = useState<any[]>([]);
+    const [blockDaySlots, setBlockDaySlots] = useState<{ [key: number]: any[] }>({});
     const [additionalOpen, setAdditionalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [departments, setDepartments] = useState([]);
     const [loadingDepartments, setLoadingDepartments] = useState(false);
-
-    console.log(selectedBookingFiles)
 
     const [formData, setFormData] = useState({
         facilityName: "",
@@ -158,12 +161,15 @@ export const EditBookingSetupPage = () => {
             minimumPersonAllowed: "1",
             maximumPersonAllowed: "1",
         },
-        blockDays: {
-            startDate: "",
-            endDate: "",
-            dayType: "entireDay",
-            blockReason: "",
-        },
+        blockDays: [
+            {
+                startDate: "",
+                endDate: "",
+                dayType: "entireDay",
+                blockReason: "",
+                selectedSlots: [],
+            },
+        ],
     });
 
     const [cancellationRules, setCancellationRules] = useState([
@@ -311,17 +317,25 @@ export const EditBookingSetupPage = () => {
                     _destroy: false,
                 })),
                 chargeSetup: {
-                    member: { selected: responseData.facility_charge.adult_member_charge, adult: responseData.facility_charge.adult_member_charge, child: "" },
-                    guest: { selected: responseData.facility_charge.adult_guest_charge, adult: responseData.facility_charge.adult_guest_charge, child: "" },
+                    member: { selected: responseData.facility_charge.adult_member_charge, adult: responseData.facility_charge.adult_member_charge, child: responseData.facility_charge.child_member_charge },
+                    guest: { selected: responseData.facility_charge.adult_guest_charge, adult: responseData.facility_charge.adult_guest_charge, child: responseData.facility_charge.child_guest_charge },
                     minimumPersonAllowed: responseData.min_people,
                     maximumPersonAllowed: responseData.max_people,
                 },
-                blockDays: {
-                    startDate: responseData?.facility_blockings[0]?.facility_blocking?.ondate,
+                blockDays: responseData?.facility_blockings?.map((blocking: any) => ({
+                    startDate: blocking.facility_blocking?.ondate || "",
                     endDate: "",
                     dayType: "entireDay",
-                    blockReason: responseData?.facility_blockings[0]?.facility_blocking?.reason,
-                },
+                    blockReason: blocking.facility_blocking?.reason || "",
+                    selectedSlots: [],
+                })) || [
+                        {
+                            startDate: "",
+                            endDate: "",
+                            dayType: "entireDay",
+                            blockReason: "",
+                        },
+                    ],
             });
             const transformedRules = responseData.cancellation_rules.map((rule) => ({
                 description: rule.description,
@@ -342,10 +356,97 @@ export const EditBookingSetupPage = () => {
                     id: doc.document.id
                 })) || []
             );
+
+            // Extract gallery images from API response
+            const galleryImages: any[] = [];
+            const ratioKeys = ['gallery_image_1_by_1', 'gallery_image_16_by_9', 'gallery_image_9_by_16', 'gallery_image_3_by_2'];
+            const ratioLabels: { [key: string]: string } = {
+                'gallery_image_1_by_1': '1:1',
+                'gallery_image_16_by_9': '16:9',
+                'gallery_image_9_by_16': '9:16',
+                'gallery_image_3_by_2': '3:2'
+            };
+
+            ratioKeys.forEach((ratioKey) => {
+                const imageArray = responseData?.[ratioKey];
+                if (Array.isArray(imageArray) && imageArray.length > 0) {
+                    imageArray.forEach((item: any) => {
+                        const imageData = item[ratioKey];
+                        if (imageData?.document) {
+                            galleryImages.push({
+                                ratio: ratioLabels[ratioKey],
+                                url: imageData.document,
+                                doctype: imageData.doctype,
+                                fileSize: imageData.document_file_size
+                            });
+                        }
+                    });
+                }
+            });
+
+            setExistingGalleryImages(galleryImages);
         } catch (error) {
             console.error("Error fetching facility details:", error);
             toast.error("Failed to fetch facility details");
         }
+    };
+
+    const handleGalleryModalOpen = () => {
+        setGalleryModalOpen(true);
+    };
+
+    const handleGalleryModalClose = () => {
+        setGalleryModalOpen(false);
+    };
+
+    const handleGalleryModalContinue = (galleryImages: any[]) => {
+        setSelectedGalleryImages(galleryImages);
+        setGalleryModalOpen(false);
+    };
+
+    const fetchBlockDaySlots = async (facilityId: string, date: string, blockIndex: number) => {
+        try {
+            const formattedDate = date.replace(/-/g, '/');
+            const response = await axios.get(
+                `https://${baseUrl}/pms/admin/facility_setups/${facilityId}/get_schedules.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    params: {
+                        on_date: formattedDate,
+                    }
+                }
+            );
+
+            if (response.data && response.data.slots) {
+                setBlockDaySlots(prev => ({
+                    ...prev,
+                    [blockIndex]: response.data.slots
+                }));
+            }
+        } catch (error) {
+            console.error('Error fetching block day slots:', error);
+            setBlockDaySlots(prev => ({
+                ...prev,
+                [blockIndex]: []
+            }));
+        }
+    };
+
+    const addBlockDay = () => {
+        const newBlockDay = {
+            startDate: "",
+            endDate: "",
+            dayType: "entireDay",
+            blockReason: "",
+            selectedSlots: [],
+        };
+        setFormData({
+            ...formData,
+            blockDays: [...formData.blockDays, newBlockDay],
+        });
     };
 
     console.log(formData);
@@ -432,12 +533,12 @@ export const EditBookingSetupPage = () => {
             );
             formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
             formDataToSend.append("facility_setup[active]", formData.active);
-            if (formData.department) {
-                formDataToSend.append(
-                    "facility_setup[department_id]",
-                    formData.department
-                );
-            }
+            // if (formData.department) {
+            //     formDataToSend.append(
+            //         "facility_setup[department_id]",
+            //         formData.department
+            //     );
+            // }
             formDataToSend.append("facility_setup[app_key]", formData.appKey);
             formDataToSend.append(
                 "facility_setup[postpaid]",
@@ -488,32 +589,33 @@ export const EditBookingSetupPage = () => {
                 formData.chargeSetup.maximumPersonAllowed || "1"
             );
 
-            // Block Days - Date range
-            if (formData.blockDays.startDate) {
+            // Block Days - Handle multiple block day records
+            formData.blockDays.forEach((blockDay, index) => {
+                if (blockDay.startDate) {
+                    formDataToSend.append(
+                        `facility_setup[facility_blockings_attributes][${index}][ondate]`,
+                        blockDay.startDate
+                    );
+                }
+
+                if (blockDay.blockReason) {
+                    formDataToSend.append(
+                        `facility_setup[facility_blockings_attributes][${index}][reason]`,
+                        blockDay.blockReason
+                    );
+                }
+
+                // Default values for facility blockings
                 formDataToSend.append(
-                    "facility_setup[facility_blockings_attributes][0][ondate]",
-                    formData.blockDays.startDate
+                    `facility_setup[facility_blockings_attributes][${index}][order_allowed]`,
+                    "false"
                 );
-            }
 
-            // Block Days - Reason
-            if (formData.blockDays.blockReason) {
                 formDataToSend.append(
-                    "facility_setup[facility_blockings_attributes][0][reason]",
-                    formData.blockDays.blockReason
+                    `facility_setup[facility_blockings_attributes][${index}][booking_allowed]`,
+                    "false"
                 );
-            }
-
-            // Default values for facility blockings
-            formDataToSend.append(
-                "facility_setup[facility_blockings_attributes][0][order_allowed]",
-                "false"
-            );
-
-            formDataToSend.append(
-                "facility_setup[facility_blockings_attributes][0][booking_allowed]",
-                "false"
-            );
+            });
 
             formDataToSend.append(
                 "facility_setup[multi_slot]",
@@ -602,6 +704,16 @@ export const EditBookingSetupPage = () => {
                 if (typeof file !== "string") {
                     formDataToSend.append(`attachments[]`, file);
                 }
+            });
+
+            // Append gallery images
+            selectedGalleryImages.forEach((image: any, index: number) => {
+                // Convert aspect ratio to format: 16_by_9, 9_by_16, 1_by_1, 3_by_2
+                const ratioKey = image.ratio.replace(':', '_by_');
+                formDataToSend.append(
+                    `facility_setup[attach_file_${ratioKey}][${index}][file]`,
+                    image.file
+                );
             });
 
             // Append image IDs to remove
@@ -780,7 +892,7 @@ export const EditBookingSetupPage = () => {
                                     }
                                     variant="outlined"
                                 />
-                                <FormControl>
+                                {/* <FormControl>
                                     <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
                                     <Select
                                         value={formData.department}
@@ -803,7 +915,7 @@ export const EditBookingSetupPage = () => {
                                                 </MenuItem>
                                             ))}
                                     </Select>
-                                </FormControl>
+                                </FormControl> */}
                             </div>
                             <div className="flex gap-6">
                                 <div className="flex items-center space-x-2">
@@ -854,12 +966,12 @@ export const EditBookingSetupPage = () => {
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full border-collapse">
+                            <table className="w-full border">
                                 <thead>
                                     <tr className="bg-gray-50">
                                         <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Member Type</th>
                                         <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Adult</th>
-                                        {/* <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Child</th> */}
+                                        <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Child</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -923,9 +1035,9 @@ export const EditBookingSetupPage = () => {
                                                 />
                                             </div>
                                         </td>
-                                        {/* <td className="border border-gray-300 px-4 py-3">
+                                        <td className="border border-gray-300 px-4 py-3">
                                             <div className="flex items-center justify-center gap-2">
-                                                <Checkbox 
+                                                <Checkbox
                                                     checked={!!formData.chargeSetup.member.child}
                                                     onChange={(e) => {
                                                         if (!e.target.checked) {
@@ -961,7 +1073,7 @@ export const EditBookingSetupPage = () => {
                                                     className="w-full max-w-[200px]"
                                                 />
                                             </div>
-                                        </td> */}
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td className="border border-gray-300 px-4 py-3">
@@ -1023,9 +1135,9 @@ export const EditBookingSetupPage = () => {
                                                 />
                                             </div>
                                         </td>
-                                        {/* <td className="border border-gray-300 px-4 py-3">
+                                        <td className="border border-gray-300 px-4 py-3">
                                             <div className="flex items-center justify-center gap-2">
-                                                <Checkbox 
+                                                <Checkbox
                                                     checked={!!formData.chargeSetup.guest.child}
                                                     onChange={(e) => {
                                                         if (!e.target.checked) {
@@ -1061,7 +1173,7 @@ export const EditBookingSetupPage = () => {
                                                     className="w-full max-w-[200px]"
                                                 />
                                             </div>
-                                        </td> */}
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1491,7 +1603,7 @@ export const EditBookingSetupPage = () => {
                                 </div>
                             </div>
                             <div className="space-y-4 flex items-center justify-between mt-4">
-                                <div className="flex flex-col gap-5">
+                                {/* <div className="flex flex-col gap-5">
                                     <div className="flex items-center space-x-2">
                                         <Checkbox
                                             id="allowMultipleSlots"
@@ -1525,7 +1637,7 @@ export const EditBookingSetupPage = () => {
                                             />
                                         </div>
                                     )}
-                                </div>
+                                </div> */}
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                     <span>Facility can be booked</span>
                                     <TextField
@@ -1549,109 +1661,167 @@ export const EditBookingSetupPage = () => {
 
                     {/* Block Days Section */}
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                                <CalendarDays className="w-4 h-4" />
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                    <CalendarDays className="w-4 h-4" />
+                                </div>
+                                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days</h3>
                             </div>
-                            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days</h3>
+                            <Button
+                                onClick={addBlockDay}
+                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                                size="sm"
+                            >
+                                Add
+                            </Button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <TextField
-                                label="Date"
-                                type="date"
-                                value={formData.blockDays.startDate}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        blockDays: {
-                                            ...formData.blockDays,
-                                            startDate: e.target.value,
-                                        },
-                                    })
-                                }
-                                variant="outlined"
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                            />
-                            {/* <TextField
-                                label="End Date"
-                                type="date"
-                                value={formData.blockDays.endDate}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        blockDays: {
-                                            ...formData.blockDays,
-                                            endDate: e.target.value,
-                                        },
-                                    })
-                                }
-                                variant="outlined"
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                            /> */}
-                        </div>
+                        <div className="space-y-6">
+                            {[...formData.blockDays].reverse().map((blockDay, reverseIndex) => {
+                                const blockIndex = formData.blockDays.length - 1 - reverseIndex;
+                                return (
+                                    <div key={blockIndex} className="space-y-4 p-4 border rounded-lg">
+                                        {formData.blockDays.length > 1 && (
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-sm font-semibold">Block Day {blockIndex + 1}</span>
+                                                <button
+                                                    onClick={() => {
+                                                        setFormData({
+                                                            ...formData,
+                                                            blockDays: formData.blockDays.filter((_, idx) => idx !== blockIndex),
+                                                        });
+                                                    }}
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <TextField
+                                                label="Date"
+                                                type="date"
+                                                value={blockDay.startDate}
+                                                onChange={(e) => {
+                                                    const newBlockDays = [...formData.blockDays];
+                                                    newBlockDays[blockIndex].startDate = e.target.value;
+                                                    setFormData({
+                                                        ...formData,
+                                                        blockDays: newBlockDays,
+                                                    });
+                                                    // Fetch slots automatically if selectedSlots is active
+                                                    if (blockDay.dayType === "selectedSlots" && e.target.value) {
+                                                        fetchBlockDaySlots(id!, e.target.value, blockIndex);
+                                                    }
+                                                }}
+                                                variant="outlined"
+                                                InputLabelProps={{
+                                                    shrink: true,
+                                                }}
+                                            />
+                                        </div>
 
-                        <div className="flex gap-6 px-1">
-                            <div className="flex items-center space-x-2">
-                                <input
-                                    type="radio"
-                                    id="entireDay"
-                                    name="dayType"
-                                    checked={formData.blockDays.dayType === "entireDay"}
-                                    onChange={() =>
-                                        setFormData({
-                                            ...formData,
-                                            blockDays: {
-                                                ...formData.blockDays,
-                                                dayType: "entireDay",
-                                            },
-                                        })
-                                    }
-                                    className="text-blue-600"
-                                />
-                                <label htmlFor="entireDay">Entire Day</label>
-                            </div>
-                            {/* <div className="flex items-center space-x-2">
-                                <input
-                                    type="radio"
-                                    id="selectedSlots"
-                                    name="dayType"
-                                    checked={formData.blockDays.dayType === "selectedSlots"}
-                                    onChange={() =>
-                                        setFormData({
-                                            ...formData,
-                                            blockDays: {
-                                                ...formData.blockDays,
-                                                dayType: "selectedSlots",
-                                            },
-                                        })
-                                    }
-                                    className="text-blue-600"
-                                />
-                                <label htmlFor="selectedSlots">Selected Slots</label>
-                            </div> */}
-                        </div>
+                                        <div className="flex gap-6 px-1">
+                                            <div className="flex items-center space-x-2">
+                                                <input
+                                                    type="radio"
+                                                    id={`entireDay-${blockIndex}`}
+                                                    name={`dayType-${blockIndex}`}
+                                                    checked={blockDay.dayType === "entireDay"}
+                                                    onChange={() => {
+                                                        const newBlockDays = [...formData.blockDays];
+                                                        newBlockDays[blockIndex].dayType = "entireDay";
+                                                        setFormData({
+                                                            ...formData,
+                                                            blockDays: newBlockDays,
+                                                        });
+                                                    }}
+                                                    className="text-blue-600"
+                                                />
+                                                <label htmlFor={`entireDay-${blockIndex}`}>Entire Day</label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <input
+                                                    type="radio"
+                                                    id={`selectedSlots-${blockIndex}`}
+                                                    name={`dayType-${blockIndex}`}
+                                                    checked={blockDay.dayType === "selectedSlots"}
+                                                    onChange={() => {
+                                                        const newBlockDays = [...formData.blockDays];
+                                                        newBlockDays[blockIndex].dayType = "selectedSlots";
+                                                        setFormData({
+                                                            ...formData,
+                                                            blockDays: newBlockDays,
+                                                        });
+                                                    }}
+                                                    className="text-blue-600"
+                                                />
+                                                <label htmlFor={`selectedSlots-${blockIndex}`}>Selected Slots</label>
+                                            </div>
+                                        </div>
 
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
-                            <Textarea
-                                placeholder="Please mention block reason"
-                                value={formData.blockDays.blockReason}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        blockDays: {
-                                            ...formData.blockDays,
-                                            blockReason: e.target.value,
-                                        },
-                                    })
-                                }
-                                className="min-h-[100px]"
-                            />
+                                        {blockDay.dayType === "selectedSlots" && (
+                                            <div>
+                                                <h4 className="text-sm font-medium text-gray-700 mb-3">Select Slots</h4>
+                                                {blockDaySlots[blockIndex]?.length > 0 ? (
+                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                        {blockDaySlots[blockIndex].map((slot) => (
+                                                            <div key={slot.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    id={`slot-${blockIndex}-${slot.id}`}
+                                                                    checked={blockDay.selectedSlots?.includes(slot.id) || false}
+                                                                    onChange={(e) => {
+                                                                        const newBlockDays = [...formData.blockDays];
+                                                                        if ((e.target as HTMLInputElement).checked) {
+                                                                            newBlockDays[blockIndex].selectedSlots = [...(blockDay.selectedSlots || []), slot.id];
+                                                                        } else {
+                                                                            newBlockDays[blockIndex].selectedSlots = (blockDay.selectedSlots || []).filter((id: number) => id !== slot.id);
+                                                                        }
+                                                                        setFormData({
+                                                                            ...formData,
+                                                                            blockDays: newBlockDays,
+                                                                        });
+                                                                    }}
+                                                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                                />
+                                                                <label
+                                                                    htmlFor={`slot-${blockIndex}-${slot.id}`}
+                                                                    className="cursor-pointer text-sm font-medium"
+                                                                >
+                                                                    {slot.ampm}
+                                                                </label>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : blockDay.startDate ? (
+                                                    <p className="text-sm text-gray-500">No slots available for the selected date</p>
+                                                ) : (
+                                                    <p className="text-sm text-gray-500">Please select a date to fetch available slots</p>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
+                                            <Textarea
+                                                placeholder="Please mention block reason"
+                                                value={blockDay.blockReason}
+                                                onChange={(e) => {
+                                                    const newBlockDays = [...formData.blockDays];
+                                                    newBlockDays[blockIndex].blockReason = e.target.value;
+                                                    setFormData({
+                                                        ...formData,
+                                                        blockDays: newBlockDays,
+                                                    });
+                                                }}
+                                                className="min-h-[100px]"
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -1695,7 +1865,7 @@ export const EditBookingSetupPage = () => {
                                     />
                                     <label htmlFor="payOnFacility">Pay on Facility</label>
                                 </div>
-                                {/* <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="complimentary"
                                         checked={formData.complimentary}
@@ -1704,7 +1874,7 @@ export const EditBookingSetupPage = () => {
                                         }
                                     />
                                     <label htmlFor="complimentary">Complimentary</label>
-                                </div> */}
+                                </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <TextField
@@ -1858,6 +2028,81 @@ export const EditBookingSetupPage = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Gallery Images Card */}
+                    <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                <Image className="w-4 h-4" />
+                            </div>
+                            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GALLERY IMAGES</h3>
+                        </div>
+
+                        <div
+                            onClick={handleGalleryModalOpen}
+                            className="border border-dashed rounded-lg p-8 text-center cursor-pointer border-[#C72030] transition-colors hover:bg-[#C72030]/5"
+                        >
+                            <div className="text-[#C72030] mb-2">
+                                <Upload className="h-8 w-8 mx-auto" />
+                            </div>
+                            <p className="text-sm text-gray-600">
+                                Drag & Drop or{" "}
+                                <span className="text-[#C72030] cursor-pointer font-medium">
+                                    Click to Upload Gallery Images
+                                </span>
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Supports multiple aspect ratios (16:9, 9:16, 1:1, 3:2)
+                            </p>
+                        </div>
+
+                        {(selectedGalleryImages.length > 0 || existingGalleryImages.length > 0) && (
+                            <div className="space-y-6">
+                                {existingGalleryImages.length > 0 && (
+                                    <div className="space-y-4">
+                                        <h4 className="text-sm font-semibold text-gray-700">Existing Gallery Images</h4>
+                                        <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-10 gap-3">
+                                            {existingGalleryImages.map((image, index) => (
+                                                <div key={`existing-${index}`} className="relative group">
+                                                    <img
+                                                        src={image.url}
+                                                        alt={`existing-gallery-${index}`}
+                                                        className="h-24 w-24 rounded border border-gray-200 object-fit"
+                                                    />
+                                                    <div className="absolute top-1 right-1 bg-[#C72030] text-white text-xs font-semibold px-2 py-1 rounded">
+                                                        {image.ratio}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {selectedGalleryImages.length > 0 && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-sm font-semibold text-gray-700">New Selected Images</h4>
+                                            <span className="text-xs text-gray-500">{selectedGalleryImages.length} image(s)</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                            {selectedGalleryImages.map((image, index) => (
+                                                <div key={`new-${index}`} className="relative group">
+                                                    <img
+                                                        src={image.preview}
+                                                        alt={`gallery-${index}`}
+                                                        className="h-24 w-full rounded border border-gray-200 object-cover"
+                                                    />
+                                                    <div className="absolute top-1 right-1 bg-[#C72030] text-white text-xs font-semibold px-2 py-1 rounded">
+                                                        {image.ratio}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                         <div className="flex items-center gap-3">
                             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -2063,7 +2308,7 @@ export const EditBookingSetupPage = () => {
                                     ))}
                                 </div>
                             </div>
-                            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                            {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                         <Armchair className="w-4 h-4" />
@@ -2189,7 +2434,7 @@ export const EditBookingSetupPage = () => {
                                         variant="outlined"
                                     />
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
 
@@ -2207,6 +2452,26 @@ export const EditBookingSetupPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Gallery Image Upload Modal */}
+            {galleryModalOpen && (
+                <GalleryImageUpload
+                    showAsModal={galleryModalOpen}
+                    onClose={handleGalleryModalClose}
+                    onContinue={handleGalleryModalContinue}
+                    label="Upload Gallery Images"
+                    description="Upload images supporting multiple aspect ratios."
+                    ratios={[
+                        { label: '16:9', ratio: 16 / 9, width: 200, height: 112 },
+                        { label: '9:16', ratio: 9 / 16, width: 120, height: 213 },
+                        { label: '1:1', ratio: 1, width: 150, height: 150 },
+                        { label: '3:2', ratio: 3 / 2, width: 180, height: 120 }
+                    ]}
+                    enableCropping={true}
+                    initialImages={selectedGalleryImages}
+                    onImagesChange={setSelectedGalleryImages}
+                />
+            )}
         </ThemeProvider >
     );
 };
