@@ -30,31 +30,34 @@ baseClient.interceptors.request.use(
         sessionStorage.setItem("token", token);
       }
 
-      if (!email || !organizationId) {
-        throw new Error('Email or organization_id not found in URL');
-      }
+      // Only attempt to fetch organizations if both parameters are present
+      if (email && organizationId) {
+        // Call organizations API with the email from URL
+        const response = await axios.get(`https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`);
+        const { organizations } = response.data;
 
-      // Call organizations API with the email from URL
-      const response = await axios.get(`https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`);
-      const { organizations } = response.data;
+        if (organizations && organizations.length > 0) {
+          // Find the organization matching the organization_id from URL
+          const selectedOrg = organizations.find((org: Organization) => org.id === parseInt(organizationId));
 
-      if (organizations && organizations.length > 0) {
-        // Find the organization matching the organization_id from URL
-        const selectedOrg = organizations.find((org: Organization) => org.id === parseInt(organizationId));
-
-        if (selectedOrg && selectedOrg.backend_domain) {
-          // Set baseURL from the organization's backend_domain
-          config.baseURL = selectedOrg.backend_domain;
-          console.log('Base URL set to:', selectedOrg.backend_domain);
+          if (selectedOrg && selectedOrg.backend_domain) {
+            // Set baseURL from the organization's backend_domain
+            config.baseURL = selectedOrg.backend_domain;
+            console.log('Base URL set to:', selectedOrg.backend_domain);
+          } else {
+            // Fallback URL if organization not found or no backend_domain
+            config.baseURL = 'https://fm-uat-api.lockated.com/';
+            console.warn('Organization not found or no backend_domain, using fallback URL');
+          }
         } else {
-          // Fallback URL if organization not found or no backend_domain
+          // Fallback URL if no organizations found
           config.baseURL = 'https://fm-uat-api.lockated.com/';
-          console.warn('Organization not found or no backend_domain, using fallback URL');
+          console.warn('No organizations found, using fallback URL');
         }
       } else {
-        // Fallback URL if no organizations found
+        // Use fallback URL when email or organization_id is not in URL
         config.baseURL = 'https://fm-uat-api.lockated.com/';
-        console.warn('No organizations found, using fallback URL');
+        console.log('Email or organization_id not in URL, using fallback URL');
       }
     } catch (error) {
       console.error('Error fetching organizations:', error);

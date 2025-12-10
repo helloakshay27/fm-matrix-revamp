@@ -792,6 +792,7 @@ import Sitemap from "./pages/Sitemap";
 import ClubMembershipDashboard from "./pages/ClubManagement/ClubMembershipDashboard";
 import ClubMembershipDetailPage from "./pages/ClubManagement/ClubMembershipDetailPage";
 import AddClubMembershipPage from "./pages/ClubManagement/AddClubMembershipPage";
+import AddGroupMembershipPage from "./pages/ClubManagement/AddGroupMembershipPage";
 import BookingList from "./pages/BookingList";
 import AccessoriesSetup from "./pages/AccessoriesSetup";
 import AccessoriesDetailsPage from "./pages/AccessoriesDetailsPage";
@@ -1531,6 +1532,10 @@ function App() {
                   <Route
                     path="/club-management/membership/add"
                     element={<AddClubMembershipPage />}
+                  />
+                  <Route
+                    path="/club-management/membership/add-group"
+                    element={<AddGroupMembershipPage />}
                   />
                   <Route
                     path="/club-management/membership/:id"

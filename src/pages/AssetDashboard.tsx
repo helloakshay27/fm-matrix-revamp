@@ -1300,9 +1300,14 @@ export const AssetDashboard = () => {
     'groupWise',
   ]);
 
-  // Use search hook
-  const { assets: searchedAssets, loading: searchLoading, error: searchError, pagination: searchPagination, searchAssets } =
-    useAssetSearch();
+  // Use search hook for search functionality
+  const {
+    assets: searchedAssets,
+    loading: searchLoading,
+    error: searchError,
+    pagination: searchPagination,
+    searchAssets,
+  } = useAssetSearch();
 
   // Function to format date for API
   const formatDateForAPI = (date: Date) => {
@@ -1386,22 +1391,20 @@ export const AssetDashboard = () => {
     siteName: asset.site_name || '',
     building: asset.building || null,
     wing: asset.wing || null,
-    area:
-      (asset.area && typeof asset.area === 'object')
-        ? asset.area
-        : (asset.pms_area && typeof asset.pms_area === 'object')
-          ? asset.pms_area
-          : (typeof asset.area === 'string')
-            ? { name: asset.area }
-            : (asset.area_name ? { name: asset.area_name } : null),
+    area: asset.area || null,
     pmsRoom: asset.pms_room || null,
     assetGroup: asset.pms_asset_group || asset.asset_group || '',
     assetSubGroup: asset.sub_group || asset.asset_sub_group || '',
-    assetType: Boolean(asset.asset_type),
-    purchaseCost: asset.purchase_cost || 0,
-    currentBookValue: asset.current_book_value || 0,
+    assetType: asset.asset_type,
+    purchaseCost: asset.purchase_cost,
+    currentBookValue: asset.current_book_value,
     floor: asset.pms_floor || null,
-    category: asset.asset_type_category || '',
+    category: (asset.asset_type_category && typeof asset.asset_type_category === 'object')
+      ? asset.asset_type_category
+      : (typeof asset.asset_type_category === 'string')
+        ? { name: asset.asset_type_category }
+        : null,
+    // Additional required fields
     purchased_on: asset.purchased_on || '',
     supplier_name: asset.supplier_name || '',
     purchase_cost: asset.purchase_cost || 0,
@@ -1417,18 +1420,12 @@ export const AssetDashboard = () => {
     commisioning_date: asset.commisioning_date || '',
     warranty: asset.warranty || '',
     amc: asset.amc || '',
+    // Include all custom fields dynamically
     ...availableCustomFields.reduce((acc, field) => {
-      const coreKeysToSkip = new Set([
-        'id', 'name', 'asset_number', 'status', 'site_name',
-        'building', 'wing', 'floor', 'area', 'pms_room',
-        'asset_group', 'sub_group', 'asset_type', 'asset_type_category',
-        'purchase_cost', 'current_book_value', 'purchased_on', 'supplier_name',
-        'allocation_type', 'useful_life', 'depreciation_method',
-        'accumulated_depreciation', 'current_book_value', 'disposal_date',
-        'model_number', 'manufacturer', 'critical', 'commisioning_date',
-        'warranty', 'amc'
-      ]);
-      if (coreKeysToSkip.has(field.key)) return acc;
+      // Handle custom_fields structure: {field_name: "...", field_value: "..."}
+
+      if (field.key === 'id') return acc; // Skip id field
+
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
         acc[field.key] =
@@ -1451,20 +1448,18 @@ export const AssetDashboard = () => {
     siteName: asset.siteName || '',
     building: asset.building || null,
     wing: asset.wing || null,
-    area:
-      (asset.area && typeof asset.area === 'object')
-        ? asset.area
-        : (asset.pms_area && typeof asset.pms_area === 'object')
-          ? asset.pms_area
-          : (typeof asset.area === 'string')
-            ? { name: asset.area }
-            : (asset.area_name ? { name: asset.area_name } : null),
+    area: asset.area || null,
     pmsRoom: asset.pmsRoom || null,
     assetGroup: asset.assetGroup || '',
     assetSubGroup: asset.assetSubGroup || '',
-    assetType: Boolean(asset.assetType),
-    floor: null,
-    category: asset.asset_type_category || '',
+    assetType: asset.assetType,
+    floor: null, // Search results don't include floor data
+    category: (asset.asset_type_category && typeof asset.asset_type_category === 'object')
+      ? asset.asset_type_category
+      : (typeof asset.asset_type_category === 'string')
+        ? { name: asset.asset_type_category }
+        : null,
+    // Additional required fields for search results
     purchased_on: asset.purchased_on || '',
     supplier_name: asset.supplier_name || '',
     purchase_cost: asset.purchase_cost || 0,
@@ -1480,18 +1475,12 @@ export const AssetDashboard = () => {
     commisioning_date: asset.commisioning_date || '',
     warranty: asset.warranty || '',
     amc: asset.amc || '',
+    // Include all custom fields dynamically for search results too
     ...availableCustomFields.reduce((acc, field) => {
-      const coreKeysToSkip = new Set([
-        'id', 'name', 'asset_number', 'status', 'site_name',
-        'building', 'wing', 'floor', 'area', 'pms_room',
-        'asset_group', 'sub_group', 'asset_type', 'asset_type_category',
-        'purchase_cost', 'current_book_value', 'purchased_on', 'supplier_name',
-        'allocation_type', 'useful_life', 'depreciation_method',
-        'accumulated_depreciation', 'current_book_value', 'disposal_date',
-        'model_number', 'manufacturer', 'critical', 'commisioning_date',
-        'warranty', 'amc'
-      ]);
-      if (coreKeysToSkip.has(field.key)) return acc;
+      // Handle custom_fields structure: {field_name: "...", field_value: "..."}
+
+      if (field.key === 'id') return acc; // Skip id field
+
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
         acc[field.key] =
@@ -1505,51 +1494,95 @@ export const AssetDashboard = () => {
     }, {} as Record<string, any>),
   })) as unknown as TableAsset[];
 
-  // Use search results if search term exists
-  const displayAssets: TableAsset[] = searchTerm.trim() ? transformedSearchedAssets : transformedAssets;
+  // Use search results if search term exists, otherwise use Redux assets
+  const displayAssets = searchTerm.trim()
+    ? transformedSearchedAssets
+    : transformedAssets;
   const isSearchMode = searchTerm.trim().length > 0;
 
-  // Use search pagination when in search mode
-  const pagination = isSearchMode
-    ? {
-      currentPage: searchPagination.current_page,
-      totalPages: searchPagination.total_pages,
-      totalCount: searchPagination.total_count,
-    }
-    : {
-      currentPage,
-      totalPages: totalPages || 1,
-      totalCount: totalCount || 0,
-    };
+  // For stats calculation, we need ALL filtered assets, not just current page
+  // If we have filters applied, we should use the total filtered count from API response
+  // For now, let's use displayAssets but note this limitation
+  const allFilteredAssets = displayAssets; // This represents all filtered results
 
+  // Create pagination object for compatibility
+  const pagination = {
+    currentPage: isSearchMode ? (searchPagination?.currentPage || currentPage) : currentPage,
+    totalPages: isSearchMode ? (searchPagination?.totalPages || totalPages || 1) : (totalPages || 1),
+    totalCount: isSearchMode ? (searchPagination?.totalCount || 0) : (totalCount || 0),
+  };
+
+  // Create stats object based on current displayed assets (filtered or unfiltered)
   const calculateStats = (assetList: any[]) => {
+    console.log("Calculating stats for assets:", assetList.length, "assets");
+    console.log("Total count from API:", totalCount);
+    console.log(
+      "Sample asset statuses:",
+      assetList.slice(0, 3).map((a) => ({ id: a.id, status: a.status }))
+    );
+
+    // IMPORTANT: The current implementation only calculates from visible page data
+    // This should ideally be calculated from ALL filtered assets, not just current page
     const totalAssets = assetList.length;
+
+    // Check for various status formats from API
     const inUseAssets = assetList.filter((asset) => {
       const status = asset.status?.toLowerCase();
-      return status === 'in_use' || status === 'in use' || status === 'active' || status === 'in-use';
+      return (
+        status === "in_use" ||
+        status === "in use" ||
+        status === "active" ||
+        status === "in-use"
+      );
     }).length;
+
     const breakdownAssets = assetList.filter((asset) => {
       const status = asset.status?.toLowerCase();
-      return status === 'breakdown' || status === 'broken' || status === 'faulty';
+      return (
+        status === "breakdown" || status === "broken" || status === "faulty"
+      );
     }).length;
+
     const inStoreAssets = assetList.filter((asset) => {
       const status = asset.status?.toLowerCase();
       return (
-        status === 'in_storage' ||
-        status === 'in_store' ||
-        status === 'in store' ||
-        status === 'storage' ||
-        status === 'stored'
+        status === "in_storage" ||
+        status === "in_store" ||
+        status === "in store" ||
+        status === "storage" ||
+        status === "stored"
       );
     }).length;
+
     const disposeAssets = assetList.filter((asset) => {
       const status = asset.status?.toLowerCase();
-      return status === 'disposed' || status === 'dispose' || status === 'discarded';
+      return (
+        status === "disposed" || status === "dispose" || status === "discarded"
+      );
     }).length;
 
+    const missingAssets = assetList.filter((asset) => {
+      const status = asset.status?.toLowerCase();
+      return status === "missing" || status === "lost";
+    }).length;
+
+    // Get unique status values for debugging
+    const uniqueStatuses = [...new Set(assetList.map((asset) => asset.status))];
+    console.log("Unique status values found:", uniqueStatuses);
+    console.log("Stats calculated from current page:", {
+      total: totalAssets,
+      inUse: inUseAssets,
+      breakdown: breakdownAssets,
+      inStore: inStoreAssets,
+      dispose: disposeAssets,
+      missing: missingAssets,
+    });
+
+    // Note: This is a limitation - we're showing stats for current page only
+    // Ideally, the API should return aggregated stats for all filtered results
     return {
-      total: totalCount || totalAssets,
-      total_value: `${localStorage.getItem('currency')}0.00`,
+      total: totalCount || totalAssets, // Use total count from API if available
+      total_value: `${localStorage.getItem("currency")}0.00`,
       nonItAssets: Math.floor((totalCount || totalAssets) * 0.6),
       itAssets: Math.floor((totalCount || totalAssets) * 0.4),
       inUse: inUseAssets,
@@ -1559,14 +1592,18 @@ export const AssetDashboard = () => {
     };
   };
 
+  // Calculate stats from currently displayed assets (this updates with filters)
+  // const stats = calculateStats(displayAssets);
   const stats = {
     ...calculateStats(displayAssets),
     total_value:
       totalValue !== undefined && totalValue !== null
         ? String(totalValue)
-        : `${localStorage.getItem('currency')}0.00`,
+        : `${localStorage.getItem("currency")}0.00`,
   };
 
+  console.log("Final stats object:", stats);
+  // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -1574,47 +1611,54 @@ export const AssetDashboard = () => {
     })
   );
 
+  // Handle asset stat card clicks
   const handleStatCardClick = (filterType: string) => {
     let filters: any = {};
+
     switch (filterType) {
-      case 'total':
+      case "total":
+        // No filters for total - show all assets
         filters = {};
         break;
-      case 'non_it':
+      case "non_it":
         filters = { it_asset_eq: false };
         break;
-      case 'it':
+      case "it":
         filters = { it_asset_eq: true };
         break;
-      case 'in_use':
-        filters = { breakdown_eq: false, status_eq: 'in_use' };
+      case "in_use":
+        filters = { breakdown_eq: false, status_eq: "in_use" };
         break;
-      case 'breakdown':
+      case "breakdown":
         filters = { breakdown_eq: true };
         break;
-      case 'in_store':
-        filters = { status_eq: 'in_storage' };
+      case "in_store":
+        filters = { status_eq: "in_storage" };
         break;
-      case 'dispose':
-        filters = { status_eq: 'disposed' };
+      case "dispose":
+        filters = { status_eq: "disposed" };
         break;
       default:
         filters = {};
     }
-    setSearchTerm('');
+
+    // Clear search term when applying filters
+    setSearchTerm("");
+
+    // Dispatch the filter to fetch filtered assets
     dispatch(fetchAssetsData({ page: 1, filters }));
     setCurrentPage(1);
   };
 
+  // Handle search with API call
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     if (term.trim()) {
-      searchAssets(term, currentPage);
-    } else {
-      setCurrentPage(1); // Reset to page 1 when clearing search
+      performSearch(term);
     }
   };
 
+  // Handle refresh - fetch assets from Redux
   const handleRefresh = () => {
     if (searchTerm.trim()) {
       searchAssets(searchTerm, currentPage);
@@ -1623,6 +1667,7 @@ export const AssetDashboard = () => {
     }
   };
 
+  // Handle pagination
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     if (searchTerm.trim()) {
@@ -1681,6 +1726,7 @@ export const AssetDashboard = () => {
     setVisibleColumns(columns);
   };
 
+  // Selection panel handlers
   const handleMoveAsset = () => {
     const selectedAssetObjects = displayAssets.filter((asset) => selectedAssets.includes(asset.id));
     navigate('/maintenance/asset/move', {
@@ -1711,10 +1757,12 @@ export const AssetDashboard = () => {
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
+
     if (active.id !== over.id) {
       setChartOrder((items) => {
         const oldIndex = items.indexOf(active.id);
         const newIndex = items.indexOf(over.id);
+
         return arrayMove(items, oldIndex, newIndex);
       });
     }
@@ -1740,10 +1788,28 @@ export const AssetDashboard = () => {
       { name: 'IT Equipment', value: stats.itAssets, color: '#d8dcdd' },
       { name: 'Non-IT Equipment', value: stats.nonItAssets, color: '#c6b692' },
     ];
+
     return { chartStatusData, chartTypeData };
   };
 
   const { chartStatusData, chartTypeData } = processAssetStatusForCharts();
+
+  // Simplified data for charts when analytics data is not available
+  const categoryData = [{ name: 'Loading...', value: 0 }];
+  const groupData = [{ name: 'Loading...', value: 0 }];
+
+  const agingMatrixData = [
+    { priority: 'P1', '0-1Y': 15, '1-2Y': 8, '2-3Y': 5, '3-4Y': 3, '4-5Y': 2 },
+    { priority: 'P2', '0-1Y': 25, '1-2Y': 12, '2-3Y': 8, '3-4Y': 5, '4-5Y': 3 },
+    {
+      priority: 'P3',
+      '0-1Y': 35,
+      '1-2Y': 18,
+      '2-3Y': 12,
+      '3-4Y': 8,
+      '4-5Y': 5,
+    },
+  ];
 
   return (
     <div className="p-4 sm:p-6">
@@ -1923,7 +1989,9 @@ export const AssetDashboard = () => {
                           }
                         }}
                         className={
-                          pagination.currentPage === pagination.totalPages ? 'pointer-events-none opacity-50' : ''
+                          pagination.currentPage === pagination.totalPages
+                            ? 'pointer-events-none opacity-50'
+                            : ''
                         }
                       />
                     </PaginationItem>

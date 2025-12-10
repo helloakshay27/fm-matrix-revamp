@@ -11,6 +11,16 @@ import { RootState } from '@/redux/store';
 import { API_CONFIG } from '@/config/apiConfig';
 import { ClubMembershipFilterDialog, ClubMembershipFilters } from '@/components/ClubMembershipFilterDialog';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -61,6 +71,8 @@ export const ClubMembershipDashboard = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isMembershipTypeModalOpen, setIsMembershipTypeModalOpen] = useState(false);
+  const [membershipType, setMembershipType] = useState<'individual' | 'group'>('individual');
   const [filters, setFilters] = useState<ClubMembershipFilters>({
     search: '',
     clubMemberEnabled: '',
@@ -457,6 +469,20 @@ export const ClubMembershipDashboard = () => {
     setSelectedMembers([]);
   };
 
+  // Handle membership type selection and navigation
+  const handleAddMembership = () => {
+    setIsMembershipTypeModalOpen(true);
+  };
+
+  const handleMembershipTypeConfirm = () => {
+    setIsMembershipTypeModalOpen(false);
+    if (membershipType === 'individual') {
+      navigate('/club-management/membership/add');
+    } else {
+      navigate('/club-management/membership/add-group');
+    }
+  };
+
   // Render membership status badge
   const renderStatusBadge = (startDate: string | null, endDate: string | null, accessCardEnabled: boolean) => {
     if (!startDate && !endDate) {
@@ -620,7 +646,7 @@ export const ClubMembershipDashboard = () => {
     <div className="flex gap-3">
       <Button
         className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={() => navigate('/club-management/membership/add')}
+        onClick={handleAddMembership}
       >
         <Plus className="w-4 h-4 mr-2" />
         Add
@@ -722,6 +748,54 @@ export const ClubMembershipDashboard = () => {
         onClose={() => setIsFilterOpen(false)}
         onApply={handleFilterApply}
       />
+
+      {/* Membership Type Selection Modal */}
+      <Dialog open={isMembershipTypeModalOpen} onOpenChange={setIsMembershipTypeModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Membership Type</DialogTitle>
+            <DialogDescription>
+              Choose whether you want to add an individual member or a group membership.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6">
+            <RadioGroup
+              value={membershipType}
+              onValueChange={(value) => setMembershipType(value as 'individual' | 'group')}
+              className="space-y-4"
+            >
+              <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <RadioGroupItem value="individual" id="individual" />
+                <Label htmlFor="individual" className="flex-1 cursor-pointer">
+                  <div className="font-semibold">Individual Member</div>
+                  <div className="text-sm text-gray-500">Add a single member to the club</div>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <RadioGroupItem value="group" id="group" />
+                <Label htmlFor="group" className="flex-1 cursor-pointer">
+                  <div className="font-semibold">Group Membership</div>
+                  <div className="text-sm text-gray-500">Add multiple members as a group</div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsMembershipTypeModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
+              onClick={handleMembershipTypeConfirm}
+            >
+              Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

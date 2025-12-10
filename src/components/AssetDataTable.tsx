@@ -529,7 +529,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       case "category":
         return (
           <span className="text-sm text-gray-600">
-            {asset.category || "-"}
+            {asset.category?.name || "-"}
           </span>
         );
       case "purchaseDate":
