@@ -1,0 +1,17 @@
+version: 0.0
+os: linux
+
+hooks:
+  AfterInstall:
+    - location: src/scripts/install_dependencies.sh
+      timeout: 300
+      runas: root
+    
+    - location: src/scripts/build_react.sh
+      timeout: 300
+      runas: root
+
+  ApplicationStart:
+    - location: src/scripts/restart_nginx.sh
+      timeout: 120
+      runas: root
