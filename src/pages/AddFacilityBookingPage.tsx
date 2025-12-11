@@ -77,6 +77,12 @@ export const AddFacilityBookingPage = () => {
   const [openCancelPolicy, setOpenCancelPolicy] = useState(false);
   const [openTerms, setOpenTerms] = useState(false);
   const [complementaryReason, setComplementaryReason] = useState('');
+  const [peopleTable, setPeopleTable] = useState<Array<{
+    srNo: number;
+    role: string;
+    user: string;
+    level: string;
+  }>>([]);
 
   // Fetch guest users
   const fetchGuestUsers = async () => {
@@ -113,6 +119,24 @@ export const AddFacilityBookingPage = () => {
     dispatch(fetchActiveFacilities({ baseUrl: localStorage.getItem('baseUrl'), token: localStorage.getItem('token') }));
   }, [dispatch, userType]);
 
+  // Load all user types when facility is selected for the people table
+  useEffect(() => {
+    if (facilityDetails) {
+      // Load FM users if not already loaded
+      if (fmUsers.length === 0 && !fmUsersLoading) {
+        dispatch(fetchFMUsers());
+      }
+      // Load occupant users if not already loaded
+      if (occupantUsers.length === 0 && !occupantUsersLoading) {
+        dispatch(fetchOccupantUsers({ page: 1, perPage: 100 }));
+      }
+      // Load guest users if not already loaded
+      if (guestUsers.length === 0 && !guestUsersLoading) {
+        fetchGuestUsers();
+      }
+    }
+  }, [facilityDetails]);
+
   // Pre-populate facility and date from URL parameters
   useEffect(() => {
     if (urlFacilityId && facilities.length > 0) {
@@ -142,6 +166,16 @@ export const AddFacilityBookingPage = () => {
       if (response.data && response.data.facility_setup) {
         setFacilityDetails(response.data.facility_setup);
         setPaymentMethod(''); // Reset payment method when facility changes
+        
+        // Initialize people table based on max_people
+        const maxPeople = response.data.facility_setup.max_people || 1;
+        const initialTable = Array.from({ length: maxPeople }, (_, index) => ({
+          srNo: index + 1,
+          role: '',
+          user: '',
+          level: index === 0 ? 'primary' : 'secondary'
+        }));
+        setPeopleTable(initialTable);
       }
     } catch (error) {
       console.error('Error fetching facility details:', error);
@@ -180,6 +214,25 @@ export const AddFacilityBookingPage = () => {
         setSlots(response.data.slots);
         setSelectedSlots([]); // Reset selected slots when new slots are fetched
       }
+
+      // Call amenity booking API for members
+      // if (userType === 'occupant' && userId && facilityId) {
+      //   try {
+      //     const token = localStorage.getItem('token');
+      //     const amenityResponse = await apiClient.get('/club_members/amenity_booking_by_club_plan', {
+      //       params: {
+      //         user_id: userId,
+      //         facility_setup_id: facilityId
+      //       },
+      //       headers: {
+      //         'Authorization': `Bearer ${token}`
+      //       }
+      //     });
+      //     console.log('Amenity Booking by Club Plan Response:', amenityResponse.data);
+      //   } catch (amenityError) {
+      //     console.error('Error fetching amenity booking by club plan:', amenityError);
+      //   }
+      // }
     } catch (error) {
       console.error('Error fetching slots:', error);
       setSlots([]);
@@ -196,6 +249,58 @@ export const AddFacilityBookingPage = () => {
       setSelectedSlots([]);
     }
   }, [selectedFacility, selectedDate, selectedUser]);
+
+  // Call amenity booking API when member user type is selected with user and facility
+  useEffect(() => {
+    console.log('=== Amenity API Check ===');
+    console.log('userType:', userType, '| Is occupant?', userType === 'occupant');
+    console.log('selectedUser:', selectedUser, '| Is truthy?', !!selectedUser);
+    console.log('selectedFacility:', selectedFacility, '| Is truthy?', !!selectedFacility);
+    console.log('All conditions met?', userType === 'occupant' && !!selectedUser && !!selectedFacility);
+    console.log('========================');
+    
+    if (userType === 'occupant' && selectedUser && selectedFacility) {
+      const fetchAmenityBooking = async () => {
+        try {
+          const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
+          
+          console.log('✅ Calling amenity API with:', {
+            user_id: selectedUser,
+            facility_setup_id: facilityId
+          });
+          
+          const amenityResponse = await apiClient.get('/club_members/amenity_booking_by_club_plan', {
+            params: {
+              user_id: selectedUser,
+              facility_setup_id: facilityId
+            },
+            headers: {
+              'Accept': 'application/json, text/plain, */*',
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          console.log('Amenity Booking by Club Plan Response:', amenityResponse.data);
+        } catch (amenityError: any) {
+          console.error('Error fetching amenity booking by club plan:', amenityError);
+          if (amenityError.response) {
+            console.error('Error response status:', amenityError.response.status);
+            console.error('Error response data:', amenityError.response.data);
+            console.error('Error response headers:', amenityError.response.headers);
+            
+            // If it's a 500 error, the API might have specific validation requirements
+            if (amenityError.response.status === 500) {
+              console.warn('Server error (500): The API encountered an internal error. Check if user_id and facility_setup_id are valid.');
+            }
+          }
+        }
+      };
+      
+      fetchAmenityBooking();
+    } else {
+      console.log('❌ Amenity API not called - condition not met');
+    }
+  }, [userType, selectedUser, selectedFacility]);
 
   // Auto-select slot from URL parameter when slots are loaded
   useEffect(() => {
@@ -235,6 +340,53 @@ export const AddFacilityBookingPage = () => {
         return [...prev, slotId];
       }
     });
+  };
+
+  // Handle people table changes
+  const handlePeopleTableChange = (index: number, field: 'role' | 'user' | 'level', value: string) => {
+    setPeopleTable(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      
+      // If role is changed and it matches the pre-selected user, auto-select that user
+      if (field === 'role' && selectedUser) {
+        // Check if the selected user exists in the users for this role
+        const roleUsers = getUsersForRole(value);
+        const userExists = roleUsers.some((u: any) => u.id.toString() === selectedUser.toString());
+        
+        if (userExists) {
+          updated[index].user = selectedUser;
+        } else {
+          updated[index].user = ''; // Reset user if not found in role users
+        }
+      } else if (field === 'role' && !selectedUser && value === 'guest' && selectedGuest) {
+        // Special case for guest when no selectedUser but selectedGuest exists
+        updated[index].user = selectedGuest;
+      } else if (field === 'role' && !selectedUser) {
+        updated[index].user = ''; // Reset user if no pre-selection
+      }
+      
+      return updated;
+    });
+  };
+
+  // Get users based on role
+  const getUsersForRole = (role: string) => {
+    if (!role) return [];
+    
+    switch (role) {
+      case 'staff':
+        console.log('Staff users:', fmUsers);
+        return fmUsers || [];
+      case 'member':
+        console.log('Member users:', occupantUsers);
+        return occupantUsers || [];
+      case 'guest':
+        console.log('Guest users:', guestUsers);
+        return guestUsers || [];
+      default:
+        return [];
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -716,6 +868,105 @@ export const AddFacilityBookingPage = () => {
             </div>
           )}
         </div>
+
+        {/* People Table Section */}
+        {facilityDetails && peopleTable.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Invited User</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-[#E5E0D3]">
+                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Sr No.</th>
+                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Role</th>
+                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">User</th>
+                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Level</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {peopleTable.map((row, index) => (
+                    <tr key={index} className="border-b hover:bg-gray-50">
+                      <td className="border border-gray-300 px-4 py-3">{row.srNo}</td>
+                      <td className="border border-gray-300 px-4 py-3">
+                        <TextField
+                          select
+                          size="small"
+                          value={row.role}
+                          onChange={(e) => handlePeopleTableChange(index, 'role', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                        >
+                          <MenuItem value="">Select Role</MenuItem>
+                          <MenuItem value="staff">Staff</MenuItem>
+                          <MenuItem value="member">Member</MenuItem>
+                          <MenuItem value="guest">Guest</MenuItem>
+                        </TextField>
+                      </td>
+                      <td className="border border-gray-300 px-4 py-3">
+                        <TextField
+                          select
+                          size="small"
+                          value={row.user}
+                          onChange={(e) => handlePeopleTableChange(index, 'user', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          disabled={!row.role}
+                          SelectProps={{
+                            displayEmpty: true,
+                          }}
+                        >
+                          <MenuItem value="">
+                            {!row.role 
+                              ? 'Select Role First' 
+                              : (row.role === 'staff' && fmUsersLoading) ||
+                                (row.role === 'member' && occupantUsersLoading) ||
+                                (row.role === 'guest' && guestUsersLoading)
+                              ? 'Loading users...'
+                              : 'Select User'
+                            }
+                          </MenuItem>
+                          {row.role && getUsersForRole(row.role).map((user: any) => (
+                            <MenuItem key={user.id} value={user.id}>
+                              {row.role === 'staff' 
+                                ? user.full_name 
+                                : row.role === 'member' 
+                                  ? user.name 
+                                  : row.role === 'guest' 
+                                    ? `${user.firstname || ''} ${user.lastname || ''}`.trim() 
+                                    : user.name || user.username || `User ${user.id}`
+                              }
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </td>
+                      <td className="border border-gray-300 px-4 py-3">
+                        <TextField
+                          select
+                          size="small"
+                          value={row.level}
+                          onChange={(e) => handlePeopleTableChange(index, 'level', e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          disabled
+                          // sx={{
+                          //   '& .MuiInputBase-input.Mui-disabled': {
+                          //     WebkitTextFillColor: 'rgba(0, 0, 0, 0.87)',
+                          //     color: 'rgba(0, 0, 0, 0.87)'
+                          //   }
+                          // }}
+                        >
+                          <MenuItem value="primary">Primary</MenuItem>
+                          <MenuItem value="secondary">Secondary</MenuItem>
+                        </TextField>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+         )} 
+
 
         {/* Submit Button */}
         <div className="flex justify-center">
