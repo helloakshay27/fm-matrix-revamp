@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,12 @@ import { toast } from 'sonner';
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
+  
+  // Get URL parameters
+  const urlFacilityId = searchParams.get('facility_id');
+  const urlDate = searchParams.get('date');
+  const urlSlotTime = searchParams.get('slot_time');
 
   const { data: fmUsersResponse, loading: fmUsersLoading, error: fmUsersError } = useAppSelector((state) => state.fmUsers);
   const fmUsers = fmUsersResponse?.users || [];
@@ -99,12 +105,35 @@ export const AddFacilityBookingPage = () => {
     if (userType === 'occupant') {
       dispatch(fetchOccupantUsers({ page: 1, perPage: 100 }));
       dispatch(fetchEntities());
+    } else if (userType === 'guest') {
+      fetchGuestUsers();
     } else {
       dispatch(fetchFMUsers());
-      fetchGuestUsers();
     }
     dispatch(fetchActiveFacilities({ baseUrl: localStorage.getItem('baseUrl'), token: localStorage.getItem('token') }));
   }, [dispatch, userType]);
+
+  // Pre-populate facility and date from URL parameters
+  useEffect(() => {
+    if (urlFacilityId && facilities.length > 0) {
+      const facility = facilities.find(f => f.id.toString() === urlFacilityId);
+      if (facility) {
+        setSelectedFacility(facility);
+        fetchFacilityDetails(facility.id);
+      }
+    }
+  }, [urlFacilityId, facilities]);
+
+  useEffect(() => {
+    if (urlDate) {
+      // Convert from dd/mm/yyyy to yyyy-mm-dd format
+      const [day, month, year] = urlDate.split('/');
+      if (day && month && year) {
+        const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        setSelectedDate(formattedDate);
+      }
+    }
+  }, [urlDate]);
 
   // Fetch facility details when facility is selected
   const fetchFacilityDetails = async (facilityId: string) => {
@@ -131,14 +160,20 @@ export const AddFacilityBookingPage = () => {
     }
   };
 
-  const fetchSlots = async (facilityId: string, date: string, userId: string) => {
+  const fetchSlots = async (facilityId: string, date: string, userId?: string) => {
     try {
       const formattedDate = date.replace(/-/g, '/');
+      const params: any = {
+        on_date: formattedDate
+      };
+      
+      // Only add user_id if it's provided
+      if (userId) {
+        params.user_id = userId;
+      }
+      
       const response = await apiClient.get(`/pms/admin/facility_setups/${facilityId}/get_schedules.json`, {
-        params: {
-          on_date: formattedDate,
-          user_id: userId
-        }
+        params
       });
 
       if (response.data && response.data.slots) {
@@ -151,15 +186,45 @@ export const AddFacilityBookingPage = () => {
     }
   };
 
-  // Effect to fetch slots when facility, date, and user are all selected
+  // Effect to fetch slots when facility and date are selected (user is optional)
   useEffect(() => {
-    if (selectedFacility && selectedDate && selectedUser) {
-      fetchSlots(selectedFacility.id, selectedDate, selectedUser);
+    if (selectedFacility && selectedDate) {
+      const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
+      fetchSlots(facilityId, selectedDate, selectedUser || undefined);
     } else {
       setSlots([]);
       setSelectedSlots([]);
     }
   }, [selectedFacility, selectedDate, selectedUser]);
+
+  // Auto-select slot from URL parameter when slots are loaded
+  useEffect(() => {
+    if (urlSlotTime && slots.length > 0 && selectedSlots.length === 0) {
+      // Decode the URL slot time (e.g., "9:00AM - 9:15AM")
+      const decodedSlotTime = decodeURIComponent(urlSlotTime);
+      
+      // Find the slot that matches the clicked time
+      // The slot.ampm format is like "09:00 AM to 09:15 AM"
+      // The URL format is like "9:00AM - 9:15AM"
+      const matchingSlot = slots.find(slot => {
+        // Normalize both formats for comparison
+        const slotTimeNormalized = slot.ampm
+          .replace(/\s+/g, '') // Remove all spaces
+          .replace('to', '-')  // Replace 'to' with '-'
+          .toLowerCase();
+        
+        const urlTimeNormalized = decodedSlotTime
+          .replace(/\s+/g, '') // Remove all spaces
+          .toLowerCase();
+        
+        return slotTimeNormalized === urlTimeNormalized;
+      });
+      
+      if (matchingSlot) {
+        setSelectedSlots([matchingSlot.id]);
+      }
+    }
+  }, [urlSlotTime, slots]);
 
   // Handle slot selection
   const handleSlotSelection = (slotId: number) => {
@@ -220,6 +285,8 @@ export const AddFacilityBookingPage = () => {
         }
       }
 
+      const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
+      
       const payload = {
         facility_booking: {
           user_society_type: 'User',
@@ -227,7 +294,7 @@ export const AddFacilityBookingPage = () => {
           resource_id: selectedSiteId,
           book_by_id: selectedSlots[0],
           book_by: 'slot',
-          facility_id: selectedFacility.id,
+          facility_id: facilityId,
           startdate: selectedDate.replace(/-/g, '/'),
           comment: comment || '',
           payment_method: paymentMethod,
@@ -235,10 +302,10 @@ export const AddFacilityBookingPage = () => {
           entity_id: selectedCompany,
           ...(paymentMethod === 'complementary' && { complementary_payment_reason: complementaryReason }),
         },
-        on_behalf_of: userType === 'occupant' ? 'occupant-user' : 'fm-user',
+        on_behalf_of: userType === 'occupant' ? 'occupant-user' : userType === 'guest' ? 'guest-user' : 'fm-user',
         occupant_user_id: userType === 'occupant' ? selectedUser : '',
         fm_user_id: userType === 'fm' ? selectedUser : '',
-        ...(selectedGuest && { guest_user_id: selectedGuest })
+        guest_user_id: userType === 'guest' ? selectedUser : ''
       };
 
       console.log('Payload being sent:', JSON.stringify(payload, null, 2));
@@ -328,47 +395,12 @@ export const AddFacilityBookingPage = () => {
               <RadioGroupItem value="occupant" id="occupant" />
               <Label htmlFor="occupant">Members</Label>
             </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="guest" id="guest" />
+              <Label htmlFor="guest">Guest</Label>
+            </div>
           </RadioGroup>
         </div>
-
-        {/* Guest Dropdown - only for staff users */}
-        {userType === 'fm' && (
-          <div className="space-y-2">
-            <TextField
-              select
-              label="Guest"
-              value={selectedGuest}
-              onChange={(e) => setSelectedGuest(e.target.value)}
-              SelectProps={{ displayEmpty: true }}
-              variant="outlined"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              sx={fieldStyles}
-              disabled={guestUsersLoading}
-              helperText={guestUsersError ? "Error loading guest users" : ""}
-              error={!!guestUsersError}
-            >
-              <MenuItem value="">
-                <em>Select Guest</em>
-              </MenuItem>
-              {guestUsersLoading && (
-                <MenuItem value="" disabled>
-                  Loading guest users...
-                </MenuItem>
-              )}
-              {!guestUsersLoading && !guestUsersError && guestUsers.length === 0 && (
-                <MenuItem value="" disabled>
-                  No guest users available
-                </MenuItem>
-              )}
-              {guestUsers.map((guest) => (
-                <MenuItem key={guest.id} value={guest.id.toString()}>
-                  {guest.firstname} {guest.lastname}
-                </MenuItem>
-              ))}
-            </TextField>
-          </div>
-        )}
 
         {/* Form Fields Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -413,7 +445,7 @@ export const AddFacilityBookingPage = () => {
             </div>
           )}
 
-          {/* User Selection - occupant or fm users */}
+          {/* User Selection - occupant, fm, or guest users */}
           <div className="space-y-2">
             <TextField
               select
@@ -431,9 +463,9 @@ export const AddFacilityBookingPage = () => {
                 shrink: true
               }}
               sx={fieldStyles}
-              disabled={userType === 'occupant' ? occupantUsersLoading : fmUsersLoading}
-              helperText={userType === 'occupant' ? (occupantUsersError ? "Error loading users" : "") : (fmUsersError ? "Error loading users" : "")}
-              error={userType === 'occupant' ? !!occupantUsersError : !!fmUsersError}
+              disabled={userType === 'occupant' ? occupantUsersLoading : userType === 'guest' ? guestUsersLoading : fmUsersLoading}
+              helperText={userType === 'occupant' ? (occupantUsersError ? "Error loading users" : "") : userType === 'guest' ? (guestUsersError ? "Error loading guest users" : "") : (fmUsersError ? "Error loading users" : "")}
+              error={userType === 'occupant' ? !!occupantUsersError : userType === 'guest' ? !!guestUsersError : !!fmUsersError}
             >
               <MenuItem value="" disabled>
                 <em>
@@ -453,6 +485,22 @@ export const AddFacilityBookingPage = () => {
               {userType === 'occupant' && occupantUsers.map((user) => (
                 <MenuItem key={user.id} value={user.id.toString()}>
                   {user.name}
+                </MenuItem>
+              ))}
+
+              {userType === 'guest' && guestUsersLoading && (
+                <MenuItem value="" disabled>
+                  Loading guest users...
+                </MenuItem>
+              )}
+              {userType === 'guest' && !guestUsersLoading && !guestUsersError && guestUsers.length === 0 && (
+                <MenuItem value="" disabled>
+                  No guest users available
+                </MenuItem>
+              )}
+              {userType === 'guest' && guestUsers.map((guest) => (
+                <MenuItem key={guest.id} value={guest.id.toString()}>
+                  {guest.firstname} {guest.lastname}
                 </MenuItem>
               ))}
 
@@ -603,9 +651,9 @@ export const AddFacilityBookingPage = () => {
             </div>
           ) : (
             <p className="text-gray-500">
-              {selectedFacility && selectedDate && selectedUser
+              {selectedFacility && selectedDate
                 ? "No slots available for the selected date"
-                : "Please select facility, date, and user to see available slots"
+                : "Please select facility and date to see available slots"
               }
             </p>
           )}
@@ -710,7 +758,9 @@ export const AddFacilityBookingPage = () => {
           <DialogContent>
             <div className="space-y-4">
               {
-                selectedFacility.cancellation_policy
+                selectedFacility && typeof selectedFacility === 'object'
+                  ? selectedFacility.cancellation_policy || 'No cancellation policy available'
+                  : 'No cancellation policy available'
               }
             </div>
           </DialogContent>
@@ -735,7 +785,9 @@ export const AddFacilityBookingPage = () => {
           <DialogContent>
             <div className="space-y-4">
               {
-                selectedFacility.terms
+                selectedFacility && typeof selectedFacility === 'object'
+                  ? selectedFacility.terms || 'No terms and conditions available'
+                  : 'No terms and conditions available'
               }
             </div>
           </DialogContent>

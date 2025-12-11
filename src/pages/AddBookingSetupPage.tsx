@@ -156,19 +156,19 @@ export const AddBookingSetupPage = () => {
     {
       description:
         "If user cancels the booking selected hours/days prior to schedule, a percentage of the amount will be deducted",
-      time: { type: "Hr", value: "00", day: "0" },
+      time: { type: "00", value: "00", day: "0" },
       deduction: "",
     },
     {
       description:
         "If user cancels the booking selected hours/days prior to schedule, a percentage of the amount will be deducted",
-      time: { type: "Hr", value: "00", day: "0" },
+      time: { type: "00", value: "00", day: "0" },
       deduction: "",
     },
     {
       description:
         "If user cancels the booking selected hours/days prior to schedule, a percentage of the amount will be deducted",
-      time: { type: "Hr", value: "00", day: "0" },
+      time: { type: "00", value: "00", day: "0" },
       deduction: "",
     },
   ]);
@@ -1343,6 +1343,12 @@ export const AddBookingSetupPage = () => {
                       <MenuItem value={45}>45 Minutes</MenuItem>
                       <MenuItem value={60}>1 hour</MenuItem>
                       <MenuItem value={90}>1 and a half hours</MenuItem>
+                      <MenuItem value={120}>2 hours</MenuItem>
+                      <MenuItem value={150}>2 and a half hours</MenuItem>
+                      <MenuItem value={180}>3 hours</MenuItem>
+                      <MenuItem value={210}>3 and a half hours</MenuItem>
+                      <MenuItem value={240}>4 hours</MenuItem>
+                      <MenuItem value={270}>4 and a half hours</MenuItem>
                     </Select>
                   </FormControl>
 
@@ -2028,7 +2034,7 @@ export const AddBookingSetupPage = () => {
                   </div>
 
                   {/* Time Type & Value */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
                     {/* Day Input */}
                     <TextField
                       placeholder="Day"
@@ -2042,6 +2048,7 @@ export const AddBookingSetupPage = () => {
                         setCancellationRules(newRules);
                       }}
                     />
+                    <span>DD</span>
 
                     {/* Type: Hr or Day */}
                     <FormControl size="small" style={{ width: "80px" }}>
@@ -2053,26 +2060,7 @@ export const AddBookingSetupPage = () => {
                           setCancellationRules(newRules);
                         }}
                       >
-                        <MenuItem value="Hr">Hr</MenuItem>
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i + 1} value={(i + 1).toString()}>
-                            {i + 1}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    {/* Value: 0 - 23 */}
-                    <FormControl size="small" style={{ width: "80px" }}>
-                      <Select
-                        value={rule.time.value}
-                        onChange={(e) => {
-                          const newRules = [...cancellationRules];
-                          newRules[index].time.value = e.target.value;
-                          setCancellationRules(newRules);
-                        }}
-                      >
-                        {Array.from({ length: 24 }, (_, i) => (
+                        {Array.from({ length: 25 }, (_, i) => (
                           <MenuItem
                             key={i}
                             value={i.toString().padStart(2, "0")}
@@ -2082,6 +2070,29 @@ export const AddBookingSetupPage = () => {
                         ))}
                       </Select>
                     </FormControl>
+                    <span>HH</span>
+
+                    {/* Value: 0 - 59 */}
+                    <FormControl size="small" style={{ width: "80px" }}>
+                      <Select
+                        value={rule.time.value}
+                        onChange={(e) => {
+                          const newRules = [...cancellationRules];
+                          newRules[index].time.value = e.target.value;
+                          setCancellationRules(newRules);
+                        }}
+                      >
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <MenuItem
+                            key={i}
+                            value={i.toString().padStart(2, "0")}
+                          >
+                            {i.toString().padStart(2, "0")}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <span>MM</span>
                   </div>
 
                   {/* Percentage Input */}
@@ -2145,7 +2156,7 @@ export const AddBookingSetupPage = () => {
                   <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                     <Tv className="w-4 h-4" />
                   </div>
-                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
+                  <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE ACCESSORIES</h3>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
