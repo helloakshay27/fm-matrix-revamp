@@ -243,7 +243,7 @@ const DependencyKanban = ({ taskId, dependencies = [], onDependenciesChange }: D
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex gap-4 overflow-x-auto pb-4 relative min-h-[400px]">
+            <div className="flex gap-4 overflow-x-auto pb-4 relative mt-4 h-full min-h-[450px]">
                 {cardsTitle.map((card) => {
                     const filteredTasks = (taskData || []).filter((task) => {
                         const droppedStatus = droppedTasks[task.id || ""];

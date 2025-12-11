@@ -95,6 +95,10 @@ import { ScheduledTaskDashboard } from "./pages/maintenance/ScheduledTaskDashboa
 import { TaskDetailsPage } from "./pages/TaskDetailsPage";
 import { JobSheetPage } from "./pages/JobSheetPage";
 
+// Import Issue pages
+import IssuesListPage from "./pages/IssuesListPage";
+import IssueDetailsPage from "./pages/IssueDetailsPage";
+
 // Import Utility pages
 import { UtilityDashboard } from "./pages/UtilityDashboard";
 import { AddAssetDashboard } from "./pages/AddAssetDashboard";
@@ -802,6 +806,8 @@ import { SprintDashboard } from "./pages/SprintDashboard";
 import SprintDetailsPage from "./pages/SprintDetailsPage";
 import MilestoneDetailsPage from "./pages/MilestoneDetailsPage";
 import ProjectTaskDetails from "./pages/ProjectTaskDetails";
+import OpportunityDashboard from "./pages/OpportunityDashboard";
+import OpportunityDetailsPage from "./pages/OpportunityDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2338,6 +2344,10 @@ function App() {
                     element={<ProjectTasksPage />}
                   />
                   <Route
+                    path="/vas/tasks"
+                    element={<ProjectTasksPage />}
+                  />
+                  <Route
                     //   path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
                     //   element={<ProjectTaskDetailsPage />}
                     // />
@@ -2357,6 +2367,34 @@ function App() {
                   <Route
                     path="/vas/projects/:id/milestones/:mid"
                     element={<MilestoneDetailsPage />}
+                  />
+
+                  {/* Issues Routes */}
+                  <Route
+                    path="/vas/issues"
+                    element={<IssuesListPage />}
+                  />
+                  <Route
+                    path="/vas/issues/:id"
+                    element={<IssueDetailsPage />}
+                  />
+                  <Route
+                    path="/vas/projects/:id/issues"
+                    element={<IssuesListPage />}
+                  />
+                  <Route
+                    path="/vas/projects/:id/issues/:issueId"
+                    element={<IssueDetailsPage />}
+                  />
+
+                  <Route
+                    path="/vas/opportunity"
+                    element={<OpportunityDashboard />}
+                  />
+
+                  <Route
+                    path="/vas/opportunity/:id"
+                    element={<OpportunityDetailsPage />}
                   />
 
                   {/* Utility Routes */}

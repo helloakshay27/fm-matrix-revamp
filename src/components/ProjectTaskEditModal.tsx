@@ -26,13 +26,13 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
     const dispatch = useAppDispatch();
-    
+
     const { data: task } = useAppSelector((state) => state.fetchProjectTasksById);
     const { data: project } = useAppSelector((state) => state.fetchProjectById);
     const { data: milestone } = useAppSelector((state) => state.fetchMilestoneById);
     const { loading: editLoading } = useAppSelector((state) => state.editProjectTask);
     const { data: userAvailabilityData } = useAppSelector((state) => state.fetchUserAvailability);
-    
+
     const userAvailability = useMemo(
         () => (Array.isArray(userAvailabilityData) ? userAvailabilityData : []),
         [userAvailabilityData]
@@ -54,7 +54,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     const [showCalender, setShowCalender] = useState(false);
     const [showStartCalender, setShowStartCalender] = useState(false);
     const [calendarTaskHours, setCalendarTaskHours] = useState([]);
-    
+
     const [formData, setFormData] = useState({
         taskTitle: "",
         description: "",
@@ -100,7 +100,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
     const fetchShifts = useCallback(async (id: string | number) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/shifts/get_shifts.json?user_id=${id}`, {
+            const response = await axios.get(`https://${baseUrl}/pms/admin/user_shifts.json?user_id=${id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -166,7 +166,9 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                 title?: string;
                 description?: string;
                 responsible_person_id?: string;
-                responsible_person_name?: string;
+                responsible_person?: {
+                    name?: string;
+                };
                 priority?: string;
                 expected_start_date?: string;
                 target_date?: string;
@@ -174,7 +176,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                 task_tags?: Array<{ company_tag?: { id: string }; id: string }>;
                 observers?: Array<{ user_id: string; user_name: string; id: string }>;
             };
-            
+
             // Fetch project and milestone details
             if (taskData.project_management_id) {
                 dispatch(fetchProjectById({ baseUrl, token, id: taskData.project_management_id }));
@@ -201,7 +203,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                 taskTitle: taskData.title || "",
                 description: taskData.description || "",
                 responsiblePerson: taskData.responsible_person_id || "",
-                responsiblePersonName: taskData.responsible_person_name || "",
+                responsiblePersonName: taskData.responsible_person?.name || "",
                 priority: taskData.priority || "",
                 observer: mappedObservers,
                 tags: mappedTags,
@@ -580,12 +582,13 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                             Duration <span className="text-red-600">*</span>
                         </label>
                         <DurationPicker
-                            value={taskDuration}
+                            // value={taskDuration}
                             onChange={setTaskDuration}
                             onDateWiseHoursChange={setDateWiseHours}
                             startDate={startDate}
                             endDate={endDate}
                             resposiblePerson={formData.responsiblePersonName}
+                            dateWiseHours={dateWiseHours}
                             totalWorkingHours={totalWorkingHours}
                             setTotalWorkingHours={setTotalWorkingHours}
                             shift={shift}

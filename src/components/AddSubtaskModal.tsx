@@ -127,7 +127,7 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal }) => {
 
     const fetchShifts = async (id) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/shifts/get_shifts.json?user_id=${id}`, {
+            const response = await axios.get(`https://${baseUrl}/pms/admin/user_shifts.json?user_id=${id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -384,11 +384,11 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal }) => {
                                             Efforts Duration <span className="text-red-600">*</span>
                                         </label>
                                         <DurationPicker
-                                            value={taskDuration}
                                             onChange={setTaskDuration}
                                             onDateWiseHoursChange={setDateWiseHours}
                                             startDate={startDate}
                                             endDate={endDate}
+                                            dateWiseHours={dateWiseHours}
                                             resposiblePerson={formData.responsiblePersonName}
                                             totalWorkingHours={totalWorkingHours}
                                             setTotalWorkingHours={setTotalWorkingHours}
