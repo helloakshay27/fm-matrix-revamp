@@ -46,7 +46,7 @@ import {
   Trash,
 } from "lucide-react";
 
-export modulesByPackage = {
+export const modulesByPackage = {
   Master: [
     {
       name: "Location Master",
@@ -133,9 +133,9 @@ export modulesByPackage = {
       href: "/master/material-ebom",
     },
     {
-      name: 'Finance Master',
+      name: "Finance Master",
       icon: Wallet,
-      href: '/master/finance'
+      href: "/master/finance",
     },
     {
       name: "Gate Number",
@@ -362,7 +362,6 @@ export modulesByPackage = {
       href: "/maintenance/vendor",
     },
 
-
     // {
     //   name: "Msafe Report",
     //   icon: Download,
@@ -391,12 +390,13 @@ export modulesByPackage = {
           href: "/safety/permit/pending-approvals",
           color: "text-[#1a1a1a]",
         },
-        { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
+        {
+          name: "Permit Checklist",
+          href: "/safety/permit/checklist",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
-
-
-
 
     {
       name: "M-Safe",
@@ -424,12 +424,20 @@ export modulesByPackage = {
       ],
     },
     {
-      name: 'Report',
+      name: "Report",
       icon: Download,
-      href: '/safety/report',
+      href: "/safety/report",
       subItems: [
-        { name: 'Msafe User Report', icon: Download, href: '/safety/report/msafe-report' },
-        { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
+        {
+          name: "Msafe User Report",
+          icon: Download,
+          href: "/safety/report/msafe-report",
+        },
+        {
+          name: "Msafe Detail Report",
+          icon: Download,
+          href: "/safety/report/msafe-detail-report",
+        },
       ],
     },
     // {
@@ -615,7 +623,10 @@ export modulesByPackage = {
       ],
     },
     {
-      name: "Patrolling", icon: Shield, href: "/security/patrolling", subItems: [
+      name: "Patrolling",
+      icon: Shield,
+      href: "/security/patrolling",
+      subItems: [
         {
           name: "Patrolling Info",
           href: "/security/patrolling",
@@ -626,7 +637,7 @@ export modulesByPackage = {
           href: "/security/patrolling/response",
           color: "text-[#1a1a1a]",
         },
-      ]
+      ],
     },
   ],
   "Value Added Services": [
@@ -758,35 +769,34 @@ export modulesByPackage = {
           href: "/vas/channels/tasks",
           color: "text-[#1a1a1a]",
         },
-      ]
+      ],
     },
     {
-      name: 'Projects & Tasks',
+      name: "Projects & Tasks",
       icon: Briefcase,
       subItems: [
         {
-          name: 'Projects',
-          href: "/vas/projects"
+          name: "Projects",
+          href: "/vas/projects",
         },
         {
-          name: 'Tasks',
-          href: "/vas/tasks"
+          name: "Tasks",
+          href: "/vas/tasks",
         },
         {
-          name: 'Issues',
-          href: "/vas/issues"
+          name: "Issues",
+          href: "/vas/issues",
         },
         // {
         //   name: 'Sprint',
         //   href: "/vas/sprint"
         // },
         {
-          name: 'Opportunity Register',
-          href: "/vas/opportunity"
+          name: "Opportunity Register",
+          href: "/vas/opportunity",
         },
-      ]
+      ],
     },
-
   ],
   "Market Place": [
     {
@@ -1061,7 +1071,7 @@ export modulesByPackage = {
           href: "/settings/community-modules/amenity-setup",
           color: "text-[#1a1a1a]",
         },
-      ]
+      ],
     },
     { name: "FM Groups", icon: Users, href: "/settings/groups" },
     // {
@@ -1073,9 +1083,7 @@ export modulesByPackage = {
     {
       name: "Common Modules",
       icon: IndianRupee,
-      subItems: [
-        { name: "Currency", href: "/settings/currency" },
-      ]
+      subItems: [{ name: "Currency", href: "/settings/currency" }],
     },
     {
       icon: Circle,
@@ -1084,7 +1092,6 @@ export modulesByPackage = {
     },
   ],
 };
-
 
 // Direct mapping from sidebar item names to their expected API function names
 export const sidebarToApiFunctionMapping = {
