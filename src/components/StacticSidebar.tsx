@@ -389,6 +389,11 @@ const modulesByPackage = {
       href: "/master/material-ebom",
     },
     {
+    name: 'Finance Master',
+    icon: Wallet,
+    href: '/master/finance'
+  },
+    {
       name: "Gate Number",
       icon: DoorOpen,
       href: "/master/gate-number",

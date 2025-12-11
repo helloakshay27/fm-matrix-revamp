@@ -165,7 +165,10 @@ interface ServicePR {
 const serviceColumns: ColumnConfig[] = [
   { key: "sno", label: "S.No", sortable: true, draggable: true },
   { key: "boq_details", label: "BOQ Details", sortable: true, draggable: true },
+  { key: "gl_account", label: "GL Account", sortable: true, draggable: true },
+  { key: "tax_code", label: "Tax Code", sortable: true, draggable: true },
   { key: "general_storage", label: "General Storage", sortable: true, draggable: true },
+
   { key: "quantity", label: "Quantity", sortable: true, draggable: true },
   { key: "uom", label: "UOM", sortable: true, draggable: true },
   {
@@ -559,7 +562,10 @@ export const ServicePRDetailsPage = () => {
       tcs_amount: item.tcs_amount || 0,
       tax_amount: item.tax_amount || 0,
       total_amount: item.total_amount || 0,
-      general_storage: item.general_storage || "GNST"
+      general_storage: item.general_storage || "-",
+      gl_account: item.gl_account || "-",
+      tax_code: item.tax_code || "-"
+      
     })) || [];
 
   const renderCell = (item: ServiceItem, columnKey: string) => {

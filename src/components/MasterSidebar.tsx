@@ -11,7 +11,8 @@ import {
   FileText,
   DoorOpen,
   PackagePlus,
-  Ticket
+  Ticket,
+  Wallet
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -58,6 +59,11 @@ const masterItems = [
     name: 'Material Master -> EBom',
     icon: FileText,
     href: '/master/material-ebom'
+  },
+  {
+    name: 'Finance Master',
+    icon: Wallet,
+    href: '/master/finance'
   },
 ];
 
