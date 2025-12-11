@@ -705,6 +705,7 @@ import AddSacHsn from "./pages/AddSacHsn";
 import { WOFeedsPage } from "./pages/WOFeedsPage";
 import { VendorPage } from "./pages/VendorPage";
 import { AddVendorPage } from "./pages/AddVendorPage";
+import { FinanceMasterPage } from "./pages/FinanceMasterPage";
 import MsafeReportDownload from "./pages/MsafeReportDownload";
 import MsafeDetailReportDownload from "./pages/MsafeDetailReportDownload";
 import DetailsVendorPage from "./pages/DetailsVendorPage";
@@ -1422,6 +1423,12 @@ function App() {
                   <Route
                     path="/master/user/occupant-users/edit/:id"
                     element={<EditOccupantUserPage />}
+                  />
+
+                  {/* Finance Master Routes */}
+                  <Route
+                    path="/master/finance"
+                    element={<FinanceMasterPage />}
                   />
 
                   {/* CRM Routes */}
