@@ -89,6 +89,7 @@ export const Header = () => {
 
   const isWebSite = hostname.includes("web.gophygital.work");
 
+  const isLocalhost = hostname.includes("localhost") || hostname.includes("lockated.gophygital.work");
   const navigate = useNavigate();
   const [notificationCount, setNotificationCount] = useState(3);
 
@@ -240,6 +241,29 @@ export const Header = () => {
     userDisplayName ||
     user.firstname ||
     "User";
+
+  /**
+   * VIEW SWITCHING LOGIC (ADMIN HEADER)
+   * 
+   * This header is shown when user is in Admin View (default view)
+   * 
+   * USER TYPE CHECK:
+   * - Check user.user_type from database (not localStorage)
+   * - If user_type === "pms_organization_admin": User can switch to Employee View
+   * - If user_type === "pms_occupant": User has employee-only access (no switcher shown)
+   * 
+   * TO SWITCH TO EMPLOYEE VIEW:
+   * - Set localStorage.userType = "pms_occupant"
+   * - Reload page
+   * - Layout.tsx detects this and renders EmployeeHeader + EmployeeSidebar
+   */
+        const userType = localStorage.getItem("userType");
+
+         const tempType = localStorage.getItem("tempType");
+
+  const canSwitchToEmployee = userType === "pms_organization_admin";
+
+  const tempSwitchToEmployee = tempType === "pms_organization_admin";
 
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-20 w-full shadow-sm">
@@ -570,12 +594,59 @@ export const Header = () => {
                       : user.email) || ""}
                   </span>
                 </div>
-                <div className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded mt-2 inline-block">
-                  {(isViSite && viAccount
-                    ? viAccount.role_name || ""
-                    : userRoleName || user?.lock_role?.name) || "No Role"}{" "}
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded inline-block">
+                    {(isViSite && viAccount
+                      ? viAccount.role_name || ""
+                      : userRoleName || user?.lock_role?.name) || "No Role"}
+                  </div>
+                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                    Admin View
+                  </Badge>
                 </div>
               </div>
+
+              {/* View Switcher - Only shown for admin users (pms_organization_admin) */}
+              {canSwitchToEmployee && isLocalhost && (
+                <>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-2">
+                    <p className="text-xs text-gray-500 mb-2">Switch View</p>
+                    <button
+                      onClick={() => {
+                        // Set userType to trigger employee layout
+                        localStorage.setItem("userType", "pms_occupant");
+                        localStorage.setItem("tempType", "pms_organization_admin");
+                        navigate("/employee/dashboard");
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-green-50 hover:bg-green-100 text-green-700 transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>Switch to Employee View</span>
+                    </button>
+                  </div>
+                </>
+              )}
+               {tempSwitchToEmployee && isLocalhost && (
+                <>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-2">
+                    <p className="text-xs text-gray-500 mb-2">Switch View</p>
+                    <button
+                      onClick={() => {
+                        // Set userType to trigger employee layout
+                        localStorage.setItem("userType", "pms_occupant");
+                        localStorage.setItem("tempType", "pms_organization_admin");
+                        navigate("/employee/dashboard");
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-green-50 hover:bg-green-100 text-green-700 transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>Switch to Employee View</span>
+                    </button>
+                  </div>
+                </>
+              )}
 
               <DropdownMenuSeparator />
               <DropdownMenuItem

@@ -14,7 +14,7 @@ import {
   CircularProgress 
 } from '@mui/material';
 import { toast } from 'sonner';
-import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { getFullUrl, getAuthHeader, API_CONFIG } from '@/config/apiConfig';
 import { useLocationData } from '@/hooks/useLocationData';
 
 interface Question {
@@ -71,6 +71,14 @@ interface SurveyMapping {
   floorIds: number[];
   areaIds: number[];
   roomIds: number[];
+  // Store fetched location data per configuration
+  locationData: {
+    buildings: LocationItem[];
+    wings: LocationItem[];
+    areas: LocationItem[];
+    floors: LocationItem[];
+    rooms: LocationItem[];
+  };
 }
 
 // Section component matching PatrollingCreatePage
@@ -124,7 +132,14 @@ export const AddSurveyMapping = () => {
     wingIds: [],
     floorIds: [],
     areaIds: [],
-    roomIds: []
+    roomIds: [],
+    locationData: {
+      buildings: [],
+      wings: [],
+      areas: [],
+      floors: [],
+      rooms: []
+    }
   }]);
 
   // Survey data
@@ -142,18 +157,89 @@ export const AddSurveyMapping = () => {
     fetchSurveys();
   }, []);
 
+  // Fetch location data for a specific configuration
+  const fetchLocationDataForConfig = async (
+    configIndex: number,
+    field: 'buildings' | 'wings' | 'areas' | 'floors' | 'rooms',
+    params: { siteId?: number; buildingId?: number; wingId?: number; areaId?: number; floorId?: number }
+  ) => {
+    try {
+      let url = '';
+      switch (field) {
+        case 'buildings':
+          url = `${API_CONFIG.BASE_URL}/pms/sites/${params.siteId}/buildings.json`;
+          break;
+        case 'wings':
+          url = `${API_CONFIG.BASE_URL}/pms/wings.json?q[building_id_eq]=${params.buildingId}`;
+          break;
+        case 'areas': {
+          const areaParams = new URLSearchParams();
+          if (params.wingId) areaParams.append('q[wing_id_eq]', params.wingId.toString());
+          if (params.buildingId) areaParams.append('q[building_id_eq]', params.buildingId.toString());
+          url = `${API_CONFIG.BASE_URL}/pms/areas.json?${areaParams.toString()}`;
+          break;
+        }
+        case 'floors': {
+          const floorParams = new URLSearchParams();
+          if (params.areaId) floorParams.append('q[area_id_eq]', params.areaId.toString());
+          if (params.buildingId) floorParams.append('q[building_id_eq]', params.buildingId.toString());
+          if (params.wingId) floorParams.append('q[wing_id_eq]', params.wingId.toString());
+          url = `${API_CONFIG.BASE_URL}/pms/floors.json?${floorParams.toString()}`;
+          break;
+        }
+        case 'rooms': {
+          const roomParams = new URLSearchParams();
+          if (params.floorId) roomParams.append('q[floor_id_eq]', params.floorId.toString());
+          if (params.buildingId) roomParams.append('q[building_id_eq]', params.buildingId.toString());
+          if (params.wingId) roomParams.append('q[wing_id_eq]', params.wingId.toString());
+          if (params.areaId) roomParams.append('q[area_id_eq]', params.areaId.toString());
+          url = `${API_CONFIG.BASE_URL}/pms/rooms.json?${roomParams.toString()}`;
+          break;
+        }
+      }
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) throw new Error(`Failed to fetch ${field}`);
+      
+      const data = await response.json();
+      // Handle both array format and object with field property
+      const items = Array.isArray(data) ? data : (data[field] || []);
+      
+      setSurveyMappings(prev => prev.map((mapping, i) => {
+        if (i !== configIndex) return mapping;
+        return {
+          ...mapping,
+          locationData: {
+            ...mapping.locationData,
+            [field]: items
+          }
+        };
+      }));
+    } catch (error) {
+      console.error(`Error fetching ${field}:`, error);
+    }
+  };
+
   // Handle location changes with cascading behavior
   const handleLocationChange = async (
     index: number,
     field: 'site' | 'building' | 'wing' | 'area' | 'floor' | 'room',
     value: string
   ) => {
+    // First update state and clear dependent fields
     setSurveyMappings(prev => prev.map((mapping, i) => {
       if (i !== index) return mapping;
 
       const newSelectedLocation = { ...mapping.selectedLocation };
+      const newLocationData = { ...mapping.locationData };
       
-      // Reset dependent fields when parent changes
+      // Reset dependent fields and clear their data when parent changes
       switch (field) {
         case 'site':
           newSelectedLocation.site = value;
@@ -162,13 +248,11 @@ export const AddSurveyMapping = () => {
           newSelectedLocation.area = "";
           newSelectedLocation.floor = "";
           newSelectedLocation.room = "";
-          // Fetch buildings for the selected site
-          if (value) {
-            const siteId = parseInt(value);
-            if (siteId) {
-              fetchBuildings(siteId);
-            }
-          }
+          newLocationData.buildings = [];
+          newLocationData.wings = [];
+          newLocationData.areas = [];
+          newLocationData.floors = [];
+          newLocationData.rooms = [];
           break;
 
         case 'building':
@@ -177,14 +261,10 @@ export const AddSurveyMapping = () => {
           newSelectedLocation.area = "";
           newSelectedLocation.floor = "";
           newSelectedLocation.room = "";
-          if (value) {
-            const buildingId = parseInt(value);
-            fetchWings(buildingId);
-            // Also fetch areas, floors, and rooms with buildingId filter
-            fetchAreas(0, buildingId);
-            fetchFloors(0, buildingId);
-            fetchRooms(0, buildingId);
-          }
+          newLocationData.wings = [];
+          newLocationData.areas = [];
+          newLocationData.floors = [];
+          newLocationData.rooms = [];
           break;
 
         case 'wing':
@@ -192,43 +272,23 @@ export const AddSurveyMapping = () => {
           newSelectedLocation.area = "";
           newSelectedLocation.floor = "";
           newSelectedLocation.room = "";
-          if (value && newSelectedLocation.building) {
-            const wingId = parseInt(value);
-            const buildingId = parseInt(newSelectedLocation.building);
-            // Fetch areas for this wing
-            fetchAreas(wingId, buildingId);
-            // Also fetch floors and rooms with wing_id
-            fetchFloors(0, buildingId, wingId);
-            fetchRooms(0, buildingId, wingId);
-          }
+          newLocationData.areas = [];
+          newLocationData.floors = [];
+          newLocationData.rooms = [];
           break;
 
         case 'area':
           newSelectedLocation.area = value;
           newSelectedLocation.floor = "";
           newSelectedLocation.room = "";
-          if (value && newSelectedLocation.building) {
-            const areaId = parseInt(value);
-            const buildingId = parseInt(newSelectedLocation.building);
-            const wingId = newSelectedLocation.wing ? parseInt(newSelectedLocation.wing) : undefined;
-            // Fetch floors for this area, passing wing_id if available
-            fetchFloors(areaId, buildingId, wingId);
-            // Also fetch rooms with area_id and wing_id
-            fetchRooms(0, buildingId, wingId, areaId);
-          }
+          newLocationData.floors = [];
+          newLocationData.rooms = [];
           break;
 
         case 'floor':
           newSelectedLocation.floor = value;
           newSelectedLocation.room = "";
-          if (value && newSelectedLocation.building) {
-            const floorId = parseInt(value);
-            const buildingId = parseInt(newSelectedLocation.building);
-            const wingId = newSelectedLocation.wing ? parseInt(newSelectedLocation.wing) : undefined;
-            const areaId = newSelectedLocation.area ? parseInt(newSelectedLocation.area) : undefined;
-            // Fetch rooms for this floor, passing all parent IDs
-            fetchRooms(floorId, buildingId, wingId, areaId);
-          }
+          newLocationData.rooms = [];
           break;
 
         case 'room':
@@ -238,9 +298,64 @@ export const AddSurveyMapping = () => {
 
       return {
         ...mapping,
-        selectedLocation: newSelectedLocation
+        selectedLocation: newSelectedLocation,
+        locationData: newLocationData
       };
     }));
+
+    // Then fetch new data for this specific configuration
+    const mapping = surveyMappings[index];
+    
+    switch (field) {
+      case 'site':
+        if (value) {
+          const siteId = parseInt(value);
+          if (siteId) {
+            await fetchLocationDataForConfig(index, 'buildings', { siteId });
+          }
+        }
+        break;
+
+      case 'building':
+        if (value) {
+          const buildingId = parseInt(value);
+          await fetchLocationDataForConfig(index, 'wings', { buildingId });
+          await fetchLocationDataForConfig(index, 'areas', { buildingId });
+          await fetchLocationDataForConfig(index, 'floors', { buildingId });
+          await fetchLocationDataForConfig(index, 'rooms', { buildingId });
+        }
+        break;
+
+      case 'wing':
+        if (value && mapping.selectedLocation.building) {
+          const wingId = parseInt(value);
+          const buildingId = parseInt(mapping.selectedLocation.building);
+          await fetchLocationDataForConfig(index, 'areas', { buildingId, wingId });
+          await fetchLocationDataForConfig(index, 'floors', { buildingId, wingId });
+          await fetchLocationDataForConfig(index, 'rooms', { buildingId, wingId });
+        }
+        break;
+
+      case 'area':
+        if (value && mapping.selectedLocation.building) {
+          const areaId = parseInt(value);
+          const buildingId = parseInt(mapping.selectedLocation.building);
+          const wingId = mapping.selectedLocation.wing ? parseInt(mapping.selectedLocation.wing) : undefined;
+          await fetchLocationDataForConfig(index, 'floors', { buildingId, wingId, areaId });
+          await fetchLocationDataForConfig(index, 'rooms', { buildingId, wingId, areaId });
+        }
+        break;
+
+      case 'floor':
+        if (value && mapping.selectedLocation.building) {
+          const floorId = parseInt(value);
+          const buildingId = parseInt(mapping.selectedLocation.building);
+          const wingId = mapping.selectedLocation.wing ? parseInt(mapping.selectedLocation.wing) : undefined;
+          const areaId = mapping.selectedLocation.area ? parseInt(mapping.selectedLocation.area) : undefined;
+          await fetchLocationDataForConfig(index, 'rooms', { buildingId, wingId, areaId, floorId });
+        }
+        break;
+    }
   };
 
   const fetchSurveys = async () => {
@@ -307,7 +422,14 @@ export const AddSurveyMapping = () => {
       wingIds: [],
       floorIds: [],
       areaIds: [],
-      roomIds: []
+      roomIds: [],
+      locationData: {
+        buildings: [],
+        wings: [],
+        areas: [],
+        floors: [],
+        rooms: []
+      }
     }]);
   };
 
@@ -695,7 +817,7 @@ export const AddSurveyMapping = () => {
                     value={mapping.selectedLocation.building}
                     onChange={(e) => handleLocationChange(mappingIdx, 'building', e.target.value as string)}
                     input={<OutlinedInput label="Building" />}
-                    disabled={!mapping.selectedLocation.site || loading.buildings}
+                    disabled={!mapping.selectedLocation.site}
                     displayEmpty
                     notched
                   >
@@ -707,20 +829,14 @@ export const AddSurveyMapping = () => {
                         }
                       </em>
                     </MenuItem>
-                    {loading.buildings ? (
-                      <MenuItem disabled>
-                        <CircularProgress size={20} sx={{ mr: 1 }} />
-                        Loading buildings...
-                      </MenuItem>
-                    ) : (
-                      buildings
-                        .filter(building => building?.id && building?.name)
-                        .map((building) => (
-                          <MenuItem key={building.id} value={building.id}>
-                            {building.name}
-                          </MenuItem>
-                        ))
-                    )}
+                    {mapping.locationData.buildings
+                      .filter(building => building?.id && building?.name)
+                      .map((building) => (
+                        <MenuItem key={building.id} value={building.id}>
+                          {building.name}
+                        </MenuItem>
+                      ))
+                    }
                   </Select>
                 </FormControl>
 
@@ -735,7 +851,7 @@ export const AddSurveyMapping = () => {
                     value={mapping.selectedLocation.wing}
                     onChange={(e) => handleLocationChange(mappingIdx, 'wing', e.target.value as string)}
                     input={<OutlinedInput label="Wing" />}
-                    disabled={!mapping.selectedLocation.building || loading.wings}
+                    disabled={!mapping.selectedLocation.building}
                     displayEmpty
                     notched
                   >
@@ -747,20 +863,14 @@ export const AddSurveyMapping = () => {
                         }
                       </em>
                     </MenuItem>
-                    {loading.wings ? (
-                      <MenuItem disabled>
-                        <CircularProgress size={20} sx={{ mr: 1 }} />
-                        Loading wings...
-                      </MenuItem>
-                    ) : (
-                      wings
-                        .filter(wing => wing?.id && wing?.name)
-                        .map((wing) => (
-                          <MenuItem key={wing.id} value={wing.id}>
-                            {wing.name}
-                          </MenuItem>
-                        ))
-                    )}
+                    {mapping.locationData.wings
+                      .filter(wing => wing?.id && wing?.name)
+                      .map((wing) => (
+                        <MenuItem key={wing.id} value={wing.id}>
+                          {wing.name}
+                        </MenuItem>
+                      ))
+                    }
                   </Select>
                 </FormControl>
 
@@ -787,20 +897,14 @@ export const AddSurveyMapping = () => {
                         }
                       </em>
                     </MenuItem>
-                    {loading.areas ? (
-                      <MenuItem disabled>
-                        <CircularProgress size={20} sx={{ mr: 1 }} />
-                        Loading areas...
-                      </MenuItem>
-                    ) : (
-                      areas
-                        .filter(area => area?.id && area?.name)
-                        .map((area) => (
-                          <MenuItem key={area.id} value={area.id}>
-                            {area.name}
-                          </MenuItem>
-                        ))
-                    )}
+                    {mapping.locationData.areas
+                      .filter(area => area?.id && area?.name)
+                      .map((area) => (
+                        <MenuItem key={area.id} value={area.id}>
+                          {area.name}
+                        </MenuItem>
+                      ))
+                    }
                   </Select>
                 </FormControl>
 
@@ -827,20 +931,14 @@ export const AddSurveyMapping = () => {
                         }
                       </em>
                     </MenuItem>
-                    {loading.floors ? (
-                      <MenuItem disabled>
-                        <CircularProgress size={20} sx={{ mr: 1 }} />
-                        Loading floors...
-                      </MenuItem>
-                    ) : (
-                      floors
-                        .filter(floor => floor?.id && floor?.name)
-                        .map((floor) => (
-                          <MenuItem key={floor.id} value={floor.id}>
-                            {floor.name}
-                          </MenuItem>
-                        ))
-                    )}
+                    {mapping.locationData.floors
+                      .filter(floor => floor?.id && floor?.name)
+                      .map((floor) => (
+                        <MenuItem key={floor.id} value={floor.id}>
+                          {floor.name}
+                        </MenuItem>
+                      ))
+                    }
                   </Select>
                 </FormControl>
 
@@ -867,20 +965,14 @@ export const AddSurveyMapping = () => {
                         }
                       </em>
                     </MenuItem>
-                    {loading.rooms ? (
-                      <MenuItem disabled>
-                        <CircularProgress size={20} sx={{ mr: 1 }} />
-                        Loading rooms...
-                      </MenuItem>
-                    ) : (
-                      rooms
-                        .filter(room => room?.id && room?.name)
-                        .map((room) => (
-                          <MenuItem key={room.id} value={room.id}>
-                            {room.name}
-                          </MenuItem>
-                        ))
-                    )}
+                    {mapping.locationData.rooms
+                      .filter(room => room?.id && room?.name)
+                      .map((room) => (
+                        <MenuItem key={room.id} value={room.id}>
+                          {room.name}
+                        </MenuItem>
+                      ))
+                    }
                   </Select>
                 </FormControl>
               </div>

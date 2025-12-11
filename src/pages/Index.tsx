@@ -23,6 +23,17 @@ const Index = () => {
     // Fallback logic if no specific route found or no user role
     const hostname = window.location.hostname;
     const isViSite = hostname.includes('vi-web.gophygital.work');
+    const userType = localStorage.getItem("userType");
+    const isLocalhost = hostname.includes('localhost') || hostname.includes('lockated.gophygital.work');
+
+    if (userType && isLocalhost) {
+      // Navigate based on userType
+      if (userType === "pms_organization_admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else if (userType === "pms_occupant") {
+        navigate("/employee/dashboard", { replace: true });
+      }
+    }
 
     if (isViSite) {
       navigate('/safety/m-safe/internal', { replace: true });
