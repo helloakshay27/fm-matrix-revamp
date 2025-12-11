@@ -205,7 +205,7 @@ const BookingCalenderView = () => {
         });
     };
 
-    const handleSlotClick = (facilityId, slotId, isBooked, facilityBookingId) => {
+    const handleSlotClick = (facilityId, slotId, isBooked, facilityBookingId, slot) => {
         if (isBooked && facilityBookingId) {
             // Redirect to booking details page
             const currentPath = window.location.pathname;
@@ -217,8 +217,17 @@ const BookingCalenderView = () => {
                 navigate(`/vas/booking/${facilityBookingId}`);
             }
         } else if (!isBooked) {
-            // Create new booking
-            console.log("Create new booking:", { facilityId, slotId, date: selectedDate });
+            // Navigate to add facility booking page with dynamic parameters
+            const currentPath = window.location.pathname;
+            const queryParams = `facility_id=${facilityId}&date=${selectedDate}&slot_time=${encodeURIComponent(slot.time_text)}`;
+            
+            if (currentPath.includes("bookings")) {
+                navigate(`/bookings/add?${queryParams}`);
+            } else if (currentPath.includes("club-management")) {
+                navigate(`/club-management/amenities-booking/add?${queryParams}`);
+            } else {
+                navigate(`/vas/booking/add?${queryParams}`);
+            }
         }
     };
 
@@ -438,13 +447,13 @@ const BookingCalenderView = () => {
                                                         return (
                                                             <div
                                                                 key={slot.id}
-                                                                onClick={() => handleSlotClick(facility.id, slot.id, slotBooked, bookedSlot?.facility_booking_id)}
+                                                                onClick={() => handleSlotClick(facility.id, slot.id, slotBooked, bookedSlot?.facility_booking_id, slot)}
                                                                 className={`flex-1 border border-gray-200 transition-colors
                                                                     ${selectedDateInfo?.isOff
                                                                         ? "bg-gray-100 cursor-not-allowed"
                                                                         : slotBooked
-                                                                            ? "bg-[rgba(86,86,86,0.2)] cursor-pointer"
-                                                                            : "hover:bg-blue-50 cursor-pointer"
+                                                                            ? "bg-gray-400 cursor-pointer hover:bg-gray-500"
+                                                                            : "bg-white hover:bg-blue-50 cursor-pointer"
                                                                     }
                                                                     ${slot.quarter === 0 ? 'border-l border-l-gray-400' : ''}
                                                                     ${slot.quarter === 3 ? 'border-r border-r-gray-400' : ''}
