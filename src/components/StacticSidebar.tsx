@@ -1017,10 +1017,25 @@ const modulesByPackage = {
       href: "/vas/projects"
     },
     {
-      name: 'Sprint',
+      name: 'Tasks',
       icon: Briefcase,
-      href: "/vas/sprint"
-    }
+      href: "/vas/tasks"
+    },
+    {
+      name: 'Issues',
+      icon: Briefcase,
+      href: "/vas/issues"
+    },
+    // {
+    //   name: 'Sprint',
+    //   icon: Briefcase,
+    //   href: "/vas/sprint"
+    // },
+    {
+      name: 'Opportunity Register',
+      icon: Briefcase,
+      href: "/vas/opportunity"
+    },
   ],
   "Market Place": [
     {

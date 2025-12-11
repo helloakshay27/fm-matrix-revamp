@@ -36,6 +36,29 @@ export const createProject = createAsyncThunk(
     }
 )
 
+export const fetchKanbanProjects = createAsyncThunk('fetchKanbanProjects', async ({ token, baseUrl }: { token: string, baseUrl: string }, { rejectWithValue }) => {
+    try {
+        let params = new URLSearchParams();
+        params.append(
+            'q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]',
+            JSON.parse(localStorage.getItem('user')).id
+        );
+        const response = await axios.get(
+            `https://${baseUrl}/project_managements/project_kanban.json?${params.toString()}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        return error.response.data;
+    }
+});
+
 export const fetchProjectById = createAsyncThunk(
     'fetchProjectById',
     async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
@@ -166,6 +189,7 @@ const removeTagFromProjectSlice = createApiSlice("removeTagFromProject", removeT
 const filterProjectsSlice = createApiSlice("filterProjects", filterProjects);
 const attachFilesSlice = createApiSlice("attachFiles", attachFiles);
 const removeAttachmentSlice = createApiSlice("removeAttachment", removeAttachment);
+const fetchKanbanProjectsSlice = createApiSlice("fetchKanbanProjects", fetchKanbanProjects);
 
 export const fetchProjectsReducer = fetchProjectsSlice.reducer;
 export const createProjectReducer = createProjectSlice.reducer;
@@ -175,3 +199,4 @@ export const removeTagFromProjectReducer = removeTagFromProjectSlice.reducer;
 export const filterProjectsReducer = filterProjectsSlice.reducer;
 export const attachFilesReducer = attachFilesSlice.reducer;
 export const removeAttachmentReducer = removeAttachmentSlice.reducer;
+export const fetchKanbanProjectsReducer = fetchKanbanProjectsSlice.reducer;

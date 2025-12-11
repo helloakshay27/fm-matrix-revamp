@@ -199,7 +199,7 @@ export const ProjectsDashboard = () => {
       const response = await dispatch(
         filterProjects({ token, baseUrl, filters })
       ).unwrap();
-      setProjects(transformedProjects(response));
+      setProjects(transformedProjects(response.project_managements));
     } catch (error) {
       console.log(error);
     } finally {
@@ -484,13 +484,6 @@ export const ProjectsDashboard = () => {
 
   const rightActions = (
     <div className="flex items-center gap-2">
-      <button
-        onClick={() => setIsFilterModalOpen(true)}
-        className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200"
-      >
-        <Filter className="w-4 h-4 text-[#C72030]" />
-        <span className="text-sm font-medium text-gray-700">Filter</span>
-      </button>
       <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -708,7 +701,7 @@ export const ProjectsDashboard = () => {
         leftActions={leftActions}
         rightActions={rightActions}
         storageKey="projects-table"
-        onFilterClick={() => { }}
+        onFilterClick={() => setIsFilterModalOpen(true)}
         canAddRow={true}
         readonlyColumns={["id", "milestones", "tasks", "subtasks", "issues"]}
         onAddRow={(newRowData) => {

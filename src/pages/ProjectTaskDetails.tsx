@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronDown, PencilIcon, Plus, ScrollText, Trash2, X, ChevronDownCircle } from "lucide-react";
 import { toast } from "sonner";
+import axios from "axios";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
@@ -150,21 +151,146 @@ const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetD
 
 // Comments Component
 const Comments = ({ comments, taskId }: { comments?: any[]; taskId?: string }) => {
-  const [comment, setComment] = useState("");
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const handleAddComment = () => {
-    if (comment.trim()) {
-      // TODO: Implement API call to add comment
-      setComment("");
-      toast.success("Comment added successfully");
+  const [comment, setComment] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editedCommentText, setEditedCommentText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localComments, setLocalComments] = useState<any[]>(comments || []);
+
+  useEffect(() => {
+    setLocalComments(comments || []);
+  }, [comments]);
+
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!comment.trim()) {
+      toast.error("Comment cannot be empty");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("comment[body]", comment.trim());
+      formData.append("comment[commentable_id]", taskId || "");
+      formData.append("comment[commentable_type]", "TaskManagement");
+      formData.append("comment[commentor_id]", currentUser?.id || "");
+      formData.append("comment[active]", "true");
+
+      const response = await axios.post(
+        `https://${baseUrl}/comments.json`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 201) {
+        setComment("");
+        toast.success("Comment added successfully");
+        if (taskId) {
+          // Fetch the complete task details to get all comments from server
+          const taskResponse = await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
+          // Update local comments with the fresh data from server
+          setLocalComments(taskResponse?.comments || []);
+        }
+      }
+    } catch (error: any) {
+      console.error("Error adding comment:", error);
+      toast.error("Failed to add comment");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditComment = (cmt: any) => {
+    setEditingCommentId(cmt.id);
+    setEditedCommentText(cmt.body);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editedCommentText.trim()) {
+      toast.error("Comment cannot be empty");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("comment[body]", editedCommentText.trim());
+
+      const response = await axios.put(
+        `https://${baseUrl}/comments/${editingCommentId}.json`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setLocalComments(
+          localComments.map((c) =>
+            c.id === editingCommentId ? { ...c, body: editedCommentText } : c
+          )
+        );
+        setEditingCommentId(null);
+        setEditedCommentText("");
+        toast.success("Comment updated successfully");
+        if (taskId) {
+          dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId }));
+        }
+      }
+    } catch (error: any) {
+      console.error("Error editing comment:", error);
+      toast.error("Failed to update comment");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!window.confirm("Are you sure you want to delete this comment?")) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await axios.delete(
+        `https://${baseUrl}/comments/${commentId}.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setLocalComments(localComments.filter((c) => c.id !== commentId));
+        toast.success("Comment deleted successfully");
+        if (taskId) {
+          dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId }));
+        }
+      }
+    } catch (error: any) {
+      console.error("Error deleting comment:", error);
+      toast.error("Failed to delete comment");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="text-[14px] flex flex-col gap-4">
+    <div className="text-[14px] flex flex-col gap-4 mt-4">
       <div className="flex justify-start gap-5">
         <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
-          <span>U</span>
+          <span>{getInitials(currentUser?.firstname || "U")}</span>
         </div>
         <div className="w-full">
           <textarea
@@ -172,6 +298,7 @@ const Comments = ({ comments, taskId }: { comments?: any[]; taskId?: string }) =
             onChange={(e) => setComment(e.target.value)}
             placeholder="Add comment here..."
             className="w-full h-[70px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] rounded focus:outline-none resize-none"
+            disabled={isSubmitting}
           />
         </div>
       </div>
@@ -179,29 +306,79 @@ const Comments = ({ comments, taskId }: { comments?: any[]; taskId?: string }) =
       <div className="flex justify-end gap-2">
         <button
           onClick={handleAddComment}
-          className="bg-[#C72030] text-white px-4 py-2 rounded hover:bg-[#A01B29] transition"
+          className="bg-[#C72030] text-white px-4 py-2 rounded hover:bg-[#A01B29] transition disabled:opacity-50"
+          disabled={isSubmitting}
         >
-          Add Comment
+          {isSubmitting ? "Adding..." : "Add Comment"}
         </button>
         <button
           onClick={() => setComment("")}
           className="border-2 border-[#C72030] text-[#C72030] px-4 py-2 rounded hover:bg-[#C72030] hover:text-white transition"
+          disabled={isSubmitting}
         >
           Cancel
         </button>
       </div>
 
-      {comments && comments.length > 0 ? (
+      {localComments && localComments.length > 0 ? (
         <div className="space-y-4">
-          {comments.map((cmt: any, idx: number) => (
-            <div key={idx} className="flex justify-start gap-5 border-b pb-4">
+          {localComments.map((cmt: any) => (
+            <div key={cmt?.id} className="flex justify-start gap-5 border-b pb-4">
               <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5 flex-shrink-0">
-                <span>{getInitials(cmt.commentor_full_name || "U")}</span>
+                <span>{getInitials(cmt?.commentor_full_name || "U")}</span>
               </div>
               <div className="flex-1">
-                <h4 className="font-bold text-sm">{cmt.commentor_full_name || "Unknown"}</h4>
-                <p className="text-sm text-gray-700 mt-1">{cmt.body || ""}</p>
-                <span className="text-xs text-gray-500">{formatToDDMMYYYY_AMPM(cmt.created_at || "")}</span>
+                <h4 className="font-bold text-sm">{cmt?.commentor_full_name || "Unknown"}</h4>
+                {editingCommentId === cmt?.id ? (
+                  <div className="flex flex-col gap-2 mt-2">
+                    <textarea
+                      value={editedCommentText}
+                      onChange={(e) => setEditedCommentText(e.target.value)}
+                      className="w-full h-[60px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] rounded focus:outline-none resize-none"
+                      disabled={isSubmitting}
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSaveEdit}
+                        className="bg-[#C72030] text-white px-3 py-1 rounded text-xs hover:bg-[#A01B29] transition disabled:opacity-50"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Saving..." : "Save"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingCommentId(null);
+                          setEditedCommentText("");
+                        }}
+                        className="border-2 border-[#C72030] text-[#C72030] px-3 py-1 rounded text-xs hover:bg-[#C72030] hover:text-white transition"
+                        disabled={isSubmitting}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-700 mt-1">{cmt?.body || ""}</p>
+                )}
+                <div className="flex gap-2 text-xs text-gray-500 mt-2">
+                  <span>{formatToDDMMYYYY_AMPM(cmt?.created_at || "")}</span>
+                  {currentUser?.id === cmt?.commentor_id && !editingCommentId && (
+                    <>
+                      <span
+                        className="cursor-pointer text-blue-600 hover:underline"
+                        onClick={() => handleEditComment(cmt)}
+                      >
+                        Edit
+                      </span>
+                      <span
+                        className="cursor-pointer text-red-600 hover:underline"
+                        onClick={() => handleDeleteComment(cmt?.id)}
+                      >
+                        Delete
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -215,33 +392,165 @@ const Comments = ({ comments, taskId }: { comments?: any[]; taskId?: string }) =
 
 // Attachments Component
 const Attachments = ({ attachments, taskId }: { attachments?: any[]; taskId?: string }) => {
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+
   const [files, setFiles] = useState<any[]>(attachments || []);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setFiles(attachments || []);
+  }, [attachments]);
 
   const handleAttachFile = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
-    if (selectedFiles.length > 0) {
-      // TODO: Implement file upload API
-      toast.success("File upload started");
+    if (!selectedFiles.length) return;
+
+    // Check file sizes (max 10MB per file)
+    const oversizedFiles = selectedFiles.filter((file) => file.size > 10 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      const fileNames = oversizedFiles.map((f) => f.name).join(", ");
+      toast.error(`File(s) too large: ${fileNames}. Max allowed size is 10MB.`);
+      return;
+    }
+
+    // Show pending files instantly on UI
+    const newPendingFiles = selectedFiles.map((file, idx) => ({
+      id: `pending-${Date.now()}-${idx}`,
+      file_name: file.name,
+      document_file_name: file.name,
+      created_at: new Date().toISOString(),
+      isPending: true,
+      size: file.size,
+    }));
+    setPendingFiles([...pendingFiles, ...newPendingFiles]);
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      selectedFiles.forEach((file) => {
+        formData.append("task_management[attachments][]", file);
+      });
+
+      const response = await axios.put(
+        `https://${baseUrl}/task_managements/${taskId}.json`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 201) {
+        toast.success("File(s) uploaded successfully");
+        // Clear pending files after successful upload
+        setPendingFiles([]);
+        if (taskId) {
+          const taskResponse = await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
+          setFiles(taskResponse?.attachments || []);
+        }
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      }
+    } catch (error: any) {
+      console.error("Error uploading file:", error);
+      toast.error(error.response?.data?.message || "Failed to upload file");
+      // Clear pending files on error
+      setPendingFiles([]);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleRemoveFile = (fileName: string) => {
-    setFiles(files.filter((f) => f.file_name !== fileName));
-    toast.success("File removed");
+  const handleRemoveFile = async (fileId: string, fileName: string) => {
+    if (!window.confirm(`Are you sure you want to delete ${fileName}?`)) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await axios.delete(
+        `https://${baseUrl}/task_managements/${taskId}/remove_attachemnts/${fileId}.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setFiles(files.filter((f) => f.id !== fileId));
+        toast.success("File removed successfully");
+        if (taskId) {
+          dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId }));
+        }
+      }
+    } catch (error: any) {
+      console.error("Error deleting file:", error);
+      toast.error("Failed to delete file");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
+  const getFileIcon = (fileName: string) => {
+    const ext = fileName.split(".").pop()?.toLowerCase();
+    if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext || "")) return "🖼️";
+    if (ext === "pdf") return "📄";
+    if (["doc", "docx"].includes(ext || "")) return "📝";
+    if (["xls", "xlsx"].includes(ext || "")) return "📊";
+    return "📎";
+  };
+
+  const getFilePreview = (file: any) => {
+    const fileName = file.file_name || file.document_file_name || "";
+    const ext = fileName.split(".").pop()?.toLowerCase();
+    const imageExts = ["jpg", "jpeg", "png", "gif", "bmp", "webp"];
+
+    if (imageExts.includes(ext || "")) {
+      return {
+        type: "image",
+        icon: "🖼️",
+      };
+    } else if (ext === "pdf") {
+      return {
+        type: "pdf",
+        icon: "📄",
+      };
+    } else if (["doc", "docx"].includes(ext || "")) {
+      return {
+        type: "document",
+        icon: "📝",
+      };
+    } else if (["xls", "xlsx"].includes(ext || "")) {
+      return {
+        type: "spreadsheet",
+        icon: "📊",
+      };
+    }
+    return {
+      type: "file",
+      icon: "📎",
+    };
+  };
+
+  const displayFiles = [...files, ...pendingFiles];
+
   return (
-    <div className="text-[14px] flex flex-col gap-4">
+    <div className="text-[14px] flex flex-col gap-4 mt-4">
       <button
         onClick={handleAttachFile}
-        className="bg-[#C72030] text-white px-4 py-2 rounded hover:bg-[#A01B29] transition w-fit"
+        className="bg-[#C72030] text-white px-4 py-2 rounded hover:bg-[#A01B29] transition w-fit disabled:opacity-50"
+        disabled={isSubmitting}
       >
-        Attach File
+        {isSubmitting ? "Uploading..." : "Attach File"} <span className="text-xs">(Max 10 MB)</span>
       </button>
       <input
         ref={fileInputRef}
@@ -249,30 +558,135 @@ const Attachments = ({ attachments, taskId }: { attachments?: any[]; taskId?: st
         multiple
         onChange={handleFileChange}
         className="hidden"
+        disabled={isSubmitting}
       />
 
-      {files && files.length > 0 ? (
-        <div className="space-y-2">
-          {files.map((file: any, idx: number) => (
-            <div key={idx} className="flex items-center justify-between bg-gray-50 p-3 rounded border border-gray-200">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">📎</span>
-                <div>
-                  <p className="font-medium text-sm">{file.file_name || "Unknown File"}</p>
-                  <p className="text-xs text-gray-500">{file.created_at ? formatToDDMMYYYY_AMPM(file.created_at) : ""}</p>
-                </div>
+      {displayFiles && displayFiles.length > 0 ? (
+        <div className="space-y-3">
+          {/* Image Preview Section */}
+          {displayFiles.some((f) => getFilePreview(f).type === "image") && (
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Image Attachments</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {displayFiles
+                  .filter((f) => getFilePreview(f).type === "image")
+                  .map((file: any) => (
+                    <div
+                      key={file.id}
+                      className={`relative group rounded-lg overflow-hidden border-2 border-gray-200 ${file.isPending ? "opacity-60" : ""
+                        }`}
+                    >
+                      <img
+                        src={file.document_url || file.file_url || ""}
+                        alt={file.file_name || file.document_file_name || ""}
+                        className="w-full h-24 object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f0f0f0' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%23999' font-size='14'%3ENo Preview%3C/text%3E%3C/svg%3E";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                        <a
+                          href={file.document_url || file.file_url || ""}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs transition"
+                          title="View"
+                        >
+                          👁️
+                        </a>
+                        {!file.isPending && (
+                          <button
+                            onClick={() =>
+                              handleRemoveFile(
+                                file.id,
+                                file.file_name || file.document_file_name || ""
+                              )
+                            }
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs transition disabled:opacity-50"
+                            disabled={isSubmitting}
+                            title="Delete"
+                          >
+                            🗑️
+                          </button>
+                        )}
+                        {file.isPending && (
+                          <span className="text-white text-xs font-semibold">Uploading...</span>
+                        )}
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1 truncate">
+                        {file.file_name || file.document_file_name || ""}
+                      </div>
+                    </div>
+                  ))}
               </div>
-              <button
-                onClick={() => handleRemoveFile(file.file_name || "")}
-                className="text-red-600 hover:text-red-800 transition"
-              >
-                <Trash2 size={16} />
-              </button>
             </div>
-          ))}
+          )}
+
+          {/* Other Files Section */}
+          {displayFiles.some((f) => getFilePreview(f).type !== "image") && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                {displayFiles.some((f) => getFilePreview(f).type === "image") ? "Other Attachments" : "Attachments"}
+              </h4>
+              <div className="space-y-2">
+                {displayFiles
+                  .filter((f) => getFilePreview(f).type !== "image")
+                  .map((file: any) => {
+                    const preview = getFilePreview(file);
+                    return (
+                      <div
+                        key={file.id}
+                        className={`flex items-center justify-between bg-gray-50 p-3 rounded border border-gray-200 ${file.isPending ? "opacity-60" : ""
+                          }`}
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <span className="text-2xl flex-shrink-0">{preview.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <a
+                              href={file.document_url || file.file_url || ""}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-sm text-blue-600 hover:underline truncate block"
+                              title={file.file_name || file.document_file_name || ""}
+                            >
+                              {file.file_name || file.document_file_name || "Unknown File"}
+                            </a>
+                            <p className="text-xs text-gray-500">
+                              {file.created_at
+                                ? formatToDDMMYYYY_AMPM(file.created_at)
+                                : "Just now"}
+                              {file.isPending && " • Uploading..."}
+                            </p>
+                          </div>
+                        </div>
+                        {!file.isPending && (
+                          <button
+                            onClick={() =>
+                              handleRemoveFile(
+                                file.id,
+                                file.file_name || file.document_file_name || ""
+                              )
+                            }
+                            className="text-red-600 hover:text-red-800 transition flex-shrink-0 ml-2 disabled:opacity-50"
+                            disabled={isSubmitting}
+                            title="Delete file"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
-        <div className="text-center py-8 text-gray-500">No attachments available</div>
+        <div className="text-center py-8 text-gray-500">
+          <p className="mb-2">No attachments available</p>
+          <p className="text-xs">Drop or attach relevant documents here</p>
+        </div>
       )}
     </div>
   );
@@ -363,7 +777,7 @@ interface TaskDetails {
   title?: string;
   description?: string;
   created_by?: string;
-  created_on?: string;
+  created_at?: string;
   status?: string;
   responsible_person_name?: string;
   priority?: string;
@@ -372,7 +786,9 @@ interface TaskDetails {
   allocation_date?: string;
   estimated_hour?: number;
   project_title?: string;
-  milestone_title?: string;
+  milestone?: {
+    title?: string;
+  };
   observers?: Array<{ user_name: string }>;
   task_tags?: Array<{ company_tag?: { name: string }; name?: string }>;
   workflow_status?: string;
@@ -607,7 +1023,7 @@ export const ProjectTaskDetails = () => {
             <span>Created By: {typeof taskDetails?.created_by === 'string' ? taskDetails.created_by : (taskDetails?.created_by as any)?.name}</span>
             <span className="h-6 w-[1px] border border-gray-300"></span>
             <span className="flex items-center gap-3">
-              Created On: {formatToDDMMYYYY_AMPM(taskDetails.created_on || "")}
+              Created On: {formatToDDMMYYYY_AMPM(taskDetails.created_at || "")}
             </span>
             <span className="h-6 w-[1px] border border-gray-300"></span>
             <span className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] || "bg-gray-400 text-white"}`}>
@@ -772,10 +1188,10 @@ export const ProjectTaskDetails = () => {
 
               <div className="flex items-start">
                 <div className="min-w-[200px]">
-                  <p className="text-sm font-medium text-gray-600">MileStones:</p>
+                  <p className="text-sm font-medium text-gray-600">Milestone:</p>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-900">{taskDetails.milestone_title || "-"}</p>
+                  <p className="text-sm text-gray-900">{taskDetails?.milestone?.title || "-"}</p>
                 </div>
               </div>
 

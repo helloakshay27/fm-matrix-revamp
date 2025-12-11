@@ -4,14 +4,22 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
 import { createProjectTask, fetchProjectTasks, filterTasks } from "@/store/slices/projectTasksSlice";
 import { ChartNoAxesColumn, ChevronDown, Edit, Eye, List, Plus, X } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { MenuItem, Select, TextField } from "@mui/material";
+import { useEffect, useState, useRef, forwardRef } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { Dialog, DialogContent, MenuItem, Select, Slide, TextField, Switch } from "@mui/material";
 import { toast } from "sonner";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
 import TaskManagementKanban from "@/components/TaskManagementKanban";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { TransitionProps } from "@mui/material/transitions";
+
+const Transition = forwardRef(function Transition(
+    props: TransitionProps & { children: React.ReactElement },
+    ref: React.Ref<unknown>
+) {
+    return <Slide direction="left" ref={ref} {...props} />;
+});
 
 const columns: ColumnConfig[] = [
     {
@@ -185,6 +193,7 @@ const validateDateRange = (startDate: string, endDate: string): { valid: boolean
 const ProjectTasksPage = () => {
     const { id, mid } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useAppDispatch();
 
     const baseUrl = localStorage.getItem("baseUrl");
@@ -197,6 +206,10 @@ const ProjectTasksPage = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [openStatusOptions, setOpenStatusOptions] = useState(false)
     const [selectedFilterOption, setSelectedFilterOption] = useState("all")
+    const [isMyTasks, setIsMyTasks] = useState(() => {
+        return localStorage.getItem('myTasks') === 'true'
+    });
+    const [taskType, setTaskType] = useState<"all" | "my">("all");
     const [pagination, setPagination] = useState({
         current_page: 1,
         next_page: null as number | null,
@@ -209,20 +222,57 @@ const ProjectTasksPage = () => {
     const fetchData = async (page: number = 1) => {
         try {
             setLoading(true);
-            let filters = { page };
+
+            // Determine if we're in milestone context or standalone tasks
+            const isMilestoneContext = mid !== undefined && mid !== null;
+
+            let filters: any = { page };
+
             if (selectedFilterOption !== "all") {
                 filters["q[status_eq]"] = selectedFilterOption;
             }
-            const response = await dispatch(
-                filterTasks({ token, baseUrl, params: filters })
-            ).unwrap();
-            setTasks(response.task_managements)
+
+            let response;
+
+            // Handle URL-based context
+            if (isMilestoneContext) {
+                // In milestone context - show all tasks for that milestone
+                filters["q[milestone_id_eq]"] = mid;
+                response = await dispatch(
+                    filterTasks({ token, baseUrl, params: filters })
+                ).unwrap();
+            } else {
+                // Standalone tasks view - distinguish between all tasks and my tasks
+                if (taskType === "my") {
+                    // My Tasks - use dedicated endpoint with page param
+                    const params = new URLSearchParams();
+                    params.append("page", page.toString());
+                    if (selectedFilterOption !== "all") {
+                        params.append("status", selectedFilterOption);
+                    }
+                    response = await fetch(
+                        `https://${baseUrl}/task_managements/my_tasks.json?${params.toString()}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    ).then(res => res.json());
+                } else {
+                    // All Tasks - use filter endpoint
+                    response = await dispatch(
+                        filterTasks({ token, baseUrl, params: filters })
+                    ).unwrap();
+                }
+            }
+
+            setTasks(response.task_managements || response.data?.task_managements || []);
             setPagination({
-                current_page: response.pagination?.current_page || 1,
-                next_page: response.pagination?.next_page || null,
-                prev_page: response.pagination?.prev_page || null,
-                total_pages: response.pagination?.total_pages || 1,
-                total_count: response.pagination?.total_count || 0,
+                current_page: response.pagination?.current_page || response.data?.pagination?.current_page || 1,
+                next_page: response.pagination?.next_page || response.data?.pagination?.next_page || null,
+                prev_page: response.pagination?.prev_page || response.data?.pagination?.prev_page || null,
+                total_pages: response.pagination?.total_pages || response.data?.pagination?.total_pages || 1,
+                total_count: response.pagination?.total_count || response.data?.pagination?.total_count || 0,
             });
         } catch (error) {
             console.log(error);
@@ -243,7 +293,7 @@ const ProjectTasksPage = () => {
 
     useEffect(() => {
         fetchData(1);
-    }, [selectedFilterOption]);
+    }, [selectedFilterOption, taskType, mid]);
 
     useEffect(() => {
         getUsers();
@@ -446,14 +496,14 @@ const ProjectTasksPage = () => {
             >
                 <Eye className="w-4 h-4" />
             </Button>
-            <Button
+            {/* <Button
                 size="sm"
                 variant="ghost"
                 className="p-1"
                 title="Edit Task"
             >
                 <Edit className="w-4 h-4" />
-            </Button>
+            </Button> */}
         </div>
     );
 
@@ -637,7 +687,28 @@ const ProjectTasksPage = () => {
     );
 
     const rightActions = (
-        <div className="flex items-center">
+        <div className="flex items-center gap-1">
+            {/* Task Type Toggle - Only show when NOT in milestone context */}
+            {!mid && (
+                <div className="flex items-center px-4 py-2">
+                    <span className="text-gray-700 font-medium text-sm">All task</span>
+                    <Switch
+                        checked={taskType === "my"}
+                        onChange={() => setTaskType(taskType === "all" ? "my" : "all")}
+                        sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#C72030',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#C72030',
+                            },
+                        }}
+                    />
+                    <span className="text-gray-700 font-medium text-sm">My Task</span>
+                </div>
+            )}
+
+            {/* View Type Selector */}
             <div className="relative">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
@@ -686,6 +757,8 @@ const ProjectTasksPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Status Filter */}
             <div className="relative">
                 <button
                     onClick={() => setOpenStatusOptions(!openStatusOptions)}
@@ -732,7 +805,27 @@ const ProjectTasksPage = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         Add
                     </Button>
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-2">
+                        {/* Task Type Toggle - Only show when NOT in milestone context */}
+                        {!mid && (
+                            <div className="flex items-center gap-2 px-4 py-2">
+                                <span className="text-gray-700 font-medium text-sm">All task</span>
+                                <Switch
+                                    checked={taskType === "my"}
+                                    onChange={() => setTaskType(taskType === "all" ? "my" : "all")}
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#C72030',
+                                        },
+                                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                            backgroundColor: '#C72030',
+                                        },
+                                    }}
+                                />
+                                <span className="text-gray-700 font-medium text-sm">My Task</span>
+                            </div>
+                        )}
+
                         <div className="relative">
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
@@ -838,6 +931,41 @@ const ProjectTasksPage = () => {
                 renderEditableCell={renderEditableCell}
                 newRowPlaceholder="Click to add new task"
             />
+
+            <Dialog
+                open={openTaskModal}
+                onClose={handleCloseModal}
+                TransitionComponent={Transition}
+                maxWidth={false}
+            >
+                <DialogContent
+                    className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                    style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+                    sx={{
+                        padding: "0 !important",
+                        "& .MuiDialogContent-root": {
+                            padding: "0 !important",
+                            overflow: "auto",
+                        }
+                    }}
+                >
+                    <div className="sticky top-0 bg-white z-10">
+                        <h3 className="text-[14px] font-medium text-center mt-8">Add Project Task</h3>
+                        <X
+                            className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
+                            onClick={handleCloseModal}
+                        />
+                        <hr className="border border-[#E95420] mt-4" />
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto">
+                        <ProjectTaskCreateModal
+                            isEdit={false}
+                            onCloseModal={handleCloseModal}
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {pagination.total_pages > 1 && (
                 <div className="flex justify-center mt-6">
