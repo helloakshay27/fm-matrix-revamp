@@ -133,6 +133,11 @@ export const modulesByPackage = {
       href: "/master/material-ebom",
     },
     {
+      name: "Finance Master",
+      icon: Wallet,
+      href: "/master/finance",
+    },
+    {
       name: "Gate Number",
       icon: DoorOpen,
       href: "/master/gate-number",
@@ -356,17 +361,6 @@ export const modulesByPackage = {
       icon: UserRoundPen,
       href: "/maintenance/vendor",
     },
-
-    // {
-    //   name: 'Projects & Tasks',
-    //   icon: Briefcase,
-    //   href: "/maintenance/projects"
-    // },
-    // {
-    //   name: 'Sprint',
-    //   icon: Briefcase,
-    //   href: "/maintenance/sprint"
-    // }
 
     // {
     //   name: "Msafe Report",
@@ -628,7 +622,23 @@ export const modulesByPackage = {
         },
       ],
     },
-    { name: "Patrolling", icon: Shield, href: "/security/patrolling" },
+    {
+      name: "Patrolling",
+      icon: Shield,
+      href: "/security/patrolling",
+      subItems: [
+        {
+          name: "Patrolling Info",
+          href: "/security/patrolling",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Response",
+          href: "/security/patrolling/response",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
   ],
   "Value Added Services": [
     { name: "F&B", icon: Coffee, href: "/vas/fnb" },
@@ -758,6 +768,32 @@ export const modulesByPackage = {
           name: "Tasks",
           href: "/vas/channels/tasks",
           color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
+      name: "Projects & Tasks",
+      icon: Briefcase,
+      subItems: [
+        {
+          name: "Projects",
+          href: "/vas/projects",
+        },
+        {
+          name: "Tasks",
+          href: "/vas/tasks",
+        },
+        {
+          name: "Issues",
+          href: "/vas/issues",
+        },
+        // {
+        //   name: 'Sprint',
+        //   href: "/vas/sprint"
+        // },
+        {
+          name: "Opportunity Register",
+          href: "/vas/opportunity",
         },
       ],
     },
