@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -21,6 +21,8 @@ import { PrimeSupportSidebar } from "./PrimeSupportSidebar";
 import { PrimeSupportDynamicHeader } from "./PrimeSupportDynamicHeader";
 import { EmployeeSidebar } from "./EmployeeSidebar";
 import { EmployeeDynamicHeader } from "./EmployeeDynamicHeader";
+import { EmployeeHeader } from "./EmployeeHeader";
+import { ViewSelectionModal } from "./ViewSelectionModal";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -29,19 +31,50 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { isSidebarCollapsed, getLayoutByCompanyId } = useLayout();
   const { selectedCompany } = useSelector((state: RootState) => state.project);
+  const { selectedSite } = useSelector((state: RootState) => state.site);
   const location = useLocation();
 
-  // Get current user to check user_type
-
+  /**
+   * EMPLOYEE VIEW DETECTION
+   * 
+   * Determine if user is in Employee View based on:
+   * 1. Route pattern: /employee/* routes trigger employee layout
+   * 2. localStorage fallback: userType === "pms_occupant"
+   * 
+   * Employee routes: /employee/portal, /employee/dashboard, etc.
+   * Admin routes: /admin/*, / (root), and all other routes
+   */
+  const isEmployeeRoute = location.pathname.startsWith('/employee');
   const userType = localStorage.getItem("userType");
-  const isEmployeeUser = userType === "pms_occupantss";
-  // Handle token-based authentication from URL parameters
+  const isEmployeeUser = isEmployeeRoute || userType === "pms_occupant";
 
-  // Get current domain for backward compatibility
+  // Check if user needs to select a view (Admin or Employee)
+  const [showViewModal, setShowViewModal] = useState(false);
+
+  useEffect(() => {
+    // Check if user has already selected a view
+    const selectedView = localStorage.getItem("selectedView");
+    const storedUserType = localStorage.getItem("userType");
+
+    // If no view is selected, show the view selection modal
+    if (!selectedView || !storedUserType) {
+      setShowViewModal(true);
+    } else {
+      setShowViewModal(false);
+    }
+  }, []);
+
+  // Check if non-employee user needs to select project/site
   const hostname = window.location.hostname;
+  const isViSite = hostname.includes("vi-web.gophygital.work") || hostname.includes("localhost:5174");
+
+  // Removed project selection modal logic - now handled by view selection
+
+  // Handle token-based authentication from URL parameters
+  // Get current domain for backward compatibility
   const isOmanSite = hostname.includes("oig.gophygital.work");
-  const isViSite =
-    hostname.includes("vi-web.gophygital.work") ||
+
+  const isLockatedSite = hostname.includes("lockated.gophygital.work") ||
     hostname.includes("localhost:5174");
 
   // Get layout configuration based on company ID
@@ -50,6 +83,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       ? selectedCompany.id
       : null
   );
+
+    const isLocalhost = hostname.includes('localhost') || hostname.includes('lockated.gophygital.work');
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -60,7 +95,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Render sidebar component based on configuration
   const renderSidebar = () => {
     // Check if user is employee (pms_occupant) - Employee layout takes priority
-    if (isEmployeeUser) {
+    if (isEmployeeUser && isLocalhost) {
       return <EmployeeSidebar />;
     }
 
@@ -98,8 +133,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
-      selectedCompany?.id === 298 ||
-      selectedCompany?.id === 301
+      selectedCompany?.id === 298
     ) {
       return <Sidebar />;
     }
@@ -121,8 +155,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Render header component based on configuration
   const renderDynamicHeader = () => {
     // Check if user is employee (pms_occupant) - Employee layout takes priority
-    if (isEmployeeUser) {
-      return <EmployeeDynamicHeader />;
+    // Employees don't need dynamic header, they use EmployeeHeader instead
+    if (isEmployeeUser && isLocalhost) {
+      return null; // No dynamic header for employees
     }
 
     // Domain-based logic takes precedence for backward compatibility
@@ -145,8 +180,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
-      selectedCompany?.id === 298 ||
-      selectedCompany?.id === 301
+      selectedCompany?.id === 298
     ) {
       return <DynamicHeader />;
     }
@@ -228,14 +262,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         allowedDomains={["vi-web.gophygital.work"]}
       />
 
-      <Header />
+      {/* View Selection Modal - Choose Admin or Employee View */}
+
+      <ViewSelectionModal
+        isOpen={!isEmployeeUser && isLocalhost ? showViewModal : false}
+        onComplete={() => setShowViewModal(false)}
+      />
+
+      {/* Conditional Header - Use EmployeeHeader for employee users */}
+      {isEmployeeUser ? <EmployeeHeader /> : <Header />}
+
       {renderSidebar()}
       {renderDynamicHeader()}
 
       <main
-        className={`${
-          isSidebarCollapsed ? "ml-16" : "ml-64"
-        } pt-28 transition-all duration-300`}
+        className={`${isSidebarCollapsed ? "ml-16" : "ml-64"
+          } ${isEmployeeUser ? "pt-16" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>
