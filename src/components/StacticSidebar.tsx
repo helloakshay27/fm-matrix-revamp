@@ -1014,28 +1014,30 @@ const modulesByPackage = {
     {
       name: 'Projects & Tasks',
       icon: Briefcase,
-      href: "/vas/projects"
+      subItems: [
+        {
+          name: 'Projects',
+          href: "/vas/projects"
+        },
+        {
+          name: 'Tasks',
+          href: "/vas/tasks"
+        },
+        {
+          name: 'Issues',
+          href: "/vas/issues"
+        },
+        // {
+        //   name: 'Sprint',
+        //   href: "/vas/sprint"
+        // },
+        {
+          name: 'Opportunity Register',
+          href: "/vas/opportunity"
+        },
+      ]
     },
-    {
-      name: 'Tasks',
-      icon: Briefcase,
-      href: "/vas/tasks"
-    },
-    {
-      name: 'Issues',
-      icon: Briefcase,
-      href: "/vas/issues"
-    },
-    // {
-    //   name: 'Sprint',
-    //   icon: Briefcase,
-    //   href: "/vas/sprint"
-    // },
-    {
-      name: 'Opportunity Register',
-      icon: Briefcase,
-      href: "/vas/opportunity"
-    },
+
   ],
   "Market Place": [
     {
