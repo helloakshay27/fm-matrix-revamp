@@ -1011,16 +1011,16 @@ const modulesByPackage = {
         },
       ]
     },
-    // {
-    //   name: 'Projects & Tasks',
-    //   icon: Briefcase,
-    //   href: "/vas/projects"
-    // },
-    // {
-    //   name: 'Sprint',
-    //   icon: Briefcase,
-    //   href: "/vas/sprint"
-    // }
+    {
+      name: 'Projects & Tasks',
+      icon: Briefcase,
+      href: "/vas/projects"
+    },
+    {
+      name: 'Sprint',
+      icon: Briefcase,
+      href: "/vas/sprint"
+    }
   ],
   "Market Place": [
     {

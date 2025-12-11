@@ -87,11 +87,13 @@ export const fetchProjectTasksById = createAsyncThunk('fetchProjectTasksById', a
 export const filterTasks = createAsyncThunk(
     "filterTasks",
     async ({ token, baseUrl, params }: { token: string, baseUrl: string, params: any }, { rejectWithValue }) => {
+        console.log(params)
         try {
-            const response = await axios.get(`https://${baseUrl}/task_managements.json?${params}`, {
+            const response = await axios.get(`https://${baseUrl}/task_managements.json`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
-                }
+                },
+                params
             })
             return response.data
         } catch (error) {
