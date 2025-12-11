@@ -1200,7 +1200,7 @@ export const sidebarToApiFunctionMapping = {
   opportunity: ["opportunity"],
   crm: ["customers"],
   customers: ["customers"],
-  "fm users": ["user & roles", "pms_user_roles"],
+
   events: ["events", "pms_events"],
   groups: ["groups"],
   polls: ["polls"],
@@ -1434,6 +1434,7 @@ export const sidebarToApiFunctionMapping = {
   pms_gvehicles: ["pms_gvehicles", "g vehicles"],
   pms_patrolling: ["pms_patrolling", "patrolling"],
   pms_occupant_users: ["pms_occupant_users", "occupant users"],
+  "fm users": ["fm user", "user_master_fm_user"],
   pms_msafe: ["pms_msafe", "msafe", "m-safe", "m safe"],
   pms_safety: ["pms_safety", "safety"],
   pms_incidents: ["pms_incidents", "incident"],
