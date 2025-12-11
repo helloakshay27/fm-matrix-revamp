@@ -241,6 +241,7 @@ export const AddFacilityBookingPage = () => {
 
   // Effect to fetch slots when facility and date are selected (user is optional)
   useEffect(() => {
+   
     if (selectedFacility && selectedDate) {
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
       fetchSlots(facilityId, selectedDate, selectedUser || undefined);
@@ -258,7 +259,8 @@ export const AddFacilityBookingPage = () => {
     console.log('selectedFacility:', selectedFacility, '| Is truthy?', !!selectedFacility);
     console.log('All conditions met?', userType === 'occupant' && !!selectedUser && !!selectedFacility);
     console.log('========================');
-    
+     const token= localStorage.getItem('token') 
+     console.log('Token for Amenity API:', token);
     if (userType === 'occupant' && selectedUser && selectedFacility) {
       const fetchAmenityBooking = async () => {
         try {
@@ -275,6 +277,7 @@ export const AddFacilityBookingPage = () => {
               facility_setup_id: facilityId
             },
             headers: {
+              'Authorization': `Bearer ${token}`,
               'Accept': 'application/json, text/plain, */*',
               'Content-Type': 'application/json'
             }
