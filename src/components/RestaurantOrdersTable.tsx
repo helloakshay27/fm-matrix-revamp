@@ -146,13 +146,23 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
       if (needPadding) {
         try {
           const response = await dispatch(fetchRestaurants({ baseUrl, token })).unwrap();
-          setRestoId(response[0]?.id);
+          if (response && response.length > 0) {
+            setRestoId(response[0]?.id);
+          } else {
+            setRestoId(undefined);
+            setLoading(false);
+          }
         } catch (error) {
           console.error('Error fetching restaurants:', error);
           toast.error('Failed to fetch restaurants');
+          setLoading(false);
         }
       } else {
-        setRestoId(id ? Number(id) : undefined);
+        const newRestoId = id ? Number(id) : undefined;
+        setRestoId(newRestoId);
+        if (!newRestoId) {
+          setLoading(false);
+        }
       }
     };
 
