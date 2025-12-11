@@ -487,7 +487,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                       {/* Department */}
                       <div className="flex items-start">
                         <span className="w-28 text-gray-500 text-sm">
-                          Department
+                          Department/User
                         </span>
                         <span className="mx-2 text-gray-500">:</span>
                         <span className="font-semibold text-black">
