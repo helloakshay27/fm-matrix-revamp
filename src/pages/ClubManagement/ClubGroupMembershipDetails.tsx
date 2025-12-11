@@ -84,6 +84,53 @@ interface GroupMembershipDetail {
   club_members: ClubMember[];
 }
 
+// Update MembershipPlan interface
+interface MembershipPlan {
+  id: number;
+  name: string;
+  advance_booking_in_days: number | null;
+  usage_limits: string;
+  price?: string;
+  renewal_terms?: string;
+  user_limit?: number;
+}
+
+const QUESTION_MAP: { [key: string]: string } = {
+  '1': 'Do you have any existing injuries or medical conditions?',
+  '2': 'Do you have any physical restrictions or movement limitations?',
+  '3': 'Are you currently under medication?',
+  '4': 'Have you practiced Pilates before?',
+  '5': 'Primary Fitness Goals',
+  '6': 'Which sessions are you interested in?',
+  '7': 'How did you first hear about The Recess Club?',
+  '8': 'What motivates you to join a wellness club?',
+  '9': 'What type of updates would you like to receive?',
+  '10': 'Preferred Communication Channel',
+  '11': 'Profession / Industry',
+  '12': 'Company Name',
+  '13': 'Are you interested in corporate/group plans for your workplace?'
+};
+
+// Add section categorization
+const QUESTION_SECTIONS: { [key: string]: { title: string; questionIds: string[] } } = {
+  'health': {
+    title: 'Health & Wellness Information',
+    questionIds: ['1', '2', '3']
+  },
+  'activity': {
+    title: 'Activity Interests',
+    questionIds: ['4', '5', '6']
+  },
+  'lifestyle': {
+    title: 'Lifestyle & Communication Insights',
+    questionIds: ['7', '8', '9', '10']
+  },
+  'occupation': {
+    title: 'Occupation & Demographics',
+    questionIds: ['11', '12', '13']
+  }
+};
+
 export const ClubGroupMembershipDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -93,13 +140,60 @@ export const ClubGroupMembershipDetails = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedMemberIndex, setSelectedMemberIndex] = useState(0);
-
-  console.log(membershipData)
+  const [membershipPlanName, setMembershipPlanName] = useState<string>('');
+  const [membershipPlanUserLimit, setMembershipPlanUserLimit] = useState<number | null>(null);
+  const [loadingPlanName, setLoadingPlanName] = useState(false);
 
   // Fetch membership details
   useEffect(() => {
     fetchMembershipDetails();
   }, [id]);
+
+  // Fetch membership plan name when membership data is loaded
+  useEffect(() => {
+    if (membershipData?.membership_plan_id) {
+      fetchMembershipPlanName(membershipData.membership_plan_id);
+    }
+  }, [membershipData?.membership_plan_id]);
+
+  const fetchMembershipPlanName = async (planId: number) => {
+    setLoadingPlanName(true);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+
+      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/membership_plans.json`);
+      url.searchParams.append('access_token', token || '');
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch membership plans');
+      }
+
+      const data = await response.json();
+      const plan = data.plans?.find((p: MembershipPlan) => p.id === planId);
+      
+      if (plan) {
+        setMembershipPlanName(plan.name);
+        setMembershipPlanUserLimit(plan.user_limit || null);
+      } else {
+        setMembershipPlanName(`Plan #${planId}`);
+        setMembershipPlanUserLimit(null);
+      }
+    } catch (error) {
+      console.error('Error fetching membership plan name:', error);
+      setMembershipPlanName(`Plan #${planId}`);
+      setMembershipPlanUserLimit(null);
+    } finally {
+      setLoadingPlanName(false);
+    }
+  };
 
   const fetchMembershipDetails = async () => {
     setLoading(true);
@@ -193,6 +287,67 @@ export const ClubGroupMembershipDetails = () => {
       return `https://fm-uat-api.lockated.com${decodeURIComponent(avatar)}`;
     }
     return avatar;
+  };
+
+  // Helper function to parse answers from snag_answers format
+  const parseAnswers = (snagAnswers: any[]) => {
+    if (!snagAnswers || snagAnswers.length === 0) return null;
+
+    const groupedAnswers: { [key: string]: Array<{ answer: string; comments?: string }> } = {};
+
+    snagAnswers.forEach((item) => {
+      const questionId = String(item.question_id);
+      if (!groupedAnswers[questionId]) {
+        groupedAnswers[questionId] = [];
+      }
+      groupedAnswers[questionId].push({
+        answer: item.ans_descr || '',
+        comments: item.comments || ''
+      });
+    });
+
+    return groupedAnswers;
+  };
+
+  // Helper function to render answer value
+  const renderAnswerValue = (questionId: string, answers: Array<{ answer: string; comments?: string }>) => {
+    if (!answers || answers.length === 0) return '-';
+
+    // For questions with comments (like question 1)
+    if (questionId === '1' && answers.length > 0) {
+      const hasYes = answers.some(a => a.answer?.toLowerCase() === 'yes');
+      const comments = answers.find(a => a.comments)?.comments;
+      return (
+        <div>
+          <span className="text-gray-900 font-medium">{hasYes ? 'Yes' : 'No'}</span>
+          {comments && (
+            <p className="text-sm text-gray-600 mt-1 italic">Comments: {comments}</p>
+          )}
+        </div>
+      );
+    }
+
+    // For multiple choice questions
+    if (answers.length > 1) {
+      return (
+        <div className="flex flex-wrap gap-2">
+          {answers.map((ans, idx) => (
+            <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              {ans.answer}
+              {ans.comments && <span className="ml-1 text-gray-600">({ans.comments})</span>}
+            </span>
+          ))}
+        </div>
+      );
+    }
+
+    // For single answer questions
+    return (
+      <span className="text-gray-900 font-medium">
+        {answers[0].answer}
+        {answers[0].comments && <span className="text-sm text-gray-600 ml-2">({answers[0].comments})</span>}
+      </span>
+    );
   };
 
   if (loading) {
@@ -296,10 +451,28 @@ export const ClubGroupMembershipDetails = () => {
                 <span className="text-gray-900 font-medium">{membershipData.id}</span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Membership Plan ID</span>
+                <span className="text-gray-500 min-w-[140px]">Membership Plan</span>
                 <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">{membershipData.membership_plan_id}</span>
+                <span className="text-gray-900 font-medium">
+                  {loadingPlanName ? (
+                    <span className="inline-flex items-center gap-2">
+                      <span className="animate-spin rounded-full h-3 w-3 border-b border-gray-600"></span>
+                      Loading...
+                    </span>
+                  ) : (
+                    membershipPlanName || `Plan #${membershipData.membership_plan_id}`
+                  )}
+                </span>
               </div>
+              {membershipPlanUserLimit && (
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Plan Member Limit</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {membershipPlanUserLimit} {membershipPlanUserLimit === 1 ? 'Member' : 'Members'}
+                  </span>
+                </div>
+              )}
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Site ID</span>
                 <span className="text-gray-500 mx-2">:</span>
@@ -308,7 +481,10 @@ export const ClubGroupMembershipDetails = () => {
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Total Members</span>
                 <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">{membershipData.club_members?.length || 0}</span>
+                <span className="text-gray-900 font-medium">
+                  {membershipData.club_members?.length || 0}
+                  {membershipPlanUserLimit && ` / ${membershipPlanUserLimit}`}
+                </span>
               </div>
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Start Date</span>
@@ -365,7 +541,7 @@ export const ClubGroupMembershipDetails = () => {
                       <Badge variant={member.club_member_enabled ? "default" : "secondary"}>
                         {member.club_member_enabled ? 'Active' : 'Inactive'}
                       </Badge>
-                      <Button
+                      {/* <Button
                         size="sm"
                         variant="outline"
                         onClick={() => {
@@ -374,7 +550,7 @@ export const ClubGroupMembershipDetails = () => {
                         }}
                       >
                         View Details
-                      </Button>
+                      </Button> */}
                     </div>
                   </div>
                 </div>
@@ -401,179 +577,264 @@ export const ClubGroupMembershipDetails = () => {
                   </select>
                 </div>
 
-                {/* Personal Information */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
-                    <User className="w-5 h-5 text-[#C72030]" />
-                    Personal Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Full Name</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedMember.user_name}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Email</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedMember.user_email}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Mobile</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedMember.user_mobile}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Gender</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedMember.user?.gender || '-'}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Date of Birth</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{formatDate(selectedMember.user?.birth_date)}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Face Added</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <Badge variant={selectedMember.face_added ? "default" : "secondary"}>
-                        {selectedMember.face_added ? 'Yes' : 'No'}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+                {/* Nested Tabs for Member Details */}
+                <Tabs defaultValue="personal" className="w-full">
+                  <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-lg h-auto p-0 text-xs justify-stretch mb-6">
+                    <TabsTrigger
+                      value="personal"
+                      className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-2 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                    >
+                      Personal Info
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="membership"
+                      className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-2 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                    >
+                      Membership
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="address"
+                      className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-2 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                    >
+                      Address
+                    </TabsTrigger>
+                    {selectedMember.snag_answers && selectedMember.snag_answers.length > 0 && (
+                      <TabsTrigger
+                        value="questionnaires"
+                        className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-2 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                      >
+                        Questionnaires
+                      </TabsTrigger>
+                    )}
+                    <TabsTrigger
+                      value="system"
+                      className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-2 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                    >
+                      System Info
+                    </TabsTrigger>
+                  </TabsList>
 
-                {/* Membership Details */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
-                    <CreditCard className="w-5 h-5 text-[#C72030]" />
-                    Membership Details
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Membership Number</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedMember.membership_number}</span>
+                  {/* Personal Information Tab */}
+                  <TabsContent value="personal" className="mt-0">
+                    <h3 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+                      <User className="w-5 h-5 text-[#C72030]" />
+                      Personal Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Full Name</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.user_name}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Email</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.user_email}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Mobile</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.user_mobile}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Gender</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.user?.gender || '-'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Date of Birth</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{formatDate(selectedMember.user?.birth_date)}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Face Added</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <Badge variant={selectedMember.face_added ? "default" : "secondary"}>
+                          {selectedMember.face_added ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Club Member</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <Badge variant={selectedMember.club_member_enabled ? "default" : "secondary"}>
-                        {selectedMember.club_member_enabled ? 'Enabled' : 'Disabled'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Access Card</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <Badge variant={selectedMember.access_card_enabled ? "default" : "secondary"}>
-                        {selectedMember.access_card_enabled ? 'Enabled' : 'Disabled'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Access Card ID</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedMember.access_card_id || '-'}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Emergency Contact</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedMember.emergency_contact_name || '-'}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Referred By</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedMember.referred_by || '-'}</span>
-                    </div>
-                  </div>
-                </div>
+                  </TabsContent>
 
-                {/* Address Information */}
-                {selectedMember.user?.addresses && selectedMember.user.addresses.length > 0 && (
-                  <div className="mb-6">
+                  {/* Membership Details Tab */}
+                  <TabsContent value="membership" className="mt-0">
+                    <h3 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+                      <CreditCard className="w-5 h-5 text-[#C72030]" />
+                      Membership Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Membership Number</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.membership_number}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Club Member</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <Badge variant={selectedMember.club_member_enabled ? "default" : "secondary"}>
+                          {selectedMember.club_member_enabled ? 'Enabled' : 'Disabled'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Access Card</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <Badge variant={selectedMember.access_card_enabled ? "default" : "secondary"}>
+                          {selectedMember.access_card_enabled ? 'Enabled' : 'Disabled'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Access Card ID</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.access_card_id || '-'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Emergency Contact</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.emergency_contact_name || '-'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Referred By</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.referred_by || '-'}</span>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  {/* Address Information Tab */}
+                  <TabsContent value="address" className="mt-0">
                     <h3 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
                       <Building2 className="w-5 h-5 text-[#C72030]" />
                       Address Information
                     </h3>
-                    {selectedMember.user.addresses.map((addr, index) => (
-                      <div key={addr.id} className={`${index > 0 ? 'mt-6 pt-6 border-t border-gray-200' : ''}`}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                          <div className="flex items-start">
-                            <span className="text-gray-500 min-w-[140px]">Address</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="text-gray-900 font-medium">{addr.address || '-'}</span>
-                          </div>
-                          <div className="flex items-start">
-                            <span className="text-gray-500 min-w-[140px]">Address Line 2</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="text-gray-900 font-medium">{addr.address_line_two || '-'}</span>
-                          </div>
-                          <div className="flex items-start">
-                            <span className="text-gray-500 min-w-[140px]">City</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="text-gray-900 font-medium">{addr.city || '-'}</span>
-                          </div>
-                          <div className="flex items-start">
-                            <span className="text-gray-500 min-w-[140px]">State</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="text-gray-900 font-medium">{addr.state || '-'}</span>
-                          </div>
-                          <div className="flex items-start">
-                            <span className="text-gray-500 min-w-[140px]">Country</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="text-gray-900 font-medium">{addr.country || '-'}</span>
-                          </div>
-                          <div className="flex items-start">
-                            <span className="text-gray-500 min-w-[140px]">PIN Code</span>
-                            <span className="text-gray-500 mx-2">:</span>
-                            <span className="text-gray-900 font-medium">{addr.pin_code || '-'}</span>
+                    {selectedMember.user?.addresses && selectedMember.user.addresses.length > 0 ? (
+                      selectedMember.user.addresses.map((addr, index) => (
+                        <div key={addr.id} className={`${index > 0 ? 'mt-6 pt-6 border-t border-gray-200' : ''}`}>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Address</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{addr.address || '-'}</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Address Line 2</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{addr.address_line_two || '-'}</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">City</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{addr.city || '-'}</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">State</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{addr.state || '-'}</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Country</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{addr.country || '-'}</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">PIN Code</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{addr.pin_code || '-'}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-center py-8">No address information available</p>
+                    )}
+                  </TabsContent>
 
-                {/* System Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-[#C72030]" />
-                    System Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Member ID</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedMember.id}</span>
+                  {/* Questionnaires Tab */}
+                  {selectedMember.snag_answers && selectedMember.snag_answers.length > 0 && (
+                    <TabsContent value="questionnaires" className="mt-0">
+                      <h3 className="text-lg font-semibold text-[#1a1a1a] mb-6 flex items-center gap-3">
+                        <FileText className="w-5 h-5 text-[#C72030]" />
+                        Member Questionnaires
+                      </h3>
+                      <div className="space-y-8">
+                        {(() => {
+                          const parsedAnswers = parseAnswers(selectedMember.snag_answers);
+                          if (!parsedAnswers) return null;
+
+                          return Object.entries(QUESTION_SECTIONS).map(([sectionKey, section]) => {
+                            // Filter questions that exist in answers
+                            const sectionQuestions = section.questionIds.filter(qId => parsedAnswers[qId]);
+                            
+                            if (sectionQuestions.length === 0) return null;
+
+                            return (
+                              <div key={sectionKey} className="border border-gray-200 rounded-lg p-6 bg-white">
+                                <h4 className="text-md font-semibold text-[#C72030] mb-4 pb-3 border-b border-gray-200 flex items-center gap-2">
+                                  {section.title}
+                                </h4>
+                                <div className="space-y-4">
+                                  {sectionQuestions.map((questionId) => (
+                                    <div key={questionId} className="bg-gray-50 rounded-lg p-4">
+                                      <div className="mb-2">
+                                        <span className="text-sm font-medium text-gray-700">
+                                          {QUESTION_MAP[questionId]}
+                                        </span>
+                                      </div>
+                                      <div className="pl-4 border-l-2 border-[#C72030]">
+                                        {renderAnswerValue(questionId, parsedAnswers[questionId])}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </TabsContent>
+                  )}
+
+                  {/* System Information Tab */}
+                  <TabsContent value="system" className="mt-0">
+                    <h3 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-[#C72030]" />
+                      System Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Member ID</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.id}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">User ID</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.user_id}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Created By</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{selectedMember.created_by_id || '-'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Created At</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{formatDateTime(selectedMember.created_at)}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Updated At</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{formatDateTime(selectedMember.updated_at)}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Active</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <Badge variant={selectedMember.active ? "default" : "secondary"}>
+                          {selectedMember.active ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">User ID</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedMember.user_id}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Created By</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{selectedMember.created_by_id || '-'}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Created At</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{formatDateTime(selectedMember.created_at)}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Updated At</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{formatDateTime(selectedMember.updated_at)}</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Active</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <Badge variant={selectedMember.active ? "default" : "secondary"}>
-                        {selectedMember.active ? 'Yes' : 'No'}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+                  </TabsContent>
+                </Tabs>
               </>
             )}
           </TabsContent>

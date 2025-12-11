@@ -457,7 +457,7 @@ export const AddClubMembershipPage = () => {
           const subtotalAmount = parseFloat(paymentDetail.base_amount) || 0;
           if (subtotalAmount > 0) {
             const sgstAmt = parseFloat(paymentDetail.sgst) || 0;
-            const sgstPct = (sgstAmt / subtotalAmount) * 100;
+            const sgstPct = (sgtAmt / subtotalAmount) * 100;
             setSgstPercentage(sgstPct.toString());
           }
         }
@@ -969,7 +969,7 @@ export const AddClubMembershipPage = () => {
             base_amount: editablePlanCost,
             discount: discountAmount.toString(),
             cgst: cgstAmount,
-            sgst: sgstAmount,
+            sgst: sgtAmount,
             total_tax: cgstAmount + sgstAmount,
             total_amount: totalCost.toString(),
             landed_amount: totalCost.toString(),
@@ -1199,6 +1199,37 @@ export const AddClubMembershipPage = () => {
   const sgstAmount = (subtotal * (parseFloat(sgstPercentage) || 0)) / 100;
   const totalCost = subtotal + cgstAmount + sgstAmount;
 
+  // Auto-populate end date when membership type or start date changes
+  useEffect(() => {
+    if (startDate && formData.membershipType) {
+      let newEndDate: Dayjs | null = null;
+      
+      switch (formData.membershipType) {
+        case 'Day Pass':
+          newEndDate = startDate.add(1, 'day');
+          break;
+        case 'Monthly':
+          newEndDate = startDate.add(1, 'month');
+          break;
+        case 'Quarterly':
+          newEndDate = startDate.add(3, 'month');
+          break;
+        case 'Annual':
+          newEndDate = startDate.add(1, 'year');
+          break;
+        case 'Corporate':
+          newEndDate = startDate.add(1, 'year');
+          break;
+        default:
+          newEndDate = null;
+      }
+      
+      if (newEndDate) {
+        setEndDate(newEndDate);
+      }
+    }
+  }, [startDate, formData.membershipType]);
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <div className="p-6 bg-gray-50 min-h-screen">
@@ -1340,14 +1371,23 @@ export const AddClubMembershipPage = () => {
 
                       {/* Row 2: Date of Birth, Gender */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <TextField
+                        <DatePicker
                           label="Date of Birth"
-                          type="date"
-                          value={formData.dateOfBirth}
-                          onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                          sx={fieldStyles}
-                          fullWidth
-                          InputLabelProps={{ shrink: true }}
+                          value={formData.dateOfBirth ? dayjs(formData.dateOfBirth, 'YYYY-MM-DD') : null}
+                          onChange={(newValue) => {
+                            if (newValue) {
+                              setFormData({ ...formData, dateOfBirth: newValue.format('YYYY-MM-DD') });
+                            } else {
+                              setFormData({ ...formData, dateOfBirth: '' });
+                            }
+                          }}
+                          format="DD/MM/YYYY"
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                              sx: fieldStyles,
+                            },
+                          }}
                         />
                         <FormControl fullWidth sx={fieldStyles}>
                           <InputLabel>Gender</InputLabel>
@@ -1936,6 +1976,47 @@ export const AddClubMembershipPage = () => {
                         />
                       </RadioGroup>
                     </div>
+
+                    {/* Question 4: Pilates experience */}
+                    <div className="mb-6">
+                      <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
+                        Pilates Experience
+                      </FormLabel>
+                      <FormControl fullWidth sx={fieldStyles}>
+                        <Select
+                          value={pilatesExperience}
+                          onChange={(e) => setPilatesExperience(e.target.value)}
+                          label="Pilates Experience"
+                          displayEmpty
+                          sx={{
+                            border: "1px solid #000",
+                            borderRadius: "4px",
+
+                            // Remove blue outline
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              border: "none",
+                            },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                              border: "none",
+                            },
+
+                            // Remove box shadow
+                            "&.Mui-focused": {
+                              outline: "none",
+                              boxShadow: "none",
+                            },
+                          }}
+                        >
+                          <MenuItem value="">
+                            <em>Select Experience Level</em>
+                          </MenuItem>
+                          <MenuItem value="Never">Never</MenuItem>
+                          <MenuItem value="Beginner">Beginner</MenuItem>
+                          <MenuItem value="Intermediate">Intermediate</MenuItem>
+                          <MenuItem value="Advanced">Advanced</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </div>
                   </div>
 
                   {/* Card 6: Activity Interests */}
@@ -1968,7 +2049,7 @@ export const AddClubMembershipPage = () => {
                                 onChange={(e) => {
                                   if (e.target.checked) {
                                     setFitnessGoals([...fitnessGoals, goal]);
-                                  } else {
+                                                                                                                                                                                                                                                                     } else {
                                     setFitnessGoals(fitnessGoals.filter(g => g !== goal));
                                   }
                                 }}
@@ -2025,7 +2106,7 @@ export const AddClubMembershipPage = () => {
                       <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
                         Which sessions are you interested in?
                       </FormLabel>
-                      <div className="space-y-1">
+                                            <div className="space-y-1">
                         {[
                           'Group Pilates',
                           'Private / Duo Pilates',
@@ -2412,9 +2493,19 @@ export const AddClubMembershipPage = () => {
                           <div className="flex items-start justify-between mb-3">
                             <div>
                               <h3 className="font-semibold text-lg text-[#1a1a1a]">{plan.name}</h3>
-                              <p className="text-sm text-gray-500 mt-1">
-                                {plan.renewal_terms && plan.renewal_terms.charAt(0).toUpperCase() + plan.renewal_terms.slice(1)} Membership
-                              </p>
+                              <div className="flex items-center gap-3 mt-1">
+                                <p className="text-sm text-gray-500">
+                                    {plan.renewal_terms && plan.renewal_terms.charAt(0).toUpperCase() + plan.renewal_terms.slice(1)} Membership
+                                </p>
+                                {plan.user_limit && (
+                                  <>
+                                    <span className="text-gray-300">•</span>
+                                    <p className="text-sm text-gray-500">
+                                      Max {plan.user_limit} {parseInt(plan.user_limit) === 1 ? 'Member' : 'Members'}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
                             </div>
                             <div className="text-right">
                               <p className="text-2xl font-bold text-[#C72030]">₹{plan.price}</p>

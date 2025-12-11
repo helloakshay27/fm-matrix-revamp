@@ -942,66 +942,48 @@ export const AddGroupMembershipPage = () => {
 
     // Handle form submission
     const handleSubmit = async () => {
-        // Get unique member IDs that are used in at least one card
-        const allUsedMemberIds = Array.from(new Set([
-            ...userMemberIds,
-            ...addressMemberIds,
-            ...documentMemberIds,
-            ...healthMemberIds,
-            ...activityMemberIds,
-            ...lifestyleMemberIds,
-            ...occupationMemberIds
-        ]));
-
-        // Get only members that are actually used
-        const activeMembers = members.filter(m => allUsedMemberIds.includes(m.id));
-
-        // Validate all active members
-        for (let i = 0; i < activeMembers.length; i++) {
-            const member = activeMembers[i];
+        // Validate all members (not just "active" ones)
+        for (let i = 0; i < members.length; i++) {
+            const member = members[i];
             const memberLabel = `Member ${i + 1}`;
 
-            // Only validate user selection if member is in user card
-            if (userMemberIds.includes(member.id)) {
-                if (member.userSelectionMode === 'select' && !member.selectedUserId) {
-                    toast.error(`${memberLabel}: Please select a user`);
-                    return;
-                }
-
-                if (member.userSelectionMode === 'manual') {
-                    if (!member.formData.firstName || !member.formData.lastName) {
-                        toast.error(`${memberLabel}: Please enter first name and last name`);
-                        return;
-                    }
-                    if (!member.formData.email) {
-                        toast.error(`${memberLabel}: Please enter email address`);
-                        return;
-                    }
-                    if (!validateEmail(member.formData.email)) {
-                        toast.error(`${memberLabel}: Please enter a valid email address`);
-                        return;
-                    }
-                    if (!member.formData.mobile) {
-                        toast.error(`${memberLabel}: Please enter mobile number`);
-                        return;
-                    }
-                    if (!validateMobile(member.formData.mobile)) {
-                        toast.error(`${memberLabel}: Please enter a valid 10-digit mobile number`);
-                        return;
-                    }
-                }
+            // Validate user selection
+            if (member.userSelectionMode === 'select' && !member.selectedUserId) {
+                toast.error(`${memberLabel}: Please select a user`);
+                return;
             }
 
-            // Validate address fields if member is in address card
-            if (addressMemberIds.includes(member.id)) {
-                if (member.formData.pin_code && !validatePinCode(member.formData.pin_code)) {
-                    toast.error(`${memberLabel}: Please enter a valid 6-digit PIN code`);
+            if (member.userSelectionMode === 'manual') {
+                if (!member.formData.firstName || !member.formData.lastName) {
+                    toast.error(`${memberLabel}: Please enter first name and last name`);
+                    return;
+                }
+                if (!member.formData.email) {
+                    toast.error(`${memberLabel}: Please enter email address`);
+                    return;
+                }
+                if (!validateEmail(member.formData.email)) {
+                    toast.error(`${memberLabel}: Please enter a valid email address`);
+                    return;
+                }
+                if (!member.formData.mobile) {
+                    toast.error(`${memberLabel}: Please enter mobile number`);
+                    return;
+                }
+                if (!validateMobile(member.formData.mobile)) {
+                    toast.error(`${memberLabel}: Please enter a valid 10-digit mobile number`);
                     return;
                 }
             }
 
-            // Mandatory file validations - only for add mode and if member is in document card
-            if (!isEditMode && documentMemberIds.includes(member.id)) {
+            // Validate PIN code if provided
+            if (member.formData.pin_code && !validatePinCode(member.formData.pin_code)) {
+                toast.error(`${memberLabel}: Please enter a valid 6-digit PIN code`);
+                return;
+            }
+
+            // Mandatory file validations - only for add mode
+            if (!isEditMode) {
                 if (!member.idCardFile) {
                     toast.error(`${memberLabel}: Please upload ID card (mandatory)`);
                     return;
@@ -1019,24 +1001,18 @@ export const AddGroupMembershipPage = () => {
             }
         }
 
-        // Mandatory membership date validations
-        if (!startDate) {
-            toast.error('Please select start date (mandatory)');
+        // Note: Date and emergency contact validations are already done in handleNext, 
+        // but we keep them here as a safety check
+        if (!startDate || !endDate) {
+            toast.error('Please ensure start and end dates are selected');
             return;
         }
 
-        if (!endDate) {
-            toast.error('Please select end date (mandatory)');
-            return;
-        }
-
-        // Validate that end date is after start date
-        if (endDate && startDate && endDate.isBefore(startDate)) {
+        if (endDate.isBefore(startDate)) {
             toast.error('End date must be after start date');
             return;
         }
 
-        // Validate emergency contact if provided
         if (emergencyContactName && !validateMobile(emergencyContactName)) {
             toast.error('Please enter a valid 10-digit emergency contact number');
             return;
@@ -1047,25 +1023,11 @@ export const AddGroupMembershipPage = () => {
             const siteId = getSiteIdFromStorage();
             const companyId = getCompanyIdFromStorage();
 
-            // Get unique member IDs that are used in at least one card
-            const allUsedMemberIds = Array.from(new Set([
-                ...userMemberIds,
-                ...addressMemberIds,
-                ...documentMemberIds,
-                ...healthMemberIds,
-                ...activityMemberIds,
-                ...lifestyleMemberIds,
-                ...occupationMemberIds
-            ]));
+            // Find group leader (first member with mobile)
+            const groupLeader = members.find(m => m.formData.mobile) || members[0];
 
-            // Get only members that are actually used
-            const activeMembers = members.filter(m => allUsedMemberIds.includes(m.id));
-
-            // Find group leader (first active member with mobile)
-            const groupLeader = activeMembers.find(m => m.formData.mobile) || activeMembers[0];
-
-            // Build members array for payload - only include active members
-            const membersPayload = await Promise.all(activeMembers.map(async (member) => {
+            // Build members array for payload - include ALL members
+            const membersPayload = await Promise.all(members.map(async (member) => {
                 // Convert files to base64
                 let identificationImageBase64 = '';
                 let avatarBase64 = '';
@@ -1158,7 +1120,7 @@ export const AddGroupMembershipPage = () => {
                     referred_by: referredBy,
                     total_members: members.length,
                     group_leader_mobile: groupLeader.formData.mobile,
-                    common_payment_detail: {
+                    allocation_payment_detail_attributes: {
                         base_amount: parseFloat(editablePlanCost) || 0,
                         discount: discountAmount,
                         cgst: cgstAmount,
@@ -1186,7 +1148,7 @@ export const AddGroupMembershipPage = () => {
                 body: JSON.stringify(payload)
             };
 
-            console.log('Submitting payload:', payload);
+            console.log('Submitting payload:', JSON.stringify(payload, null, 2));
 
             const response = await fetch(url, options);
 
@@ -1268,6 +1230,29 @@ export const AddGroupMembershipPage = () => {
         // Validation for step 1 (Membership Plan Selection)
         if (!selectedPlanId) {
             toast.error('Please select a membership plan');
+            return;
+        }
+
+        // Validate shared membership details
+        if (!startDate) {
+            toast.error('Please select start date (mandatory)');
+            return;
+        }
+
+        if (!endDate) {
+            toast.error('Please select end date (mandatory)');
+            return;
+        }
+
+        // Validate that end date is after start date
+        if (endDate && startDate && endDate.isBefore(startDate)) {
+            toast.error('End date must be after start date');
+            return;
+        }
+
+        // Validate emergency contact if provided
+        if (emergencyContactName && !validateMobile(emergencyContactName)) {
+            toast.error('Please enter a valid 10-digit emergency contact number');
             return;
         }
 
@@ -1438,6 +1423,37 @@ export const AddGroupMembershipPage = () => {
     const cgstAmount = (subtotal * (parseFloat(cgstPercentage) || 0)) / 100;
     const sgstAmount = (subtotal * (parseFloat(sgstPercentage) || 0)) / 100;
     const totalCost = subtotal + cgstAmount + sgstAmount;
+
+    // Auto-populate end date when membership type or start date changes
+    useEffect(() => {
+        if (startDate && membershipType) {
+            let newEndDate: Dayjs | null = null;
+            
+            switch (membershipType) {
+                case 'Day Pass':
+                    newEndDate = startDate.add(1, 'day');
+                    break;
+                case 'Monthly':
+                    newEndDate = startDate.add(1, 'month');
+                    break;
+                case 'Quarterly':
+                    newEndDate = startDate.add(3, 'month');
+                    break;
+                case 'Annual':
+                    newEndDate = startDate.add(1, 'year');
+                    break;
+                case 'Corporate':
+                    newEndDate = startDate.add(1, 'year');
+                    break;
+                default:
+                    newEndDate = null;
+            }
+            
+            if (newEndDate) {
+                setEndDate(newEndDate);
+            }
+        }
+    }, [startDate, membershipType]);
 
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -1646,14 +1662,23 @@ export const AddGroupMembershipPage = () => {
                                                     </div>
 
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <TextField
+                                                        <DatePicker
                                                             label="Date of Birth"
-                                                            type="date"
-                                                            value={member.formData.dateOfBirth}
-                                                            onChange={(e) => updateMember(member.id, { formData: { ...member.formData, dateOfBirth: e.target.value } })}
-                                                            sx={fieldStyles}
-                                                            fullWidth
-                                                            InputLabelProps={{ shrink: true }}
+                                                            value={member.formData.dateOfBirth ? dayjs(member.formData.dateOfBirth, 'YYYY-MM-DD') : null}
+                                                            onChange={(newValue) => {
+                                                                if (newValue) {
+                                                                    updateMember(member.id, { formData: { ...member.formData, dateOfBirth: newValue.format('YYYY-MM-DD') } });
+                                                                } else {
+                                                                    updateMember(member.id, { formData: { ...member.formData, dateOfBirth: '' } });
+                                                                }
+                                                            }}
+                                                            format="DD/MM/YYYY"
+                                                            slotProps={{
+                                                                textField: {
+                                                                    fullWidth: true,
+                                                                    sx: fieldStyles,
+                                                                },
+                                                            }}
                                                         />
                                                         <FormControl fullWidth sx={fieldStyles}>
                                                             <InputLabel>Gender</InputLabel>
@@ -2139,80 +2164,6 @@ export const AddGroupMembershipPage = () => {
                                     </div>
                                 ))}
 
-                                {/* Shared Membership Details */}
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                    <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">Shared Membership Details</h2>
-                                    
-                                    <div className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <FormControl fullWidth sx={fieldStyles}>
-                                                <InputLabel>Membership Type</InputLabel>
-                                                <Select value={membershipType} onChange={(e) => setMembershipType(e.target.value)} label="Membership Type">
-                                                    <MenuItem value=""><em>Select Type</em></MenuItem>
-                                                    {MEMBERSHIP_TYPE_OPTIONS.map((opt) => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
-                                                </Select>
-                                            </FormControl>
-
-                                            <FormControl fullWidth sx={fieldStyles}>
-                                                <InputLabel>Referred By</InputLabel>
-                                                <Select value={referredBy} onChange={(e) => setReferredBy(e.target.value)} label="Referred By">
-                                                    <MenuItem value=""><em>Select</em></MenuItem>
-                                                    {REFERRED_BY_OPTIONS.map((opt) => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
-                                                </Select>
-                                            </FormControl>
-                                        </div>
-
-                                        <TextField
-                                            label="Emergency Contact"
-                                            value={emergencyContactName}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                // Only allow numbers and limit to 10 digits
-                                                if (value === '' || /^\d{0,10}$/.test(value)) {
-                                                    setEmergencyContactName(value);
-                                                }
-                                            }}
-                                            sx={fieldStyles}
-                                            fullWidth
-                                            type="tel"
-                                            placeholder="Phone Number"
-                                            inputProps={{ 
-                                                maxLength: 10,
-                                                pattern: '[0-9]*',
-                                                inputMode: 'numeric'
-                                            }}
-                                            error={emergencyContactName !== '' && !validateMobile(emergencyContactName)}
-                                            helperText={emergencyContactName !== '' && !validateMobile(emergencyContactName) ? 'Please enter a valid 10-digit phone number' : ''}
-                                        />
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <DatePicker
-                                                label="Start Date *"
-                                                value={startDate}
-                                                onChange={(newValue) => setStartDate(newValue as Dayjs | null)}
-                                                slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
-                                            />
-                                            <DatePicker
-                                                label="End Date *"
-                                                value={endDate}
-                                                onChange={(newValue) => setEndDate(newValue as Dayjs | null)}
-                                                slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
-                                            />
-                                        </div>
-
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={cardAllocated}
-                                                    onChange={(e) => setCardAllocated(e.target.checked)}
-                                                    sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                                                />
-                                            }
-                                            label="Access Card Allocated"
-                                        />
-                                    </div>
-                                </div>
-
                                 {/* Submit Buttons */}
                                 <div className="flex justify-between gap-3 pt-6 border-t border-gray-200">
                                     <Button variant="outline" onClick={handleBackToStep1}>Back</Button>
@@ -2256,9 +2207,19 @@ export const AddGroupMembershipPage = () => {
                                                     <div className="flex items-start justify-between mb-3">
                                                         <div>
                                                             <h3 className="font-semibold text-lg text-[#1a1a1a]">{plan.name}</h3>
-                                                            <p className="text-sm text-gray-500 mt-1">
-                                                                {plan.renewal_terms && plan.renewal_terms.charAt(0).toUpperCase() + plan.renewal_terms.slice(1)} Membership
-                                                            </p>
+                                                            <div className="flex items-center gap-3 mt-1">
+                                                                <p className="text-sm text-gray-500">
+                                                                    {plan.renewal_terms && plan.renewal_terms.charAt(0).toUpperCase() + plan.renewal_terms.slice(1)} Membership
+                                                                </p>
+                                                                {plan.user_limit && (
+                                                                    <>
+                                                                        <span className="text-gray-300">•</span>
+                                                                        <p className="text-sm text-gray-500">
+                                                                            Max {plan.user_limit} {parseInt(plan.user_limit) === 1 ? 'Member' : 'Members'}
+                                                                        </p>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                         <div className="text-right">
                                                             <p className="text-2xl font-bold text-[#C72030]">₹{plan.price}</p>
@@ -2344,6 +2305,82 @@ export const AddGroupMembershipPage = () => {
                                         )}
                                     </div>
                                 )}
+
+                                 {/* Shared Membership Details */}
+                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                    <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">Shared Membership Details</h2>
+                                    
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <FormControl fullWidth sx={fieldStyles}>
+                                                <InputLabel>Membership Type</InputLabel>
+                                                <Select value={membershipType} onChange={(e) => setMembershipType(e.target.value)} label="Membership Type">
+                                                    <MenuItem value=""><em>Select Type</em></MenuItem>
+                                                    {MEMBERSHIP_TYPE_OPTIONS.map((opt) => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
+                                                </Select>
+                                            </FormControl>
+
+                                            <FormControl fullWidth sx={fieldStyles}>
+                                                <InputLabel>Referred By</InputLabel>
+                                                <Select value={referredBy} onChange={(e) => setReferredBy(e.target.value)} label="Referred By">
+                                                    <MenuItem value=""><em>Select</em></MenuItem>
+                                                    {REFERRED_BY_OPTIONS.map((opt) => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
+                                                </Select>
+                                            </FormControl>
+                                        </div>
+
+                                        <TextField
+                                            label="Emergency Contact"
+                                            value={emergencyContactName}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Only allow numbers and limit to 10 digits
+                                                if (value === '' || /^\d{0,10}$/.test(value)) {
+                                                    setEmergencyContactName(value);
+                                                }
+                                            }}
+                                            sx={fieldStyles}
+                                            fullWidth
+                                            type="tel"
+                                            placeholder="Phone Number"
+                                            inputProps={{ 
+                                                maxLength: 10,
+                                                pattern: '[0-9]*',
+                                                inputMode: 'numeric'
+                                            }}
+                                            error={emergencyContactName !== '' && !validateMobile(emergencyContactName)}
+                                            helperText={emergencyContactName !== '' && !validateMobile(emergencyContactName) ? 'Please enter a valid 10-digit phone number' : ''}
+                                        />
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <DatePicker
+                                                label="Start Date *"
+                                                value={startDate}
+                                                onChange={(newValue) => setStartDate(newValue as Dayjs | null)}
+                                                format="DD/MM/YYYY"
+                                                slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
+                                            />
+                                            <DatePicker
+                                                label="End Date *"
+                                                value={endDate}
+                                                onChange={(newValue) => setEndDate(newValue as Dayjs | null)}
+                                                format="DD/MM/YYYY"
+                                                slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
+                                            />
+                                        </div>
+
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={cardAllocated}
+                                                    onChange={(e) => setCardAllocated(e.target.checked)}
+                                                    sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                                />
+                                            }
+                                            label="Access Card Allocated"
+                                        />
+                                    </div>
+                                </div>
 
                                 {/* Card 11: Cost Summary */}
                                 {selectedPlanId && (
