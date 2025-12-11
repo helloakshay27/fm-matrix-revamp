@@ -15,10 +15,12 @@ import { StacticSidebar } from "./StacticSidebar";
 import ViSidebarWithToken from "./ViSidebarWithToken";
 import { ZxSidebar } from "./ZxSidebar";
 import { ZxDynamicHeader } from "./ZxDynamicHeader";
-import { saveToken, saveUser, saveBaseUrl } from "../utils/auth";
+import { saveToken, saveUser, saveBaseUrl, getUser } from "../utils/auth";
 import { ProtectionLayer } from "./ProtectionLayer";
 import { PrimeSupportSidebar } from "./PrimeSupportSidebar";
 import { PrimeSupportDynamicHeader } from "./PrimeSupportDynamicHeader";
+import { EmployeeSidebar } from "./EmployeeSidebar";
+import { EmployeeDynamicHeader } from "./EmployeeDynamicHeader";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -29,6 +31,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const location = useLocation();
 
+  // Get current user to check user_type
+
+  const userType = localStorage.getItem("userType");
+  const isEmployeeUser = userType === "pms_occupantss";
   // Handle token-based authentication from URL parameters
 
   // Get current domain for backward compatibility
@@ -53,6 +59,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Render sidebar component based on configuration
   const renderSidebar = () => {
+    // Check if user is employee (pms_occupant) - Employee layout takes priority
+    if (isEmployeeUser) {
+      return <EmployeeSidebar />;
+    }
+
     // Check for token-based VI access first
     const urlParams = new URLSearchParams(window.location.search);
     const hasTokenParam = urlParams.has("access_token");
@@ -73,7 +84,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ViSidebar />;
     }
 
-    // Company-specific logic
+    // Company-specific logic (Admin layout)
     if (selectedCompany?.id === 189) {
       return <ZxSidebar />;
     }
@@ -87,7 +98,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
-      selectedCompany?.id === 298
+      selectedCompany?.id === 298 ||
+      selectedCompany?.id === 301
     ) {
       return <Sidebar />;
     }
@@ -108,6 +120,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Render header component based on configuration
   const renderDynamicHeader = () => {
+    // Check if user is employee (pms_occupant) - Employee layout takes priority
+    if (isEmployeeUser) {
+      return <EmployeeDynamicHeader />;
+    }
+
     // Domain-based logic takes precedence for backward compatibility
     if (isOmanSite) {
       return <OmanDynamicHeader />;
@@ -116,7 +133,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ViDynamicHeader />;
     }
 
-    // Company-specific logic
+    // Company-specific logic (Admin layout)
     if (selectedCompany?.id === 189) {
       return <ZxDynamicHeader />;
     }
@@ -128,7 +145,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       selectedCompany?.id === 295 ||
       selectedCompany?.id === 298 ||
       selectedCompany?.id === 199 ||
-      selectedCompany?.id === 298
+      selectedCompany?.id === 298 ||
+      selectedCompany?.id === 301
     ) {
       return <DynamicHeader />;
     }
