@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -92,6 +92,8 @@ export const AddBookingSetupPage = () => {
 
   const [additionalOpen, setAdditionalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inventories, setInventories] = useState<any[]>([]);
+  const [loadingInventories, setLoadingInventories] = useState(false);
 
   const [formData, setFormData] = useState({
     facilityName: "",
@@ -106,6 +108,7 @@ export const AddBookingSetupPage = () => {
     complimentary: false,
     gstPercentage: "",
     sgstPercentage: "",
+    igstPercentage: "",
     perSlotCharge: "",
     bookingAllowedBefore: { day: "", hour: "", minute: "" },
     advanceBooking: { day: "", hour: "", minute: "" },
@@ -116,14 +119,7 @@ export const AddBookingSetupPage = () => {
     description: "",
     termsConditions: "",
     cancellationText: "",
-    amenities: {
-      tv: false,
-      whiteboard: false,
-      casting: false,
-      smartPenForTV: false,
-      wirelessCharging: false,
-      meetingRoomInventory: false,
-    },
+    amenities: {} as Record<number, boolean>,
     seaterInfo: "Select a seater",
     floorInfo: "Select a floor",
     sharedContentInfo: "",
@@ -242,7 +238,7 @@ export const AddBookingSetupPage = () => {
       let departmentsList = [];
       if (Array.isArray(data)) {
         departmentsList = data;
-      } else if (data && Array.isArray(data.departments)) {
+      } else if (Array.isArray(data.departments)) {
         departmentsList = data.departments;
       } else if (data && data.length !== undefined) {
         // Handle case where data might be array-like
@@ -257,6 +253,40 @@ export const AddBookingSetupPage = () => {
       setLoadingDepartments(false);
     }
   };
+
+  const fetchInventories = async () => {
+    if (inventories.length > 0) return; // Don't fetch if already loaded
+
+    setLoadingInventories(true);
+    try {
+      const response = await fetch(
+        `https://${baseUrl}/pms/inventories.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+
+      if (data && Array.isArray(data.inventories)) {
+        setInventories(data.inventories);
+      } else {
+        setInventories([]);
+      }
+    } catch (error) {
+      console.error("Error fetching inventories:", error);
+      setInventories([]);
+    } finally {
+      setLoadingInventories(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDepartments();
+    fetchInventories();
+  }, []);
 
   const validateForm = () => {
     if (!formData.facilityName) {
@@ -402,6 +432,7 @@ export const AddBookingSetupPage = () => {
       );
       formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
       formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
+      formDataToSend.append("facility_setup[igst]", formData.igstPercentage);
       // formDataToSend.append(
       //   "facility_setup[facility_charge_attributes][per_slot_charge]",
       //   formData.perSlotCharge
@@ -525,17 +556,15 @@ export const AddBookingSetupPage = () => {
       });
 
       // Generic Tags (Amenities)
-      const amenities = [];
-      if (formData.amenities.tv) amenities.push("TV");
-      if (formData.amenities.whiteboard) amenities.push("Whiteboard");
-      if (formData.amenities.casting) amenities.push("Casting");
-      if (formData.amenities.smartPenForTV) amenities.push("Smart Pen for TV");
-      if (formData.amenities.wirelessCharging)
-        amenities.push("Wireless Charging");
-      if (formData.amenities.meetingRoomInventory)
-        amenities.push("Meeting Room Inventory");
+      const selectedAmenities = Object.entries(formData.amenities)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([inventoryId]) => {
+          const inventory = inventories.find(inv => inv.id === parseInt(inventoryId));
+          return inventory ? inventory.name : null;
+        })
+        .filter(name => name !== null);
 
-      amenities.forEach((name, index) => {
+      selectedAmenities.forEach((name, index) => {
         formDataToSend.append(
           `facility_setup[generic_tags_attributes][${index}][tag_type]`,
           "amenity_things"
@@ -1106,7 +1135,7 @@ export const AddBookingSetupPage = () => {
               </Button>
 
               {/* Slot Headers */}
-              <div className="grid grid-cols-7 gap-2 mb-2 text-sm font-medium text-gray-600">
+              <div className="grid grid-cols-8 gap-2 mb-2 text-sm font-medium text-gray-600">
                 <div>Start Time</div>
                 <div>Break Time Start</div>
                 <div>Break Time End</div>
@@ -1114,11 +1143,12 @@ export const AddBookingSetupPage = () => {
                 <div>Concurrent Slots</div>
                 <div>Slot by</div>
                 <div>Wrap Time</div>
+                <div>Action</div>
               </div>
 
               {/* Slot Rows */}
               {formData.slots.map((slot, index) => (
-                <div key={index} className="grid grid-cols-7 gap-2 mb-2">
+                <div key={index} className="grid grid-cols-8 gap-2 mb-2">
                   <div className="flex gap-1">
                     <FormControl size="small">
                       <Select
@@ -1330,6 +1360,18 @@ export const AddBookingSetupPage = () => {
                     }}
                     variant="outlined"
                   />
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const newSlots = formData.slots.filter((_, i) => i !== index);
+                      setFormData({ ...formData, slots: newSlots });
+                    }}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
 
@@ -1654,7 +1696,7 @@ export const AddBookingSetupPage = () => {
                   <label htmlFor="complimentary">Complimentary</label>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <TextField
                   label="SGST(%)"
                   value={formData.sgstPercentage}
@@ -1668,6 +1710,14 @@ export const AddBookingSetupPage = () => {
                   value={formData.gstPercentage}
                   onChange={(e) =>
                     setFormData({ ...formData, gstPercentage: e.target.value })
+                  }
+                  variant="outlined"
+                />
+                <TextField
+                  label="IGST(%)"
+                  value={formData.igstPercentage}
+                  onChange={(e) =>
+                    setFormData({ ...formData, igstPercentage: e.target.value })
                   }
                   variant="outlined"
                 />
@@ -1793,51 +1843,91 @@ export const AddBookingSetupPage = () => {
 
           {/* Gallery Images Card */}
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                <Image className="w-4 h-4" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <Image className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  GALLERY IMAGES [{selectedGalleryImages.length}]
+                </h3>
               </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GALLERY IMAGES</h3>
-            </div>
-
-            <div
-              onClick={handleGalleryModalOpen}
-              className="border border-dashed rounded-lg p-8 text-center cursor-pointer border-[#C72030] transition-colors"
-            >
-              <div className="flex flex-col items-center gap-2">
-                <Upload className="h-8 w-8 text-gray-400" />
-                <p className="text-sm text-gray-600">
-                  Click to add gallery images{selectedGalleryImages.length > 0 && ` (${selectedGalleryImages.length} selected)`}
-                </p>
-              </div>
+              <Button
+                onClick={handleGalleryModalOpen}
+                className="bg-[#C72030] hover:bg-[#A01828] text-white"
+              >
+                + Add
+              </Button>
             </div>
 
             {selectedGalleryImages.length > 0 && (
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-3">
-                  {selectedGalleryImages.length} image{selectedGalleryImages.length !== 1 ? 's' : ''} selected
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {selectedGalleryImages.map((image: any, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={image.preview}
-                        alt={`gallery-preview-${index}`}
-                        className="h-24 w-full rounded border border-gray-200 object-cover"
-                      />
-                      <button
-                        onClick={() => {
-                          setSelectedGalleryImages(
-                            selectedGalleryImages.filter((_: any, i: number) => i !== index)
-                          );
-                        }}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-[#E5E0D3]">
+                      <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Image Name</th>
+                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Preview</th>
+                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Ratio</th>
+                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Enable to App</th>
+                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedGalleryImages.map((image: any, index) => (
+                      <tr key={index} className="border-b hover:bg-gray-50">
+                        <td className="border border-gray-300 px-4 py-3">
+                          <input
+                            type="text"
+                            value={image.name || `Image ${index + 1}`}
+                            onChange={(e) => {
+                              const newImages = [...selectedGalleryImages];
+                              newImages[index] = { ...newImages[index], name: e.target.value };
+                              setSelectedGalleryImages(newImages);
+                            }}
+                            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                          />
+                        </td>
+                        <td className="border border-gray-300 px-4 py-3">
+                          <div className="flex justify-center">
+                            <img
+                              src={image.preview}
+                              alt={`gallery-preview-${index}`}
+                              className="h-20 w-20 rounded border border-gray-200 object-cover"
+                            />
+                          </div>
+                        </td>
+                        <td className="border border-gray-300 px-4 py-3 text-center">
+                          {image.ratio || '1:1'}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-3 text-center">
+                          <div className="flex items-center justify-center">
+                            <Checkbox
+                              checked={image.enableToApp ?? true}
+                              onCheckedChange={(checked) => {
+                                const newImages = [...selectedGalleryImages];
+                                newImages[index] = { ...newImages[index], enableToApp: !!checked };
+                                setSelectedGalleryImages(newImages);
+                              }}
+                              className="w-5 h-5 mx-auto"
+                            />
+                          </div>
+                        </td>
+                        <td className="border border-gray-300 px-4 py-3 text-center">
+                          <button
+                            onClick={() => {
+                              setSelectedGalleryImages(
+                                selectedGalleryImages.filter((_: any, i: number) => i !== index)
+                              );
+                            }}
+                            className="bg-[#C72030] text-white w-8 h-8 flex items-center justify-center rounded hover:bg-[#A01828] mx-auto"
+                          >
+                            ×
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
@@ -2059,101 +2149,32 @@ export const AddBookingSetupPage = () => {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="tv"
-                      checked={formData.amenities.tv}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: { ...formData.amenities, tv: !!checked },
-                        })
-                      }
-                    />
-                    <label htmlFor="tv">TV</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="whiteboard"
-                      checked={formData.amenities.whiteboard}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            whiteboard: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="whiteboard">Whiteboard</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="casting"
-                      checked={formData.amenities.casting}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            casting: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="casting">Casting</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="smartPenForTV"
-                      checked={formData.amenities.smartPenForTV}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            smartPenForTV: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="smartPenForTV">Smart Pen for TV</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="wirelessCharging"
-                      checked={formData.amenities.wirelessCharging}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            wirelessCharging: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="wirelessCharging">Wireless Charging</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="meetingRoomInventory"
-                      checked={formData.amenities.meetingRoomInventory}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          amenities: {
-                            ...formData.amenities,
-                            meetingRoomInventory: !!checked,
-                          },
-                        })
-                      }
-                    />
-                    <label htmlFor="meetingRoomInventory">
-                      Meeting Room Inventory
-                    </label>
-                  </div>
+                  {loadingInventories ? (
+                    <div className="col-span-full text-center text-gray-500">Loading inventories...</div>
+                  ) : inventories.length === 0 ? (
+                    <div className="col-span-full text-center text-gray-500">No inventories available</div>
+                  ) : (
+                    inventories.map((inventory) => (
+                      <div key={inventory.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`inventory-${inventory.id}`}
+                          checked={formData.amenities[inventory.id] || false}
+                          onCheckedChange={(checked) =>
+                            setFormData({
+                              ...formData,
+                              amenities: {
+                                ...formData.amenities,
+                                [inventory.id]: !!checked,
+                              },
+                            })
+                          }
+                        />
+                        <label htmlFor={`inventory-${inventory.id}`} className="cursor-pointer">
+                          {inventory.name}
+                        </label>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 

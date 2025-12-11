@@ -97,6 +97,8 @@ export const EditBookingSetupPage = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [departments, setDepartments] = useState([]);
     const [loadingDepartments, setLoadingDepartments] = useState(false);
+    const [inventories, setInventories] = useState<any[]>([]);
+    const [loadingInventories, setLoadingInventories] = useState(false);
 
     const [formData, setFormData] = useState({
         facilityName: "",
@@ -111,6 +113,7 @@ export const EditBookingSetupPage = () => {
         complimentary: false,
         gstPercentage: "",
         sgstPercentage: "",
+        igstPercentage: "",
         perSlotCharge: "",
         bookingAllowedBefore: { d: "", h: "", m: "" },
         advanceBooking: { d: "", h: "", m: "" },
@@ -121,26 +124,7 @@ export const EditBookingSetupPage = () => {
         description: "",
         termsConditions: "",
         cancellationText: "",
-        amenities: {
-            tv: { name: "TV", selected: false, tag_id: null },
-            whiteboard: { name: "Whiteboard", selected: false, tag_id: null },
-            casting: { name: "Casting", selected: false, tag_id: null },
-            smartPenForTV: {
-                name: "Smart Pen for TV",
-                selected: false,
-                tag_id: null,
-            },
-            wirelessCharging: {
-                name: "Wireless Charging",
-                selected: false,
-                tag_id: null,
-            },
-            meetingRoomInventory: {
-                name: "Meeting Room Inventory",
-                selected: false,
-                tag_id: null,
-            },
-        },
+        amenities: {} as Record<number, { name: string; selected: boolean; tag_id: number | null }>,
         seaterInfo: "Select a seater",
         floorInfo: "Select a floor",
         sharedContentInfo: "",
@@ -221,6 +205,30 @@ export const EditBookingSetupPage = () => {
         }
     };
 
+    const fetchInventories = async () => {
+        if (inventories.length > 0) return;
+        setLoadingInventories(true);
+        try {
+            const response = await fetch(`https://${baseUrl}/pms/inventories.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+            const data = await response.json();
+            if (data && Array.isArray(data.inventories)) {
+                setInventories(data.inventories);
+            } else {
+                setInventories([]);
+            }
+        } catch (error) {
+            console.error("Error fetching inventories:", error);
+            setInventories([]);
+        } finally {
+            setLoadingInventories(false);
+        }
+    };
+
     const fetchFacilityBookingDetails = async () => {
         try {
             const response = await axios.get(
@@ -247,6 +255,7 @@ export const EditBookingSetupPage = () => {
                 complimentary: responseData.complementary,
                 gstPercentage: responseData.gst,
                 sgstPercentage: responseData.sgst,
+                igstPercentage: responseData.igst,
                 perSlotCharge: responseData?.facility_charge?.per_slot_charge,
                 bookingAllowedBefore: responseData.bb_dhm,
                 advanceBooking: responseData.ab_dhm,
@@ -257,42 +266,19 @@ export const EditBookingSetupPage = () => {
                 description: responseData.description,
                 termsConditions: responseData.terms,
                 cancellationText: responseData.cancellation_policy,
-                amenities: {
-                    tv: {
-                        name: "TV",
-                        selected: responseData.amenity_info[0].selected,
-                        tag_id: responseData.amenity_info[0].tag_id
-                    },
-                    whiteboard: {
-                        name: "Whiteboard",
-                        selected: responseData.amenity_info[1].selected,
-                        tag_id: responseData.amenity_info[1].tag_id
-                    },
-                    casting: {
-                        name: "Casting",
-                        selected: responseData.amenity_info[2].selected,
-                        tag_id: responseData.amenity_info[2].tag_id
-                    },
-                    smartPenForTV: {
-                        name: "Smart Pen for TV",
-                        selected: responseData.amenity_info[3].selected,
-                        tag_id: responseData.amenity_info[3].tag_id
-                    },
-                    wirelessCharging: {
-                        name: "Wireless Charging",
-                        selected: responseData.amenity_info[4].selected,
-                        tag_id: responseData.amenity_info[4].tag_id
-                    },
-                    meetingRoomInventory: {
-                        name: "Meeting Room Inventory",
-                        selected: responseData.amenity_info[5].selected,
-                        tag_id: responseData.amenity_info[5].tag_id
-                    },
-                },
+                amenities: responseData.amenity_info?.reduce((acc, amenity) => {
+                    // Map amenity names to inventory IDs when inventories are loaded
+                    acc[amenity.tag_id || amenity.name] = {
+                        name: amenity.name,
+                        selected: amenity.selected,
+                        tag_id: amenity.tag_id
+                    };
+                    return acc;
+                }, {}) || {},
                 seaterInfo: responseData.seater_info,
                 floorInfo: responseData.location_info,
                 sharedContentInfo: responseData.shared_content,
-                slots: responseData.facility_slots.map((slot) => ({
+                slots: responseData.facility_slots?.map((slot) => ({
                     id: slot.facility_slot.id,
                     startTime: {
                         hour: slot.facility_slot.start_hour,
@@ -315,10 +301,10 @@ export const EditBookingSetupPage = () => {
                     wrapTime: slot.facility_slot.wrap_time,
                     dayofweek: slot.facility_slot.dayofweek || "",
                     _destroy: false,
-                })),
+                })) || [],
                 chargeSetup: {
-                    member: { selected: responseData.facility_charge.adult_member_charge, adult: responseData.facility_charge.adult_member_charge, child: responseData.facility_charge.child_member_charge },
-                    guest: { selected: responseData.facility_charge.adult_guest_charge, adult: responseData.facility_charge.adult_guest_charge, child: responseData.facility_charge.child_guest_charge },
+                    member: { selected: responseData.facility_charge?.adult_member_charge, adult: responseData.facility_charge?.adult_member_charge, child: responseData.facility_charge?.child_member_charge },
+                    guest: { selected: responseData.facility_charge?.adult_guest_charge, adult: responseData.facility_charge?.adult_guest_charge, child: responseData.facility_charge?.child_guest_charge },
                     minimumPersonAllowed: responseData.min_people,
                     maximumPersonAllowed: responseData.max_people,
                 },
@@ -337,7 +323,7 @@ export const EditBookingSetupPage = () => {
                         },
                     ],
             });
-            const transformedRules = responseData.cancellation_rules.map((rule) => ({
+            const transformedRules = responseData.cancellation_rules?.map((rule) => ({
                 description: rule.description,
                 time: {
                     type: rule.hour,
@@ -345,7 +331,7 @@ export const EditBookingSetupPage = () => {
                     day: rule.day,
                 },
                 deduction: rule.deduction?.toString() || "",
-            }));
+            })) || [];
 
             setCancellationRules([...transformedRules]);
 
@@ -374,10 +360,13 @@ export const EditBookingSetupPage = () => {
                         const imageData = item[ratioKey];
                         if (imageData?.document) {
                             galleryImages.push({
+                                name: imageData.name || `Image ${galleryImages.length + 1}`,
+                                preview: imageData.document,
                                 ratio: ratioLabels[ratioKey],
                                 url: imageData.document,
                                 doctype: imageData.doctype,
-                                fileSize: imageData.document_file_size
+                                fileSize: imageData.document_file_size,
+                                enableToApp: true
                             });
                         }
                     });
@@ -385,6 +374,7 @@ export const EditBookingSetupPage = () => {
             });
 
             setExistingGalleryImages(galleryImages);
+            setSelectedGalleryImages(galleryImages); // Also set to selectedGalleryImages to display them
         } catch (error) {
             console.error("Error fetching facility details:", error);
             toast.error("Failed to fetch facility details");
@@ -453,6 +443,7 @@ export const EditBookingSetupPage = () => {
 
     useEffect(() => {
         fetchDepartments();
+        fetchInventories();
         fetchFacilityBookingDetails();
     }, [id]);
 
@@ -558,6 +549,7 @@ export const EditBookingSetupPage = () => {
             );
             formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
             formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
+            formDataToSend.append("facility_setup[igst]", formData.igstPercentage);
             // formDataToSend.append(
             //     "facility_setup[facility_charge_attributes][per_slot_charge]",
             // formData.perSlotChasrge
@@ -603,6 +595,16 @@ export const EditBookingSetupPage = () => {
                         `facility_setup[facility_blockings_attributes][${index}][reason]`,
                         blockDay.blockReason
                     );
+                }
+
+                // Add selected slots if dayType is selectedSlots
+                if (blockDay.dayType === "selectedSlots" && blockDay.selectedSlots && blockDay.selectedSlots.length > 0) {
+                    blockDay.selectedSlots.forEach((slotId: number) => {
+                        formDataToSend.append(
+                            `facility_setup[facility_blockings_attributes][${index}][block_slot][]`,
+                            slotId.toString()
+                        );
+                    });
                 }
 
                 // Default values for facility blockings
@@ -813,6 +815,24 @@ export const EditBookingSetupPage = () => {
                 "shared_content_info",
                 formData.sharedContentInfo || ""
             );
+
+            // Log the FormData payload for debugging
+            console.log("=== EDIT PAYLOAD ===");
+            const payloadEntries: any = {};
+            formDataToSend.forEach((value, key) => {
+                if (payloadEntries[key]) {
+                    // If key already exists, convert to array
+                    if (Array.isArray(payloadEntries[key])) {
+                        payloadEntries[key].push(value);
+                    } else {
+                        payloadEntries[key] = [payloadEntries[key], value];
+                    }
+                } else {
+                    payloadEntries[key] = value;
+                }
+            });
+            console.log(JSON.stringify(payloadEntries, null, 2));
+            console.log("===================");
 
             const response = await fetch(
                 `https://${baseUrl}/pms/admin/facility_setups/${id}.json`,
@@ -1448,7 +1468,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>d</span>
+                                        <span>DD</span>
                                         <TextField
                                             placeholder="Hour"
                                             size="small"
@@ -1465,7 +1485,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>h</span>
+                                        <span>HH</span>
                                         <TextField
                                             placeholder="Mins"
                                             size="small"
@@ -1482,7 +1502,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>m</span>
+                                        <span>MM</span>
                                     </div>
                                 </div>
                                 <div>
@@ -1506,7 +1526,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>d</span>
+                                        <span>DD</span>
                                         <TextField
                                             placeholder="Hour"
                                             size="small"
@@ -1523,7 +1543,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>h</span>
+                                        <span>HH</span>
                                         <TextField
                                             placeholder="Mins"
                                             size="small"
@@ -1540,7 +1560,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>m</span>
+                                        <span>MM</span>
                                     </div>
                                 </div>
                                 <div>
@@ -1564,7 +1584,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>d</span>
+                                        <span>DD</span>
                                         <TextField
                                             placeholder="Hour"
                                             size="small"
@@ -1581,7 +1601,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>h</span>
+                                        <span>HH</span>
                                         <TextField
                                             placeholder="Mins"
                                             size="small"
@@ -1598,7 +1618,7 @@ export const EditBookingSetupPage = () => {
                                                 })
                                             }
                                         />
-                                        <span>m</span>
+                                        <span>MM</span>
                                     </div>
                                 </div>
                             </div>
@@ -1876,7 +1896,7 @@ export const EditBookingSetupPage = () => {
                                     <label htmlFor="complimentary">Complimentary</label>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                 <TextField
                                     label="SGST(%)"
                                     value={formData.sgstPercentage}
@@ -1895,6 +1915,17 @@ export const EditBookingSetupPage = () => {
                                         setFormData({
                                             ...formData,
                                             gstPercentage: e.target.value,
+                                        })
+                                    }
+                                    variant="outlined"
+                                />
+                                <TextField
+                                    label="IGST(%)"
+                                    value={formData.igstPercentage}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            igstPercentage: e.target.value,
                                         })
                                     }
                                     variant="outlined"
@@ -2031,74 +2062,91 @@ export const EditBookingSetupPage = () => {
 
                     {/* Gallery Images Card */}
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                                <Image className="w-4 h-4" />
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                    <Image className="w-4 h-4" />
+                                </div>
+                                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                                    GALLERY IMAGES [{selectedGalleryImages.length}]
+                                </h3>
                             </div>
-                            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GALLERY IMAGES</h3>
+                            <Button
+                                onClick={handleGalleryModalOpen}
+                                className="bg-[#C72030] hover:bg-[#A01828] text-white"
+                            >
+                                + Add
+                            </Button>
                         </div>
 
-                        <div
-                            onClick={handleGalleryModalOpen}
-                            className="border border-dashed rounded-lg p-8 text-center cursor-pointer border-[#C72030] transition-colors hover:bg-[#C72030]/5"
-                        >
-                            <div className="text-[#C72030] mb-2">
-                                <Upload className="h-8 w-8 mx-auto" />
-                            </div>
-                            <p className="text-sm text-gray-600">
-                                Drag & Drop or{" "}
-                                <span className="text-[#C72030] cursor-pointer font-medium">
-                                    Click to Upload Gallery Images
-                                </span>
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                                Supports multiple aspect ratios (16:9, 9:16, 1:1, 3:2)
-                            </p>
-                        </div>
-
-                        {(selectedGalleryImages.length > 0 || existingGalleryImages.length > 0) && (
-                            <div className="space-y-6">
-                                {existingGalleryImages.length > 0 && (
-                                    <div className="space-y-4">
-                                        <h4 className="text-sm font-semibold text-gray-700">Existing Gallery Images</h4>
-                                        <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-10 gap-3">
-                                            {existingGalleryImages.map((image, index) => (
-                                                <div key={`existing-${index}`} className="relative group">
-                                                    <img
-                                                        src={image.url}
-                                                        alt={`existing-gallery-${index}`}
-                                                        className="h-24 w-24 rounded border border-gray-200 object-fit"
+                        {selectedGalleryImages.length > 0 && (
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-[#E5E0D3]">
+                                            <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Image Name</th>
+                                            <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Preview</th>
+                                            <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Ratio</th>
+                                            <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Enable to App</th>
+                                            <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {selectedGalleryImages.map((image: any, index: number) => (
+                                            <tr key={index} className="border-b hover:bg-gray-50">
+                                                <td className="border border-gray-300 px-4 py-3">
+                                                    <input
+                                                        type="text"
+                                                        value={image.name || `Image ${index + 1}`}
+                                                        onChange={(e) => {
+                                                            const newImages = [...selectedGalleryImages];
+                                                            newImages[index] = { ...newImages[index], name: e.target.value };
+                                                            setSelectedGalleryImages(newImages);
+                                                        }}
+                                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                                                     />
-                                                    <div className="absolute top-1 right-1 bg-[#C72030] text-white text-xs font-semibold px-2 py-1 rounded">
-                                                        {image.ratio}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-3">
+                                                    <div className="flex justify-center">
+                                                        <img
+                                                            src={image.preview}
+                                                            alt={`gallery-preview-${index}`}
+                                                            className="h-20 w-20 rounded border border-gray-200 object-cover"
+                                                        />
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                {selectedGalleryImages.length > 0 && (
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <h4 className="text-sm font-semibold text-gray-700">New Selected Images</h4>
-                                            <span className="text-xs text-gray-500">{selectedGalleryImages.length} image(s)</span>
-                                        </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                            {selectedGalleryImages.map((image, index) => (
-                                                <div key={`new-${index}`} className="relative group">
-                                                    <img
-                                                        src={image.preview}
-                                                        alt={`gallery-${index}`}
-                                                        className="h-24 w-full rounded border border-gray-200 object-cover"
-                                                    />
-                                                    <div className="absolute top-1 right-1 bg-[#C72030] text-white text-xs font-semibold px-2 py-1 rounded">
-                                                        {image.ratio}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-3 text-center">
+                                                    {image.ratio || '1:1'}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-3 text-center">
+                                                    <div className="flex items-center justify-center">
+                                                        <Checkbox
+                                                            checked={image.enableToApp ?? true}
+                                                            onCheckedChange={(checked) => {
+                                                                const newImages = [...selectedGalleryImages];
+                                                                newImages[index] = { ...newImages[index], enableToApp: !!checked };
+                                                                setSelectedGalleryImages(newImages);
+                                                            }}
+                                                            className="w-5 h-5 mx-auto"
+                                                        />
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                                </td>
+                                                <td className="border border-gray-300 px-4 py-3 text-center">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedGalleryImages(
+                                                                selectedGalleryImages.filter((_: any, i: number) => i !== index)
+                                                            );
+                                                        }}
+                                                        className="bg-[#C72030] text-white w-8 h-8 flex items-center justify-center rounded hover:bg-[#A01828] mx-auto"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
                     </div>
@@ -2122,7 +2170,7 @@ export const EditBookingSetupPage = () => {
                             />
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid  gap-6">
                         <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                             <div className="flex items-center gap-3">
                                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -2145,7 +2193,7 @@ export const EditBookingSetupPage = () => {
                                 />
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                        {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                             <div className="flex items-center gap-3">
                                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                     <MessageSquareX className="w-4 h-4" />
@@ -2165,7 +2213,7 @@ export const EditBookingSetupPage = () => {
                                     className="min-h-[100px]"
                                 />
                             </div>
-                        </div>
+                        </div> */}
                     </div>
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                         <div className="flex items-center gap-3">
@@ -2187,10 +2235,14 @@ export const EditBookingSetupPage = () => {
                                     key={index}
                                     className="grid grid-cols-3 gap-4 mb-2 items-center"
                                 >
+                                    {/* Description */}
                                     <div className="text-sm text-gray-600">
                                         {rule.description}
                                     </div>
+
+                                    {/* Time Type & Value */}
                                     <div className="flex gap-2">
+                                        {/* Day Input */}
                                         <TextField
                                             placeholder="Day"
                                             size="small"
@@ -2203,6 +2255,8 @@ export const EditBookingSetupPage = () => {
                                                 setCancellationRules(newRules);
                                             }}
                                         />
+
+                                        {/* Type: Hr or Day */}
                                         <FormControl size="small" style={{ width: "80px" }}>
                                             <Select
                                                 value={rule.time.type}
@@ -2220,6 +2274,8 @@ export const EditBookingSetupPage = () => {
                                                 ))}
                                             </Select>
                                         </FormControl>
+
+                                        {/* Value: 0 - 23 */}
                                         <FormControl size="small" style={{ width: "80px" }}>
                                             <Select
                                                 value={rule.time.value}
@@ -2230,13 +2286,18 @@ export const EditBookingSetupPage = () => {
                                                 }}
                                             >
                                                 {Array.from({ length: 24 }, (_, i) => (
-                                                    <MenuItem key={i} value={i.toString()}>
-                                                        {i.toString()}
+                                                    <MenuItem
+                                                        key={i}
+                                                        value={i.toString().padStart(2, "0")}
+                                                    >
+                                                        {i.toString().padStart(2, "0")}
                                                     </MenuItem>
                                                 ))}
                                             </Select>
                                         </FormControl>
                                     </div>
+
+                                    {/* Percentage Input */}
                                     <TextField
                                         placeholder="%"
                                         size="small"
@@ -2250,6 +2311,23 @@ export const EditBookingSetupPage = () => {
                                     />
                                 </div>
                             ))}
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="font-medium text-gray-700">
+                                Cancellation Policy
+                            </div>
+                            <Textarea
+                                placeholder="Enter cancellation text"
+                                value={formData.cancellationText}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        cancellationText: e.target.value,
+                                    })
+                                }
+                                className="min-h-[100px]"
+                            />
                         </div>
                     </div>
                     <div className={`bg-white rounded-lg border-2 p-6 space-y-6 overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[6rem]'}`}>
@@ -2283,29 +2361,44 @@ export const EditBookingSetupPage = () => {
                                 </div>
 
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
-                                    {Object.keys(formData.amenities).map((key) => (
-                                        <div key={key} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={key}
-                                                checked={formData.amenities[key].selected}
-                                                onCheckedChange={(checked) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        amenities: {
-                                                            ...formData.amenities,
-                                                            [key]: {
-                                                                ...formData.amenities[key],
-                                                                selected: !!checked,
-                                                            },
-                                                        },
-                                                    })
-                                                }
-                                            />
-                                            <label htmlFor={key}>
-                                                {formData.amenities[key].name}
-                                            </label>
-                                        </div>
-                                    ))}
+                                    {loadingInventories ? (
+                                        <div className="col-span-full text-center text-gray-500">Loading inventories...</div>
+                                    ) : inventories.length === 0 ? (
+                                        <div className="col-span-full text-center text-gray-500">No inventories available</div>
+                                    ) : (
+                                        inventories.map((inventory) => {
+                                            const existingAmenity = Object.values(formData.amenities).find(
+                                                (amenity: any) => amenity.name === inventory.name
+                                            );
+                                            const isSelected = existingAmenity?.selected || false;
+                                            const tagId = existingAmenity?.tag_id || null;
+                                            
+                                            return (
+                                                <div key={inventory.id} className="flex items-center space-x-2">
+                                                    <Checkbox
+                                                        id={`inventory-${inventory.id}`}
+                                                        checked={isSelected}
+                                                        onCheckedChange={(checked) =>
+                                                            setFormData({
+                                                                ...formData,
+                                                                amenities: {
+                                                                    ...formData.amenities,
+                                                                    [inventory.id]: {
+                                                                        name: inventory.name,
+                                                                        selected: !!checked,
+                                                                        tag_id: tagId,
+                                                                    },
+                                                                },
+                                                            })
+                                                        }
+                                                    />
+                                                    <label htmlFor={`inventory-${inventory.id}`} className="cursor-pointer">
+                                                        {inventory.name}
+                                                    </label>
+                                                </div>
+                                            );
+                                        })
+                                    )}
                                 </div>
                             </div>
                             {/* <div className="bg-white rounded-lg border-2 p-6 space-y-6">

@@ -108,12 +108,7 @@ export const BookingSetupDetailPage = () => {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState();
   const [selectedBookingFiles, setSelectedBookingFiles] = useState([]);
-  const [galleryImages, setGalleryImages] = useState<Array<{ label: string; images: string[] }>>([
-    { label: '16:9', images: [] },
-    { label: '9:16', images: [] },
-    { label: '1:1', images: [] },
-    { label: '3:2', images: [] }
-  ]);
+  const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [showQr, setShowQr] = useState(false);
   const [qrUrl, setQrUrl] = useState("");
   const [additionalOpen, setAdditionalOpen] = useState(false);
@@ -122,6 +117,8 @@ export const BookingSetupDetailPage = () => {
   const [popoverOpen, setPopoverOpen] = useState<{ [key: string]: boolean }>({});
   const [premiumPercentage, setPremiumPercentage] = useState<{ [key: string]: string }>({});
   const [isPremiumSlots, setIsPremiumSlots] = useState<{ [key: string]: boolean }>({});
+  const [inventories, setInventories] = useState<any[]>([]);
+  const [loadingInventories, setLoadingInventories] = useState(false);
   const [formData, setFormData] = useState({
     facilityName: "",
     isBookable: true,
@@ -134,6 +131,7 @@ export const BookingSetupDetailPage = () => {
     complimentary: false,
     gstPercentage: "",
     sgstPercentage: "",
+    igstPercentage: "",
     perSlotCharge: "",
     bookingAllowedBefore: { day: "", hour: "", minute: "" },
     advanceBooking: { day: "", hour: "", minute: "" },
@@ -144,14 +142,7 @@ export const BookingSetupDetailPage = () => {
     description: "",
     termsConditions: "",
     cancellationText: "",
-    amenities: {
-      tv: false,
-      whiteboard: false,
-      casting: false,
-      smartPenForTV: false,
-      wirelessCharging: false,
-      meetingRoomInventory: false,
-    },
+    amenities: {} as Record<string, boolean>,
     seaterInfo: "Select a seater",
     floorInfo: "Select a floor",
     sharedContentInfo: "",
@@ -264,6 +255,33 @@ export const BookingSetupDetailPage = () => {
     }
   };
 
+  const fetchInventories = async () => {
+    if (inventories.length > 0) return;
+    setLoadingInventories(true);
+    try {
+      const response = await fetch(
+        `https://${baseUrl}/pms/inventories.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+      if (data && Array.isArray(data.inventories)) {
+        setInventories(data.inventories);
+      } else {
+        setInventories([]);
+      }
+    } catch (error) {
+      console.error("Error fetching inventories:", error);
+      setInventories([]);
+    } finally {
+      setLoadingInventories(false);
+    }
+  };
+
   const handleEditClick = (id) => {
     navigate(`/settings/vas/booking/setup/edit/${id}`);
   }
@@ -285,6 +303,7 @@ export const BookingSetupDetailPage = () => {
         complimentary: response.complementary,
         gstPercentage: response.gst,
         sgstPercentage: response.sgst,
+        igstPercentage: response.igst,
         perSlotCharge: response?.facility_charge?.per_slot_charge,
         bookingAllowedBefore: {
           day: response.bb_dhm.d,
@@ -307,18 +326,14 @@ export const BookingSetupDetailPage = () => {
         description: response.description,
         termsConditions: response.terms,
         cancellationText: response.cancellation_policy,
-        amenities: {
-          tv: response.amenity_info[0].selected,
-          whiteboard: response.amenity_info[1].selected,
-          casting: response.amenity_info[2].selected,
-          smartPenForTV: response.amenity_info[3].selected,
-          wirelessCharging: response.amenity_info[4].selected,
-          meetingRoomInventory: response.amenity_info[5].selected,
-        },
+        amenities: response.amenity_info?.reduce((acc, amenity) => {
+          acc[amenity.name] = amenity.selected;
+          return acc;
+        }, {}) || {},
         seaterInfo: response.seater_info,
         floorInfo: response.location_info,
         sharedContentInfo: response.shared_content,
-        slots: response.facility_slots.map((slot) => ({
+        slots: response.facility_slots?.map((slot) => ({
           startTime: { hour: slot.facility_slot.start_hour, minute: slot.facility_slot.start_min },
           breakTimeStart: { hour: slot.facility_slot.break_start_hour, minute: slot.facility_slot.break_start_min },
           breakTimeEnd: { hour: slot.facility_slot.break_end_hour, minute: slot.facility_slot.break_end_min },
@@ -326,10 +341,10 @@ export const BookingSetupDetailPage = () => {
           concurrentSlots: slot.facility_slot.max_bookings,
           slotBy: slot.facility_slot.breakminutes_label,
           wrapTime: slot.facility_slot.wrap_time,
-        })),
+        })) || [],
         chargeSetup: {
-          member: { selected: response.facility_charge.adult_member_charge, adult: response.facility_charge.adult_member_charge, child: response.facility_charge.child_member_charge },
-          guest: { selected: response.facility_charge.adult_guest_charge, adult: response.facility_charge.adult_guest_charge, child: response.facility_charge.child_guest_charge },
+          member: { selected: response.facility_charge?.adult_member_charge, adult: response.facility_charge?.adult_member_charge, child: response.facility_charge?.child_member_charge },
+          guest: { selected: response.facility_charge?.adult_guest_charge, adult: response.facility_charge?.adult_guest_charge, child: response.facility_charge?.child_guest_charge },
           minimumPersonAllowed: response.min_people,
           maximumPersonAllowed: response.max_people,
         },
@@ -340,7 +355,7 @@ export const BookingSetupDetailPage = () => {
           blockReason: response?.facility_blockings[0]?.facility_blocking?.reason,
         },
       });
-      const transformedRules = response.cancellation_rules.map((rule: any) => ({
+      const transformedRules = response.cancellation_rules?.map((rule: any) => ({
         description: rule.description,
         time: {
           type: rule.hour, // You can dynamically determine this if needed
@@ -348,7 +363,7 @@ export const BookingSetupDetailPage = () => {
           day: rule.day,
         },
         deduction: rule.deduction?.toString() || '',
-      }));
+      })) || [];
 
       setCancellationRules([...transformedRules]);
 
@@ -382,27 +397,68 @@ export const BookingSetupDetailPage = () => {
       setQrUrl(response?.qr_code.document);
 
       // Setup gallery images
-      const galleryData = [
-        {
-          label: '1:1',
-          images: response?.gallery_image_1_by_1?.map((item: any) => item.gallery_image_1_by_1?.document) || []
-        },
-        {
-          label: '16:9',
-          images: response?.gallery_image_16_by_9?.map((item: any) => item.gallery_image_16_by_9?.document) || []
-        },
-        {
-          label: '9:16',
-          images: response?.gallery_image_9_by_16?.map((item: any) => item.gallery_image_9_by_16?.document) || []
-        },
-        {
-          label: '3:2',
-          images: response?.gallery_image_3_by_2?.map((item: any) => item.gallery_image_3_by_2?.document) || []
-        }
-      ];
-      setGalleryImages(galleryData);
+      const allGalleryImages: any[] = [];
+      
+      // 1:1 images
+      if (response?.gallery_image_1_by_1 && Array.isArray(response.gallery_image_1_by_1)) {
+        response.gallery_image_1_by_1.forEach((item: any) => {
+          if (item.gallery_image_1_by_1?.document) {
+            allGalleryImages.push({
+              name: `Image ${allGalleryImages.length + 1}`,
+              preview: item.gallery_image_1_by_1.document,
+              ratio: '1:1',
+              enableToApp: true
+            });
+          }
+        });
+      }
+      
+      // 16:9 images
+      if (response?.gallery_image_16_by_9 && Array.isArray(response.gallery_image_16_by_9)) {
+        response.gallery_image_16_by_9.forEach((item: any) => {
+          if (item.gallery_image_16_by_9?.document) {
+            allGalleryImages.push({
+              name: `Image ${allGalleryImages.length + 1}`,
+              preview: item.gallery_image_16_by_9.document,
+              ratio: '16:9',
+              enableToApp: true
+            });
+          }
+        });
+      }
+      
+      // 9:16 images
+      if (response?.gallery_image_9_by_16 && Array.isArray(response.gallery_image_9_by_16)) {
+        response.gallery_image_9_by_16.forEach((item: any) => {
+          if (item.gallery_image_9_by_16?.document) {
+            allGalleryImages.push({
+              name: `Image ${allGalleryImages.length + 1}`,
+              preview: item.gallery_image_9_by_16.document,
+              ratio: '9:16',
+              enableToApp: true
+            });
+          }
+        });
+      }
+      
+      // 3:2 images
+      if (response?.gallery_image_3_by_2 && Array.isArray(response.gallery_image_3_by_2)) {
+        response.gallery_image_3_by_2.forEach((item: any) => {
+          if (item.gallery_image_3_by_2?.document) {
+            allGalleryImages.push({
+              name: `Image ${allGalleryImages.length + 1}`,
+              preview: item.gallery_image_3_by_2.document,
+              ratio: '3:2',
+              enableToApp: true
+            });
+          }
+        });
+      }
+      
+      setGalleryImages(allGalleryImages);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching facility details:", error);
+      console.error("Error details:", error?.response?.data || error.message);
     }
   };
 
@@ -461,6 +517,7 @@ export const BookingSetupDetailPage = () => {
 
   useEffect(() => {
     fetchDepartments();
+    fetchInventories();
     fetchFacilityBookingDetails();
   }, []);
 
@@ -913,6 +970,13 @@ export const BookingSetupDetailPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">IGST (%)</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.igstPercentage || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Per Slot Charge</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
@@ -977,33 +1041,61 @@ export const BookingSetupDetailPage = () => {
 
           {/* Gallery Images */}
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                <Image className="w-4 h-4" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                  <Image className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  GALLERY IMAGES [{galleryImages.length}]
+                </h3>
               </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">GALLERY IMAGES</h3>
             </div>
 
-            <div className="space-y-6">
-              {galleryImages.map((ratio) => (
-                ratio.images && ratio.images.length > 0 && (
-                  <div key={ratio.label} className="space-y-2">
-                    <h4 className="text-sm font-semibold text-gray-700">Aspect Ratio: {ratio.label}</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {ratio.images.map((image, index) => (
-                        <div key={index} className="relative">
-                          <img
-                            src={image}
-                            alt={`gallery-${ratio.label}-${index}`}
-                            className="h-24 w-24 rounded border border-gray-200 object-fit"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )
-              ))}
-            </div>
+            {galleryImages.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-[#E5E0D3]">
+                      <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Image Name</th>
+                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Preview</th>
+                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Ratio</th>
+                      <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Enable to App</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {galleryImages.map((image: any, index: number) => (
+                      <tr key={index} className="border-b hover:bg-gray-50">
+                        <td className="border border-gray-300 px-4 py-3">
+                          <span className="text-gray-900">{image.name || `Image ${index + 1}`}</span>
+                        </td>
+                        <td className="border border-gray-300 px-4 py-3">
+                          <div className="flex justify-center">
+                            <img
+                              src={image.preview}
+                              alt={`gallery-preview-${index}`}
+                              className="h-20 w-20 rounded border border-gray-200 object-cover"
+                            />
+                          </div>
+                        </td>
+                        <td className="border border-gray-300 px-4 py-3 text-center">
+                          {image.ratio || '1:1'}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-3 text-center">
+                          <div className="flex items-center justify-center">
+                            <Checkbox
+                              checked={image.enableToApp ?? true}
+                              disabled
+                              className="w-5 h-5 mx-auto"
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Description */}
@@ -1024,7 +1116,7 @@ export const BookingSetupDetailPage = () => {
           </div>
 
           {/* Terms & Conditions and Cancellation Text */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid  gap-6">
             <div className="bg-white rounded-lg border-2 p-6 space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -1040,24 +1132,9 @@ export const BookingSetupDetailPage = () => {
                 />
               </div>
             </div>
-            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                  <MessageSquareX className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CANCELLATION POLICY*</h3>
-              </div>
-              <div>
-                <Textarea
-                  value={formData.cancellationText}
-                  className="min-h-[100px]"
-                  readOnly
-                />
-              </div>
-            </div>
           </div>
 
-          {/* Cancellation Rules */}
+          {/* Rule Setup */}
           <div className="bg-white rounded-lg border-2 p-6 space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -1078,10 +1155,14 @@ export const BookingSetupDetailPage = () => {
                   key={index}
                   className="grid grid-cols-3 gap-4 mb-2 items-center"
                 >
+                  {/* Description */}
                   <div className="text-sm text-gray-600">
                     {rule.description}
                   </div>
+
+                  {/* Time Type & Value */}
                   <div className="flex gap-2">
+                    {/* Day Input */}
                     <TextField
                       placeholder="Day"
                       size="small"
@@ -1090,19 +1171,23 @@ export const BookingSetupDetailPage = () => {
                       value={rule.time.day}
                       InputProps={{ readOnly: true }}
                     />
+
+                    {/* Type: Hr or Day */}
                     <FormControl size="small" style={{ width: "80px" }}>
                       <Select
                         value={rule.time.type}
                         disabled
                       >
+                        <MenuItem value="Hr">Hr</MenuItem>
                         {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i} value={i}>
-                            {i}
+                          <MenuItem key={i + 1} value={(i + 1).toString()}>
+                            {i + 1}
                           </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
 
+                    {/* Value: 0 - 23 */}
                     <FormControl size="small" style={{ width: "80px" }}>
                       <Select
                         value={rule.time.value}
@@ -1111,14 +1196,16 @@ export const BookingSetupDetailPage = () => {
                         {Array.from({ length: 24 }, (_, i) => (
                           <MenuItem
                             key={i}
-                            value={i}
+                            value={i.toString().padStart(2, "0")}
                           >
-                            {i}
+                            {i.toString().padStart(2, "0")}
                           </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
                   </div>
+
+                  {/* Percentage Input */}
                   <TextField
                     placeholder="%"
                     size="small"
@@ -1129,10 +1216,22 @@ export const BookingSetupDetailPage = () => {
                 </div>
               ))}
             </div>
+
+            <div className="space-y-3">
+              <div className="font-medium text-gray-700">
+                Cancellation Policy
+              </div>
+              <Textarea
+                placeholder="Enter cancellation text"
+                value={formData.cancellationText}
+                disabled
+                className="min-h-[100px]"
+              />
+            </div>
           </div>
 
-          {/* Additional Setup */}
-          <div className={`bg-white rounded-lg border-2 p-6 space-y-6 overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[6rem]'}`}>
+          {/* /* Additional Setup */ }
+          <div className={`bg-white rounded-lg border-2 p-6 space-y-6 overflow-hidden ${additionalOpen ? "h-auto" : "h-[6rem]"}`}>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -1161,56 +1260,27 @@ export const BookingSetupDetailPage = () => {
                   <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE AMENITY INFO</h3>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4" id="amenities">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="tv"
-                      checked={formData.amenities.tv}
-                      disabled
-                    />
-                    <label htmlFor="tv">TV</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="whiteboard"
-                      checked={formData.amenities.whiteboard}
-                      disabled
-                    />
-                    <label htmlFor="whiteboard">Whiteboard</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="casting"
-                      checked={formData.amenities.casting}
-                      disabled
-                    />
-                    <label htmlFor="casting">Casting</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="smartPenForTV"
-                      checked={formData.amenities.smartPenForTV}
-                      disabled
-                    />
-                    <label htmlFor="smartPenForTV">Smart Pen for TV</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="wirelessCharging"
-                      checked={formData.amenities.wirelessCharging}
-                      disabled
-                    />
-                    <label htmlFor="wirelessCharging">Wireless Charging</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="meetingRoomInventory"
-                      checked={formData.amenities.meetingRoomInventory}
-                      disabled
-                    />
-                    <label htmlFor="meetingRoomInventory">
-                      Meeting Room Inventory
-                    </label>
-                  </div>
+                  {loadingInventories ? (
+                    <div className="col-span-full text-center text-gray-500">Loading inventories...</div>
+                  ) : inventories.length === 0 ? (
+                    <div className="col-span-full text-center text-gray-500">No inventories available</div>
+                  ) : (
+                    inventories.map((inventory) => {
+                      const isSelected = formData.amenities[inventory.name] || false;
+                      return (
+                        <div key={inventory.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`inventory-${inventory.id}`}
+                            checked={isSelected}
+                            disabled
+                          />
+                          <label htmlFor={`inventory-${inventory.id}`}>
+                            {inventory.name}
+                          </label>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
@@ -1329,6 +1399,6 @@ export const BookingSetupDetailPage = () => {
         qrCode={qrUrl}
         handleDownloadQR={handleDownloadQr}
       />
-    </ThemeProvider >
+    </ThemeProvider>
   );
 };
