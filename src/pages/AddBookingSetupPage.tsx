@@ -725,9 +725,13 @@ export const AddBookingSetupPage = () => {
                   label="Facility Name"
                   placeholder="Enter Facility Name"
                   value={formData.facilityName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, facilityName: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Only allow letters and spaces, no numbers
+                    if (/^[a-zA-Z\s]*$/.test(value)) {
+                      setFormData({ ...formData, facilityName: value });
+                    }
+                  }}
                   variant="outlined"
                   required
                   InputLabelProps={{
@@ -863,18 +867,22 @@ export const AddBookingSetupPage = () => {
                           size="small"
                           variant="outlined"
                           value={formData.chargeSetup.member.adult}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              chargeSetup: {
-                                ...formData.chargeSetup,
-                                member: {
-                                  ...formData.chargeSetup.member,
-                                  adult: e.target.value,
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Allow only positive numbers with max 2 decimal places
+                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                              setFormData({
+                                ...formData,
+                                chargeSetup: {
+                                  ...formData.chargeSetup,
+                                  member: {
+                                    ...formData.chargeSetup.member,
+                                    adult: value,
+                                  },
                                 },
-                              },
-                            })
-                          }
+                              });
+                            }
+                          }}
                           className="w-full max-w-[200px]"
                         />
                       </div>
@@ -961,18 +969,22 @@ export const AddBookingSetupPage = () => {
                           size="small"
                           variant="outlined"
                           value={formData.chargeSetup.guest.adult}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              chargeSetup: {
-                                ...formData.chargeSetup,
-                                guest: {
-                                  ...formData.chargeSetup.guest,
-                                  adult: e.target.value,
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Allow only positive numbers with max 2 decimal places
+                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                              setFormData({
+                                ...formData,
+                                chargeSetup: {
+                                  ...formData.chargeSetup,
+                                  guest: {
+                                    ...formData.chargeSetup.guest,
+                                    adult: value,
+                                  },
                                 },
-                              },
-                            })
-                          }
+                              });
+                            }
+                          }}
                           className="w-full max-w-[200px]"
                         />
                       </div>
@@ -1026,16 +1038,25 @@ export const AddBookingSetupPage = () => {
                   size="small"
                   variant="outlined"
                   value={formData.chargeSetup.minimumPersonAllowed}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      chargeSetup: {
-                        ...formData.chargeSetup,
-                        minimumPersonAllowed: e.target.value,
-                      },
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only positive integers (no decimals, no negatives)
+                    if (value === '' || /^[1-9]\d*$/.test(value)) {
+                      setFormData({
+                        ...formData,
+                        chargeSetup: {
+                          ...formData.chargeSetup,
+                          minimumPersonAllowed: value,
+                        },
+                      });
+                      // Check if maximum is valid after updating minimum
+                      if (formData.chargeSetup.maximumPersonAllowed && parseInt(formData.chargeSetup.maximumPersonAllowed) <= parseInt(value)) {
+                        toast.error("Maximum Person Allowed must be greater than Minimum Person Allowed");
+                      }
+                    }
+                  }}
                   className="w-32"
+                  placeholder="1"
                 />
               </div>
               <div className="flex items-center gap-3">
@@ -1044,16 +1065,25 @@ export const AddBookingSetupPage = () => {
                   size="small"
                   variant="outlined"
                   value={formData.chargeSetup.maximumPersonAllowed}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      chargeSetup: {
-                        ...formData.chargeSetup,
-                        maximumPersonAllowed: e.target.value,
-                      },
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only positive integers (no decimals, no negatives)
+                    if (value === '' || /^[1-9]\d*$/.test(value)) {
+                      // Check if value is greater than minimum
+                      if (formData.chargeSetup.minimumPersonAllowed && parseInt(value) <= parseInt(formData.chargeSetup.minimumPersonAllowed)) {
+                        toast.error("Maximum Person Allowed must be greater than Minimum Person Allowed");
+                      }
+                      setFormData({
+                        ...formData,
+                        chargeSetup: {
+                          ...formData.chargeSetup,
+                          maximumPersonAllowed: value,
+                        },
+                      });
+                    }
+                  }}
                   className="w-32"
+                  placeholder="1"
                 />
               </div>
             </div>
@@ -1258,9 +1288,13 @@ export const AddBookingSetupPage = () => {
                     size="small"
                     value={slot.concurrentSlots}
                     onChange={(e) => {
-                      const newSlots = [...formData.slots];
-                      newSlots[index].concurrentSlots = e.target.value;
-                      setFormData({ ...formData, slots: newSlots });
+                      const value = e.target.value;
+                      // Allow only positive integers (no decimals, no negatives)
+                      if (value === '' || /^[1-9]\d*$/.test(value)) {
+                        const newSlots = [...formData.slots];
+                        newSlots[index].concurrentSlots = value;
+                        setFormData({ ...formData, slots: newSlots });
+                      }
                     }}
                     variant="outlined"
                   />
@@ -1286,9 +1320,13 @@ export const AddBookingSetupPage = () => {
                     size="small"
                     value={slot.wrapTime}
                     onChange={(e) => {
-                      const newSlots = [...formData.slots];
-                      newSlots[index].wrapTime = e.target.value;
-                      setFormData({ ...formData, slots: newSlots });
+                      const value = e.target.value;
+                      // Allow only positive integers (no decimals, no negatives)
+                      if (value === '' || /^\d+$/.test(value)) {
+                        const newSlots = [...formData.slots];
+                        newSlots[index].wrapTime = value;
+                        setFormData({ ...formData, slots: newSlots });
+                      }
                     }}
                     variant="outlined"
                   />
@@ -1310,51 +1348,60 @@ export const AddBookingSetupPage = () => {
                       style={{ width: "80px" }}
                       variant="outlined"
                       value={formData.bookingAllowedBefore.day}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          bookingAllowedBefore: {
-                            ...formData.bookingAllowedBefore,
-                            day: e.target.value,
-                          },
-                        })
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setFormData({
+                            ...formData,
+                            bookingAllowedBefore: {
+                              ...formData.bookingAllowedBefore,
+                              day: value,
+                            },
+                          });
+                        }
+                      }}
                     />
-                    <span>d</span>
+                    <span>DD</span>
                     <TextField
                       placeholder="Hour"
                       size="small"
                       style={{ width: "80px" }}
                       variant="outlined"
                       value={formData.bookingAllowedBefore.hour}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          bookingAllowedBefore: {
-                            ...formData.bookingAllowedBefore,
-                            hour: e.target.value,
-                          },
-                        })
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setFormData({
+                            ...formData,
+                            bookingAllowedBefore: {
+                              ...formData.bookingAllowedBefore,
+                              hour: value,
+                            },
+                          });
+                        }
+                      }}
                     />
-                    <span>h</span>
+                    <span>HH</span>
                     <TextField
                       placeholder="Mins"
                       size="small"
                       style={{ width: "80px" }}
                       variant="outlined"
                       value={formData.bookingAllowedBefore.minute}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          bookingAllowedBefore: {
-                            ...formData.bookingAllowedBefore,
-                            minute: e.target.value,
-                          },
-                        })
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setFormData({
+                            ...formData,
+                            bookingAllowedBefore: {
+                              ...formData.bookingAllowedBefore,
+                              minute: value,
+                            },
+                          });
+                        }
+                      }}
                     />
-                    <span>m</span>
+                    <span>MM</span>
                   </div>
                 </div>
                 <div>
@@ -1368,51 +1415,60 @@ export const AddBookingSetupPage = () => {
                       style={{ width: "80px" }}
                       variant="outlined"
                       value={formData.advanceBooking.day}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          advanceBooking: {
-                            ...formData.advanceBooking,
-                            day: e.target.value,
-                          },
-                        })
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setFormData({
+                            ...formData,
+                            advanceBooking: {
+                              ...formData.advanceBooking,
+                              day: value,
+                            },
+                          });
+                        }
+                      }}
                     />
-                    <span>d</span>
+                    <span>DD</span>
                     <TextField
                       placeholder="Hour"
                       size="small"
                       style={{ width: "80px" }}
                       variant="outlined"
                       value={formData.advanceBooking.hour}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          advanceBooking: {
-                            ...formData.advanceBooking,
-                            hour: e.target.value,
-                          },
-                        })
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setFormData({
+                            ...formData,
+                            advanceBooking: {
+                              ...formData.advanceBooking,
+                              hour: value,
+                            },
+                          });
+                        }
+                      }}
                     />
-                    <span>h</span>
+                    <span>HH</span>
                     <TextField
                       placeholder="Mins"
                       size="small"
                       style={{ width: "80px" }}
                       variant="outlined"
                       value={formData.advanceBooking.minute}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          advanceBooking: {
-                            ...formData.advanceBooking,
-                            minute: e.target.value,
-                          },
-                        })
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setFormData({
+                            ...formData,
+                            advanceBooking: {
+                              ...formData.advanceBooking,
+                              minute: value,
+                            },
+                          });
+                        }
+                      }}
                     />
-                    <span>m</span>
+                    <span>MM</span>
                   </div>
                 </div>
                 <div>
@@ -1426,51 +1482,60 @@ export const AddBookingSetupPage = () => {
                       style={{ width: "80px" }}
                       variant="outlined"
                       value={formData.canCancelBefore.day}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          canCancelBefore: {
-                            ...formData.canCancelBefore,
-                            day: e.target.value,
-                          },
-                        })
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setFormData({
+                            ...formData,
+                            canCancelBefore: {
+                              ...formData.canCancelBefore,
+                              day: value,
+                            },
+                          });
+                        }
+                      }}
                     />
-                    <span>d</span>
+                    <span>DD</span>
                     <TextField
                       placeholder="Hour"
                       size="small"
                       style={{ width: "80px" }}
                       variant="outlined"
                       value={formData.canCancelBefore.hour}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          canCancelBefore: {
-                            ...formData.canCancelBefore,
-                            hour: e.target.value,
-                          },
-                        })
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setFormData({
+                            ...formData,
+                            canCancelBefore: {
+                              ...formData.canCancelBefore,
+                              hour: value,
+                            },
+                          });
+                        }
+                      }}
                     />
-                    <span>h</span>
+                    <span>HH</span>
                     <TextField
                       placeholder="Mins"
                       size="small"
                       style={{ width: "80px" }}
                       variant="outlined"
                       value={formData.canCancelBefore.minute}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          canCancelBefore: {
-                            ...formData.canCancelBefore,
-                            minute: e.target.value,
-                          },
-                        })
-                      }
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d+$/.test(value)) {
+                          setFormData({
+                            ...formData,
+                            canCancelBefore: {
+                              ...formData.canCancelBefore,
+                              minute: value,
+                            },
+                          });
+                        }
+                      }}
                     />
-                    <span>m</span>
+                    <span>MM</span>
                   </div>
                 </div>
               </div>
@@ -1518,12 +1583,16 @@ export const AddBookingSetupPage = () => {
                   <TextField
                     placeholder=""
                     value={formData.facilityBookedTimes}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        facilityBookedTimes: e.target.value,
-                      })
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow only positive integers (no decimals, no negatives)
+                      if (value === '' || /^[1-9]\d*$/.test(value)) {
+                        setFormData({
+                          ...formData,
+                          facilityBookedTimes: value,
+                        });
+                      }
+                    }}
                     variant="outlined"
                     size="small"
                     style={{ width: "80px" }}
