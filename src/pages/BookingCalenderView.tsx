@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
 import axios from "axios";
-import { ArrowUpDown, Bell, ChevronLeft, ChevronRight, Filter, Plus, Search } from "lucide-react";
+import { ArrowUpDown, Bell, ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -85,7 +85,7 @@ const BookingCalenderView = () => {
                 const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
                 const dd = String(dateObj.getDate()).padStart(2, "0");
                 const fullDate = `${yyyy}-${mm}-${dd}`;
-                return { date: formattedDate, day: dayName, isOff, fullDate };
+                return { date: formattedDate, day: dayName, isOff, fullDate, isBlocked: false };
             });
 
             setDates(generatedDates);
@@ -179,7 +179,8 @@ const BookingCalenderView = () => {
                 ...prev,
                 [facilityId]: {
                     booked: response.data.booked || [],
-                    vacant: response.data.vacant || []
+                    vacant: response.data.vacant || [],
+                    is_blocked: response.data.is_blocked || false
                 }
             }));
         } catch (error) {
@@ -349,22 +350,27 @@ const BookingCalenderView = () => {
                             {dates.map((dateInfo, idx) => (
                                 <div
                                     key={idx}
-                                    onClick={() => !dateInfo.isOff && (
+                                    onClick={() => !dateInfo.isOff && !dateInfo.isBlocked && (
                                         setSelectedDate(dateInfo.date),
                                         setSelectedDateForApi(dateInfo.fullDate)
                                     )}
                                     className={`relative border bg-[rgba(86,86,86,0.2)] border-gray-400 px-2 py-1 text-center w-[110px] transition-colors ${selectedDate === dateInfo.date
                                         ? 'bg-[rgba(86,86,86,0.3)] border-b-[2px] !border-b-[#C72030]'
-                                        : dateInfo.isOff
+                                        : dateInfo.isOff || dateInfo.isBlocked
                                             ? '!bg-gray-100 cursor-not-allowed'
                                             : '!bg-white hover:bg-gray-50 cursor-pointer'
                                         }`}
                                 >
-                                    {selectedDate === dateInfo.date && (
+                                    {selectedDate === dateInfo.date && !dateInfo.isBlocked && (
                                         <span className="absolute top-0 left-0 w-0 h-0 border-t-[20px] border-t-[#C72030] border-r-[10px] border-r-transparent"></span>
                                     )}
+                                    {dateInfo.isBlocked && (
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <X className="w-8 h-8 text-red-600" strokeWidth={3} />
+                                        </div>
+                                    )}
                                     <div className="text-xs">{dateInfo.date}</div>
-                                    <div className="text-sm font-medium">{dateInfo.day}{dateInfo.isOff && <span className="text-xs text-gray-500 ml-2">OFF</span>}</div>
+                                    <div className="text-sm font-medium">{dateInfo.day}{dateInfo.isOff && <span className="text-xs text-gray-500 ml-2">OFF</span>}{dateInfo.isBlocked && <span className="text-xs text-red-600 ml-2">BLOCKED</span>}</div>
                                 </div>
                             ))}
                         </div>
@@ -443,13 +449,14 @@ const BookingCalenderView = () => {
                                                                 (slotStart <= bookedStart && slotEnd >= bookedEnd);
                                                         });
                                                         const slotBooked = !!bookedSlot;
+                                                        const isSlotBlocked = facilityBookings.is_blocked || bookedSlot?.is_blocked || false;
 
                                                         return (
                                                             <div
                                                                 key={slot.id}
-                                                                onClick={() => handleSlotClick(facility.id, slot.id, slotBooked, bookedSlot?.facility_booking_id, slot)}
-                                                                className={`flex-1 border border-gray-200 transition-colors
-                                                                    ${selectedDateInfo?.isOff
+                                                                onClick={() => !isSlotBlocked && handleSlotClick(facility.id, slot.id, slotBooked, bookedSlot?.facility_booking_id, slot)}
+                                                                className={`relative flex-1 border border-gray-200 transition-colors
+                                                                    ${selectedDateInfo?.isOff || isSlotBlocked
                                                                         ? "bg-gray-100 cursor-not-allowed"
                                                                         : slotBooked
                                                                             ? "bg-gray-400 cursor-pointer hover:bg-gray-500"
@@ -459,6 +466,11 @@ const BookingCalenderView = () => {
                                                                     ${slot.quarter === 3 ? 'border-r border-r-gray-400' : ''}
                                                                 `}
                                                             >
+                                                                {isSlotBlocked && (
+                                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                                        <X className="w-3 h-3 text-red-600" strokeWidth={3} />
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         );
                                                     })}
