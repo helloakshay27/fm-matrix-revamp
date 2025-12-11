@@ -350,6 +350,17 @@ export const AddGroupMembershipPage = () => {
     const [cgstPercentage, setCgstPercentage] = useState<string>('9');
     const [sgstPercentage, setSgstPercentage] = useState<string>('9');
 
+    // Add updateMember function after state declarations
+    const updateMember = (memberId: string, updates: Partial<MemberData>) => {
+        setMembers(prevMembers =>
+            prevMembers.map(member =>
+                member.id === memberId
+                    ? { ...member, ...updates }
+                    : member
+            )
+        );
+    };
+
     // Load users on component mount
     useEffect(() => {
         loadUsers();
@@ -523,7 +534,7 @@ export const AddGroupMembershipPage = () => {
                     const subtotalAmount = parseFloat(paymentDetail.base_amount) || 0;
                     if (subtotalAmount > 0) {
                         const sgstAmt = parseFloat(paymentDetail.sgst) || 0;
-                        const sgstPct = (sgstAmt / subtotalAmount) * 100;
+                        const sgstPct = (sgtAmt / subtotalAmount) * 100;
                         setSgstPercentage(sgstPct.toString());
                     }
                 }
@@ -1301,252 +1312,31 @@ export const AddGroupMembershipPage = () => {
         corporateInterest: '',
     });
 
-    // Card-specific add member functions
-    const handleAddUserMember = () => {
-        if (userMemberIds.length >= userLimit) {
+    // Replace the card-specific add/remove functions with a single unified approach
+    const handleAddMember = () => {
+        if (members.length >= userLimit) {
             toast.error(`Maximum ${userLimit} members allowed for this plan`);
             return;
         }
         const newMember = createNewMember();
         setMembers([...members, newMember]);
-        setUserMemberIds([...userMemberIds, newMember.id]);
-        toast.success(`User ${userMemberIds.length + 1} added`);
+        toast.success(`Member ${members.length + 1} added`);
     };
 
-    const handleAddAddressMember = () => {
-        if (addressMemberIds.length >= userLimit) {
-            toast.error(`Maximum ${userLimit} members allowed for this plan`);
+    const handleRemoveMember = (memberId: string) => {
+        if (members.length <= 1) {
+            toast.error('At least one member is required');
             return;
         }
-        // Try to reuse an existing member from user selection that's not already in address
-        const existingMember = getUserMembers().find(m => !addressMemberIds.includes(m.id));
-        if (existingMember) {
-            setAddressMemberIds([...addressMemberIds, existingMember.id]);
-            toast.success(`Address for ${existingMember.formData.firstName || 'Member'} ${existingMember.formData.lastName || addressMemberIds.length + 1} added`);
-        } else {
-            // Create new member if no existing ones available
-            const newMember = createNewMember();
-            setMembers([...members, newMember]);
-            setAddressMemberIds([...addressMemberIds, newMember.id]);
-            toast.success(`Address ${addressMemberIds.length + 1} added`);
-        }
+        setMembers(members.filter(m => m.id !== memberId));
+        toast.success('Member removed');
     };
 
-    const handleAddDocumentMember = () => {
-        if (documentMemberIds.length >= userLimit) {
-            toast.error(`Maximum ${userLimit} members allowed for this plan`);
-            return;
-        }
-        // Try to reuse an existing member from user selection that's not already in documents
-        const existingMember = getUserMembers().find(m => !documentMemberIds.includes(m.id));
-        if (existingMember) {
-            setDocumentMemberIds([...documentMemberIds, existingMember.id]);
-            toast.success(`Documents for ${existingMember.formData.firstName || 'Member'} ${existingMember.formData.lastName || documentMemberIds.length + 1} added`);
-        } else {
-            // Create new member if no existing ones available
-            const newMember = createNewMember();
-            setMembers([...members, newMember]);
-            setDocumentMemberIds([...documentMemberIds, newMember.id]);
-            toast.success(`Document ${documentMemberIds.length + 1} added`);
-        }
-    };
-
-    const handleAddHealthMember = () => {
-        if (healthMemberIds.length >= userLimit) {
-            toast.error(`Maximum ${userLimit} members allowed for this plan`);
-            return;
-        }
-        // Try to reuse an existing member from user selection that's not already in health
-        const existingMember = getUserMembers().find(m => !healthMemberIds.includes(m.id));
-        if (existingMember) {
-            setHealthMemberIds([...healthMemberIds, existingMember.id]);
-            toast.success(`Health info for ${existingMember.formData.firstName || 'Member'} ${existingMember.formData.lastName || healthMemberIds.length + 1} added`);
-        } else {
-            // Create new member if no existing ones available
-            const newMember = createNewMember();
-            setMembers([...members, newMember]);
-            setHealthMemberIds([...healthMemberIds, newMember.id]);
-            toast.success(`Health Info ${healthMemberIds.length + 1} added`);
-        }
-    };
-
-    const handleAddActivityMember = () => {
-        if (activityMemberIds.length >= userLimit) {
-            toast.error(`Maximum ${userLimit} members allowed for this plan`);
-            return;
-        }
-        // Try to reuse an existing member from user selection that's not already in activity
-        const existingMember = getUserMembers().find(m => !activityMemberIds.includes(m.id));
-        if (existingMember) {
-            setActivityMemberIds([...activityMemberIds, existingMember.id]);
-            toast.success(`Activity interests for ${existingMember.formData.firstName || 'Member'} ${existingMember.formData.lastName || activityMemberIds.length + 1} added`);
-        } else {
-            // Create new member if no existing ones available
-            const newMember = createNewMember();
-            setMembers([...members, newMember]);
-            setActivityMemberIds([...activityMemberIds, newMember.id]);
-            toast.success(`Activity Interests ${activityMemberIds.length + 1} added`);
-        }
-    };
-
-    const handleAddLifestyleMember = () => {
-        if (lifestyleMemberIds.length >= userLimit) {
-            toast.error(`Maximum ${userLimit} members allowed for this plan`);
-            return;
-        }
-        // Try to reuse an existing member from user selection that's not already in lifestyle
-        const existingMember = getUserMembers().find(m => !lifestyleMemberIds.includes(m.id));
-        if (existingMember) {
-            setLifestyleMemberIds([...lifestyleMemberIds, existingMember.id]);
-            toast.success(`Lifestyle info for ${existingMember.formData.firstName || 'Member'} ${existingMember.formData.lastName || lifestyleMemberIds.length + 1} added`);
-        } else {
-            // Create new member if no existing ones available
-            const newMember = createNewMember();
-            setMembers([...members, newMember]);
-            setLifestyleMemberIds([...lifestyleMemberIds, newMember.id]);
-            toast.success(`Lifestyle Info ${lifestyleMemberIds.length + 1} added`);
-        }
-    };
-
-    const handleAddOccupationMember = () => {
-        if (occupationMemberIds.length >= userLimit) {
-            toast.error(`Maximum ${userLimit} members allowed for this plan`);
-            return;
-        }
-        // Try to reuse an existing member from user selection that's not already in occupation
-        const existingMember = getUserMembers().find(m => !occupationMemberIds.includes(m.id));
-        if (existingMember) {
-            setOccupationMemberIds([...occupationMemberIds, existingMember.id]);
-            toast.success(`Occupation info for ${existingMember.formData.firstName || 'Member'} ${existingMember.formData.lastName || occupationMemberIds.length + 1} added`);
-        } else {
-            // Create new member if no existing ones available
-            const newMember = createNewMember();
-            setMembers([...members, newMember]);
-            setOccupationMemberIds([...occupationMemberIds, newMember.id]);
-            toast.success(`Occupation Info ${occupationMemberIds.length + 1} added`);
-        }
-    };
-
-    // Card-specific remove member functions
-    const handleRemoveUserMember = (memberId: string) => {
-        setUserMemberIds(userMemberIds.filter(id => id !== memberId));
-        // Only remove from members if not used in other cards
-        const usedInOtherCards = [
-            ...addressMemberIds, ...documentMemberIds, ...healthMemberIds,
-            ...activityMemberIds, ...lifestyleMemberIds, ...occupationMemberIds
-        ].includes(memberId);
-        if (!usedInOtherCards) {
-            setMembers(members.filter(m => m.id !== memberId));
-        }
-        toast.success('User removed');
-    };
-
-    const handleRemoveAddressMember = (memberId: string) => {
-        setAddressMemberIds(addressMemberIds.filter(id => id !== memberId));
-        const usedInOtherCards = [
-            ...userMemberIds, ...documentMemberIds, ...healthMemberIds,
-            ...activityMemberIds, ...lifestyleMemberIds, ...occupationMemberIds
-        ].includes(memberId);
-        if (!usedInOtherCards) {
-            setMembers(members.filter(m => m.id !== memberId));
-        }
-        toast.success('Address removed');
-    };
-
-    const handleRemoveDocumentMember = (memberId: string) => {
-        setDocumentMemberIds(documentMemberIds.filter(id => id !== memberId));
-        const usedInOtherCards = [
-            ...userMemberIds, ...addressMemberIds, ...healthMemberIds,
-            ...activityMemberIds, ...lifestyleMemberIds, ...occupationMemberIds
-        ].includes(memberId);
-        if (!usedInOtherCards) {
-            setMembers(members.filter(m => m.id !== memberId));
-        }
-        toast.success('Document removed');
-    };
-
-    const handleRemoveHealthMember = (memberId: string) => {
-        setHealthMemberIds(healthMemberIds.filter(id => id !== memberId));
-        const usedInOtherCards = [
-            ...userMemberIds, ...addressMemberIds, ...documentMemberIds,
-            ...activityMemberIds, ...lifestyleMemberIds, ...occupationMemberIds
-        ].includes(memberId);
-        if (!usedInOtherCards) {
-            setMembers(members.filter(m => m.id !== memberId));
-        }
-        toast.success('Health Info removed');
-    };
-
-    const handleRemoveActivityMember = (memberId: string) => {
-        setActivityMemberIds(activityMemberIds.filter(id => id !== memberId));
-        const usedInOtherCards = [
-            ...userMemberIds, ...addressMemberIds, ...documentMemberIds,
-            ...healthMemberIds, ...lifestyleMemberIds, ...occupationMemberIds
-        ].includes(memberId);
-        if (!usedInOtherCards) {
-            setMembers(members.filter(m => m.id !== memberId));
-        }
-        toast.success('Activity Interests removed');
-    };
-
-    const handleRemoveLifestyleMember = (memberId: string) => {
-        setLifestyleMemberIds(lifestyleMemberIds.filter(id => id !== memberId));
-        const usedInOtherCards = [
-            ...userMemberIds, ...addressMemberIds, ...documentMemberIds,
-            ...healthMemberIds, ...activityMemberIds, ...occupationMemberIds
-        ].includes(memberId);
-        if (!usedInOtherCards) {
-            setMembers(members.filter(m => m.id !== memberId));
-        }
-        toast.success('Lifestyle Info removed');
-    };
-
-    const handleRemoveOccupationMember = (memberId: string) => {
-        setOccupationMemberIds(occupationMemberIds.filter(id => id !== memberId));
-        const usedInOtherCards = [
-            ...userMemberIds, ...addressMemberIds, ...documentMemberIds,
-            ...healthMemberIds, ...activityMemberIds, ...lifestyleMemberIds
-        ].includes(memberId);
-        if (!usedInOtherCards) {
-            setMembers(members.filter(m => m.id !== memberId));
-        }
-        toast.success('Occupation Info removed');
-    };
-
-    // Update member function (works for all cards)
-    const updateMember = (memberId: string, updates: Partial<MemberData>) => {
-        setMembers(members.map(m => m.id === memberId ? { ...m, ...updates } : m));
-    };
-
-    // Copy data from previous member functions
-    const copyUserDataFromPrevious = (currentMemberIndex: number) => {
-        if (currentMemberIndex === 0) return;
-        const userMembers = getUserMembers();
-        const previousMember = userMembers[currentMemberIndex - 1];
-        const currentMember = userMembers[currentMemberIndex];
-
-        updateMember(currentMember.id, {
-            userSelectionMode: previousMember.userSelectionMode,
-            selectedUser: previousMember.selectedUser,
-            selectedUserId: previousMember.selectedUserId,
-            formData: {
-                ...currentMember.formData,
-                firstName: previousMember.formData.firstName,
-                lastName: previousMember.formData.lastName,
-                dateOfBirth: previousMember.formData.dateOfBirth,
-                gender: previousMember.formData.gender,
-                email: previousMember.formData.email,
-                mobile: previousMember.formData.mobile,
-            }
-        });
-        toast.success('User data copied from previous member');
-    };
-
+    // Copy address data only from previous member
     const copyAddressFromPrevious = (currentMemberIndex: number) => {
         if (currentMemberIndex === 0) return;
-        const addressMembers = getAddressMembers();
-        const previousMember = addressMembers[currentMemberIndex - 1];
-        const currentMember = addressMembers[currentMemberIndex];
+        const previousMember = members[currentMemberIndex - 1];
+        const currentMember = members[currentMemberIndex];
 
         updateMember(currentMember.id, {
             formData: {
@@ -1560,67 +1350,38 @@ export const AddGroupMembershipPage = () => {
                 address_type: previousMember.formData.address_type,
             }
         });
-        toast.success('Address data copied from previous member');
+        toast.success('Address copied from previous member');
     };
 
-    const copyHealthInfoFromPrevious = (currentMemberIndex: number) => {
+    // Copy all data from previous member
+    const copyAllDataFromPrevious = (currentMemberIndex: number) => {
         if (currentMemberIndex === 0) return;
-        const healthMembers = getHealthMembers();
-        const previousMember = healthMembers[currentMemberIndex - 1];
-        const currentMember = healthMembers[currentMemberIndex];
+        const previousMember = members[currentMemberIndex - 1];
+        const currentMember = members[currentMemberIndex];
 
         updateMember(currentMember.id, {
+            userSelectionMode: previousMember.userSelectionMode,
+            selectedUser: previousMember.selectedUser,
+            selectedUserId: previousMember.selectedUserId,
+            formData: { ...previousMember.formData },
             hasInjuries: previousMember.hasInjuries,
             injuryDetails: previousMember.injuryDetails,
             hasPhysicalRestrictions: previousMember.hasPhysicalRestrictions,
             hasCurrentMedication: previousMember.hasCurrentMedication,
-        });
-        toast.success('Health info copied from previous member');
-    };
-
-    const copyActivityInterestsFromPrevious = (currentMemberIndex: number) => {
-        if (currentMemberIndex === 0) return;
-        const activityMembers = getActivityMembers();
-        const previousMember = activityMembers[currentMemberIndex - 1];
-        const currentMember = activityMembers[currentMemberIndex];
-
-        updateMember(currentMember.id, {
+            pilatesExperience: previousMember.pilatesExperience,
             fitnessGoals: [...previousMember.fitnessGoals],
             fitnessGoalsOther: previousMember.fitnessGoalsOther,
             interestedSessions: [...previousMember.interestedSessions],
             interestedSessionsOther: previousMember.interestedSessionsOther,
-            pilatesExperience: previousMember.pilatesExperience,
-        });
-        toast.success('Activity interests copied from previous member');
-    };
-
-    const copyLifestyleInfoFromPrevious = (currentMemberIndex: number) => {
-        if (currentMemberIndex === 0) return;
-        const lifestyleMembers = getLifestyleMembers();
-        const previousMember = lifestyleMembers[currentMemberIndex - 1];
-        const currentMember = lifestyleMembers[currentMemberIndex];
-
-        updateMember(currentMember.id, {
             heardAbout: previousMember.heardAbout,
             motivations: [...previousMember.motivations],
             updatePreferences: [...previousMember.updatePreferences],
             communicationChannel: [...previousMember.communicationChannel],
-        });
-        toast.success('Lifestyle info copied from previous member');
-    };
-
-    const copyOccupationFromPrevious = (currentMemberIndex: number) => {
-        if (currentMemberIndex === 0) return;
-        const occupationMembers = getOccupationMembers();
-        const previousMember = occupationMembers[currentMemberIndex - 1];
-        const currentMember = occupationMembers[currentMemberIndex];
-
-        updateMember(currentMember.id, {
             profession: previousMember.profession,
             companyName: previousMember.companyName,
             corporateInterest: previousMember.corporateInterest,
         });
-        toast.success('Occupation data copied from previous member');
+        toast.success('All data copied from previous member');
     };
 
     // Calculate total cost with discount
@@ -1671,62 +1432,67 @@ export const AddGroupMembershipPage = () => {
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        {/* Step 1: User Details and Forms */}
+                        {/* Step 2: Member Details Forms */}
                         {currentStep === 2 && (
                             <>
-                                {/* Card 1: User Selection Mode */}
+                                {/* Header with Add Member Button */}
                                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h2 className="text-lg font-semibold text-[#1a1a1a]">User Selection</h2>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h2 className="text-lg font-semibold text-[#1a1a1a]">Group Members</h2>
+                                            <p className="text-sm text-gray-500 mt-1">Add and manage all members in this group</p>
+                                        </div>
                                         <Button
-                                            onClick={handleAddUserMember}
+                                            onClick={handleAddMember}
                                             size="sm"
                                             className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                                            disabled={members.length >= userLimit}
                                         >
-                                            <span className="mr-1">+</span> Add User ({getUserMembers().length}/{userLimit})
+                                            <span className="mr-1">+</span> Add Member ({members.length}/{userLimit})
                                         </Button>
                                     </div>
+                                </div>
 
-                                    {/* Members List */}
-                                    {getUserMembers().map((member, memberIndex) => (
-                                        <div key={member.id} className={`${memberIndex > 0 ? 'mt-6 pt-6 border-t border-gray-200' : ''}`}>
-                                            {/* Member Header */}
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="bg-[#C72030] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold">
-                                                        {memberIndex + 1}
-                                                    </div>
-                                                    <span className="font-medium text-gray-700">
+                                {/* Members List - Each member has all sections */}
+                                {members.map((member, memberIndex) => (
+                                    <div key={member.id} className="bg-white rounded-lg shadow-sm border-2 border-gray-200 p-6">
+                                        {/* Member Header */}
+                                        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-[#C72030] text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold">
+                                                    {memberIndex + 1}
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-lg font-semibold text-[#1a1a1a]">
                                                         {member.formData.firstName && member.formData.lastName
                                                             ? `${member.formData.firstName} ${member.formData.lastName}`
                                                             : `Member ${memberIndex + 1}`}
-                                                    </span>
+                                                    </h3>
+                                                    <p className="text-sm text-gray-500">
+                                                        {member.formData.email || 'No email provided'}
+                                                    </p>
                                                 </div>
-                                                {getUserMembers().length > 0 && (
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {members.length > 1 && (
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => handleRemoveUserMember(member.id)}
-                                                        className="text-red-600 hover:text-red-700"
+                                                        onClick={() => handleRemoveMember(member.id)}
+                                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                                     >
                                                         <X className="w-4 h-4 mr-1" /> Remove
                                                     </Button>
                                                 )}
                                             </div>
+                                        </div>
 
-                                            {/* Copy from Previous Button */}
-                                            {/* {memberIndex > 0 && (
-                        <div className="mb-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => copyUserDataFromPrevious(memberIndex)}
-                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                          >
-                            <Copy className="w-4 h-4 mr-1" /> Copy User Data from Member {memberIndex}
-                          </Button>
-                        </div>
-                      )} */}
+                                        {/* Section 1: User Selection */}
+                                        <div className="mb-8">
+                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">1</div>
+                                                User Selection
+                                            </h4>
 
                                             {/* User Selection Mode */}
                                             <div className="mb-6">
@@ -1750,20 +1516,6 @@ export const AddGroupMembershipPage = () => {
                                                                 mobile: '',
                                                                 dateOfBirth: '',
                                                                 gender: '',
-                                                                emergencyContactName: '',
-                                                                address: '',
-                                                                address_line_two: '',
-                                                                city: '',
-                                                                state: '',
-                                                                country: '',
-                                                                pin_code: '',
-                                                                address_type: 'residential',
-                                                                residentType: '',
-                                                                relationWithOwner: '',
-                                                                membershipNumber: '',
-                                                                accessCardId: '',
-                                                                membershipType: '',
-                                                                referredBy: ''
                                                             }
                                                         });
                                                     }}
@@ -1806,18 +1558,10 @@ export const AddGroupMembershipPage = () => {
                                                                             mobile: user.mobile,
                                                                         }
                                                                     });
-                                                                } else {
-                                                                    updateMember(member.id, {
-                                                                        selectedUser: userId,
-                                                                        selectedUserId: userIdNum,
-                                                                    });
                                                                 }
                                                             }}
                                                             sx={fieldStyles}
                                                             disabled={loadingUsers}
-                                                            SelectProps={{
-                                                                native: false,
-                                                            }}
                                                         >
                                                             {loadingUsers ? (
                                                                 <MenuItem value="">Loading users...</MenuItem>
@@ -1826,7 +1570,7 @@ export const AddGroupMembershipPage = () => {
                                                             ) : (
                                                                 users.map((user) => (
                                                                     <MenuItem key={user.id} value={user.id.toString()}>
-                                                                        {user.firstname} {user.lastname} {user.unit_name ? `(${user.unit_name})` : ''} - {user.email}
+                                                                        {user.firstname} {user.lastname} - {user.email}
                                                                     </MenuItem>
                                                                 ))
                                                             )}
@@ -1837,10 +1581,7 @@ export const AddGroupMembershipPage = () => {
 
                                             {/* Manual User Details */}
                                             {member.userSelectionMode === 'manual' && (
-                                                <div className="space-y-6">
-                                                    <h3 className="text-sm font-medium text-gray-700">User Details</h3>
-
-                                                    {/* Row 1: First Name, Last Name */}
+                                                <div className="space-y-4">
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <TextField
                                                             label="First Name *"
@@ -1858,7 +1599,6 @@ export const AddGroupMembershipPage = () => {
                                                         />
                                                     </div>
 
-                                                    {/* Row 2: Date of Birth, Gender */}
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <TextField
                                                             label="Date of Birth"
@@ -1888,7 +1628,6 @@ export const AddGroupMembershipPage = () => {
                                                         </FormControl>
                                                     </div>
 
-                                                    {/* Row 3: Mobile, Email */}
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <TextField
                                                             label="Mobile Number *"
@@ -1909,88 +1648,41 @@ export const AddGroupMembershipPage = () => {
                                                 </div>
                                             )}
                                         </div>
-                                    ))}
-                                </div>
 
-                                {/* Card 2: Address Details */}
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h2 className="text-lg font-semibold text-[#1a1a1a]">Address Details</h2>
-                                        <Button
-                                            onClick={handleAddAddressMember}
-                                            size="sm"
-                                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                                        >
-                                            <span className="mr-1">+</span> Add Address ({getAddressMembers().length}/{userLimit})
-                                        </Button>
-                                    </div>
-
-                                    {/* Members List */}
-                                    {getAddressMembers().map((member, memberIndex) => (
-                                        <div key={member.id} className={`${memberIndex > 0 ? 'mt-6 pt-6 border-t border-gray-200' : ''}`}>
-                                            {/* Member Header */}
+                                        {/* Section 2: Address Details */}
+                                        <div className="mb-8 pt-8 border-t border-gray-200">
                                             <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="bg-[#C72030] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold">
-                                                        {memberIndex + 1}
-                                                    </div>
-                                                    <span className="font-medium text-gray-700">
-                                                        {member.formData.firstName && member.formData.lastName
-                                                            ? `${member.formData.firstName} ${member.formData.lastName}`
-                                                            : `Member ${memberIndex + 1}`}
-                                                    </span>
-                                                </div>
-                                                {getAddressMembers().length > 0 && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleRemoveAddressMember(member.id)}
-                                                        className="text-red-600 hover:text-red-700"
-                                                    >
-                                                        <X className="w-4 h-4 mr-1" /> Remove
-                                                    </Button>
-                                                )}
-                                            </div>
-
-                                            {/* Copy from Previous Button */}
-                                            {memberIndex > 0 && (
-                                                <div className="mb-4">
+                                                <h4 className="text-md font-semibold text-[#1a1a1a] flex items-center gap-2">
+                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">2</div>
+                                                    Address Details
+                                                </h4>
+                                                {memberIndex > 0 && (
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
                                                         onClick={() => copyAddressFromPrevious(memberIndex)}
                                                         className="text-blue-600 border-blue-600 hover:bg-blue-50"
                                                     >
-                                                        <Copy className="w-4 h-4 mr-1" /> Copy Address from Member {memberIndex}
+                                                        <Copy className="w-4 h-4 mr-1" /> Copy from Member {memberIndex}
                                                     </Button>
-                                                </div>
-                                            )}
+                                                )}
+                                            </div>
 
-                                            {/* Address Fields */}
-                                            <div className="space-y-6">
-                                                {/* Row 1: Address */}
-                                                <div className="grid grid-cols-1 gap-4">
-                                                    <TextField
-                                                        label="Address"
-                                                        value={member.formData.address}
-                                                        onChange={(e) => updateMember(member.id, { formData: { ...member.formData, address: e.target.value } })}
-                                                        sx={fieldStyles}
-                                                        fullWidth
-                                                    />
-                                                </div>
-
-                                                {/* Row 2: Address Line Two */}
-                                                <div className="grid grid-cols-1 gap-4">
-                                                    <TextField
-                                                        label="Address Line Two"
-                                                        value={member.formData.address_line_two}
-                                                        onChange={(e) => updateMember(member.id, { formData: { ...member.formData, address_line_two: e.target.value } })}
-                                                        sx={fieldStyles}
-                                                        fullWidth
-                                                    />
-                                                </div>
-
-                                                {/* Row 3: City, State */}
+                                            <div className="space-y-4">
+                                                <TextField
+                                                    label="Address"
+                                                    value={member.formData.address}
+                                                    onChange={(e) => updateMember(member.id, { formData: { ...member.formData, address: e.target.value } })}
+                                                    sx={fieldStyles}
+                                                    fullWidth
+                                                />
+                                                <TextField
+                                                    label="Address Line Two"
+                                                    value={member.formData.address_line_two}
+                                                    onChange={(e) => updateMember(member.id, { formData: { ...member.formData, address_line_two: e.target.value } })}
+                                                    sx={fieldStyles}
+                                                    fullWidth
+                                                />
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <TextField
                                                         label="City"
@@ -2007,8 +1699,6 @@ export const AddGroupMembershipPage = () => {
                                                         fullWidth
                                                     />
                                                 </div>
-
-                                                {/* Row 4: Country, Pin Code */}
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <TextField
                                                         label="Country"
@@ -2025,340 +1715,76 @@ export const AddGroupMembershipPage = () => {
                                                         fullWidth
                                                     />
                                                 </div>
-
-                                                {/* Row 5: Address Type */}
-                                                <div className="grid grid-cols-1 gap-4">
-                                                    <FormControl fullWidth sx={fieldStyles}>
-                                                        <InputLabel>Address Type</InputLabel>
-                                                        <Select
-                                                            value={member.formData.address_type}
-                                                            onChange={(e) => updateMember(member.id, { formData: { ...member.formData, address_type: e.target.value } })}
-                                                            label="Address Type"
-                                                        >
-                                                            <MenuItem value="residential">Residential</MenuItem>
-                                                            <MenuItem value="commercial">Commercial</MenuItem>
-                                                            <MenuItem value="other">Other</MenuItem>
-                                                        </Select>
-                                                    </FormControl>
-                                                </div>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
 
-                                {/* Card 3: Membership Details */}
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                    <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">Membership Details</h2>
+                                        {/* Section 3: Upload Documents */}
+                                        <div className="mb-8 pt-8 border-t border-gray-200">
+                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">3</div>
+                                                Upload Documents {!isEditMode && <span className="text-red-500">*</span>}
+                                            </h4>
 
-                                    {/* Club Membership - Always Enabled */}
-                                    {/* <div className="mb-6">
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={clubMembership}
-                          disabled={true}
-                          sx={{
-                            color: '#C72030',
-                            '&.Mui-checked': {
-                              color: '#C72030',
-                            },
-                            '&.Mui-disabled': {
-                              color: '#C72030',
-                            },
-                          }}
-                        />
-                      }
-                      label="Club Membership (Always Enabled)"
-                    />
-                  </div> */}
-
-                                    {/* Membership Type and Referred By */}
-                                    <div className="mb-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <FormControl fullWidth sx={fieldStyles}>
-                                                <InputLabel>Membership Type</InputLabel>
-                                                <Select
-                                                    value={membershipType}
-                                                    onChange={(e) => setMembershipType(e.target.value)}
-                                                    label="Membership Type"
-                                                >
-                                                    <MenuItem value="">
-                                                        <em>Select Membership Type</em>
-                                                    </MenuItem>
-                                                    {MEMBERSHIP_TYPE_OPTIONS.map((option) => (
-                                                        <MenuItem key={option.value} value={option.value}>
-                                                            {option.label}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-
-                                            <FormControl fullWidth sx={fieldStyles}>
-                                                <InputLabel>Referred By</InputLabel>
-                                                <Select
-                                                    value={referredBy}
-                                                    onChange={(e) => setReferredBy(e.target.value)}
-                                                    label="Referred By"
-                                                >
-                                                    <MenuItem value="">
-                                                        <em>Select Referred By</em>
-                                                    </MenuItem>
-                                                    {REFERRED_BY_OPTIONS.map((option) => (
-                                                        <MenuItem key={option.value} value={option.value}>
-                                                            {option.label}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                        <TextField
-                                            label="Emergency Contact"
-                                            value={emergencyContactName}
-                                            onChange={(e) => setEmergencyContactName(e.target.value)}
-                                            sx={fieldStyles}
-                                            placeholder='Name or Phone Number'
-                                            fullWidth
-                                            InputLabelProps={{ shrink: true }}
-                                        />
-                                    </div>
-
-                                    {/* Membership Dates */}
-                                    <div className="mb-6">
-                                        <h3 className="text-sm font-medium text-gray-700 mb-4">
-                                            Membership Period <span className="text-red-500">*</span>
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <DatePicker
-                                                label="Start Date *"
-                                                value={startDate}
-                                                onChange={(newValue) => setStartDate(newValue as Dayjs | null)}
-                                                slotProps={{
-                                                    textField: {
-                                                        fullWidth: true,
-                                                        sx: {
-                                                            ...fieldStyles,
-                                                            '& .MuiOutlinedInput-root': {
-                                                                ...fieldStyles['& .MuiOutlinedInput-root'],
-                                                                backgroundColor: startDate ? '#f0fdf4' : '#fff',
-                                                            },
-                                                        },
-                                                    },
-                                                }}
-                                            />
-
-                                            <DatePicker
-                                                label="End Date *"
-                                                value={endDate}
-                                                onChange={(newValue) => setEndDate(newValue as Dayjs | null)}
-                                                slotProps={{
-                                                    textField: {
-                                                        fullWidth: true,
-                                                        sx: {
-                                                            ...fieldStyles,
-                                                            '& .MuiOutlinedInput-root': {
-                                                                ...fieldStyles['& .MuiOutlinedInput-root'],
-                                                                backgroundColor: endDate ? '#f0fdf4' : '#fff',
-                                                            },
-                                                        },
-                                                    },
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Access Card Section */}
-                                    <div className="mb-6">
-                                        <h3 className="text-sm font-medium text-gray-700 mb-4">Access Card</h3>
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={cardAllocated}
-                                                    onChange={(e) => setCardAllocated(e.target.checked)}
-                                                    sx={{
-                                                        color: '#C72030',
-                                                        '&.Mui-checked': {
-                                                            color: '#C72030',
-                                                        },
-                                                    }}
-                                                />
-                                            }
-                                            label="Access Card Allocated"
-                                        />
-                                    </div>
-
-                                    {/* Access Card ID (shown only if Access Card Allocated is checked) */}
-                                    {cardAllocated && (
-                                        <div>
-                                            <TextField
-                                                label="Enter Access Card ID"
-                                                value={members[0].formData.accessCardId}
-                                                onChange={(e) => updateMember(members[0].id, { formData: { ...members[0].formData, accessCardId: e.target.value } })}
-                                                sx={fieldStyles}
-                                                fullWidth
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Card 4: Upload Documents */}
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h2 className="text-lg font-semibold text-[#1a1a1a]">
-                                            Upload Documents {!isEditMode && <span className="text-red-500">*</span>}
-                                            {isEditMode && <span className="text-gray-500 text-sm font-normal ml-2">(Upload new files to replace existing ones)</span>}
-                                        </h2>
-                                        <Button
-                                            onClick={handleAddDocumentMember}
-                                            size="sm"
-                                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                                        >
-                                            <span className="mr-1">+</span> Add Documents ({getDocumentMembers().length}/{userLimit})
-                                        </Button>
-                                    </div>
-
-                                    {/* Members List */}
-                                    {getDocumentMembers().map((member, memberIndex) => (
-                                        <div key={member.id} className={`${memberIndex > 0 ? 'mt-6 pt-6 border-t border-gray-200' : ''}`}>
-                                            {/* Member Header */}
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="bg-[#C72030] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold">
-                                                        {memberIndex + 1}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                                {/* ID Card Upload */}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        ID Card {!isEditMode && <span className="text-red-500">*</span>}
+                                                    </label>
+                                                    <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.idCardFile || member.idCardPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
+                                                        {(member.idCardFile || member.idCardPreview) ? (
+                                                            <div>
+                                                                {member.idCardPreview && (
+                                                                    <img src={member.idCardPreview} alt="ID Card" className="max-h-40 mx-auto rounded mb-3" />
+                                                                )}
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="text-sm text-gray-600">{member.idCardFile?.name || 'Existing ID Card'}</span>
+                                                                    <Button variant="ghost" size="sm" onClick={() => removeIdCard(member.id)} className="text-red-600">
+                                                                        <X className="w-4 h-4" />
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div>
+                                                                <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                                                                <p className="text-sm text-gray-500 mb-2">Upload ID Card</p>
+                                                                <input type="file" accept="image/*" onChange={(e) => handleIdCardUpload(member.id, e)} className="hidden" id={`id-card-${member.id}`} />
+                                                                <label htmlFor={`id-card-${member.id}`}>
+                                                                    <Button variant="outline" className="cursor-pointer" asChild><span>Choose File</span></Button>
+                                                                </label>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <span className="font-medium text-gray-700">
-                                                        {member.formData.firstName && member.formData.lastName
-                                                            ? `${member.formData.firstName} ${member.formData.lastName}`
-                                                            : `Member ${memberIndex + 1}`}
-                                                    </span>
                                                 </div>
-                                                {getDocumentMembers().length > 0 && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleRemoveDocumentMember(member.id)}
-                                                        className="text-red-600 hover:text-red-700"
-                                                    >
-                                                        <X className="w-4 h-4 mr-1" /> Remove
-                                                    </Button>
-                                                )}
-                                            </div>
 
-                                            {/* File Uploads */}
-                                            <div className="mb-6">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    {/* ID Card Upload */}
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            ID Card {!isEditMode && <span className="text-red-500">*</span>}
-                                                            {isEditMode && member.idCardPreview && !member.idCardFile && <span className="text-green-600 text-xs ml-2">(Existing)</span>}
-                                                        </label>
-                                                        <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${member.idCardFile ? 'border-green-300 bg-green-50' : member.idCardPreview ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-[#C72030]'
-                                                            }`}>
-                                                            {(member.idCardFile || member.idCardPreview) ? (
-                                                                <div>
-                                                                    {member.idCardPreview && (
-                                                                        <div className="mb-3">
-                                                                            <img
-                                                                                src={member.idCardPreview}
-                                                                                alt="ID Card Preview"
-                                                                                className="max-h-40 mx-auto rounded object-cover"
-                                                                            />
-                                                                        </div>
-                                                                    )}
-                                                                    <div className="flex items-center justify-between">
-                                                                        <span className="text-sm text-gray-600">
-                                                                            {member.idCardFile ? member.idCardFile.name : (isEditMode ? 'Existing ID Card' : '')}
-                                                                        </span>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            onClick={() => removeIdCard(member.id)}
-                                                                            className="text-red-600 hover:text-red-700"
-                                                                        >
-                                                                            <X className="w-4 h-4" />
-                                                                        </Button>
-                                                                    </div>
+                                                {/* Member Photo Upload */}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Member Photo {!isEditMode && <span className="text-red-500">*</span>}
+                                                    </label>
+                                                    <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.residentPhotoFile || member.residentPhotoPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
+                                                        {(member.residentPhotoFile || member.residentPhotoPreview) ? (
+                                                            <div>
+                                                                {member.residentPhotoPreview && (
+                                                                    <img src={member.residentPhotoPreview} alt="Photo" className="max-h-40 mx-auto rounded mb-3" />
+                                                                )}
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="text-sm text-gray-600">{member.residentPhotoFile?.name || 'Existing Photo'}</span>
+                                                                    <Button variant="ghost" size="sm" onClick={() => removeResidentPhoto(member.id)} className="text-red-600">
+                                                                        <X className="w-4 h-4" />
+                                                                    </Button>
                                                                 </div>
-                                                            ) : (
-                                                                <div>
-                                                                    <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                                                                    <p className="text-sm text-gray-500 mb-2">
-                                                                        Upload ID Card {!isEditMode && '(Required)'}
-                                                                    </p>
-                                                                    <input
-                                                                        type="file"
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleIdCardUpload(member.id, e)}
-                                                                        className="hidden"
-                                                                        id={`id-card-upload-${member.id}`}
-                                                                    />
-                                                                    <label htmlFor={`id-card-upload-${member.id}`}>
-                                                                        <Button variant="outline" className="cursor-pointer" asChild>
-                                                                            <span>Choose File</span>
-                                                                        </Button>
-                                                                    </label>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Resident Photo Upload */}
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            Member Photo {!isEditMode && <span className="text-red-500">*</span>}
-                                                            {isEditMode && member.residentPhotoPreview && !member.residentPhotoFile && <span className="text-green-600 text-xs ml-2">(Existing)</span>}
-                                                        </label>
-                                                        <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${member.residentPhotoFile ? 'border-green-300 bg-green-50' : member.residentPhotoPreview ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-[#C72030]'
-                                                            }`}>
-                                                            {(member.residentPhotoFile || member.residentPhotoPreview) ? (
-                                                                <div>
-                                                                    {member.residentPhotoPreview && (
-                                                                        <div className="mb-3">
-                                                                            <img
-                                                                                src={member.residentPhotoPreview}
-                                                                                alt="Resident Photo Preview"
-                                                                                className="max-h-40 mx-auto rounded object-cover"
-                                                                            />
-                                                                        </div>
-                                                                    )}
-                                                                    <div className="flex items-center justify-between">
-                                                                        <span className="text-sm text-gray-600">
-                                                                            {member.residentPhotoFile ? member.residentPhotoFile.name : (isEditMode ? 'Existing Member Photo' : '')}
-                                                                        </span>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            onClick={() => removeResidentPhoto(member.id)}
-                                                                            className="text-red-600 hover:text-red-700"
-                                                                        >
-                                                                            <X className="w-4 h-4" />
-                                                                        </Button>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <div>
-                                                                    <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                                                                    <p className="text-sm text-gray-500 mb-2">
-                                                                        Upload Photo {!isEditMode && '(Required)'}
-                                                                    </p>
-                                                                    <input
-                                                                        type="file"
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleResidentPhotoUpload(member.id, e)}
-                                                                        className="hidden"
-                                                                        id={`resident-photo-upload-${member.id}`}
-                                                                    />
-                                                                    <label htmlFor={`resident-photo-upload-${member.id}`}>
-                                                                        <Button variant="outline" className="cursor-pointer" asChild>
-                                                                            <span>Choose File</span>
-                                                                        </Button>
-                                                                    </label>
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div>
+                                                                <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                                                                <p className="text-sm text-gray-500 mb-2">Upload Photo</p>
+                                                                <input type="file" accept="image/*" onChange={(e) => handleResidentPhotoUpload(member.id, e)} className="hidden" id={`photo-${member.id}`} />
+                                                                <label htmlFor={`photo-${member.id}`}>
+                                                                    <Button variant="outline" className="cursor-pointer" asChild><span>Choose File</span></Button>
+                                                                </label>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -2375,10 +1801,10 @@ export const AddGroupMembershipPage = () => {
                                                             accept="image/*,.pdf,.doc,.docx"
                                                             onChange={(e) => handleAttachmentUpload(member.id, e)}
                                                             className="hidden"
-                                                            id={`other-documents-upload-${member.id}`}
+                                                            id={`other-documents-${member.id}`}
                                                             multiple
                                                         />
-                                                        <label htmlFor={`other-documents-upload-${member.id}`}>
+                                                        <label htmlFor={`other-documents-${member.id}`}>
                                                             <Button variant="outline" className="cursor-pointer" asChild>
                                                                 <span>Choose Files</span>
                                                             </Button>
@@ -2434,620 +1860,148 @@ export const AddGroupMembershipPage = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                    ))}               </div>
 
-                                {/* Card 5: Health & Wellness Information */}
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h2 className="text-lg font-semibold text-[#1a1a1a]">Health & Wellness Information</h2>
-                                        <Button
-                                            onClick={handleAddHealthMember}
-                                            size="sm"
-                                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                                        >
-                                            <span className="mr-1">+</span> Add Health Info ({getHealthMembers().length}/{userLimit})
-                                        </Button>
-                                    </div>
+                                        {/* Section 4: Health & Wellness */}
+                                        <div className="mb-8 pt-8 border-t border-gray-200">
+                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">4</div>
+                                                Health & Wellness Information
+                                            </h4>
 
-                                    {/* Members List */}
-                                    {getHealthMembers().map((member, memberIndex) => (
-                                        <div key={member.id} className={`${memberIndex > 0 ? 'mt-6 pt-6 border-t border-gray-200' : ''}`}>
-                                            {/* Member Header */}
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="bg-[#C72030] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold">
-                                                        {memberIndex + 1}
-                                                    </div>
-                                                    <span className="font-medium text-gray-700">
-                                                        {member.formData.firstName && member.formData.lastName
-                                                            ? `${member.formData.firstName} ${member.formData.lastName}`
-                                                            : `Member ${memberIndex + 1}`}
-                                                    </span>
+                                            <div className="space-y-6">
+                                                <div>
+                                                    <FormLabel component="legend" className="text-sm font-medium mb-2">
+                                                        Do you have any existing injuries or medical conditions?
+                                                    </FormLabel>
+                                                    <RadioGroup row value={member.hasInjuries} onChange={(e) => updateMember(member.id, { hasInjuries: e.target.value as 'yes' | 'no' })}>
+                                                        <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
+                                                        <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
+                                                    </RadioGroup>
+                                                    {member.hasInjuries === 'yes' && (
+                                                        <TextField
+                                                            label="Please specify"
+                                                            value={member.injuryDetails}
+                                                            onChange={(e) => updateMember(member.id, { injuryDetails: e.target.value })}
+                                                            multiline
+                                                            rows={3}
+                                                            fullWidth
+                                                            sx={{ mt: 2 }}
+                                                        />
+                                                    )}
                                                 </div>
-                                                {getHealthMembers().length > 0 && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleRemoveHealthMember(member.id)}
-                                                        className="text-red-600 hover:text-red-700"
-                                                    >
-                                                        <X className="w-4 h-4 mr-1" /> Remove
-                                                    </Button>
-                                                )}
-                                            </div>
 
-                                            {/* Copy from Previous Button */}
-                                            {memberIndex > 0 && (
-                                                <div className="mb-4">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => copyHealthInfoFromPrevious(memberIndex)}
-                                                        className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    >
-                                                        <Copy className="w-4 h-4 mr-1" /> Copy Health Info from Member {memberIndex}
-                                                    </Button>
+                                                <div>
+                                                    <FormLabel component="legend" className="text-sm font-medium mb-2">
+                                                        Do you have any physical restrictions?
+                                                    </FormLabel>
+                                                    <RadioGroup row value={member.hasPhysicalRestrictions} onChange={(e) => updateMember(member.id, { hasPhysicalRestrictions: e.target.value as 'yes' | 'no' })}>
+                                                        <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
+                                                        <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
+                                                    </RadioGroup>
                                                 </div>
-                                            )}
 
-                                            {/* Question 1: Existing injuries or medical conditions */}
-                                            <div className="mb-6">
-                                                <FormLabel component="legend" className="text-sm font-medium text-black mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
-                                                    Do you have any existing injuries or medical conditions?
-                                                </FormLabel>
-                                                <RadioGroup
-                                                    row
-                                                    value={member.hasInjuries}
-                                                    onChange={(e) => updateMember(member.id, { hasInjuries: e.target.value as 'yes' | 'no' })}
-                                                >
-                                                    <FormControlLabel
-                                                        value="yes"
-                                                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                                                        label="Yes"
-                                                    />
-                                                    <FormControlLabel
-                                                        value="no"
-                                                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                                                        label="No"
-                                                    />
-                                                </RadioGroup>
-                                            </div>
-
-                                            {/* If yes, specify */}
-                                            {member.hasInjuries === 'yes' && (
-                                                <div className="mb-6">
-                                                    <TextField
-                                                        label="If yes, please specify"
-                                                        value={member.injuryDetails}
-                                                        onChange={(e) => updateMember(member.id, { injuryDetails: e.target.value })}
-                                                        multiline
-                                                        rows={3}
-                                                        fullWidth
-                                                        sx={{
-                                                            backgroundColor: '#fff',
-                                                            borderRadius: '4px',
-                                                            '& .MuiOutlinedInput-root': {
-                                                                '& fieldset': {
-                                                                    borderColor: '#ddd',
-                                                                },
-                                                                '&:hover fieldset': {
-                                                                    borderColor: '#C72030',
-                                                                },
-                                                                '&.Mui-focused fieldset': {
-                                                                    borderColor: '#C72030',
-                                                                },
-                                                            },
-                                                            '& .MuiInputLabel-root': {
-                                                                '&.Mui-focused': {
-                                                                    color: '#C72030',
-                                                                },
-                                                            },
-                                                        }}
-                                                    />
+                                                <div>
+                                                    <FormLabel component="legend" className="text-sm font-medium mb-2">
+                                                        Are you currently under medication?
+                                                    </FormLabel>
+                                                    <RadioGroup row value={member.hasCurrentMedication} onChange={(e) => updateMember(member.id, { hasCurrentMedication: e.target.value as 'yes' | 'no' })}>
+                                                        <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
+                                                        <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
+                                                    </RadioGroup>
                                                 </div>
-                                            )}
-
-                                            {/* Question 2: Physical restrictions */}
-                                            <div className="mb-6">
-                                                <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
-                                                    Do you have any physical restrictions or movement limitations?
-                                                </FormLabel>
-                                                <RadioGroup
-                                                    row
-                                                    value={member.hasPhysicalRestrictions}
-                                                    onChange={(e) => updateMember(member.id, { hasPhysicalRestrictions: e.target.value as 'yes' | 'no' })}
-                                                >
-                                                    <FormControlLabel
-                                                        value="yes"
-                                                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                                                        label="Yes"
-                                                    />
-                                                    <FormControlLabel
-                                                        value="no"
-                                                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                                                        label="No"
-                                                    />
-                                                </RadioGroup>
-                                            </div>
-
-                                            {/* Question 3: Current medication */}
-                                            <div className="mb-6">
-                                                <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
-                                                    Are you currently under medication?
-                                                </FormLabel>
-                                                <RadioGroup
-                                                    row
-                                                    value={member.hasCurrentMedication}
-                                                    onChange={(e) => updateMember(member.id, { hasCurrentMedication: e.target.value as 'yes' | 'no' })}
-                                                >
-                                                    <FormControlLabel
-                                                        value="yes"
-                                                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                                                        label="Yes"
-                                                    />
-                                                    <FormControlLabel
-                                                        value="no"
-                                                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                                                        label="No"
-                                                    />
-                                                </RadioGroup>
                                             </div>
                                         </div>
-                                    ))}               </div>
 
-                                {/* Card 6: Activity Interests */}
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div>
-                                            <h2 className="text-lg font-semibold text-[#1a1a1a]">Activity Interests</h2>
-                                            <p className="text-sm text-gray-500 mt-1">Helps us customise your experience and send relevant updates</p>
-                                        </div>
-                                        <Button
-                                            onClick={handleAddActivityMember}
-                                            size="sm"
-                                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                                        >
-                                            <span className="mr-1">+</span> Add Activity Interests ({getActivityMembers().length}/{userLimit})
-                                        </Button>
-                                    </div>
+                                        {/* Section 5: Activity Interests */}
+                                        <div className="mb-8 pt-8 border-t border-gray-200">
+                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">5</div>
+                                                Activity Interests
+                                            </h4>
 
-                                    {/* Members List */}
-                                    {getActivityMembers().map((member, memberIndex) => (
-                                        <div key={member.id} className={`${memberIndex > 0 ? 'mt-6 pt-6 border-t border-gray-200' : 'mt-6'}`}>
-                                            {/* Member Header */}
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="bg-[#C72030] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold">
-                                                        {memberIndex + 1}
-                                                    </div>
-                                                    <span className="font-medium text-gray-700">
-                                                        {member.formData.firstName && member.formData.lastName
-                                                            ? `${member.formData.firstName} ${member.formData.lastName}`
-                                                            : `Member ${memberIndex + 1}`}
-                                                    </span>
-                                                </div>
-                                                {getActivityMembers().length > 0 && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleRemoveActivityMember(member.id)}
-                                                        className="text-red-600 hover:text-red-700"
-                                                    >
-                                                        <X className="w-4 h-4 mr-1" /> Remove
-                                                    </Button>
-                                                )}
-                                            </div>
-
-                                            {/* Copy from Previous Button */}
-                                            {memberIndex > 0 && (
-                                                <div className="mb-4">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => copyActivityInterestsFromPrevious(memberIndex)}
-                                                        className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    >
-                                                        <Copy className="w-4 h-4 mr-1" /> Copy Activity Interests from Member {memberIndex}
-                                                    </Button>
-                                                </div>
-                                            )}
-
-                                            {/* Primary Fitness Goals */}
-                                            <div className="mb-6">
-                                                <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
-                                                    Primary Fitness Goals:
-                                                </FormLabel>
-                                                <div className="space-y-1">
-                                                    {[
-                                                        'General Fitness',
-                                                        'Strength Training',
-                                                        'Pilates',
-                                                        'Mobility & Flexibility',
-                                                        'Weight Management',
-                                                        'Performance Training (Squash/Padel/Pickle)',
-                                                        'Stress Relief / Lifestyle Wellness',
-                                                        'Post Workout Recovery'
-                                                    ].map((goal) => (
-                                                        <FormControlLabel
-                                                            key={goal}
-                                                            control={
-                                                                <Checkbox
-                                                                    size="small"
-                                                                    checked={member.fitnessGoals.includes(goal)}
-                                                                    onChange={(e) => {
-                                                                        if (e.target.checked) {
-                                                                            updateMember(member.id, { fitnessGoals: [...member.fitnessGoals, goal] });
-                                                                        } else {
-                                                                            updateMember(member.id, { fitnessGoals: member.fitnessGoals.filter(g => g !== goal) });
-                                                                        }
-                                                                    }}
-                                                                    sx={{
-                                                                        color: '#C72030',
-                                                                        '&.Mui-checked': {
-                                                                            color: '#C72030',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            }
-                                                            label={<span className="text-sm">{goal}</span>}
-                                                        />
-                                                    ))}
-                                                    <div className="flex items-center gap-2">
-                                                        <FormControlLabel
-                                                            control={
-                                                                <Checkbox
-                                                                    size="small"
-                                                                    checked={members[0].fitnessGoals.includes('Other')}
-                                                                    onChange={(e) => {
-                                                                        if (e.target.checked) {
-                                                                            updateMember(members[0].id, { fitnessGoals: [...members[0].fitnessGoals, 'Other'] });
-                                                                        } else {
-                                                                            updateMember(members[0].id, { fitnessGoals: members[0].fitnessGoals.filter(g => g !== 'Other'), fitnessGoalsOther: '' });
-                                                                        }
-                                                                    }}
-                                                                    sx={{
-                                                                        color: '#C72030',
-                                                                        '&.Mui-checked': {
-                                                                            color: '#C72030',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            }
-                                                            label={<span className="text-sm">Other:</span>}
-                                                        />
-                                                        {member.fitnessGoals.includes('Other') && (
-                                                            <TextField
-                                                                value={member.fitnessGoalsOther}
-                                                                onChange={(e) => updateMember(member.id, { fitnessGoalsOther: e.target.value })}
-                                                                placeholder="Please specify"
-                                                                size="small"
-                                                                sx={{ flex: 1 }}
+                                            <div className="space-y-6">
+                                                <div>
+                                                    <FormLabel component="legend" className="text-sm font-medium mb-3">
+                                                        Primary Fitness Goals:
+                                                    </FormLabel>
+                                                    <div className="space-y-1">
+                                                        {['General Fitness', 'Strength Training', 'Pilates', 'Mobility & Flexibility', 'Weight Management', 'Stress Relief / Lifestyle Wellness'].map((goal) => (
+                                                            <FormControlLabel
+                                                                key={goal}
+                                                                control={
+                                                                    <Checkbox
+                                                                        size="small"
+                                                                        checked={member.fitnessGoals.includes(goal)}
+                                                                        onChange={(e) => {
+                                                                            if (e.target.checked) {
+                                                                                updateMember(member.id, { fitnessGoals: [...member.fitnessGoals, goal] });
+                                                                            } else {
+                                                                                updateMember(member.id, { fitnessGoals: member.fitnessGoals.filter(g => g !== goal) });
+                                                                            }
+                                                                        }}
+                                                                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                                                    />
+                                                                }
+                                                                label={<span className="text-sm">{goal}</span>}
                                                             />
-                                                        )}
+                                                        ))}
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            {/* Which sessions are you interested in? */}
-                                            <div className="mb-6">
-                                                <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
-                                                    Which sessions are you interested in?
-                                                </FormLabel>
-                                                <div className="space-y-1">
-                                                    {[
-                                                        'Group Pilates',
-                                                        'Private / Duo Pilates',
-                                                        'Strength Training',
-                                                        'Yoga',
-                                                        'Mat Pilates',
-                                                        'Mobility / Stretch',
-                                                        'Kids Fitness',
-                                                        'Corporate Wellness Sessions',
-                                                        'Run Clubs',
-                                                        'Social Sports Events',
-                                                        'Racquet Sports Events'
-                                                    ].map((session) => (
-                                                        <FormControlLabel
-                                                            key={session}
-                                                            control={
-                                                                <Checkbox
-                                                                    size="small"
-                                                                    checked={member.interestedSessions.includes(session)}
-                                                                    onChange={(e) => {
-                                                                        if (e.target.checked) {
-                                                                            updateMember(member.id, { interestedSessions: [...member.interestedSessions, session] });
-                                                                        } else {
-                                                                            updateMember(member.id, { interestedSessions: member.interestedSessions.filter(s => s !== session) });
-                                                                        }
-                                                                    }}
-                                                                    sx={{
-                                                                        color: '#C72030',
-                                                                        '&.Mui-checked': {
-                                                                            color: '#C72030',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            }
-                                                            label={<span className="text-sm">{session}</span>}
-                                                        />
-                                                    ))}
-                                                    <div className="flex items-center gap-2">
-                                                        <FormControlLabel
-                                                            control={
-                                                                <Checkbox
-                                                                    size="small"
-                                                                    checked={members[0].interestedSessions.includes('Other')}
-                                                                    onChange={(e) => {
-                                                                        if (e.target.checked) {
-                                                                            updateMember(members[0].id, { interestedSessions: [...members[0].interestedSessions, 'Other'] });
-                                                                        } else {
-                                                                            updateMember(members[0].id, { interestedSessions: members[0].interestedSessions.filter(s => s !== 'Other'), interestedSessionsOther: '' });
-                                                                        }
-                                                                    }}
-                                                                    sx={{
-                                                                        color: '#C72030',
-                                                                        '&.Mui-checked': {
-                                                                            color: '#C72030',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            }
-                                                            label={<span className="text-sm">Other:</span>}
-                                                        />
-                                                        {member.interestedSessions.includes('Other') && (
-                                                            <TextField
-                                                                value={member.interestedSessionsOther}
-                                                                onChange={(e) => updateMember(member.id, { interestedSessionsOther: e.target.value })}
-                                                                placeholder="Please specify"
-                                                                size="small"
-                                                                sx={{ flex: 1 }}
-                                                            />
-                                                        )}
-                                                    </div>
+                                                <div>
+                                                    <FormLabel component="legend" className="text-sm font-medium mb-3">
+                                                        Have you practiced Pilates before?
+                                                    </FormLabel>
+                                                    <FormControl fullWidth sx={fieldStyles}>
+                                                        <Select
+                                                            value={member.pilatesExperience}
+                                                            onChange={(e) => updateMember(member.id, { pilatesExperience: e.target.value })}
+                                                            displayEmpty
+                                                        >
+                                                            <MenuItem value=""><em>Select Experience Level</em></MenuItem>
+                                                            <MenuItem value="Never">Never</MenuItem>
+                                                            <MenuItem value="Beginner">Beginner</MenuItem>
+                                                            <MenuItem value="Intermediate">Intermediate</MenuItem>
+                                                            <MenuItem value="Advanced">Advanced</MenuItem>
+                                                        </Select>
+                                                    </FormControl>
                                                 </div>
-                                            </div>
-
-                                            <div>
-                                                <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
-                                                    Have you practiced Pilates before?
-                                                </FormLabel>
-                                                <FormControl fullWidth sx={fieldStyles}>
-                                                    {/* <InputLabel>Have you practiced Pilates before?</InputLabel> */}
-                                                    <Select
-                                                        value={member.pilatesExperience}
-                                                        onChange={(e) => updateMember(member.id, { pilatesExperience: e.target.value })}
-                                                        label="Have you practiced Pilates before?"
-                                                        displayEmpty
-                                                        sx={{
-                                                            border: "1px solid #000",
-                                                            borderRadius: "4px",
-
-                                                            // Remove blue outline
-                                                            "& .MuiOutlinedInput-notchedOutline": {
-                                                                border: "none",
-                                                            },
-                                                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                                                border: "none",
-                                                            },
-
-                                                            // Remove box shadow
-                                                            "&.Mui-focused": {
-                                                                outline: "none",
-                                                                boxShadow: "none",
-                                                            },
-                                                        }}
-                                                    >
-                                                        <MenuItem value="">
-                                                            <em>Select Experience Level</em>
-                                                        </MenuItem>
-                                                        <MenuItem value="Never">Never</MenuItem>
-                                                        <MenuItem value="Beginner">Beginner</MenuItem>
-                                                        <MenuItem value="Intermediate">Intermediate</MenuItem>
-                                                        <MenuItem value="Advanced">Advanced</MenuItem>
-                                                    </Select>
-                                                </FormControl>
                                             </div>
                                         </div>
-                                    ))}               </div>
 
-                                {/* Card 7: Lifestyle & Communication Insights */}
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div>
-                                            <h2 className="text-lg font-semibold text-[#1a1a1a]">Lifestyle & Communication Insights</h2>
-                                            <p className="text-sm text-gray-500 mt-1">Helps us understand your preferences and design better offerings</p>
-                                        </div>
-                                        <Button
-                                            onClick={handleAddLifestyleMember}
-                                            size="sm"
-                                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                                        >
-                                            <span className="mr-1">+</span> Add Lifestyle Info ({getLifestyleMembers().length}/{userLimit})
-                                        </Button>
-                                    </div>
+                                        {/* Section 6: Lifestyle & Communication */}
+                                        <div className="mb-8 pt-8 border-t border-gray-200">
+                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">6</div>
+                                                Lifestyle & Communication
+                                            </h4>
 
-                                    {/* Members List */}
-                                    {getLifestyleMembers().map((member, memberIndex) => (
-                                        <div key={member.id} className={`${memberIndex > 0 ? 'mt-6 pt-6 border-t border-gray-200' : 'mt-6'}`}>
-                                            {/* Member Header */}
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="bg-[#C72030] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold">
-                                                        {memberIndex + 1}
-                                                    </div>
-                                                    <span className="font-medium text-gray-700">
-                                                        {member.formData.firstName && member.formData.lastName
-                                                            ? `${member.formData.firstName} ${member.formData.lastName}`
-                                                            : `Member ${memberIndex + 1}`}
-                                                    </span>
-                                                </div>
-                                                {getLifestyleMembers().length > 0 && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleRemoveLifestyleMember(member.id)}
-                                                        className="text-red-600 hover:text-red-700"
-                                                    >
-                                                        <X className="w-4 h-4 mr-1" /> Remove
-                                                    </Button>
-                                                )}
-                                            </div>
-
-                                            {/* Copy from Previous Button */}
-                                            {memberIndex > 0 && (
-                                                <div className="mb-4">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => copyLifestyleInfoFromPrevious(memberIndex)}
-                                                        className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    >
-                                                        <Copy className="w-4 h-4 mr-1" /> Copy Lifestyle Info from Member {memberIndex}
-                                                    </Button>
-                                                </div>
-                                            )}
-
-                                            <div>
-                                                {/* How did you first hear about The Recess Club? */}
-                                                <div className="mb-6">
-                                                    <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
-                                                        How did you first hear about The Recess Club?
+                                            <div className="space-y-6">
+                                                <div>
+                                                    <FormLabel component="legend" className="text-sm font-medium mb-2">
+                                                        How did you hear about us?
                                                     </FormLabel>
                                                     <FormControl fullWidth sx={fieldStyles}>
                                                         <Select
                                                             value={member.heardAbout}
                                                             onChange={(e) => updateMember(member.id, { heardAbout: e.target.value })}
-                                                            label="How did you first hear about The Recess Club?"
                                                             displayEmpty
-                                                            sx={{
-                                                                border: "1px solid #000",
-                                                                borderRadius: "4px",
-
-                                                                // Remove blue outline
-                                                                "& .MuiOutlinedInput-notchedOutline": {
-                                                                    border: "none",
-                                                                },
-                                                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                                                    border: "none",
-                                                                },
-
-                                                                // Remove box shadow
-                                                                "&.Mui-focused": {
-                                                                    outline: "none",
-                                                                    boxShadow: "none",
-                                                                },
-                                                            }}
                                                         >
-                                                            <MenuItem value="">
-                                                                <em>Select an option</em>
-                                                            </MenuItem>
+                                                            <MenuItem value=""><em>Select an option</em></MenuItem>
                                                             <MenuItem value="Instagram">Instagram</MenuItem>
                                                             <MenuItem value="Friend / Referral">Friend / Referral</MenuItem>
-                                                            <MenuItem value="Marriott Suites">Marriott Suites</MenuItem>
                                                             <MenuItem value="Event">Event</MenuItem>
-                                                            <MenuItem value="Google Search">Google Search</MenuItem>
-                                                            <MenuItem value="Influencer / Trainer">Influencer / Trainer</MenuItem>
                                                             <MenuItem value="Other">Other</MenuItem>
                                                         </Select>
                                                     </FormControl>
                                                 </div>
 
-                                                {/* What motivates you to join a wellness club? */}
-                                                <div className="mb-6">
-                                                    <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
-                                                        What motivates you to join a wellness club?
-                                                    </FormLabel>
-                                                    <div className="space-y-1">
-                                                        {[
-                                                            'Health',
-                                                            'Fitness Community',
-                                                            'Social Sports',
-                                                            'Convenience',
-                                                            'Stress Management',
-                                                            'Amenities & Facilities',
-                                                            'Trainer Expertise'
-                                                        ].map((motivation) => (
-                                                            <FormControlLabel
-                                                                key={motivation}
-                                                                control={
-                                                                    <Checkbox
-                                                                        size="small"
-                                                                        checked={member.motivations.includes(motivation)}
-                                                                        onChange={(e) => {
-                                                                            const currentMotivations = member.motivations;
-                                                                            if (e.target.checked) {
-                                                                                updateMember(member.id, { motivations: [...currentMotivations, motivation] });
-                                                                            } else {
-                                                                                updateMember(member.id, { motivations: currentMotivations.filter(m => m !== motivation) });
-                                                                            }
-                                                                        }}
-                                                                        sx={{
-                                                                            color: '#C72030',
-                                                                            '&.Mui-checked': {
-                                                                                color: '#C72030',
-                                                                            },
-                                                                        }}
-                                                                    />
-                                                                }
-                                                                label={<span className="text-sm">{motivation}</span>}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* What type of updates would you like to receive? */}
-                                                <div className="mb-6">
-                                                    <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
-                                                        What type of updates would you like to receive?
-                                                    </FormLabel>
-                                                    <div className="space-y-1">
-                                                        {[
-                                                            'Class Schedules',
-                                                            'New Programs / Workshops',
-                                                            'Events & Social Sports',
-                                                            'Promotions & Membership Offers',
-                                                            'Facility Updates',
-                                                            'Café Menus / Specials'
-                                                        ].map((update) => (
-                                                            <FormControlLabel
-                                                                key={update}
-                                                                control={
-                                                                    <Checkbox
-                                                                        size="small"
-                                                                        checked={member.updatePreferences.includes(update)}
-                                                                        onChange={(e) => {
-                                                                            const currentPreferences = member.updatePreferences;
-                                                                            if (e.target.checked) {
-                                                                                updateMember(member.id, { updatePreferences: [...currentPreferences, update] });
-                                                                            } else {
-                                                                                updateMember(member.id, { updatePreferences: currentPreferences.filter(u => u !== update) });
-                                                                            }
-                                                                        }}
-                                                                        sx={{
-                                                                            color: '#C72030',
-                                                                            '&.Mui-checked': {
-                                                                                color: '#C72030',
-                                                                            },
-                                                                        }}
-                                                                    />
-                                                                }
-                                                                label={<span className="text-sm">{update}</span>}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Preferred Communication Channel */}
                                                 <div>
-                                                    <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-3" sx={{ color: '#000', fontWeight: 'medium' }}>
+                                                    <FormLabel component="legend" className="text-sm font-medium mb-2">
                                                         Preferred Communication Channel:
                                                     </FormLabel>
                                                     <div className="space-y-1">
-                                                        {[
-                                                            'WhatsApp',
-                                                            'Email',
-                                                            'SMS'
-                                                        ].map((channel) => (
+                                                        {['WhatsApp', 'Email', 'SMS'].map((channel) => (
                                                             <FormControlLabel
                                                                 key={channel}
                                                                 control={
@@ -3055,19 +2009,14 @@ export const AddGroupMembershipPage = () => {
                                                                         size="small"
                                                                         checked={member.communicationChannel.includes(channel)}
                                                                         onChange={(e) => {
-                                                                            const currentChannels = member.communicationChannel;
+                                                                            const current = member.communicationChannel;
                                                                             if (e.target.checked) {
-                                                                                updateMember(member.id, { communicationChannel: [...currentChannels, channel] });
+                                                                                updateMember(member.id, { communicationChannel: [...current, channel] });
                                                                             } else {
-                                                                                updateMember(member.id, { communicationChannel: currentChannels.filter(c => c !== channel) });
+                                                                                updateMember(member.id, { communicationChannel: current.filter(c => c !== channel) });
                                                                             }
                                                                         }}
-                                                                        sx={{
-                                                                            color: '#C72030',
-                                                                            '&.Mui-checked': {
-                                                                                color: '#C72030',
-                                                                            },
-                                                                        }}
+                                                                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
                                                                     />
                                                                 }
                                                                 label={<span className="text-sm">{channel}</span>}
@@ -3077,65 +2026,15 @@ export const AddGroupMembershipPage = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
 
-                                {/* Card 8: Occupation & Demographics */}
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h2 className="text-lg font-semibold text-[#1a1a1a]">Occupation & Demographics</h2>
-                                        <Button
-                                            onClick={handleAddOccupationMember}
-                                            size="sm"
-                                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                                        >
-                                            <span className="mr-1">+</span> Add Occupation Info ({getOccupationMembers().length}/{userLimit})
-                                        </Button>
-                                    </div>
+                                        {/* Section 7: Occupation */}
+                                        <div className="pt-8 border-t border-gray-200">
+                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">7</div>
+                                                Occupation & Demographics
+                                            </h4>
 
-                                    {/* Members List */}
-                                    {getOccupationMembers().map((member, memberIndex) => (
-                                        <div key={member.id} className={`${memberIndex > 0 ? 'mt-6 pt-6 border-t border-gray-200' : ''}`}>
-                                            {/* Member Header */}
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="bg-[#C72030] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold">
-                                                        {memberIndex + 1}
-                                                    </div>
-                                                    <span className="font-medium text-gray-700">
-                                                        {member.formData.firstName && member.formData.lastName
-                                                            ? `${member.formData.firstName} ${member.formData.lastName}`
-                                                            : `Member ${memberIndex + 1}`}
-                                                    </span>
-                                                </div>
-                                                {getOccupationMembers().length > 0 && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleRemoveOccupationMember(member.id)}
-                                                        className="text-red-600 hover:text-red-700"
-                                                    >
-                                                        <X className="w-4 h-4 mr-1" /> Remove
-                                                    </Button>
-                                                )}
-                                            </div>
-
-                                            {/* Copy from Previous Button */}
-                                            {memberIndex > 0 && (
-                                                <div className="mb-4">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => copyOccupationFromPrevious(memberIndex)}
-                                                        className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                                    >
-                                                        <Copy className="w-4 h-4 mr-1" /> Copy Occupation from Member {memberIndex}
-                                                    </Button>
-                                                </div>
-                                            )}
-
-                                            {/* Profession / Industry */}
-                                            <div className="mb-6">
+                                            <div className="space-y-4">
                                                 <TextField
                                                     label="Profession / Industry"
                                                     value={member.profession}
@@ -3143,10 +2042,6 @@ export const AddGroupMembershipPage = () => {
                                                     sx={fieldStyles}
                                                     fullWidth
                                                 />
-                                            </div>
-
-                                            {/* Company Name */}
-                                            <div className="mb-6">
                                                 <TextField
                                                     label="Company Name"
                                                     value={member.companyName}
@@ -3154,55 +2049,86 @@ export const AddGroupMembershipPage = () => {
                                                     sx={fieldStyles}
                                                     fullWidth
                                                 />
-                                            </div>
-
-                                            {/* Corporate Interest */}
-                                            <div>
-                                                <FormLabel component="legend" className="text-sm font-medium text-gray-700 mb-2" sx={{ color: '#000', fontWeight: 'medium' }}>
-                                                    Are you interested in corporate/group plans for your workplace?
-                                                </FormLabel>
-                                                <RadioGroup
-                                                    row
-                                                    value={member.corporateInterest}
-                                                    onChange={(e) => updateMember(member.id, { corporateInterest: e.target.value as 'yes' | 'no' })}
-                                                >
-                                                    <FormControlLabel
-                                                        value="yes"
-                                                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                                                        label="Yes"
-                                                    />
-                                                    <FormControlLabel
-                                                        value="no"
-                                                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                                                        label="No"
-                                                    />
-                                                </RadioGroup>
+                                                <div>
+                                                    <FormLabel component="legend" className="text-sm font-medium mb-2">
+                                                        Interested in corporate/group plans?
+                                                    </FormLabel>
+                                                    <RadioGroup row value={member.corporateInterest} onChange={(e) => updateMember(member.id, { corporateInterest: e.target.value as 'yes' | 'no' })}>
+                                                        <FormControlLabel value="yes" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="Yes" />
+                                                        <FormControlLabel value="no" control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} label="No" />
+                                                    </RadioGroup>
+                                                </div>
                                             </div>
                                         </div>
-                                    ))}
+                                    </div>
+                                ))}
+
+                                {/* Shared Membership Details */}
+                                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                    <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">Shared Membership Details</h2>
+                                    
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <FormControl fullWidth sx={fieldStyles}>
+                                                <InputLabel>Membership Type</InputLabel>
+                                                <Select value={membershipType} onChange={(e) => setMembershipType(e.target.value)} label="Membership Type">
+                                                    <MenuItem value=""><em>Select Type</em></MenuItem>
+                                                    {MEMBERSHIP_TYPE_OPTIONS.map((opt) => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
+                                                </Select>
+                                            </FormControl>
+
+                                            <FormControl fullWidth sx={fieldStyles}>
+                                                <InputLabel>Referred By</InputLabel>
+                                                <Select value={referredBy} onChange={(e) => setReferredBy(e.target.value)} label="Referred By">
+                                                    <MenuItem value=""><em>Select</em></MenuItem>
+                                                    {REFERRED_BY_OPTIONS.map((opt) => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
+                                                </Select>
+                                            </FormControl>
+                                        </div>
+
+                                        <TextField
+                                            label="Emergency Contact"
+                                            value={emergencyContactName}
+                                            onChange={(e) => setEmergencyContactName(e.target.value)}
+                                            sx={fieldStyles}
+                                            fullWidth
+                                            placeholder="Name or Phone Number"
+                                        />
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <DatePicker
+                                                label="Start Date *"
+                                                value={startDate}
+                                                onChange={(newValue) => setStartDate(newValue as Dayjs | null)}
+                                                slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
+                                            />
+                                            <DatePicker
+                                                label="End Date *"
+                                                value={endDate}
+                                                onChange={(newValue) => setEndDate(newValue as Dayjs | null)}
+                                                slotProps={{ textField: { fullWidth: true, sx: fieldStyles } }}
+                                            />
+                                        </div>
+
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={cardAllocated}
+                                                    onChange={(e) => setCardAllocated(e.target.checked)}
+                                                    sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                                />
+                                            }
+                                            label="Access Card Allocated"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Submit Buttons */}
                                 <div className="flex justify-between gap-3 pt-6 border-t border-gray-200">
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleBackToStep1}
-                                    >
-                                        Back
-                                    </Button>
+                                    <Button variant="outline" onClick={handleBackToStep1}>Back</Button>
                                     <div className="flex gap-3">
-                                        <Button
-                                            variant="outline"
-                                            onClick={handleGoBack}
-                                            disabled={isSubmitting}
-                                        >
-                                            Cancel
-                                        </Button>
-                                        <Button
-                                            onClick={handleSubmit}
-                                            disabled={isSubmitting || !selectedPlanId}
-                                            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                                        >
+                                        <Button variant="outline" onClick={handleGoBack} disabled={isSubmitting}>Cancel</Button>
+                                        <Button onClick={handleSubmit} disabled={isSubmitting || !selectedPlanId} className="bg-[#C72030] hover:bg-[#A01020] text-white">
                                             {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
                                         </Button>
                                     </div>
@@ -3210,7 +2136,7 @@ export const AddGroupMembershipPage = () => {
                             </>
                         )}
 
-                        {/* Step 2: Membership Plan & Add-ons */}
+                        {/* Step 1: Membership Plan & Add-ons */}
                         {currentStep === 1 && (
                             <>
                                 {/* Card 9: Membership Plan Selection */}
@@ -3340,26 +2266,13 @@ export const AddGroupMembershipPage = () => {
                                                 <div className="flex items-center justify-between mb-2">
                                                     <div>
                                                         <p className="text-sm font-medium text-gray-700">{selectedPlan?.name}</p>
-                                                        <p className="text-xs text-gray-500">{selectedPlan?.renewal_terms} membership</p>
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            {selectedPlan?.renewal_terms && selectedPlan.renewal_terms.charAt(0).toUpperCase() + selectedPlan.renewal_terms.slice(1)} Membership
+                                                        </p>
                                                     </div>
-                                                </div>
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <label className="text-sm text-gray-600">Plan Cost:</label>
-                                                    <div className="flex items-center gap-1 flex-1">
-                                                        <span className="text-gray-600">₹</span>
-                                                        <TextField
-                                                            value={editablePlanCost}
-                                                            onChange={(e) => setEditablePlanCost(e.target.value)}
-                                                            type="number"
-                                                            size="small"
-                                                            sx={{
-                                                                ...fieldStyles,
-                                                                flex: 1,
-                                                                '& .MuiOutlinedInput-root': {
-                                                                    height: '40px',
-                                                                }
-                                                            }}
-                                                        />
+                                                    <div className="text-right">
+                                                        <p className="text-2xl font-bold text-[#C72030]">₹{selectedPlan?.price}</p>
+                                                        <p className="text-xs text-gray-500">per {selectedPlan?.renewal_terms}</p>
                                                     </div>
                                                 </div>
 
@@ -3384,26 +2297,6 @@ export const AddGroupMembershipPage = () => {
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            {/* Add-ons Cost */}
-                                            {/* {selectedAddOns.length > 0 && (
-                        <div className="pb-3 border-b border-gray-200">
-                          <p className="text-sm font-medium text-gray-700 mb-2">Add-ons:</p>
-                          {selectedAddOns.map(addOnId => {
-                            const addOn = allAmenities.find(a => a.value === addOnId);
-                            return (
-                              <div key={addOnId} className="flex items-center justify-between ml-4 mb-1">
-                                <p className="text-sm text-gray-600">{addOn?.name}</p>
-                                <p className="text-sm font-medium text-gray-700">₹{parseFloat(addOn?.price || '0').toFixed(2)}</p>
-                              </div>
-                            );
-                          })}
-                          <div className="flex items-center justify-between mt-2">
-                            <p className="text-sm font-medium text-gray-700">Subtotal (Add-ons)</p>
-                            <p className="text-lg font-semibold text-gray-900">₹{addOnsCost.toFixed(2)}</p>
-                          </div>
-                        </div>
-                      )} */}
 
                                             {/* Subtotal */}
                                             <div className="flex items-center justify-between pb-3 border-b border-gray-200">

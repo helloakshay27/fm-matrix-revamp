@@ -789,6 +789,8 @@ import SafetyCheckAudit from './pages/SafetyCheckAudit';
 import MsafeCirlce from "./pages/MsafeCirlce";
 import { TicketJobSheetPage } from "./pages/TicketJobSheetPage";
 import Sitemap from "./pages/Sitemap";
+import ClubGroupMembershipDashboard from "./pages/ClubManagement/ClubGroupMembershipDashboard";
+import ClubGroupMembershipDetails from "./pages/ClubManagement/ClubGroupMembershipDetails"; 
 import ClubMembershipDashboard from "./pages/ClubManagement/ClubMembershipDashboard";
 import ClubMembershipDetailPage from "./pages/ClubManagement/ClubMembershipDetailPage";
 import AddClubMembershipPage from "./pages/ClubManagement/AddClubMembershipPage";
@@ -1530,12 +1532,21 @@ function App() {
                     element={<ClubMembershipDashboard />}
                   />
                   <Route
+                    path="/club-management/membership/groups"
+                    element={<ClubGroupMembershipDashboard />}
+                  />
+                  <Route
                     path="/club-management/membership/add"
                     element={<AddClubMembershipPage />}
                   />
                   <Route
                     path="/club-management/membership/add-group"
                     element={<AddGroupMembershipPage />}
+                  />
+
+                  <Route
+                    path="/club-management/membership/group-details/:id"
+                    element={<ClubGroupMembershipDetails />}
                   />
                   <Route
                     path="/club-management/membership/:id"

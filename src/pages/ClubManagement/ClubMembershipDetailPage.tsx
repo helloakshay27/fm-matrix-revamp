@@ -1,17 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_CONFIG } from '@/config/apiConfig';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Attachment {
   id: number;
   relation: string;
   relation_id: number;
   document: string;
+}
+
+interface Address {
+  id: number;
+  address: string | null;
+  address_line_two?: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  pin_code: string | null;
+  address_type?: string | null;
+  active: boolean | null;
+  resource_id: number;
+  resource_type: string;
 }
 
 interface MembershipDetail {
@@ -24,6 +38,7 @@ interface MembershipDetail {
   access_card_id: string | null;
   start_date: string | null;
   end_date: string | null;
+  preferred_start_date?: string | null;
   created_at: string;
   updated_at: string;
   user_name: string;
@@ -33,20 +48,19 @@ interface MembershipDetail {
   attachments: Attachment[];
   identification_image: string | null;
   avatar: string;
-  // Additional fields from add page
   emergency_contact_name?: string;
   referred_by?: string;
   membership_plan_id?: number;
   membership_plan_name?: string;
-  date_of_birth?: string;
-  gender?: string;
-  address?: string;
-  address_line_two?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  pin_code?: string;
-  // Amenities and payment details
+  active?: boolean;
+  face_added?: boolean;
+  created_by_id?: number;
+  access_card_check?: boolean;
+  club_member_check?: boolean;
+  current_age?: number | null;
+  doc_type?: string | null;
+  relation_with_owner?: string | null;
+  resident_type?: string | null;
   plan_amenities?: Array<{
     id: number;
     facility_setup_id: number;
@@ -67,19 +81,22 @@ interface MembershipDetail {
     sgst: string;
     total_tax: string;
     total_amount: string;
-  };
+  } | null;
   user: {
+    id: number;
+    email: string;
+    firstname: string;
+    lastname: string;
+    mobile: string;
     birth_date: string | null;
     gender: string | null;
-    addresses: Array<{
-      address: string | null;
-      address_line_two: string | null;
-      city: string | null;
-      state: string | null;
-      country: string | null;
-      pin_code: string | null;
-    }>
-  }
+    user_type: string;
+    addresses: Address[];
+    full_name?: string;
+    country_code?: string;
+    company_id?: number;
+    site_id?: number;
+  };
 }
 
 export const ClubMembershipDetailPage = () => {
@@ -89,6 +106,7 @@ export const ClubMembershipDetailPage = () => {
   const [membershipData, setMembershipData] = useState<MembershipDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("personal");
 
   console.log(membershipData)
 
@@ -196,7 +214,7 @@ export const ClubMembershipDetailPage = () => {
       <div className="p-4 sm:p-6 min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C72030]"></div>
-          <p className="text-gray-600">Loading membership details...</p>
+          <p className="text-gray-600">Loading membership data...</p>
         </div>
       </div>
     );
@@ -218,55 +236,35 @@ export const ClubMembershipDetailPage = () => {
   const avatarUrl = getAvatarUrl(membershipData.avatar);
 
   return (
-    <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
+    <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <button
           onClick={handleBackToList}
-          className="flex items-center gap-1 text-gray-600 hover:text-gray-800 mb-4 transition-colors"
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Membership List
         </button>
 
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            {/* Avatar */}
-            <div className="flex-shrink-0">
-              {avatarUrl && !avatarUrl.includes('profile.png') ? (
-                <img
-                  src={avatarUrl}
-                  alt={membershipData.user_name}
-                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
-                  <User className="w-10 h-10 text-gray-400" />
-                </div>
-              )}
-            </div>
-
-            {/* Member Info */}
-            <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-4">
               <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
                 {membershipData.user_name}
               </h1>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-sm text-gray-600">
-                  Membership #{membershipData.membership_number}
-                </span>
-                {renderStatusBadge()}
-              </div>
-              <div className="text-sm text-gray-500">
-                Created on {formatDateTime(membershipData.created_at)}
-              </div>
+              {renderStatusBadge()}
+            </div>
+            <div className="text-sm text-gray-600">
+              Membership #{membershipData.membership_number} • Created on {formatDateTime(membershipData.created_at)}
             </div>
           </div>
-
-          <div className="flex items-center gap-3">
+          
+          <div className="flex gap-3">
             <Button
               onClick={handleEdit}
-              className="bg-[#C72030] hover:bg-[#A01020] text-white"
+              variant="outline"
+              className="border-[#C72030] text-[#C72030]"
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit
@@ -275,310 +273,299 @@ export const ClubMembershipDetailPage = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Main Details */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Personal Information */}
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <User className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Personal Information</h3>
+      {/* Main Content - Tabs */}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <Tabs defaultValue="personal" className="w-full" onValueChange={setActiveTab}>
+          <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
+            <TabsTrigger
+              value="personal"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Personal Information
+            </TabsTrigger>
+            <TabsTrigger
+              value="membership"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Membership Details
+            </TabsTrigger>
+            <TabsTrigger
+              value="address"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Address Information
+            </TabsTrigger>
+            {(membershipData.plan_amenities?.length || membershipData.custom_amenities?.length) && (
+              <TabsTrigger
+                value="plan"
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              >
+                Plan & Amenities
+              </TabsTrigger>
+            )}
+            {membershipData.member_payment_detail && (
+              <TabsTrigger
+                value="payment"
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              >
+                Payment Information
+              </TabsTrigger>
+            )}
+            {((membershipData.attachments && membershipData.attachments.length > 0) || 
+              membershipData.identification_image || 
+              (avatarUrl && !avatarUrl.includes('profile.png'))) && (
+              <TabsTrigger
+                value="documents"
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              >
+                Documents & Images
+              </TabsTrigger>
+            )}
+            <TabsTrigger
+              value="system"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              System Information
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="personal" className="p-4 sm:p-6">
+            <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+              <User className="w-5 h-5 text-[#C72030]" />
+              Personal Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Full Name</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.user_name || membershipData.user?.full_name || '-'}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">First Name</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.user?.firstname || '-'}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Last Name</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.user?.lastname || '-'}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Email</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.user_email || membershipData.user?.email || '-'}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Mobile</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {membershipData.user?.country_code && `+${membershipData.user.country_code} `}
+                  {membershipData.user_mobile || membershipData.user?.mobile || '-'}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Site</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.site_name || '-'}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Date of Birth</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{formatDate(membershipData.user?.birth_date)}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Gender</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.user?.gender || '-'}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Current Age</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.current_age || '-'}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">User Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.user?.user_type || '-'}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Face Added</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  <Badge variant={membershipData.face_added ? "default" : "secondary"}>
+                    {membershipData.face_added ? 'Yes' : 'No'}
+                  </Badge>
+                </span>
               </div>
             </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Full Name
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.user_name}
-                  </span>
-                </div>
+          </TabsContent>
 
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Email
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.user_email}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Mobile
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.user_mobile}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Site
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.site_name}
-                  </span>
-                </div>
+          <TabsContent value="membership" className="p-4 sm:p-6">
+            <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+              <CreditCard className="w-5 h-5 text-[#C72030]" />
+              Membership Details
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Membership Number</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.membership_number || '-'}</span>
               </div>
-            </div>
-          </Card>
-
-          {/* Membership Details */}
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <CreditCard className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Membership Details</h3>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Club Member</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  <Badge variant={membershipData.club_member_enabled ? "default" : "secondary"}>
+                    {membershipData.club_member_enabled ? 'Enabled' : 'Disabled'}
+                  </Badge>
+                </span>
               </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Start Date</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{formatDate(membershipData.start_date)}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">End Date</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{formatDate(membershipData.end_date)}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Preferred Start Date</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{formatDate(membershipData.preferred_start_date)}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Access Card</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  <Badge variant={membershipData.access_card_enabled ? "default" : "secondary"}>
+                    {membershipData.access_card_enabled ? 'Enabled' : 'Disabled'}
+                  </Badge>
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Access Card ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.access_card_id || '-'}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Active Status</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  <Badge variant={membershipData.active ? "default" : "secondary"}>
+                    {membershipData.active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </span>
+              </div>
+              {membershipData.referred_by && (
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Referred By</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">{membershipData.referred_by}</span>
+                </div>
+              )}
+              {membershipData.emergency_contact_name && (
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Emergency Contact</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">{membershipData.emergency_contact_name}</span>
+                </div>
+              )}
+              {membershipData.resident_type && (
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Resident Type</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">{membershipData.resident_type}</span>
+                </div>
+              )}
+              {membershipData.relation_with_owner && (
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Relation with Owner</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">{membershipData.relation_with_owner}</span>
+                </div>
+              )}
             </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Membership Number
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.membership_number}
-                  </span>
-                </div>
+          </TabsContent>
 
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Club Member
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    <Badge variant={membershipData.club_member_enabled ? "default" : "secondary"}>
-                      {membershipData.club_member_enabled ? 'Enabled' : 'Disabled'}
-                    </Badge>
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Start Date
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {formatDate(membershipData.start_date)}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    End Date
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {formatDate(membershipData.end_date)}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Access Card
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    <Badge variant={membershipData.access_card_enabled ? "default" : "secondary"}>
-                      {membershipData.access_card_enabled ? 'Enabled' : 'Disabled'}
-                    </Badge>
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Access Card ID
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.access_card_id || '-'}
-                  </span>
-                </div>
-
-                {membershipData.referred_by && (
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                      Referred By
-                    </span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                      {membershipData.referred_by}
-                    </span>
+          <TabsContent value="address" className="p-4 sm:p-6">
+            <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+              <Building2 className="w-5 h-5 text-[#C72030]" />
+              Address Information
+            </h2>
+            {membershipData.user?.addresses && membershipData.user.addresses.length > 0 ? (
+              membershipData.user.addresses.map((addr, index) => (
+                <div key={addr.id} className={`${index > 0 ? 'mt-6 pt-6 border-t border-gray-200' : ''}`}>
+                  {membershipData.user.addresses.length > 1 && (
+                    <h3 className="text-md font-medium text-gray-700 mb-4">Address {index + 1}</h3>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Address</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{addr.address || '-'}</span>
+                    </div>
+                    {addr.address_line_two && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Address Line 2</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{addr.address_line_two}</span>
+                      </div>
+                    )}
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">City</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{addr.city || '-'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">State</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{addr.state || '-'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Country</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{addr.country || '-'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">PIN Code</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{addr.pin_code || '-'}</span>
+                    </div>
+                    {addr.address_type && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Address Type</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium capitalize">{addr.address_type}</span>
+                      </div>
+                    )}
                   </div>
-                )}
-
-                {membershipData.emergency_contact_name && (
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                      Emergency Contact
-                    </span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                      {membershipData.emergency_contact_name}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
-
-          {/* Additional Personal Information */}
-
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <User className="figma-card-icon" />
                 </div>
-                <h3 className="figma-card-title">Additional Information</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Date of Birth
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {formatDate(membershipData.user.birth_date)}
-                  </span>
-                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-8">No address information available</p>
+            )}
+          </TabsContent>
 
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Gender
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.user.gender}
-                  </span>
+          {(membershipData.plan_amenities?.length || membershipData.custom_amenities?.length) && (
+            <TabsContent value="plan" className="p-4 sm:p-6">
+              {/* Plan & Amenities */}
+              <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+                <FileText className="w-5 h-5 text-[#C72030]" />
+                Plan & Amenities
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Plan</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">{membershipData.membership_plan_name || '-'}</span>
                 </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Address Information */}
-
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <Building2 className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Address Information</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Address
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.user.addresses[0]?.address || '-'}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Address Line 2
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.user.addresses[0]?.address_line_two || '-'}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    City
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.user.addresses[0]?.city || '-'}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    State
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.user.addresses[0]?.state}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Country
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.user.addresses[0]?.country}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    PIN Code
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.user.addresses[0]?.pin_code}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Plan & Amenities Information */}
-
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <CreditCard className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">Plan & Amenities</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Plan
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.membership_plan_name}
-                  </span>
-                </div>
-
                 {membershipData.plan_amenities && membershipData.plan_amenities.length > 0 && (
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                      Included Amenities
-                    </span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                  <div className="flex items-start col-span-2">
+                    <span className="text-gray-500 min-w-[140px]">Included Amenities</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       <ul className="list-disc list-inside space-y-1">
                         {membershipData.plan_amenities.map((amenity) => (
                           <li key={amenity.id}>{amenity.facility_setup_name || `Amenity ${amenity.facility_setup_id}`}</li>
@@ -587,14 +574,11 @@ export const ClubMembershipDetailPage = () => {
                     </span>
                   </div>
                 )}
-
                 {membershipData.custom_amenities && membershipData.custom_amenities.length > 0 && (
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                      Custom Amenities
-                    </span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
+                  <div className="flex items-start col-span-2">
+                    <span className="text-gray-500 min-w-[140px]">Custom Amenities</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
                       <ul className="list-disc list-inside space-y-1">
                         {membershipData.custom_amenities.map((amenity) => (
                           <li key={amenity.id}>{amenity.facility_setup_name || `Amenity ${amenity.facility_setup_id}`}</li>
@@ -604,107 +588,116 @@ export const ClubMembershipDetailPage = () => {
                   </div>
                 )}
               </div>
-            </div>
-          </Card>
+            </TabsContent>
+          )}
 
-          {/* Payment Information */}
-
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <CreditCard className="figma-card-icon" />
+          {membershipData.member_payment_detail && (
+            <TabsContent value="payment" className="p-4 sm:p-6">
+              {/* Payment Information */}
+              <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+                <CreditCard className="w-5 h-5 text-[#C72030]" />
+                Payment Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Base Amount</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">₹ {membershipData?.member_payment_detail?.base_amount || '0'}</span>
                 </div>
-                <h3 className="figma-card-title">Payment Information</h3>
-              </div>
-            </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Base Amount
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    ₹ {membershipData?.member_payment_detail?.base_amount}
-                  </span>
-                </div>
-
                 {membershipData?.member_payment_detail?.discount && membershipData.member_payment_detail.discount !== '0' && (
-                  <div className="task-info-row">
-                    <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                      Discount
-                    </span>
-                    <span className="task-info-separator-enhanced">:</span>
-                    <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                      -₹ {membershipData?.member_payment_detail?.discount}
-                    </span>
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[140px]">Discount</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">-₹ {membershipData?.member_payment_detail?.discount}</span>
+                  </div>
+                )}
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">CGST</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">₹ {membershipData?.member_payment_detail?.cgst || '0'}</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">SGST</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">₹ {membershipData?.member_payment_detail?.sgst || '0'}</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Total Tax</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">₹ {membershipData?.member_payment_detail?.total_tax || '0'}</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Total Amount</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">₹ {membershipData?.member_payment_detail?.total_amount || '0'}</span>
+                </div>
+              </div>
+            </TabsContent>
+          )}
+
+          {((membershipData.attachments && membershipData.attachments.length > 0) || 
+            membershipData.identification_image || 
+            (avatarUrl && !avatarUrl.includes('profile.png'))) && (
+            <TabsContent value="documents" className="p-4 sm:p-6">
+              {/* Documents & Images */}
+              <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+                <ImageIcon className="w-5 h-5 text-[#C72030]" />
+                Documents & Images
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* ID Card */}
+                {membershipData.identification_image && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500 font-medium">ID Card</p>
+                    <a
+                      href={membershipData.identification_image}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative block aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors"
+                    >
+                      <img
+                        src={membershipData.identification_image}
+                        alt="ID Card"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                        <Download className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </a>
                   </div>
                 )}
 
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    CGST
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    ₹ {membershipData?.member_payment_detail?.cgst}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    SGST
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    ₹ {membershipData?.member_payment_detail?.sgst}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Total Tax
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    ₹ {membershipData?.member_payment_detail?.total_tax}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Total Amount
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    ₹ {membershipData?.member_payment_detail?.total_amount}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Attachments */}
-          {membershipData.attachments && membershipData.attachments.length > 0 && (
-            <Card className="w-full bg-transparent shadow-none border-none">
-              <div className="figma-card-header">
-                <div className="flex items-center gap-3">
-                  <div className="figma-card-icon-wrapper">
-                    <FileText className="figma-card-icon" />
-                  </div>
-                  <h3 className="figma-card-title">Attachments ({membershipData.attachments.length})</h3>
-                </div>
-              </div>
-              <div className="figma-card-content">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {membershipData.attachments.map((attachment, index) => (
+                {/* User Photo */}
+                {avatarUrl && !avatarUrl.includes('profile.png') && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500 font-medium">User Photo</p>
                     <a
-                      key={attachment.id}
+                      href={avatarUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative block aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors"
+                    >
+                      <img
+                        src={avatarUrl}
+                        alt="User Photo"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                        <Download className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </a>
+                  </div>
+                )}
+
+                {/* Other Attachments */}
+                {membershipData.attachments && membershipData.attachments.map((attachment, index) => (
+                  <div key={attachment.id} className="space-y-2">
+                    <p className="text-sm text-gray-500 font-medium">Attachment {index + 1}</p>
+                    <a
                       href={attachment.document}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group relative aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors"
+                      className="group relative block aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors"
                     >
                       <img
                         src={attachment.document}
@@ -715,132 +708,93 @@ export const ClubMembershipDetailPage = () => {
                         <Download className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     </a>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          )}
-        </div>
-
-        {/* Right Column - Images */}
-        <div className="space-y-6">
-          {/* Identification Image */}
-          {membershipData.identification_image && (
-            <Card className="w-full bg-transparent shadow-none border-none">
-              <div className="figma-card-header">
-                <div className="flex items-center gap-3">
-                  <div className="figma-card-icon-wrapper">
-                    <ImageIcon className="figma-card-icon" />
                   </div>
-                  <h3 className="figma-card-title">ID Card</h3>
-                </div>
+                ))}
               </div>
-              <div className="figma-card-content">
-                <a
-                  href={membershipData.identification_image}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative block aspect-[3/2] rounded-lg overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors"
-                >
-                  <img
-                    src={membershipData.identification_image}
-                    alt="ID Card"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
-                    <Download className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </a>
-              </div>
-            </Card>
+            </TabsContent>
           )}
 
-          {/* User Photo */}
-          {avatarUrl && !avatarUrl.includes('profile.png') && (
-            <Card className="w-full bg-transparent shadow-none border-none">
-              <div className="figma-card-header">
-                <div className="flex items-center gap-3">
-                  <div className="figma-card-icon-wrapper">
-                    <User className="figma-card-icon" />
-                  </div>
-                  <h3 className="figma-card-title">User Photo</h3>
-                </div>
+          <TabsContent value="system" className="p-4 sm:p-6">
+            <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+              <FileText className="w-5 h-5 text-[#C72030]" />
+              System Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">User ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.user_id}</span>
               </div>
-              <div className="figma-card-content">
-                <a
-                  href={avatarUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative block aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors"
-                >
-                  <img
-                    src={avatarUrl}
-                    alt="User Photo"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
-                    <Download className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </a>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Membership ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.id}</span>
               </div>
-            </Card>
-          )}
-
-          {/* System Information */}
-          <Card className="w-full bg-transparent shadow-none border-none">
-            <div className="figma-card-header">
-              <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                  <FileText className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title">System Information</h3>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Created By ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.created_by_id || '-'}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Status</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{renderStatusBadge()}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Active</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  <Badge variant={membershipData.active ? "default" : "secondary"}>
+                    {membershipData.active ? 'Yes' : 'No'}
+                  </Badge>
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Doc Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.doc_type || '-'}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Site ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.pms_site_id}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Company ID</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{membershipData.user?.company_id || '-'}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Created At</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{formatDateTime(membershipData.created_at)}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Updated At</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">{formatDateTime(membershipData.updated_at)}</span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Access Card Check</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  <Badge variant={membershipData.access_card_check ? "default" : "secondary"}>
+                    {membershipData.access_card_check ? 'Yes' : 'No'}
+                  </Badge>
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Club Member Check</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  <Badge variant={membershipData.club_member_check ? "default" : "secondary"}>
+                    {membershipData.club_member_check ? 'Yes' : 'No'}
+                  </Badge>
+                </span>
               </div>
             </div>
-            <div className="figma-card-content">
-              <div className="task-info-enhanced">
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    User ID
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.user_id}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Site ID
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {membershipData.pms_site_id}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Created At
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {formatDateTime(membershipData.created_at)}
-                  </span>
-                </div>
-
-                <div className="task-info-row">
-                  <span className="task-info-label-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 500, fontSize: "16px" }}>
-                    Last Updated
-                  </span>
-                  <span className="task-info-separator-enhanced">:</span>
-                  <span className="task-info-value-enhanced" style={{ fontFamily: "Work Sans", fontWeight: 400, fontSize: "14px" }}>
-                    {formatDateTime(membershipData.updated_at)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Image Modal */}

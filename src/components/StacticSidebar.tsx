@@ -78,6 +78,7 @@ import {
   Circle,
 } from "lucide-react";
 import { template } from "lodash";
+import { subISOWeekYears } from "date-fns";
 
 const navigationStructure = {
   Settings: {
@@ -308,6 +309,10 @@ const modulesByPackage = {
       name: "Club Membership",
       icon: Star,
       href: "/club-management/membership",
+      subItems: [
+        { name: "Membership List", href: "/club-management/membership", color: "text-[#1a1a1a]" },
+        { name: "Group Memberships", href: "/club-management/membership/groups", color: "text-[#1a1a1a]" },
+      ]
     },
     {
       name: "User Management",
