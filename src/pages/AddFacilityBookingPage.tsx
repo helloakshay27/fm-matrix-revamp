@@ -25,6 +25,11 @@ export const AddFacilityBookingPage = () => {
   const occupantUsersLoading = occupantUsersState?.loading;
   const occupantUsersError = occupantUsersState?.error;
 
+  const [guestUsers, setGuestUsers] = useState([]);
+  const [guestUsersLoading, setGuestUsersLoading] = useState(false);
+  const [guestUsersError, setGuestUsersError] = useState(null);
+  const [selectedGuest, setSelectedGuest] = useState('');
+
   console.log(occupantUsersState)
 
   const { data: entitiesResponse, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
@@ -65,6 +70,29 @@ export const AddFacilityBookingPage = () => {
   const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
   const [openCancelPolicy, setOpenCancelPolicy] = useState(false);
   const [openTerms, setOpenTerms] = useState(false);
+  const [complementaryReason, setComplementaryReason] = useState('');
+
+  // Fetch guest users
+  const fetchGuestUsers = async () => {
+    setGuestUsersLoading(true);
+    setGuestUsersError(null);
+    try {
+      const response = await apiClient.get('/pms/account_setups/occupant_users.json', {
+        params: {
+          'q[lock_user_permissions_user_type_eq]': 'pms_guest'
+        }
+      });
+      if (response.data && response.data.occupant_users) {
+        setGuestUsers(response.data.occupant_users);
+      }
+    } catch (error) {
+      console.error('Error fetching guest users:', error);
+      setGuestUsersError(error);
+      setGuestUsers([]);
+    } finally {
+      setGuestUsersLoading(false);
+    }
+  };
 
   // Fetch data on component mount
   useEffect(() => {
@@ -73,6 +101,7 @@ export const AddFacilityBookingPage = () => {
       dispatch(fetchEntities());
     } else {
       dispatch(fetchFMUsers());
+      fetchGuestUsers();
     }
     dispatch(fetchActiveFacilities({ baseUrl: localStorage.getItem('baseUrl'), token: localStorage.getItem('token') }));
   }, [dispatch, userType]);
@@ -167,6 +196,10 @@ export const AddFacilityBookingPage = () => {
         toast.error('Please select a payment method');
         return;
       }
+      if (paymentMethod === 'complementary' && !complementaryReason.trim()) {
+        toast.error('Please enter a reason for complementary booking');
+        return;
+      }
       if (selectedSlots.length === 0) {
         toast.error('Please select at least one slot');
         return;
@@ -200,10 +233,12 @@ export const AddFacilityBookingPage = () => {
           payment_method: paymentMethod,
           selected_slots: selectedSlots,
           entity_id: selectedCompany,
+          ...(paymentMethod === 'complementary' && { complementary_payment_reason: complementaryReason }),
         },
         on_behalf_of: userType === 'occupant' ? 'occupant-user' : 'fm-user',
         occupant_user_id: userType === 'occupant' ? selectedUser : '',
-        fm_user_id: userType === 'fm' ? selectedUser : ''
+        fm_user_id: userType === 'fm' ? selectedUser : '',
+        ...(selectedGuest && { guest_user_id: selectedGuest })
       };
 
       console.log('Payload being sent:', JSON.stringify(payload, null, 2));
@@ -295,6 +330,45 @@ export const AddFacilityBookingPage = () => {
             </div>
           </RadioGroup>
         </div>
+
+        {/* Guest Dropdown - only for staff users */}
+        {userType === 'fm' && (
+          <div className="space-y-2">
+            <TextField
+              select
+              label="Guest"
+              value={selectedGuest}
+              onChange={(e) => setSelectedGuest(e.target.value)}
+              SelectProps={{ displayEmpty: true }}
+              variant="outlined"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
+              disabled={guestUsersLoading}
+              helperText={guestUsersError ? "Error loading guest users" : ""}
+              error={!!guestUsersError}
+            >
+              <MenuItem value="">
+                <em>Select Guest</em>
+              </MenuItem>
+              {guestUsersLoading && (
+                <MenuItem value="" disabled>
+                  Loading guest users...
+                </MenuItem>
+              )}
+              {!guestUsersLoading && !guestUsersError && guestUsers.length === 0 && (
+                <MenuItem value="" disabled>
+                  No guest users available
+                </MenuItem>
+              )}
+              {guestUsers.map((guest) => (
+                <MenuItem key={guest.id} value={guest.id.toString()}>
+                  {guest.firstname} {guest.lastname}
+                </MenuItem>
+              ))}
+            </TextField>
+          </div>
+        )}
 
         {/* Form Fields Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -570,6 +644,28 @@ export const AddFacilityBookingPage = () => {
           )}
           {!facilityDetails && selectedFacility && (
             <p className="text-gray-500">Please select a facility to see available payment methods</p>
+          )}
+          
+          {/* Complementary Reason Input */}
+          {paymentMethod === 'complementary' && (
+            <div className="mt-4">
+              <TextField
+                label="Reason"
+                required
+                value={complementaryReason}
+                onChange={(e) => setComplementaryReason(e.target.value)}
+                variant="outlined"
+                fullWidth
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500",
+                  },
+                  shrink: true
+                }}
+                sx={fieldStyles}
+                placeholder="Enter reason for complementary booking"
+              />
+            </div>
           )}
         </div>
 

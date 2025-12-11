@@ -109,6 +109,7 @@ export const EditMembershipPlanPage = () => {
     price: "",
     userLimit: "",
     renewalTerms: "",
+    paymentFrequency: "",
     amenities: [] as any[],
     amenityDetails: {} as Record<string, {
       frequency: string;
@@ -173,6 +174,7 @@ export const EditMembershipPlanPage = () => {
         price: data.price,
         userLimit: data.user_limit,
         renewalTerms: data.renewal_terms,
+        paymentFrequency: data.payment_frequency || "",
         amenities: data.plan_amenities,
         amenityDetails: amenityDetailsMap,
       })
@@ -221,6 +223,7 @@ export const EditMembershipPlanPage = () => {
           price: formData.price,
           user_limit: formData.userLimit,
           renewal_terms: formData.renewalTerms,
+          payment_frequency: formData.paymentFrequency,
           plan_amenities_attributes: [
             ...formData.amenities.map(amenity => {
               const details = formData.amenityDetails[amenity.facility_setup_id] || {};
@@ -387,6 +390,26 @@ export const EditMembershipPlanPage = () => {
                   </MenuItem>
                   <MenuItem value="monthly">Monthly</MenuItem>
                   <MenuItem value="quarterly">Quarterly</MenuItem>
+                  <MenuItem value="yearly">Yearly</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl variant="outlined">
+                <InputLabel>Payment Frequency</InputLabel>
+                <Select
+                  value={formData.paymentFrequency}
+                  onChange={(e) =>
+                    setFormData({ ...formData, paymentFrequency: e.target.value })
+                  }
+                  label="Payment Frequency"
+                >
+                  <MenuItem value="">
+                    <em>Select Payment Frequency</em>
+                  </MenuItem>
+                  <MenuItem value="one time">One Time</MenuItem>
+                  <MenuItem value="monthly">Monthly</MenuItem>
+                  <MenuItem value="quarterly">Quarterly</MenuItem>
+                  <MenuItem value="half yearly">Half Yearly</MenuItem>
                   <MenuItem value="yearly">Yearly</MenuItem>
                 </Select>
               </FormControl>

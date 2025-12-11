@@ -105,6 +105,7 @@ export const AddMembershipPlanPage = () => {
     price: "",
     userLimit: "",
     renewalTerms: "",
+    paymentFrequency: "",
     usageLimits: "Unlimited",
     discountEligibility: "No",
     amenities: [] as string[],
@@ -174,6 +175,7 @@ export const AddMembershipPlanPage = () => {
           price: formData.price,
           user_limit: formData.userLimit,
           renewal_terms: formData.renewalTerms,
+          payment_frequency: formData.paymentFrequency,
           usage_limits: formData.usageLimits,
           discount_eligibility: formData.discountEligibility,
           plan_amenities_attributes: formData.amenities.map(amenityId => {
@@ -300,6 +302,26 @@ export const AddMembershipPlanPage = () => {
                   <MenuItem value="monthly">Monthly</MenuItem>
                   <MenuItem value="quaterly">Quarterly</MenuItem>
                   <MenuItem value="half_yearly">Half Yearly</MenuItem>
+                  <MenuItem value="yearly">Yearly</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl variant="outlined">
+                <InputLabel>Payment Frequency</InputLabel>
+                <Select
+                  value={formData.paymentFrequency}
+                  onChange={(e) =>
+                    setFormData({ ...formData, paymentFrequency: e.target.value })
+                  }
+                  label="Payment Frequency"
+                >
+                  <MenuItem value="">
+                    <em>Select Payment Frequency</em>
+                  </MenuItem>
+                  <MenuItem value="one time">One Time</MenuItem>
+                  <MenuItem value="monthly">Monthly</MenuItem>
+                  <MenuItem value="quarterly">Quarterly</MenuItem>
+                  <MenuItem value="half yearly">Half Yearly</MenuItem>
                   <MenuItem value="yearly">Yearly</MenuItem>
                 </Select>
               </FormControl>

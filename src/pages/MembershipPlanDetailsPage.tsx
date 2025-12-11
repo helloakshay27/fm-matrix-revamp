@@ -106,6 +106,7 @@ export const MembershipPlanDetailsPage = () => {
     price: "",
     userLimit: "",
     renewalTerms: "",
+    paymentFrequency: "",
     usageLimits: "",
     discountEligibility: "",
     amenities: [] as string[],
@@ -167,6 +168,7 @@ export const MembershipPlanDetailsPage = () => {
         price: data.price,
         userLimit: data.user_limit,
         renewalTerms: data.renewal_terms,
+        paymentFrequency: data.payment_frequency || "",
         usageLimits: data.usage_limits || "",
         discountEligibility: data.discount_eligibility || "",
         amenities: data.plan_amenities.map((amenity) => amenity.facility_setup_id),
@@ -267,6 +269,13 @@ export const MembershipPlanDetailsPage = () => {
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.renewalTerms ? formData.renewalTerms.charAt(0).toUpperCase() + formData.renewalTerms.slice(1) : "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Payment Frequency</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.paymentFrequency ? formData.paymentFrequency.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : "-"}
                 </span>
               </div>
               <div className="flex items-start">
