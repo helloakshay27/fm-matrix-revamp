@@ -973,10 +973,30 @@ export const AddGroupMembershipPage = () => {
                         toast.error(`${memberLabel}: Please enter first name and last name`);
                         return;
                     }
-                    if (!member.formData.email || !member.formData.mobile) {
-                        toast.error(`${memberLabel}: Please enter email and mobile number`);
+                    if (!member.formData.email) {
+                        toast.error(`${memberLabel}: Please enter email address`);
                         return;
                     }
+                    if (!validateEmail(member.formData.email)) {
+                        toast.error(`${memberLabel}: Please enter a valid email address`);
+                        return;
+                    }
+                    if (!member.formData.mobile) {
+                        toast.error(`${memberLabel}: Please enter mobile number`);
+                        return;
+                    }
+                    if (!validateMobile(member.formData.mobile)) {
+                        toast.error(`${memberLabel}: Please enter a valid 10-digit mobile number`);
+                        return;
+                    }
+                }
+            }
+
+            // Validate address fields if member is in address card
+            if (addressMemberIds.includes(member.id)) {
+                if (member.formData.pin_code && !validatePinCode(member.formData.pin_code)) {
+                    toast.error(`${memberLabel}: Please enter a valid 6-digit PIN code`);
+                    return;
                 }
             }
 
@@ -1013,6 +1033,12 @@ export const AddGroupMembershipPage = () => {
         // Validate that end date is after start date
         if (endDate && startDate && endDate.isBefore(startDate)) {
             toast.error('End date must be after start date');
+            return;
+        }
+
+        // Validate emergency contact if provided
+        if (emergencyContactName && !validateMobile(emergencyContactName)) {
+            toast.error('Please enter a valid 10-digit emergency contact number');
             return;
         }
 
@@ -1221,7 +1247,23 @@ export const AddGroupMembershipPage = () => {
         navigate('/club-management/membership');
     };
 
-    // Handle next step
+    // Add validation helper functions
+    const validateEmail = (email: string): boolean => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    const validateMobile = (mobile: string): boolean => {
+        const mobileRegex = /^[0-9]{10}$/;
+        return mobileRegex.test(mobile);
+    };
+
+    const validatePinCode = (pinCode: string): boolean => {
+        const pinCodeRegex = /^[0-9]{6}$/;
+        return pinCodeRegex.test(pinCode);
+    };
+
+    // Handle next step with proper validation
     const handleNext = () => {
         // Validation for step 1 (Membership Plan Selection)
         if (!selectedPlanId) {
@@ -1589,6 +1631,8 @@ export const AddGroupMembershipPage = () => {
                                                             onChange={(e) => updateMember(member.id, { formData: { ...member.formData, firstName: e.target.value } })}
                                                             sx={fieldStyles}
                                                             fullWidth
+                                                            error={member.formData.firstName !== '' && member.formData.firstName.length < 2}
+                                                            helperText={member.formData.firstName !== '' && member.formData.firstName.length < 2 ? 'Name must be at least 2 characters' : ''}
                                                         />
                                                         <TextField
                                                             label="Last Name *"
@@ -1596,6 +1640,8 @@ export const AddGroupMembershipPage = () => {
                                                             onChange={(e) => updateMember(member.id, { formData: { ...member.formData, lastName: e.target.value } })}
                                                             sx={fieldStyles}
                                                             fullWidth
+                                                            error={member.formData.lastName !== '' && member.formData.lastName.length < 2}
+                                                            helperText={member.formData.lastName !== '' && member.formData.lastName.length < 2 ? 'Name must be at least 2 characters' : ''}
                                                         />
                                                     </div>
 
@@ -1632,9 +1678,23 @@ export const AddGroupMembershipPage = () => {
                                                         <TextField
                                                             label="Mobile Number *"
                                                             value={member.formData.mobile}
-                                                            onChange={(e) => updateMember(member.id, { formData: { ...member.formData, mobile: e.target.value } })}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                // Only allow numbers and limit to 10 digits
+                                                                if (value === '' || /^\d{0,10}$/.test(value)) {
+                                                                    updateMember(member.id, { formData: { ...member.formData, mobile: value } });
+                                                                }
+                                                            }}
                                                             sx={fieldStyles}
                                                             fullWidth
+                                                            type="tel"
+                                                            inputProps={{ 
+                                                                maxLength: 10,
+                                                                pattern: '[0-9]*',
+                                                                inputMode: 'numeric'
+                                                            }}
+                                                            error={member.formData.mobile !== '' && !validateMobile(member.formData.mobile)}
+                                                            helperText={member.formData.mobile !== '' && !validateMobile(member.formData.mobile) ? 'Please enter a valid 10-digit mobile number' : ''}
                                                         />
                                                         <TextField
                                                             label="Email Address *"
@@ -1643,6 +1703,8 @@ export const AddGroupMembershipPage = () => {
                                                             onChange={(e) => updateMember(member.id, { formData: { ...member.formData, email: e.target.value } })}
                                                             sx={fieldStyles}
                                                             fullWidth
+                                                            error={member.formData.email !== '' && !validateEmail(member.formData.email)}
+                                                            helperText={member.formData.email !== '' && !validateEmail(member.formData.email) ? 'Please enter a valid email address' : ''}
                                                         />
                                                     </div>
                                                 </div>
@@ -1710,9 +1772,23 @@ export const AddGroupMembershipPage = () => {
                                                     <TextField
                                                         label="Pin Code"
                                                         value={member.formData.pin_code}
-                                                        onChange={(e) => updateMember(member.id, { formData: { ...member.formData, pin_code: e.target.value } })}
+                                                        onChange={(e) => {
+                                                            const value = e.target.value;
+                                                            // Only allow numbers and limit to 6 digits
+                                                            if (value === '' || /^\d{0,6}$/.test(value)) {
+                                                                updateMember(member.id, { formData: { ...member.formData, pin_code: value } });
+                                                            }
+                                                        }}
                                                         sx={fieldStyles}
                                                         fullWidth
+                                                        type="tel"
+                                                        inputProps={{ 
+                                                            maxLength: 6,
+                                                            pattern: '[0-9]*',
+                                                            inputMode: 'numeric'
+                                                        }}
+                                                        error={member.formData.pin_code !== '' && !validatePinCode(member.formData.pin_code)}
+                                                        helperText={member.formData.pin_code !== '' && !validatePinCode(member.formData.pin_code) ? 'Please enter a valid 6-digit PIN code' : ''}
                                                     />
                                                 </div>
                                             </div>
@@ -2089,10 +2165,24 @@ export const AddGroupMembershipPage = () => {
                                         <TextField
                                             label="Emergency Contact"
                                             value={emergencyContactName}
-                                            onChange={(e) => setEmergencyContactName(e.target.value)}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                // Only allow numbers and limit to 10 digits
+                                                if (value === '' || /^\d{0,10}$/.test(value)) {
+                                                    setEmergencyContactName(value);
+                                                }
+                                            }}
                                             sx={fieldStyles}
                                             fullWidth
-                                            placeholder="Name or Phone Number"
+                                            type="tel"
+                                            placeholder="Phone Number"
+                                            inputProps={{ 
+                                                maxLength: 10,
+                                                pattern: '[0-9]*',
+                                                inputMode: 'numeric'
+                                            }}
+                                            error={emergencyContactName !== '' && !validateMobile(emergencyContactName)}
+                                            helperText={emergencyContactName !== '' && !validateMobile(emergencyContactName) ? 'Please enter a valid 10-digit phone number' : ''}
                                         />
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2282,9 +2372,20 @@ export const AddGroupMembershipPage = () => {
                                                     <div className="flex items-center gap-1 flex-1">
                                                         <TextField
                                                             value={discountPercentage}
-                                                            onChange={(e) => setDiscountPercentage(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                // Only allow non-negative numbers between 0 and 100
+                                                                if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
+                                                                    setDiscountPercentage(value);
+                                                                }
+                                                            }}
                                                             type="number"
                                                             size="small"
+                                                            inputProps={{ 
+                                                                min: 0,
+                                                                max: 100,
+                                                                step: 0.01
+                                                            }}
                                                             sx={{
                                                                 ...fieldStyles,
                                                                 width: '100px',
@@ -2312,9 +2413,20 @@ export const AddGroupMembershipPage = () => {
                                                         <label className="text-sm text-gray-600">CGST (%):</label>
                                                         <TextField
                                                             value={cgstPercentage}
-                                                            onChange={(e) => setCgstPercentage(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                // Only allow non-negative numbers between 0 and 100
+                                                                if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
+                                                                    setCgstPercentage(value);
+                                                                }
+                                                            }}
                                                             type="number"
                                                             size="small"
+                                                            inputProps={{ 
+                                                                min: 0,
+                                                                max: 100,
+                                                                step: 0.01
+                                                            }}
                                                             sx={{
                                                                 ...fieldStyles,
                                                                 width: '80px',
@@ -2333,9 +2445,20 @@ export const AddGroupMembershipPage = () => {
                                                         <label className="text-sm text-gray-600">SGST (%):</label>
                                                         <TextField
                                                             value={sgstPercentage}
-                                                            onChange={(e) => setSgstPercentage(e.target.value)}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                // Only allow non-negative numbers between 0 and 100
+                                                                if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
+                                                                    setSgstPercentage(value);
+                                                                }
+                                                            }}
                                                             type="number"
                                                             size="small"
+                                                            inputProps={{ 
+                                                                min: 0,
+                                                                max: 100,
+                                                                step: 0.01
+                                                            }}
                                                             sx={{
                                                                 ...fieldStyles,
                                                                 width: '80px',
