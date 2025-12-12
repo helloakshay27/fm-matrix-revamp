@@ -936,6 +936,8 @@ function App() {
                     path="settings/account/lock-module"
                     element={<LockModuleList />}
                   />
+
+
                   {/* <Route
                       path="settings/account/lock-module/view/:id"
                       element={<LockModuleView />}
@@ -1120,6 +1122,7 @@ function App() {
                   }
                 />
 
+
                 <Route
                   path="/bookings"
                   element={
@@ -1167,6 +1170,33 @@ function App() {
                   }
                 >
                   <Route index element={<Index />} />
+                  <Route
+                    path="/bookings-overview"
+                    element={
+                      <ProtectedRoute>
+                        <BookingList />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/bookings-overview/add"
+                    element={
+                      <ProtectedRoute>
+                        <AddFacilityBookingPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/bookings-overview/:id"
+                    element={
+                      <ProtectedRoute>
+                        <BookingDetailsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
                   <Route path="/vas/channels" element={<ChannelsLayout />}>
                     <Route
                       index
