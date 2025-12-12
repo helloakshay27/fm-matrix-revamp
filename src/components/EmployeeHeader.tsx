@@ -407,13 +407,13 @@ export const EmployeeHeader: React.FC = () => {
                     <User className="w-3 h-3 mr-1" />
                     {userRoleName}
                   </Badge>
-                  <Badge
+                  {/* <Badge
                     variant="outline"
                     className="text-xs bg-blue-50 text-blue-700 border-blue-200 font-medium"
                   >
                     <Shield className="w-3 h-3 mr-1" />
                     {tempSwitchToAdmin ? "Admin Access" : "Standard User"}
-                  </Badge>
+                  </Badge> */}
                 </div>
               </div>
 

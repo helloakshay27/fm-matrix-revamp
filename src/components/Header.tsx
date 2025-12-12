@@ -603,13 +603,13 @@ export const Header = () => {
                     <Shield className="w-3 h-3 mr-1" />
                     {userRoleName}
                   </Badge>
-                  <Badge
+                  {/* <Badge
                     variant="outline"
                     className="text-xs bg-purple-50 text-purple-700 border-purple-200 font-medium"
                   >
                     <User className="w-3 h-3 mr-1" />
                     {tempSwitchToAdmin ? "Admin Access" : "Standard User"}
-                  </Badge>
+                  </Badge> */}
                 </div>
               </div>
 
