@@ -389,10 +389,10 @@ const modulesByPackage = {
       href: "/master/material-ebom",
     },
     {
-    name: 'Finance Master',
-    icon: Wallet,
-    href: '/master/finance'
-  },
+      name: 'Finance Master',
+      icon: Wallet,
+      href: '/master/finance'
+    },
     {
       name: "Gate Number",
       icon: DoorOpen,
@@ -1000,22 +1000,17 @@ const modulesByPackage = {
         },
       ],
     },
-    {
-      name: "Collaboration",
-      icon: Globe,
-      subItems: [
-        {
-          name: "Channels",
-          href: "/vas/channels",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Tasks",
-          href: "/vas/channels/tasks",
-          color: "text-[#1a1a1a]",
-        },
-      ]
-    },
+    // {
+    //   name: "Collaboration",
+    //   icon: Globe,
+    //   subItems: [
+    //     {
+    //       name: "Tasks",
+    //       href: "/vas/channels/tasks",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //   ]
+    // },
     {
       name: 'Projects & Tasks',
       icon: Briefcase,
@@ -1028,17 +1023,26 @@ const modulesByPackage = {
           name: 'Tasks',
           href: "/vas/tasks"
         },
-        {
-          name: 'Issues',
-          href: "/vas/issues"
-        },
         // {
         //   name: 'Sprint',
         //   href: "/vas/sprint"
         // },
         {
+          name: 'Issues',
+          href: "/vas/issues"
+        },
+        {
+          name: "Channels",
+          href: "/vas/channels",
+          color: "text-[#1a1a1a]",
+        },
+        {
           name: 'Opportunity Register',
           href: "/vas/opportunity"
+        },
+        {
+          name: 'Minutes of Meeting',
+          href: "/vas/mom"
         },
       ]
     },

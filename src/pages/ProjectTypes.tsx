@@ -2,7 +2,10 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { Edit, Plus, X, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { fetchProjectTypes, createProjectTypes, updateProjectTypes, deleteProjectTypes } from "@/store/slices/projectTypeSlice";
 
 const columns: ColumnConfig[] = [
     {
@@ -36,33 +39,18 @@ const columns: ColumnConfig[] = [
 ]
 
 const ProjectTypes = () => {
+    const dispatch = useDispatch<AppDispatch>();
+    // @ts-ignore - store typing might lag slightly in IDE but slice is updated
+    const { projectTypes, loading } = useSelector((state: RootState) => state.projectTypes);
+
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [typeName, setTypeName] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [projectTypes, setProjectTypes] = useState([
-        {
-            id: 1,
-            typeName: 'Real EState',
-            isActive: true,
-            createdOn: '04/07/2025',
-            createdBy: 'Tejas Chaudhary',
-        },
-        {
-            id: 2,
-            typeName: 'residential',
-            isActive: true,
-            createdOn: '01/07/2025',
-            createdBy: 'Tejas Chaudhary',
-        },
-        {
-            id: 3,
-            typeName: 'commercial',
-            isActive: true,
-            createdOn: '01/07/2025',
-            createdBy: 'Tejas Chaudhary',
-        },
-    ]);
+
+    useEffect(() => {
+        dispatch(fetchProjectTypes());
+    }, [dispatch]);
 
     const openAddDialog = () => {
         setIsEditMode(false);
@@ -73,7 +61,7 @@ const ProjectTypes = () => {
 
     const openEditDialog = (item: any) => {
         setIsEditMode(true);
-        setTypeName(item.typeName);
+        setTypeName(item.name || item.typeName);
         setEditingId(item.id);
         setIsDialogOpen(true);
     };
@@ -84,48 +72,67 @@ const ProjectTypes = () => {
         setEditingId(null);
     };
 
-    const handleSubmit = () => {
-        if (!typeName.trim()) {
+    const handleSubmit = async () => {
+        const trimmedType = typeName.trim();
+        if (!trimmedType) {
             alert('Please enter project type name');
             return;
         }
 
+        // Safe extraction of user ID from localStorage
+        let userId = '';
+        try {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                userId = user.id || '';
+            }
+        } catch (e) {
+            console.error("Error parsing user from localStorage", e);
+        }
+
+        const payload = {
+            name: trimmedType,
+            created_by_id: userId,
+            active: true,
+        };
+
         if (isEditMode && editingId) {
-            setProjectTypes(projectTypes.map(type =>
-                type.id === editingId
-                    ? { ...type, typeName }
-                    : type
-            ));
+            await dispatch(updateProjectTypes({ id: editingId, data: payload })).unwrap();
+            dispatch(fetchProjectTypes());
         } else {
-            const newType = {
-                id: Math.max(...projectTypes.map(t => t.id), 0) + 1,
-                typeName,
-                isActive: true,
-                createdOn: new Date().toLocaleDateString('en-US', {
-                    month: '2-digit',
-                    day: '2-digit',
-                    year: 'numeric'
-                }),
-                createdBy: 'Current User',
-            };
-            setProjectTypes([...projectTypes, newType]);
+            await dispatch(createProjectTypes(payload)).unwrap();
+            dispatch(fetchProjectTypes());
         }
 
         closeDialog();
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: number) => {
         if (confirm('Are you sure you want to delete this project type?')) {
-            setProjectTypes(projectTypes.filter(type => type.id !== id));
+            await dispatch(deleteProjectTypes(id)).unwrap();
         }
     };
 
-    const handleToggleStatus = (id: number) => {
-        setProjectTypes(projectTypes.map(type =>
-            type.id === id
-                ? { ...type, isActive: !type.isActive }
-                : type
-        ));
+    const handleToggleStatus = async (id: number) => {
+        const item = projectTypes.find((t: any) => t.id === id);
+        if (!item) return;
+
+        const currentActive = item.active !== undefined ? item.active : item.isActive;
+        const newActive = !currentActive;
+
+        const payload = {
+            name: item.name || item.typeName,
+            created_by_id: item.created_by_id,
+            active: newActive
+        };
+
+        try {
+            await dispatch(updateProjectTypes({ id, data: payload })).unwrap();
+            dispatch(fetchProjectTypes());
+        } catch (error) {
+            console.error("Failed to toggle status", error);
+        }
     };
 
     const renderActions = (item: any) => {
@@ -153,21 +160,27 @@ const ProjectTypes = () => {
 
     const renderCell = (item: any, columnKey: string) => {
         switch (columnKey) {
+            case 'typeName':
+                return item.name || item.typeName || '-';
+            case 'createdOn':
+                return item.created_at ? new Date(item.created_at).toLocaleDateString() : (item.createdOn || '-');
+            case 'createdBy':
+                return item.created_by?.name || item.createdBy || '-';
             case 'status':
+                const isActive = item.active !== undefined ? item.active : item.isActive;
                 return (
                     <div className="flex items-center gap-2">
-                        <span className="text-sm">{item.isActive ? 'Inactive' : 'Inactive'}</span>
-                        <button
+                        <span className="text-sm">{isActive ? 'Active' : 'Inactive'}</span>
+                        <div
                             onClick={() => handleToggleStatus(item.id)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.isActive ? 'bg-green-500' : 'bg-gray-300'
+                            className={`cursor-pointer relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-300'
                                 }`}
                         >
                             <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.isActive ? 'translate-x-6' : 'translate-x-1'
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'
                                     }`}
                             />
-                        </button>
-                        <span className="text-sm">{item.isActive ? 'Active' : 'Inactive'}</span>
+                        </div>
                     </div>
                 );
             default:
@@ -197,6 +210,7 @@ const ProjectTypes = () => {
                 leftActions={leftActions}
                 pagination={true}
                 pageSize={10}
+                loading={loading}
             />
 
             {/* Dialog Modal */}

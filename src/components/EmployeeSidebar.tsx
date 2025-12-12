@@ -88,7 +88,7 @@ const employeeNavigationByModule: Record<string, any> = {
     },
     "Minutes of Meeting": {
       icon: Target,
-      href: "/vas/minutes-of-meeting",
+      href: "/vas/mom",
       items: [],
     },
 
@@ -374,8 +374,8 @@ export const EmployeeSidebar: React.FC = () => {
                     key={key}
                     onClick={() => handleNavigation(sectionHref)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative ${isActive(sectionHref)
-                        ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                        : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                      ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                      : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
                       }`}
                     title={isSidebarCollapsed ? key : ""}
                   >
@@ -421,8 +421,8 @@ export const EmployeeSidebar: React.FC = () => {
                           key={item.name}
                           onClick={() => handleNavigation(item.href)}
                           className={`w-full text-left px-3 py-2 text-sm rounded-lg font-medium transition-colors relative ${isActive(item.href)
-                              ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                              : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                            ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                            : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
                             }`}
                         >
                           {isActive(item.href) && (
