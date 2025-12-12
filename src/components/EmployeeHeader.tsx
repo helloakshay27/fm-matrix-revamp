@@ -127,13 +127,13 @@ export const EmployeeHeader: React.FC = () => {
         navigate("/master/communication-template");
         break;
       case "ID Card":
-        navigate("/master/user/occupant-users");
+        navigate("/business-card?card=39F77D8CE774201F22C211CE0A28BB708A329227D493E9C1751E48C0200DFF5A5BF9DBD4D1925C490C75AA6A02F3ED88");
         break;
       case "Notes ":
         navigate("/vas/channels");
         break;
       case "Ask AI":
-        navigate("/dashboard");
+        navigate("/ask-ai");
         break;
       default:
         break;
