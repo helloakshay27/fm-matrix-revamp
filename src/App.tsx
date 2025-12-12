@@ -809,6 +809,14 @@ import MilestoneDetailsPage from "./pages/MilestoneDetailsPage";
 import ProjectTaskDetails from "./pages/ProjectTaskDetails";
 import OpportunityDashboard from "./pages/OpportunityDashboard";
 import OpportunityDetailsPage from "./pages/OpportunityDetailsPage";
+import ProjectRoles from "./pages/ProjectRoles";
+import ProjectTeams from "./pages/ProjectTeams";
+import ProjectStatus from "./pages/ProjectStatus";
+import ProjectGroups from "./pages/ProjectGroups";
+import ProjectTemplates from "./pages/ProjectTemplates";
+import ProjectIssueTypes from "./pages/ProjectIssueTypes";
+import ProjectTypes from "./pages/ProjectTypes";
+import ProjectTags from "./pages/ProjectTags";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2402,6 +2410,46 @@ function App() {
                   <Route
                     path="/vas/opportunity/:id"
                     element={<OpportunityDetailsPage />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/roles"
+                    element={<ProjectRoles />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/project-types"
+                    element={<ProjectTypes />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/project-tags"
+                    element={<ProjectTags />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/project-teams"
+                    element={<ProjectTeams />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/project-status"
+                    element={<ProjectStatus />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/project-groups"
+                    element={<ProjectGroups />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/project-templates"
+                    element={<ProjectTemplates />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/issue-types"
+                    element={<ProjectIssueTypes />}
                   />
 
                   {/* Utility Routes */}

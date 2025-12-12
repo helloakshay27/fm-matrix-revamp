@@ -1319,6 +1319,44 @@ const modulesByPackage = {
         },
       ]
     },
+    {
+      icon: Settings,
+      name: "Project & Task Setup",
+      subItems: [
+        {
+          name: "Roles",
+          href: "/settings/project-task-setup/roles",
+        },
+        {
+          name: "Project Teams",
+          href: "/settings/project-task-setup/project-teams",
+        },
+        {
+          name: "Project Types",
+          href: "/settings/project-task-setup/project-types",
+        },
+        {
+          name: "Project Tags",
+          href: "/settings/project-task-setup/project-tags",
+        },
+        {
+          name: "Status",
+          href: "/settings/project-task-setup/project-status",
+        },
+        {
+          name: "Project Groups",
+          href: "/settings/project-task-setup/project-groups",
+        },
+        {
+          name: "Project Templates",
+          href: "/settings/project-task-setup/project-templates",
+        },
+        {
+          name: "Issue Types",
+          href: "/settings/project-task-setup/issue-types",
+        },
+      ]
+    },
     { name: "FM Groups", icon: Users, href: "/settings/groups" },
     // {
     //   name: 'Currency',

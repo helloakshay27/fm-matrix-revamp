@@ -229,6 +229,10 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                 setTotalWorkingHours(taskData.estimated_hour);
             }
 
+            if (Array.isArray(taskData.task_allocation_times) && taskData.task_allocation_times.length > 0) {
+                setDateWiseHours(taskData.task_allocation_times);
+            }
+
             setPrevTags(mappedTags);
             setPrevObservers(mappedObservers);
 
