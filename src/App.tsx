@@ -817,6 +817,8 @@ import ProjectTemplates from "./pages/ProjectTemplates";
 import ProjectIssueTypes from "./pages/ProjectIssueTypes";
 import ProjectTypes from "./pages/ProjectTypes";
 import ProjectTags from "./pages/ProjectTags";
+import BusinessCard from "./pages/mobile/BusinessCard";
+import AskAI from "./pages/AskAI";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1221,6 +1223,10 @@ function App() {
                     path="/vas/channels/tasks"
                     element={<ChannelTasksAll />}
                   />
+
+                  <Route path="/business-card" element={<BusinessCard />} />
+                  <Route path="/ask-ai" element={<AskAI />} />
+
                   <Route
                     path="/vas/channels/tasks/:id"
                     element={<ChatTaskDetailsPage />}
