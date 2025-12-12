@@ -64,11 +64,11 @@ export const EmployeeHeader: React.FC = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
-    const [userRoleName, setUserRoleName] = useState<string | null>(null);
+  const [userRoleName, setUserRoleName] = useState<string | null>(null);
 
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const { selectedSite } = useSelector((state: RootState) => state.site);
- const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
+  const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   // Get user data
   const user = getUser() || {
     id: 0,
@@ -96,16 +96,16 @@ export const EmployeeHeader: React.FC = () => {
     navigate("/notifications");
   };
 
-   useEffect(() => {
-      const loadUserInfo = () => {
-        const displayName = permissionService.getDisplayName();
-        const roleName = permissionService.getRoleName();
-        setUserDisplayName(displayName);
-        setUserRoleName(roleName);
-      };
-  
-      loadUserInfo();
-    }, []);
+  useEffect(() => {
+    const loadUserInfo = () => {
+      const displayName = permissionService.getDisplayName();
+      const roleName = permissionService.getRoleName();
+      setUserDisplayName(displayName);
+      setUserRoleName(roleName);
+    };
+
+    loadUserInfo();
+  }, []);
 
   const handleModuleClick = (moduleName: string) => {
     setCurrentSection(moduleName);
@@ -142,7 +142,7 @@ export const EmployeeHeader: React.FC = () => {
         navigate("/business-card?card=39F77D8CE774201F22C211CE0A28BB708A329227D493E9C1751E48C0200DFF5A5BF9DBD4D1925C490C75AA6A02F3ED88");
         break;
       case "Notes ":
-        navigate("/vas/channels");
+        navigate("/vas/todo");
         break;
       case "Ask AI":
         navigate("/ask-ai");
