@@ -57,6 +57,15 @@ export const AddFacilityBookingPage = () => {
     prepaid: number;
     pay_on_facility: number;
     complementary: number;
+    facility_charge?: {
+      adult_member_charge?: number;
+      adult_guest_charge?: number;
+      child_member_charge?: number;
+      child_guest_charge?: number;
+      per_slot_charge?: number;
+    };
+    gst?: number;
+    sgst?: number;
   } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [slots, setSlots] = useState<Array<{
@@ -77,6 +86,7 @@ export const AddFacilityBookingPage = () => {
   const [openCancelPolicy, setOpenCancelPolicy] = useState(false);
   const [openTerms, setOpenTerms] = useState(false);
   const [complementaryReason, setComplementaryReason] = useState('');
+  const [discountPercentage, setDiscountPercentage] = useState<number>(0);
   const [peopleTable, setPeopleTable] = useState<Array<{
     srNo: number;
     role: string;
@@ -442,6 +452,48 @@ export const AddFacilityBookingPage = () => {
 
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
       
+      // Calculate cost summary
+      const staffMemberCount = peopleTable.filter(row => (row.role === 'staff' || row.role === 'member') && row.user).length;
+      const guestCount = peopleTable.filter(row => row.role === 'guest' && row.user).length;
+      
+      const adultMemberCharge = facilityDetails?.facility_charge?.adult_member_charge || 0;
+      const adultGuestCharge = facilityDetails?.facility_charge?.adult_guest_charge || 0;
+      const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge || 0;
+      
+      const memberCharges = staffMemberCount * adultMemberCharge;
+      const guestCharges = guestCount * adultGuestCharge;
+      const slotCharges = selectedSlots.length * perSlotCharge;
+      
+      const subtotalBeforeDiscount = memberCharges + guestCharges + slotCharges;
+      const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
+      const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
+      
+      const gstPercentage = facilityDetails?.gst || 0;
+      const sgstPercentage = facilityDetails?.sgst || 0;
+      const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
+      const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
+      
+      const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
+      
+      // Build booked_members_attributes array from people table
+      const bookedMembersAttributes = peopleTable
+        .filter(row => row.role && row.user) // Only include rows with both role and user selected
+        .map(row => {
+          // Calculate individual charge based on role
+          let totalCharge = 0;
+          if (row.role === 'staff' || row.role === 'member') {
+            totalCharge = adultMemberCharge;
+          } else if (row.role === 'guest') {
+            totalCharge = adultGuestCharge;
+          }
+          
+          return {
+            user_id: parseInt(row.user),
+            oftype: row.level, // 'primary' or 'secondary'
+            total_charge: totalCharge
+          };
+        });
+      
       const payload = {
         facility_booking: {
           user_society_type: 'User',
@@ -455,6 +507,14 @@ export const AddFacilityBookingPage = () => {
           payment_method: paymentMethod,
           selected_slots: selectedSlots,
           entity_id: selectedCompany,
+          member_charges: memberCharges,
+          guest_charges: guestCharges,
+          discount: discountAmount,
+          gst: gstAmount,
+          sgst: sgstAmount,
+          sub_total: subtotalAfterDiscount,
+          amount_full: amountFull,
+          booked_members_attributes: bookedMembersAttributes,
           ...(paymentMethod === 'complementary' && { complementary_payment_reason: complementaryReason }),
         },
         on_behalf_of: userType === 'occupant' ? 'occupant-user' : userType === 'guest' ? 'guest-user' : 'fm-user',
@@ -970,6 +1030,158 @@ export const AddFacilityBookingPage = () => {
           </div>
          )} 
 
+        {/* Cost Summary Section */}
+        {facilityDetails && peopleTable.length > 0 && peopleTable.some(row => row.role && row.user) && (
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-lg font-semibold mb-4">Cost Summary</h2>
+            <div className="space-y-3">
+              {/* Calculate costs based on roles */}
+              {(() => {
+                const staffMemberCount = peopleTable.filter(row => (row.role === 'staff' || row.role === 'member') && row.user).length;
+                const guestCount = peopleTable.filter(row => row.role === 'guest' && row.user).length;
+                
+                const adultMemberCharge = facilityDetails.facility_charge?.adult_member_charge || 0;
+                const adultGuestCharge = facilityDetails.facility_charge?.adult_guest_charge || 0;
+                const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge || 0;
+                
+                const staffMemberTotal = staffMemberCount * adultMemberCharge;
+                const guestTotal = guestCount * adultGuestCharge;
+                const slotTotal = selectedSlots.length * perSlotCharge;
+                
+                const subtotalBeforeDiscount = staffMemberTotal + guestTotal + slotTotal;
+                const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
+                const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
+                
+                const gstPercentage = facilityDetails.gst || 0;
+                const sgstPercentage = facilityDetails.sgst || 0;
+                const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
+                const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
+                const totalTax = gstAmount + sgstAmount;
+                const grandTotal = subtotalAfterDiscount + totalTax;
+
+                return (
+                  <>
+                    {/* Staff/Member Charges */}
+                    {staffMemberCount > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">Staff/Member Charges</span>
+                          <span className="text-sm text-gray-500">({staffMemberCount} x ₹{adultMemberCharge.toFixed(2)})</span>
+                        </div>
+                        <span className="font-medium">₹{staffMemberTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Guest Charges */}
+                    {guestCount > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">Guest Charges</span>
+                          <span className="text-sm text-gray-500">({guestCount} x ₹{adultGuestCharge.toFixed(2)})</span>
+                        </div>
+                        <span className="font-medium">₹{guestTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Slot Charges */}
+                    {selectedSlots.length > 0 && perSlotCharge > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">Slot Charges</span>
+                          <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
+                        </div>
+                        <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Subtotal Before Discount */}
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-gray-700 font-medium">Subtotal</span>
+                      <span className="font-medium">₹{subtotalBeforeDiscount.toFixed(2)}</span>
+                    </div>
+
+                    {/* Discount - Editable */}
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-700">Discount</span>
+                        <div className="flex items-center gap-1">
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={discountPercentage}
+                            onChange={(e) => setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+                            variant="outlined"
+                            sx={{
+                              width: '80px',
+                              '& .MuiOutlinedInput-root': {
+                                height: '36px',
+                                '& input': {
+                                  textAlign: 'right',
+                                  padding: '8px 12px'
+                                }
+                              }
+                            }}
+                            inputProps={{
+                              min: 0,
+                              max: 100,
+                              step: 0.1
+                            }}
+                          />
+                          <span className="text-gray-500">%</span>
+                        </div>
+                      </div>
+                      <span className="font-medium">- ₹{discountAmount.toFixed(2)}</span>
+                    </div>
+
+                    {/* Subtotal After Discount */}
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-gray-700 font-medium">Subtotal After Discount</span>
+                        <span className="font-medium">₹{subtotalAfterDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* GST */}
+                    {gstPercentage > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">GST</span>
+                          <span className="text-sm text-gray-500">({gstPercentage}%)</span>
+                        </div>
+                        <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* SGST */}
+                    {sgstPercentage > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">SGST</span>
+                          <span className="text-sm text-gray-500">({sgstPercentage}%)</span>
+                        </div>
+                        <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Total Tax */}
+                    {/* {totalTax > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-gray-700 font-medium">Total Tax</span>
+                        <span className="font-medium">₹{totalTax.toFixed(2)}</span>
+                      </div>
+                    )} */}
+
+                    {/* Grand Total */}
+                    <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
+                      <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
+                      <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{grandTotal.toFixed(2)}</span>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* Submit Button */}
         <div className="flex justify-center">

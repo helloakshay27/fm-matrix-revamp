@@ -280,10 +280,9 @@ export const ClubMembershipDashboard = () => {
   };
 
   // Handle download society QR
-  const handleDownloadSocietyQR = async () => {
+const handleDownloadSocietyQR = async () => {
+    const loadingToast = toast.loading('Generating Society QR Code...');
     try {
-      toast.loading('Generating Society QR Code...');
-
       // TODO: Replace with actual API call
       // const response = await apiClient.get('/club-management/society-qr', {
       //   responseType: 'blob'
@@ -291,12 +290,12 @@ export const ClubMembershipDashboard = () => {
 
       // Mock download
       setTimeout(() => {
-        toast.success('Society QR Code downloaded successfully');
+        toast.success('Society QR Code downloaded successfully', { id: loadingToast });
       }, 1000);
 
     } catch (error) {
       console.error('Error downloading Society QR:', error);
-      toast.error('Failed to download Society QR');
+      toast.error('Failed to download Society QR', { id: loadingToast });
     }
   };
 

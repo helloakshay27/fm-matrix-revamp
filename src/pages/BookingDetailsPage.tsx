@@ -6,10 +6,11 @@ import {
   fetchBookingDetails,
   getLogs,
 } from "@/store/slices/facilityBookingsSlice";
-import { ArrowLeft, Logs, Ticket } from "lucide-react";
+import { ArrowLeft, Logs, Ticket, CreditCard, Download } from "lucide-react";
 import { CustomTabs } from "@/components/CustomTabs";
 import { LogsTimeline } from "@/components/LogTimeline";
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
+import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -82,6 +83,46 @@ export const BookingDetailsPage = () => {
       toast.error('Failed to update booking status');
     } finally {
       setStatusUpdating(null);
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    const loadingToast = toast.loading('Generating invoice...');
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/admin/facility_bookings/${id}/invoice.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: 'blob', // Important for PDF download
+        }
+      );
+
+      // Create a blob from the response
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      
+      // Create download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      
+      // Generate filename with current date
+      const date = new Date().toISOString().split('T')[0];
+      link.download = `facility_booking_invoice_${id}_${date}.pdf`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Cleanup
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      toast.success('Invoice downloaded successfully', { id: loadingToast });
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast.error('Failed to download invoice', { id: loadingToast });
     }
   };
 
@@ -243,6 +284,198 @@ export const BookingDetailsPage = () => {
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      value: "payment",
+      label: "Payment Details",
+      content: (
+        <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                <CreditCard className="w-4 h-4" />
+              </div>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">PAYMENT DETAILS</h3>
+            </div>
+            <Button
+              onClick={handleDownloadInvoice}
+              className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download Invoice
+            </Button>
+          </div>
+          
+          <div className="space-y-6">
+            {/* Payment Summary */}
+            <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+              <h4 className="font-semibold text-gray-900 mb-3">Payment Summary</h4>
+              
+              <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="text-gray-900 font-medium">₹{bookings?.sub_total?.toFixed(2) || '0.00'}</span>
+              </div>
+
+              {bookings?.discount && bookings.discount > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <span className="text-gray-600">Discount</span>
+                  <span className="text-green-600 font-medium">- ₹{bookings.discount.toFixed(2)}</span>
+                </div>
+              )}
+
+              {bookings?.gst && bookings.gst > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <span className="text-gray-600">GST</span>
+                  <span className="text-gray-900 font-medium">₹{bookings.gst.toFixed(2)}</span>
+                </div>
+              )}
+
+              {bookings?.sgst && bookings.sgst > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <span className="text-gray-600">SGST</span>
+                  <span className="text-gray-900 font-medium">₹{bookings.sgst.toFixed(2)}</span>
+                </div>
+              )}
+
+              {bookings?.conv_charge && bookings.conv_charge > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <span className="text-gray-600">Convenience Charge</span>
+                  <span className="text-gray-900 font-medium">₹{bookings.conv_charge.toFixed(2)}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
+                <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Total Amount</span>
+                <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{bookings?.amount_full?.toFixed(2) || '0.00'}</span>
+              </div>
+            </div>
+
+            {/* Payment Information */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[150px]">Payment Status</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className={`px-2 py-1 rounded text-sm font-medium ${
+                    bookings?.payment_status === 'Paid' 
+                      ? 'bg-green-100 text-green-800' 
+                      : bookings?.payment_status === 'Pending'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {bookings?.payment_status || 'NA'}
+                  </span>
+                </div>
+
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[150px]">Payment Method</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {bookings?.payment_method === "NA" ? "Complimentary" : bookings?.payment_method || '-'}
+                  </span>
+                </div>
+
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[150px]">Payment Mode</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {bookings?.payment_mode || 'NA'}
+                  </span>
+                </div>
+
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[150px]">Amount Paid</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {bookings?.amount_paid ? `₹${bookings.amount_paid.toFixed(2)}` : 'NA'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[150px]">PG State</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {bookings?.pg_state || 'NA'}
+                  </span>
+                </div>
+
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[150px]">Transaction ID</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium break-all">
+                    {bookings?.pg_transaction_id || 'NA'}
+                  </span>
+                </div>
+
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[150px]">Response Code</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {bookings?.pg_response_code || 'NA'}
+                  </span>
+                </div>
+
+                {bookings?.deposit_amount && bookings.deposit_amount > 0 && (
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[150px]">Deposit Amount</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      ₹{bookings.deposit_amount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Booked Members */}
+            {bookings?.booked_members && bookings.booked_members.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-900">Booked Members</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-[#E5E0D3]">
+                        <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Sr No.</th>
+                        <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Name</th>
+                        <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Mobile</th>
+                        <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Type</th>
+                        <th className="border border-gray-300 px-4 py-3 text-right font-semibold">Charge</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bookings.booked_members.map((member: { booked_member: { id: number; name: string | null; mobile: string | null; oftype: string; charge: number | null; total: number; total_charge: number } }, index: number) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="border border-gray-300 px-4 py-3">{index + 1}</td>
+                          <td className="border border-gray-300 px-4 py-3">
+                            {member.booked_member?.name || '-'}
+                          </td>
+                          <td className="border border-gray-300 px-4 py-3">
+                            {member.booked_member?.mobile || '-'}
+                          </td>
+                          <td className="border border-gray-300 px-4 py-3">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              member.booked_member?.oftype === 'primary' 
+                                ? 'bg-blue-100 text-blue-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {member.booked_member?.oftype || '-'}
+                            </span>
+                          </td>
+                          <td className="border border-gray-300 px-4 py-3 text-right">
+                            ₹{member.booked_member?.total_charge?.toFixed(2) || '0.00'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )
