@@ -282,8 +282,8 @@ export const AddClubMembershipPage = () => {
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [editablePlanCost, setEditablePlanCost] = useState<string>('');
   const [discountPercentage, setDiscountPercentage] = useState<string>('0');
-  const [cgstPercentage, setCgstPercentage] = useState<string>('9');
-  const [sgstPercentage, setSgstPercentage] = useState<string>('9');
+  const [cgstPercentage, setCgstPercentage] = useState<string>('0');
+  const [sgstPercentage, setSgstPercentage] = useState<string>('0');
 
   // Load users on component mount
   useEffect(() => {
@@ -457,7 +457,7 @@ export const AddClubMembershipPage = () => {
           const subtotalAmount = parseFloat(paymentDetail.base_amount) || 0;
           if (subtotalAmount > 0) {
             const sgstAmt = parseFloat(paymentDetail.sgst) || 0;
-            const sgstPct = (sgtAmt / subtotalAmount) * 100;
+            const sgstPct = (sgstAmt / subtotalAmount) * 100;
             setSgstPercentage(sgstPct.toString());
           }
         }
@@ -906,9 +906,9 @@ export const AddClubMembershipPage = () => {
           member_payment_detail_attributes: {
             base_amount: editablePlanCost,
             discount: discountAmount.toString(),
-            cgst: cgstAmount,
-            sgst: sgstAmount,
-            total_tax: cgstAmount + sgstAmount,
+            cgst: cgstAmount.toString(),
+            sgst: sgstAmount.toString(),
+            total_tax: (cgstAmount + sgstAmount).toString(),
             total_amount: totalCost.toString(),
             landed_amount: totalCost.toString(),
             payment_status: "success",
@@ -968,9 +968,9 @@ export const AddClubMembershipPage = () => {
           member_payment_detail_attributes: {
             base_amount: editablePlanCost,
             discount: discountAmount.toString(),
-            cgst: cgstAmount,
-            sgst: sgtAmount,
-            total_tax: cgstAmount + sgstAmount,
+            cgst: cgstAmount.toString(),
+            sgst: sgstAmount.toString(),
+            total_tax: (cgstAmount + sgstAmount).toString(),
             total_amount: totalCost.toString(),
             landed_amount: totalCost.toString(),
             payment_status: "success",
@@ -1104,7 +1104,29 @@ export const AddClubMembershipPage = () => {
     navigate('/club-management/membership');
   };
 
-  // Handle next step
+  // Add validation helper functions
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateMobile = (mobile: string): boolean => {
+    const mobileRegex = /^[0-9]{10}$/;
+    return mobileRegex.test(mobile);
+  };
+
+  const validateName = (name: string): boolean => {
+    // Only allow letters and spaces
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    return nameRegex.test(name) && name.trim().length >= 2;
+  };
+
+  const validatePinCode = (pinCode: string): boolean => {
+    const pinCodeRegex = /^[0-9]{6}$/;
+    return pinCodeRegex.test(pinCode);
+  };
+
+  // Handle next step with proper validation
   const handleNext = () => {
     // Validation for step 1
     if (userSelectionMode === 'select' && !selectedUserId) {
@@ -1117,8 +1139,28 @@ export const AddClubMembershipPage = () => {
         toast.error('Please enter first name and last name');
         return;
       }
-      if (!formData.email || !formData.mobile) {
-        toast.error('Please enter email and mobile number');
+      if (!validateName(formData.firstName)) {
+        toast.error('First name must contain only alphabets and be at least 2 characters');
+        return;
+      }
+      if (!validateName(formData.lastName)) {
+        toast.error('Last name must contain only alphabets and be at least 2 characters');
+        return;
+      }
+      if (!formData.email) {
+        toast.error('Please enter email address');
+        return;
+      }
+      if (!validateEmail(formData.email)) {
+        toast.error('Please enter a valid email address (e.g., user@example.com)');
+        return;
+      }
+      if (!formData.mobile) {
+        toast.error('Please enter mobile number');
+        return;
+      }
+      if (!validateMobile(formData.mobile)) {
+        toast.error('Please enter a valid 10-digit mobile number');
         return;
       }
     }
@@ -1356,16 +1398,36 @@ export const AddClubMembershipPage = () => {
                         <TextField
                           label="First Name *"
                           value={formData.firstName}
-                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Only allow alphabets and spaces
+                            if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                              setFormData({ ...formData, firstName: value });
+                            } else {
+                              toast.error('First name should contain only alphabets');
+                            }
+                          }}
                           sx={fieldStyles}
                           fullWidth
+                          error={formData.firstName !== '' && !validateName(formData.firstName)}
+                          helperText={formData.firstName !== '' && !validateName(formData.firstName) ? 'First name must be at least 2 characters and contain only alphabets' : ''}
                         />
                         <TextField
                           label="Last Name *"
                           value={formData.lastName}
-                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Only allow alphabets and spaces
+                            if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                              setFormData({ ...formData, lastName: value });
+                            } else {
+                              toast.error('Last name should contain only alphabets');
+                            }
+                          }}
                           sx={fieldStyles}
                           fullWidth
+                          error={formData.lastName !== '' && !validateName(formData.lastName)}
+                          helperText={formData.lastName !== '' && !validateName(formData.lastName) ? 'Last name must be at least 2 characters and contain only alphabets' : ''}
                         />
                       </div>
 
@@ -1376,12 +1438,18 @@ export const AddClubMembershipPage = () => {
                           value={formData.dateOfBirth ? dayjs(formData.dateOfBirth, 'YYYY-MM-DD') : null}
                           onChange={(newValue) => {
                             if (newValue) {
+                              // Check if selected date is in the future
+                              if (newValue.isAfter(dayjs())) {
+                                toast.error('Date of Birth cannot be a future date');
+                                return;
+                              }
                               setFormData({ ...formData, dateOfBirth: newValue.format('YYYY-MM-DD') });
                             } else {
                               setFormData({ ...formData, dateOfBirth: '' });
                             }
                           }}
                           format="DD/MM/YYYY"
+                          maxDate={dayjs()}
                           slotProps={{
                             textField: {
                               fullWidth: true,
@@ -1413,17 +1481,45 @@ export const AddClubMembershipPage = () => {
                         <TextField
                           label="Mobile Number *"
                           value={formData.mobile}
-                          onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Only allow numbers and restrict to 10 digits
+                            if (value === '' || /^\d{0,10}$/.test(value)) {
+                              setFormData({ ...formData, mobile: value });
+                            } else {
+                              toast.error('Mobile number should contain only digits and must be 10 digits');
+                            }
+                          }}
+                          onBlur={() => {
+                            if (formData.mobile && !validateMobile(formData.mobile)) {
+                              toast.error('Please enter a valid 10-digit mobile number');
+                            }
+                          }}
                           sx={fieldStyles}
                           fullWidth
+                          type="tel"
+                          inputProps={{ 
+                            maxLength: 10,
+                            pattern: '[0-9]*',
+                            inputMode: 'numeric'
+                          }}
+                          error={formData.mobile !== '' && !validateMobile(formData.mobile)}
+                          helperText={formData.mobile !== '' && !validateMobile(formData.mobile) ? 'Mobile number must be exactly 10 digits' : ''}
                         />
                         <TextField
                           label="Email Address *"
                           type="email"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          onBlur={() => {
+                            if (formData.email && !validateEmail(formData.email)) {
+                              toast.error('Please enter a valid email address (e.g., user@example.com)');
+                            }
+                          }}
                           sx={fieldStyles}
                           fullWidth
+                          error={formData.email !== '' && !validateEmail(formData.email)}
+                          helperText={formData.email !== '' && !validateEmail(formData.email) ? 'Please enter a valid email format (e.g., user@example.com)' : ''}
                         />
                       </div>
                     </div>
@@ -1585,15 +1681,30 @@ export const AddClubMembershipPage = () => {
                       value={formData.emergencyContactName}
                       onChange={(e) => {
                         const value = e.target.value;
-                        // Only allow numbers
-                        if (value === '' || /^\d+$/.test(value)) {
+                        // Only allow numbers and limit to 10 digits
+                        if (value === '' || /^\d{0,10}$/.test(value)) {
                           setFormData({ ...formData, emergencyContactName: value });
+                        } else {
+                          toast.error('Emergency contact should contain only digits and must be 10 digits');
+                        }
+                      }}
+                      onBlur={() => {
+                        if (formData.emergencyContactName && !validateMobile(formData.emergencyContactName)) {
+                          toast.error('Please enter a valid 10-digit emergency contact number');
                         }
                       }}
                       sx={fieldStyles}
                       placeholder='Phone Number'
                       fullWidth
+                      type="tel"
+                      inputProps={{ 
+                        maxLength: 10,
+                        pattern: '[0-9]*',
+                        inputMode: 'numeric'
+                      }}
                       InputLabelProps={{ shrink: true }}
+                      error={formData.emergencyContactName !== '' && !validateMobile(formData.emergencyContactName)}
+                      helperText={formData.emergencyContactName !== '' && !validateMobile(formData.emergencyContactName) ? 'Emergency contact must be exactly 10 digits' : ''}
                     />
                   </div>
 
@@ -2688,9 +2799,20 @@ export const AddClubMembershipPage = () => {
                             <label className="text-sm text-gray-600">CGST (%):</label>
                             <TextField
                               value={cgstPercentage}
-                              onChange={(e) => setCgstPercentage(e.target.value)}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                // Only allow non-negative numbers between 0 and 100
+                                if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
+                                  setCgstPercentage(value);
+                                }
+                              }}
                               type="number"
                               size="small"
+                              inputProps={{ 
+                                min: 0,
+                                max: 100,
+                                step: 0.01
+                              }}
                               sx={{
                                 ...fieldStyles,
                                 width: '80px',
@@ -2709,9 +2831,20 @@ export const AddClubMembershipPage = () => {
                             <label className="text-sm text-gray-600">SGST (%):</label>
                             <TextField
                               value={sgstPercentage}
-                              onChange={(e) => setSgstPercentage(e.target.value)}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                // Only allow non-negative numbers between 0 and 100
+                                if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
+                                  setSgstPercentage(value);
+                                }
+                              }}
                               type="number"
                               size="small"
+                              inputProps={{ 
+                                min: 0,
+                                max: 100,
+                                step: 0.01
+                              }}
                               sx={{
                                 ...fieldStyles,
                                 width: '80px',

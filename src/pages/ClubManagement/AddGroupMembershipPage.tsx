@@ -347,8 +347,8 @@ export const AddGroupMembershipPage = () => {
     const [loadingPlans, setLoadingPlans] = useState(false);
     const [editablePlanCost, setEditablePlanCost] = useState<string>('');
     const [discountPercentage, setDiscountPercentage] = useState<string>('0');
-    const [cgstPercentage, setCgstPercentage] = useState<string>('9');
-    const [sgstPercentage, setSgstPercentage] = useState<string>('9');
+    const [cgstPercentage, setCgstPercentage] = useState<string>('0');
+    const [sgstPercentage, setSgstPercentage] = useState<string>('0');
 
     // Add updateMember function after state declarations
     const updateMember = (memberId: string, updates: Partial<MemberData>) => {
@@ -1225,6 +1225,12 @@ export const AddGroupMembershipPage = () => {
         return pinCodeRegex.test(pinCode);
     };
 
+    const validateName = (name: string): boolean => {
+        // Only allow letters (including unicode characters for international names) and spaces
+        const nameRegex = /^[a-zA-Z\s]+$/;
+        return nameRegex.test(name) && name.trim().length >= 2;
+    };
+
     // Handle next step with proper validation
     const handleNext = () => {
         // Validation for step 1 (Membership Plan Selection)
@@ -1644,20 +1650,36 @@ export const AddGroupMembershipPage = () => {
                                                         <TextField
                                                             label="First Name *"
                                                             value={member.formData.firstName}
-                                                            onChange={(e) => updateMember(member.id, { formData: { ...member.formData, firstName: e.target.value } })}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                // Only allow alphabets and spaces
+                                                                if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                                                                    updateMember(member.id, { formData: { ...member.formData, firstName: value } });
+                                                                } else {
+                                                                    toast.error('First name should contain only alphabets');
+                                                                }
+                                                            }}
                                                             sx={fieldStyles}
                                                             fullWidth
-                                                            error={member.formData.firstName !== '' && member.formData.firstName.length < 2}
-                                                            helperText={member.formData.firstName !== '' && member.formData.firstName.length < 2 ? 'Name must be at least 2 characters' : ''}
+                                                            error={member.formData.firstName !== '' && !validateName(member.formData.firstName)}
+                                                            helperText={member.formData.firstName !== '' && !validateName(member.formData.firstName) ? 'First name must be at least 2 characters and contain only alphabets' : ''}
                                                         />
                                                         <TextField
                                                             label="Last Name *"
                                                             value={member.formData.lastName}
-                                                            onChange={(e) => updateMember(member.id, { formData: { ...member.formData, lastName: e.target.value } })}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                // Only allow alphabets and spaces
+                                                                if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                                                                    updateMember(member.id, { formData: { ...member.formData, lastName: value } });
+                                                                } else {
+                                                                    toast.error('Last name should contain only alphabets');
+                                                                }
+                                                            }}
                                                             sx={fieldStyles}
                                                             fullWidth
-                                                            error={member.formData.lastName !== '' && member.formData.lastName.length < 2}
-                                                            helperText={member.formData.lastName !== '' && member.formData.lastName.length < 2 ? 'Name must be at least 2 characters' : ''}
+                                                            error={member.formData.lastName !== '' && !validateName(member.formData.lastName)}
+                                                            helperText={member.formData.lastName !== '' && !validateName(member.formData.lastName) ? 'Last name must be at least 2 characters and contain only alphabets' : ''}
                                                         />
                                                     </div>
 
@@ -1667,12 +1689,18 @@ export const AddGroupMembershipPage = () => {
                                                             value={member.formData.dateOfBirth ? dayjs(member.formData.dateOfBirth, 'YYYY-MM-DD') : null}
                                                             onChange={(newValue) => {
                                                                 if (newValue) {
+                                                                    // Check if selected date is in the future
+                                                                    if (newValue.isAfter(dayjs())) {
+                                                                        toast.error('Date of Birth cannot be a future date');
+                                                                        return;
+                                                                    }
                                                                     updateMember(member.id, { formData: { ...member.formData, dateOfBirth: newValue.format('YYYY-MM-DD') } });
                                                                 } else {
                                                                     updateMember(member.id, { formData: { ...member.formData, dateOfBirth: '' } });
                                                                 }
                                                             }}
                                                             format="DD/MM/YYYY"
+                                                            maxDate={dayjs()}
                                                             slotProps={{
                                                                 textField: {
                                                                     fullWidth: true,
@@ -1705,9 +1733,16 @@ export const AddGroupMembershipPage = () => {
                                                             value={member.formData.mobile}
                                                             onChange={(e) => {
                                                                 const value = e.target.value;
-                                                                // Only allow numbers and limit to 10 digits
+                                                                // Only allow numbers and restrict to 10 digits
                                                                 if (value === '' || /^\d{0,10}$/.test(value)) {
                                                                     updateMember(member.id, { formData: { ...member.formData, mobile: value } });
+                                                                } else {
+                                                                    toast.error('Mobile number should contain only digits and must be 10 digits');
+                                                                }
+                                                            }}
+                                                            onBlur={() => {
+                                                                if (member.formData.mobile && !validateMobile(member.formData.mobile)) {
+                                                                    toast.error('Please enter a valid 10-digit mobile number');
                                                                 }
                                                             }}
                                                             sx={fieldStyles}
@@ -1719,17 +1754,22 @@ export const AddGroupMembershipPage = () => {
                                                                 inputMode: 'numeric'
                                                             }}
                                                             error={member.formData.mobile !== '' && !validateMobile(member.formData.mobile)}
-                                                            helperText={member.formData.mobile !== '' && !validateMobile(member.formData.mobile) ? 'Please enter a valid 10-digit mobile number' : ''}
+                                                            helperText={member.formData.mobile !== '' && !validateMobile(member.formData.mobile) ? 'Mobile number must be exactly 10 digits' : ''}
                                                         />
                                                         <TextField
                                                             label="Email Address *"
                                                             type="email"
                                                             value={member.formData.email}
                                                             onChange={(e) => updateMember(member.id, { formData: { ...member.formData, email: e.target.value } })}
+                                                            onBlur={() => {
+                                                                if (member.formData.email && !validateEmail(member.formData.email)) {
+                                                                    toast.error('Please enter a valid email address (e.g., user@example.com)');
+                                                                }
+                                                            }}
                                                             sx={fieldStyles}
                                                             fullWidth
                                                             error={member.formData.email !== '' && !validateEmail(member.formData.email)}
-                                                            helperText={member.formData.email !== '' && !validateEmail(member.formData.email) ? 'Please enter a valid email address' : ''}
+                                                            helperText={member.formData.email !== '' && !validateEmail(member.formData.email) ? 'Please enter a valid email format (e.g., user@example.com)' : ''}
                                                         />
                                                     </div>
                                                 </div>
@@ -2337,6 +2377,13 @@ export const AddGroupMembershipPage = () => {
                                                 // Only allow numbers and limit to 10 digits
                                                 if (value === '' || /^\d{0,10}$/.test(value)) {
                                                     setEmergencyContactName(value);
+                                                } else {
+                                                    toast.error('Emergency contact should contain only digits and must be 10 digits');
+                                                }
+                                            }}
+                                            onBlur={() => {
+                                                if (emergencyContactName && !validateMobile(emergencyContactName)) {
+                                                    toast.error('Please enter a valid 10-digit emergency contact number');
                                                 }
                                             }}
                                             sx={fieldStyles}
@@ -2349,7 +2396,7 @@ export const AddGroupMembershipPage = () => {
                                                 inputMode: 'numeric'
                                             }}
                                             error={emergencyContactName !== '' && !validateMobile(emergencyContactName)}
-                                            helperText={emergencyContactName !== '' && !validateMobile(emergencyContactName) ? 'Please enter a valid 10-digit phone number' : ''}
+                                            helperText={emergencyContactName !== '' && !validateMobile(emergencyContactName) ? 'Emergency contact must be exactly 10 digits' : ''}
                                         />
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
