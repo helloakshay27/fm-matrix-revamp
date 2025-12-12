@@ -3094,35 +3094,35 @@ const AddAssetPage = () => {
 
     if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0 &&
       categoriesWithUsefulLife.includes(selectedAssetCategory)) {
-      if (!formData.useful_life) {
-        toast.error("Useful Life Required", {
-          description:
-            "Please enter the useful life for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Useful Life is required for Depreciation"];
-      }
+      // if (!formData.useful_life) {
+      //   toast.error("Useful Life Required", {
+      //     description:
+      //       "Please enter the useful life for depreciation calculation when purchase cost is provided.",
+      //     duration: 4000,
+      //   });
+      //   return ["Useful Life is required for Depreciation"];
+      // }
 
-      if (!formData.salvage_value) {
-        toast.error("Salvage Value Required", {
-          description:
-            "Please enter the salvage value for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Salvage Value is required for Depreciation"];
-      }
+      // if (!formData.salvage_value) {
+      //   toast.error("Salvage Value Required", {
+      //     description:
+      //       "Please enter the salvage value for depreciation calculation when purchase cost is provided.",
+      //     duration: 4000,
+      //   });
+      //   return ["Salvage Value is required for Depreciation"];
+      // }
 
-      if (!formData.depreciation_rate) {
-        toast.error("Depreciation Rate Required", {
-          description:
-            "Please enter the depreciation rate for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Depreciation Rate is required for Depreciation"];
-      }
+      // if (!formData.depreciation_rate) {
+      //   toast.error("Depreciation Rate Required", {
+      //     description:
+      //       "Please enter the depreciation rate for depreciation calculation when purchase cost is provided.",
+      //     duration: 4000,
+      //   });
+      //   return ["Depreciation Rate is required for Depreciation"];
+      // }
 
       // Validate Purchase Cost is not equal to Salvage Value
-      if (parseFloat(formData.purchase_cost) === parseFloat(formData.salvage_value)) {
+      if (formData.salvage_value && parseFloat(formData.purchase_cost) === parseFloat(formData.salvage_value)) {
         toast.error("Invalid Salvage Value", {
           description: "Purchase Cost cannot be equal to Salvage Value.",
           duration: 4000,
@@ -3131,7 +3131,7 @@ const AddAssetPage = () => {
       }
 
       // Validate Salvage Value is not greater than Purchase Cost
-      if (parseFloat(formData.salvage_value) > parseFloat(formData.purchase_cost)) {
+      if (formData.salvage_value && parseFloat(formData.salvage_value) > parseFloat(formData.purchase_cost)) {
         toast.error("Invalid Salvage Value", {
           description: "Salvage Value cannot be greater than Purchase Cost.",
           duration: 4000,

@@ -31,8 +31,8 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
     const brcPct = breachedPctOverride !== undefined ? breachedPctOverride : brcPctCalc;
     const baseData = React.useMemo(
         () => [
-        { name: 'Achieved', value: achieved, color: '#DBC2A9' },
-        { name: 'Breached', value: breached, color: '#8B7355' }
+            { name: 'Achieved', value: achieved, color: '#DBC2A9' },
+            { name: 'Breached', value: breached, color: '#8B7355' }
         ],
         [achieved, breached]
     );
@@ -133,7 +133,15 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
         <div className="w-full no-break tat-pie-card">
             <h3 className="text-black font-semibold text-base sm:text-lg mb-1 print:mb-1">{title}</h3>
             <div className="bg-[#F6F4EE] rounded-sm px-6 sm:px-8 py-4 sm:py-5 print:px-5 print:py-3">
-                <div className="w-full h-[260px] sm:h-[320px] print:h-[320px] tat-pie-container" style={{ overflow: 'visible' }}>
+                <div
+                    className="w-full h-[260px] sm:h-[320px] print:h-[320px] tat-pie-container"
+                    style={{
+                        overflow: 'visible',
+                        transform: isPrinting ? 'scale(1.7)' : 'none',
+                        transformOrigin: 'center 40%',
+                        zIndex: 10
+                    }}
+                >
                     <ResponsiveContainer width="100%" height="100%">
                         {/* Provide extra margin so outer labels have space and are not clipped */}
                         <PieChart margin={isPrinting ? { top: 12, right: 48, bottom: 12, left: 48 } : { top: 20, right: 36, bottom: 20, left: 36 }}>
@@ -194,9 +202,8 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
                         return (
                             <div
                                 key={legend.name}
-                                className={`legend-pill flex items-center gap-2 px-3 py-1 rounded-md transition ${
-                                    isActive ? 'bg-white/70 font-semibold text-[#4B351F]' : 'text-black'
-                                } ${isPrinting ? '' : 'cursor-pointer'}`}
+                                className={`legend-pill flex items-center gap-2 px-3 py-1 rounded-md transition ${isActive ? 'bg-white/70 font-semibold text-[#4B351F]' : 'text-black'
+                                    } ${isPrinting ? '' : 'cursor-pointer'}`}
                                 role={isPrinting ? undefined : 'button'}
                                 tabIndex={isPrinting ? -1 : 0}
                                 {...(!isPrinting ? handlers : {})}
@@ -218,19 +225,19 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
 type WeeklyReportProps = { title?: string };
 const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) => {
     const sectionBox = 'bg-white border border-gray-300 w-[95%] mx-auto p-5 mb-10 print:w-[95%] print:mx-auto print:p-2 print:mb-4 no-break';
-    
+
     const location = useLocation();
     const params = React.useMemo(() => new URLSearchParams(location.search), [location.search]);
-    
+
     // Get dates from URL params or use default (last 7 days)
     const startDate = params.get('start_date') || '';
     const endDate = params.get('end_date') || '';
-    
+
     // Dynamic 7-day window label (start = today - 6 days, end = today)
     const weekRangeLabel = React.useMemo(() => {
         let end: Date;
         let start: Date;
-        
+
         if (startDate && endDate) {
             start = new Date(startDate);
             end = new Date(endDate);
@@ -239,7 +246,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             start = new Date(end);
             start.setDate(end.getDate() - 6);
         }
-        
+
         const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         return `${fmt(start)} - ${fmt(end)}`;
     }, [startDate, endDate]);
@@ -248,7 +255,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
     const dateRangeLabel = React.useMemo(() => {
         let end: Date;
         let start: Date;
-        
+
         if (startDate && endDate) {
             start = new Date(startDate);
             end = new Date(endDate);
@@ -257,7 +264,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             start = new Date(end);
             start.setDate(end.getDate() - 6);
         }
-        
+
         try {
             const fmt = (d: Date) => {
                 const day = d.getDate();
@@ -265,7 +272,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                 const year = d.getFullYear();
                 return `${day} ${month} ${year}`;
             };
-            return `From: ${fmt(start)} to ${fmt(end)}`;
+            return `${fmt(start)} to ${fmt(end)}`;
         } catch {
             const dayStart = start.getDate();
             const monthStart = start.toLocaleString('en-US', { month: 'short' });
@@ -290,7 +297,9 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
 
     const logoElement = React.useMemo(() => {
         if (typeof window === 'undefined') {
-            return <DEFAULT_LOGO_CODE />;
+            return   <DEFAULT_LOGO_CODE />;
+            // <OIG_LOGO_CODE />;
+            // <DEFAULT_LOGO_CODE />;
         }
 
         const hostname = window.location.hostname.toLowerCase();
@@ -303,7 +312,9 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             return <VI_LOGO_CODE />;
         }
 
-        return <DEFAULT_LOGO_CODE />;
+        return   <DEFAULT_LOGO_CODE />
+        // <OIG_LOGO_CODE />;
+        //  <DEFAULT_LOGO_CODE />;
     }, []);
 
     // === State: Category Wise Ticket (Top-5) dynamic data ===
@@ -672,7 +683,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         };
         let endDateObj: Date;
         let startDateObj: Date;
-        
+
         if (startDate && endDate) {
             startDateObj = new Date(startDate);
             endDateObj = new Date(endDate);
@@ -681,7 +692,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             startDateObj = new Date(endDateObj); // clone
             startDateObj.setDate(endDateObj.getDate() - 6); // last 7 calendar days inclusive
         }
-        
+
         const fromDate = formatDate(startDateObj);
         const toDate = formatDate(endDateObj);
         const url = `https://${rawBase}/pms/admin/complaints/ticket_ageing_matrix.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${token}`;
@@ -1113,7 +1124,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
     box-shadow: none !important;
 }
 `}</style>
-              <style>{`
+            <style>{`
         @media print {
           @page {
               size: A4;
@@ -1246,13 +1257,13 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
           }
 
           .date-range-text > span:first-of-type {
-              left: 239px !important;
+              left: 292px !important;
               max-width: none !important;
               overflow: visible !important;
           }
 
           .date-range-text > span:last-of-type {
-              left: 279px !important;
+              left: 332px !important;
               max-width: none !important;
               overflow: visible !important;
           }
@@ -1277,7 +1288,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
           }
 
           .weekly-text > span:last-of-type {
-              left: 120px !important;
+              left: 123px !important;
               max-width: none !important;
               overflow: visible !important;
           }
@@ -1605,284 +1616,284 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
         }
       `}</style>
 
-      {/* ✅ Main Layout */}
-      <Box
-        sx={{
-          fontFamily: "sans-serif",
-          bgcolor: "white",
-          minHeight: "100vh",
-          position: "relative",
-        }}
-      >
-        {/* Header Image */}
-        <div className="relative h-[750px] w-full print:h-[600px] print:overflow-hidden">
-            <img
-                src="/weekly_report png.png"
-                alt="Meeting Room"
-                className="w-full h-full object-cover print:h-[600px] print:object-cover"
-            />
-
-
-          {/* Logo top-right */}
-          <Box
-            sx={{
-              position: "absolute",
-              top: 16,
-              right: 24,
-              backgroundColor: "white",
-              borderRadius: "6px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              px: 1.5,
-              py: 0.5,
-              "& svg": {
-                height: "40px",
-                width: "auto",
-                display: "block",
-              },
-              "@media print": {
-                "& svg": {
-                  height: "32px",
-                },
-              },
-            }}
-          >
-            {logoElement}
-          </Box>
-
-          {/* Site Label */}
-          <Typography
-            sx={{
-              position: "absolute",
-              bottom: 16,
-              right: 0,
-              color: "white",
-              fontWeight: 700,
-              fontSize: 18,
-              minWidth: 250,
-              textAlign: "right",
-              paddingRight: 3,
-              '@media print': {
-                right: 0,
-                paddingRight: 2,
-                fontSize: 16,
-              },
-            }}
-          >
-            <span style={{ fontWeight: 700 }}>Site</span> : <span style={{ fontWeight: 700 }}>{siteLabel || 'N/A'}</span>
-          </Typography>
-        </div>
-
-        {/* Main Content Section */}
-        <Box
-          sx={{
-            position: "relative",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            py: { xs: 6, md: 10 },
-            px: { xs: 2, md: 6 },
-          }}
-        >
-          {/* Red Box */}
-          <Box
-            sx={{
-              position: "absolute",
-              left: { xs: "10%", md: "25%" },
-              top: { xs: "-30px", md: "-100px" },
-              width: { xs: "40%", md: "320px" },
-              height: { xs: "400px", md: "450px" },
-              bgcolor: "#bf0c0c",
-              zIndex: 2,
-            }}
-          />
-
-          {/* White Box */}
-          <Box
-            sx={{
-              position: "relative",
-              border: "1px solid #bf0c0c",
-              bgcolor: "white",
-              zIndex: 1,
-              width: { xs: "70%", md: "50%" },
-              height: { xs: "380px", md: "400px" },
-            }}
-          />
-
-          {/* WEEKLY REPORT Text - Single div with complete words, split at box boundary */}
-          <Box
-            sx={{
-              position: "absolute",
-              left: { xs: "10%", md: "25%" },
-              top: { xs: "80px", md: "100px" },
-              width: { xs: "80%", md: "calc(320px + 50%)" },
-              zIndex: 10,
-            }}
-          >
-            {/* WEEKLY - Single word, split by color - TOP */}
-            <div
-              className="weekly-text"
-              style={{
-                marginTop: "20px",
-                paddingLeft: "40px",
-                lineHeight: "1.2",
-                whiteSpace: "nowrap",
-                fontWeight: 700,
-                letterSpacing: "2px",
-                fontSize: "3rem",
-                fontFamily: "sans-serif",
-                position: "relative",
-                display: "block",
-              }}
+            {/* ✅ Main Layout */}
+            <Box
+                sx={{
+                    fontFamily: "sans-serif",
+                    bgcolor: "white",
+                    minHeight: "100vh",
+                    position: "relative",
+                }}
             >
-              {/* White text (shows on red box) - shows WEEKL part */}
-              <span
-                style={{
-                  color: "white",
-                  position: "relative",
-                  display: "inline-block",
-                  zIndex: 11,
-                  left: "103px",
-                }}
-              >
-                <span
-                  style={{
-                    clipPath: "polygon(0 0, 83% 0, 83% 100%, 0 100%)",
-                    WebkitClipPath: "polygon(0 0, 83% 0, 83% 100%, 0 100%)",
-                  }}
-                >
-                  WEEKLY
-                </span>
-              </span>
-              {/* Red text overlay (shows on white box) - shows Y part */}
-              <span
-                style={{
-                  color: "#bf0c0c",
-                  position: "absolute",
-                  left: "140px",
-                  top: 0,
-                  zIndex: 12,
-                  clipPath: "polygon(83% 0, 100% 0, 100% 100%, 83% 100%)",
-                  WebkitClipPath: "polygon(83% 0, 100% 0, 100% 100%, 83% 100%)",
-                }}
-              >
-                WEEKLY
-              </span>
-            </div>
+                {/* Header Image */}
+                <div className="relative h-[750px] w-full print:h-[600px] print:overflow-hidden">
+                    <img
+                        src="/weekly_report png.png"
+                        alt="Meeting Room"
+                        className="w-full h-full object-cover print:h-[600px] print:object-cover"
+                    />
 
-            {/* REPORT - Single word, split by color - BELOW */}
-            <div
-              className="report-text"
-              style={{
-                marginTop: "20px",
-                paddingLeft: "40px",
-                lineHeight: "1.2",
-                whiteSpace: "nowrap",
-                fontWeight: 600,
-                letterSpacing: "2px",
-                fontSize: "3.75rem",
-                fontFamily: "sans-serif",
-                position: "relative",
-                display: "block",
-              }}
-            >
-              {/* White text (shows on red box) - shows REP part */}
-              <span
-                style={{
-                  color: "white",
-                  position: "relative",
-                  display: "inline-block",
-                  left: "150px",
-                  zIndex: 12,
-                }}
-              >
-                <span
-                  style={{
-                    clipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
-                    WebkitClipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
-                  }}
-                >
-                  REPORT
-                </span>
-              </span>
-              {/* Red text overlay (shows on white box) - shows ORT part */}
-              <span
-                style={{
-                  color: "#bf0c0c",
-                  position: "absolute",
-                  left: "190px",
-                  top: 0,
-                  zIndex: 12,
-                  clipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
-                  WebkitClipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
-                }}
-              >
-                REPORT
-              </span>
-            </div>
 
-            {/* Date Range - Split by color like WEEKLY and REPORT */}
-            <div
-              className="date-range-text"
-              style={{
-                marginTop: "20px",
-                paddingLeft: "40px",
-                lineHeight: "1.2",
-                whiteSpace: "nowrap",
-                fontWeight: 300,
-                fontSize: "1rem",
-                position: "relative",
-                display: "block",
-              }}
-            >
-              {/* White text (shows on red box) - left part */}
-              <span
-                style={{
-                  color: "black",
-                  position: "relative",
-                  display: "inline-block",
-                  left: "298px",
-                  zIndex: 12,
-                }}
-              >
-                <span
-                  style={{
-                    clipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
-                    WebkitClipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
-                  }}
-                >
-                  {dateRangeLabel}
-                </span>
-              </span>
-              {/* Red text overlay (shows on white box) - right part */}
-              <span
-                style={{
-                  color: "black",
-                  position: "absolute",
-                  left: "337px",
-                  top: 0,
-                  zIndex: 12,
-                  clipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
-                  WebkitClipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
-                }}
-              >
-                {dateRangeLabel}
-              </span>
-            </div>
-          </Box>
-        </Box>
-        <div className="w-full flex items-center justify-center py-6 print:py-3 first-page-logo">
-        <img
-          src={GoPhygital}
-          alt="GoPhygital"
-          className="h-10 print:h-5"
-        />
-      </div>
-      </Box>
+                    {/* Logo top-right */}
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            top: 16,
+                            right: 24,
+                            backgroundColor: "white",
+                            borderRadius: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            px: 1.5,
+                            py: 0.5,
+                            "& svg": {
+                                height: "40px",
+                                width: "auto",
+                                display: "block",
+                            },
+                            "@media print": {
+                                "& svg": {
+                                    height: "32px",
+                                },
+                            },
+                        }}
+                    >
+                        {logoElement}
+                    </Box>
 
-      {/* GoPhygital logo footer under the cover layout (both view & print) */}
-   
+                    {/* Site Label */}
+                    <Typography
+                        sx={{
+                            position: "absolute",
+                            bottom: 16,
+                            right: 0,
+                            color: "white",
+                            fontWeight: 700,
+                            fontSize: 18,
+                            minWidth: 250,
+                            textAlign: "right",
+                            paddingRight: 3,
+                            '@media print': {
+                                right: 0,
+                                paddingRight: 2,
+                                fontSize: 16,
+                            },
+                        }}
+                    >
+                        <span style={{ fontWeight: 700 }}>Site</span> : <span style={{ fontWeight: 700 }}>{siteLabel || 'N/A'}</span>
+                    </Typography>
+                </div>
+
+                {/* Main Content Section */}
+                <Box
+                    sx={{
+                        position: "relative",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        py: { xs: 6, md: 10 },
+                        px: { xs: 2, md: 6 },
+                    }}
+                >
+                    {/* Red Box */}
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            left: { xs: "10%", md: "25%" },
+                            top: { xs: "-30px", md: "-100px" },
+                            width: { xs: "40%", md: "320px" },
+                            height: { xs: "400px", md: "450px" },
+                            bgcolor: "#bf0c0c",
+                            zIndex: 2,
+                        }}
+                    />
+
+                    {/* White Box */}
+                    <Box
+                        sx={{
+                            position: "relative",
+                            border: "1px solid #bf0c0c",
+                            bgcolor: "white",
+                            zIndex: 1,
+                            width: { xs: "70%", md: "50%" },
+                            height: { xs: "380px", md: "400px" },
+                        }}
+                    />
+
+                    {/* WEEKLY REPORT Text - Single div with complete words, split at box boundary */}
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            left: { xs: "10%", md: "25%" },
+                            top: { xs: "80px", md: "100px" },
+                            width: { xs: "80%", md: "calc(320px + 50%)" },
+                            zIndex: 10,
+                        }}
+                    >
+                        {/* WEEKLY - Single word, split by color - TOP */}
+                        <div
+                            className="weekly-text"
+                            style={{
+                                marginTop: "20px",
+                                paddingLeft: "40px",
+                                lineHeight: "1.2",
+                                whiteSpace: "nowrap",
+                                fontWeight: 700,
+                                letterSpacing: "2px",
+                                fontSize: "3rem",
+                                fontFamily: "sans-serif",
+                                position: "relative",
+                                display: "block",
+                            }}
+                        >
+                            {/* White text (shows on red box) - shows WEEKL part */}
+                            <span
+                                style={{
+                                    color: "white",
+                                    position: "relative",
+                                    display: "inline-block",
+                                    zIndex: 11,
+                                    left: "103px",
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        clipPath: "polygon(0 0, 83% 0, 83% 100%, 0 100%)",
+                                        WebkitClipPath: "polygon(0 0, 83% 0, 83% 100%, 0 100%)",
+                                    }}
+                                >
+                                    WEEKLY
+                                </span>
+                            </span>
+                            {/* Red text overlay (shows on white box) - shows Y part */}
+                            <span
+                                style={{
+                                    color: "#bf0c0c",
+                                    position: "absolute",
+                                    left: "140px",
+                                    top: 0,
+                                    zIndex: 12,
+                                    clipPath: "polygon(83% 0, 100% 0, 100% 100%, 83% 100%)",
+                                    WebkitClipPath: "polygon(83% 0, 100% 0, 100% 100%, 83% 100%)",
+                                }}
+                            >
+                                WEEKLY
+                            </span>
+                        </div>
+
+                        {/* REPORT - Single word, split by color - BELOW */}
+                        <div
+                            className="report-text"
+                            style={{
+                                marginTop: "20px",
+                                paddingLeft: "40px",
+                                lineHeight: "1.2",
+                                whiteSpace: "nowrap",
+                                fontWeight: 600,
+                                letterSpacing: "2px",
+                                fontSize: "3.75rem",
+                                fontFamily: "sans-serif",
+                                position: "relative",
+                                display: "block",
+                            }}
+                        >
+                            {/* White text (shows on red box) - shows REP part */}
+                            <span
+                                style={{
+                                    color: "white",
+                                    position: "relative",
+                                    display: "inline-block",
+                                    left: "150px",
+                                    zIndex: 12,
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        clipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
+                                        WebkitClipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
+                                    }}
+                                >
+                                    REPORT
+                                </span>
+                            </span>
+                            {/* Red text overlay (shows on white box) - shows ORT part */}
+                            <span
+                                style={{
+                                    color: "#bf0c0c",
+                                    position: "absolute",
+                                    left: "190px",
+                                    top: 0,
+                                    zIndex: 12,
+                                    clipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
+                                    WebkitClipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
+                                }}
+                            >
+                                REPORT
+                            </span>
+                        </div>
+
+                        {/* Date Range - Split by color like WEEKLY and REPORT */}
+                        <div
+                            className="date-range-text"
+                            style={{
+                                marginTop: "20px",
+                                paddingLeft: "40px",
+                                lineHeight: "1.2",
+                                whiteSpace: "nowrap",
+                                fontWeight: 300,
+                                fontSize: "1rem",
+                                position: "relative",
+                                display: "block",
+                            }}
+                        >
+                            {/* White text (shows on red box) - left part */}
+                            <span
+                                style={{
+                                    color: "black",
+                                    position: "relative",
+                                    display: "inline-block",
+                                    left: "298px",
+                                    zIndex: 12,
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        clipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
+                                        WebkitClipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)",
+                                    }}
+                                >
+                                    {dateRangeLabel}
+                                </span>
+                            </span>
+                            {/* Red text overlay (shows on white box) - right part */}
+                            <span
+                                style={{
+                                    color: "black",
+                                    position: "absolute",
+                                    left: "337px",
+                                    top: 0,
+                                    zIndex: 12,
+                                    clipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
+                                    WebkitClipPath: "polygon(50% 0, 100% 0, 100% 100%, 50% 100%)",
+                                }}
+                            >
+                                {dateRangeLabel}
+                            </span>
+                        </div>
+                    </Box>
+                </Box>
+                <div className="w-full flex items-center justify-center py-6 print:py-3 first-page-logo">
+                    <img
+                        src={GoPhygital}
+                        alt="GoPhygital"
+                        className="h-10 print:h-5"
+                    />
+                </div>
+            </Box>
+
+            {/* GoPhygital logo footer under the cover layout (both view & print) */}
+
             {/* Wrap sections 1–3 together to keep them on a single page in PDF */}
             <div className="no-break first-page-group">
                 {/* <header className="w-full bg-[#F6F4EE] flex flex-col items-center justify-center text-center py-6 sm:py-8 mb-6 
@@ -1895,8 +1906,8 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
                         {weekRangeLabel}
                     </p>
                 </header> */}
-            
-   
+
+
 
 
 
