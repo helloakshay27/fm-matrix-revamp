@@ -1,7 +1,7 @@
 import { useEffect, useState, forwardRef, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, PencilIcon, Plus, ScrollText, Trash2, X, ChevronDownCircle } from "lucide-react";
+import { ArrowLeft, ChevronDown, PencilIcon, Plus, ScrollText, Trash2, X, ChevronDownCircle, CircleCheckBig } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -871,6 +871,7 @@ export const ProjectTaskDetails = () => {
   const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
   const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
   const [dependentTasks, setDependentTasks] = useState<any[]>([]);
+  const [addingTodo, setAddingTodo] = useState(false);
 
   const firstContentRef = useRef<HTMLDivElement>(null);
   const secondContentRef = useRef<HTMLDivElement>(null);
@@ -945,6 +946,33 @@ export const ProjectTaskDetails = () => {
   ];
 
   const dropdownOptions = ["Open", "In Progress", "On Hold", "Overdue", "Completed"];
+
+  const handleAddToDo = async () => {
+    if (addingTodo) return;
+    setAddingTodo(true);
+    try {
+      const payload = {
+        todo: {
+          title: taskDetails.title,
+          task_management_id: taskDetails.id,
+          status: 'open',
+          target_date: taskDetails.target_date,
+        },
+      };
+
+      await axios.post(`https://${baseUrl}/todos.json`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success('To-Do added successfully.');
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setAddingTodo(false);
+    }
+  };
 
   const handleOptionSelect = async (option) => {
     setSelectedOption(option);
@@ -1079,6 +1107,14 @@ export const ProjectTaskDetails = () => {
                 activeTimeTillNow={(taskDetails as any)?.active_time_till_now}
                 isStarted={(taskDetails as any)?.is_started}
               />
+            </span>
+            <span className="h-6 w-[1px] border border-gray-300"></span>
+            <span
+              className="flex items-center gap-1 cursor-pointer"
+              onClick={handleAddToDo}
+            >
+              <CircleCheckBig size={15} />
+              <span>Add To Do</span>
             </span>
             <span className="h-6 w-[1px] border border-gray-300"></span>
             <span

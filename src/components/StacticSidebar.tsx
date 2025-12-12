@@ -1041,6 +1041,10 @@ const modulesByPackage = {
           href: "/vas/opportunity"
         },
         {
+          name: 'ToDo',
+          href: "/vas/todo"
+        },
+        {
           name: 'Minutes of Meeting',
           href: "/vas/mom"
         },

@@ -15,7 +15,6 @@ import {
     InputLabel,
     Box,
     TextareaAutosize,
-    FormHelperText,
     Dialog,
     DialogContent,
     Slide,
@@ -187,7 +186,7 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
     );
 
     const {
-        data: projects = [],
+        data: projects = { project_managements: [] },
         loading: loadingProjects,
         error: projectsFetchError,
     } = useAppSelector(
@@ -464,14 +463,14 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
         if (
             !loadingProjects &&
             projects &&
-            (Array.isArray(projects.project_managements) && projects.project_managements.length > 0)
+            (projects as any).project_managements &&
+            Array.isArray((projects as any).project_managements) &&
+            (projects as any).project_managements.length > 0
         ) {
-            const projectList = Array.isArray(projects.project_managements)
-                ? projects.project_managements.map((project: any) => ({
-                    value: project.id,
-                    label: project.title || project.name,
-                }))
-                : [];
+            const projectList = (projects as any).project_managements.map((project: any) => ({
+                value: project.id,
+                label: project.title || project.name,
+            }));
             setProjectOptions(projectList);
         }
     }, [projects, loadingProjects]);
@@ -506,10 +505,10 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
                 toast.error('Responsible Person is required');
                 return;
             }
-            if (!type) {
-                toast.error('Issue Type is required');
-                return;
-            }
+            // if (!type) {
+            //     toast.error('Issue Type is required');
+            //     return;
+            // }
             if (!priority) {
                 toast.error('Priority is required');
                 return;
@@ -990,7 +989,7 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
 
                         {/* Type and Priority */}
                         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                            <FormControl fullWidth size="small" required>
+                            <FormControl fullWidth size="small">
                                 <InputLabel>Type</InputLabel>
                                 <Select
                                     value={type}

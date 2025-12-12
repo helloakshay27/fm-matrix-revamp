@@ -93,7 +93,30 @@ const IssuesListPage = () => {
     const { data, loading } = useAppSelector(
         (state) => state.fetchIssues || { data: [], loading: false }
     );
-    const issues = Array.isArray(data) ? data : [];
+    const rawIssues = Array.isArray(data.issues) ? data.issues : [];
+
+    // Map API response to table format
+    const mapIssueData = (issue: any): Issue => {
+        return {
+            id: issue.id?.toString() || "",
+            title: issue.title || "",
+            description: issue.description || "",
+            issue_type: issue.issue_type || issue.type_name || "",
+            priority: issue.priority || "",
+            status: issue.status || "Open",
+            assigned_to: issue.responsible_person?.name || issue.responsible_person_name || issue.assigned_to || "Unassigned",
+            created_by: issue.created_by?.full_name || issue.created_by_name || "",
+            created_at: issue.created_at || "",
+            updated_at: issue.updated_at || "",
+            start_date: issue.start_date ? new Date(issue.start_date).toLocaleDateString() : "",
+            due_date: issue.end_date ? new Date(issue.end_date).toLocaleDateString() : issue.target_date ? new Date(issue.target_date).toLocaleDateString() : "",
+            project_id: issue.project_management_id || issue.project_id || "",
+            milestone_id: issue.milestone_id || "",
+            task_id: issue.task_management_id || issue.task_id || "",
+        };
+    };
+
+    const issues: Issue[] = rawIssues.map(mapIssueData);
 
     const [openIssueModal, setOpenIssueModal] = useState(false);
     const [selectedView, setSelectedView] = useState<"List" | "Kanban">("List");
@@ -101,10 +124,8 @@ const IssuesListPage = () => {
     const dropdownRef = useRef(null);
 
     useEffect(() => {
-        if (projectId && baseUrl && token) {
-            dispatch(fetchIssues({ baseUrl, token, id: projectId })).unwrap();
-        }
-    }, [projectId, dispatch, baseUrl, token]);
+        dispatch(fetchIssues({ baseUrl, token, id: projectId })).unwrap();
+    }, []);
 
     const handleOpenDialog = () => setOpenIssueModal(true);
 
@@ -127,7 +148,7 @@ const IssuesListPage = () => {
                 size="sm"
                 variant="ghost"
                 className="p-1"
-                onClick={() => navigate(`/issues/${item.id}`)}
+                onClick={() => navigate(`/vas/issues/${item.id}`)}
                 title="View Issue Details"
             >
                 <Eye className="w-4 h-4" />

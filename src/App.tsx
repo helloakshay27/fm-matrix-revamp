@@ -821,6 +821,7 @@ import BusinessCard from "./pages/mobile/BusinessCard";
 import AskAI from "./pages/AskAI";
 import MinutesOfMeeting from "./pages/MinutesOfMeeting";
 import AddMoMPage from "./pages/AddMoMPage";
+import Todo from "./pages/Todo";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2448,6 +2449,11 @@ function App() {
                   <Route
                     path="/vas/opportunity/:id"
                     element={<OpportunityDetailsPage />}
+                  />
+
+                  <Route
+                    path="/vas/todo"
+                    element={<Todo />}
                   />
 
                   <Route

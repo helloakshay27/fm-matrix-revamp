@@ -1,14 +1,14 @@
-import { ChevronDown, ChevronDownCircle, CircleCheckBig, LogOut, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronDownCircle, CircleCheckBig, LogOut, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { getFullUrl } from '@/config/apiConfig';
 import { toast } from 'sonner';
+import ConvertModal from '@/components/ConvertModal';
 // TODO: Implement comments and user mentions when dependencies are available
 // import { Mention, MentionsInput } from 'react-mentions';
 // import { fetchUsers } from '@/redux/slices/userSlice';
 // import { fetchActiveTags } from '@/redux/slices/tagsSlice';
-// import ConvertModal from '@/components/ConvertModal';
 
 // Types
 interface OpportunityDetailsData {
@@ -688,22 +688,21 @@ const OpportunityDetailsPage = () => {
                     </div>
                 </div>
             </div>
-            {/* TODO: Implement ConvertModal when component is available */}
-            {/* {isTaskModalOpen && (
-        <ConvertModal
-          isModalOpen={isTaskModalOpen}
-          setIsModalOpen={setIsTaskModalOpen}
-          prefillData={{
-            title: opportunityDetails?.title,
-            project: opportunityDetails?.project_management_id,
-            projectName: opportunityDetails?.project_name,
-            task: opportunityDetails?.task_management_id,
-            taskName: opportunityDetails?.task_name,
-            description: opportunityDetails?.description,
-          }}
-          opportunityId={Number(id)}
-        />
-      )} */}
+            {isTaskModalOpen && (
+                <ConvertModal
+                    isModalOpen={isTaskModalOpen}
+                    setIsModalOpen={setIsTaskModalOpen}
+                    prefillData={{
+                        title: opportunityDetails?.title,
+                        project: opportunityDetails?.project_management_id,
+                        projectName: opportunityDetails?.project_name,
+                        task: opportunityDetails?.task_management_id,
+                        taskName: opportunityDetails?.task_name,
+                        description: opportunityDetails?.description,
+                    }}
+                    opportunityId={Number(id)}
+                />
+            )}
         </div>
     );
 };

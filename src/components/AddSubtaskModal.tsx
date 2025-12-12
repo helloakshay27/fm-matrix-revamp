@@ -12,7 +12,6 @@ import axios from "axios";
 import { removeTagFromProject } from "@/store/slices/projectManagementSlice";
 import { createProjectTask, fetchUserAvailability } from "@/store/slices/projectTasksSlice";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
-import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 
@@ -56,7 +55,6 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal, fetchData }) => {
     const startDateRef = useRef(null);
     const endDateRef = useRef(null);
 
-    const { data: tags = [] } = useAppSelector((state) => state.fetchProjectsTags);
     const { data: userAvailabilityData } = useAppSelector((state) => state.fetchUserAvailability);
     const userAvailability = Array.isArray(userAvailabilityData) ? userAvailabilityData : [];
 
@@ -113,7 +111,6 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal, fetchData }) => {
     useEffect(() => {
         const getUsers = async () => {
             try {
-                await dispatch(fetchProjectsTags({ baseUrl, token })).unwrap();
                 const response = await dispatch(fetchFMUsers()).unwrap();
                 const validUsers = (response.users || []).filter((user: any) => user && user.id);
                 setUsers(validUsers);
@@ -494,7 +491,7 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal, fetchData }) => {
                                     <div className="flex flex-col justify-between w-full">
                                         <MuiMultiSelect
                                             label="Tags"
-                                            options={Array.isArray(tags) ? tags.map((tag) => ({ value: tag.id, label: tag.name, id: tag.id })) : []}
+                                            options={[]}
                                             value={formData.tags}
                                             onChange={(values) => handleMultiSelectChange("tags", values)}
                                             placeholder="Select Tags"
