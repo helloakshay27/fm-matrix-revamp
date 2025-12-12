@@ -82,6 +82,21 @@ interface GroupMembershipDetail {
   preferred_start_date?: string | null;
   referred_by?: string;
   club_members: ClubMember[];
+  allocation_payment_detail?: {
+    id: number;
+    club_member_allocation_id: number;
+    base_amount: string;
+    discount: string;
+    cgst: string;
+    sgst: string;
+    total_tax: string;
+    total_amount: string;
+    landed_amount: string;
+    payment_mode: string;
+    payment_status: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
 }
 
 // Update MembershipPlan interface
@@ -93,6 +108,49 @@ interface MembershipPlan {
   price?: string;
   renewal_terms?: string;
   user_limit?: number;
+}
+
+// Add BillDetail interface after other interfaces
+interface BillDetail {
+  id: number;
+  lock_account_id: number | null;
+  society_id: number;
+  society_flat_id: number | null;
+  ledger_id: number | null;
+  bill_number: string;
+  due_date: string;
+  total_amount: number;
+  note: string | null;
+  bill_cycle_id: number;
+  status: string;
+  publish: boolean | null;
+  mail_sent: boolean | null;
+  published_by: number | null;
+  published_on: string | null;
+  billed_to_type: string;
+  billed_to: number;
+  bill_frequency_id: number;
+  billing_date: string | null;
+  charged_amount: number | null;
+  balance_amount: number | null;
+  irn_no: string | null;
+  ack_no: string | null;
+  ack_date: string | null;
+  roundoff_diff: number | null;
+  after_roundoff_amount: number | null;
+  lock_account_bill_charges: Array<{
+    id: number;
+    name: string;
+    amount: number;
+    gst_rate: number;
+    gst_amount: number;
+    total_amount: number;
+    igst_amount: number | null;
+    cgst_amount: number | null;
+    sgst_amount: number | null;
+    quantity: number | null;
+    rate: number | null;
+  }>;
 }
 
 const QUESTION_MAP: { [key: string]: string } = {
@@ -143,6 +201,9 @@ export const ClubGroupMembershipDetails = () => {
   const [membershipPlanName, setMembershipPlanName] = useState<string>('');
   const [membershipPlanUserLimit, setMembershipPlanUserLimit] = useState<number | null>(null);
   const [loadingPlanName, setLoadingPlanName] = useState(false);
+  const [billDetail, setBillDetail] = useState<BillDetail | null>(null);
+  const [loadingBill, setLoadingBill] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
 
   // Fetch membership details
   useEffect(() => {
@@ -155,6 +216,13 @@ export const ClubGroupMembershipDetails = () => {
       fetchMembershipPlanName(membershipData.membership_plan_id);
     }
   }, [membershipData?.membership_plan_id]);
+
+  // Fetch bill details when membership data is loaded
+  useEffect(() => {
+    if (id) {
+      fetchBillDetails(Number(id));
+    }
+  }, [id]);
 
   const fetchMembershipPlanName = async (planId: number) => {
     setLoadingPlanName(true);
@@ -224,6 +292,37 @@ export const ClubGroupMembershipDetails = () => {
       toast.error('Failed to fetch membership details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBillDetails = async (allocationId: number) => {
+    setLoadingBill(true);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+
+      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${allocationId}/get_bill_by_allocation`);
+      url.searchParams.append('access_token', token || '');
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch bill details');
+      }
+
+      const data = await response.json();
+      // The API returns an array, so take the first item
+      setBillDetail(Array.isArray(data) && data.length > 0 ? data[0] : data);
+    } catch (error) {
+      console.error('Error fetching bill details:', error);
+      toast.error('Failed to fetch bill details');
+    } finally {
+      setLoadingBill(false);
     }
   };
 
@@ -350,6 +449,53 @@ export const ClubGroupMembershipDetails = () => {
     );
   };
 
+  const handleDownloadPDF = async () => {
+    if (!billDetail?.id) {
+      toast.error('Bill ID not found');
+      return;
+    }
+
+    setDownloadingPDF(true);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+
+      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/show_pdf`);
+      url.searchParams.append('lock_account_bill_id', billDetail.id.toString());
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download PDF');
+      }
+
+      // Get the blob from response
+      const blob = await response.blob();
+      
+      // Create a download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `Bill_${billDetail.bill_number || billDetail.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      toast.success('PDF downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('Failed to download PDF');
+    } finally {
+      setDownloadingPDF(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-4 sm:p-6 min-h-screen flex items-center justify-center">
@@ -430,6 +576,20 @@ export const ClubGroupMembershipDetails = () => {
               className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
             >
               Members ({membershipData.club_members?.length || 0})
+            </TabsTrigger>
+            {membershipData.allocation_payment_detail && (
+              <TabsTrigger
+                value="payment"
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              >
+                Payment Details
+              </TabsTrigger>
+            )}
+            <TabsTrigger
+              value="bill"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+            >
+              Bill Details
             </TabsTrigger>
             <TabsTrigger
               value="member-details"
@@ -556,6 +716,360 @@ export const ClubGroupMembershipDetails = () => {
                 </div>
               ))}
             </div>
+          </TabsContent>
+
+          {membershipData.allocation_payment_detail && (
+            <TabsContent value="payment" className="p-4 sm:p-6">
+              <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+                <CreditCard className="w-5 h-5 text-[#C72030]" />
+                Payment Information
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Payment ID</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">{membershipData.allocation_payment_detail.id}</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Base Amount</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.base_amount}</span>
+                </div>
+                {membershipData.allocation_payment_detail.discount && membershipData.allocation_payment_detail.discount !== '0' && membershipData.allocation_payment_detail.discount !== '0.0' && (
+                  <div className="flex items-start">
+                    <span className="text-gray-500 min-w-[140px]">Discount</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">-₹ {membershipData.allocation_payment_detail.discount}</span>
+                  </div>
+                )}
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">CGST</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.cgst}</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">SGST</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.sgst}</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Total Tax</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.total_tax}</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Total Amount</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.total_amount}</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Landed Amount</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.landed_amount}</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Payment Mode</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium capitalize">{membershipData.allocation_payment_detail.payment_mode}</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Payment Status</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <Badge variant={membershipData.allocation_payment_detail.payment_status === 'success' ? "default" : "secondary"} className="capitalize">
+                    {membershipData.allocation_payment_detail.payment_status}
+                  </Badge>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">Payment Created</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">{formatDateTime(membershipData.allocation_payment_detail.created_at)}</span>
+                </div>
+              </div>
+            </TabsContent>
+          )}
+
+          <TabsContent value="bill" className="p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-[#1a1a1a] flex items-center gap-3">
+                <FileText className="w-5 h-5 text-[#C72030]" />
+                Bill Details
+              </h2>
+              {billDetail && (
+                <Button
+                  onClick={handleDownloadPDF}
+                  disabled={downloadingPDF}
+                  className="bg-[#C72030] hover:bg-[#A01828] text-white"
+                >
+                  {downloadingPDF ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download PDF
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+            {loadingBill ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+              </div>
+            ) : billDetail ? (
+              <div className="space-y-6">
+                {/* Bill Header Information */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Bill Number</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{billDetail.bill_number || '-'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Bill ID</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{billDetail.id}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Status</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <Badge variant={billDetail.status === 'generated' ? "default" : "secondary"} className="capitalize">
+                        {billDetail.status}
+                      </Badge>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Due Date</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{formatDate(billDetail.due_date)}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Billed To Type</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{billDetail.billed_to_type || '-'}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 min-w-[140px]">Billed To ID</span>
+                      <span className="text-gray-500 mx-2">:</span>
+                      <span className="text-gray-900 font-medium">{billDetail.billed_to || '-'}</span>
+                    </div>
+                    {billDetail.billing_date && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Billing Date</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{formatDate(billDetail.billing_date)}</span>
+                      </div>
+                    )}
+                    {billDetail.mail_sent !== null && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Mail Sent</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <Badge variant={billDetail.mail_sent ? "default" : "secondary"}>
+                          {billDetail.mail_sent ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
+                    )}
+                    {billDetail.irn_no && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">IRN Number</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{billDetail.irn_no}</span>
+                      </div>
+                    )}
+                    {billDetail.ack_no && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">ACK Number</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{billDetail.ack_no}</span>
+                      </div>
+                    )}
+                    {billDetail.ack_date && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">ACK Date</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{formatDate(billDetail.ack_date)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bill Charges */}
+                {billDetail.lock_account_bill_charges && billDetail.lock_account_bill_charges.length > 0 && (
+                  <div>
+                    <h3 className="text-md font-semibold text-gray-900 mb-3">Bill Charges</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border border-gray-200 rounded-lg">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                              Item Name
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                              Quantity
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                              Rate
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                              Amount
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                              GST Rate
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                              GST Amount
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                              Total
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {billDetail.lock_account_bill_charges.map((charge) => (
+                            <tr key={charge.id}>
+                              <td className="px-4 py-3 text-sm text-gray-900">{charge.name}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right">{charge.quantity || '-'}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right">{charge.rate ? `₹ ${charge.rate.toFixed(2)}` : '-'}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right">₹ {charge.amount.toFixed(2)}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right">{charge.gst_rate.toFixed(2)}%</td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right">₹ {charge.gst_amount.toFixed(2)}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">₹ {charge.total_amount.toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tax Breakdown (if GST components exist) */}
+                {billDetail.lock_account_bill_charges.some(c => c.cgst_amount || c.sgst_amount || c.igst_amount) && (
+                  <div>
+                    <h3 className="text-md font-semibold text-gray-900 mb-3">Tax Breakdown</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        {billDetail.lock_account_bill_charges.some(c => c.cgst_amount) && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">CGST</span>
+                            <span className="text-gray-900 font-medium">
+                              ₹ {billDetail.lock_account_bill_charges.reduce((sum, c) => sum + (c.cgst_amount || 0), 0).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        {billDetail.lock_account_bill_charges.some(c => c.sgst_amount) && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">SGST</span>
+                            <span className="text-gray-900 font-medium">
+                              ₹ {billDetail.lock_account_bill_charges.reduce((sum, c) => sum + (c.sgst_amount || 0), 0).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        {billDetail.lock_account_bill_charges.some(c => c.igst_amount) && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">IGST</span>
+                            <span className="text-gray-900 font-medium">
+                              ₹ {billDetail.lock_account_bill_charges.reduce((sum, c) => sum + (c.igst_amount || 0), 0).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bill Summary */}
+                <div>
+                  <h3 className="text-md font-semibold text-gray-900 mb-3">Bill Summary</h3>
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600">Subtotal (Before Tax)</span>
+                        <span className="text-gray-900 font-medium">
+                          ₹ {billDetail.lock_account_bill_charges.reduce((sum, c) => sum + c.amount, 0).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600">Total GST</span>
+                        <span className="text-gray-900 font-medium">
+                          ₹ {billDetail.lock_account_bill_charges.reduce((sum, c) => sum + c.gst_amount, 0).toFixed(2)}
+                        </span>
+                      </div>
+                      {billDetail.roundoff_diff !== null && billDetail.roundoff_diff !== 0 && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">Round Off</span>
+                          <span className="text-gray-900 font-medium">
+                            ₹ {billDetail.roundoff_diff.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      {billDetail.charged_amount !== null && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">Charged Amount</span>
+                          <span className="text-gray-900 font-medium">₹ {billDetail.charged_amount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {billDetail.balance_amount !== null && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">Balance Amount</span>
+                          <span className="text-gray-900 font-medium">₹ {billDetail.balance_amount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="pt-3 border-t border-gray-300">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-900 font-semibold">Total Amount</span>
+                          <span className="text-gray-900 font-bold text-lg">
+                            ₹ {(billDetail.after_roundoff_amount || billDetail.total_amount).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Information */}
+                {(billDetail.note || billDetail.bill_cycle_id || billDetail.bill_frequency_id) && (
+                  <div>
+                    <h3 className="text-md font-semibold text-gray-900 mb-3">Additional Information</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        {billDetail.bill_cycle_id && (
+                          <div className="flex items-start">
+                            <span className="text-gray-500 min-w-[140px]">Bill Cycle ID</span>
+                            <span className="text-gray-500 mx-2">:</span>
+                            <span className="text-gray-900 font-medium">{billDetail.bill_cycle_id}</span>
+                          </div>
+                        )}
+                        {billDetail.bill_frequency_id && (
+                          <div className="flex items-start">
+                            <span className="text-gray-500 min-w-[140px]">Bill Frequency ID</span>
+                            <span className="text-gray-500 mx-2">:</span>
+                            <span className="text-gray-900 font-medium">{billDetail.bill_frequency_id}</span>
+                          </div>
+                        )}
+                        {billDetail.society_id && (
+                          <div className="flex items-start">
+                            <span className="text-gray-500 min-w-[140px]">Society ID</span>
+                            <span className="text-gray-500 mx-2">:</span>
+                            <span className="text-gray-900 font-medium">{billDetail.society_id}</span>
+                          </div>
+                        )}
+                        {billDetail.note && (
+                          <div className="flex items-start col-span-2">
+                            <span className="text-gray-500 min-w-[140px]">Note</span>
+                            <span className="text-gray-500 mx-2">:</span>
+                            <span className="text-gray-900 font-medium">{billDetail.note}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">No bill details available</p>
+            )}
           </TabsContent>
 
           <TabsContent value="member-details" className="p-4 sm:p-6">

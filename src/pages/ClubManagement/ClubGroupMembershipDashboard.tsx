@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users } from 'lucide-react';
+import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -69,9 +69,28 @@ interface GroupMembershipData {
   pms_site_id: number;
   start_date: string | null;
   end_date: string | null;
-  preferred_start_date: string | null;
-  referred_by: string;
+  preferred_start_date?: string | null;
+  referred_by?: string;
+  total_members?: number;
+  group_leader_mobile?: string;
+  created_at: string;
+  updated_at: string;
   club_members: ClubMember[];
+  allocation_payment_detail?: {
+    id: number;
+    club_member_allocation_id: number;
+    base_amount: string;
+    discount: string;
+    cgst: string;
+    sgst: string;
+    total_tax: string;
+    total_amount: string;
+    landed_amount: string;
+    payment_mode: string;
+    payment_status: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
 }
 
 export const ClubGroupMembershipDashboard = () => {
@@ -554,14 +573,14 @@ export const ClubGroupMembershipDashboard = () => {
           >
             <Eye className="w-4 h-4" />
           </Button>
-          <Button
+          {/* <Button
             variant="ghost"
             onClick={() => navigate(`/club-management/membership/group/${item.id}/edit`)}
             title="Edit"
             className="p-0"
           >
             <Edit className="w-4 h-4" />
-          </Button>
+          </Button> */}
         </div>
       );
     }

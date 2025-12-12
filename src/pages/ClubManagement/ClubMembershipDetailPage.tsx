@@ -82,6 +82,22 @@ interface MembershipDetail {
     total_tax: string;
     total_amount: string;
   } | null;
+  allocation_payment_detail?: {
+    id: number;
+    club_member_allocation_id: number;
+    base_amount: string;
+    discount: string;
+    cgst: string;
+    sgst: string;
+    total_tax: string;
+    total_amount: string;
+    landed_amount: string;
+    payment_mode: string;
+    payment_status: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
+  club_member_allocation_id?: number;
   user: {
     id: number;
     email: string;
@@ -158,6 +174,8 @@ export const ClubMembershipDetailPage = () => {
   const [membershipPlanName, setMembershipPlanName] = useState<string>('');
   const [membershipPlanUserLimit, setMembershipPlanUserLimit] = useState<number | null>(null);
   const [loadingPlanName, setLoadingPlanName] = useState(false);
+  const [allocationPaymentDetail, setAllocationPaymentDetail] = useState<any>(null);
+  const [loadingAllocationPayment, setLoadingAllocationPayment] = useState(false);
 
   console.log(membershipData)
 
@@ -172,6 +190,13 @@ export const ClubMembershipDetailPage = () => {
       fetchMembershipPlanName(membershipData.membership_plan_id);
     }
   }, [membershipData?.membership_plan_id]);
+
+  // Fetch allocation payment details
+  useEffect(() => {
+    if (membershipData?.club_member_allocation_id) {
+      fetchAllocationPaymentDetails(membershipData.club_member_allocation_id);
+    }
+  }, [membershipData?.club_member_allocation_id]);
 
   const fetchMembershipPlanName = async (planId: number) => {
     setLoadingPlanName(true);
@@ -241,6 +266,35 @@ export const ClubMembershipDetailPage = () => {
       toast.error('Failed to fetch membership details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllocationPaymentDetails = async (allocationId: number) => {
+    setLoadingAllocationPayment(true);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+
+      const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${allocationId}.json`);
+      url.searchParams.append('access_token', token || '');
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch allocation payment details');
+      }
+
+      const data = await response.json();
+      setAllocationPaymentDetail(data.allocation_payment_detail);
+    } catch (error) {
+      console.error('Error fetching allocation payment details:', error);
+    } finally {
+      setLoadingAllocationPayment(false);
     }
   };
 
@@ -445,8 +499,16 @@ export const ClubMembershipDetailPage = () => {
               value="membership"
               className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
             >
-              Membership Details
+              Membership Details  
             </TabsTrigger>
+            {(membershipData.club_member_allocation_id || membershipData.member_payment_detail) && (
+              <TabsTrigger
+                value="payment"
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              >
+                Payment Information
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="address"
               className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
@@ -459,14 +521,6 @@ export const ClubMembershipDetailPage = () => {
                 className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
               >
                 Plan & Amenities
-              </TabsTrigger>
-            )}
-            {membershipData.member_payment_detail && (
-              <TabsTrigger
-                value="payment"
-                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
-              >
-                Payment Information
               </TabsTrigger>
             )}
             {((membershipData.attachments && membershipData.attachments.length > 0) || 
@@ -789,47 +843,115 @@ export const ClubMembershipDetailPage = () => {
             </TabsContent>
           )}
 
-          {membershipData.member_payment_detail && (
+          {(allocationPaymentDetail || membershipData.member_payment_detail) && (
             <TabsContent value="payment" className="p-4 sm:p-6">
-              {/* Payment Information */}
               <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
                 <CreditCard className="w-5 h-5 text-[#C72030]" />
                 Payment Information
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">Base Amount</span>
-                  <span className="text-gray-500 mx-2">:</span>
-                  <span className="text-gray-900 font-medium">₹ {membershipData?.member_payment_detail?.base_amount || '0'}</span>
+              {loadingAllocationPayment ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
                 </div>
-                {membershipData?.member_payment_detail?.discount && membershipData.member_payment_detail.discount !== '0' && (
-                  <div className="flex items-start">
-                    <span className="text-gray-500 min-w-[140px]">Discount</span>
-                    <span className="text-gray-500 mx-2">:</span>
-                    <span className="text-gray-900 font-medium">-₹ {membershipData?.member_payment_detail?.discount}</span>
-                  </div>
-                )}
-                <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">CGST</span>
-                  <span className="text-gray-500 mx-2">:</span>
-                  <span className="text-gray-900 font-medium">₹ {membershipData?.member_payment_detail?.cgst || '0'}</span>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                  {allocationPaymentDetail ? (
+                    <>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Base Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹ {allocationPaymentDetail.base_amount || '0'}</span>
+                      </div>
+                      {allocationPaymentDetail.discount && allocationPaymentDetail.discount !== '0.0' && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Discount</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">-₹ {allocationPaymentDetail.discount}</span>
+                        </div>
+                      )}
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">CGST</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹ {allocationPaymentDetail.cgst || '0'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">SGST</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹ {allocationPaymentDetail.sgst || '0'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Total Tax</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹ {allocationPaymentDetail.total_tax || '0'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Total Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹ {allocationPaymentDetail.total_amount || '0'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Landed Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹ {allocationPaymentDetail.landed_amount || '0'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Payment Mode</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium capitalize">{allocationPaymentDetail.payment_mode || '-'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Payment Status</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          <Badge variant={allocationPaymentDetail.payment_status === 'success' ? "default" : "secondary"}>
+                            {allocationPaymentDetail.payment_status || '-'}
+                          </Badge>
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Payment Created</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{formatDateTime(allocationPaymentDetail.created_at)}</span>
+                      </div>
+                    </>
+                  ) : membershipData.member_payment_detail ? (
+                    <>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Base Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹ {membershipData.member_payment_detail.base_amount || '0'}</span>
+                      </div>
+                      {membershipData.member_payment_detail.discount && membershipData.member_payment_detail.discount !== '0' && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Discount</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">-₹ {membershipData.member_payment_detail.discount}</span>
+                        </div>
+                      )}
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">CGST</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹ {membershipData.member_payment_detail.cgst || '0'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">SGST</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹ {membershipData.member_payment_detail.sgst || '0'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Total Tax</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹ {membershipData.member_payment_detail.total_tax || '0'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Total Amount</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">₹ {membershipData.member_payment_detail.total_amount || '0'}</span>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
-                <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">SGST</span>
-                  <span className="text-gray-500 mx-2">:</span>
-                  <span className="text-gray-900 font-medium">₹ {membershipData?.member_payment_detail?.sgst || '0'}</span>
-                </div>
-                <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">Total Tax</span>
-                  <span className="text-gray-500 mx-2">:</span>
-                  <span className="text-gray-900 font-medium">₹ {membershipData?.member_payment_detail?.total_tax || '0'}</span>
-                </div>
-                <div className="flex items-start">
-                  <span className="text-gray-500 min-w-[140px]">Total Amount</span>
-                  <span className="text-gray-500 mx-2">:</span>
-                  <span className="text-gray-900 font-medium">₹ {membershipData?.member_payment_detail?.total_amount || '0'}</span>
-                </div>
-              </div>
+              )}
             </TabsContent>
           )}
 

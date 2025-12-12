@@ -2380,6 +2380,29 @@ export const AddGroupMembershipPage = () => {
                                             label="Access Card Allocated"
                                         />
                                     </div>
+
+                                    {/* Access Card ID (shown only if Access Card Allocated is checked) */}
+                                    {cardAllocated && (
+                                        <div className="mt-4">
+                                            <TextField
+                                                label="Enter Access Card ID"
+                                                value={members[0]?.formData.accessCardId || ''}
+                                                onChange={(e) => {
+                                                    const firstMember = members[0];
+                                                    if (firstMember) {
+                                                        updateMember(firstMember.id, {
+                                                            formData: {
+                                                                ...firstMember.formData,
+                                                                accessCardId: e.target.value
+                                                            }
+                                                        });
+                                                    }
+                                                }}
+                                                sx={fieldStyles}
+                                                fullWidth
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Card 11: Cost Summary */}
