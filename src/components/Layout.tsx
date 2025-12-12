@@ -29,7 +29,12 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { isSidebarCollapsed, getLayoutByCompanyId } = useLayout();
+  const {
+    isSidebarCollapsed,
+    getLayoutByCompanyId,
+    currentSection,
+    setCurrentSection,
+  } = useLayout();
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const { selectedSite } = useSelector((state: RootState) => state.site);
   const location = useLocation();
@@ -100,8 +105,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Render sidebar component based on configuration
   const renderSidebar = () => {
     // Check if user is employee (pms_occupant) - Employee layout takes priority
+    // Only show sidebar for "Project Task" module, hide for other modules
     if (isEmployeeUser && isLocalhost) {
-      return <EmployeeSidebar />;
+      // Only render sidebar for Project Task module
+      if (currentSection === "Project Task") {
+        return <EmployeeSidebar />;
+      }
+      // For other modules (Ticket, MOM, Visitors), don't render sidebar
+      return null;
     }
 
     // Check for token-based VI access first
@@ -282,7 +293,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       <main
         className={`${
-          isSidebarCollapsed ? "ml-16" : "ml-64"
+          // For employee users, only add left margin if on Project Task module
+          isEmployeeUser && isLocalhost
+            ? currentSection === "Project Task"
+              ? isSidebarCollapsed
+                ? "ml-16"
+                : "ml-64"
+              : "ml-0" // No margin for other modules
+            : isSidebarCollapsed
+              ? "ml-16"
+              : "ml-64"
         } ${isEmployeeUser ? "pt-16" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />

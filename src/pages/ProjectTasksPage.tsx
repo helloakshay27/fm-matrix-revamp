@@ -438,41 +438,69 @@ const ProjectTasksPage = () => {
     };
 
     const handleSubmit = async (data: any) => {
+        console.log(data)
         // Validate all required fields
         if (!data.title?.trim()) {
             toast.error("Task title is required");
             return;
         }
-        if (!data.expected_start_date || !data.start_date) {
+        if (!data.expected_start_date) {
             toast.error("Start date is required");
             return;
         }
-        if (!data.target_date || !data.end_date) {
+        if (!data.target_date) {
             toast.error("End date is required");
             return;
         }
 
         // Validate date range
         const dateValidation = validateDateRange(
-            data.expected_start_date || data.start_date,
-            data.target_date || data.end_date
+            data.expected_start_date,
+            data.target_date
         );
         if (!dateValidation.valid) {
             toast.error(dateValidation.error);
             return;
         }
 
+        const generateAllocationDates = (start, end) => {
+            const result = [];
+            let current = new Date(start);
+            const endDate = new Date(end);
+
+            while (current <= endDate) {
+                const formatted = current.toISOString().split("T")[0];
+
+                result.push({
+                    date: formatted,
+                    hours: 8,
+                    minutes: 0,
+                });
+
+                // move to next day
+                current.setDate(current.getDate() + 1);
+            }
+
+            return result;
+        };
+
+        const allocation = generateAllocationDates(
+            data.expected_start_date,
+            data.target_date
+        );
+
         const payload = {
             task_management: {
                 title: data.title,
-                expected_start_date: data.expected_start_date || data.start_date,
-                target_date: data.target_date || data.end_date,
+                expected_start_date: data.expected_start_date,
+                target_date: data.target_date,
                 status: data.status || "open",
                 priority: data.priority || "Medium",
                 active: true,
                 responsible_person_id: data.responsible || data.responsible_person_id,
                 ...(id && { project_management_id: id }),
-                ...(mid && { milestone_id: mid })
+                ...(mid && { milestone_id: mid }),
+                task_allocation_times_attributes: allocation,
             }
         }
         try {
@@ -481,7 +509,11 @@ const ProjectTasksPage = () => {
             await fetchData();
         } catch (error) {
             console.log(error)
-            toast.error(String(error) || "Failed to create task")
+            // toast.error(String(error) || "Failed to create task")
+            const fullError = error.response.data
+            Object.keys(fullError).forEach((key) => {
+                toast.error(`${key} ${fullError[key]}`);
+            })
         }
     };
 

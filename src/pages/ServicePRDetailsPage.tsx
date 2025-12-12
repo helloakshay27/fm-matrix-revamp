@@ -148,6 +148,7 @@ interface Attachment {
 }
 
 interface ServicePR {
+  amc_declaration: any;
   company?: Company;
   work_order?: WorkOrder;
   inventories?: ServiceItem[];
@@ -980,6 +981,17 @@ export const ServicePRDetailsPage = () => {
                 {servicePR.pr_type ? (
                   <span className="text-gray-900 font-medium px-3 text-sm rounded-[5px] w-max cursor-pointer bg-blue-200">
                     {servicePR.pr_type}
+                  </span>
+                ) : (
+                  <span className="text-gray-500">-</span>
+                )}
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Amc Declation</span>
+                <span className="text-gray-500 mx-2">:</span>
+                {servicePR.amc_declaration ? (
+                  <span className="text-gray-900 font-medium px-3 text-sm rounded-[5px] w-max cursor-pointer ">
+                    {servicePR.amc_declaration ? "Yes" : "No"}
                   </span>
                 ) : (
                   <span className="text-gray-500">-</span>
