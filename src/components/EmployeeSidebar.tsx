@@ -81,6 +81,17 @@ const employeeNavigationByModule: Record<string, any> = {
       href: "/vas/issues",
       items: [],
     },
+    Channels: {
+      icon: Target,
+      href: "/vas/channels",
+      items: [],
+    },
+    "Minutes of Meeting": {
+      icon: Target,
+      href: "/vas/minutes-of-meeting",
+      items: [],
+    },
+
     "Opportunity Register": {
       icon: Target,
       href: "/vas/opportunity",
