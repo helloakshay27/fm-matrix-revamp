@@ -35,6 +35,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { getUser, clearAuth } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
+import { permissionService } from "@/services/permissionService";
 
 
 
@@ -63,10 +64,11 @@ export const EmployeeHeader: React.FC = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
+    const [userRoleName, setUserRoleName] = useState<string | null>(null);
 
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const { selectedSite } = useSelector((state: RootState) => state.site);
-
+ const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   // Get user data
   const user = getUser() || {
     id: 0,
@@ -74,9 +76,8 @@ export const EmployeeHeader: React.FC = () => {
     lastname: "",
     email: "",
   };
+  const userFullName = `${user.firstname} ${user.lastname}`.trim();
 
-  const userDisplayName =
-    `${user.firstname} ${user.lastname}`.trim() || user.email;
 
   const handleLogout = () => {
     clearAuth();
@@ -95,6 +96,17 @@ export const EmployeeHeader: React.FC = () => {
     navigate("/notifications");
   };
 
+   useEffect(() => {
+      const loadUserInfo = () => {
+        const displayName = permissionService.getDisplayName();
+        const roleName = permissionService.getRoleName();
+        setUserDisplayName(displayName);
+        setUserRoleName(roleName);
+      };
+  
+      loadUserInfo();
+    }, []);
+
   const handleModuleClick = (moduleName: string) => {
     setCurrentSection(moduleName);
     // Navigate to the module's default page
@@ -106,7 +118,7 @@ export const EmployeeHeader: React.FC = () => {
         navigate("/maintenance/ticket");
         break;
       case "MOM":
-        navigate("/settings/vas/mom");
+        navigate("/vas/mom");
         break;
       case "Visitors":
         navigate("/security/visitor");
@@ -278,7 +290,7 @@ export const EmployeeHeader: React.FC = () => {
         {/* Center Section - Module Navigation */}
         <div className="flex-1 flex justify-center px-2 lg:px-4 overflow-x-auto scrollbar-hide">
           <TooltipProvider delayDuration={300}>
-            <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-1">
+            <div className="flex items-center gap-1  rounded-lg p-1 ">
               {employeeModules.map((module) => {
                 const Icon = module.icon;
                 const isActive = currentSection === module.name;
@@ -378,60 +390,89 @@ export const EmployeeHeader: React.FC = () => {
 
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64">
-              <div className="px-3 py-2 border-b border-gray-100">
-                <p className="text-sm font-medium text-gray-900">
-                  {userDisplayName}
+            <DropdownMenuContent align="end" className="w-72 p-0">
+              {/* User Info Header */}
+              <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                <p className="text-sm font-semibold text-gray-900">
+                  {userFullName}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">{user.email}</p>
-                <Badge
-                  variant="outline"
-                  className="mt-2 text-xs bg-green-50 text-green-700 border-green-200"
-                >
-                  Employee View
-                </Badge>
+                <p className="text-xs text-gray-600 mt-0.5">{user.email}</p>
+
+                {/* User Type & Role Pills */}
+                <div className="flex items-center gap-2 mt-3">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-green-50 text-green-700 border-green-200 font-medium"
+                  >
+                    <User className="w-3 h-3 mr-1" />
+                    {userRoleName}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-blue-50 text-blue-700 border-blue-200 font-medium"
+                  >
+                    <Shield className="w-3 h-3 mr-1" />
+                    {tempSwitchToAdmin ? "Admin Access" : "Standard User"}
+                  </Badge>
+                </div>
               </div>
 
-              {/* Check if user has admin access - show switcher */}
-              {/* Only users with user_type "pms_organization_admin" can switch to Admin View */}
+              {/* View Switcher - Only for Admin Users */}
               {tempSwitchToAdmin && (
                 <>
-                  <DropdownMenuSeparator />
-                  <div className="px-3 py-2">
-                    <p className="text-xs text-gray-500 mb-2">Switch View</p>
+                  <div className="px-3 py-3 bg-gray-50 border-b border-gray-200">
+                    <p className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">
+                      Switch View
+                    </p>
                     <button
                       onClick={() => {
                         localStorage.setItem(
-                          "tempType",
+                          "userType",
                           "pms_organization_admin"
                         );
-                        localStorage.removeItem("userType");
-                        // Remove userType from localStorage to return to admin view
-                        navigate("/maintenance/asset");
+                        localStorage.setItem("selectedView", "admin");
+                        localStorage.removeItem("tempType");
+                        window.location.href = "/maintenance/asset";
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors"
+                      className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm bg-white hover:bg-[#C72030] text-gray-700 hover:text-white transition-all duration-200 border border-gray-200 hover:border-[#C72030] group shadow-sm"
                     >
-                      <Shield className="w-4 h-4" />
-                      <span>Switch to Admin View</span>
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        <span className="font-medium">Admin View</span>
+                      </div>
+                      <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
                     </button>
+                    <p className="text-xs text-gray-500 mt-2 px-1">
+                      Access full system controls and settings
+                    </p>
                   </div>
                 </>
               )}
 
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleProfileClick}>
-                <User className="w-4 h-4 mr-2" />
-                My Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleSettingsClick}>
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </DropdownMenuItem>
+              {/* Menu Items */}
+              <div className="py-1">
+                <DropdownMenuItem onClick={handleProfileClick} className="mx-2 my-1 rounded-md">
+                  <User className="w-4 h-4 mr-2 text-gray-500" />
+                  <span className="font-medium">My Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSettingsClick} className="mx-2 my-1 rounded-md">
+                  <Settings className="w-4 h-4 mr-2 text-gray-500" />
+                  <span className="font-medium">Settings</span>
+                </DropdownMenuItem>
+              </div>
+
+              <DropdownMenuSeparator className="my-1" />
+
+              {/* Logout Button */}
+              <div className="p-2">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md font-medium"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

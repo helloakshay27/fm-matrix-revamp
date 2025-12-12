@@ -819,6 +819,8 @@ import ProjectTypes from "./pages/ProjectTypes";
 import ProjectTags from "./pages/ProjectTags";
 import BusinessCard from "./pages/mobile/BusinessCard";
 import AskAI from "./pages/AskAI";
+import MinutesOfMeeting from "./pages/MinutesOfMeeting";
+import AddMoMPage from "./pages/AddMoMPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2446,6 +2448,16 @@ function App() {
                   <Route
                     path="/vas/opportunity/:id"
                     element={<OpportunityDetailsPage />}
+                  />
+
+                  <Route
+                    path="/vas/mom"
+                    element={<MinutesOfMeeting />}
+                  />
+
+                  <Route
+                    path="/vas/add-mom"
+                    element={<AddMoMPage />}
                   />
 
                   <Route

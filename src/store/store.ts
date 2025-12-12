@@ -10,6 +10,7 @@ import roleReducer from './slices/roleSlice'
 import roleWithModulesReducer from './slices/roleWithModulesSlice'
 import { functionReducer } from './slices/functionSlice'
 import fmUserReducer, { createFmUserReducer, editFMUserReducer, fetchRolesReducer, fetchSuppliersReducer, fetchUnitsReducer, getFMUsersReducer, getUserDetailsReducer } from './slices/fmUserSlice'
+import { createMoMReducer, fetchMoMsReducer } from './slices/momSlice'
 import userCountsReducer from './slices/userCountsSlice'
 import occupantUsersReducer, { exportOccupantUsersReducer } from './slices/occupantUsersSlice'
 import occupantUserCountsReducer from './slices/occupantUserCountsSlice'
@@ -68,11 +69,14 @@ import { createChatTaskReducer, createConversationReducer, createGroupReducer, d
 import { createCircleReducer, fetchCircleListReducer, updateCircleReducer } from './slices/msafeCircleSlice'
 import { changeProjectStatusReducer, createProjectReducer, fetchProjectByIdReducer, fetchProjectsReducer, filterProjectsReducer, attachFilesReducer, removeAttachmentReducer, fetchKanbanProjectsReducer } from './slices/projectManagementSlice'
 import { createMilestoneReducer, fetchDependentMilestonesReducer, fetchMilestoneByIdReducer, fetchMilestonesReducer, updateMilestoneStatusReducer } from './slices/projectMilestoneSlice'
-import { createProjectTeamReducer, fetchProjectTeamByIdReducer, fetchProjectTeamsReducer, updateProjectTeamReducer } from './slices/projectTeamsSlice'
-import { createProjectTypesReducer, fetchProjectTypesReducer, updateProjectTypesReducer } from './slices/projectTypeSlice'
-import { createProjectsTagsReducer, fetchProjectsTagsReducer, updateProjectsTagsReducer } from './slices/projectTagSlice'
+import { projectTeamsReducer } from './slices/projectTeamsSlice'
+import { projectTypeReducer } from './slices/projectTypeSlice'
+import { projectTagReducer } from './slices/projectTagSlice'
+import { projectStatusReducer } from './slices/projectStatusSlice'
+import { projectRoleReducer } from './slices/projectRoleSlice'
 import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer, filterTasksReducer, updateTaskStatusReducer } from './slices/projectTasksSlice'
 import { fetchIssuesReducer, fetchIssueByIdReducer, createIssueReducer, updateIssueReducer, deleteIssueReducer, filterIssuesReducer } from './slices/issueSlice'
+import { createProjectGroupReducer, deleteProjectGroupReducer, fetchProjectGroupsReducer, updateProjectGroupReducer } from './slices/projectGroupSlice'
 
 export const store = configureStore({
   reducer: {
@@ -363,18 +367,12 @@ export const store = configureStore({
     updateTaskStatus: updateTaskStatusReducer,
 
     // Project Team
-    fetchProjectTeams: fetchProjectTeamsReducer,
-    fetchProjectTeamById: fetchProjectTeamByIdReducer,
-    createProjectTeam: createProjectTeamReducer,
-    updateProjectTeam: updateProjectTeamReducer,
+    projectTeams: projectTeamsReducer,
 
-    fetchProjectTypes: fetchProjectTypesReducer,
-    createProjectTypes: createProjectTypesReducer,
-    updateProjectTypes: updateProjectTypesReducer,
+    projectTypes: projectTypeReducer,
 
-    fetchProjectsTags: fetchProjectsTagsReducer,
-    createProjectsTags: createProjectsTagsReducer,
-    updateProjectsTags: updateProjectsTagsReducer,
+    projectTags: projectTagReducer,
+    projectStatus: projectStatusReducer,
 
     // Issues
     fetchIssues: fetchIssuesReducer,
@@ -383,6 +381,15 @@ export const store = configureStore({
     updateIssue: updateIssueReducer,
     deleteIssue: deleteIssueReducer,
     filterIssues: filterIssuesReducer,
+    createMoM: createMoMReducer,
+    fetchMoMs: fetchMoMsReducer,
+    projectRole: projectRoleReducer,
+
+    // Project Groups
+    fetchProjectGroups: fetchProjectGroupsReducer,
+    createProjectGroup: createProjectGroupReducer,
+    updateProjectGroup: updateProjectGroupReducer,
+    deleteProjectGroup: deleteProjectGroupReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

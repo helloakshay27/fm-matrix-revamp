@@ -956,6 +956,7 @@ const ProjectTasksPage = () => {
                 storageKey="projects-table"
                 onFilterClick={() => { }}
                 canAddRow={true}
+                loading={loading}
                 readonlyColumns={["id", "duration", "predecessor", "successor"]}
                 onAddRow={(newRowData) => {
                     handleSubmit(newRowData)

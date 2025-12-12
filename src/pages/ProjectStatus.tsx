@@ -2,7 +2,10 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { Edit, Plus, X, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { fetchProjectStatuses, createProjectStatus, updateProjectStatus, deleteProjectStatus } from "@/store/slices/projectStatusSlice";
 
 const columns: ColumnConfig[] = [
     {
@@ -22,7 +25,7 @@ const columns: ColumnConfig[] = [
     {
         key: 'status',
         label: 'Status',
-        sortable: true,
+        sortable: false,
         draggable: true,
         defaultVisible: true,
     },
@@ -36,48 +39,19 @@ const columns: ColumnConfig[] = [
 ]
 
 const ProjectStatus = () => {
+    const dispatch = useDispatch<AppDispatch>();
+    // @ts-ignore - store typing might lag slightly in IDE but slice is updated
+    const { projectStatuses, loading } = useSelector((state: RootState) => state.projectStatus);
+
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [statusName, setStatusName] = useState('');
     const [selectedColor, setSelectedColor] = useState('#FF0000');
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [statuses, setStatuses] = useState([
-        {
-            id: 1,
-            statusName: 'Overdue',
-            color: '#B8860B',
-            status: 'Active',
-            createdOn: '04/11/2025',
-        },
-        {
-            id: 2,
-            statusName: 'Completed',
-            color: '#4CAF50',
-            status: 'Active',
-            createdOn: '01/07/2025',
-        },
-        {
-            id: 3,
-            statusName: 'On Hold',
-            color: '#FFC107',
-            status: 'Active',
-            createdOn: '01/07/2025',
-        },
-        {
-            id: 4,
-            statusName: 'In Progress',
-            color: '#2196F3',
-            status: 'Active',
-            createdOn: '01/07/2025',
-        },
-        {
-            id: 5,
-            statusName: 'Open',
-            color: '#F44336',
-            status: 'Active',
-            createdOn: '01/07/2025',
-        },
-    ]);
+
+    useEffect(() => {
+        dispatch(fetchProjectStatuses());
+    }, [dispatch]);
 
     const openAddDialog = () => {
         setIsEditMode(false);
@@ -89,8 +63,8 @@ const ProjectStatus = () => {
 
     const openEditDialog = (item: any) => {
         setIsEditMode(true);
-        setStatusName(item.statusName);
-        setSelectedColor(item.color);
+        setStatusName(item.status);
+        setSelectedColor(item.color_code);
         setEditingId(item.id);
         setIsDialogOpen(true);
     };
@@ -102,50 +76,55 @@ const ProjectStatus = () => {
         setEditingId(null);
     };
 
-    const handleSubmit = () => {
-        if (!statusName.trim()) {
+    const handleSubmit = async () => {
+        const trimmedName = statusName.trim();
+        if (!trimmedName) {
             alert('Please enter a status name');
             return;
         }
 
+        const payload = {
+            status: trimmedName,
+            color_code: selectedColor,
+            active: true,
+        };
+
         if (isEditMode && editingId) {
-            // Update existing status
-            setStatuses(statuses.map(st =>
-                st.id === editingId
-                    ? { ...st, statusName, color: selectedColor }
-                    : st
-            ));
+            await dispatch(updateProjectStatus({ id: editingId, data: payload })).unwrap();
+            dispatch(fetchProjectStatuses());
         } else {
-            // Add new status
-            const newStatus = {
-                id: Math.max(...statuses.map(s => s.id), 0) + 1,
-                statusName,
-                color: selectedColor,
-                status: 'Active',
-                createdOn: new Date().toLocaleDateString('en-US', {
-                    month: '2-digit',
-                    day: '2-digit',
-                    year: 'numeric'
-                }),
-            };
-            setStatuses([...statuses, newStatus]);
+            await dispatch(createProjectStatus(payload)).unwrap();
+            dispatch(fetchProjectStatuses());
         }
 
         closeDialog();
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: number) => {
         if (confirm('Are you sure you want to delete this status?')) {
-            setStatuses(statuses.filter(status => status.id !== id));
+            await dispatch(deleteProjectStatus(id)).unwrap();
         }
     };
 
-    const handleToggleStatus = (id: number) => {
-        setStatuses(statuses.map(st =>
-            st.id === id
-                ? { ...st, status: st.status === 'Active' ? 'Inactive' : 'Active' }
-                : st
-        ));
+    const handleToggleStatus = async (id: number) => {
+        const item = projectStatuses.find((s: any) => s.id === id);
+        if (!item) return;
+
+        const currentActive = item.active !== undefined ? item.active : item.isActive;
+        const newActive = !currentActive;
+
+        const payload = {
+            status: item.status,
+            color_code: item.color_code,
+            active: newActive,
+        };
+
+        try {
+            await dispatch(updateProjectStatus({ id, data: payload })).unwrap();
+            dispatch(fetchProjectStatuses());
+        } catch (error) {
+            console.error("Failed to toggle status", error);
+        }
     };
 
     const renderActions = (item: any) => {
@@ -173,28 +152,32 @@ const ProjectStatus = () => {
 
     const renderCell = (item: any, columnKey: string) => {
         switch (columnKey) {
+            case 'statusName':
+                return item.status || '-';
             case 'color':
                 return (
                     <div
                         className="w-32 h-8 rounded border border-gray-300"
-                        style={{ backgroundColor: item.color }}
+                        style={{ backgroundColor: item.color_code }}
                     ></div>
                 );
+            case 'createdOn':
+                return item.created_at ? new Date(item.created_at).toLocaleDateString() : (item.createdOn || '-');
             case 'status':
+                const isActive = item.active !== undefined ? item.active : item.isActive;
                 return (
                     <div className="flex items-center gap-2">
-                        <span className="text-sm">{item.status === 'Inactive' ? 'Inactive' : 'Inactive'}</span>
-                        <button
+                        <span className="text-sm">{isActive ? 'Active' : 'Inactive'}</span>
+                        <div
                             onClick={() => handleToggleStatus(item.id)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.status === 'Active' ? 'bg-green-500' : 'bg-gray-300'
+                            className={`cursor-pointer relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-300'
                                 }`}
                         >
                             <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.status === 'Active' ? 'translate-x-6' : 'translate-x-1'
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'
                                     }`}
                             />
-                        </button>
-                        <span className="text-sm">{item.status}</span>
+                        </div>
                     </div>
                 );
             default:
@@ -217,13 +200,14 @@ const ProjectStatus = () => {
     return (
         <div className="p-6">
             <EnhancedTable
-                data={statuses}
+                data={projectStatuses}
                 columns={columns}
                 renderActions={renderActions}
                 renderCell={renderCell}
                 leftActions={leftActions}
                 pagination={true}
                 pageSize={10}
+                loading={loading}
             />
 
             {/* Dialog Modal */}
