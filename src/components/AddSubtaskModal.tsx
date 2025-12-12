@@ -45,7 +45,7 @@ const monthNames = [
     "Dec",
 ];
 
-const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal }) => {
+const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal, fetchData }) => {
     const { id: pid, mid, taskId } = useParams();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -206,6 +206,8 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal }) => {
         try {
             await dispatch(createProjectTask({ baseUrl, token, data: payload })).unwrap();
             toast.success("Subtask created successfully");
+            handleCloseModal();
+            fetchData();
         } catch (error) {
             console.log(error)
         } finally {

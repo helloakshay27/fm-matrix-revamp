@@ -1299,7 +1299,7 @@ export const ProjectTaskDetails = () => {
         </div>
       </div>
 
-      <AddSubtaskModal openTaskModal={openSubTaskModal} setOpenTaskModal={setOpenSubTaskModal} />
+      <AddSubtaskModal openTaskModal={openSubTaskModal} setOpenTaskModal={setOpenSubTaskModal} fetchData={fetchData} />
 
       {/* Tabs Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">

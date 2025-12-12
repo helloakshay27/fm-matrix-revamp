@@ -3,7 +3,7 @@ import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { createIssue, fetchIssues } from '@/store/slices/issueSlice';
 import { fetchMilestones } from '@/store/slices/projectMilestoneSlice';
 import { fetchKanbanProjects } from '@/store/slices/projectManagementSlice';
-import { fetchUserAvailability, fetchTargetDateTasks } from '@/store/slices/projectTasksSlice';
+import { fetchUserAvailability, fetchTargetDateTasks, fetchProjectTasks } from '@/store/slices/projectTasksSlice';
 import { toast } from 'sonner';
 import { CalendarIcon, X } from 'lucide-react';
 import {
@@ -390,9 +390,9 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
     }, [loadingMilestone, milestoneFetchError, newIssuesMilestoneId, milestoneOptions]);
 
     useEffect(() => {
-        if (!loadingTasks && !tasksFetchError && tasks?.length > 0) {
+        if (!loadingTasks && !tasksFetchError && tasks.task_managements?.length > 0) {
             setTaskOptions(
-                tasks.map((t: any) => ({
+                tasks.task_managements.map((t: any) => ({
                     value: t.id,
                     label: t.title,
                 }))
@@ -400,10 +400,26 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
         }
     }, [tasks, loadingTasks, tasksFetchError]);
 
+
+
+    useEffect(() => {
+        if (newIssuesMilestoneId && milestoneOptions?.length > 0) {
+            dispatch(fetchProjectTasks({ baseUrl, token, id: newIssuesMilestoneId }) as any);
+        }
+    }, [newIssuesMilestoneId])
+
     // New effect to handle subtask options when task is selected
     useEffect(() => {
-        if (newIssuesTaskId && tasks?.length > 0) {
-            const selectedTask = tasks.find((t: any) => t.id === newIssuesTaskId);
+        if (newIssuesTaskId) {
+            let selectedTask = null;
+
+            // Check if tasks is an array or object with task_managements property
+            const tasksList = Array.isArray(tasks) ? tasks : (tasks?.task_managements || []);
+
+            if (tasksList && tasksList.length > 0) {
+                selectedTask = tasksList.find((t: any) => t.id === newIssuesTaskId);
+            }
+
             if (
                 selectedTask &&
                 selectedTask.sub_tasks_managements &&
@@ -411,7 +427,7 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
                 selectedTask.sub_tasks_managements.length > 0
             ) {
                 setSubtaskOptions(
-                    selectedTask.sub_tasks_managements.map((subtask) => ({
+                    selectedTask.sub_tasks_managements.map((subtask: any) => ({
                         value: subtask.id,
                         label: subtask.title,
                     }))
@@ -448,10 +464,10 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
         if (
             !loadingProjects &&
             projects &&
-            (Array.isArray(projects) && projects.length > 0)
+            (Array.isArray(projects.project_managements) && projects.project_managements.length > 0)
         ) {
-            const projectList = Array.isArray(projects)
-                ? projects.map((project: any) => ({
+            const projectList = Array.isArray(projects.project_managements)
+                ? projects.project_managements.map((project: any) => ({
                     value: project.id,
                     label: project.title || project.name,
                 }))

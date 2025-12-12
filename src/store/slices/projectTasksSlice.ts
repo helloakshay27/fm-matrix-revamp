@@ -30,8 +30,7 @@ export const createProjectTask = createAsyncThunk(
             })
             return response.data
         } catch (error) {
-            const message = error.response?.data?.error || error.error || 'Failed to create project task'
-            return rejectWithValue(message)
+            return rejectWithValue(error)
         }
     }
 )

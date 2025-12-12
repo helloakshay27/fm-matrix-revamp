@@ -91,6 +91,7 @@ export const AddServicePRDashboard = () => {
     subject: "",
     description: "",
     termsConditions: "",
+    amcDeclared: "",
   });
 
   const [detailsForms, setDetailsForms] = useState([
@@ -215,6 +216,7 @@ export const AddServicePRDashboard = () => {
             subject: prData.subject || "",
             description: prData.description || "",
             termsConditions: prData.term_condition || "",
+            amcDeclared: prData.amc_declaration || "",
           });
 
           // Populate detailsForms
@@ -295,6 +297,7 @@ export const AddServicePRDashboard = () => {
           subject: formData.subject,
           description: formData.description,
           term_condition: formData.termsConditions,
+          amc_declaration: formData.amcDeclared,
           ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
           pms_wo_inventories_attributes: detailsForms.map((item) => ({
             pms_service_id: item.service,
@@ -429,6 +432,7 @@ export const AddServicePRDashboard = () => {
             subject: data.work_order.subject,
             description: data.work_order.description,
             termsConditions: data.work_order.term_condition,
+            amcDeclared: data.work_order.amc_declaration || false,
           });
 
           setDetailsForms(data.inventories.map((item, index) => ({
@@ -651,9 +655,11 @@ export const AddServicePRDashboard = () => {
       toast.error("Related To is required");
       return false;
     }
+    if (formData.amcDeclared === "" || formData.amcDeclared === undefined || formData.amcDeclared === null) {
+      toast.error("Amc Declared is required");
+      return false;
+    }
     
-
-    // Details Forms Validation
     for (const item of detailsForms) {
       if (!item.service) {
         toast.error("Service is required for all items");
@@ -741,6 +747,7 @@ export const AddServicePRDashboard = () => {
         subject: formData.subject,
         description: formData.description,
         term_condition: formData.termsConditions,
+        amc_declaration: formData.amcDeclared,
         ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
         pms_wo_inventories_attributes: detailsForms.map((item) => ({
           pms_service_id: item.service,
@@ -1036,6 +1043,38 @@ export const AddServicePRDashboard = () => {
                 }}
               />
 
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "start",
+                  mt: 2,
+                }}
+              >
+                <FormLabel
+                  component="legend"
+                  sx={{ minWidth: "80px", fontSize: "14px", mb: 1 }}
+                >
+                  Amc Declared*
+                </FormLabel>
+                <RadioGroup
+                  row
+                  value={formData.amcDeclared === "" ? "" : (formData.amcDeclared ? "yes" : "no")}
+                  onChange={(e) => handleInputChange("amcDeclared", e.target.value === "yes")}
+                >
+                  <FormControlLabel
+                    value="yes"
+                    control={<Radio />}
+                    label="Yes"
+                  />
+                  <FormControlLabel
+                    value="no"
+                    control={<Radio />}
+                    label="No"
+                  />
+                </RadioGroup>
+              </Box>
+
               {showRadio && (
                 <Box
                   sx={{
@@ -1225,8 +1264,8 @@ export const AddServicePRDashboard = () => {
                         <em>Select Storage Location</em>
                       </MenuItem>
                       {storageLocationOptions.map((option) => (
-                        <MenuItem key={option.id} value={option.code}>
-                          {option.code} - {option.name}
+                        <MenuItem key={option.id} value={option.content.code}>
+                          {option.content.code} - {option.content.name}
                         </MenuItem>
                       ))}
                     </MuiSelect>
