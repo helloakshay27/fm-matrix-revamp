@@ -2,7 +2,10 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { Edit, Plus, X, ChevronDown, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { fetchProjectsTags, createProjectsTags, updateProjectsTags, deleteProjectsTags } from "@/store/slices/projectTagSlice";
 
 const columns: ColumnConfig[] = [
     {
@@ -41,56 +44,20 @@ const tagTypeOptions = [
 ];
 
 const ProjectTags = () => {
+    const dispatch = useDispatch<AppDispatch>();
+    // @ts-ignore - store typing might lag slightly in IDE but slice is updated
+    const { projectTags, loading } = useSelector((state: RootState) => state.projectTags);
+
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [tagName, setTagName] = useState('');
     const [selectedTagType, setSelectedTagType] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
     const [showTagTypeDropdown, setShowTagTypeDropdown] = useState(false);
-    const [tags, setTags] = useState([
-        {
-            id: 1,
-            tagName: 'Run Cycle',
-            tagType: 'Product Tag',
-            createdOn: '22/11/2025',
-            isActive: true,
-        },
-        {
-            id: 2,
-            tagName: 'Recess club tag',
-            tagType: 'Client Tag',
-            createdOn: '21/11/2025',
-            isActive: true,
-        },
-        {
-            id: 3,
-            tagName: 'Project & Task',
-            tagType: 'Product Tag',
-            createdOn: '10/11/2025',
-            isActive: true,
-        },
-        {
-            id: 4,
-            tagName: 'ERP',
-            tagType: 'Client Tag',
-            createdOn: '09/09/2025',
-            isActive: true,
-        },
-        {
-            id: 5,
-            tagName: 'HRMS',
-            tagType: 'Client Tag',
-            createdOn: '03/07/2025',
-            isActive: true,
-        },
-        {
-            id: 6,
-            tagName: 'New Tag',
-            tagType: 'Client Tag',
-            createdOn: '02/07/2025',
-            isActive: true,
-        },
-    ]);
+
+    useEffect(() => {
+        dispatch(fetchProjectsTags());
+    }, [dispatch]);
 
     const openAddDialog = () => {
         setIsEditMode(false);
@@ -102,8 +69,8 @@ const ProjectTags = () => {
 
     const openEditDialog = (item: any) => {
         setIsEditMode(true);
-        setTagName(item.tagName);
-        setSelectedTagType(item.tagType);
+        setTagName(item.name || item.tagName);
+        setSelectedTagType(item.tag_type || item.tagType);
         setEditingId(item.id);
         setIsDialogOpen(true);
     };
@@ -116,8 +83,9 @@ const ProjectTags = () => {
         setShowTagTypeDropdown(false);
     };
 
-    const handleSubmit = () => {
-        if (!tagName.trim()) {
+    const handleSubmit = async () => {
+        const trimmedName = tagName.trim();
+        if (!trimmedName) {
             alert('Please enter tag name');
             return;
         }
@@ -126,42 +94,52 @@ const ProjectTags = () => {
             return;
         }
 
+        const payload = {
+            company_tag: {
+                name: trimmedName,
+                tag_type: selectedTagType,
+                active: true,
+            }
+        };
+
         if (isEditMode && editingId) {
-            setTags(tags.map(tag =>
-                tag.id === editingId
-                    ? { ...tag, tagName, tagType: selectedTagType }
-                    : tag
-            ));
+            await dispatch(updateProjectsTags({ id: editingId, data: payload })).unwrap();
+            dispatch(fetchProjectsTags());
         } else {
-            const newTag = {
-                id: Math.max(...tags.map(t => t.id), 0) + 1,
-                tagName,
-                tagType: selectedTagType,
-                createdOn: new Date().toLocaleDateString('en-US', {
-                    month: '2-digit',
-                    day: '2-digit',
-                    year: 'numeric'
-                }),
-                isActive: true,
-            };
-            setTags([...tags, newTag]);
+            await dispatch(createProjectsTags(payload)).unwrap();
+            dispatch(fetchProjectsTags());
         }
 
         closeDialog();
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = async (id: number) => {
         if (confirm('Are you sure you want to delete this tag?')) {
-            setTags(tags.filter(tag => tag.id !== id));
+            await dispatch(deleteProjectsTags(id)).unwrap();
         }
     };
 
-    const handleToggleStatus = (id: number) => {
-        setTags(tags.map(tag =>
-            tag.id === id
-                ? { ...tag, isActive: !tag.isActive }
-                : tag
-        ));
+    const handleToggleStatus = async (id: number) => {
+        const item = projectTags.find((t: any) => t.id === id);
+        if (!item) return;
+
+        const currentActive = item.active !== undefined ? item.active : item.isActive;
+        const newActive = !currentActive;
+
+        const payload = {
+            company_tag: {
+                name: item.name,
+                tag_type: item.tag_type,
+                active: newActive,
+            }
+        };
+
+        try {
+            await dispatch(updateProjectsTags({ id, data: payload })).unwrap();
+            dispatch(fetchProjectsTags());
+        } catch (error) {
+            console.error("Failed to toggle status", error);
+        }
     };
 
     const renderActions = (item: any) => {
@@ -189,21 +167,27 @@ const ProjectTags = () => {
 
     const renderCell = (item: any, columnKey: string) => {
         switch (columnKey) {
+            case 'tagName':
+                return item.name || item.tagName || '-';
+            case 'tagType':
+                return item.tag_type || item.tagType || '-';
+            case 'createdOn':
+                return item.created_at ? new Date(item.created_at).toLocaleDateString() : (item.createdOn || '-');
             case 'status':
+                const isActive = item.active !== undefined ? item.active : item.isActive;
                 return (
                     <div className="flex items-center gap-2">
-                        <span className="text-sm">{item.isActive ? 'Inactive' : 'Inactive'}</span>
-                        <button
+                        <span className="text-sm">{isActive ? 'Active' : 'Inactive'}</span>
+                        <div
                             onClick={() => handleToggleStatus(item.id)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.isActive ? 'bg-green-500' : 'bg-gray-300'
+                            className={`cursor-pointer relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-300'
                                 }`}
                         >
                             <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.isActive ? 'translate-x-6' : 'translate-x-1'
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'
                                     }`}
                             />
-                        </button>
-                        <span className="text-sm">{item.isActive ? 'Active' : 'Inactive'}</span>
+                        </div>
                     </div>
                 );
             default:
@@ -226,13 +210,14 @@ const ProjectTags = () => {
     return (
         <div className="p-6">
             <EnhancedTable
-                data={tags}
+                data={projectTags}
                 columns={columns}
                 renderActions={renderActions}
                 renderCell={renderCell}
                 leftActions={leftActions}
                 pagination={true}
                 pageSize={10}
+                loading={loading}
             />
 
             {/* Dialog Modal */}
@@ -266,6 +251,11 @@ const ProjectTags = () => {
                                     placeholder="Tag Name"
                                     className="w-full px-4 py-3 border-2 border-gray-300 rounded focus:outline-none focus:border-blue-500 placeholder-gray-400"
                                     autoFocus
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleSubmit();
+                                        }
+                                    }}
                                 />
                             </div>
 
@@ -294,8 +284,8 @@ const ProjectTags = () => {
                                                         setShowTagTypeDropdown(false);
                                                     }}
                                                     className={`w-full text-left px-4 py-3 border-b last:border-b-0 ${selectedTagType === type.name
-                                                            ? 'bg-red-600 text-white'
-                                                            : 'hover:bg-gray-100'
+                                                        ? 'bg-red-600 text-white'
+                                                        : 'hover:bg-gray-100'
                                                         }`}
                                                 >
                                                     {type.name}

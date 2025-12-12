@@ -1,10 +1,14 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
-import { Edit, Plus, X, ChevronDown } from "lucide-react";
-import { forwardRef, useState } from "react";
+import { Edit, Plus, X, ChevronDown, Trash } from "lucide-react";
+import { forwardRef, useEffect, useState } from "react";
 import { Dialog, DialogContent, Slide } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { fetchProjectTeams, createProjectTeam, updateProjectTeam, deleteProjectTeam } from "@/store/slices/projectTeamsSlice";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -15,21 +19,21 @@ const Transition = forwardRef(function Transition(
 
 const columns: ColumnConfig[] = [
     {
-        key: 'title',
+        key: 'title', // mapped from item.name or item.title in logic
         label: 'Team Name',
         sortable: true,
         draggable: true,
         defaultVisible: true,
     },
     {
-        key: 'lead',
+        key: 'lead_name',
         label: 'Team Lead',
         sortable: true,
         draggable: true,
         defaultVisible: true,
     },
     {
-        key: 'members',
+        key: 'members_names',
         label: 'Team Members (TL+Members)',
         sortable: true,
         draggable: true,
@@ -37,23 +41,17 @@ const columns: ColumnConfig[] = [
     },
 ]
 
-const teamLeadsOptions = [
-    { id: 1, name: 'Alice Johnson' },
-    { id: 2, name: 'Bob Smith' },
-    { id: 3, name: 'Charlie Davis' },
-    { id: 4, name: 'Diana Wilson' },
-];
-
-const teamMembersOptions = [
-    { id: 1, name: 'Alice Johnson' },
-    { id: 2, name: 'Bob Smith' },
-    { id: 3, name: 'Charlie Davis' },
-    { id: 4, name: 'Diana Wilson' },
-    { id: 5, name: 'Eve Martinez' },
-    { id: 6, name: 'Frank Garcia' },
-];
-
 const ProjectTeams = () => {
+    const dispatch = useDispatch<AppDispatch>();
+    const { teams, loading } = useSelector((state: RootState) => state.projectTeams);
+    const { users: fmUsers } = useSelector((state: RootState) => {
+        // Safe access for createApiSlice structure (data.users) or standard slice (users directly)
+        const sliceData = (state.fmUsers as any);
+        return { users: sliceData.data?.users || sliceData.users || [] };
+    });
+
+    console.log(teams)
+
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -62,14 +60,11 @@ const ProjectTeams = () => {
     const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
     const [showLeadDropdown, setShowLeadDropdown] = useState(false);
     const [showMembersDropdown, setShowMembersDropdown] = useState(false);
-    const [teams, setTeams] = useState([
-        {
-            id: 1,
-            title: "Project Team Alpha",
-            lead: "Alice Johnson",
-            members: "Alice Johnson, Bob Smith, Charlie Davis"
-        }
-    ]);
+
+    useEffect(() => {
+        dispatch(fetchProjectTeams());
+        dispatch(fetchFMUsers());
+    }, [dispatch]);
 
     const openAddDialog = () => {
         setIsEditMode(false);
@@ -82,9 +77,24 @@ const ProjectTeams = () => {
 
     const openEditDialog = (item: any) => {
         setIsEditMode(true);
-        setTeamName(item.title);
-        const lead = teamLeadsOptions.find(l => l.name === item.lead);
-        setSelectedLead(lead?.id || null);
+        setTeamName(item.name || item.title);
+        // Map response logic.
+        // If API returns team_lead_id, use that. If it returns nested object, map it.
+        // Given the payload requirement, the response likely has team_lead_id / user_ids or similar.
+        // Fallback to previous logic just in case.
+        const leadId = item.team_lead_id || item.lead_id || (item.lead && item.lead.id);
+        setSelectedLead(leadId);
+
+        let memberIds: number[] = [];
+        if (item.user_ids) {
+            memberIds = item.user_ids;
+        } else if (item.member_ids) {
+            memberIds = item.member_ids;
+        } else if (item.members && Array.isArray(item.members)) {
+            memberIds = item.members.map((m: any) => m.id);
+        }
+        setSelectedMembers(memberIds);
+
         setEditingId(item.id);
         setIsDialogOpen(true);
     };
@@ -99,7 +109,7 @@ const ProjectTeams = () => {
         setShowMembersDropdown(false);
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!teamName.trim()) {
             alert('Please enter team name');
             return;
@@ -113,29 +123,31 @@ const ProjectTeams = () => {
             return;
         }
 
-        const leadName = teamLeadsOptions.find(l => l.id === selectedLead)?.name || '';
-        const memberNames = selectedMembers
-            .map(id => teamMembersOptions.find(m => m.id === id)?.name)
-            .filter(Boolean)
-            .join(', ');
+        // Construct payload as requested
+        const payload = {
+            project_team: {
+                name: teamName,
+                team_lead_id: selectedLead,
+                user_ids: selectedMembers, // selectedMembers is already an array of IDs
+            },
+        };
 
         if (isEditMode && editingId) {
-            setTeams(teams.map(team =>
-                team.id === editingId
-                    ? { ...team, title: teamName, lead: leadName, members: memberNames }
-                    : team
-            ));
+            await dispatch(updateProjectTeam({ id: editingId, data: payload })).unwrap();
+            dispatch(fetchProjectTeams());
         } else {
-            const newTeam = {
-                id: Math.max(...teams.map(t => t.id), 0) + 1,
-                title: teamName,
-                lead: leadName,
-                members: memberNames,
-            };
-            setTeams([...teams, newTeam]);
+            await dispatch(createProjectTeam(payload)).unwrap();
+            dispatch(fetchProjectTeams());
         }
 
         closeDialog();
+    };
+
+    const handleDelete = async (id: number) => {
+        if (window.confirm('Are you sure you want to delete this team?')) {
+            await dispatch(deleteProjectTeam(id)).unwrap();
+            dispatch(fetchProjectTeams());
+        }
     };
 
     const toggleMemberSelection = (memberId: number) => {
@@ -157,13 +169,48 @@ const ProjectTeams = () => {
                 >
                     <Edit className="w-4 h-4" />
                 </Button>
-
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleDelete(item.id)}
+                >
+                    <Trash className="w-4 h-4" />
+                </Button>
             </div>
         )
     };
 
     const renderCell = (item: any, columnKey: string) => {
         switch (columnKey) {
+            case 'lead_name':
+                if (item.team_lead?.name) return item.team_lead.name;
+                return 'N/A';
+            // case 'members_names':
+            //     if (Array.isArray(item.project_team_members)) {
+            //         const names = item.project_team_members.map((m: any) => m.user.name).filter(Boolean);
+            //         if (names.length > 0) return names.join(', ');
+            //     }
+            //     return '-';
+            case 'members_names':
+                if (Array.isArray(item.project_team_members)) {
+                    const names = item.project_team_members
+                        .map((m: any) => m.user.name)
+                        .filter(Boolean);
+
+                    if (names.length === 0) return "-";
+
+                    const limit = 2; // change limit if needed
+
+                    if (names.length > limit) {
+                        return `${names.slice(0, limit).join(", ")}…`;
+                    }
+
+                    return names.join(", ");
+                }
+                return "-";
+            case 'title':
+                return item.name || item.title;
             default:
                 return item[columnKey] || "-";
         }
@@ -191,6 +238,7 @@ const ProjectTeams = () => {
                 leftActions={leftActions}
                 pagination={true}
                 pageSize={10}
+                loading={loading}
             />
 
             {/* Dialog Modal */}
@@ -225,7 +273,7 @@ const ProjectTeams = () => {
                                     type="text"
                                     value={teamName}
                                     onChange={(e) => setTeamName(e.target.value)}
-                                    placeholder="Enter Matrix Title"
+                                    placeholder="Enter Team Name"
                                     className="w-full px-4 py-1.5 border-2 border-gray-300 rounded focus:outline-none placeholder-gray-400 text-base"
                                 />
                             </div>
@@ -242,23 +290,23 @@ const ProjectTeams = () => {
                                     >
                                         <span className={selectedLead ? 'text-base' : 'text-gray-400'}>
                                             {selectedLead
-                                                ? teamLeadsOptions.find(l => l.id === selectedLead)?.name
+                                                ? fmUsers.find((user: any) => user.id === selectedLead)?.full_name
                                                 : 'Select team Lead'}
                                         </span>
                                         <ChevronDown size={20} className="text-gray-400" />
                                     </button>
                                     {showLeadDropdown && (
-                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded shadow-lg z-10">
-                                            {teamLeadsOptions.map(lead => (
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded shadow-lg z-10 max-h-60 overflow-y-auto">
+                                            {fmUsers && fmUsers.map((user: any) => (
                                                 <button
-                                                    key={lead.id}
+                                                    key={user.id}
                                                     onClick={() => {
-                                                        setSelectedLead(lead.id);
+                                                        setSelectedLead(user.id);
                                                         setShowLeadDropdown(false);
                                                     }}
                                                     className="w-full text-left px-4 py-3 hover:bg-gray-100 border-b last:border-b-0"
                                                 >
-                                                    {lead.name}
+                                                    {user.full_name}
                                                 </button>
                                             ))}
                                         </div>
@@ -285,18 +333,18 @@ const ProjectTeams = () => {
                                     </button>
                                     {showMembersDropdown && (
                                         <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded shadow-lg z-10 max-h-64 overflow-y-auto">
-                                            {teamMembersOptions.map(member => (
+                                            {fmUsers && fmUsers.map((user: any) => (
                                                 <label
-                                                    key={member.id}
+                                                    key={user.id}
                                                     className="flex items-center px-4 py-3 hover:bg-gray-100 border-b last:border-b-0 cursor-pointer"
                                                 >
                                                     <input
                                                         type="checkbox"
-                                                        checked={selectedMembers.includes(member.id)}
-                                                        onChange={() => toggleMemberSelection(member.id)}
+                                                        checked={selectedMembers.includes(user.id)}
+                                                        onChange={() => toggleMemberSelection(user.id)}
                                                         className="w-4 h-4 rounded border-gray-300 cursor-pointer mr-3"
                                                     />
-                                                    <span>{member.name}</span>
+                                                    <span>{user.full_name}</span>
                                                 </label>
                                             ))}
                                         </div>

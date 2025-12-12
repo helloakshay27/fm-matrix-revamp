@@ -415,7 +415,7 @@ const mapDisplayToApiStatus = (displayStatus: string): string => {
 
 const OpportunityDetailsPage = () => {
     const token = localStorage.getItem('token');
-    const { opportunityId: id } = useParams();
+    const { id } = useParams();
     const navigate = useNavigate();
 
     const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
