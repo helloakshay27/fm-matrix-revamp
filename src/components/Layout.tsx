@@ -36,15 +36,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   /**
    * EMPLOYEE VIEW DETECTION
-   * 
+   *
    * Determine if user is in Employee View based on:
    * 1. Route pattern: /employee/* routes trigger employee layout
    * 2. localStorage fallback: userType === "pms_occupant"
-   * 
+   *
    * Employee routes: /employee/portal, /employee/dashboard, etc.
    * Admin routes: /admin/*, / (root), and all other routes
    */
-  const isEmployeeRoute = location.pathname.startsWith('/employee');
+  const isEmployeeRoute = location.pathname.startsWith("/employee");
   const userType = localStorage.getItem("userType");
   const isEmployeeUser = isEmployeeRoute || userType === "pms_occupant";
 
@@ -66,7 +66,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Check if non-employee user needs to select project/site
   const hostname = window.location.hostname;
-  const isViSite = hostname.includes("vi-web.gophygital.work") || hostname.includes("localhost:5174");
+  const isViSite =
+    hostname.includes("vi-web.gophygital.work") ||
+    hostname.includes("localhost:5174");
 
   // Removed project selection modal logic - now handled by view selection
 
@@ -74,7 +76,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Get current domain for backward compatibility
   const isOmanSite = hostname.includes("oig.gophygital.work");
 
-  const isLockatedSite = hostname.includes("lockated.gophygital.work") ||
+  const isLockatedSite =
+    hostname.includes("lockated.gophygital.work") ||
     hostname.includes("localhost:5174");
 
   // Get layout configuration based on company ID
@@ -84,7 +87,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       : null
   );
 
-    const isLocalhost = hostname.includes('localhost') || hostname.includes('lockated.gophygital.work');
+  const isLocalhost =
+    hostname.includes("localhost") ||
+    hostname.includes("lockated.gophygital.work");
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -270,14 +275,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       />
 
       {/* Conditional Header - Use EmployeeHeader for employee users */}
-      {isEmployeeUser ? <EmployeeHeader /> : <Header />}
+      {isEmployeeUser && isLocalhost ? <EmployeeHeader /> : <Header />}
 
       {renderSidebar()}
       {renderDynamicHeader()}
 
       <main
-        className={`${isSidebarCollapsed ? "ml-16" : "ml-64"
-          } ${isEmployeeUser ? "pt-16" : "pt-28"} transition-all duration-300`}
+        className={`${
+          isSidebarCollapsed ? "ml-16" : "ml-64"
+        } ${isEmployeeUser ? "pt-16" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>
