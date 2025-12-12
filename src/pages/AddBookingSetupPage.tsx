@@ -555,31 +555,15 @@ export const AddBookingSetupPage = () => {
         );
       });
 
-      // Generic Tags (Amenities)
-      const selectedAmenities = Object.entries(formData.amenities)
+      // Facility Setup Accessories
+      const selectedAccessories = Object.entries(formData.amenities)
         .filter(([_, isSelected]) => isSelected)
-        .map(([inventoryId]) => {
-          const inventory = inventories.find(inv => inv.id === parseInt(inventoryId));
-          return inventory ? inventory.name : null;
-        })
-        .filter(name => name !== null);
+        .map(([inventoryId]) => parseInt(inventoryId));
 
-      selectedAmenities.forEach((name, index) => {
+      selectedAccessories.forEach((inventoryId, index) => {
         formDataToSend.append(
-          `facility_setup[generic_tags_attributes][${index}][tag_type]`,
-          "amenity_things"
-        );
-        formDataToSend.append(
-          `facility_setup[generic_tags_attributes][${index}][category_name]`,
-          name
-        );
-        formDataToSend.append(
-          `facility_setup[generic_tags_attributes][${index}][_destroy]`,
-          "0"
-        );
-        formDataToSend.append(
-          `facility_setup[generic_tags_attributes][${index}][selected]`,
-          "1"
+          `facility_setup[facility_setup_accessories_attributes][${index}][pms_inventory_id]`,
+          inventoryId.toString()
         );
       });
 
