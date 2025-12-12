@@ -12,10 +12,21 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
+
+/* Hide scrollbar while maintaining scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
 .fc .fc-list-sticky .fc-list-day > * {
-    position: sticky;
-    top: 0px;
-    z-index: 1;
+  position: sticky;
+  top: 0px;
+  z-index: 1;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -24,14 +35,14 @@
 }
 
 .fc .fc-more-popover .fc-popover-body {
-    min-width: 220px;
-    padding: 10px;
-    height: 400px;
-    overflow-y: auto;
+  min-width: 220px;
+  padding: 10px;
+  height: 400px;
+  overflow-y: auto;
 }
 
-
-.tracking-tight ,  .text-lg {
+.tracking-tight,
+.text-lg {
   color: #000000 !important;
   font-weight: 600;
   leading-trim: NONE;
@@ -41,7 +52,7 @@
   color: #000000 !important;
 }
 
-.bg-card ,
+.bg-card,
 .cursor-grab svg {
   color: #000000 !important;
 }
@@ -397,7 +408,10 @@ body {
   flex-direction: column;
 
   /* Typography base */
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   color: #1a1a1a;
 
   /* Positioning */
@@ -759,7 +773,12 @@ body {
 
 /* FullCalendar Custom Styles */
 .fc {
-  font-family: "Inter", "Work Sans", system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    "Work Sans",
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 .fc-theme-standard .fc-scrollgrid {
@@ -1257,4 +1276,168 @@ td a {
 
 .hover\:bg-primary\/80:hover {
   color: white !important;
+}
+
+/* ===========================================
+   EMPLOYEE HEADER ENHANCEMENTS
+   =========================================== */
+
+/* Employee Header - Ensure consistent spacing and alignment */
+.employee-header-container {
+  max-width: 1920px;
+  margin: 0 auto;
+}
+
+/* Module navigation scrollbar styling */
+.employee-modules-container {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.employee-modules-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth scroll behavior for module navigation */
+.employee-modules-container {
+  scroll-behavior: smooth;
+}
+
+/* Responsive logo sizing */
+@media (max-width: 640px) {
+  .employee-header-logo {
+    max-width: 80px;
+    height: auto;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .employee-header-logo {
+    max-width: 100px;
+    height: auto;
+  }
+}
+
+/* Dropdown menu improvements for employee header */
+.employee-dropdown-menu {
+  min-width: 240px;
+  max-width: 280px;
+}
+
+/* User name truncation for small screens */
+.employee-user-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 1280px) {
+  .employee-user-name {
+    max-width: 150px;
+  }
+}
+
+/* Module button hover effects */
+.employee-module-btn:hover {
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+.employee-module-btn:active {
+  transform: translateY(0);
+}
+
+/* Notification badge pulse animation */
+@keyframes pulse-notification {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.notification-badge {
+  animation: pulse-notification 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ===========================================
+   MODULE TOOLTIP ENHANCEMENTS
+   =========================================== */
+
+/* Tooltip styling for module buttons */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* Module button smooth transitions */
+.employee-header-container button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Module button hover lift effect */
+.employee-header-container button:hover {
+  transform: translateY(-1px);
+}
+
+.employee-header-container button:active {
+  transform: translateY(0);
+}
+
+/* Tooltip fade-in animation */
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Truncated text ellipsis for module names */
+.module-name-truncated {
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  .module-name-truncated {
+    max-width: 100px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .module-name-truncated {
+    max-width: 120px;
+  }
+}
+
+/* Improve tooltip readability */
+[role="tooltip"] {
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(8px);
+}
+
+/* Active module indicator */
+.module-active-indicator {
+  position: relative;
+}
+
+.module-active-indicator::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #c72030;
 }

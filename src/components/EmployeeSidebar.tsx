@@ -106,7 +106,7 @@ const employeeNavigationByModule: Record<string, any> = {
     },
     "My Tickets": {
       icon: Ticket,
-      href: "/maintenance/ticket",
+      href: "/tickets",
       items: [],
     },
     Tasks: {
@@ -150,7 +150,7 @@ const employeeNavigationByModule: Record<string, any> = {
     },
     "Visitor Management": {
       icon: Users,
-      href: "/security/visitor",
+      href: "/visitors",
       items: [],
     },
     "Visitor Setup": {
@@ -167,6 +167,110 @@ const employeeNavigationByModule: Record<string, any> = {
         },
         { name: "Icons", href: "/settings/visitor-management/icons" },
       ],
+    },
+  },
+  Booking: {
+    Dashboard: {
+      icon: Home,
+      href: "/",
+      items: [],
+    },
+    "Booking List": {
+      icon: Calendar,
+      href: "/bookings",
+      items: [],
+    },
+    "My Bookings": {
+      icon: CheckSquare,
+      href: "/bookings",
+      items: [],
+    },
+  },
+  "Meeting Room": {
+    Dashboard: {
+      icon: Home,
+      href: "/",
+      items: [],
+    },
+    "Space Bookings": {
+      icon: Calendar,
+      href: "/vas/space-management/bookings",
+      items: [],
+    },
+    "Seat Requests": {
+      icon: UserPlus,
+      href: "/vas/space-management/seat-requests",
+      items: [],
+    },
+  },
+  "F&B": {
+    Dashboard: {
+      icon: Home,
+      href: "/",
+      items: [],
+    },
+    "F&B Services": {
+      icon: Target,
+      href: "/vas/fnb",
+      items: [],
+    },
+  },
+  Documents: {
+    Dashboard: {
+      icon: Home,
+      href: "/",
+      items: [],
+    },
+    "Communication Templates": {
+      icon: FileText,
+      href: "/master/communication-template",
+      items: [],
+    },
+  },
+  "ID Card": {
+    Dashboard: {
+      icon: Home,
+      href: "/",
+      items: [],
+    },
+    "Occupant Users": {
+      icon: Users,
+      href: "/master/user/occupant-users",
+      items: [],
+    },
+    "FM Users": {
+      icon: UserCheck,
+      href: "/master/user/fm-users",
+      items: [],
+    },
+  },
+  "Notes ": {
+    Dashboard: {
+      icon: Home,
+      href: "/",
+      items: [],
+    },
+    Channels: {
+      icon: MessageSquare,
+      href: "/vas/channels",
+      items: [],
+    },
+    Tasks: {
+      icon: ListChecks,
+      href: "/vas/channels/tasks",
+      items: [],
+    },
+  },
+  "Ask AI": {
+    Dashboard: {
+      icon: Home,
+      href: "/dashboard",
+      items: [],
+    },
+    "AI Dashboard": {
+      icon: Target,
+      href: "/dashboard",
+      items: [],
     },
   },
 };
@@ -224,9 +328,8 @@ export const EmployeeSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-[#f6f4ee] border-r border-[#D5DbDB] transition-all duration-300 z-40 overflow-y-auto ${
-        isSidebarCollapsed ? "w-16" : "w-64"
-      }`}
+      className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-[#f6f4ee] border-r border-[#D5DbDB] transition-all duration-300 z-40 overflow-y-auto ${isSidebarCollapsed ? "w-16" : "w-64"
+        }`}
     >
       {/* Toggle Button */}
       <button
@@ -270,11 +373,10 @@ export const EmployeeSidebar: React.FC = () => {
                   <button
                     key={key}
                     onClick={() => handleNavigation(sectionHref)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative ${
-                      isActive(sectionHref)
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative ${isActive(sectionHref)
                         ? "bg-[#DBC2A9] text-[#1a1a1a]"
                         : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
-                    }`}
+                      }`}
                     title={isSidebarCollapsed ? key : ""}
                   >
                     {isActive(sectionHref) && (
@@ -293,9 +395,8 @@ export const EmployeeSidebar: React.FC = () => {
                 <div key={key} className="space-y-1">
                   <button
                     onClick={() => toggleSection(key)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors relative ${
-                      isSectionOpen ? "bg-[#DBC2A9]" : "hover:bg-[#DBC2A9]"
-                    } text-[#1a1a1a]`}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-colors relative ${isSectionOpen ? "bg-[#DBC2A9]" : "hover:bg-[#DBC2A9]"
+                      } text-[#1a1a1a]`}
                     title={isSidebarCollapsed ? key : ""}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
@@ -305,9 +406,8 @@ export const EmployeeSidebar: React.FC = () => {
                           {key}
                         </span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform ${
-                            isSectionOpen ? "transform rotate-180" : ""
-                          }`}
+                          className={`w-4 h-4 transition-transform ${isSectionOpen ? "transform rotate-180" : ""
+                            }`}
                         />
                       </>
                     )}
@@ -320,11 +420,10 @@ export const EmployeeSidebar: React.FC = () => {
                         <button
                           key={item.name}
                           onClick={() => handleNavigation(item.href)}
-                          className={`w-full text-left px-3 py-2 text-sm rounded-lg font-medium transition-colors relative ${
-                            isActive(item.href)
+                          className={`w-full text-left px-3 py-2 text-sm rounded-lg font-medium transition-colors relative ${isActive(item.href)
                               ? "bg-[#DBC2A9] text-[#1a1a1a]"
                               : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
-                          }`}
+                            }`}
                         >
                           {isActive(item.href) && (
                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -342,18 +441,7 @@ export const EmployeeSidebar: React.FC = () => {
       </div>
 
       {/* Module Badge */}
-      {!isSidebarCollapsed && (
-        <div className="absolute bottom-4 left-0 right-0 px-4">
-          <div className="bg-[#C72030] bg-opacity-10 border border-[#C72030] border-opacity-30 rounded-lg p-3 text-center">
-            <p className="text-xs font-medium text-[#C72030]">
-              {currentSection || "Employee Portal"}
-            </p>
-            <p className="text-xs text-[#C72030] opacity-80 mt-1">
-              Limited Access
-            </p>
-          </div>
-        </div>
-      )}
+
     </aside>
   );
 };
