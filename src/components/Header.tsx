@@ -257,9 +257,9 @@ export const Header = () => {
    * - Reload page
    * - Layout.tsx detects this and renders EmployeeHeader + EmployeeSidebar
    */
-        const userType = localStorage.getItem("userType");
+  const userType = localStorage.getItem("userType");
 
-         const tempType = localStorage.getItem("tempType");
+  const tempType = localStorage.getItem("tempType");
 
   const canSwitchToEmployee = userType === "pms_organization_admin";
 
@@ -617,7 +617,7 @@ export const Header = () => {
                         // Set userType to trigger employee layout
                         localStorage.setItem("userType", "pms_occupant");
                         localStorage.setItem("tempType", "pms_organization_admin");
-                        navigate("/employee/dashboard");
+                        navigate("/vas/projects");
                       }}
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-green-50 hover:bg-green-100 text-green-700 transition-colors"
                     >
@@ -627,7 +627,7 @@ export const Header = () => {
                   </div>
                 </>
               )}
-               {tempSwitchToEmployee && isLocalhost && (
+              {tempSwitchToEmployee && isLocalhost && (
                 <>
                   <DropdownMenuSeparator />
                   <div className="px-2 py-2">
@@ -637,7 +637,7 @@ export const Header = () => {
                         // Set userType to trigger employee layout
                         localStorage.setItem("userType", "pms_occupant");
                         localStorage.setItem("tempType", "pms_organization_admin");
-                        navigate("/employee/dashboard");
+                        navigate("/vas/projects");
                       }}
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-green-50 hover:bg-green-100 text-green-700 transition-colors"
                     >

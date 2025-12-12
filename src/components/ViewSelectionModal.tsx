@@ -20,7 +20,7 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
     onComplete,
 }) => {
     const [selectedView, setSelectedView] = useState<string | null>(null);
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
     const handleViewSelection = (viewType: string) => {
         // Set localStorage based on selected view
@@ -32,7 +32,7 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
             localStorage.setItem("userType", "pms_occupant");
             localStorage.setItem("tempType", "pms_organization_admin"); // Clear selected company for employee view
             localStorage.setItem("selectedView", "employee");
-            navigate("/employee/dashboard");
+            navigate("/vas/projects");
         }
 
         // Complete the selection and reload to apply changes
