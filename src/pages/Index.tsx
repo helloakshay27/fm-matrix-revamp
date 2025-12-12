@@ -31,7 +31,7 @@ const Index = () => {
       if (userType === "pms_organization_admin") {
         navigate("/admin/dashboard", { replace: true });
       } else if (userType === "pms_occupant") {
-        navigate("/employee/dashboard", { replace: true });
+        navigate("/vas/projects", { replace: true });
       }
     }
 

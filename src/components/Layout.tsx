@@ -46,7 +46,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
    * 1. Route pattern: /employee/* routes trigger employee layout
    * 2. localStorage fallback: userType === "pms_occupant"
    *
-   * Employee routes: /employee/portal, /employee/dashboard, etc.
+   * Employee routes: /employee/portal, /vas/projects, etc.
    * Admin routes: /admin/*, / (root), and all other routes
    */
   const isEmployeeRoute = location.pathname.startsWith("/employee");
@@ -303,7 +303,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             : isSidebarCollapsed
               ? "ml-16"
               : "ml-64"
-        } ${isEmployeeUser ? "pt-16" : "pt-28"} transition-all duration-300`}
+          } ${isEmployeeUser ? "pt-16" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>
