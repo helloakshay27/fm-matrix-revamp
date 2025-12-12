@@ -15,6 +15,7 @@ import {
   MessagesSquare,
   ChartArea,
   ChartAreaIcon,
+  Shield,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -578,92 +579,102 @@ export const Header = () => {
                   .toUpperCase()}
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 bg-white border border-[#D5DbDB] shadow-lg p-2">
-              <div className="px-2 py-2 mb-2 border-b border-gray-100">
-                <p className="font-medium text-sm">
+            <DropdownMenuContent className="w-72 bg-white border border-[#D5DbDB] shadow-lg p-0">
+              {/* User Info Header */}
+              <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
-                    ? `${viAccount.firstname || ""} ${viAccount.lastname || ""
-                      }`.trim() || "User"
+                    ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() || "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
-                <div className="flex items-center text-gray-600 text-xs mt-1">
+                <div className="flex items-center text-gray-600 text-xs mt-0.5">
                   <Mail className="w-3 h-3 mr-1" />
                   <span>
-                    {(isViSite && viAccount
-                      ? viAccount.email || ""
-                      : user.email) || ""}
+                    {(isViSite && viAccount ? viAccount.email || "" : user.email) || ""}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded inline-block">
-                    {(isViSite && viAccount
-                      ? viAccount.role_name || ""
-                      : userRoleName || user?.lock_role?.name) || "No Role"}
-                  </div>
-                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                    Admin View
+
+                {/* User Type & Role Pills */}
+                <div className="flex items-center gap-2 mt-3">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-blue-50 text-blue-700 border-blue-200 font-medium"
+                  >
+                    <Shield className="w-3 h-3 mr-1" />
+                    {userRoleName}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-purple-50 text-purple-700 border-purple-200 font-medium"
+                  >
+                    <User className="w-3 h-3 mr-1" />
+                    {tempSwitchToAdmin ? "Admin Access" : "Standard User"}
                   </Badge>
                 </div>
               </div>
 
               {/* View Switcher - Only shown for admin users (pms_organization_admin) */}
-              {canSwitchToEmployee && isLocalhost && (
-                <>
-                  <DropdownMenuSeparator />
-                  <div className="px-2 py-2">
-                    <p className="text-xs text-gray-500 mb-2">Switch View</p>
-                    <button
-                      onClick={() => {
-                        // Set userType to trigger employee layout
-                        localStorage.setItem("userType", "pms_occupant");
-                        localStorage.setItem("tempType", "pms_organization_admin");
-                        navigate("/vas/projects");
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-green-50 hover:bg-green-100 text-green-700 transition-colors"
-                    >
+              {(canSwitchToEmployee || tempSwitchToEmployee) && isLocalhost && (
+                <div className="px-3 py-3 bg-gray-50 border-b border-gray-200">
+                  <p className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">
+                    Switch View
+                  </p>
+                  <button
+                    onClick={() => {
+                      localStorage.setItem("userType", "pms_occupant");
+                      localStorage.setItem("selectedView", "employee");
+                      localStorage.setItem("tempType", "pms_organization_admin");
+                      window.location.href = "/vas/projects";
+                    }}
+                    className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm bg-white hover:bg-[#C72030] text-gray-700 hover:text-white transition-all duration-200 border border-gray-200 hover:border-[#C72030] group shadow-sm"
+                  >
+                    <div className="flex items-center gap-2">
                       <User className="w-4 h-4" />
-                      <span>Switch to Employee View</span>
-                    </button>
-                  </div>
-                </>
-              )}
-              {tempSwitchToEmployee && isLocalhost && (
-                <>
-                  <DropdownMenuSeparator />
-                  <div className="px-2 py-2">
-                    <p className="text-xs text-gray-500 mb-2">Switch View</p>
-                    <button
-                      onClick={() => {
-                        // Set userType to trigger employee layout
-                        localStorage.setItem("userType", "pms_occupant");
-                        localStorage.setItem("tempType", "pms_organization_admin");
-                        navigate("/vas/projects");
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm bg-green-50 hover:bg-green-100 text-green-700 transition-colors"
-                    >
-                      <User className="w-4 h-4" />
-                      <span>Switch to Employee View</span>
-                    </button>
-                  </div>
-                </>
+                      <span className="font-medium">Employee View</span>
+                    </div>
+                    <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                  <p className="text-xs text-gray-500 mt-2 px-1">
+                    Access simplified employee interface
+                  </p>
+                </div>
               )}
 
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  navigate("/login");
+              {/* Menu Items */}
+              <div className="py-1">
+                <DropdownMenuItem
+                  onClick={() => navigate("/profile")}
+                  className="mx-2 my-1 rounded-md"
+                >
+                  <User className="w-4 h-4 mr-2 text-gray-500" />
+                  <span className="font-medium">My Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => navigate("/settings")}
+                  className="mx-2 my-1 rounded-md"
+                >
+                  <Settings className="w-4 h-4 mr-2 text-gray-500" />
+                  <span className="font-medium">Settings</span>
+                </DropdownMenuItem>
+              </div>
 
-                  permissionService.clearUserData();
-                  clearAuth();
+              <DropdownMenuSeparator className="my-1" />
 
-                  window.location.reload();
-                  // Clear stored user data from permissionService
-                }}
-                className="flex items-center gap-2 text-red-600 focus:text-red-700 focus:bg-red-50"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </DropdownMenuItem>
+              {/* Logout Button */}
+              <div className="p-2">
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigate("/login");
+                    permissionService.clearUserData();
+                    clearAuth();
+                    window.location.reload();
+                  }}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md font-medium"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

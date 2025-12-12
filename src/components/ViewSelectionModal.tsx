@@ -19,7 +19,7 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
     isOpen,
     onComplete,
 }) => {
-    const [selectedView, setSelectedView] = useState<string | null>(null);
+    const [selectedView, setSelectedView] = useState<string | null>("admin"); // Default to admin
     const navigate = useNavigate();
 
     const handleViewSelection = (viewType: string) => {
@@ -160,8 +160,8 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
                 </div>
 
                 {/* Info Footer */}
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-sm text-blue-800 text-center">
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-300">
+                    <p className="text-sm text-gray-700 text-center">
                         <strong>Note:</strong> You can switch between views anytime from the header menu
                     </p>
                 </div>
