@@ -82,7 +82,8 @@ const AllContent = () => {
 
     const logoElement = useMemo(() => {
         if (typeof window === 'undefined') {
-            return <DEFAULT_LOGO_CODE />;
+            return <OIG_LOGO_CODE />
+            //  <DEFAULT_LOGO_CODE />;
         }
 
         const hostname = window.location.hostname.toLowerCase();
@@ -95,7 +96,8 @@ const AllContent = () => {
             return <VI_LOGO_CODE />;
         }
 
-        return <DEFAULT_LOGO_CODE />;
+        return <OIG_LOGO_CODE />
+        //  <DEFAULT_LOGO_CODE />;
     }, []);
 
     // Separate effect to fetch helpdesk management snapshot
@@ -1873,7 +1875,7 @@ const AllContent = () => {
                                 {dateRangeLabel}
                             </p>
                         </div>
-                        
+
                     </div>
                     <div className="w-full flex justify-center items-center py-6 print:py-3 first-page-logo">
                         <img
@@ -1882,7 +1884,7 @@ const AllContent = () => {
                             className="h-8 print:h-6"
                         />
                     </div>
-                    
+
                 </div>
             </div>
             {/* Disclaimer Page */}
@@ -1981,9 +1983,9 @@ const AllContent = () => {
                                         <li>Site Performance: Customer Rating Overview</li>
                                     </>
                                 )}
-                                <li>Response TAT Performance by Site  
+                                <li>Response TAT Performance by Site
                                     {/* {periodUnit}ly Comparison */}
-                                    </li>
+                                </li>
                             </ul>
 
                             <h3 className="font-semibold mt-2">2- Asset Management</h3>
@@ -1999,8 +2001,8 @@ const AllContent = () => {
                             <h3 className="font-semibold mt-2">3- Checklist Management</h3>
                             <ul className="list-disc list-inside pl-6 print-small">
                                 <li>Checklist Progress Status – Site-wise </li>
-                                     {/* {periodUnit}ly */}
-                                     {/* Comparison</li> */}
+                                {/* {periodUnit}ly */}
+                                {/* Comparison</li> */}
                                 <li>Top 10 Overdue Checklists – Site-wise Contribution Comparison</li>
                             </ul>
 
@@ -2928,7 +2930,8 @@ const AllContent = () => {
 
                     {/* Title */}
                     <h1 className="text-3xl md:text-3xl font-bold text-center bg-[#F6F4EE] py-3 mb-2 print:text-xl print:py-2 print:mb-0 border-b border-dashed border-gray-300">
-                        TAT Performance by Site – {periodUnit}ly Comparison
+                        TAT Performance by Site
+                        {/* – {periodUnit}ly Comparison */}
                     </h1>
 
                     {/* Legend Row */}
@@ -3402,7 +3405,7 @@ const AllContent = () => {
 
 
             {/*  Active AMC Contracts + 90 Days Expiry (kept together) */}
-            <div className="print-page break-before-page print:w-[95%] print:m-auto print-keep-together">
+            <div className="print-page break-before-page print:w-[95%] print:m-auto">
                 {/* AMC Contract Summary - standardized section box */}
                 <div className={sectionBox}>
                     <h2 className="text-lg md:text-lg font-bold tracking-wide mb-4 border-b border-gray-300 pb-2 print:text-[14px] print:mb-2 print:pb-1">
@@ -3495,7 +3498,7 @@ const AllContent = () => {
                     </p>
                 </div>
                 <div className={sectionBox}>
-                    <div className="border border-gray-300 py-3 px-3 print:shadow-none break-inside-avoid print:break-inside-avoid">
+                    <div className="border border-gray-300 py-3 px-3 print:shadow-none">
                         <h2 className="font-bold text-lg md:text-lg tracking-wide mb-3 pb-2 border-b border-gray-300 print:text-[14px] print:mb-1 print:pb-1">
                             AMC Contract Summary – Expired
                         </h2>
@@ -3602,7 +3605,7 @@ const AllContent = () => {
                             {/* Table 1: Checklist Progress Status */}
                             <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
                                 <div className="p-4 text-lg md:text-lg font-bold border-b border-gray-300 print:p-2 print:text-[14px] ">
-                                    Checklist Progress Status – Site-Wise 
+                                    Checklist Progress Status – Site-Wise
                                     {/* {periodUnit}ly Comparison */}
                                 </div>
                                 <div className="print:flex-1">
