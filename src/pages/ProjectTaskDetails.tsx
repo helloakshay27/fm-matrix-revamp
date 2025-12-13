@@ -800,9 +800,11 @@ export interface Subtask {
   id?: string;
   subtask_title?: string;
   status?: string;
-  responsible_person?: string;
-  start_date?: string;
-  end_date?: string;
+  responsible_person?: {
+    name?: string;
+  };
+  expected_start_date?: string;
+  target_date?: string;
   duration?: string;
   priority?: string;
   tags?: string;
