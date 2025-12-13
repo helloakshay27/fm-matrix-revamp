@@ -115,13 +115,13 @@ export const EmployeeHeader: React.FC = () => {
         navigate("/vas/projects");
         break;
       case "Ticket":
-        navigate("/maintenance/ticket");
+        navigate("/maintenance/ticket/employee");
         break;
       case "MOM":
         navigate("/vas/mom");
         break;
       case "Visitors":
-        navigate("/security/visitor");
+        navigate("/security/visitor/employee");
         break;
       case "MOM":
         navigate("/settings/vas/mom/client-tag-setup");
