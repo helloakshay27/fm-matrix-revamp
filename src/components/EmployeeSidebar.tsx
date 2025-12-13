@@ -84,6 +84,11 @@ const employeeNavigationByModule: Record<string, any> = {
       href: "/vas/issues",
       items: [],
     },
+    Sprint: {
+      icon: AlertTriangle,
+      href: "/vas/sprint",
+      items: [],
+    },
     Channels: {
       icon: MessageSquare,
       href: "/vas/channels",
