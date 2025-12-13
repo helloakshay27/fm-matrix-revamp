@@ -129,9 +129,6 @@ export const EmployeeHeader: React.FC = () => {
       case "Booking":
         navigate("/bookings-overview");
         break;
-      case "Meeting Room":
-        navigate("/vas/space-management/bookings");
-        break;
       case "F&B":
         navigate("/vas/fnb");
         break;
