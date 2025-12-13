@@ -28,6 +28,8 @@ import {
   AlertTriangle,
   Target,
   CheckSquare,
+  CircleCheckBig,
+  FileCheck2Icon,
 } from "lucide-react";
 
 /**
@@ -82,12 +84,12 @@ const employeeNavigationByModule: Record<string, any> = {
       items: [],
     },
     Channels: {
-      icon: Target,
+      icon: MessageSquare,
       href: "/vas/channels",
       items: [],
     },
     "Minutes of Meeting": {
-      icon: Target,
+      icon: FileCheck2Icon,
       href: "/vas/mom",
       items: [],
     },
@@ -95,6 +97,11 @@ const employeeNavigationByModule: Record<string, any> = {
     "Opportunity Register": {
       icon: Target,
       href: "/vas/opportunity",
+      items: [],
+    },
+    "To Do": {
+      icon: CircleCheckBig,
+      href: "/vas/todo",
       items: [],
     },
   },

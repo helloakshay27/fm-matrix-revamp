@@ -2,7 +2,9 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { Edit, Plus, X, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "sonner";
 
 const columns: ColumnConfig[] = [
     {
@@ -29,43 +31,55 @@ const columns: ColumnConfig[] = [
 ]
 
 const ProjectIssueTypes = () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    const userId = JSON.parse(localStorage.getItem('user'))?.id || '';
+
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [typeName, setTypeName] = useState('');
     const [description, setDescription] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [issueTypes, setIssueTypes] = useState([
-        {
-            id: 1,
-            typeName: 'Critical',
-            createdOn: '04/07/2025',
-            description: 'SHOW STOPPER',
-        },
-        {
-            id: 2,
-            typeName: 'enhancement module',
-            createdOn: '01/07/2025',
-            description: 'Enhancement',
-        },
-        {
-            id: 3,
-            typeName: 'data correction',
-            createdOn: '01/07/2025',
-            description: 'Data Correction',
-        },
-        {
-            id: 4,
-            typeName: 'new requirement',
-            createdOn: '01/07/2025',
-            description: 'New Requirement',
-        },
-        {
-            id: 5,
-            typeName: 'bug',
-            createdOn: '01/07/2025',
-            description: 'Bug',
-        },
-    ]);
+    const [issueTypes, setIssueTypes] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Fetch issue types on component mount
+    useEffect(() => {
+        fetchIssueTypes();
+    }, []);
+
+    const fetchIssueTypes = async () => {
+        try {
+            setIsLoading(true);
+            const response = await axios.get(`https://${baseUrl}/issue_types.json`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const data = response.data || [];
+            const mappedData = data.map((item: any) => ({
+                id: item.id,
+                typeName: item.name,
+                createdOn: new Date(item.created_at).toLocaleDateString('en-US', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    year: 'numeric'
+                }),
+                description: item.description,
+            }));
+
+            setIssueTypes(mappedData);
+        } catch (error) {
+            console.error('Error fetching issue types:', error);
+            toast.error('Failed to fetch issue types');
+            setIssueTypes([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const openAddDialog = () => {
         setIsEditMode(false);
@@ -91,41 +105,108 @@ const ProjectIssueTypes = () => {
     };
 
     const handleSubmit = () => {
-        if (!typeName.trim()) {
-            alert('Please enter issue type name');
+        const trimmedType = typeName.trim();
+        const trimmedDescription = description.trim();
+
+        if (!trimmedType) {
+            toast.error('Please enter issue type name');
             return;
         }
-        if (!description.trim()) {
-            alert('Please enter description');
+        if (!trimmedDescription) {
+            toast.error('Please enter description');
             return;
         }
 
         if (isEditMode && editingId) {
-            setIssueTypes(issueTypes.map(issue =>
-                issue.id === editingId
-                    ? { ...issue, typeName, description }
-                    : issue
-            ));
+            updateIssueType(trimmedType, trimmedDescription);
         } else {
-            const newIssueType = {
-                id: Math.max(...issueTypes.map(i => i.id), 0) + 1,
-                typeName,
-                description,
-                createdOn: new Date().toLocaleDateString('en-US', {
-                    month: '2-digit',
-                    day: '2-digit',
-                    year: 'numeric'
-                }),
-            };
-            setIssueTypes([...issueTypes, newIssueType]);
+            createIssueType(trimmedType, trimmedDescription);
         }
+    };
 
-        closeDialog();
+    const createIssueType = async (trimmedType: string, trimmedDescription: string) => {
+        try {
+            setIsSubmitting(true);
+            const payload = {
+                issue_type: {
+                    name: trimmedType,
+                    description: trimmedDescription,
+                    created_by_id: userId,
+                }
+            };
+
+            const response = await axios.post(`https://${baseUrl}/issue_types.json`, payload, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.status === 201 || response.status === 200) {
+                toast.success('Issue type created successfully');
+                closeDialog();
+                fetchIssueTypes();
+            }
+        } catch (error) {
+            console.error('Error creating issue type:', error);
+            toast.error('Failed to create issue type');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const updateIssueType = async (trimmedType: string, trimmedDescription: string) => {
+        try {
+            setIsSubmitting(true);
+            const payload = {
+                issue_type: {
+                    name: trimmedType,
+                    description: trimmedDescription,
+                }
+            };
+
+            const response = await axios.put(`https://${baseUrl}/issue_types/${editingId}.json`, payload, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.status === 200) {
+                toast.success('Issue type updated successfully');
+                closeDialog();
+                fetchIssueTypes();
+            }
+        } catch (error) {
+            console.error('Error updating issue type:', error);
+            toast.error('Failed to update issue type');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this issue type?')) {
-            setIssueTypes(issueTypes.filter(issue => issue.id !== id));
+            deleteIssueType(id);
+        }
+    };
+
+    const deleteIssueType = async (id: number) => {
+        try {
+            const response = await axios.delete(`https://${baseUrl}/issue_types/${id}.json`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.status === 200) {
+                toast.success('Issue type deleted successfully');
+                fetchIssueTypes();
+            }
+        } catch (error) {
+            console.error('Error deleting issue type:', error);
+            toast.error('Failed to delete issue type');
         }
     };
 
