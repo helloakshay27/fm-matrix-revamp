@@ -153,7 +153,7 @@ const IssuesListPage = () => {
             >
                 <Eye className="w-4 h-4" />
             </Button>
-            <Button
+            {/* <Button
                 size="sm"
                 variant="ghost"
                 className="p-1"
@@ -161,8 +161,8 @@ const IssuesListPage = () => {
                 title="Edit Issue"
             >
                 <Edit className="w-4 h-4" />
-            </Button>
-            <Button
+            </Button> */}
+            {/* <Button
                 size="sm"
                 variant="ghost"
                 className="p-1"
@@ -170,7 +170,7 @@ const IssuesListPage = () => {
                 title="Delete Issue"
             >
                 <Trash2 className="w-4 h-4 text-red-600" />
-            </Button>
+            </Button> */}
         </div>
     );
 
