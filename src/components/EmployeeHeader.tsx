@@ -136,7 +136,7 @@ export const EmployeeHeader: React.FC = () => {
         navigate("/vas/fnb");
         break;
       case "Documents":
-        navigate("/master/communication-template");
+        navigate("/vas/documents");
         break;
       case "ID Card":
         navigate("/business-card?card=39F77D8CE774201F22C211CE0A28BB708A329227D493E9C1751E48C0200DFF5A5BF9DBD4D1925C490C75AA6A02F3ED88");

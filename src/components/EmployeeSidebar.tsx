@@ -64,11 +64,11 @@ import {
 // Module-based navigation structures for employees
 const employeeNavigationByModule: Record<string, any> = {
   "Project Task": {
-    Dashboard: {
-      icon: Home,
-      href: "/",
-      items: [],
-    },
+    // Dashboard: {
+    //   icon: Home,
+    //   href: "/",
+    //   items: [],
+    // },
     Projects: {
       icon: Briefcase,
       href: "/vas/projects",
