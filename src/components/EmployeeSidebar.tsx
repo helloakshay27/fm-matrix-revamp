@@ -30,6 +30,7 @@ import {
   CheckSquare,
   CircleCheckBig,
   FileCheck2Icon,
+  File,
 } from "lucide-react";
 
 /**
@@ -99,9 +100,16 @@ const employeeNavigationByModule: Record<string, any> = {
       href: "/vas/opportunity",
       items: [],
     },
+
     "To Do": {
       icon: CircleCheckBig,
       href: "/vas/todo",
+      items: [],
+    },
+
+    "Documents": {
+      icon: File,
+      href: "/vas/documents",
       items: [],
     },
   },

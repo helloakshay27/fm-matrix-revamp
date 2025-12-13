@@ -822,6 +822,7 @@ import AskAI from "./pages/AskAI";
 import MinutesOfMeeting from "./pages/MinutesOfMeeting";
 import AddMoMPage from "./pages/AddMoMPage";
 import Todo from "./pages/Todo";
+import ProjectDocuments from "./pages/ProjectDocuments";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2454,6 +2455,11 @@ function App() {
                   <Route
                     path="/vas/todo"
                     element={<Todo />}
+                  />
+
+                  <Route
+                    path="/vas/documents"
+                    element={<ProjectDocuments />}
                   />
 
                   <Route

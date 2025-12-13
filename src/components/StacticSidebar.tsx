@@ -1045,6 +1045,10 @@ const modulesByPackage = {
           href: "/vas/todo"
         },
         {
+          name: 'Documents',
+          href: "/vas/documents"
+        },
+        {
           name: 'Minutes of Meeting',
           href: "/vas/mom"
         },
