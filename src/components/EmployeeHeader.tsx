@@ -47,7 +47,7 @@ const employeeModules = [
   { name: "Visitors", icon: Users },
   { name: "MOM", icon: FileText },
   { name: "Booking", icon: Package },
-  { name: "Meeting Room", icon: Shield },
+  // { name: "Meeting Room", icon: Shield },
   { name: "F&B", icon: ChartArea },
   { name: "Documents", icon: ChartArea },
   { name: "ID Card", icon: ChartArea },
