@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { useEffect, useState, forwardRef } from 'react';
 import axios from 'axios';
 import { getFullUrl } from '@/config/apiConfig';
 import { toast } from 'sonner';
@@ -7,9 +6,13 @@ import { useAppDispatch } from '@/store/hooks';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import AddMilestoneForm from './AddMilestoneForm';
 import ProjectTaskCreateModal from './ProjectTaskCreateModal';
-import { FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import { FormControl, InputLabel, MenuItem, Select, TextField, Dialog, DialogTitle, DialogContent, Slide } from "@mui/material";
 import { createProject } from "@/store/slices/projectManagementSlice";
 import { Button } from "./ui/button";
+
+const Transition = forwardRef(function Transition(props: any, ref: any) {
+    return <Slide direction="left" ref={ref} {...props} />;
+});
 
 interface ConvertModalProps {
     isModalOpen: boolean;
@@ -31,7 +34,6 @@ const ConvertModal = ({
     prefillData,
     opportunityId,
 }: ConvertModalProps) => {
-    const convertModalRef = useRef<HTMLDivElement>(null);
     const [selectedType, setSelectedType] = useState('Project');
     const token = localStorage.getItem('token');
     const dispatch = useAppDispatch();
@@ -251,21 +253,33 @@ const ConvertModal = ({
     if (!isModalOpen) return null;
 
     return (
-        <div className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50 z-50">
-            <div
-                ref={convertModalRef}
-                className="bg-white py-6 rounded-lg shadow-lg w-[50%] relative h-full right-0 overflow-y-auto"
-            >
-                <h3 className="text-lg font-medium text-center">Convert Opportunity</h3>
-                <X
-                    className="absolute top-[26px] right-8 cursor-pointer hover:text-gray-600"
-                    onClick={closeModal}
-                />
+        <Dialog
+            open={isModalOpen}
+            onClose={closeModal}
+            TransitionComponent={Transition}
+            transitionDuration={{ enter: 500, exit: 300 }}
+            fullWidth
+            maxWidth="md"
+            PaperProps={{
+                sx: {
+                    position: 'fixed',
+                    right: 0,
+                    top: 0,
+                    height: '100%',
+                    width: '50%',
+                    borderRadius: 0,
+                    margin: 0,
+                    maxHeight: '100%',
+                }
+            }}
+        >
+            <DialogTitle sx={{ fontWeight: 600, fontSize: '16px', color: '#1B1B1B', textAlign: 'center', borderBottom: '2px solid #E95420', py: 2 }}>
+                Convert Opportunity
+            </DialogTitle>
 
-                <hr className="border border-[#E95420] my-4" />
-
+            <DialogContent sx={{ p: 3, overflowY: 'auto', maxHeight: 'calc(100% - 100px)' }}>
                 {/* Radio Buttons */}
-                <div className="px-6 mb-6">
+                <div className="mb-6">
                     <div className="flex items-center gap-5">
                         <label className="flex items-center gap-3 cursor-pointer">
                             <input
@@ -306,7 +320,7 @@ const ConvertModal = ({
                 </div>
 
                 {/* Forms based on selection */}
-                <div className="overflow-y-auto px-6 pb-6" style={{ maxHeight: 'calc(100% - 200px)' }}>
+                <div>
                     {selectedType === 'Project' && (
                         <form onSubmit={handleProjectSubmit} className="space-y-4">
                             <div className="mt-4 space-y-2">
@@ -542,8 +556,8 @@ const ConvertModal = ({
                         />
                     )}
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };
 

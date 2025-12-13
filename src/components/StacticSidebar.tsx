@@ -1023,10 +1023,10 @@ const modulesByPackage = {
           name: 'Tasks',
           href: "/vas/tasks"
         },
-        // {
-        //   name: 'Sprint',
-        //   href: "/vas/sprint"
-        // },
+        {
+          name: 'Sprint',
+          href: "/vas/sprint"
+        },
         {
           name: 'Issues',
           href: "/vas/issues"
@@ -1043,6 +1043,10 @@ const modulesByPackage = {
         {
           name: 'ToDo',
           href: "/vas/todo"
+        },
+        {
+          name: 'Documents',
+          href: "/vas/documents"
         },
         {
           name: 'Minutes of Meeting',
