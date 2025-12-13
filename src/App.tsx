@@ -823,6 +823,9 @@ import MinutesOfMeeting from "./pages/MinutesOfMeeting";
 import AddMoMPage from "./pages/AddMoMPage";
 import Todo from "./pages/Todo";
 import ProjectDocuments from "./pages/ProjectDocuments";
+import { TicketDashboardEmployee } from "./pages/TicketDashboardEmplooyee";
+import { AddTicketDashboardEmployee } from "./pages/AddTicketDashboardEmployee";
+import { VisitorsDashboardEmployee } from "./pages/VisitorsDashboardEmployee";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1621,13 +1624,22 @@ function App() {
                   />
 
                   {/* Ticket Routes */}
+                    <Route
+                    path="/maintenance/ticket/employee"
+                    element={<TicketDashboardEmployee />}
+                  />
                   <Route
                     path="/maintenance/ticket"
                     element={<TicketDashboard />}
                   />
+                 
                   <Route
                     path="/maintenance/ticket/add"
                     element={<AddTicketDashboard />}
+                  />
+                   <Route
+                    path="/maintenance/ticket/employee/add"
+                    element={<AddTicketDashboardEmployee />}
                   />
                   <Route
                     path="/maintenance/ticket/assign"
@@ -1843,6 +1855,14 @@ function App() {
                     path="/security/visitor"
                     element={<VisitorsDashboard />}
                   />
+
+                    <Route
+                    path="/security/visitor/employee"
+                    element={<VisitorsDashboardEmployee />}
+                  />
+
+
+
 
                   {/* Incident Routes */}
                   <Route
