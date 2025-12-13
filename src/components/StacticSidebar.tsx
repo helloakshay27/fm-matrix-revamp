@@ -1023,10 +1023,10 @@ const modulesByPackage = {
           name: 'Tasks',
           href: "/vas/tasks"
         },
-        // {
-        //   name: 'Sprint',
-        //   href: "/vas/sprint"
-        // },
+        {
+          name: 'Sprint',
+          href: "/vas/sprint"
+        },
         {
           name: 'Issues',
           href: "/vas/issues"
