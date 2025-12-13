@@ -66,7 +66,7 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
         };
     }, []);
     const RADIAN = Math.PI / 180;
-    const outerRadiusValue = isPrinting ? 225 : 150;
+    const outerRadiusValue = isPrinting ? 300 : 210;
     const innerRadiusValue = 0;
     const formatPercent = (p: number) => `${p.toFixed(2)}%`;
     const toggleSlice = React.useCallback((name: string) => {
@@ -134,7 +134,7 @@ const TATPieCard: React.FC<TATPieCardProps> = ({ title, achieved, breached, achi
             <h3 className="text-black font-semibold text-base sm:text-lg mb-1 print:mb-1">{title}</h3>
             <div className="bg-[#F6F4EE] rounded-sm px-6 sm:px-8 py-4 sm:py-5 print:px-5 print:py-3">
                 <div
-                    className="w-full h-[260px] sm:h-[320px] print:h-[320px] tat-pie-container"
+                    className="w-full h-[400px] sm:h-[450px] print:h-[320px] tat-pie-container"
                     style={{
                         overflow: 'visible',
                         transform: isPrinting ? 'scale(1.7)' : 'none',
@@ -312,7 +312,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ title = 'Weekly Report' }) 
             return <VI_LOGO_CODE />;
         }
 
-        return   <DEFAULT_LOGO_CODE />
+        return  <DEFAULT_LOGO_CODE />; 
         // <OIG_LOGO_CODE />;
         //  <DEFAULT_LOGO_CODE />;
     }, []);
