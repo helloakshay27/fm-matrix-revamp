@@ -130,7 +130,7 @@ export const EmployeeHeader: React.FC = () => {
         navigate("/bookings-overview");
         break;
       case "F&B":
-        navigate("/vas/fnb");
+        navigate("/employee/fnb");
         break;
       case "Documents":
         navigate("/vas/documents");

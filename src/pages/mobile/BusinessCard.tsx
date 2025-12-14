@@ -11,7 +11,7 @@ import {
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import viBusinessCardBg from "../../assets/VI-businesscard.png";
-import baseClient from "@/utils/withoutTokenBase";
+import { API_CONFIG } from "@/config/apiConfig";
 
 interface UserCardData {
   id: number;
@@ -60,9 +60,31 @@ export const BusinessCard: React.FC = () => {
           return;
         }
 
-        const response = await fetch(
-          `https://live-api.gophygital.work/pms/users/user_info.json?token=${card}`
-        );
+        // Get base URL from config
+        let baseUrl = API_CONFIG.BASE_URL;
+        const token = API_CONFIG.TOKEN;
+
+        // Ensure base URL has proper format
+        if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+          baseUrl = `https://${baseUrl}`;
+        }
+
+        // Remove trailing slash if present
+        baseUrl = baseUrl.replace(/\/$/, "");
+
+        // Build the API URL - using card as token in Authorization header
+        const apiUrl = `${baseUrl}/pms/users/user_info.json?is_token=true`;
+
+        console.log("Fetching user info from:", apiUrl);
+        console.log("Using token from card parameter:", card);
+
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
         if (!response.ok) {
           throw new Error("Failed to fetch user data");
@@ -70,7 +92,6 @@ export const BusinessCard: React.FC = () => {
 
         const data: ApiResponse = await response.json();
 
-        // const data: ApiResponse = response.data;
         console.log("Fetched user data:", data);
         // Map API response to UserCardData
         const mappedData: UserCardData = {
@@ -247,10 +268,7 @@ END:VCARD`;
                   </p>
                 )}
                 {userData.company && (
-                  <p
-                    className="text-sm mt-1"
-                    style={{ color: "#999" }}
-                  >
+                  <p className="text-sm mt-1" style={{ color: "#999" }}>
                     {userData.company}
                   </p>
                 )}
@@ -264,7 +282,7 @@ END:VCARD`;
                   className="flex items-center gap-4 p-4 rounded-xl transition-all hover:bg-gray-50 active:scale-[0.98]"
                   style={{
                     backgroundColor: "#F8F9FA",
-                    border: "1px solid #E5E7EB"
+                    border: "1px solid #E5E7EB",
                   }}
                 >
                   <div
@@ -274,7 +292,9 @@ END:VCARD`;
                     <Phone className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-500 mb-0.5">Phone</p>
+                    <p className="text-xs font-medium text-gray-500 mb-0.5">
+                      Phone
+                    </p>
                     <p className="text-sm font-semibold text-gray-900 truncate">
                       {userData.phone}
                     </p>
@@ -287,7 +307,7 @@ END:VCARD`;
                   className="flex items-center gap-4 p-4 rounded-xl transition-all hover:bg-gray-50 active:scale-[0.98]"
                   style={{
                     backgroundColor: "#F8F9FA",
-                    border: "1px solid #E5E7EB"
+                    border: "1px solid #E5E7EB",
                   }}
                 >
                   <div
@@ -297,7 +317,9 @@ END:VCARD`;
                     <Mail className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-500 mb-0.5">Email</p>
+                    <p className="text-xs font-medium text-gray-500 mb-0.5">
+                      Email
+                    </p>
                     <p className="text-sm font-semibold text-gray-900 truncate">
                       {userData.email}
                     </p>
@@ -313,7 +335,7 @@ END:VCARD`;
                     className="flex items-center gap-4 p-4 rounded-xl transition-all hover:bg-gray-50 active:scale-[0.98]"
                     style={{
                       backgroundColor: "#F8F9FA",
-                      border: "1px solid #E5E7EB"
+                      border: "1px solid #E5E7EB",
                     }}
                   >
                     <div
@@ -323,7 +345,9 @@ END:VCARD`;
                       <Globe className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-500 mb-0.5">Website</p>
+                      <p className="text-xs font-medium text-gray-500 mb-0.5">
+                        Website
+                      </p>
                       <p className="text-sm font-semibold text-gray-900 truncate">
                         {userData.website}
                       </p>
@@ -337,7 +361,7 @@ END:VCARD`;
                     className="flex items-start gap-4 p-4 rounded-xl"
                     style={{
                       backgroundColor: "#F8F9FA",
-                      border: "1px solid #E5E7EB"
+                      border: "1px solid #E5E7EB",
                     }}
                   >
                     <div
@@ -347,7 +371,9 @@ END:VCARD`;
                       <MapPin className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-500 mb-1">Location</p>
+                      <p className="text-xs font-medium text-gray-500 mb-1">
+                        Location
+                      </p>
                       <p className="text-sm font-semibold text-gray-900 leading-relaxed">
                         {userData.address}
                       </p>
@@ -362,8 +388,8 @@ END:VCARD`;
                   onClick={handleDownloadVCard}
                   className="w-full text-white font-semibold text-base py-4 px-6 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg"
                   style={{
-                    backgroundColor: '#E31E24',
-                    boxShadow: '0 4px 14px rgba(227, 30, 36, 0.4)',
+                    backgroundColor: "#E31E24",
+                    boxShadow: "0 4px 14px rgba(227, 30, 36, 0.4)",
                   }}
                 >
                   <UserIcon className="w-5 h-5" />
@@ -374,9 +400,9 @@ END:VCARD`;
                   onClick={handleShare}
                   className="w-full font-semibold text-base py-4 px-6 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                   style={{
-                    backgroundColor: '#F8F9FA',
+                    backgroundColor: "#F8F9FA",
                     border: "2px solid #E31E24",
-                    color: '#E31E24'
+                    color: "#E31E24",
                   }}
                 >
                   <Share2 className="w-5 h-5" />

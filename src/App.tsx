@@ -826,6 +826,13 @@ import ProjectDocuments from "./pages/ProjectDocuments";
 import { TicketDashboardEmployee } from "./pages/TicketDashboardEmplooyee";
 import { AddTicketDashboardEmployee } from "./pages/AddTicketDashboardEmployee";
 import { VisitorsDashboardEmployee } from "./pages/VisitorsDashboardEmployee";
+import EmployeeBookingList from "./pages/EmployeeBookingList";
+import { EmployeeAddBookingPage } from "./pages/EmployeeAddBookingPage";
+import { EmployeeFnb } from "./pages/EmployeeFnb";
+import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
+import { VisitorFormPageEmployee } from "./pages/VisitorFormPageEmployee";
+import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
+import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1183,7 +1190,7 @@ function App() {
                     path="/bookings-overview"
                     element={
                       <ProtectedRoute>
-                        <BookingList />
+                        <EmployeeBookingList />
                       </ProtectedRoute>
                     }
                   />
@@ -1192,7 +1199,7 @@ function App() {
                     path="/bookings-overview/add"
                     element={
                       <ProtectedRoute>
-                        <AddFacilityBookingPage />
+                        <EmployeeAddBookingPage />
                       </ProtectedRoute>
                     }
                   />
@@ -1202,6 +1209,15 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <BookingDetailsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/employee/fnb"
+                    element={
+                      <ProtectedRoute>
+                        <EmployeeFnb needPadding={true} />
                       </ProtectedRoute>
                     }
                   />
@@ -1624,7 +1640,7 @@ function App() {
                   />
 
                   {/* Ticket Routes */}
-                    <Route
+                  <Route
                     path="/maintenance/ticket/employee"
                     element={<TicketDashboardEmployee />}
                   />
@@ -1632,12 +1648,12 @@ function App() {
                     path="/maintenance/ticket"
                     element={<TicketDashboard />}
                   />
-                 
+
                   <Route
                     path="/maintenance/ticket/add"
                     element={<AddTicketDashboard />}
                   />
-                   <Route
+                  <Route
                     path="/maintenance/ticket/employee/add"
                     element={<AddTicketDashboardEmployee />}
                   />
@@ -1693,6 +1709,10 @@ function App() {
                   <Route
                     path="/maintenance/ticket/:id/tag-vendor"
                     element={<TicketTagVendorPage />}
+                  />
+                  <Route
+                    path="/maintenance/ticket/employee/details/:id"
+                    element={<TicketDetailsEmployee />}
                   />
 
                   {/* Task Routes */}
@@ -1856,7 +1876,7 @@ function App() {
                     element={<VisitorsDashboard />}
                   />
 
-                    <Route
+                  <Route
                     path="/security/visitor/employee"
                     element={<VisitorsDashboardEmployee />}
                   />
@@ -2687,6 +2707,10 @@ function App() {
                     path="/security/visitor/add"
                     element={<VisitorFormPage />}
                   />
+                   <Route
+                    path="/security/visitor/employee/add"
+                    element={<VisitorFormPageEmployeeNew />}
+                  />
                   <Route
                     path="/security/visitor/history"
                     element={<VisitorsHistoryDashboard />}
@@ -2694,6 +2718,10 @@ function App() {
                   <Route
                     path="/security/visitor/details/:id"
                     element={<VisitorDetailsPage />}
+                  />
+                   <Route
+                    path="/security/visitor/employee/details/:id"
+                    element={<VisitorDetailsPageEmployee />}
                   />
                   <Route
                     path="/settings/visitor-management/setup"

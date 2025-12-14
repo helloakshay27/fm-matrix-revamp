@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Upload, Paperclip, X, User, Ticket, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
+import { employeeTicketAPI } from '@/services/employeeTicketAPI';
 import { FMUser } from '@/store/slices/fmUserSlice';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
@@ -985,11 +986,7 @@ export const AddTicketDashboardEmployee = () => {
       return;
     }
 
-    // Validate complaint mode is selected
-    if (!formData.complaintMode) {
-      toast.error("Please select a complaint mode", { description: "Validation Error" });
-      return;
-    }
+    // Mode is set to 'web' by default - no validation needed
 
     // Validate user selection for behalf of others
     if (onBehalfOf !== 'self' && !selectedUserId) {
@@ -1021,11 +1018,10 @@ export const AddTicketDashboardEmployee = () => {
         priority: formData.adminPriority || '',
         severity: formData.severity || '',
         society_staff_type: 'User',
-        ...(formData.vendor && { complaint: { supplier_id: parseInt(formData.vendor) } }),
-        supplier_id: formData.vendor ? parseInt(formData.vendor) : '', // Remove old supplier_id key
+        ...(formData.vendor && { supplier_id: parseInt(formData.vendor) }),
         proactive_reactive: formData.proactiveReactive || '',
         heading: formData.description,
-        ...(formData.complaintMode && { complaint_mode_id: parseInt(formData.complaintMode) }),
+        complaint_mode: 'web',
         ...(onBehalfOf === 'self' && userAccount?.id && { id_user: userAccount.id }),
         ...(onBehalfOf !== 'self' && selectedUserId && {
           sel_id_user: selectedUserId,
@@ -1044,18 +1040,10 @@ export const AddTicketDashboardEmployee = () => {
         is_flagged: isFlagged
       };
 
-      // console.log('Ticket payload before API call:', ticketData);
-      // console.log('Using site ID from user account:', siteId);
-      // console.log('User account info:', userAccount);
-      // console.log('Form data:', formData);
-      // console.log('Severity value:', formData.severity);
-      // console.log('Golden Ticket:', isGoldenTicket);
-      // console.log('Is Flagged:', isFlagged);
-
       console.log('Submitting ticket with data:', ticketData, 'and files:', attachedFiles);
 
 
-      const response = await ticketManagementAPI.createTicket(ticketData, attachedFiles);
+      const response = await employeeTicketAPI.createTicket(ticketData, attachedFiles);
       console.log('Create ticket response:', response);
 
       // Extract ticket number from response - common patterns are ticket_number, complaint_number, or number
@@ -1193,7 +1181,7 @@ export const AddTicketDashboardEmployee = () => {
               </RadioGroup>
             </div>
 
-            <div className="flex gap-8">
+            {/* <div className="flex gap-8">
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -1220,7 +1208,7 @@ export const AddTicketDashboardEmployee = () => {
                 />
                 <label htmlFor="flagged" className="text-sm font-medium">Is Flagged</label>
               </div>
-            </div>
+            </div> */}
 
             {/* Golden Ticket and Is Flagged radio buttons */}
 
@@ -1293,7 +1281,7 @@ export const AddTicketDashboardEmployee = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
-              <FormControl
+              {/* <FormControl
                 fullWidth
                 variant="outlined"
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
@@ -1313,32 +1301,8 @@ export const AddTicketDashboardEmployee = () => {
                     </MenuItem>
                   ))}
                 </MuiSelect>
-              </FormControl>
-              <FormControl
-                fullWidth
-                variant="outlined"
-                required
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
-              >
-                <InputLabel shrink>Mode</InputLabel>
-                <MuiSelect
-                  value={formData.complaintMode}
-                  onChange={(e) => setFormData({ ...formData, complaintMode: e.target.value })}
-                  label="Mode*"
-                  notched
-                  displayEmpty
-                  disabled={loadingComplaintModes}
-                >
-                  <MenuItem value="">
-                    {loadingComplaintModes ? "Loading..." : "Select Mode"}
-                  </MenuItem>
-                  {complaintModes.map((mode) => (
-                    <MenuItem key={mode.id} value={mode.id.toString()}>
-                      {mode.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
+              </FormControl> */}
+              {/* Mode dropdown hidden - defaulting to 'web' in backend */}
 
 
               {/* Row 2: Proactive/Reactive, Admin Priority, Severity, Reference Number */}
