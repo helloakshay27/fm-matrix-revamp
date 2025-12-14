@@ -830,6 +830,9 @@ import EmployeeBookingList from "./pages/EmployeeBookingList";
 import { EmployeeAddBookingPage } from "./pages/EmployeeAddBookingPage";
 import { EmployeeFnb } from "./pages/EmployeeFnb";
 import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
+import { VisitorFormPageEmployee } from "./pages/VisitorFormPageEmployee";
+import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
+import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2704,6 +2707,10 @@ function App() {
                     path="/security/visitor/add"
                     element={<VisitorFormPage />}
                   />
+                   <Route
+                    path="/security/visitor/employee/add"
+                    element={<VisitorFormPageEmployeeNew />}
+                  />
                   <Route
                     path="/security/visitor/history"
                     element={<VisitorsHistoryDashboard />}
@@ -2711,6 +2718,10 @@ function App() {
                   <Route
                     path="/security/visitor/details/:id"
                     element={<VisitorDetailsPage />}
+                  />
+                   <Route
+                    path="/security/visitor/employee/details/:id"
+                    element={<VisitorDetailsPageEmployee />}
                   />
                   <Route
                     path="/settings/visitor-management/setup"
