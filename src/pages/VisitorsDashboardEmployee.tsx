@@ -917,18 +917,7 @@ export const VisitorsDashboardEmployee = () => {
                 }}
               />
             </div>
-            <div title={`${visitor.is_flagged ? 'Unflag' : 'Flag'} visitor`} className="p-1 hover:bg-gray-100 rounded transition-colors">
-              <Flag
-                className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:text-[#C72030] hover:scale-110 ${visitor.is_flagged
-                  ? 'text-red-500 fill-red-500'
-                  : 'text-gray-600'
-                  }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSingleVisitorFlag(visitor.id, visitor.is_flagged);
-                }}
-              />
-            </div>
+           
           </div>
         );
       default: {
@@ -1844,7 +1833,7 @@ export const VisitorsDashboardEmployee = () => {
             <EnhancedTable
               data={visitorHistoryData}
               columns={visibleVisitorHistoryColumns}
-              selectable={true}
+              selectable={false}
               renderCell={renderVisitorHistoryCell}
               enableSearch={true}
               enableGlobalSearch={true}
@@ -1852,7 +1841,7 @@ export const VisitorsDashboardEmployee = () => {
                 console.log('🔍 EnhancedTable search triggered with:', searchTerm);
                 setSearchTerm(searchTerm);
               }}
-              enableSelection={true}
+              enableSelection={false}
               selectedItems={selectedVisitors.map(id => id.toString())}
               onSelectItem={(visitorIdString: string, checked: boolean) =>
                 handleSelectVisitor(parseInt(visitorIdString), checked)
