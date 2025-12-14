@@ -1082,6 +1082,11 @@ const modulesByPackage = {
       icon: Calculator,
       href: "/settings/accessories",
     },
+    // {
+    //   name: "Payment Plan Setup",
+    //   icon: Calculator,
+    //   href: "/settings/payment-plan/setup",
+    // },
   ],
 };
 

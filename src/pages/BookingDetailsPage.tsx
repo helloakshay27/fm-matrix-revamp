@@ -319,26 +319,22 @@ export const BookingDetailsPage = () => {
                 <span className="text-gray-900 font-medium">₹{bookings?.sub_total?.toFixed(2) || '0.00'}</span>
               </div>
 
-              {bookings?.discount && bookings.discount > 0 && (
+              {/* {bookings?.discount && bookings.discount > 0 && ( */}
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <span className="text-gray-600">Discount</span>
                   <span className="text-green-600 font-medium">- ₹{bookings.discount.toFixed(2)}</span>
                 </div>
-              )}
+              {/* )} */}
 
-              {bookings?.gst && bookings.gst > 0 && (
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-gray-600">GST</span>
-                  <span className="text-gray-900 font-medium">₹{bookings.gst.toFixed(2)}</span>
-                </div>
-              )}
+              <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <span className="text-gray-600">GST</span>
+                <span className="text-gray-900 font-medium">₹{bookings?.gst?.toFixed(2) || '0.00'}</span>
+              </div>
 
-              {bookings?.sgst && bookings.sgst > 0 && (
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-gray-600">SGST</span>
-                  <span className="text-gray-900 font-medium">₹{bookings.sgst.toFixed(2)}</span>
-                </div>
-              )}
+              <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <span className="text-gray-600">SGST</span>
+                <span className="text-gray-900 font-medium">₹{bookings?.sgst?.toFixed(2) || '0.00'}</span>
+              </div>
 
               {bookings?.conv_charge && bookings.conv_charge > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
@@ -354,7 +350,7 @@ export const BookingDetailsPage = () => {
             </div>
 
             {/* Payment Information */}
-            <div className="grid grid-cols-2 gap-6">
+            {/* <div className="grid grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="flex items-start">
                   <span className="text-gray-500 min-w-[150px]">Payment Status</span>
@@ -430,7 +426,7 @@ export const BookingDetailsPage = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
 
             {/* Booked Members */}
             {bookings?.booked_members && bookings.booked_members.length > 0 && (

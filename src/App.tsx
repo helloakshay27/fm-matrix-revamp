@@ -254,6 +254,12 @@ import { MembershipPlanDashboard } from "./pages/MembershipPlanDashboard";
 import { AddMembershipPlanPage } from "./pages/AddMembershipPlanPage";
 import { EditMembershipPlanPage } from "./pages/EditMembershipPlanPage";
 import { MembershipPlanDetailsPage } from "./pages/MembershipPlanDetailsPage";
+
+// Import Payment Plan pages
+import { PaymentPlanSetup } from "./pages/Settings/PaymentPlanSetup";
+import { AddPaymentPlan } from "./pages/Settings/AddPaymentPlan";
+import { PaymentPlanDetails } from "./pages/Settings/PaymentPlanDetails";
+
 import ParkingDetailsPage from "./pages/ParkingDetailsPage";
 import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
 import ParkingCreatePage from "./pages/ParkingCreatePage";
@@ -1526,6 +1532,22 @@ function App() {
                   <Route
                     path="/settings/accessories/:id"
                     element={<AccessoriesDetailsPage />}
+                  />
+                  <Route
+                    path="/settings/payment-plan/setup"
+                    element={<PaymentPlanSetup />}
+                  />
+                  <Route
+                    path="/settings/payment-plan/add"
+                    element={<AddPaymentPlan />}
+                  />
+                  <Route
+                    path="/settings/payment-plan/edit/:id"
+                    element={<AddPaymentPlan />}
+                  />
+                  <Route
+                    path="/settings/payment-plan/details/:id"
+                    element={<PaymentPlanDetails />}
                   />
                   <Route
                     path="/club-management/membership"
