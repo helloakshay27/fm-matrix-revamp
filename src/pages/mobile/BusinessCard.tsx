@@ -45,7 +45,6 @@ interface ApiResponse {
 }
 
 export const BusinessCard: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const [userData, setUserData] = useState<UserCardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,12 +52,7 @@ export const BusinessCard: React.FC = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const card = searchParams.get("card");
-        if (!card) {
-          setError("No card token provided");
-          setLoading(false);
-          return;
-        }
+
 
         // Get base URL from config
         let baseUrl = API_CONFIG.BASE_URL;
@@ -75,8 +69,6 @@ export const BusinessCard: React.FC = () => {
         // Build the API URL - using card as token in Authorization header
         const apiUrl = `${baseUrl}/pms/users/user_info.json?is_token=true`;
 
-        console.log("Fetching user info from:", apiUrl);
-        console.log("Using token from card parameter:", card);
 
         const response = await fetch(apiUrl, {
           method: "GET",
@@ -118,7 +110,7 @@ export const BusinessCard: React.FC = () => {
     };
 
     fetchUserData();
-  }, [searchParams]);
+  }, []);
 
   const handleDownloadVCard = () => {
     if (!userData) return;
