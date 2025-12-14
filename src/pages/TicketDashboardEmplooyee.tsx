@@ -19,7 +19,8 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ticketManagementAPI, TicketResponse, TicketFilters, EscalationInfo } from '@/services/ticketManagementAPI';
+import { ticketManagementAPI, EscalationInfo } from '@/services/ticketManagementAPI';
+import { employeeTicketAPI, EmployeeTicketResponse, EmployeeTicketFilters } from '@/services/employeeTicketAPI';
 import { ticketAnalyticsAPI, TicketCategoryData, TicketStatusData, TicketAgingMatrix, UnitCategorywiseData, ResponseTATData, ResolutionTATReportData, RecentTicketsResponse } from '@/services/ticketAnalyticsAPI';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { TicketAnalyticsCard } from '@/components/TicketAnalyticsCard';
@@ -121,7 +122,7 @@ export const TicketDashboardEmployee = () => {
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'responseTat', 'categoryWiseProactiveReactive', 'categoryChart', 'agingMatrix', 'resolutionTat']);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'responseTat', 'categoryWiseProactiveReactive', 'categoryChart', 'agingMatrix', 'resolutionTat']);
-  const [tickets, setTickets] = useState<TicketResponse[]>([]);
+  const [tickets, setTickets] = useState<EmployeeTicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -222,12 +223,12 @@ export const TicketDashboardEmployee = () => {
     requests: 0,
     pending_tickets: 0
   });
-  const [filters, setFilters] = useState<TicketFilters>({});
+  const [filters, setFilters] = useState<EmployeeTicketFilters>({});
   const [searchQuery, setSearchQuery] = useState<string>('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300); // Optimized debounce timing
   const isSearchingRef = useRef(false);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
-  const [selectedTicketForEdit, setSelectedTicketForEdit] = useState<TicketResponse | null>(null);
+  const [selectedTicketForEdit, setSelectedTicketForEdit] = useState<EmployeeTicketResponse | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const perPage = 20;
@@ -331,21 +332,21 @@ export const TicketDashboardEmployee = () => {
     // Apply date range to ticket summary cards
     const dateRangeParam = `${filters.startDate} - ${filters.endDate}`;
     // The API will automatically wrap date_range with q[] so just pass date_range
-    const summaryFilters: TicketFilters = {
+    const summaryFilters: EmployeeTicketFilters = {
       date_range: dateRangeParam
     };
     fetchTicketSummary(summaryFilters);
   };
 
   // Fetch ticket summary from API - accepts optional filter object
-  const fetchTicketSummary = useCallback(async (filters?: TicketFilters) => {
+  const fetchTicketSummary = useCallback(async (filters?: EmployeeTicketFilters) => {
     try {
       // Summary cards should show overall counts by default
       // Only pass filters when explicitly provided
       // Status filters should NEVER be passed to ticket_summary API
-      const summaryFilters: TicketFilters = filters || {};
+      const summaryFilters: EmployeeTicketFilters = filters || {};
       
-      const summary = await ticketManagementAPI.getTicketSummary(summaryFilters);
+      const summary = await employeeTicketAPI.getTicketSummary(summaryFilters);
       setTicketSummary(summary);
 
       // Store initial total count only on first load without filters
@@ -370,7 +371,7 @@ export const TicketDashboardEmployee = () => {
 
     try {
       // Start API call immediately without delays
-      const response = await ticketManagementAPI.getTickets(page, perPage, filters);
+      const response = await employeeTicketAPI.getTickets(page, perPage, filters);
 
       // Optimize sorting with early return for performance
       const sortedTickets = response.complaints.length > 0 
@@ -465,7 +466,7 @@ export const TicketDashboardEmployee = () => {
     // Initial fetch of summary data
     const loadInitialData = async () => {
       try {
-        const summary = await ticketManagementAPI.getTicketSummary();
+        const summary = await employeeTicketAPI.getTicketSummary();
         setTicketSummary(summary);
         setInitialTotalTickets(summary.total_tickets);
       } catch (error) {
@@ -631,13 +632,8 @@ export const TicketDashboardEmployee = () => {
     setVisibleSections(selectedSections);
   };
   const handleViewDetails = (ticketId: string) => {
-    const currentPath = window.location.pathname;
-
-    if (currentPath.includes("tickets")) {
-      navigate(`/tickets/details/${ticketId}`);
-    } else {
-      navigate(`/maintenance/ticket/details/${ticketId}`);
-    }
+    // Navigate to employee-specific ticket details page
+    navigate(`/maintenance/ticket/employee/details/${ticketId}`);
   };
 
   const handleEditTicket = (ticketNumber: string) => {
@@ -685,7 +681,7 @@ export const TicketDashboardEmployee = () => {
   const handleGoldenTicket = async () => {
     // console.log('TicketDashboard - Golden Ticket action for tickets:', selectedTickets);
     try {
-      await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
+      await employeeTicketAPI.markAsGoldenTicket(selectedTickets);
 
       // Update tickets locally and sort
       setTickets(prevTickets => {
@@ -730,7 +726,7 @@ export const TicketDashboardEmployee = () => {
     }
 
     try {
-      await ticketManagementAPI.markAsFlagged(selectedTickets);
+      await employeeTicketAPI.markAsFlagged(selectedTickets);
 
       // Refresh from API to get proper positioning after flag toggle
       await fetchTickets(currentPage);
@@ -761,7 +757,7 @@ export const TicketDashboardEmployee = () => {
   const handleSingleTicketFlag = async (ticketId: number, currentFlagStatus: boolean) => {
     // console.log('TicketDashboard - Single flag action for ticket:', ticketId);
     try {
-      const response = await ticketManagementAPI.markAsFlagged([ticketId]);
+      const response = await employeeTicketAPI.markAsFlagged([ticketId]);
 
       // If flagging a ticket, update immediately for responsive UI
       if (!currentFlagStatus) {
@@ -796,7 +792,7 @@ export const TicketDashboardEmployee = () => {
   const handleSingleTicketGoldenTicket = async (ticketId: number, currentGoldenStatus: boolean) => {
     // console.log('TicketDashboard - Single golden ticket action for ticket:', ticketId);
     try {
-      const response = await ticketManagementAPI.markAsGoldenTicket([ticketId]);
+      const response = await employeeTicketAPI.markAsGoldenTicket([ticketId]);
 
       // Update the ticket locally and move newly golden tickets appropriately
       setTickets(prevTickets => {
@@ -859,7 +855,7 @@ export const TicketDashboardEmployee = () => {
     });
     
     try {
-      const blob = await ticketManagementAPI.exportTicketsExcel(filters);
+      const blob = await employeeTicketAPI.exportTicketsExcel(filters);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -881,7 +877,7 @@ export const TicketDashboardEmployee = () => {
       setIsExporting(false);
     }
   };
-  const handleFilterApply = (newFilters: TicketFilters) => {
+  const handleFilterApply = (newFilters: EmployeeTicketFilters) => {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page when applying filters
     setIsFilterOpen(false);
@@ -893,7 +889,7 @@ export const TicketDashboardEmployee = () => {
     if (dateRange) {
       // Pass only date filter to ticket summary API
       // The API will automatically wrap it with q[] so just pass date_range
-      const summaryFilters: TicketFilters = {
+      const summaryFilters: EmployeeTicketFilters = {
         date_range: dateRange
       };
       fetchTicketSummary(summaryFilters);
@@ -937,7 +933,7 @@ export const TicketDashboardEmployee = () => {
         ...otherFilters 
       } = prevFilters;
 
-      const newFilters: TicketFilters = { ...otherFilters };
+      const newFilters: EmployeeTicketFilters = { ...otherFilters };
 
       // Add the new status filter
       if (cardType === 'open') {
@@ -1264,7 +1260,7 @@ export const TicketDashboardEmployee = () => {
               }}
             />
           </div> */}
-          <div title={`${item.is_flagged ? 'Unflag' : 'Flag'} ticket`} className="p-1 hover:bg-gray-100 rounded transition-colors">
+          {/* <div title={`${item.is_flagged ? 'Unflag' : 'Flag'} ticket`} className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Flag
               className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:text-[#C72030] hover:scale-110 ${item.is_flagged
                 ? 'text-red-500 fill-red-500'
@@ -1275,8 +1271,8 @@ export const TicketDashboardEmployee = () => {
                 handleSingleTicketFlag(item.id, item.is_flagged);
               }}
             />
-          </div>
-          <div title={`${item.is_golden_ticket ? 'Remove' : 'Mark as'} Golden Ticket`} className="p-1 hover:bg-gray-100 rounded transition-colors">
+          </div> */}
+          {/* <div title={`${item.is_golden_ticket ? 'Remove' : 'Mark as'} Golden Ticket`} className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Star
               className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:text-[#C72030] hover:scale-110 ${item.is_golden_ticket
                 ? 'text-yellow-500 fill-yellow-500'
@@ -1287,7 +1283,7 @@ export const TicketDashboardEmployee = () => {
                 handleSingleTicketGoldenTicket(item.id, item.is_golden_ticket);
               }}
             />
-          </div>
+          </div> */}
         </div>
       );
     }
@@ -1318,22 +1314,22 @@ export const TicketDashboardEmployee = () => {
       return formatDate(item.review_tracking_date);
     }
     if (columnKey === 'response_tat') {
-      return formatEscalationMinutes(item.next_response_escalation);
+      return item.response_tat?.toString() || '--';
     }
     if (columnKey === 'response_time') {
-      return formatEscalationTime(item.next_response_escalation);
+      return item.response_time || '--';
     }
     if (columnKey === 'escalation_response_name') {
-      return formatEscalationLevel(item.next_response_escalation);
+      return item.escalation_response_name || '--';
     }
     if (columnKey === 'resolution_tat') {
-      return formatEscalationMinutes(item.next_resolution_escalation);
+      return item.resolution_tat?.toString() || '--';
     }
     if (columnKey === 'resolution_time') {
-      return formatEscalationTime(item.next_resolution_escalation);
+      return item.resolution_time || '--';
     }
     if (columnKey === 'escalation_resolution_name') {
-      return formatEscalationLevel(item.next_resolution_escalation);
+      return item.escalation_resolution_name || '--';
     }
     if (!item[columnKey] || item[columnKey] === null || item[columnKey] === '') {
       return '--';
@@ -1353,7 +1349,7 @@ export const TicketDashboardEmployee = () => {
       // Also fetch ticket summary with date range for analytics tab
       const dateRangeParam = `${defaultRange.startDate} - ${defaultRange.endDate}`;
       // The API will automatically wrap date_range with q[] so just pass date_range
-      const summaryFilters: TicketFilters = {
+      const summaryFilters: EmployeeTicketFilters = {
         date_range: dateRangeParam
       };
       fetchTicketSummary(summaryFilters);
@@ -1585,7 +1581,7 @@ export const TicketDashboardEmployee = () => {
               data={tickets || []}
               columns={columns}
               renderCell={renderCell}
-              selectable={true}
+              // selectable={true}
               pagination={false}
               enableExport={true}
               exportFileName="tickets"
