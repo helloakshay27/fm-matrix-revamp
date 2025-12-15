@@ -256,9 +256,9 @@ import { EditMembershipPlanPage } from "./pages/EditMembershipPlanPage";
 import { MembershipPlanDetailsPage } from "./pages/MembershipPlanDetailsPage";
 
 // Import Payment Plan pages
-import { PaymentPlanSetup } from "./pages/Settings/PaymentPlanSetup";
-import { AddPaymentPlan } from "./pages/Settings/AddPaymentPlan";
-import { PaymentPlanDetails } from "./pages/Settings/PaymentPlanDetails";
+import { PaymentPlanSetup } from "./pages/settings/PaymentPlanSetup";
+import { AddPaymentPlan } from "./pages/settings/AddPaymentPlan";
+import { PaymentPlanDetails } from "./pages/settings/PaymentPlanDetails";
 
 import ParkingDetailsPage from "./pages/ParkingDetailsPage";
 import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
