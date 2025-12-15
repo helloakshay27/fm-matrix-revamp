@@ -10,6 +10,8 @@ interface AllocateToSectionProps {
   setAllocateTo: (value: string) => void;
   allocatedToId: number | null;
   setAllocatedToId: (value: number | null) => void;
+  type?: string; // Optional type parameter for API filtering
+  siteId?: number | null; // Optional site ID parameter for API filtering
 }
 
 // Custom theme for MUI dropdowns (same as MovementToSection)
@@ -88,8 +90,10 @@ export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
   setAllocateTo,
   allocatedToId,
   setAllocatedToId,
+  type,
+  siteId,
 }) => {
-  const { departments, users, loading } = useAllocationData();
+  const { departments, users, loading } = useAllocationData(type, siteId);
   return (
     <div className="mb-6">
       <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-4">Allocate To</h3>
@@ -136,17 +140,17 @@ export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
                 },
               }}
             >
-              {allocateTo === 'department' 
+              {allocateTo === 'department'
                 ? departments.map((dept) => (
-                    <MenuItem key={dept.id} value={dept.id}>
-                      {dept.department_name}
-                    </MenuItem>
-                  ))
+                  <MenuItem key={dept.id} value={dept.id}>
+                    {dept.department_name}
+                  </MenuItem>
+                ))
                 : users.map((user) => (
-                    <MenuItem key={user.id} value={user.id}>
-                      {user.full_name}
-                    </MenuItem>
-                  ))
+                  <MenuItem key={user.id} value={user.id}>
+                    {user.full_name}
+                  </MenuItem>
+                ))
               }
             </TextField>
           </ThemeProvider>

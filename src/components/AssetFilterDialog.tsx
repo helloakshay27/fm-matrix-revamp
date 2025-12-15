@@ -15,6 +15,7 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } fro
 import { X } from 'lucide-react';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
+import { AllocateToSection } from '@/components/AllocateToSection';
 
 interface AssetFilterDialogProps {
   isOpen: boolean;
@@ -121,6 +122,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
   const [area, setArea] = useState('');
   const [floor, setFloor] = useState('');
   const [room, setRoom] = useState('');
+  const [allocationType, setAllocationType] = useState('department');
+  const [allocatedToId, setAllocatedToId] = useState<number | null>(null);
 
   // API data states
   const [groups, setGroups] = useState<GroupItem[]>([]);
@@ -444,6 +447,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
         areaId: area || undefined,
         floorId: floor || undefined,
         roomId: room || undefined,
+        allocation_type_eq: allocationType || undefined,
+        allocation_ids_cont: allocatedToId?.toString() || undefined,
       };
 
       // Remove empty/undefined values
@@ -484,6 +489,8 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       setArea('');
       setFloor('');
       setRoom('');
+      setAllocationType('department');
+      setAllocatedToId(null);
 
       // Clear dependent data arrays
       setSubgroups([]);
@@ -769,6 +776,18 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
             </div>
           </div>
 
+          {/* Allocation Section */}
+          <div>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">Allocation</h3>
+            <AllocateToSection
+              allocateTo={allocationType}
+              setAllocateTo={setAllocationType}
+              allocatedToId={allocatedToId}
+              setAllocatedToId={setAllocatedToId}
+              type="Asset"
+            />
+          </div>
+
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <Button variant="secondary" onClick={handleSubmit} className="flex-1 h-11">
@@ -780,6 +799,6 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
           </div>
         </div>
       </DialogContent>
-    </Dialog>
+    </Dialog >
   );
 };

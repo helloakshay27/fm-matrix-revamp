@@ -212,6 +212,8 @@ export const AssetDashboard = () => {
     group: true,
     subGroup: true,
     assetType: true,
+    allocationType: true,
+    allocatedTo: true,
   });
   const [chartOrder, setChartOrder] = useState<string[]>([
     'statusDistribution',
@@ -335,6 +337,7 @@ export const AssetDashboard = () => {
     supplier_name: asset.supplier_name || '',
     purchase_cost: asset.purchase_cost || 0,
     allocation_type: asset.allocation_type || '',
+    allocated_to: asset.allocated_to || '',
     useful_life: asset.useful_life || 0,
     depreciation_method: asset.depreciation_method || '',
     accumulated_depreciation: asset.accumulated_depreciation || 0,
@@ -353,7 +356,7 @@ export const AssetDashboard = () => {
         'building', 'wing', 'floor', 'area', 'pms_room',
         'asset_group', 'sub_group', 'asset_type', 'asset_type_category',
         'purchase_cost', 'current_book_value', 'purchased_on', 'supplier_name',
-        'allocation_type', 'useful_life', 'depreciation_method',
+        'allocation_type', 'allocated_to', 'useful_life', 'depreciation_method',
         'accumulated_depreciation', 'current_book_value', 'disposal_date',
         'model_number', 'manufacturer', 'critical', 'commisioning_date',
         'warranty', 'amc'
@@ -399,6 +402,7 @@ export const AssetDashboard = () => {
     supplier_name: asset.supplier_name || '',
     purchase_cost: asset.purchase_cost || 0,
     allocation_type: asset.allocation_type || '',
+    allocated_to: asset.allocated_to || '',
     useful_life: asset.useful_life || 0,
     depreciation_method: asset.depreciation_method || '',
     accumulated_depreciation: asset.accumulated_depreciation || 0,
@@ -417,7 +421,7 @@ export const AssetDashboard = () => {
         'building', 'wing', 'floor', 'area', 'pms_room', 'pms_floor', 'pms_area',
         'asset_group', 'sub_group', 'asset_type', 'asset_type_category', 'pms_asset_group',
         'purchase_cost', 'current_book_value', 'purchased_on', 'supplier_name',
-        'allocation_type', 'useful_life', 'depreciation_method',
+        'allocation_type', 'allocated_to', 'useful_life', 'depreciation_method',
         'accumulated_depreciation', 'current_book_value', 'disposal_date',
         'model_number', 'manufacturer', 'critical', 'commisioning_date',
         'warranty', 'amc'

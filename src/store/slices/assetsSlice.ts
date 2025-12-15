@@ -47,6 +47,8 @@ export interface AssetFilters {
   status_eq?: string
   breakdown_eq?: boolean
   it_asset_eq?: boolean
+  allocation_type_eq?: string
+  allocation_ids_cont?: string
 }
 
 interface AssetsState {
@@ -71,7 +73,7 @@ const initialState: AssetsState = {
   currentPage: 1,
   totalPages: 0,
   filters: {},
-  data: [] ,
+  data: [],
   totalValue: 0,
   available_custom_fields: [],
 }
@@ -81,10 +83,10 @@ export const fetchAssetsData = createAsyncThunk(
   'assets/fetchAssetsData',
   async (params: { page?: number; filters?: AssetFilters } = {}) => {
     const { page = 1, filters = {} } = params
-    
+
     // Build query parameters for API
     const queryParams = new URLSearchParams({ page: page.toString() })
-    
+
     // Add filter parameters
     if (filters.assetName) queryParams.append('q[name_cont]', filters.assetName)
     if (filters.assetId) queryParams.append('q[id_eq]', filters.assetId)
@@ -94,7 +96,7 @@ export const fetchAssetsData = createAsyncThunk(
     }
     if (filters.critical_eq !== undefined) queryParams.append('q[critical_eq]', filters.critical_eq.toString())
     if (filters.groupId) queryParams.append('q[pms_asset_group_id_eq]', filters.groupId)
-    if (filters.subgroupId) queryParams.append('q[pms_sub_group_id_eq]', filters.subgroupId)
+    if (filters.subgroupId) queryParams.append('q[pms_asset_sub_group_id_eq]', filters.subgroupId)
     if (filters.siteId) queryParams.append('q[pms_site_id_eq]', filters.siteId)
     if (filters.buildingId) queryParams.append('q[pms_building_id_eq]', filters.buildingId)
     if (filters.wingId) queryParams.append('q[pms_wing_id_eq]', filters.wingId)
@@ -104,6 +106,8 @@ export const fetchAssetsData = createAsyncThunk(
     if (filters.status_eq) queryParams.append('q[status_eq]', filters.status_eq)
     if (filters.breakdown_eq !== undefined) queryParams.append('q[breakdown_eq]', filters.breakdown_eq.toString())
     if (filters.it_asset_eq !== undefined) queryParams.append('q[it_asset_eq]', filters.it_asset_eq.toString())
+    if (filters.allocation_type_eq) queryParams.append('q[allocation_type_eq]', filters.allocation_type_eq)
+    if (filters.allocation_ids_cont) queryParams.append('q[allocation_ids_cont]', filters.allocation_ids_cont)
 
     // Use the same endpoint that includes custom fields
     const response = await apiClient.get(`/pms/assets.json/?${queryParams}`)

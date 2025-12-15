@@ -238,6 +238,8 @@ export const MoveAssetPage: React.FC = () => {
               setAllocateTo={setAllocateTo}
               allocatedToId={allocatedToId}
               setAllocatedToId={setAllocatedToId}
+              type="Asset"
+              siteId={siteId}
             />
 
             {/* Attachment Section */}
