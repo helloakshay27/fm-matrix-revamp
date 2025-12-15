@@ -99,13 +99,14 @@ export const AddMembershipPlanPage = () => {
   const token = localStorage.getItem("token");
 
   const [amenities, setAmenities] = useState([])
+  const [paymentPlans, setPaymentPlans] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     price: "",
     userLimit: "",
     renewalTerms: "",
-    paymentFrequency: "",
+    payment_plan_id: "",
     usageLimits: "Unlimited",
     discountEligibility: "No",
     amenities: [] as string[],
@@ -133,10 +134,25 @@ export const AddMembershipPlanPage = () => {
     }
   }
 
+  const getPaymentPlans = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/payment_plans.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      setPaymentPlans(response.data.plans || [])
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   console.log(amenities)
 
   useEffect(() => {
     getAmenities()
+    getPaymentPlans()
   }, [])
 
   const validateForm = () => {
@@ -175,9 +191,10 @@ export const AddMembershipPlanPage = () => {
           price: formData.price,
           user_limit: formData.userLimit,
           renewal_terms: formData.renewalTerms,
-          payment_frequency: formData.paymentFrequency,
+          payment_plan_id: formData.payment_plan_id ? parseInt(formData.payment_plan_id) : null,
           usage_limits: formData.usageLimits,
           discount_eligibility: formData.discountEligibility,
+          active: true,
           plan_amenities_attributes: formData.amenities.map(amenityId => {
             const details = formData.amenityDetails[amenityId];
             return {
@@ -307,22 +324,22 @@ export const AddMembershipPlanPage = () => {
               </FormControl>
 
               <FormControl variant="outlined">
-                <InputLabel>Payment Frequency</InputLabel>
+                <InputLabel>Payment Plan</InputLabel>
                 <Select
-                  value={formData.paymentFrequency}
+                  value={formData.payment_plan_id}
                   onChange={(e) =>
-                    setFormData({ ...formData, paymentFrequency: e.target.value })
+                    setFormData({ ...formData, payment_plan_id: e.target.value })
                   }
-                  label="Payment Frequency"
+                  label="Payment Plan"
                 >
                   <MenuItem value="">
-                    <em>Select Payment Frequency</em>
+                    <em>Select Payment Plan</em>
                   </MenuItem>
-                  <MenuItem value="one time">One Time</MenuItem>
-                  <MenuItem value="monthly">Monthly</MenuItem>
-                  <MenuItem value="quarterly">Quarterly</MenuItem>
-                  <MenuItem value="half yearly">Half Yearly</MenuItem>
-                  <MenuItem value="yearly">Yearly</MenuItem>
+                  {paymentPlans.map((plan, index) => (
+                    <MenuItem key={index} value={index.toString()}>
+                      {plan.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </div>

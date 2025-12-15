@@ -39,12 +39,8 @@ export const PaymentPlanDetails = () => {
         }
       );
 
-      const foundPlan = response.data.plans.find(
-        (p: any) => p.id === parseInt(id!)
-      );
-
-      if (foundPlan) {
-        setPlan(foundPlan);
+      if (response.data) {
+        setPlan(response.data);
       } else {
         toast.error('Payment plan not found');
         navigate('/settings/payment-plan/setup');
@@ -52,6 +48,7 @@ export const PaymentPlanDetails = () => {
     } catch (error) {
       console.error('Error fetching plan details:', error);
       toast.error('Failed to fetch plan details');
+      navigate('/settings/payment-plan/setup');
     } finally {
       setLoading(false);
     }
@@ -98,13 +95,13 @@ export const PaymentPlanDetails = () => {
         <h1 className="text-[24px] font-semibold text-[#1a1a1a]">
           Payment Plan Details
         </h1>
-        <Button
+        {/* <Button
           className="bg-[#C72030] hover:bg-[#A01020] text-white"
           onClick={() => navigate(`/settings/payment-plan/edit/${id}`)}
         >
           <Edit className="w-4 h-4 mr-2" />
           Edit Plan
-        </Button>
+        </Button> */}
       </div>
 
       {/* Plan Information */}
@@ -150,7 +147,7 @@ export const PaymentPlanDetails = () => {
             </div>
           </div>
 
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <div className="flex items-start">
               <span className="text-gray-500 min-w-[140px]">Duration</span>
               <span className="text-gray-500 mx-2">:</span>
@@ -158,7 +155,7 @@ export const PaymentPlanDetails = () => {
                 {plan.duration_in_months} Months
               </span>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

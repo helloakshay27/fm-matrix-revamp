@@ -278,20 +278,20 @@ export const MembershipPlanDetailsPage = () => {
                   {formData.paymentFrequency ? formData.paymentFrequency.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : "-"}
                 </span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Usage Limits</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.usageLimits || "-"}
                 </span>
-              </div>
-              <div className="flex items-start">
+              </div> */}
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Discount Eligibility</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.discountEligibility || "-"}
                 </span>
-              </div>
+              </div> */}
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Created On</span>
                 <span className="text-gray-500 mx-2">:</span>

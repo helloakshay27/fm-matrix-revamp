@@ -103,13 +103,14 @@ export const EditMembershipPlanPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [amenities, setAmenities] = useState([])
+  const [paymentPlans, setPaymentPlans] = useState([])
 
   const [formData, setFormData] = useState({
     name: "",
     price: "",
     userLimit: "",
     renewalTerms: "",
-    paymentFrequency: "",
+    payment_plan_id: "",
     amenities: [] as any[],
     amenityDetails: {} as Record<string, {
       frequency: string;
@@ -140,8 +141,23 @@ export const EditMembershipPlanPage = () => {
     }
   }
 
+  const getPaymentPlans = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/payment_plans.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      setPaymentPlans(response.data.plans || [])
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   useEffect(() => {
     getAmenities()
+    getPaymentPlans()
   }, [])
 
   const fetchMembershipPlanDetails = async () => {
@@ -159,12 +175,12 @@ export const EditMembershipPlanPage = () => {
       data.plan_amenities.forEach((amenity) => {
         amenityDetailsMap[amenity.facility_setup_id] = {
           frequency: amenity.frequency || "",
-          limit: amenity.limit || "",
-          allowExtraBooking: amenity.allow_extra_booking || false,
-          extraBookingPrice: amenity.extra_booking_price || "",
-          price: amenity.price || "",
+          limit: amenity.slot_limit?.toString() || "",
+          allowExtraBooking: amenity.can_book_after_slot_limit || false,
+          extraBookingPrice: amenity.price?.toString() || "",
+          price: amenity.price?.toString() || "",
           allowMultipleSlots: amenity.allow_multiple_slots || false,
-          multipleSlotPrice: amenity.multiple_slot_price || "",
+          multipleSlotPrice: amenity.multiple_slots?.toString() || "",
         };
       });
 
@@ -174,7 +190,7 @@ export const EditMembershipPlanPage = () => {
         price: data.price,
         userLimit: data.user_limit,
         renewalTerms: data.renewal_terms,
-        paymentFrequency: data.payment_frequency || "",
+        payment_plan_id: data.payment_plan_id?.toString() || "",
         amenities: data.plan_amenities,
         amenityDetails: amenityDetailsMap,
       })
@@ -223,7 +239,8 @@ export const EditMembershipPlanPage = () => {
           price: formData.price,
           user_limit: formData.userLimit,
           renewal_terms: formData.renewalTerms,
-          payment_frequency: formData.paymentFrequency,
+          payment_plan_id: formData.payment_plan_id ? parseInt(formData.payment_plan_id) : null,
+          active: true,
           plan_amenities_attributes: [
             ...formData.amenities.map(amenity => {
               const details = formData.amenityDetails[amenity.facility_setup_id] || {};
@@ -395,22 +412,22 @@ export const EditMembershipPlanPage = () => {
               </FormControl>
 
               <FormControl variant="outlined">
-                <InputLabel>Payment Frequency</InputLabel>
+                <InputLabel>Payment Plan</InputLabel>
                 <Select
-                  value={formData.paymentFrequency}
+                  value={formData.payment_plan_id}
                   onChange={(e) =>
-                    setFormData({ ...formData, paymentFrequency: e.target.value })
+                    setFormData({ ...formData, payment_plan_id: e.target.value })
                   }
-                  label="Payment Frequency"
+                  label="Payment Plan"
                 >
                   <MenuItem value="">
-                    <em>Select Payment Frequency</em>
+                    <em>Select Payment Plan</em>
                   </MenuItem>
-                  <MenuItem value="one time">One Time</MenuItem>
-                  <MenuItem value="monthly">Monthly</MenuItem>
-                  <MenuItem value="quarterly">Quarterly</MenuItem>
-                  <MenuItem value="half yearly">Half Yearly</MenuItem>
-                  <MenuItem value="yearly">Yearly</MenuItem>
+                  {paymentPlans.map((plan, index) => (
+                    <MenuItem key={index} value={index.toString()}>
+                      {plan.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </div>

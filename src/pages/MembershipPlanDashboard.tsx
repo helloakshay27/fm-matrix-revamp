@@ -74,7 +74,14 @@ const transformData = (data) => {
     userLimit: item.user_limit,
     renewalTerms: item.renewal_terms ? item.renewal_terms.charAt(0).toUpperCase() + item.renewal_terms.slice(1) : '',
     status: item.status ? 'Active' : 'Inactive',
-    createdOn: item.created_at,
+    createdOn: item.created_at ? new Date(item.created_at).toLocaleString('en-GB', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(/(\d{2})\/(\d{2})\/(\d{4}),/, '$3-$2-$1,') : '',
   }));
 }
 
