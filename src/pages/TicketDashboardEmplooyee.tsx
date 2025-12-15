@@ -1031,11 +1031,13 @@ export const TicketDashboardEmployee = () => {
     key: 'issue_status',
     label: 'Status',
     sortable: true
-  }, {
-    key: 'priority',
-    label: 'Priority',
-    sortable: true
-  }, {
+  }, 
+  // {
+  //   key: 'priority',
+  //   label: 'Priority',
+  //   sortable: true
+  // }, 
+  {
     key: 'site_name',
     label: 'Site',
     sortable: true
@@ -1051,55 +1053,62 @@ export const TicketDashboardEmployee = () => {
     key: 'complaint_mode',
     label: 'Complaint Mode',
     sortable: true
-  }, {
-    key: 'asset_or_service_name',
-    label: 'Asset / Service Name',
-    sortable: true
-  }, {
+  }, 
+  // {
+  //   key: 'asset_or_service_name',
+  //   label: 'Asset / Service Name',
+  //   sortable: true
+  // }, 
+  {
+
     key: 'asset_task_occurrence_id',
     label: 'Task ID',
     sortable: true
-  }, {
-    key: 'proactive_reactive',
-    label: 'Proactive / Reactive',
-    sortable: true
-  }, {
-    key: 'review_tracking_date',
-    label: 'Review Date',
-    sortable: true
-  }, {
-    key: 'response_escalation',
-    label: 'Response Escalation',
-    sortable: true
-  }, {
-    key: 'response_tat',
-    label: 'Response TAT (Min)',
-    sortable: true
-  }, {
-    key: 'response_time',
-    label: 'Response Time (D:H:M)',
-    sortable: true
-  }, {
-    key: 'escalation_response_name',
-    label: 'Response Escalation Level',
-    sortable: true
-  }, {
-    key: 'resolution_escalation',
-    label: 'Resolution Escalation',
-    sortable: true
-  }, {
-    key: 'resolution_tat',
-    label: 'Resolution TAT (Min)',
-    sortable: true
-  }, {
-    key: 'resolution_time',
-    label: 'Resolution Time (D:H:M)',
-    sortable: true
-  }, {
-    key: 'escalation_resolution_name',
-    label: 'Resolution Escalation Level',
-    sortable: true
-  }];
+  }, 
+  // {
+  //   key: 'proactive_reactive',
+  //   label: 'Proactive / Reactive',
+  //   sortable: true
+  // }, 
+  // {
+  //   key: 'review_tracking_date',
+  //   label: 'Review Date',
+  //   sortable: true
+  // }, 
+  // {
+  //   key: 'response_escalation',
+  //   label: 'Response Escalation',
+  //   sortable: true
+  // }, {
+  //   key: 'response_tat',
+  //   label: 'Response TAT (Min)',
+  //   sortable: true
+  // }, {
+  //   key: 'response_time',
+  //   label: 'Response Time (D:H:M)',
+  //   sortable: true
+  // }, {
+  //   key: 'escalation_response_name',
+  //   label: 'Response Escalation Level',
+  //   sortable: true
+  // }, {
+  //   key: 'resolution_escalation',
+  //   label: 'Resolution Escalation',
+  //   sortable: true
+  // }, {
+  //   key: 'resolution_tat',
+  //   label: 'Resolution TAT (Min)',
+  //   sortable: true
+  // }, {
+  //   key: 'resolution_time',
+  //   label: 'Resolution Time (D:H:M)',
+  //   sortable: true
+  // }, {
+  //   key: 'escalation_resolution_name',
+  //   label: 'Resolution Escalation Level',
+  //   sortable: true
+  // }
+];
   const renderCustomActions = () => (
     <div className="flex gap-3">
       {shouldShow("tickets", "add") && (
@@ -1762,7 +1771,7 @@ export const TicketDashboardEmployee = () => {
       <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleFilterApply} />
 
       {/* Edit Status Dialog */}
-      <EditStatusDialog
+      {/* <EditStatusDialog
         open={isEditStatusOpen}
         onOpenChange={setIsEditStatusOpen}
         complaintId={selectedTicketForEdit?.id}
@@ -1772,7 +1781,7 @@ export const TicketDashboardEmployee = () => {
           fetchTickets(currentPage);
           setSelectedTicketForEdit(null);
         }}
-      />
+      /> */}
 
       {/* Analytics Filter Dialog */}
       <TicketAnalyticsFilterDialog
