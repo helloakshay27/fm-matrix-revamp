@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
-import { fetchMilestones } from "@/store/slices/projectMilestoneSlice";
+import { fetchMilestones, updateMilestoneStatus } from "@/store/slices/projectMilestoneSlice";
 
 const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
@@ -25,11 +25,11 @@ interface EditMilestoneFormProps {
     milestoneData: {
         id?: string;
         title?: string;
-        responsible_person?: string;
+        owner_id?: string;
         start_date?: string;
         end_date?: string;
         duration?: string;
-        depends_on?: string;
+        depends_on_id?: string;
     };
     onUpdate?: () => void;
 }
@@ -47,11 +47,11 @@ const EditMilestoneForm = ({ owners, handleClose, milestoneData, onUpdate }: Edi
     const [milestones, setMilestones] = useState([])
     const [formData, setFormData] = useState({
         milestoneTitle: milestoneData.title || "",
-        owner: milestoneData.responsible_person || "",
-        startDate: milestoneData.start_date || "",
-        endDate: milestoneData.end_date || "",
+        owner: milestoneData.owner_id || "",
+        startDate: milestoneData.start_date.split("T")[0] || "",
+        endDate: milestoneData.end_date.split("T")[0] || "",
         duration: milestoneData.duration || "",
-        dependsOn: milestoneData.depends_on || "",
+        dependsOn: milestoneData.depends_on_id || "",
     });
 
     useEffect(() => {
@@ -79,17 +79,17 @@ const EditMilestoneForm = ({ owners, handleClose, milestoneData, onUpdate }: Edi
         e.preventDefault();
         try {
             // TODO: Replace with actual API call when available
-            // const payload = {
-            //     milestone: {
-            //         title: formData.milestoneTitle,
-            //         owner_id: formData.owner,
-            //         start_date: formData.startDate,
-            //         end_date: formData.endDate,
-            //         depends_on_id: formData.dependsOn,
-            //     },
-            // }
+            const payload = {
+                milestone: {
+                    title: formData.milestoneTitle,
+                    owner_id: formData.owner,
+                    start_date: formData.startDate,
+                    end_date: formData.endDate,
+                    depends_on_id: formData.dependsOn,
+                },
+            }
 
-            // await dispatch(updateMilestone({ token, baseUrl, id: milestoneData.id, data: payload })).unwrap();
+            await dispatch(updateMilestoneStatus({ token, baseUrl, id: milestoneData.id, payload })).unwrap();
             toast.success("Milestone updated successfully");
             if (onUpdate) {
                 onUpdate();

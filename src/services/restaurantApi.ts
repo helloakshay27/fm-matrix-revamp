@@ -452,6 +452,53 @@ export const restaurantApi = {
     }
   },
 
+  // Get user data by mobile or email
+  async getUserData(params: { customer_mobile?: string; customer_email?: string }): Promise<{
+    success: boolean;
+    data?: UserData;
+    message?: string;
+  }> {
+    try {
+      console.log("🔍 getUserData called with:", params);
+      
+      const response = await baseClient.get(
+        `/pms/admin/restaurants/get_user_data.json`,
+        {
+          params: {
+            skp_dr: true,
+            ...params
+          }
+        }
+      );
+      
+      console.log("📥 User Data Response:", response.data);
+      
+      // API returns user data directly: {name, email, mobile}
+      if (response.data && (response.data.name || response.data.email || response.data.mobile)) {
+        return {
+          success: true,
+          data: {
+            customer_name: response.data.name,
+            customer_email: response.data.email,
+            customer_mobile: response.data.mobile,
+            delivery_address: response.data.delivery_address
+          }
+        };
+      }
+      
+      return {
+        success: false,
+        message: "No user data found"
+      };
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      return {
+        success: false,
+        message: "Failed to fetch user data"
+      };
+    }
+  },
+
   // Get restaurants by token for application users
   async getRestaurantsByToken(token: string): Promise<{
     success: boolean;
@@ -745,4 +792,11 @@ export interface AdminRestaurant {
   name: string;
   location?: string;
   image?: string;
+}
+
+export interface UserData {
+  customer_name?: string;
+  customer_mobile?: string;
+  customer_email?: string;
+  delivery_address?: string;
 }

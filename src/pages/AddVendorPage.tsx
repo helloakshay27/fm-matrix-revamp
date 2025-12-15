@@ -240,6 +240,18 @@ export const AddVendorPage = () => {
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
     // URL validation regex
     const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+    // Alphabetic validation regex (only letters and spaces)
+    const alphabeticRegex = /^[a-zA-Z\s]+$/;
+
+    // Helper function to validate alphabetic fields
+    const validateAlphabeticField = (value: string, fieldName: string) => {
+      if (value.trim() && !alphabeticRegex.test(value.trim())) {
+        newErrors[fieldName.toLowerCase()] = `${fieldName} should only contain alphabets and spaces`;
+        isValid = false;
+        return false;
+      }
+      return true;
+    };
     
     if (activeStep === 0) {
       // Company Name validation (REQUIRED - has red asterisk)
@@ -290,18 +302,24 @@ export const AddVendorPage = () => {
       if (!formData.country.trim()) {
         newErrors.country = 'Country is required';
         isValid = false;
+      } else {
+        validateAlphabeticField(formData.country, 'Country');
       }
       
       // State validation (REQUIRED - has red asterisk)
       if (!formData.state.trim()) {
         newErrors.state = 'State is required';
         isValid = false;
+      } else {
+        validateAlphabeticField(formData.state, 'State');
       }
       
       // City validation (REQUIRED - has red asterisk)
       if (!formData.city.trim()) {
         newErrors.city = 'City is required';
         isValid = false;
+      } else {
+        validateAlphabeticField(formData.city, 'City');
       }
       
       // Address Line1 validation (REQUIRED - has red asterisk)
@@ -352,6 +370,15 @@ export const AddVendorPage = () => {
           isValid = false;
         }
         
+        // Primary email validation (REQUIRED - has red asterisk)
+        if (!contact.primaryEmail.trim()) {
+          newErrors[`contact_${index}_primaryEmail`] = 'Primary email is required';
+          isValid = false;
+        } else if (!/\S+@\S+\.\S+/.test(contact.primaryEmail)) {
+          newErrors[`contact_${index}_primaryEmail`] = 'Please enter a valid email address';
+          isValid = false;
+        }
+        
         // Optional fields - only validate format if provided
         if (contact.primaryMobile.trim() && !phoneRegex.test(contact.primaryMobile.trim())) {
           newErrors[`contact_${index}_primaryMobile`] = 'Please enter a valid 10-digit mobile number';
@@ -360,11 +387,6 @@ export const AddVendorPage = () => {
         
         if (contact.secondaryMobile.trim() && !phoneRegex.test(contact.secondaryMobile.trim())) {
           newErrors[`contact_${index}_secondaryMobile`] = 'Please enter a valid 10-digit mobile number';
-          isValid = false;
-        }
-        
-        if (contact.primaryEmail.trim() && !/\S+@\S+\.\S+/.test(contact.primaryEmail)) {
-          newErrors[`contact_${index}_primaryEmail`] = 'Please enter a valid email address';
           isValid = false;
         }
         
@@ -380,23 +402,27 @@ export const AddVendorPage = () => {
   };
 
   const handleSave = async () => {
+    // Validate current step before submitting
     if (!validateStep()) {
       toast.error("Please fill all required fields before submitting.");
       return;
     }
+    
     setIsSubmitting(true);
 
     const apiFormData = new FormData();
 
-    // Step 0: Company Information
-    apiFormData.append('pms_supplier[company_name]', formData.companyName);
-    apiFormData.append('pms_supplier[mobile1]', formData.primaryPhone);
-    apiFormData.append('pms_supplier[mobile2]', formData.secondaryPhone);
-    apiFormData.append('pms_supplier[email]', formData.email);
-    apiFormData.append('pms_supplier[pan_number]', formData.pan);
-    apiFormData.append('pms_supplier[gstin_number]', formData.gst);
-    apiFormData.append('pms_supplier[supplier_type][]', formData.supplierType);
-    apiFormData.append('pms_supplier[service_description]', formData.serviceDescription);
+    // Step 0: Company Information - Send all fields (empty as empty strings to match curl)
+    apiFormData.append('pms_supplier[company_name]', formData.companyName || '');
+    apiFormData.append('pms_supplier[mobile1]', formData.primaryPhone || '');
+    apiFormData.append('pms_supplier[mobile2]', formData.secondaryPhone || '');
+    apiFormData.append('pms_supplier[email]', formData.email || '');
+    apiFormData.append('pms_supplier[pan_number]', formData.pan || '');
+    apiFormData.append('pms_supplier[gstin_number]', formData.gst || '');
+    if (formData.supplierType) {
+      apiFormData.append('pms_supplier[supplier_type][]', formData.supplierType);
+    }
+    apiFormData.append('pms_supplier[service_description]', formData.serviceDescription || '');
     if (formData.date) {
       apiFormData.append('pms_supplier[signed_on_contract]', "true");
     }
@@ -404,40 +430,46 @@ export const AddVendorPage = () => {
       apiFormData.append('pms_supplier[services_ids][]', formData.services);
     }
 
-    // Step 1: Address
-    apiFormData.append('pms_supplier[country]', formData.country);
-    apiFormData.append('pms_supplier[state]', formData.state);
-    apiFormData.append('pms_supplier[city]', formData.city);
-    apiFormData.append('pms_supplier[pincode]', formData.pincode);
-    apiFormData.append('pms_supplier[address]', formData.addressLine1);
-    apiFormData.append('pms_supplier[address2]', formData.addressLine2);
+    // Step 1: Address - Send all fields
+    apiFormData.append('pms_supplier[country]', formData.country || '');
+    apiFormData.append('pms_supplier[state]', formData.state || '');
+    apiFormData.append('pms_supplier[city]', formData.city || '');
+    apiFormData.append('pms_supplier[pincode]', formData.pincode || '');
+    apiFormData.append('pms_supplier[address]', formData.addressLine1 || '');
+    apiFormData.append('pms_supplier[address2]', formData.addressLine2 || '');
 
-    // Step 2: Bank Details
-    apiFormData.append('pms_supplier[account_name]', formData.accountName);
-    apiFormData.append('pms_supplier[account_number]', formData.accountNumber);
-    apiFormData.append('pms_supplier[bank_branch_name]', formData.bankBranchName);
-    apiFormData.append('pms_supplier[ifsc_code]', formData.ifscCode);
+    // Step 2: Bank Details - Send all fields
+    apiFormData.append('pms_supplier[account_name]', formData.accountName || '');
+    apiFormData.append('pms_supplier[account_number]', formData.accountNumber || '');
+    apiFormData.append('pms_supplier[bank_branch_name]', formData.bankBranchName || '');
+    apiFormData.append('pms_supplier[ifsc_code]', formData.ifscCode || '');
 
-    // Step 3: Contact Person
+    // Step 3: Contact Person - Send all contact fields
     contactPersons.forEach((contact, index) => {
-      apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][first_name]`, contact.firstName);
-      apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][last_name]`, contact.lastName);
-      apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email1]`, contact.primaryEmail);
-      apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email2]`, contact.secondaryEmail);
-      apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile1]`, contact.primaryMobile);
-      apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile2]`, contact.secondaryMobile);
+      if (contact.firstName || contact.lastName) {
+        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][first_name]`, contact.firstName || '');
+        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][last_name]`, contact.lastName || '');
+        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email1]`, contact.primaryEmail || '');
+        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email2]`, contact.secondaryEmail || '');
+        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile1]`, contact.primaryMobile || '');
+        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile2]`, contact.secondaryMobile || '');
+      }
     });
 
-    // Step 4: KYC Details
+    // Step 4: KYC Details - Fix the re_kyc_in value (should be text, not file)
     if (formData.reKyc) {
       let reKycValue = formData.reKyc;
       if (reKycValue !== 'custom') {
+        // Convert '3m', '6m', etc. to '3_months', '6_months', etc.
         reKycValue = `${formData.reKyc.replace('m', '')}_months`;
+      } else if (formData.customDate) {
+        // For custom date, send the formatted date string
+        reKycValue = formData.customDate.toISOString().split('T')[0];
       }
       apiFormData.append('pms_supplier[re_kyc_in]', reKycValue);
     }
 
-    // Step 5: Attachments
+    // Step 5: Attachments - Append files if they exist
     panAttachments.forEach(file => apiFormData.append('pan_attachments[]', file));
     tanAttachments.forEach(file => apiFormData.append('tan_attachments[]', file));
     gstAttachments.forEach(file => apiFormData.append('gst_attachments[]', file));
@@ -449,27 +481,171 @@ export const AddVendorPage = () => {
     apiFormData.append('pms_supplier[society_id]', '1');
     apiFormData.append('pms_supplier[active]', 'true');
 
+    // Debug: Log the FormData contents
+    console.log('FormData contents:');
+    for (const [key, value] of apiFormData.entries()) {
+      console.log(`${key}:`, value);
+    }
+
     try {
       await vendorService.createVendor(apiFormData);
       toast.success('Vendor created successfully!');
       navigate('/maintenance/vendor');
-    } catch (error) {
-      // The service handles error toast
+    } catch (error: any) {
+      // Handle 422 Unprocessable Entity (validation errors)
+      if (error.status === 422 && error.validationErrors) {
+        const validationErrors = error.validationErrors;
+        
+        // Check which step the errors belong to and navigate accordingly
+        const companyInfoFields = ['company_name', 'email', 'mobile1', 'mobile2', 'pan_number', 'gstin_number'];
+        const addressFields = ['country', 'state', 'city', 'pincode', 'address', 'address2'];
+        const bankFields = ['account_name', 'account_number', 'bank_branch_name', 'ifsc_code'];
+        
+        // Set validation errors in the form
+        const formErrors: any = {};
+        let targetStep = activeStep; // Default to current step
+        
+        Object.keys(validationErrors).forEach(field => {
+          const errorMessage = Array.isArray(validationErrors[field]) 
+            ? validationErrors[field].join(', ') 
+            : validationErrors[field];
+            
+          // Map API field names to form field names
+          const fieldMapping: { [key: string]: string } = {
+            'company_name': 'companyName',
+            'mobile1': 'primaryPhone',
+            'mobile2': 'secondaryPhone',
+            'pan_number': 'pan',
+            'gstin_number': 'gst',
+            'address': 'addressLine1',
+            'address2': 'addressLine2',
+            'account_number': 'accountNumber',
+            'bank_branch_name': 'bankBranchName',
+            'ifsc_code': 'ifscCode',
+            'account_name': 'accountName'
+          };
+          
+          const formFieldName = fieldMapping[field] || field;
+          formErrors[formFieldName] = errorMessage;
+          
+          // Determine which step to navigate to
+          if (companyInfoFields.includes(field)) {
+            targetStep = 0; // Company Information step
+          } else if (addressFields.includes(field)) {
+            targetStep = 1; // Address step
+          } else if (bankFields.includes(field)) {
+            targetStep = 2; // Bank Details step
+          }
+        });
+        
+        // Set the errors and navigate to the appropriate step
+        setErrors(formErrors);
+        setActiveStep(targetStep);
+        
+        // Show error toast with the validation message
+        const firstError = Object.values(validationErrors)[0];
+        const errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+        toast.error(errorMessage || 'Please check the form for errors');
+        
+      } else {
+        // Handle other errors
+        toast.error('Failed to create vendor. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleNext = () => {
-    if (validateStep()) {
-      if (!completedSteps.includes(activeStep)) {
-        setCompletedSteps((prev) => [...prev, activeStep]);
-      }
-      setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
+  const handleNext = async () => {
+    // First, run client-side validation
+    if (!validateStep()) {
+      toast.error('Please fill in all required fields before proceeding to the next step');
+      return;
     }
+
+    // For Company Information step (step 0), validate with backend
+    if (activeStep === 0) {
+      // Show loading state
+      setIsSubmitting(true);
+      
+      try {
+        // Create FormData with company information to validate
+        const validationFormData = new FormData();
+        validationFormData.append('pms_supplier[company_name]', formData.companyName || '');
+        validationFormData.append('pms_supplier[email]', formData.email || '');
+        validationFormData.append('pms_supplier[mobile1]', formData.primaryPhone || '');
+        validationFormData.append('pms_supplier[pan_number]', formData.pan || '');
+        validationFormData.append('pms_supplier[gstin_number]', formData.gst || '');
+        
+        // Add required fields for validation
+        validationFormData.append('pms_supplier[society_id]', '1');
+        validationFormData.append('pms_supplier[active]', 'true');
+        
+        // Make API call to validate (this will throw error if validation fails)
+        await vendorService.createVendor(validationFormData);
+        
+        // If we reach here, validation passed but we don't want to create yet
+        // So we'll continue to next step
+        
+      } catch (error: any) {
+        // Handle validation errors from backend
+        if (error.status === 422 && error.validationErrors) {
+          const validationErrors = error.validationErrors;
+          const formErrors: any = {};
+          
+          // Map API errors to form fields
+          Object.keys(validationErrors).forEach(field => {
+            const errorMessage = Array.isArray(validationErrors[field]) 
+              ? validationErrors[field].join(', ') 
+              : validationErrors[field];
+              
+            const fieldMapping: { [key: string]: string } = {
+              'company_name': 'companyName',
+              'mobile1': 'primaryPhone',
+              'mobile2': 'secondaryPhone',
+              'pan_number': 'pan',
+              'gstin_number': 'gst',
+            };
+            
+            const formFieldName = fieldMapping[field] || field;
+            formErrors[formFieldName] = errorMessage;
+          });
+          
+          // Set errors and show notification
+          setErrors(formErrors);
+          
+          // Show specific error message
+          const firstError = Object.values(validationErrors)[0];
+          const errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+          toast.error(errorMessage || 'Validation failed. Please check the form.');
+          
+          setIsSubmitting(false);
+          return; // Don't proceed to next step
+        }
+        
+        // For other errors, show generic message
+        toast.error('An error occurred. Please try again.');
+        setIsSubmitting(false);
+        return;
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+
+    // If validation passed (or not Company Info step), mark step as completed and move forward
+    if (!completedSteps.includes(activeStep)) {
+      setCompletedSteps((prev) => [...prev, activeStep]);
+    }
+    setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
+    // Clear errors when moving to next step
+    setErrors({});
   };
 
-  const handleBack = () => setActiveStep((prev) => Math.max(prev - 1, 0));
+  const handleBack = () => {
+    setActiveStep((prev) => Math.max(prev - 1, 0));
+    // Clear errors when going back
+    setErrors({});
+  };
 
   const handleStepClick = (step: number) => {
     if (step < activeStep) {
@@ -482,7 +658,15 @@ export const AddVendorPage = () => {
   };
 
   const addContactPerson = () => {
-    setContactPersons([...contactPersons, { ...initialContactPerson }]);
+    const newContactPerson = {
+      firstName: '',
+      lastName: '',
+      primaryEmail: '',
+      secondaryEmail: '',
+      primaryMobile: '',
+      secondaryMobile: '',
+    };
+    setContactPersons([...contactPersons, newContactPerson]);
   };
 
   const removeContactPerson = (index: number) => {
@@ -670,52 +854,33 @@ export const AddVendorPage = () => {
                   )}
                 </TextField>
                   <div className="col-span-1 md:col-span-2 lg:col-span-3">
-
-                  
-                <TextField
-                  label={
-                    <span style={{ fontSize: '16px' }}>
+                  <div className="relative w-full">
+                    <textarea
+                      id="serviceDescription"
+                      value={formData.serviceDescription}
+                      onChange={(e) => setFormData({ ...formData, serviceDescription: e.target.value })}
+                      rows={3}
+                      placeholder=" "
+                      className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+            focus:outline-none 
+            focus:border-[2px] 
+            focus:border-[rgb(25,118,210)] 
+            resize-vertical"
+                    />
+                    <label
+                      htmlFor="serviceDescription"
+                      className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+            peer-placeholder-shown:top-4
+            peer-placeholder-shown:text-base
+            peer-placeholder-shown:text-gray-400
+            peer-focus:-top-[10px]
+            peer-focus:text-sm
+            peer-focus:text-[rgb(25,118,210)]"
+                    >
                       Service Description
-                    </span>
-                  }
-                  placeholder="Enter Service Description"
-                  fullWidth
-                  multiline
-                  minRows={4}
-                  value={formData.serviceDescription}
-                  onChange={(e) => setFormData({ ...formData, serviceDescription: e.target.value })}
-                  sx={{
-                    margin: '0 !important',
-                    marginTop: '0 !important',
-                    marginBottom: '0 !important',
-                    "& .MuiFormControl-root": {
-                      margin: '0 !important',
-                      marginTop: '0 !important',
-                      marginBottom: '0 !important',
-                    },
-                    "& .MuiOutlinedInput-root": {
-                      margin: '0 !important',
-                      marginTop: '0 !important',
-                      marginBottom: '0 !important',
-                    },
-                    "& .MuiInputBase-root": {
-                      margin: '0 !important',
-                      marginTop: '0 !important',
-                      marginBottom: '0 !important',
-                    },
-                    "& textarea": {
-                      width: "100% !important",
-                      resize: "both",
-                      overflow: "auto",
-                      boxSizing: "border-box",
-                      display: "block",
-                      margin: '0 !important',
-                    },
-                    "& textarea[aria-hidden='true']": {
-                      display: "none !important",
-                    },
-                  }}
-                /></div>
+                    </label>
+                  </div>
+                </div>
               </div>
             </Box>
           </SectionCard>
@@ -734,24 +899,45 @@ export const AddVendorPage = () => {
                   fullWidth
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  onKeyDown={(e) => {
+                    const char = e.key;
+                    if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
+                      e.preventDefault();
+                    }
+                  }}
                   error={!!errors.country}
                   helperText={errors.country}
+                  placeholder="e.g., India"
                 />
                 <TextField
                   label={<span>State <span style={{ color: 'red' }}>*</span></span>}
                   fullWidth
                   value={formData.state}
                   onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  onKeyDown={(e) => {
+                    const char = e.key;
+                    if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
+                      e.preventDefault();
+                    }
+                  }}
                   error={!!errors.state}
                   helperText={errors.state}
+                  placeholder="e.g., Maharashtra"
                 />
                 <TextField
                   label={<span>City <span style={{ color: 'red' }}>*</span></span>}
                   fullWidth
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  onKeyDown={(e) => {
+                    const char = e.key;
+                    if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
+                      e.preventDefault();
+                    }
+                  }}
                   error={!!errors.city}
                   helperText={errors.city}
+                  placeholder="e.g., Mumbai"
                 />
                 <TextField
                   label="Pincode"
@@ -836,18 +1022,25 @@ export const AddVendorPage = () => {
             </SectionHeader>
             <Box p={3}>
               {contactPersons.map((contact, index) => (
-                <div key={index} className="relative border-b pb-8 mb-4">
-                  {contactPersons.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-0 right-0 text-red-500"
-                      onClick={() => removeContactPerson(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                <div key={index} className="relative border rounded-lg p-4 mb-4 bg-gray-50">
+                  {/* Header with Contact Number and Delete Button */}
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-lg font-semibold text-gray-800">
+                      Contact Person {index + 1}
+                    </h4>
+                    {contactPersons.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2"
+                        onClick={() => removeContactPerson(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {errors[`contact_${index}_general`] && (
                       <div className="col-span-full">
                         <p className="text-red-500 text-sm mt-1">{errors[`contact_${index}_general`]}</p>
@@ -870,7 +1063,7 @@ export const AddVendorPage = () => {
                       helperText={errors[`contact_${index}_lastName`]}
                     />
                     <TextField
-                      label="Primary Email"
+                      label={<span>Primary Email <span style={{ color: 'red' }}>*</span></span>}
                       type="email"
                       fullWidth
                       value={contact.primaryEmail}
@@ -1080,8 +1273,15 @@ export const AddVendorPage = () => {
             {isSubmitting ? 'Saving...' : 'Save Vendor'}
           </RedButton>
         ) : (
-          <RedButton onClick={handleNext}>
-            Next
+          <RedButton onClick={handleNext} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <CircularProgress size={16} sx={{ color: 'white' }} />
+                Validating...
+              </span>
+            ) : (
+              'Next'
+            )}
           </RedButton>
         )}
       </div>

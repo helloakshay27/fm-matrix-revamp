@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchAllowedSites } from '@/store/slices/siteSlice';
 import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
+import { fetchRoles } from '@/store/slices/fmUserSlice';
 import { RootState } from '@/store/store';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react'
@@ -32,6 +33,7 @@ export const AddOccupantUserPage: React.FC = () => {
     altMobileNumber: '',
     designation: '',
     selectUserCategory: '',
+    selectRole: '',
   });
 
   const [userCategories, setUserCategories] = useState([])
@@ -42,6 +44,11 @@ export const AddOccupantUserPage: React.FC = () => {
   const { data: entitiesData, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
   const { sites } = useAppSelector((state) => state.site);
   const { selectedCompany } = useAppSelector((state: RootState) => state.project);
+  const {
+    data: roles,
+    loading: roleLoading,
+    error: roleError,
+  } = useAppSelector((state) => state.fetchRoles);
   const [departments, setDepartments] = useState<any[]>([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(false);
   const [departmentsError, setDepartmentsError] = useState<string | null>(null);
@@ -68,6 +75,7 @@ export const AddOccupantUserPage: React.FC = () => {
       if (userId) dispatch(fetchAllowedSites(userId));
     } catch { }
     dispatch(fetchAllowedCompanies());
+    dispatch(fetchRoles({ baseUrl, token }));
     fetchUserCategories();
   }, [dispatch]);
 
@@ -112,7 +120,14 @@ export const AddOccupantUserPage: React.FC = () => {
   });
 
   const handleInputChange = (field: string, value: string | string[]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Allow only alphabetic characters (including spaces) for firstName and lastName
+    if (field === 'firstName' || field === 'lastName') {
+      const stringValue = typeof value === 'string' ? value : '';
+      const alphabeticValue = stringValue.replace(/[^A-Za-z\s]/g, '');
+      setFormData((prev) => ({ ...prev, [field]: alphabeticValue }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleCancel = () => navigate('/master/user/occupant-users');
@@ -183,7 +198,8 @@ export const AddOccupantUserPage: React.FC = () => {
               user_type: formData.userType,
               access_level: formData.accessLevel,
               access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
-              status: "pending"
+              status: "pending",
+              lock_role_id: formData.selectRole || undefined,
             },
           ],
           firstname: formData.firstName,
@@ -454,6 +470,26 @@ export const AddOccupantUserPage: React.FC = () => {
                   )}
                 </FormControl>
               )}
+              <div>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Select Role</InputLabel>
+                  <Select
+                    value={formData.selectRole}
+                    onChange={(e) => handleInputChange('selectRole', e.target.value)}
+                    label="Select Role"
+                    displayEmpty
+                  >
+                    <MenuItem value="">Select Role</MenuItem>
+                    {roleLoading && <MenuItem disabled>Loading...</MenuItem>}
+                    {roleError && <MenuItem disabled>Error: {roleError}</MenuItem>}
+                    {Array.isArray(roles) && roles?.map((role: any) => (
+                      <MenuItem key={role.id} value={role.id}>
+                        {role.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
               <div>
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Select User Category</InputLabel>

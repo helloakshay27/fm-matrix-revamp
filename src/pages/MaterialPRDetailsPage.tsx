@@ -79,6 +79,7 @@ interface Inventory {
 }
 
 interface PRInventory {
+  gl_account: string;
   id?: number;
   inventory?: Inventory;
   availability?: string;
@@ -92,6 +93,7 @@ interface PRInventory {
   approved_qty?: number;
   transfer_qty?: number;
   wbs_code?: string;
+  general_storage?: string;
 }
 
 interface Attachment {
@@ -102,6 +104,7 @@ interface Attachment {
 }
 
 interface MaterialPR {
+  pms_po_inventories: any;
   active?: boolean;
   id?: string;
   external_id?: string;
@@ -122,6 +125,7 @@ interface MaterialPR {
   attachments?: Attachment[];
   show_send_sap_yes?: boolean;
   can_edit_wbs_codes?: boolean;
+  pr_type?: string;
 }
 
 interface TableRow {
@@ -140,6 +144,8 @@ interface TableRow {
   approved_qty?: string;
   transfer_qty?: string;
   wbs_code?: string;
+  general_storage?: string;
+  gl_account?: string;
 }
 
 // Column configuration
@@ -149,6 +155,18 @@ const columns: ColumnConfig[] = [
   {
     key: "sacHsnCode",
     label: "SAC/HSN Code",
+    sortable: true,
+    defaultVisible: true,
+  },
+    {
+    key: "gl_account",
+    label: "GL Account",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "general_storage",
+    label: "General Storage",
     sortable: true,
     defaultVisible: true,
   },
@@ -196,7 +214,7 @@ export const MaterialPRDetailsPage = () => {
   const baseUrl = localStorage.getItem("baseUrl");
 
   const [isDeletionRequest, setIsDeletionRequest] = useState(false)
-  const [pr, setPR] = useState<MaterialPR>({});
+  const [pr, setPR] = useState<MaterialPR>({} as MaterialPR);
   const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
@@ -213,6 +231,7 @@ export const MaterialPRDetailsPage = () => {
     showSap: false,
     editWbsCode: false,
   });
+  const [externalApiCalls, setExternalApiCalls] = useState<any[]>([]);
 
   useEffect(() => {
     if (searchParams.get("type") === "delete-request") {
@@ -241,6 +260,10 @@ export const MaterialPRDetailsPage = () => {
           showSap: response.show_send_sap_yes,
           editWbsCode: response.can_edit_wbs_codes,
         });
+        // Set external API calls if available
+        if (response.external_api_calls && Array.isArray(response.external_api_calls)) {
+          setExternalApiCalls(response.external_api_calls);
+        }
         // Initialize updatedWbsCodes with current WBS codes
         const initialWbsCodes = response.pms_pr_inventories?.reduce(
           (acc: { [key: string]: string }, item: PRInventory) => {
@@ -520,7 +543,7 @@ export const MaterialPRDetailsPage = () => {
   };
 
   const tableData: TableRow[] =
-    pr?.pms_pr_inventories?.map((item, index) => ({
+    pr?.pms_po_inventories?.map((item, index) => ({
       id: item.id || index,
       srNo: index + 1,
       item: item.inventory?.name ?? "-",
@@ -538,6 +561,9 @@ export const MaterialPRDetailsPage = () => {
       approved_qty: item.approved_qty?.toString() ?? "0",
       transfer_qty: item.transfer_qty?.toString() ?? "0",
       wbs_code: item.wbs_code ?? "-",
+      general_storage: item.general_storage ?? "-",
+      gl_account: item.gl_account ?? "-",
+
     })) ?? [];
 
   const renderCell = (item: any, columnKey: string) => {
@@ -853,6 +879,19 @@ export const MaterialPRDetailsPage = () => {
                   {pr.supplier?.address ?? "-"}
                 </span>
               </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+
+                {pr.pr_type ? (
+                  <span className="text-gray-900 font-medium px-3 text-sm rounded-[5px] w-max cursor-pointer bg-blue-200">
+                    {pr.pr_type.charAt(0).toUpperCase() + pr.pr_type.slice(1)}
+                  </span>
+                ) : (
+                  <span className="text-gray-500">-</span>
+                )}
+              </div>
+
             </div>
           </CardContent>
         </Card>
@@ -1161,6 +1200,49 @@ export const MaterialPRDetailsPage = () => {
           selectedDoc={selectedDoc}
           setSelectedDoc={setSelectedDoc}
         />
+
+        {/* External API Calls Logs Section */}
+        {externalApiCalls && externalApiCalls.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6 p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Rss className="w-5 h-5" />
+              External API Calls
+            </h3>
+            <div className="space-y-4">
+              {externalApiCalls.map((apiCall, index) => (
+                <div key={apiCall.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600 font-semibold">Provider</p>
+                      <p className="text-sm font-medium">{apiCall.api_provider || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
+                      <p className={`text-sm font-medium ${
+                        apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {apiCall.response_status || '-'}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-gray-600 font-semibold">Message</p>
+                      <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
+                        {apiCall.eval_status && apiCall.eval_status.trim() 
+                          ? apiCall.eval_status 
+                          : (apiCall.response_string ? JSON.stringify(JSON.parse(apiCall.response_string), null, 2) : '-')}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-xs text-gray-500">
+                        Created: {apiCall.created_at ? new Date(apiCall.created_at).toLocaleString() : '-'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

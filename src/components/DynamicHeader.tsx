@@ -65,158 +65,25 @@ export const DynamicHeader = () => {
 
     setShouldShowHeader(true);
 
-    // Map functions to their corresponding header sections
-    const functionToHeaderMapping = {
-      // Maintenance functions
-      ticket: "Maintenance",
-      task: "Maintenance",
-      tasks: "Maintenance",
-      schedule: "Maintenance",
-      asset: "Maintenance",
-      assets: "Maintenance",
-      inventory: "Maintenance",
-      amc: "Maintenance",
-      attendance: "Maintenance",
-      audit: "Maintenance",
-      waste: "Maintenance",
-      survey: "Maintenance",
-      vendor: "Maintenance",
-      supplier: "Maintenance",
-      "soft services": "Maintenance",
-      service: "Maintenance",
-      services: "Maintenance",
-
-      // Safety functions
-      incident: "Safety",
-      permit: "Safety",
-      permits: "Safety",
-      "m safe": "Safety",
-      msafe: "Safety",
-      "training list": "Safety",
-
-      // Security functions
-      "gate pass": "Security",
-      gatepass: "Security",
-      visitor: "Security",
-      staff: "Security",
-      vehicle: "Security",
-      patrolling: "Security",
-
-      // Finance functions
-      procurement: "Finance",
-      invoice: "Finance",
-      invoices: "Finance",
-      "bill booking": "Finance",
-      accounting: "Finance",
-      "cost center": "Finance",
-      budgeting: "Finance",
-      wbs: "Finance",
-      po: "Finance",
-      wo: "Finance",
-      grn: "Finance",
-      wallet: "Finance",
-
-      // CRM functions
-      lead: "CRM",
-      opportunity: "CRM",
-      crm: "CRM",
-      events: "CRM",
-      broadcast: "CRM",
-      groups: "CRM",
-      polls: "CRM",
-      campaign: "CRM",
-
-      // VAS functions
-      "f&b": "Value Added Services",
-      parking: "Value Added Services",
-      osr: "Value Added Services",
-      "space management": "Value Added Services",
-      booking: "Value Added Services",
-      mailroom: "Value Added Services",
-      redemption: "Value Added Services",
-
-      // Utility functions
-      energy: "Utility",
-      water: "Utility",
-      stp: "Utility",
-      "daily readings": "Utility",
-      "utility request": "Utility",
-      "utility consumption": "Utility",
-      "ev consumption": "Utility",
-      "solar generator": "Utility",
-
-      // Master functions
-      location: "Master",
-      "location master": "Master",
-      "user master": "Master",
-      "checklist master": "Master",
-      "address master": "Master",
-      "unit master": "Master",
-      "material master": "Master",
-      "gate number": "Master",
-
-      // Transitioning functions
-      hoto: "Transitioning",
-      snagging: "Transitioning",
-      "design insight": "Transitioning",
-      fitout: "Transitioning",
-
-      // Settings functions (roles, account, etc.)
-      role: "Settings",
-      roles: "Settings",
-      department: "Settings",
-      account: "Settings",
-      general: "Settings",
-      holiday: "Settings",
-      about: "Settings",
-      language: "Settings",
-      "company logo": "Settings",
-      "report setup": "Settings",
-      notification: "Settings",
-      shift: "Settings",
-      roster: "Settings",
-      "lock module": "Settings",
-      "lock function": "Settings",
-      "approval matrix": "Settings",
-    };
-
-    // Determine which header sections should be shown
+    // Determine which header sections should be shown - STRICT DIRECT MATCH ONLY
+    // Only use the module_name from the API response, no fallback keyword matching
     const enabledSections = new Set<string>();
 
     activeFunctions.forEach((activeFunc) => {
-      const funcNameLower = activeFunc.functionName.toLowerCase();
-      const actionNameLower = activeFunc.actionName
-        ? activeFunc.actionName.toLowerCase()
-        : "";
-
-      // Check function name mapping
-      Object.entries(functionToHeaderMapping).forEach(([keyword, section]) => {
-        if (
-          funcNameLower.includes(keyword) ||
-          keyword.includes(funcNameLower)
-        ) {
-          enabledSections.add(section);
+      // ONLY use API module name - DIRECT MATCH approach
+      // No fallback logic - if moduleName matches a package, show it
+      if (activeFunc.moduleName) {
+        const apiModule = activeFunc.moduleName;
+        // Check exact match or case-insensitive match against packages
+        const matchedPackage = packages.find(
+          (pkg) => pkg.toLowerCase() === apiModule.toLowerCase()
+        );
+        if (matchedPackage) {
+          enabledSections.add(matchedPackage);
           console.log(
-            `🎯 Header Section "${section}" enabled by function: "${activeFunc.functionName}"`
+            `✅ DIRECT_MATCH: Module "${matchedPackage}" enabled via function "${activeFunc.functionName}"`
           );
         }
-      });
-
-      // Check action name mapping
-      if (actionNameLower) {
-        Object.entries(functionToHeaderMapping).forEach(
-          ([keyword, section]) => {
-            if (
-              actionNameLower.includes(keyword) ||
-              keyword.includes(actionNameLower)
-            ) {
-              enabledSections.add(section);
-              console.log(
-                `🎯 Header Section "${section}" enabled by action: "${activeFunc.actionName}"`
-              );
-            }
-          }
-        );
       }
     });
 

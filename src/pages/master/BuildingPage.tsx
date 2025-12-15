@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Plus, Search, Edit, X, Check, ChevronLeft, ChevronRight, Download, Upload } from 'lucide-react';
+import { Loader2, Plus, Search, Edit, X, Check, ChevronLeft, ChevronRight, Download, Upload, QrCode } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { fetchSites, fetchBuildings, createBuilding, updateBuilding } from '@/store/slices/locationSlice';
 import { useForm } from 'react-hook-form';
@@ -30,6 +30,8 @@ export function BuildingPage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [selectedQrCode, setSelectedQrCode] = useState<string>('');
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -568,19 +570,20 @@ export function BuildingPage() {
                   <TableHead>Has Area</TableHead>
                   <TableHead>Has Floor</TableHead>
                   <TableHead>Has Room</TableHead>
+                  <TableHead>QR Code</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {buildings.loading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-4">
+                    <TableCell colSpan={10} className="text-center py-4">
                       Loading buildings...
                     </TableCell>
                   </TableRow>
                 ) : filteredBuildings.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-4">
+                    <TableCell colSpan={10} className="text-center py-4">
                       {buildings.data.length === 0 ? 'No buildings available' : 'No buildings match your search'}
                     </TableCell>
                   </TableRow>
@@ -646,6 +649,23 @@ export function BuildingPage() {
                             </div>
                           )}
                         </button>
+                      </TableCell>
+                      <TableCell>
+                        {building.qr_code_url ? (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedQrCode(building.qr_code_url);
+                              setIsQrModalOpen(true);
+                            }}
+                            className="text-[#C72030] hover:text-[#C72030]/80"
+                          >
+                            <QrCode className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <button onClick={() => handleToggleStatus(building.id, 'active')} className="cursor-pointer">
@@ -922,6 +942,45 @@ export function BuildingPage() {
                   </div>
                 </form>
               </Form>
+            </DialogContent>
+          </Dialog>
+
+          {/* QR Code Modal */}
+          <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Building QR Code</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center space-y-4 py-4">
+                {selectedQrCode ? (
+                  <>
+                    <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
+                      <img 
+                        src={selectedQrCode} 
+                        alt="Building QR Code" 
+                        className="w-64 h-64 object-contain"
+                      />
+                    </div>
+                    <Button
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = selectedQrCode;
+                        link.download = `building-qr-code-${Date.now()}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        toast('QR Code downloaded successfully');
+                      }}
+                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download QR Code
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-gray-500">No QR code available</p>
+                )}
+              </div>
             </DialogContent>
           </Dialog>
         </div>

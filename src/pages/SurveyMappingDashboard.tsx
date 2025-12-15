@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { SurveyMappingFilterDialog, SurveyMappingFilters } from '@/components/SurveyMappingFilterDialog';
 import { Plus, Filter, Edit, Copy, Eye, Share2, ChevronDown, Loader2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { toast as sonnerToast } from "@/components/ui/sonner";
 import { useToast } from "@/hooks/use-toast";
@@ -112,6 +113,7 @@ export const SurveyMappingDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+  const { shouldShow } = useDynamicPermissions();
   const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   
   const [mappings, setMappings] = useState<SurveyMapping[]>([]);
@@ -561,20 +563,24 @@ export const SurveyMappingDashboard = () => {
       case 'actions':
         return (
           <div className="flex justify-center items-center gap-2">
-            <button 
-              onClick={() => handleViewClick(item)}
-              className="p-1 text-black-600 hover:text-black-800 transition-colors"
-              title="View"
-            >
-              <Eye className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => handleEditClick(item)}
-              className="p-1 text-black-600 hover:text-black-800 transition-colors"
-              title="Edit"
-            >
-              <Edit className="w-4 h-4" />
-            </button>
+            {shouldShow("survey_mapping", "view") && (
+              <button 
+                onClick={() => handleViewClick(item)}
+                className="p-1 text-black-600 hover:text-black-800 transition-colors"
+                title="View"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+            )}
+            {shouldShow("survey_mapping", "edit") && (
+              <button 
+                onClick={() => handleEditClick(item)}
+                className="p-1 text-black-600 hover:text-black-800 transition-colors"
+                title="Edit"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+            )}
           </div>
         );
       case 'survey_title':
@@ -730,27 +736,23 @@ export const SurveyMappingDashboard = () => {
                 searchPlaceholder="Search survey mappings..."
                 pagination={false}
                 pageSize={perPage}
-                hideColumnsButton={true}
+                hideColumnsButton={false}
+                hideTableExport={false}
                 loading={loading}
                 leftActions={
                   <div className="flex flex-wrap items-center gap-2 md:gap-4">
-                    <Button 
-                      onClick={handleAddMapping}
-                      className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add
-                    </Button>
+                    {shouldShow("survey_mapping", "add") && (
+                      <Button 
+                        onClick={handleAddMapping}
+                        className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add
+                      </Button>
+                    )}
                   </div>
                 }
-                rightActions={
-                  <div className="flex items-center gap-2">
-                    <ColumnVisibilityDropdown
-                      columns={dropdownColumns}
-                      onColumnToggle={handleColumnToggle}
-                    />
-                  </div>
-                }
+                rightActions={null}
                 onFilterClick={() => setIsFilterOpen(true)}
               />
 

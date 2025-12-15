@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchAllowedSites } from '@/store/slices/siteSlice';
 import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
+import { fetchRoles } from '@/store/slices/fmUserSlice';
 import { RootState } from '@/store/store';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
@@ -34,6 +35,7 @@ export const EditOccupantUserPage: React.FC = () => {
     altMobileNumber: '',
     designation: '',
     selectUserCategory: '',
+    selectRole: '',
   });
   const [showAdditional, setShowAdditional] = useState(true);
   const dispatch = useAppDispatch();
@@ -42,6 +44,11 @@ export const EditOccupantUserPage: React.FC = () => {
   const { data: entitiesData, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
   const { sites } = useAppSelector((state) => state.site);
   const { selectedCompany } = useAppSelector((state: RootState) => state.project);
+  const {
+    data: roles,
+    loading: roleLoading,
+    error: roleError,
+  } = useAppSelector((state) => state.fetchRoles);
   const [departments, setDepartments] = useState<any[]>([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(false);
   const [departmentsError, setDepartmentsError] = useState<string | null>(null);
@@ -70,6 +77,7 @@ export const EditOccupantUserPage: React.FC = () => {
       if (userId) dispatch(fetchAllowedSites(userId));
     } catch { }
     dispatch(fetchAllowedCompanies());
+    dispatch(fetchRoles({ baseUrl, token }));
     fetchUserCategories();
   }, [dispatch]);
 
@@ -115,7 +123,7 @@ export const EditOccupantUserPage: React.FC = () => {
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const u = resp.data?.user || resp.data || {};
         const lup = u.lock_user_permission || {};
-        
+
         setLockId(lup?.id);
 
         const accessLevel = lup.access_level || '';
@@ -140,6 +148,7 @@ export const EditOccupantUserPage: React.FC = () => {
           altMobileNumber: u.alternate_mobile || '',
           designation: lup.designation || '',
           selectUserCategory: u.user_category_id || '',
+          selectRole: lup.lock_role_id ? String(lup.lock_role_id) : '',
         }));
       } catch (e) {
         console.error('Error fetching user for edit', e);
@@ -213,6 +222,7 @@ export const EditOccupantUserPage: React.FC = () => {
               user_type: formData.userType,
               access_level: formData.accessLevel,
               access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
+              lock_role_id: formData.selectRole || undefined,
             },
           ],
           firstname: formData.firstName,
@@ -486,6 +496,26 @@ export const EditOccupantUserPage: React.FC = () => {
                   )}
                 </FormControl>
               )}
+              <div>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Select Role</InputLabel>
+                  <Select
+                    value={formData.selectRole}
+                    onChange={(e) => handleInputChange('selectRole', e.target.value)}
+                    label="Select Role"
+                    displayEmpty
+                  >
+                    <MenuItem value="">Select Role</MenuItem>
+                    {roleLoading && <MenuItem disabled>Loading...</MenuItem>}
+                    {roleError && <MenuItem disabled>Error: {roleError}</MenuItem>}
+                    {Array.isArray(roles) && roles?.map((role: any) => (
+                      <MenuItem key={role.id} value={role.id}>
+                        {role.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
               <div>
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Select User Category</InputLabel>

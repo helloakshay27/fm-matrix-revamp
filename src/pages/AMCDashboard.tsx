@@ -142,6 +142,7 @@ interface AMCRecord {
   service_name?: string;
   status: string;
   amc_assets?: Array<{ id: number; asset_id: number; asset_name: string }>;
+  amc_services?: Array<{ id: number; service_id: number; service_name: string; group_name?: string; sub_group_name?: string }>;
 }
 
 const initialAmcData: AMCRecord[] = [];
@@ -149,7 +150,7 @@ const initialAmcData: AMCRecord[] = [];
 const columns: ColumnConfig[] = [
   { key: 'actions', label: 'Actions', sortable: false, defaultVisible: true },
   { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
-  { key: 'asset_name', label: 'Asset Name', sortable: true, defaultVisible: true },
+  { key: 'asset_name', label: 'Asset/ Service Name', sortable: true, defaultVisible: true },
   { key: 'amc_type', label: 'AMC Type', sortable: true, defaultVisible: true },
   { key: 'vendor_name', label: 'Vendor Name', sortable: true, defaultVisible: true },
   { key: 'contract_name', label: 'Contract Name', sortable: true, defaultVisible: true },
@@ -160,6 +161,17 @@ const columns: ColumnConfig[] = [
   { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
   { key: 'active', label: 'Status', sortable: true, defaultVisible: true },
 ];
+
+// Helper function to format asset/service names with ellipsis
+const formatNamesWithEllipsis = (names: string[], maxDisplay: number = 3): string => {
+  if (!names || names.length === 0) return '-';
+
+  if (names.length <= maxDisplay) {
+    return names.join(', ');
+  }
+
+  return `${names.slice(0, maxDisplay).join(', ')} ...`;
+};
 
 export const AMCDashboard = () => {
   // Ref for anchoring MUI Select menus inside filter dialog
@@ -193,7 +205,7 @@ export const AMCDashboard = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 600);
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  
+
   // Individual loading states for each analytics card
   const [loadingStates, setLoadingStates] = useState({
     status_overview: false,
@@ -204,7 +216,7 @@ export const AMCDashboard = () => {
     service_tracking: false,
     coverage_by_location: false
   });
-  
+
   const [amcAnalyticsData, setAmcAnalyticsData] = useState<AMCStatusData | null>(null);
   const [amcStatusSummary, setAmcStatusSummary] = useState<AMCStatusSummary | null>(null);
   const [amcTypeDistribution, setAmcTypeDistribution] = useState<AMCTypeDistribution[] | null>(null);
@@ -272,7 +284,7 @@ export const AMCDashboard = () => {
 
   const fetchAMCAnalyticsData = async (startDate: Date, endDate: Date) => {
     setAnalyticsLoading(true);
-    
+
     // Set all individual cards to loading initially (only for selected analytics)
     const newLoadingStates = {
       status_overview: selectedAnalyticsOptions?.includes('status_overview'),
@@ -284,7 +296,7 @@ export const AMCDashboard = () => {
       coverage_by_location: selectedAnalyticsOptions?.includes('coverage_by_location')
     };
     setLoadingStates(newLoadingStates);
-    
+
     try {
       // Fetch all data in parallel but update states individually as they complete
       const promises = [];
@@ -389,10 +401,10 @@ export const AMCDashboard = () => {
       );
 
       await Promise.all(promises);
-      
+
     } catch (error) {
       console.error('Error fetching AMC analytics data:', error);
-      
+
       // Reset all loading states on error
       setLoadingStates({
         status_overview: false,
@@ -403,7 +415,7 @@ export const AMCDashboard = () => {
         service_tracking: false,
         coverage_by_location: false
       });
-      
+
       toast.error('Failed to fetch AMC analytics data');
     } finally {
       setAnalyticsLoading(false);
@@ -466,10 +478,7 @@ export const AMCDashboard = () => {
     }
 
     if (searchTerm && searchTerm.trim()) {
-      if (!isNaN(Number(searchTerm))) {
-        queryParams.push(`q[id_eq]=${encodeURIComponent(searchTerm.trim())}`);
-      }
-      queryParams.push(`q[search_all_fields_cont]=${encodeURIComponent(searchTerm.trim())}`);
+      queryParams.push(`q[id_value_or_amc_assets_resource_name_or_amc_type_or_supplier_company_name_or_contract_name_cont]=${encodeURIComponent(searchTerm.trim())}`);
     }
 
     if (queryParams.length > 0) {
@@ -691,13 +700,18 @@ export const AMCDashboard = () => {
         return <span className="font-medium">{item.id}</span>;
       case 'asset_name':
         if (item.amc_type === 'Asset') {
-          // Prefer first nested amc_assets entry if present
-          const first = item.amc_assets && item.amc_assets.length > 0 ? item.amc_assets[0] : null;
-          if (first) {
-            return first.asset_name || '-';
+          // Get asset names from amc_assets array
+          const assetNames = item.amc_assets?.map(asset => asset.asset_name).filter(Boolean) || [];
+          if (assetNames.length > 0) {
+            return formatNamesWithEllipsis(assetNames);
           }
           return item.asset_name || '-';
         } else if (item.amc_type === 'Service') {
+          // Get service names from amc_services array
+          const serviceNames = item.amc_services?.map(service => service.service_name).filter(Boolean) || [];
+          if (serviceNames.length > 0) {
+            return formatNamesWithEllipsis(serviceNames);
+          }
           return item.service_name || '-';
         } else {
           return '-';
@@ -1214,68 +1228,68 @@ export const AMCDashboard = () => {
 
             <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-120">
-                  {selectedAnalyticsOptions?.includes('status_overview') && (
-                    <SectionLoader loading={loadingStates.status_overview} className="h-full">
-                      <AMCStatusCard
-                        data={amcStatusSummary}
-                        colorPalette={analyticsColorPalette}
-                        headerClassName="text-[#1A1A1A]"
-                        onDownload={async () => {
-                          const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                          const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                          await amcAnalyticsDownloadAPI.downloadAMCStatusData(startDate, endDate);
-                        }}
-                      />
-                    </SectionLoader>
-                  )}
-                  {selectedAnalyticsOptions?.includes('type_distribution') && (
-                    <SectionLoader loading={loadingStates.type_distribution} className="h-full">
-                      <AMCTypeDistributionCard
-                        data={amcTypeDistribution}
-                        colorPalette={analyticsColorPalette}
-                        headerClassName="text-[#1A1A1A]"
-                        onDownload={async () => {
-                          const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                          const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                          await amcAnalyticsDownloadAPI.downloadAMCTypeDistribution(startDate, endDate);
-                        }}
-                      />
-                    </SectionLoader>
-                  )}
-                </div>
+                {selectedAnalyticsOptions?.includes('status_overview') && (
+                  <SectionLoader loading={loadingStates.status_overview} className="h-full">
+                    <AMCStatusCard
+                      data={amcStatusSummary}
+                      colorPalette={analyticsColorPalette}
+                      headerClassName="text-[#1A1A1A]"
+                      onDownload={async () => {
+                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                        await amcAnalyticsDownloadAPI.downloadAMCStatusData(startDate, endDate);
+                      }}
+                    />
+                  </SectionLoader>
+                )}
+                {selectedAnalyticsOptions?.includes('type_distribution') && (
+                  <SectionLoader loading={loadingStates.type_distribution} className="h-full">
+                    <AMCTypeDistributionCard
+                      data={amcTypeDistribution}
+                      colorPalette={analyticsColorPalette}
+                      headerClassName="text-[#1A1A1A]"
+                      onDownload={async () => {
+                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                        await amcAnalyticsDownloadAPI.downloadAMCTypeDistribution(startDate, endDate);
+                      }}
+                    />
+                  </SectionLoader>
+                )}
+              </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-                  {selectedAnalyticsOptions?.includes('unit_resource_wise') && (
-                    <SectionLoader loading={loadingStates.unit_resource_wise} className="h-full">
-                      <AMCUnitResourceCard
-                        data={amcUnitResourceData}
-                        colorPalette={analyticsColorPalette}
-                        headerClassName="text-[#1A1A1A]"
-                        onDownload={async () => {
-                          const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                          const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                          await amcAnalyticsDownloadAPI.downloadAMCUnitResourceWise(startDate, endDate);
-                        }}
-                      />
-                    </SectionLoader>
-                  )}
-                  {selectedAnalyticsOptions?.includes('service_stats') && (
-                    <SectionLoader loading={loadingStates.service_stats} className="h-full">
-                      <AMCServiceStatsCard
-                        data={amcServiceStatsData}
-                        colorPalette={analyticsColorPalette}
-                        headerClassName="text-[#1A1A1A]"
-                        onDownload={async () => {
-                          const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                          const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                          await amcAnalyticsDownloadAPI.downloadAMCServiceStats(startDate, endDate);
-                        }}
-                      />
-                    </SectionLoader>
-                  )}
-                </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                {selectedAnalyticsOptions?.includes('unit_resource_wise') && (
+                  <SectionLoader loading={loadingStates.unit_resource_wise} className="h-full">
+                    <AMCUnitResourceCard
+                      data={amcUnitResourceData}
+                      colorPalette={analyticsColorPalette}
+                      headerClassName="text-[#1A1A1A]"
+                      onDownload={async () => {
+                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                        await amcAnalyticsDownloadAPI.downloadAMCUnitResourceWise(startDate, endDate);
+                      }}
+                    />
+                  </SectionLoader>
+                )}
+                {selectedAnalyticsOptions?.includes('service_stats') && (
+                  <SectionLoader loading={loadingStates.service_stats} className="h-full">
+                    <AMCServiceStatsCard
+                      data={amcServiceStatsData}
+                      colorPalette={analyticsColorPalette}
+                      headerClassName="text-[#1A1A1A]"
+                      onDownload={async () => {
+                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                        await amcAnalyticsDownloadAPI.downloadAMCServiceStats(startDate, endDate);
+                      }}
+                    />
+                  </SectionLoader>
+                )}
+              </div>
 
-                {/* {selectedAnalyticsOptions?.includes('service_tracking') && (
+              {/* {selectedAnalyticsOptions?.includes('service_tracking') && (
                   <div className="h-96">
                     <AMCServiceTrackingCard
                       data={amcServiceTracking}
@@ -1290,45 +1304,45 @@ export const AMCDashboard = () => {
                   </div>
                 )} */}
 
-                {selectedAnalyticsOptions?.includes('coverage_by_location') && (
-                  <SectionLoader loading={loadingStates.coverage_by_location} className="h-full">
-                    <AMCCoverageByLocationCard
-                      data={amcCoverageData}
-                      colorPalette={analyticsColorPalette}
-                      headerClassName="text-[#1A1A1A]"
-                      onDownload={async () => {
-                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                        await amcAnalyticsDownloadAPI.downloadAMCCoverageByLocation(startDate, endDate);
-                      }}
-                    />
-                  </SectionLoader>
-                )}
+              {selectedAnalyticsOptions?.includes('coverage_by_location') && (
+                <SectionLoader loading={loadingStates.coverage_by_location} className="h-full">
+                  <AMCCoverageByLocationCard
+                    data={amcCoverageData}
+                    colorPalette={analyticsColorPalette}
+                    headerClassName="text-[#1A1A1A]"
+                    onDownload={async () => {
+                      const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                      const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                      await amcAnalyticsDownloadAPI.downloadAMCCoverageByLocation(startDate, endDate);
+                    }}
+                  />
+                </SectionLoader>
+              )}
 
-                {selectedAnalyticsOptions?.includes('expiry_analysis') && (
-                  <SectionLoader loading={loadingStates.expiry_analysis} className="w-full lg:w-3/5 h-full">
-                    <AMCExpiryAnalysisCard
-                      data={amcExpiryAnalysis}
-                      colorPalette={analyticsColorPalette}
-                      headerClassName="text-[#1A1A1A]"
-                      onDownload={async () => {
-                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                        await amcAnalyticsDownloadAPI.downloadAMCExpiryAnalysis(startDate, endDate);
-                      }}
-                    />
-                  </SectionLoader>
-                )}
+              {selectedAnalyticsOptions?.includes('expiry_analysis') && (
+                <SectionLoader loading={loadingStates.expiry_analysis} className="w-full lg:w-3/5 h-full">
+                  <AMCExpiryAnalysisCard
+                    data={amcExpiryAnalysis}
+                    colorPalette={analyticsColorPalette}
+                    headerClassName="text-[#1A1A1A]"
+                    onDownload={async () => {
+                      const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                      const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                      await amcAnalyticsDownloadAPI.downloadAMCExpiryAnalysis(startDate, endDate);
+                    }}
+                  />
+                </SectionLoader>
+              )}
 
-                {selectedAnalyticsOptions?.length === 0 && (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="text-center">
-                      <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">No analytics selected. Please select at least one report to view.</p>
-                    </div>
+              {selectedAnalyticsOptions?.length === 0 && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No analytics selected. Please select at least one report to view.</p>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
           </TabsContent>
 
           <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
@@ -1485,7 +1499,7 @@ export const AMCDashboard = () => {
                 </Typography>
                 <IconButton
                   aria-label="close"
-                  size="small" 
+                  size="small"
                   onClick={() => setIsFilterModalOpen(false)}
                   sx={{ opacity: 0.7, '&:hover': { opacity: 1 } }}
                 >

@@ -66,7 +66,7 @@ export const EditExternalUserPage = () => {
     .replace(/[^A-Za-z0-9\s]/g, '') // remove non alphanumeric & non-space
     .replace(/\s+/g, ' ')            // collapse whitespace
     .trim();                          // trim ends
-  const isValidName = (v: string) => /^[A-Za-z0-9 ]{2,}$/.test(v); // allow spaces between words
+  const isValidName = (v: string) => /^[A-Za-z0-9 ]+$/.test(v); // allow spaces between words
 
   // Email format validator
   const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(val).trim());
@@ -92,7 +92,8 @@ export const EditExternalUserPage = () => {
       setFieldErrors(prev => ({
         ...prev,
         [field]: cleaned.length === 0 ? (field === 'firstname' ? 'First Name is required' : 'Last Name is required')
-          : cleaned.length < 2 ? (field === 'firstname' ? 'First Name must be at least 2 characters' : 'Last Name must be at least 2 characters')
+          : (field === 'firstname' && cleaned.length < 2) ? 'First Name must be at least 2 characters'
+          : (field === 'lastname' && cleaned.length < 1) ? 'Last Name must be at least 1 character'
           : !isValidName(cleaned) ? (field === 'firstname' ? 'First Name must contain only letters, numbers, or spaces' : 'Last Name must contain only letters, numbers, or spaces')
           : ''
       }));
@@ -172,8 +173,8 @@ export const EditExternalUserPage = () => {
     }
     if (!isEmpty(formData.lastname)) {
       const ln = String(formData.lastname);
-      if (ln.length < 2) {
-        errors.lastname = errors.lastname || 'Last Name must be at least 2 characters';
+      if (ln.length < 1) {
+        errors.lastname = errors.lastname || 'Last Name must be at least 1 character';
       } else if (!/^[A-Za-z0-9 ]+$/.test(ln)) {
         errors.lastname = errors.lastname || 'Last Name must contain only letters, numbers, or spaces';
       }
@@ -257,7 +258,7 @@ export const EditExternalUserPage = () => {
       };
       const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
       const url = `${cleanBaseUrl}/pms/users/${idForUpdate}/update_vi_user`;
-      await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${cleanBaseUrl}/pms/users/${idForUpdate}/update_vi_user`, payload, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('External user updated');
       navigate(`/safety/m-safe/external/user/${idForUpdate}`, { state: { user: { ...originalUser, ...formData } } });
     } catch (e: any) {

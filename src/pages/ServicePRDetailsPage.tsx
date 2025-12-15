@@ -122,6 +122,7 @@ interface ServiceItem {
   tcs_amount: number;
   tax_amount: number;
   total_amount: number;
+  general_storage: string;
 }
 
 interface Approval {
@@ -147,6 +148,7 @@ interface Attachment {
 }
 
 interface ServicePR {
+  amc_declaration: any;
   company?: Company;
   work_order?: WorkOrder;
   inventories?: ServiceItem[];
@@ -157,12 +159,17 @@ interface ServicePR {
   signature?: string;
   contractor?: string;
   all_level_approved?: boolean;
+  pr_type: string;
 }
 
 // Column configurations
 const serviceColumns: ColumnConfig[] = [
   { key: "sno", label: "S.No", sortable: true, draggable: true },
   { key: "boq_details", label: "BOQ Details", sortable: true, draggable: true },
+  { key: "gl_account", label: "GL Account", sortable: true, draggable: true },
+  { key: "tax_code", label: "Tax Code", sortable: true, draggable: true },
+  { key: "general_storage", label: "General Storage", sortable: true, draggable: true },
+
   { key: "quantity", label: "Quantity", sortable: true, draggable: true },
   { key: "uom", label: "UOM", sortable: true, draggable: true },
   {
@@ -228,6 +235,7 @@ export const ServicePRDetailsPage = () => {
     showSap: false,
     editWbsCode: false,
   });
+  const [externalApiCalls, setExternalApiCalls] = useState<any[]>([]);
 
   useEffect(() => {
     if (searchParams.get("type") === "delete-request") {
@@ -259,6 +267,11 @@ export const ServicePRDetailsPage = () => {
           showSap: response.show_send_sap_yes,
           editWbsCode: response.can_edit_wbs_codes,
         });
+        // Set external API calls if available
+        console.log("response.page", response.page.api_responses);
+        if (response.page?.api_responses && Array.isArray(response.page.api_responses)) {
+          setExternalApiCalls(response.page.api_responses);
+        }
         // Initialize updatedWbsCodes with current WBS codes
         const initialWbsCodes = response.page?.inventories?.reduce(
           (acc: { [key: string]: string }, item: ServiceItem) => {
@@ -550,6 +563,10 @@ export const ServicePRDetailsPage = () => {
       tcs_amount: item.tcs_amount || 0,
       tax_amount: item.tax_amount || 0,
       total_amount: item.total_amount || 0,
+      general_storage: item.general_storage || "-",
+      gl_account: item.gl_account || "-",
+      tax_code: item.tax_code || "-"
+      
     })) || [];
 
   const renderCell = (item: ServiceItem, columnKey: string) => {
@@ -958,6 +975,28 @@ export const ServicePRDetailsPage = () => {
                   {servicePR.work_order?.description ?? "-"}
                 </span>
               </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Type</span>
+                <span className="text-gray-500 mx-2">:</span>
+                {servicePR.pr_type ? (
+                  <span className="text-gray-900 font-medium px-3 text-sm rounded-[5px] w-max cursor-pointer bg-blue-200">
+                    {servicePR.pr_type}
+                  </span>
+                ) : (
+                  <span className="text-gray-500">-</span>
+                )}
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Amc Declation</span>
+                <span className="text-gray-500 mx-2">:</span>
+                {servicePR.amc_declaration ? (
+                  <span className="text-gray-900 font-medium px-3 text-sm rounded-[5px] w-max cursor-pointer ">
+                    {servicePR.amc_declaration ? "Yes" : "No"}
+                  </span>
+                ) : (
+                  <span className="text-gray-500">-</span>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -1312,6 +1351,49 @@ export const ServicePRDetailsPage = () => {
           selectedDoc={selectedAttachment}
           setSelectedDoc={setSelectedAttachment}
         />
+
+        {/* External API Calls Logs Section */}
+        {externalApiCalls && externalApiCalls.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6 p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Rss className="w-5 h-5" />
+              External API Calls
+            </h3>
+            <div className="space-y-4">
+              {externalApiCalls.map((apiCall, index) => (
+                <div key={apiCall.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600 font-semibold">Provider</p>
+                      <p className="text-sm font-medium">{apiCall.api_provider || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
+                      <p className={`text-sm font-medium ${
+                        apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {apiCall.response_status || '-'}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-gray-600 font-semibold">Message</p>
+                      <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
+                        {apiCall.eval_status && apiCall.eval_status.trim() 
+                          ? apiCall.eval_status 
+                          : (apiCall.response_string ? JSON.stringify(JSON.parse(apiCall.response_string), null, 2) : '-')}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-xs text-gray-500">
+                        Created: {apiCall.created_at ? new Date(apiCall.created_at).toLocaleString() : '-'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

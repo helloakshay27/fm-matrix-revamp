@@ -749,6 +749,8 @@ export const VisitorDetailsPage = () => {
       </ExpandableSection>
 
       {/* Section 3: Goods Inward Info */}
+
+      
       <ExpandableSection
         title="GOODS INWARD INFO"
         icon={ClipboardList}

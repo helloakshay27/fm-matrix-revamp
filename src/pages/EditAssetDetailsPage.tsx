@@ -262,8 +262,14 @@ const AssetImageUpload = ({
 };
 
 export const EditAssetDetailsPage = () => {
-  const currency = (typeof window !== 'undefined' && window.localStorage.getItem('currency')) || 'INR';
-  const currencySymbol = (typeof window !== 'undefined' && window.localStorage.getItem('currencySymbol')) || '';
+  const currency =
+    (typeof window !== "undefined" &&
+      window.localStorage.getItem("currency")) ||
+    "INR";
+  const currencySymbol =
+    (typeof window !== "undefined" &&
+      window.localStorage.getItem("currencySymbol")) ||
+    "";
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -293,7 +299,7 @@ export const EditAssetDetailsPage = () => {
     meterCategory: false,
     consumption: true,
     // nonConsumption: false,
-     nonConsumption: true,
+    nonConsumption: true,
     assetAllocation: true,
     assetLoaned: false,
     amcDetails: true,
@@ -467,7 +473,8 @@ export const EditAssetDetailsPage = () => {
   const [showRenewableOptions, setShowRenewableOptions] = useState(false);
   const [showFreshWaterOptions, setShowFreshWaterOptions] = useState(false);
   const [showWaterSourceOptions, setShowWaterSourceOptions] = useState(false);
-  const [showWaterDistributionOptions, setShowWaterDistributionOptions] = useState(false);
+  const [showWaterDistributionOptions, setShowWaterDistributionOptions] =
+    useState(false);
 
   // Additional state for tracking the third level selection
   const [tertiaryCategory, setTertiaryCategory] = useState("");
@@ -491,7 +498,8 @@ export const EditAssetDetailsPage = () => {
   const [extraFormFields, setExtraFormFields] = useState<
     Record<string, ExtraFormField>
   >({});
-  const [originalExtraFieldsAttributes, setOriginalExtraFieldsAttributes] = useState<any[]>([]);
+  const [originalExtraFieldsAttributes, setOriginalExtraFieldsAttributes] =
+    useState<any[]>([]);
   const [isEditingHardDiskHeading, setIsEditingHardDiskHeading] =
     useState(false);
   const [editingHardDiskHeadingText, setEditingHardDiskHeadingText] = useState(
@@ -533,7 +541,7 @@ export const EditAssetDetailsPage = () => {
     is_meter: false,
     asset_loaned: false,
     // depreciation_applicable: false,
-     depreciation_applicable: true,
+    depreciation_applicable: true,
     useful_life: "",
     purchase_cost: "",
     purchased_on: "",
@@ -1107,11 +1115,50 @@ export const EditAssetDetailsPage = () => {
   // State for existing attachments from API
   const [existingAttachments, setExistingAttachments] = useState({
     asset_image: null as { document: string; document_name: string } | null,
-    asset_manuals: [] as Array<{ id: number; document: string; document_name: string }>,
-    asset_other_uploads: [] as Array<{ id: number; document: string; document_name: string }>,
-    asset_insurances: [] as Array<{ id: number; document: string; document_name: string }>,
-    asset_purchases: [] as Array<{ id: number; document: string; document_name: string }>
+    asset_manuals: [] as Array<{
+      id: number;
+      document: string;
+      document_name: string;
+    }>,
+    asset_other_uploads: [] as Array<{
+      id: number;
+      document: string;
+      document_name: string;
+    }>,
+    asset_insurances: [] as Array<{
+      id: number;
+      document: string;
+      document_name: string;
+    }>,
+    asset_purchases: [] as Array<{
+      id: number;
+      document: string;
+      document_name: string;
+    }>,
   });
+
+  // Track existing attachment IDs that user marked for deletion
+  const [attachmentsToDestroy, setAttachmentsToDestroy] = useState<{
+    asset_image: number[];
+  }>({
+    asset_image: [],
+  });
+
+  const markExistingAttachmentForDeletion = (
+    categoryKey: keyof typeof attachmentsToDestroy,
+    id: number
+  ) => {
+    setAttachmentsToDestroy((prev) => ({
+      ...prev,
+      [categoryKey]: [...(prev[categoryKey] || []), id],
+    }));
+
+    // Remove from visible existingAttachments so the UI updates immediately
+    setExistingAttachments((prev: any) => ({
+      ...prev,
+      [categoryKey === "asset_image" ? "asset_image" : categoryKey]: null,
+    }));
+  };
 
   const [selectedAssetCategory, setSelectedAssetCategory] = useState("");
 
@@ -1120,31 +1167,35 @@ export const EditAssetDetailsPage = () => {
   };
 
   // Download attachment function similar to AMC page
-  const downloadAttachment = async (attachment: { id?: number; document: string; document_name: string }) => {
+  const downloadAttachment = async (attachment: {
+    id?: number;
+    document: string;
+    document_name: string;
+  }) => {
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem("token");
+      const baseUrl = localStorage.getItem("baseUrl");
 
       if (!token || !baseUrl) {
-        console.error('Missing token or base URL');
+        console.error("Missing token or base URL");
         return;
       }
 
       const apiUrl = `https://${baseUrl}/attachfiles/${attachment.id}?show_file=true`;
 
       const response = await fetch(apiUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
-      if (!response.ok) throw new Error('Download failed');
+      if (!response.ok) throw new Error("Download failed");
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = attachment.document_name || `document_${attachment.id}`;
       document.body.appendChild(link);
@@ -1152,7 +1203,7 @@ export const EditAssetDetailsPage = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Error downloading file:', err);
+      console.error("Error downloading file:", err);
     }
   };
 
@@ -1221,7 +1272,12 @@ export const EditAssetDetailsPage = () => {
             ...prev,
             [key]: {
               value: String(value),
-              fieldType: key.includes("date") || key.includes("purchased_on") || key.includes("warranty_expiry") ? "date" : "text",
+              fieldType:
+                key.includes("date") ||
+                  key.includes("purchased_on") ||
+                  key.includes("warranty_expiry")
+                  ? "date"
+                  : "text",
               groupType: fallbackGroup,
               fieldDescription: description || key,
             },
@@ -1229,9 +1285,24 @@ export const EditAssetDetailsPage = () => {
         }
       };
 
-      ensureExtraField("purchase_cost", asset?.purchase_cost, "purchaseDetails", "Purchase Cost");
-      ensureExtraField("purchased_on", asset?.purchased_on, "purchaseDetails", "Purchase Date");
-      ensureExtraField("warranty_expiry", asset?.warranty_expiry, "purchaseDetails", "Warranty Expiry");
+      ensureExtraField(
+        "purchase_cost",
+        asset?.purchase_cost,
+        "purchaseDetails",
+        "Purchase Cost"
+      );
+      ensureExtraField(
+        "purchased_on",
+        asset?.purchased_on,
+        "purchaseDetails",
+        "Purchase Date"
+      );
+      ensureExtraField(
+        "warranty_expiry",
+        asset?.warranty_expiry,
+        "purchaseDetails",
+        "Warranty Expiry"
+      );
 
       const rawCategory = categoryFromExtra || asset?.asset_type_category || "";
       if (rawCategory) {
@@ -1248,7 +1319,9 @@ export const EditAssetDetailsPage = () => {
           "Tools & Instruments",
           "Meter",
         ];
-        const match = allowed.find((c) => c.toLowerCase() === normalized.toLowerCase()) || normalized;
+        const match =
+          allowed.find((c) => c.toLowerCase() === normalized.toLowerCase()) ||
+          normalized;
         setSelectedAssetCategory(match);
       }
 
@@ -1258,16 +1331,28 @@ export const EditAssetDetailsPage = () => {
       }
       // Basic identifiers
       if (asset?.asset_number) {
-        setFormData((prev) => ({ ...prev, asset_number: String(asset.asset_number) }));
+        setFormData((prev) => ({
+          ...prev,
+          asset_number: String(asset.asset_number),
+        }));
       }
       if (asset?.model_number) {
-        setFormData((prev) => ({ ...prev, model_number: String(asset.model_number) }));
+        setFormData((prev) => ({
+          ...prev,
+          model_number: String(asset.model_number),
+        }));
       }
       if (asset?.serial_number) {
-        setFormData((prev) => ({ ...prev, serial_number: String(asset.serial_number) }));
+        setFormData((prev) => ({
+          ...prev,
+          serial_number: String(asset.serial_number),
+        }));
       }
       if (asset?.manufacturer) {
-        setFormData((prev) => ({ ...prev, manufacturer: String(asset.manufacturer) }));
+        setFormData((prev) => ({
+          ...prev,
+          manufacturer: String(asset.manufacturer),
+        }));
       }
 
       // Group & Subgroup dropdowns (ensure subgroups list is loaded before selecting)
@@ -1280,7 +1365,10 @@ export const EditAssetDetailsPage = () => {
           if (asset?.pms_asset_sub_group_id) {
             const subIdStr = String(asset.pms_asset_sub_group_id);
             setSelectedSubgroup(subIdStr);
-            setFormData((prev) => ({ ...prev, pms_asset_sub_group_id: subIdStr }));
+            setFormData((prev) => ({
+              ...prev,
+              pms_asset_sub_group_id: subIdStr,
+            }));
           }
         } catch (e) {
           console.warn("Failed to fetch subgroups during prefill", e);
@@ -1290,14 +1378,19 @@ export const EditAssetDetailsPage = () => {
       // Supplier dropdown
       if (asset?.pms_supplier_id) {
         setSelectedVendorId(String(asset.pms_supplier_id));
-        setFormData((prev) => ({ ...prev, pms_supplier_id: String(asset.pms_supplier_id) }));
+        setFormData((prev) => ({
+          ...prev,
+          pms_supplier_id: String(asset.pms_supplier_id),
+        }));
       }
 
       // Location hierarchy dropdowns
       setSelectedLocation((prev) => ({
         ...prev,
         site: asset?.pms_site_id ? String(asset.pms_site_id) : prev.site,
-        building: asset?.pms_building_id ? String(asset.pms_building_id) : prev.building,
+        building: asset?.pms_building_id
+          ? String(asset.pms_building_id)
+          : prev.building,
         wing: asset?.pms_wing_id ? String(asset.pms_wing_id) : prev.wing,
         area: asset?.pms_area_id ? String(asset.pms_area_id) : prev.area,
         floor: asset?.pms_floor_id ? String(asset.pms_floor_id) : prev.floor,
@@ -1305,11 +1398,21 @@ export const EditAssetDetailsPage = () => {
       }));
 
       // Ensure dropdown option lists are loaded so values appear selected
-      const siteIdNum = asset?.pms_site_id ? Number(asset.pms_site_id) : undefined;
-      const buildingIdNum = asset?.pms_building_id ? Number(asset.pms_building_id) : undefined;
-      const wingIdNum = asset?.pms_wing_id ? Number(asset.pms_wing_id) : undefined;
-      const areaIdNum = asset?.pms_area_id ? Number(asset.pms_area_id) : undefined;
-      const floorIdNum = asset?.pms_floor_id ? Number(asset.pms_floor_id) : undefined;
+      const siteIdNum = asset?.pms_site_id
+        ? Number(asset.pms_site_id)
+        : undefined;
+      const buildingIdNum = asset?.pms_building_id
+        ? Number(asset.pms_building_id)
+        : undefined;
+      const wingIdNum = asset?.pms_wing_id
+        ? Number(asset.pms_wing_id)
+        : undefined;
+      const areaIdNum = asset?.pms_area_id
+        ? Number(asset.pms_area_id)
+        : undefined;
+      const floorIdNum = asset?.pms_floor_id
+        ? Number(asset.pms_floor_id)
+        : undefined;
 
       try {
         if (siteIdNum) {
@@ -1333,21 +1436,39 @@ export const EditAssetDetailsPage = () => {
 
       // Dates and warranty
       if (asset?.purchased_on) {
-        setFormData((prev) => ({ ...prev, purchased_on: String(asset.purchased_on) }));
+        setFormData((prev) => ({
+          ...prev,
+          purchased_on: String(asset.purchased_on),
+        }));
       }
       if (asset?.warranty_expiry) {
-        setFormData((prev) => ({ ...prev, warranty_expiry: String(asset.warranty_expiry) }));
+        setFormData((prev) => ({
+          ...prev,
+          warranty_expiry: String(asset.warranty_expiry),
+        }));
       }
-      if (asset?.warranty_period !== undefined && asset?.warranty_period !== null) {
-        setFormData((prev) => ({ ...prev, warranty_period: String(asset.warranty_period) }));
+      if (
+        asset?.warranty_period !== undefined &&
+        asset?.warranty_period !== null
+      ) {
+        setFormData((prev) => ({
+          ...prev,
+          warranty_period: String(asset.warranty_period),
+        }));
       }
       if (asset?.commisioning_date) {
-        setFormData((prev) => ({ ...prev, commisioning_date: String(asset.commisioning_date) }));
+        setFormData((prev) => ({
+          ...prev,
+          commisioning_date: String(asset.commisioning_date),
+        }));
       }
 
       // Financial & Depreciation
       if (asset?.purchase_cost !== undefined && asset?.purchase_cost !== null) {
-        setFormData((prev) => ({ ...prev, purchase_cost: String(asset.purchase_cost) }));
+        setFormData((prev) => ({
+          ...prev,
+          purchase_cost: String(asset.purchase_cost),
+        }));
       }
       // if (typeof asset?.depreciation_applicable !== "undefined") {
       //   const applicable = Boolean(asset.depreciation_applicable);
@@ -1356,25 +1477,46 @@ export const EditAssetDetailsPage = () => {
       //   setDepreciationToggle(applicable);
       // }
       if (asset?.depreciation_method) {
-        setFormData((prev) => ({ ...prev, depreciation_method: String(asset.depreciation_method) }));
+        setFormData((prev) => ({
+          ...prev,
+          depreciation_method: String(asset.depreciation_method),
+        }));
       }
       if (asset?.useful_life !== undefined && asset?.useful_life !== null) {
-        setFormData((prev) => ({ ...prev, useful_life: String(asset.useful_life) }));
+        setFormData((prev) => ({
+          ...prev,
+          useful_life: String(asset.useful_life),
+        }));
       }
       if (asset?.salvage_value !== undefined && asset?.salvage_value !== null) {
-        setFormData((prev) => ({ ...prev, salvage_value: String(asset.salvage_value) }));
+        setFormData((prev) => ({
+          ...prev,
+          salvage_value: String(asset.salvage_value),
+        }));
       }
-      if (asset?.depreciation_rate !== undefined && asset?.depreciation_rate !== null) {
-        setFormData((prev) => ({ ...prev, depreciation_rate: String(asset.depreciation_rate) }));
+      if (
+        asset?.depreciation_rate !== undefined &&
+        asset?.depreciation_rate !== null
+      ) {
+        setFormData((prev) => ({
+          ...prev,
+          depreciation_rate: String(asset.depreciation_rate),
+        }));
       }
 
       // Status / critical / breakdown
       if (typeof asset?.critical !== "undefined") {
-        setFormData((prev) => ({ ...prev, critical: asset.critical ? "Critical" : "Non-Critical" }));
+        setFormData((prev) => ({
+          ...prev,
+          critical: asset.critical ? "Critical" : "Non-Critical",
+        }));
         setCriticalStatus(asset.critical ? "1" : "0");
       }
       if (typeof asset?.breakdown !== "undefined") {
-        setFormData((prev) => ({ ...prev, breakdown: Boolean(asset.breakdown) }));
+        setFormData((prev) => ({
+          ...prev,
+          breakdown: Boolean(asset.breakdown),
+        }));
       }
       if (asset?.status) {
         setFormData((prev) => ({ ...prev, status: String(asset.status) }));
@@ -1382,35 +1524,41 @@ export const EditAssetDetailsPage = () => {
 
       // Allocation
       if (asset?.allocation_type) {
-        setFormData((prev) => ({ ...prev, allocation_type: String(asset.allocation_type) }));
+        setFormData((prev) => ({
+          ...prev,
+          allocation_type: String(asset.allocation_type),
+        }));
         setAllocationBasedOn(String(asset.allocation_type));
       }
       if (asset?.allocation_ids) {
         const raw = asset.allocation_ids;
         let idsArray = [];
-        
+
         // Handle different formats of allocation_ids
         if (Array.isArray(raw)) {
           idsArray = raw;
-        } else if (typeof raw === 'string') {
+        } else if (typeof raw === "string") {
           // Handle JSON string format like "[\"92\"]"
           try {
             const parsed = JSON.parse(raw);
             idsArray = Array.isArray(parsed) ? parsed : [parsed];
           } catch {
             // If not JSON, treat as comma-separated string
-            idsArray = raw.split(',').map((s) => s.trim()).filter(Boolean);
+            idsArray = raw
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
           }
         }
-        
+
         setFormData((prev) => ({ ...prev, allocation_ids: idsArray }));
-        
+
         // Set the appropriate selection based on allocation type
         if (idsArray.length > 0) {
           const firstId = idsArray[0];
-          if (asset.allocation_type === 'department') {
+          if (asset.allocation_type === "department") {
             setSelectedDepartmentId(String(firstId));
-          } else if (asset.allocation_type === 'users') {
+          } else if (asset.allocation_type === "users") {
             setSelectedUserId(String(firstId));
           }
         }
@@ -1420,30 +1568,49 @@ export const EditAssetDetailsPage = () => {
         let warrantyBool = false;
         if (typeof asset.warranty === "string") {
           const normalized = asset.warranty.trim().toLowerCase();
-          warrantyBool = normalized === "yes" || normalized === "true" || normalized === "1";
+          warrantyBool =
+            normalized === "yes" || normalized === "true" || normalized === "1";
         } else {
           warrantyBool = !!asset.warranty;
         }
         // Store as "Yes"/"No" to match formData shape
-        setFormData((prev) => ({ ...prev, warranty: warrantyBool ? "Yes" : "No" }));
+        setFormData((prev) => ({
+          ...prev,
+          warranty: warrantyBool ? "Yes" : "No",
+        }));
         setUnderWarranty(warrantyBool ? "yes" : "no");
       }
       if (typeof asset?.asset_type !== "undefined") {
         // Map boolean to string for radio binding
-        const assetTypeString = asset.asset_type === true ? "true" : asset.asset_type === false ? "false" : String(asset.asset_type);
+        const assetTypeString =
+          asset.asset_type === true
+            ? "true"
+            : asset.asset_type === false
+              ? "false"
+              : String(asset.asset_type);
         setFormData((prev) => ({ ...prev, asset_type: assetTypeString }));
       }
       // Asset Loaned Section
       if (asset.asset_loan_detail) {
         setAssetLoanedToggle(true);
-        setSelectedLoanedVendorId(String(asset.asset_loan_detail.loaned_from_vendor_id));
+        setSelectedLoanedVendorId(
+          String(asset.asset_loan_detail.loaned_from_vendor_id)
+        );
         setFormData((prev) => ({
           ...prev,
           asset_loaned: true,
-          loaned_from_vendor_id: asset.asset_loan_detail.loaned_from_vendor_id ? String(asset.asset_loan_detail.loaned_from_vendor_id) : "",
-          agreement_from_date: asset.asset_loan_detail.agrement_from_date ? String(asset.asset_loan_detail.agrement_from_date) : "",
-          agreement_to_date: asset.asset_loan_detail.agrement_to_date ? String(asset.asset_loan_detail.agrement_to_date) : "",
-          supplier: asset.asset_loan_detail.supplier ? String(asset.asset_loan_detail.supplier) : "",
+          loaned_from_vendor_id: asset.asset_loan_detail.loaned_from_vendor_id
+            ? String(asset.asset_loan_detail.loaned_from_vendor_id)
+            : "",
+          agreement_from_date: asset.asset_loan_detail.agrement_from_date
+            ? String(asset.asset_loan_detail.agrement_from_date)
+            : "",
+          agreement_to_date: asset.asset_loan_detail.agrement_to_date
+            ? String(asset.asset_loan_detail.agrement_to_date)
+            : "",
+          supplier: asset.asset_loan_detail.supplier
+            ? String(asset.asset_loan_detail.supplier)
+            : "",
         }));
       }
 
@@ -1456,118 +1623,146 @@ export const EditAssetDetailsPage = () => {
             ...prev.amc_detail,
             amc_cost: amc.amc_cost ? String(amc.amc_cost) : "",
             supplier_id: amc.supplier_id ? String(amc.supplier_id) : "",
-            amc_start_date: amc.amc_start_date ? String(amc.amc_start_date) : "",
+            amc_start_date: amc.amc_start_date
+              ? String(amc.amc_start_date)
+              : "",
             amc_end_date: amc.amc_end_date ? String(amc.amc_end_date) : "",
             payment_term: amc.payment_term ? String(amc.payment_term) : "",
-            amc_first_service: amc.amc_first_service ? String(amc.amc_first_service) : "",
+            amc_first_service: amc.amc_first_service
+              ? String(amc.amc_first_service)
+              : "",
             no_of_visits: amc.no_of_visits ? String(amc.no_of_visits) : "",
-            visit_frequency: amc.visit_frequency ? String(amc.visit_frequency) : "",
+            visit_frequency: amc.visit_frequency
+              ? String(amc.visit_frequency)
+              : "",
             supplier_name: amc.supplier_name ? String(amc.supplier_name) : "",
           },
         }));
-        
+
         // Set the AMC vendor selection
         if (amc.supplier_id) {
           setSelectedAmcVendorId(String(amc.supplier_id));
         }
       }
 
-
-
-
-         // IT ASSETS DETAILS section
-    if (asset.it_asset === true) {
-      // setItAssetsToggle(true);
-      setFormData((prev) => ({
-        ...prev,
-        it_asset: true,
-      }));
-      if (asset.custom_fields) {
-        setItAssetDetails({
-          system_details: {
-            os: asset.custom_fields.system_details?.os || "",
-            memory: asset.custom_fields.system_details?.memory || "",
-            processor: asset.custom_fields.system_details?.processor || "",
-          },
-          hardware: {
-            model: asset.custom_fields.hardware?.model || "",
-            serial_no: asset.custom_fields.hardware?.serial_no || "",
-            capacity: asset.custom_fields.hardware?.capacity || "",
-          },
-        });
+      // IT ASSETS DETAILS section
+      if (asset.it_asset === true) {
+        // setItAssetsToggle(true);
+        setFormData((prev) => ({
+          ...prev,
+          it_asset: true,
+        }));
+        if (asset.custom_fields) {
+          setItAssetDetails({
+            system_details: {
+              os: asset.custom_fields.system_details?.os || "",
+              memory: asset.custom_fields.system_details?.memory || "",
+              processor: asset.custom_fields.system_details?.processor || "",
+            },
+            hardware: {
+              model: asset.custom_fields.hardware?.model || "",
+              serial_no: asset.custom_fields.hardware?.serial_no || "",
+              capacity: asset.custom_fields.hardware?.capacity || "",
+            },
+          });
+        }
       }
-    }
-
-
 
       if (asset.is_meter === true) {
-      setMeterDetailsToggle(true);
+        setMeterDetailsToggle(true);
 
-      // Preselect meter type radio
-      setMeterType(asset.meter_tag_type || "");
+        // Preselect meter type radio
+        setMeterType(asset.meter_tag_type || "");
 
-      // Preselect Parent Meter dropdown when SubMeter
-      if (asset.meter_tag_type === "SubMeter") {
-        setSelectedParentMeterId(asset.parent_meter_id ? String(asset.parent_meter_id) : "");
-      } else {
-        setSelectedParentMeterId("");
-      }
-
-      // Preselect METER DETAILS category from meter_category_name (normalize names)
-      try {
-        const normalized = (asset.meter_category_name || "").toString().trim().toLowerCase();
-        const nameToValueMap = {
-          "board": "board",
-          "dg": "dg",
-          "renewable": "renewable",
-          "fresh water": "fresh-water",
-          "fresh-water": "fresh-water",
-          "recycled": "recycled",
-          "recycled water": "recycled",
-          "water distribution": "water-distribution",
-          "water-distribution": "water-distribution",
-          "iex-gdam": "iex-gdam",
-        } as Record<string, string>;
-        const mappedValue = nameToValueMap[normalized];
-        if (mappedValue) {
-          setMeterCategoryType(mappedValue);
+        // Preselect Parent Meter dropdown when SubMeter
+        if (asset.meter_tag_type === "SubMeter") {
+          setSelectedParentMeterId(
+            asset.parent_meter_id ? String(asset.parent_meter_id) : ""
+          );
         } else {
-          // Fallback to label-based lookup
-          const options = getMeterCategoryOptions();
-          const matched = options.find((o) => o.label.toLowerCase() === normalized);
-          if (matched) {
-            setMeterCategoryType(matched.value);
-          }
+          setSelectedParentMeterId("");
         }
-      } catch {}
 
-      // Preload NON CONSUMPTION METER MEASURE fields
-      if (Array.isArray(asset.non_consumption_pms_asset_measures)) {
-        setNonConsumptionMeasureFields(
-          asset.non_consumption_pms_asset_measures.map((m) => ({
-            id: String(m.id ?? `${Date.now()}-${Math.random()}`),
-            name: m.name || "",
-            unitType: m.meter_unit_id ? String(m.meter_unit_id) : "",
-            min: m.min_value !== undefined && m.min_value !== null ? String(m.min_value) : "",
-            max: m.max_value !== undefined && m.max_value !== null ? String(m.max_value) : "",
-            alertBelowVal: m.alert_below !== undefined && m.alert_below !== null ? String(m.alert_below) : "",
-            alertAboveVal: m.alert_above !== undefined && m.alert_above !== null ? String(m.alert_above) : "",
-            multiplierFactor: m.multiplier_factor !== undefined && m.multiplier_factor !== null ? String(m.multiplier_factor) : "",
-            checkPreviousReading: Boolean(m.check_previous_reading),
-          }))
-        );
-      } else {
-        setNonConsumptionMeasureFields([]);
-      }
+        // Preselect METER DETAILS category from meter_category_name (normalize names)
+        try {
+          const normalized = (asset.meter_category_name || "")
+            .toString()
+            .trim()
+            .toLowerCase();
+          const nameToValueMap = {
+            board: "board",
+            dg: "dg",
+            renewable: "renewable",
+            "fresh water": "fresh-water",
+            "fresh-water": "fresh-water",
+            recycled: "recycled",
+            "recycled water": "recycled",
+            "water distribution": "water-distribution",
+            "water-distribution": "water-distribution",
+            "iex-gdam": "iex-gdam",
+          } as Record<string, string>;
+          const mappedValue = nameToValueMap[normalized];
+          if (mappedValue) {
+            setMeterCategoryType(mappedValue);
+          } else {
+            // Fallback to label-based lookup
+            const options = getMeterCategoryOptions();
+            const matched = options.find(
+              (o) => o.label.toLowerCase() === normalized
+            );
+            if (matched) {
+              setMeterCategoryType(matched.value);
+            }
+          }
+        } catch { }
 
-      setFormData((prev) => ({
-        ...prev,
-        is_meter: true,
-        parent_meter_id: asset.parent_meter_id ? String(asset.parent_meter_id) : "",
-        meter_tag_type: asset.meter_tag_type || "",
-        meter_category_name: asset.meter_category_name || "",
-        non_consumption_pms_asset_measures_attributes: Array.isArray(asset.non_consumption_pms_asset_measures)
-          ? asset.non_consumption_pms_asset_measures.map((m) => ({
+        // Preload NON CONSUMPTION METER MEASURE fields
+        if (Array.isArray(asset.non_consumption_pms_asset_measures)) {
+          setNonConsumptionMeasureFields(
+            asset.non_consumption_pms_asset_measures.map((m) => ({
+              id: String(m.id ?? `${Date.now()}-${Math.random()}`),
+              name: m.name || "",
+              unitType: m.meter_unit_id ? String(m.meter_unit_id) : "",
+              min:
+                m.min_value !== undefined && m.min_value !== null
+                  ? String(m.min_value)
+                  : "",
+              max:
+                m.max_value !== undefined && m.max_value !== null
+                  ? String(m.max_value)
+                  : "",
+              alertBelowVal:
+                m.alert_below !== undefined && m.alert_below !== null
+                  ? String(m.alert_below)
+                  : "",
+              alertAboveVal:
+                m.alert_above !== undefined && m.alert_above !== null
+                  ? String(m.alert_above)
+                  : "",
+              multiplierFactor:
+                m.multiplier_factor !== undefined &&
+                  m.multiplier_factor !== null
+                  ? String(m.multiplier_factor)
+                  : "",
+              checkPreviousReading: Boolean(m.check_previous_reading),
+            }))
+          );
+        } else {
+          setNonConsumptionMeasureFields([]);
+        }
+
+        setFormData((prev) => ({
+          ...prev,
+          is_meter: true,
+          parent_meter_id: asset.parent_meter_id
+            ? String(asset.parent_meter_id)
+            : "",
+          meter_tag_type: asset.meter_tag_type || "",
+          meter_category_name: asset.meter_category_name || "",
+          non_consumption_pms_asset_measures_attributes: Array.isArray(
+            asset.non_consumption_pms_asset_measures
+          )
+            ? asset.non_consumption_pms_asset_measures.map((m) => ({
               id: m.id,
               asset_id: m.asset_id,
               name: m.name || "",
@@ -1583,67 +1778,75 @@ export const EditAssetDetailsPage = () => {
               cloned: m.cloned || false,
               check_previous_reading: m.check_previous_reading || false,
             }))
-          : [],
-      }));
-    }
+            : [],
+        }));
+      }
 
-
-   // CUSTOM FIELDS section (extra_fields_attributes)
-    if (Array.isArray(asset.extra_fields_attributes) && asset.extra_fields_attributes.length > 0) {
-      // Group fields by group_name
-      const groupedFields = {};
-      asset.extra_fields_attributes.forEach((field) => {
-        if (!groupedFields[field.group_name]) groupedFields[field.group_name] = [];
-        groupedFields[field.group_name].push({
-          id: field.id,
-          field_name: field.field_name,
-          field_description: field.field_description,
-          field_value: field.field_value,
-        });
-      });
-      setExtraFormFields((prev) => ({
-        ...prev,
-        ...Object.keys(groupedFields).reduce((acc, group) => {
-          groupedFields[group].forEach((field) => {
-            acc[`${group}_${field.field_name}`] = {
-              value: field.field_value,
-              fieldType: "custom",
-              groupType: group,
-              fieldDescription: field.field_description,
-            };
+      // CUSTOM FIELDS section (extra_fields_attributes)
+      if (
+        Array.isArray(asset.extra_fields_attributes) &&
+        asset.extra_fields_attributes.length > 0
+      ) {
+        // Group fields by group_name
+        const groupedFields = {};
+        asset.extra_fields_attributes.forEach((field) => {
+          if (!groupedFields[field.group_name])
+            groupedFields[field.group_name] = [];
+          groupedFields[field.group_name].push({
+            id: field.id,
+            field_name: field.field_name,
+            field_description: field.field_description,
+            field_value: field.field_value,
           });
-          return acc;
-        }, {}),
-      }));
-      
-      // Also prefill visible custom fields for UI rendering (only those marked as custom_field)
-      setCustomFields((prev) => ({
-        ...prev,
-        ...Object.keys(groupedFields).reduce((acc, group) => {
-          const customOnly = (groupedFields[group] || []).filter(
-            (f) => String(f.field_description).trim().toLowerCase() === "custom_field"
-          );
-          if (customOnly.length > 0) {
-            acc[group] = [
-              ...(prev[group] || []),
-              ...customOnly.map((f) => ({ id: f.id, name: f.field_name, value: f.field_value })),
-            ];
-          }
-          return acc;
-        }, {} as any),
-      }));
-      setOriginalExtraFieldsAttributes(asset.extra_fields_attributes);
-    }
+        });
+        setExtraFormFields((prev) => ({
+          ...prev,
+          ...Object.keys(groupedFields).reduce((acc, group) => {
+            groupedFields[group].forEach((field) => {
+              acc[`${group}_${field.field_name}`] = {
+                value: field.field_value,
+                fieldType: "custom",
+                groupType: group,
+                fieldDescription: field.field_description,
+              };
+            });
+            return acc;
+          }, {}),
+        }));
 
-    // Populate existing attachments from API
-    setExistingAttachments({
-      asset_image: asset.asset_image || null,
-      asset_manuals: asset.asset_manuals || [],
-      asset_other_uploads: asset.asset_other_uploads || [],
-      asset_insurances: asset.asset_insurances || [],
-      asset_purchases: asset.asset_purchases || []
-    });
+        // Also prefill visible custom fields for UI rendering (only those marked as custom_field)
+        setCustomFields((prev) => ({
+          ...prev,
+          ...Object.keys(groupedFields).reduce((acc, group) => {
+            const customOnly = (groupedFields[group] || []).filter(
+              (f) =>
+                String(f.field_description).trim().toLowerCase() ===
+                "custom_field"
+            );
+            if (customOnly.length > 0) {
+              acc[group] = [
+                ...(prev[group] || []),
+                ...customOnly.map((f) => ({
+                  id: f.id,
+                  name: f.field_name,
+                  value: f.field_value,
+                })),
+              ];
+            }
+            return acc;
+          }, {} as any),
+        }));
+        setOriginalExtraFieldsAttributes(asset.extra_fields_attributes);
+      }
 
+      // Populate existing attachments from API
+      setExistingAttachments({
+        asset_image: asset.asset_image || null,
+        asset_manuals: asset.asset_manuals || [],
+        asset_other_uploads: asset.asset_other_uploads || [],
+        asset_insurances: asset.asset_insurances || [],
+        asset_purchases: asset.asset_purchases || [],
+      });
     } catch (e) {
       console.error("Failed to prefill asset data", e);
     }
@@ -1670,9 +1873,9 @@ export const EditAssetDetailsPage = () => {
   useEffect(() => {
     if (sites && sites.length > 0 && !selectedLocation.site) {
       const firstSite = sites[0];
-      setSelectedLocation(prev => ({
+      setSelectedLocation((prev) => ({
         ...prev,
-        site: firstSite.id.toString()
+        site: firstSite.id.toString(),
       }));
       handleFieldChange("pms_site_id", firstSite.id.toString());
     }
@@ -1696,19 +1899,49 @@ export const EditAssetDetailsPage = () => {
         newLocation.area = "";
         newLocation.floor = "";
         newLocation.room = "";
-        if (value) fetchWings(parseInt(value));
+        if (value) {
+          const buildingId = parseInt(value);
+          fetchWings(buildingId);
+          // Also fetch areas, floors, and rooms with buildingId filter
+          fetchAreas(0, buildingId);
+          fetchFloors(0, buildingId);
+          fetchRooms(0, buildingId);
+        }
       } else if (field === "wing") {
         newLocation.area = "";
         newLocation.floor = "";
         newLocation.room = "";
-        if (value) fetchAreas(parseInt(value));
+        if (value && newLocation.building) {
+          const wingId = parseInt(value);
+          const buildingId = parseInt(newLocation.building);
+          // Fetch areas for this wing
+          fetchAreas(wingId, buildingId);
+          // Also fetch floors and rooms with wing_id
+          fetchFloors(0, buildingId, wingId);
+          fetchRooms(0, buildingId, wingId);
+        }
       } else if (field === "area") {
         newLocation.floor = "";
         newLocation.room = "";
-        if (value) fetchFloors(parseInt(value));
+        if (value && newLocation.building) {
+          const areaId = parseInt(value);
+          const buildingId = parseInt(newLocation.building);
+          const wingId = newLocation.wing ? parseInt(newLocation.wing) : undefined;
+          // Fetch floors for this area, passing wing_id if available
+          fetchFloors(areaId, buildingId, wingId);
+          // Also fetch rooms with area_id and wing_id
+          fetchRooms(0, buildingId, wingId, areaId);
+        }
       } else if (field === "floor") {
         newLocation.room = "";
-        if (value) fetchRooms(parseInt(value));
+        if (value && newLocation.building) {
+          const floorId = parseInt(value);
+          const buildingId = parseInt(newLocation.building);
+          const wingId = newLocation.wing ? parseInt(newLocation.wing) : undefined;
+          const areaId = newLocation.area ? parseInt(newLocation.area) : undefined;
+          // Fetch rooms for this floor, passing all parent IDs
+          fetchRooms(floorId, buildingId, wingId, areaId);
+        }
       }
 
       return newLocation;
@@ -1865,51 +2098,55 @@ export const EditAssetDetailsPage = () => {
   ];
 
   // Asset Meter Type ID mapping based on database values
-  const getAssetMeterTypeId = (meterCategory, subCategory = null, tertiaryCategory = null) => {
+  const getAssetMeterTypeId = (
+    meterCategory,
+    subCategory = null,
+    tertiaryCategory = null
+  ) => {
     // Create mapping from UI selections to database IDs
     const meterTypeMapping = {
       // Board category mappings
-      "board": {
+      board: {
         "ht-panel": 5, // HT Panel
-        "vcb": 8,      // VCB
-        "transformer": 2, // Transformer
-        "lt-panel": 9,  // LT Panel
+        vcb: 8, // VCB
+        transformer: 2, // Transformer
+        "lt-panel": 9, // LT Panel
       },
       // DG category
-      "dg": 1, // DG
+      dg: 1, // DG
 
       // Renewable energy mappings
-      "renewable": {
-        "solar": 7,      // Solar Panel
+      renewable: {
+        solar: 7, // Solar Panel
         "bio-methanol": 10, // Bio Methanol
-        "wind": 11,       // Wind
+        wind: 11, // Wind
       },
 
       // Fresh water mappings (three-level hierarchy)
       "fresh-water": {
-        "source": {
+        source: {
           "municipal-corporation": 12, // Municipal Corporation
-          "tanker": 13,               // Tanker  
-          "borewell": 14,             // Borewell
-          "rainwater": 15,            // Rainwater
-          "jackwell": 16,             // Jackwell
-          "pump": 3,                  // Pump (general pump type)
+          tanker: 13, // Tanker
+          borewell: 14, // Borewell
+          rainwater: 15, // Rainwater
+          jackwell: 16, // Jackwell
+          pump: 3, // Pump (general pump type)
         },
-        "destination": {
+        destination: {
           // You can add destination-specific mappings here if needed
           // For now, using a generic mapping
-          "output": 18, // Domestic (as a placeholder for destination)
-        }
+          output: 18, // Domestic (as a placeholder for destination)
+        },
       },
 
       // Recycled water
-      "recycled": 6, // Recycled Water
+      recycled: 6, // Recycled Water
 
       // Water distribution mappings
       "water-distribution": {
-        "irrigation": 17,  // Irrigation
-        "domestic": 18,    // Domestic
-        "flushing": 19,    // Flushing
+        irrigation: 17, // Irrigation
+        domestic: 18, // Domestic
+        flushing: 19, // Flushing
       },
 
       // IEX-GDAM
@@ -1917,19 +2154,28 @@ export const EditAssetDetailsPage = () => {
     };
 
     // Handle three-level hierarchy (for fresh-water with source/destination)
-    if (tertiaryCategory && meterTypeMapping[meterCategory] &&
+    if (
+      tertiaryCategory &&
+      meterTypeMapping[meterCategory] &&
       meterTypeMapping[meterCategory][subCategory] &&
-      typeof meterTypeMapping[meterCategory][subCategory] === 'object') {
-      return meterTypeMapping[meterCategory][subCategory][tertiaryCategory] || null;
+      typeof meterTypeMapping[meterCategory][subCategory] === "object"
+    ) {
+      return (
+        meterTypeMapping[meterCategory][subCategory][tertiaryCategory] || null
+      );
     }
     // Handle two-level hierarchy - but make sure we don't return nested objects
-    else if (subCategory && meterTypeMapping[meterCategory] && typeof meterTypeMapping[meterCategory] === 'object') {
+    else if (
+      subCategory &&
+      meterTypeMapping[meterCategory] &&
+      typeof meterTypeMapping[meterCategory] === "object"
+    ) {
       const result = meterTypeMapping[meterCategory][subCategory];
       // If the result is still an object (nested structure), return null instead
-      return (typeof result === 'number') ? result : null;
+      return typeof result === "number" ? result : null;
     }
     // Handle single-level
-    else if (typeof meterTypeMapping[meterCategory] === 'number') {
+    else if (typeof meterTypeMapping[meterCategory] === "number") {
       return meterTypeMapping[meterCategory];
     }
 
@@ -1938,14 +2184,20 @@ export const EditAssetDetailsPage = () => {
 
   // Handle meter category change
   const handleMeterCategoryChange = (value) => {
-    console.log('Meter category changed:', value);
+    console.log("Meter category changed:", value);
     setMeterCategoryType(value);
     setSubCategoryType(""); // Reset sub-category when main category changes
     setTertiaryCategory(""); // Reset tertiary category when main category changes
 
     // Log the meter type ID that will be used
     const meterTypeId = getAssetMeterTypeId(value, null, null);
-    console.log('Asset Meter Type ID for category:', value, '=', meterTypeId, typeof meterTypeId);
+    console.log(
+      "Asset Meter Type ID for category:",
+      value,
+      "=",
+      meterTypeId,
+      typeof meterTypeId
+    );
 
     // Show appropriate sub-options based on selection
     if (value === "board") {
@@ -1983,7 +2235,7 @@ export const EditAssetDetailsPage = () => {
 
   // Handle sub-category change
   const handleSubCategoryChange = (value) => {
-    console.log('Sub-category changed:', value);
+    console.log("Sub-category changed:", value);
     setSubCategoryType(value);
     setTertiaryCategory(""); // Reset tertiary category when sub-category changes
 
@@ -1996,17 +2248,39 @@ export const EditAssetDetailsPage = () => {
 
     // Log the meter type ID that will be used with the sub-category
     const meterTypeId = getAssetMeterTypeId(meterCategoryType, value, null);
-    console.log('Asset Meter Type ID for category:', meterCategoryType, 'sub-category:', value, '=', meterTypeId, typeof meterTypeId);
+    console.log(
+      "Asset Meter Type ID for category:",
+      meterCategoryType,
+      "sub-category:",
+      value,
+      "=",
+      meterTypeId,
+      typeof meterTypeId
+    );
   };
 
   // Handle tertiary category change (for water sources)
   const handleTertiaryCategoryChange = (value) => {
-    console.log('Tertiary category changed:', value);
+    console.log("Tertiary category changed:", value);
     setTertiaryCategory(value);
 
     // Log the meter type ID that will be used with all three levels
-    const meterTypeId = getAssetMeterTypeId(meterCategoryType, subCategoryType, value);
-    console.log('Asset Meter Type ID for category:', meterCategoryType, 'sub-category:', subCategoryType, 'tertiary:', value, '=', meterTypeId, typeof meterTypeId);
+    const meterTypeId = getAssetMeterTypeId(
+      meterCategoryType,
+      subCategoryType,
+      value
+    );
+    console.log(
+      "Asset Meter Type ID for category:",
+      meterCategoryType,
+      "sub-category:",
+      subCategoryType,
+      "tertiary:",
+      value,
+      "=",
+      meterTypeId,
+      typeof meterTypeId
+    );
   };
 
   interface HandleFieldChangeFn {
@@ -2037,7 +2311,7 @@ export const EditAssetDetailsPage = () => {
       }
     }
 
-      // Purchase cost validation - clear depreciation fields if purchase cost is removed
+    // Purchase cost validation - clear depreciation fields if purchase cost is removed
     if (field === "purchase_cost") {
       if (!value || parseFloat(value) <= 0) {
         // Clear depreciation fields when purchase cost is removed or zero
@@ -2048,12 +2322,16 @@ export const EditAssetDetailsPage = () => {
           depreciation_rate: "",
         }));
         toast.info("Depreciation Fields Cleared", {
-          description: "Depreciation fields have been cleared since purchase cost is not available.",
+          description:
+            "Depreciation fields have been cleared since purchase cost is not available.",
           duration: 3000,
         });
       } else {
         // Check if salvage value equals purchase cost
-        if (formData.salvage_value && parseFloat(formData.salvage_value) === parseFloat(value)) {
+        if (
+          formData.salvage_value &&
+          parseFloat(formData.salvage_value) === parseFloat(value)
+        ) {
           toast.error("Invalid Purchase Cost", {
             description: "Purchase Cost cannot be equal to Salvage Value.",
             duration: 4000,
@@ -2062,7 +2340,10 @@ export const EditAssetDetailsPage = () => {
         }
 
         // Check if salvage value is greater than purchase cost
-        if (formData.salvage_value && parseFloat(formData.salvage_value) > parseFloat(value)) {
+        if (
+          formData.salvage_value &&
+          parseFloat(formData.salvage_value) > parseFloat(value)
+        ) {
           toast.error("Invalid Purchase Cost", {
             description: "Purchase Cost cannot be less than Salvage Value.",
             duration: 4000,
@@ -2076,7 +2357,8 @@ export const EditAssetDetailsPage = () => {
     if (field === "salvage_value" && value) {
       if (!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0) {
         toast.error("Purchase Cost Required", {
-          description: "Please enter Purchase Cost before setting Salvage Value.",
+          description:
+            "Please enter Purchase Cost before setting Salvage Value.",
           duration: 4000,
         });
         return; // Don't update the field if validation fails
@@ -2103,7 +2385,8 @@ export const EditAssetDetailsPage = () => {
     if (field === "depreciation_rate" && value) {
       if (!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0) {
         toast.error("Purchase Cost Required", {
-          description: "Please enter Purchase Cost before setting Depreciation Rate.",
+          description:
+            "Please enter Purchase Cost before setting Depreciation Rate.",
           duration: 4000,
         });
         return; // Don't update the field if validation fails
@@ -2386,7 +2669,7 @@ export const EditAssetDetailsPage = () => {
     // Helper function to check if a value is empty
     const isEmpty = (value) => {
       if (value === null || value === undefined) return true;
-      if (typeof value === 'string' && value.trim() === '') return true;
+      if (typeof value === "string" && value.trim() === "") return true;
       if (Array.isArray(value) && value.length === 0) return true;
       return false;
     };
@@ -2447,15 +2730,17 @@ export const EditAssetDetailsPage = () => {
           if (String(field.value ?? "") !== String(originalValue ?? "")) {
             addOrReplace({
               ...(original?.id && { id: original.id }),
-            field_name: field.name,
-            field_value: field.value,
-            group_name: sectionKey,
+              field_name: field.name,
+              field_value: field.value,
+              group_name: sectionKey,
               field_description: "custom_field",
-            _destroy: false,
-          });
+              _destroy: false,
+            });
           }
         } else {
-          console.log(`Skipping empty custom field: ${field.name} (value: ${field.value})`);
+          console.log(
+            `Skipping empty custom field: ${field.name} (value: ${field.value})`
+          );
         }
       });
     });
@@ -2465,21 +2750,25 @@ export const EditAssetDetailsPage = () => {
       (itAssetsCustomFields[sectionKey] || []).forEach((field) => {
         // Only add field if it has a non-empty value
         if (!isEmpty(field.value)) {
-          console.log(`Including IT assets field: ${field.name} = ${field.value}`);
+          console.log(
+            `Including IT assets field: ${field.name} = ${field.value}`
+          );
           const original = findOriginal(field.name, sectionKey);
           const originalValue = original?.value ?? undefined;
           if (String(field.value ?? "") !== String(originalValue ?? "")) {
             addOrReplace({
               ...(original?.id && { id: original.id }),
-            field_name: field.name,
-            field_value: field.value,
-            group_name: sectionKey,
+              field_name: field.name,
+              field_value: field.value,
+              group_name: sectionKey,
               field_description: "custom_field",
-            _destroy: false,
-          });
+              _destroy: false,
+            });
           }
         } else {
-          console.log(`Skipping empty IT assets field: ${field.name} (value: ${field.value})`);
+          console.log(
+            `Skipping empty IT assets field: ${field.name} (value: ${field.value})`
+          );
         }
       });
     });
@@ -2487,7 +2776,10 @@ export const EditAssetDetailsPage = () => {
     // Standard extra fields (dynamic) - with proper date formatting; include changes only
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
       // Skip custom fields here to avoid duplicates; they are handled above via customFields/itAssetsCustomFields
-      const isCustomFieldDesc = String(fieldObj?.fieldDescription || "").trim().toLowerCase() === "custom_field";
+      const isCustomFieldDesc =
+        String(fieldObj?.fieldDescription || "")
+          .trim()
+          .toLowerCase() === "custom_field";
       if (isCustomFieldDesc) {
         return;
       }
@@ -2507,14 +2799,16 @@ export const EditAssetDetailsPage = () => {
           addOrReplace({
             ...(original?.id && { id: original.id }),
             field_name: baseName,
-          field_value: processedValue,
+            field_value: processedValue,
             group_name: groupName,
-          field_description: fieldObj.fieldDescription,
-          _destroy: false,
-        });
+            field_description: fieldObj.fieldDescription,
+            _destroy: false,
+          });
         }
       } else {
-        console.log(`Skipping empty standard field: ${key} (value: ${fieldObj?.value})`);
+        console.log(
+          `Skipping empty standard field: ${key} (value: ${fieldObj?.value})`
+        );
       }
     });
 
@@ -2540,7 +2834,11 @@ export const EditAssetDetailsPage = () => {
 
       // From original attributes, find removed custom fields (field_description === 'custom_field')
       (originalExtraFieldsAttributes || [])
-        .filter((attr: any) => String(attr.field_description).trim().toLowerCase() === "custom_field")
+        .filter(
+          (attr: any) =>
+            String(attr.field_description).trim().toLowerCase() ===
+            "custom_field"
+        )
         .forEach((attr: any) => {
           const key = `${attr.group_name}::${attr.field_name}`;
           if (!currentCustomKeys.has(key)) {
@@ -2792,7 +3090,7 @@ export const EditAssetDetailsPage = () => {
     setUsersLoading(true);
     try {
       const response = await apiClient.get(
-        "/pms/users/get_escalate_to_users.json"
+        "/pms/users/get_escalate_to_users.json?type=Asset"
       );
       setUsers(response.data?.users || []);
     } catch (error) {
@@ -3657,9 +3955,9 @@ export const EditAssetDetailsPage = () => {
       const valueFromExtra = extraFormFields[field]?.value;
       const hasValue = Boolean(
         (typeof valueFromForm === "string" && valueFromForm.trim()) ||
-          (typeof valueFromForm === "number" && !Number.isNaN(valueFromForm)) ||
-          (typeof valueFromExtra === "string" && valueFromExtra.trim()) ||
-          (typeof valueFromExtra === "number" && !Number.isNaN(valueFromExtra))
+        (typeof valueFromForm === "number" && !Number.isNaN(valueFromForm)) ||
+        (typeof valueFromExtra === "string" && valueFromExtra.trim()) ||
+        (typeof valueFromExtra === "number" && !Number.isNaN(valueFromExtra))
       );
 
       if (!hasValue) {
@@ -3697,16 +3995,19 @@ export const EditAssetDetailsPage = () => {
     //     return ["Vendor Name is required for Asset Loaned"];
     //   }
 
-        // if (assetLoanedToggle) {
-          const categoriesWithAssetLoaned = [
+    // if (assetLoanedToggle) {
+    const categoriesWithAssetLoaned = [
       "Furniture & Fixtures",
       "IT Equipment",
       "Machinery & Equipment",
       "Meter",
-      "Tools & Instruments"
+      "Tools & Instruments",
     ];
 
-    if (categoriesWithAssetLoaned.includes(selectedAssetCategory) && assetLoanedToggle) {
+    if (
+      categoriesWithAssetLoaned.includes(selectedAssetCategory) &&
+      assetLoanedToggle
+    ) {
       if (!selectedLoanedVendorId) {
         toast.error("Vendor Required for Asset Loaned", {
           description: "Please select a vendor since Asset Loaned is enabled.",
@@ -3714,7 +4015,6 @@ export const EditAssetDetailsPage = () => {
         });
         return ["Vendor Name is required for Asset Loaned"];
       }
-
 
       if (!formData.agreement_from_date) {
         toast.error("Agreement Start Date Required", {
@@ -3738,44 +4038,24 @@ export const EditAssetDetailsPage = () => {
     // and only for asset categories that have useful life fields
     const categoriesWithUsefulLife = [
       // "Leasehold Improvement",
-      "Furniture & Fixtures", 
+      "Furniture & Fixtures",
       "IT Equipment",
       "Machinery & Equipment",
       "Meter",
-      "Tools & Instruments"
+      "Tools & Instruments",
     ];
-    
-    if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0 && 
-        categoriesWithUsefulLife.includes(selectedAssetCategory)) {
-      if (!formData.useful_life) {
-        toast.error("Useful Life Required", {
-          description:
-            "Please enter the useful life for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Useful Life is required for Depreciation"];
-      }
 
-      if (!formData.salvage_value) {
-        toast.error("Salvage Value Required", {
-          description:
-            "Please enter the salvage value for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Salvage Value is required for Depreciation"];
-      }
-
-      if (!formData.depreciation_rate) {
-        toast.error("Depreciation Rate Required", {
-          description:
-            "Please enter the depreciation rate for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Depreciation Rate is required for Depreciation"];
-      }
-
-      // Validate Purchase Cost is not equal to Salvage Value
-      if (parseFloat(formData.purchase_cost) === parseFloat(formData.salvage_value)) {
+    if (
+      formData.purchase_cost &&
+      parseFloat(formData.purchase_cost) > 0 &&
+      categoriesWithUsefulLife.includes(selectedAssetCategory)
+    ) {
+      // Validate Purchase Cost is not equal to Salvage Value (Only if salvage_value is provided)
+      if (
+        formData.salvage_value &&
+        parseFloat(formData.purchase_cost) ===
+        parseFloat(formData.salvage_value)
+      ) {
         toast.error("Invalid Salvage Value", {
           description: "Purchase Cost cannot be equal to Salvage Value.",
           duration: 4000,
@@ -3783,8 +4063,11 @@ export const EditAssetDetailsPage = () => {
         return ["Purchase Cost cannot be equal to Salvage Value"];
       }
 
-      // Validate Salvage Value is not greater than Purchase Cost
-      if (parseFloat(formData.salvage_value) > parseFloat(formData.purchase_cost)) {
+      // Validate Salvage Value is not greater than Purchase Cost (Only if salvage_value is provided)
+      if (
+        formData.salvage_value &&
+        parseFloat(formData.salvage_value) > parseFloat(formData.purchase_cost)
+      ) {
         toast.error("Invalid Salvage Value", {
           description: "Salvage Value cannot be greater than Purchase Cost.",
           duration: 4000,
@@ -3792,7 +4075,6 @@ export const EditAssetDetailsPage = () => {
         return ["Salvage Value cannot be greater than Purchase Cost"];
       }
     }
-
 
     // // Meter Details validation (if applicable toggle is on)
     // // IT Assets Details validation (if applicable toggle is on)
@@ -3829,8 +4111,7 @@ export const EditAssetDetailsPage = () => {
     //   }
     // }
 
-
-     if (selectedAssetCategory === "IT Equipment") {
+    if (selectedAssetCategory === "IT Equipment") {
       // System Details required fields
       const systemFields = [
         { key: "os", label: "OS" },
@@ -4043,19 +4324,24 @@ export const EditAssetDetailsPage = () => {
         purchase_cost: formData.purchase_cost,
 
         // Asset type flags
-        it_asset: selectedAssetCategory === "IT Equipment" ? true : formData.it_asset,
+        it_asset:
+          selectedAssetCategory === "IT Equipment" ? true : formData.it_asset,
         it_meter: formData.it_meter,
         is_meter: formData.is_meter,
         asset_loaned: formData.asset_loaned,
         // depreciation_applicable: formData.depreciation_applicable,
-         depreciation_applicable: true,
+        depreciation_applicable: true,
 
         // Meter fields
         meter_tag_type: formData.meter_tag_type,
         parent_meter_id: formData.parent_meter_id,
         asset_meter_type_id: (() => {
-          const meterTypeId = getAssetMeterTypeId(meterCategoryType, subCategoryType, tertiaryCategory);
-          return typeof meterTypeId === 'number' ? meterTypeId : null;
+          const meterTypeId = getAssetMeterTypeId(
+            meterCategoryType,
+            subCategoryType,
+            tertiaryCategory
+          );
+          return typeof meterTypeId === "number" ? meterTypeId : null;
         })(),
 
         // Warranty
@@ -4064,13 +4350,14 @@ export const EditAssetDetailsPage = () => {
 
         // Other fields
         depreciation_applicable_for: formData.depreciation_applicable_for,
-        indiv_group: formData.depreciation_applicable_for === "similar_product"
-          ? formData.similar_product_type === "individual"
-            ? "individual"
-            : formData.similar_product_type === "group"
-              ? "group"
-              : formData.indiv_group
-          : formData.indiv_group,
+        indiv_group:
+          formData.depreciation_applicable_for === "similar_product"
+            ? formData.similar_product_type === "individual"
+              ? "individual"
+              : formData.similar_product_type === "group"
+                ? "group"
+                : formData.indiv_group
+            : formData.indiv_group,
         allocation_type: formData.allocation_type,
 
         // Depreciation similar product fields
@@ -4085,11 +4372,13 @@ export const EditAssetDetailsPage = () => {
         }),
 
         // Array fields - include selected asset IDs when individual asset is selected for depreciation
-        asset_ids: formData.depreciation_applicable_for === "similar_product" &&
-          formData.similar_product_type === "individual" &&
-          formData.selected_asset_ids && formData.selected_asset_ids.length > 0
-          ? formData.selected_asset_ids
-          : formData.asset_ids,
+        asset_ids:
+          formData.depreciation_applicable_for === "similar_product" &&
+            formData.similar_product_type === "individual" &&
+            formData.selected_asset_ids &&
+            formData.selected_asset_ids.length > 0
+            ? formData.selected_asset_ids
+            : formData.asset_ids,
 
         // Single allocation field
         allocation_ids: formData.allocation_ids,
@@ -4143,6 +4432,24 @@ export const EditAssetDetailsPage = () => {
         ...getCategoryAttachments(),
       },
     };
+
+    // If user marked any existing attachments for deletion, include them
+    // as nested-attributes (for FormData) and as top-level arrays for JSON payloads
+    try {
+      const assetImageDeletes = attachmentsToDestroy.asset_image || [];
+      if (assetImageDeletes && assetImageDeletes.length > 0) {
+        const deletes = assetImageDeletes.map((id) => ({ id, _destroy: true }));
+        // Nested attributes for Rails-style nested-attributes handling
+        (payload.pms_asset as any).asset_image_attributes = deletes;
+
+        // Also include top-level asset_image array in JSON payload when not uploading files
+        if (!hasFiles()) {
+          (payload.pms_asset as any).asset_image = deletes;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to attach deletion metadata:", e);
+    }
 
     console.log("Final payload:", payload);
     console.log("AMC Detail being sent:", payload.pms_asset.amc_detail);
@@ -4313,6 +4620,33 @@ export const EditAssetDetailsPage = () => {
           .replace(/&/g, "");
         const categoryAttachments = getCategoryAttachments();
 
+        // If user marked any existing attachments for deletion, append nested attributes and
+        // a JSON entry for top-level asset_image so backend can process deletions.
+        try {
+          const deletes = attachmentsToDestroy.asset_image || [];
+          if (deletes && deletes.length > 0) {
+            // Append nested attributes for FormData: pms_asset[asset_image_attributes][i][id/_destroy]
+            deletes.forEach((id, idx) => {
+              formDataObj.append(
+                `pms_asset[asset_image_attributes][${idx}][id]`,
+                String(id)
+              );
+              formDataObj.append(
+                `pms_asset[asset_image_attributes][${idx}][_destroy]`,
+                "true"
+              );
+            });
+
+            // Also append a JSON string for top-level asset_image array (helps when backend expects top-level)
+            formDataObj.append(
+              "pms_asset[asset_image]",
+              JSON.stringify(deletes.map((id) => ({ id, _destroy: true })))
+            );
+          }
+        } catch (e) {
+          console.warn("Failed to append deletion fields to FormData:", e);
+        }
+
         // Add asset image
         if (
           categoryAttachments.asset_image &&
@@ -4472,7 +4806,9 @@ export const EditAssetDetailsPage = () => {
         .catch((err) => {
           console.error("Error updating asset:", err);
           toast.error("Asset Update Failed", {
-            description: err.response?.data?.message || "An error occurred while updating the asset.",
+            description:
+              err.response?.data?.message ||
+              "An error occurred while updating the asset.",
             duration: 5000,
           });
         })
@@ -4597,12 +4933,13 @@ export const EditAssetDetailsPage = () => {
         purchase_cost: formData.purchase_cost,
 
         // Asset type flags
-        it_asset: selectedAssetCategory === "IT Equipment" ? true : formData.it_asset,
+        it_asset:
+          selectedAssetCategory === "IT Equipment" ? true : formData.it_asset,
         it_meter: formData.it_meter,
         is_meter: formData.is_meter,
         asset_loaned: formData.asset_loaned,
         // depreciation_applicable: formData.depreciation_applicable,
-         depreciation_applicable: true,
+        depreciation_applicable: true,
         it_asset_eq: selectedAssetCategory === "IT Equipment",
 
         // Meter fields
@@ -4615,13 +4952,14 @@ export const EditAssetDetailsPage = () => {
 
         // Other fields
         depreciation_applicable_for: formData.depreciation_applicable_for,
-        indiv_group: formData.depreciation_applicable_for === "similar_product"
-          ? formData.similar_product_type === "individual"
-            ? "individual"
-            : formData.similar_product_type === "group"
-              ? "group"
-              : formData.indiv_group
-          : formData.indiv_group,
+        indiv_group:
+          formData.depreciation_applicable_for === "similar_product"
+            ? formData.similar_product_type === "individual"
+              ? "individual"
+              : formData.similar_product_type === "group"
+                ? "group"
+                : formData.indiv_group
+            : formData.indiv_group,
         allocation_type: formData.allocation_type,
 
         // Depreciation similar product fields
@@ -4636,11 +4974,13 @@ export const EditAssetDetailsPage = () => {
         }),
 
         // Array fields - include selected asset IDs when individual asset is selected for depreciation
-        asset_ids: formData.depreciation_applicable_for === "similar_product" &&
-          formData.similar_product_type === "individual" &&
-          formData.selected_asset_ids && formData.selected_asset_ids.length > 0
-          ? formData.selected_asset_ids
-          : formData.asset_ids,
+        asset_ids:
+          formData.depreciation_applicable_for === "similar_product" &&
+            formData.similar_product_type === "individual" &&
+            formData.selected_asset_ids &&
+            formData.selected_asset_ids.length > 0
+            ? formData.selected_asset_ids
+            : formData.asset_ids,
 
         // Single allocation field
         allocation_ids: formData.allocation_ids,
@@ -4998,61 +5338,63 @@ export const EditAssetDetailsPage = () => {
             });
           }
         });
-  //   } else {
-  //     // Submit as JSON
-  //     apiClient
-  //       .put(`pms/assets/${id}.json`, payload, {
-  //         headers: { "Content-Type": "application/json" },
-  //       })
-  //       .then((response) => {
-  //         console.log("Asset updated successfully:", response.data);
-  //         // navigate('/maintenance/asset');
-  //         // location.reload(); // Reload to show the updated asset in the list
-          
-  //         toast.success("Asset Updated Successfully", {
-  //           description: "The asset has been updated and saved.",
-  //           duration: 3000,
-  //         });
-  //       })
-  //       .catch((err) => {
-  //         console.error("Error updating asset:", err);
-  //       });
-  //   }
-  // };
-      }else {
-    // Submit as JSON
-    apiClient
-      .put(`pms/assets/${id}.json`, payload, {
-        headers: { "Content-Type": "application/json" },
-      })
-      .then((response) => {
-        console.log("Asset updated successfully:", response.data);
-        const assetId = response.data.asset?.id || id;
-        toast.success("Asset Updated Successfully", {
-          description: "The asset has been updated and saved.",
-          duration: 3000,
+      //   } else {
+      //     // Submit as JSON
+      //     apiClient
+      //       .put(`pms/assets/${id}.json`, payload, {
+      //         headers: { "Content-Type": "application/json" },
+      //       })
+      //       .then((response) => {
+      //         console.log("Asset updated successfully:", response.data);
+      //         // navigate('/maintenance/asset');
+      //         // location.reload(); // Reload to show the updated asset in the list
+
+      //         toast.success("Asset Updated Successfully", {
+      //           description: "The asset has been updated and saved.",
+      //           duration: 3000,
+      //         });
+      //       })
+      //       .catch((err) => {
+      //         console.error("Error updating asset:", err);
+      //       });
+      //   }
+      // };
+    } else {
+      // Submit as JSON
+      apiClient
+        .put(`pms/assets/${id}.json`, payload, {
+          headers: { "Content-Type": "application/json" },
+        })
+        .then((response) => {
+          console.log("Asset updated successfully:", response.data);
+          const assetId = response.data.asset?.id || id;
+          toast.success("Asset Updated Successfully", {
+            description: "The asset has been updated and saved.",
+            duration: 3000,
+          });
+          // Small delay to show the toast before redirect
+          setTimeout(() => {
+            if (assetId) {
+              navigate(`/maintenance/asset/details/${assetId}`);
+            } else {
+              navigate("/maintenance/asset");
+            }
+          }, 1000);
+        })
+        .catch((err) => {
+          console.error("Error updating asset:", err);
+          toast.error("Asset Update Failed", {
+            description:
+              err.response?.data?.message ||
+              "An error occurred while updating the asset.",
+            duration: 5000,
+          });
+        })
+        .finally(() => {
+          setSubmitting(false);
         });
-        // Small delay to show the toast before redirect
-        setTimeout(() => {
-          if (assetId) {
-            navigate(`/maintenance/asset/details/${assetId}`);
-          } else {
-            navigate("/maintenance/asset");
-          }
-        }, 1000);
-      })
-      .catch((err) => {
-        console.error("Error updating asset:", err);
-        toast.error("Asset Update Failed", {
-          description: err.response?.data?.message || "An error occurred while updating the asset.",
-          duration: 5000,
-        });
-      })
-      .finally(() => {
-        setSubmitting(false);
-      });
-  }
-};
+    }
+  };
 
   const fieldStyles = {
     height: {
@@ -5068,6 +5410,56 @@ export const EditAssetDetailsPage = () => {
       },
     },
   };
+
+  const renderCriticalField = () => (
+    <div>
+      <label className="text-sm font-medium text-[#C72030] mb-2 block">
+        Critical
+      </label>
+      <div className="flex gap-6">
+        <div className="flex items-center space-x-2">
+          <input
+            type="radio"
+            id="critical-yes"
+            name="critical"
+            value="1"
+            checked={criticalStatus === "1"}
+            onChange={(e) => {
+              setCriticalStatus(e.target.value);
+              handleFieldChange("critical", e.target.value);
+            }}
+            className="w-4 h-4 text-[#C72030] border-gray-300"
+            style={{
+              accentColor: "#C72030",
+            }}
+          />
+          <label htmlFor="critical-yes" className="text-sm">
+            Yes
+          </label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="radio"
+            id="critical-no"
+            name="critical"
+            value="0"
+            checked={criticalStatus === "0"}
+            onChange={(e) => {
+              setCriticalStatus(e.target.value);
+              handleFieldChange("critical", e.target.value);
+            }}
+            className="w-4 h-4 text-[#C72030] border-gray-300"
+            style={{
+              accentColor: "#C72030",
+            }}
+          />
+          <label htmlFor="critical-no" className="text-sm">
+            No
+          </label>
+        </div>
+      </div>
+    </div>
+  );
   return (
     <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
       {/* Header */}
@@ -5104,7 +5496,7 @@ export const EditAssetDetailsPage = () => {
             <div className="w-full">
               <RadioGroup
                 value={selectedAssetCategory}
-                onValueChange={() => {}}
+                onValueChange={() => { }}
                 aria-readonly
                 className="flex flex-wrap gap-2 lg:gap-3 pointer-events-none opacity-60"
               >
@@ -5142,37 +5534,37 @@ export const EditAssetDetailsPage = () => {
 
             {/* Validation Requirements Info - Show when category is selected */}
             {/* {selectedAssetCategory && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                    <Info className="w-4 h-4 text-white" />
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-blue-900 mb-2">
-                    {selectedAssetCategory} - Required Fields
-                  </h4>
-                  <p className="text-sm text-blue-800 mb-3">
-                    {getCategoryValidationSummary(selectedAssetCategory).description}
-                  </p>
-                  <div className="space-y-1">
-                    <span className="text-xs font-medium text-blue-700">Required Sections:</span>
-                    <div className="flex flex-wrap gap-2">
-                      {getCategoryValidationSummary(selectedAssetCategory).requiredSections.map((section, index) => (
-                        <span 
-                          key={index}
-                          className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                          {section}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )} */}
+                                                                                                                                                            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                                                                                                                                              <div className="flex items-start gap-3">
+                                                                                                                                                                <div className="flex-shrink-0">
+                                                                                                                                                                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                                                                                                                                                    <Info className="w-4 h-4 text-white" />
+                                                                                                                                                                  </div>
+                                                                                                                                                                </div>
+                                                                                                                                                                <div className="flex-1">
+                                                                                                                                                                  <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                                                                                                                                                                    {selectedAssetCategory} - Required Fields
+                                                                                                                                                                  </h4>
+                                                                                                                                                                  <p className="text-sm text-blue-800 mb-3">
+                                                                                                                                                                    {getCategoryValidationSummary(selectedAssetCategory).description}
+                                                                                                                                                                  </p>
+                                                                                                                                                                  <div className="space-y-1">
+                                                                                                                                                                    <span className="text-xs font-medium text-blue-700">Required Sections:</span>
+                                                                                                                                                                    <div className="flex flex-wrap gap-2">
+                                                                                                                                                                      {getCategoryValidationSummary(selectedAssetCategory).requiredSections.map((section, index) => (
+                                                                                                                                                                        <span 
+                                                                                                                                                                          key={index}
+                                                                                                                                                                          className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                                                                                                                                                                        >
+                                                                                                                                                                          {section}
+                                                                                                                                                                        </span>
+                                                                                                                                                                      ))}
+                                                                                                                                                                    </div>
+                                                                                                                                                                  </div>
+                                                                                                                                                                </div>
+                                                                                                                                                              </div>
+                                                                                                                                                            </div>
+                                                                                                                                                          )} */}
           </div>
         </div>
 
@@ -5203,17 +5595,18 @@ export const EditAssetDetailsPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   
                     <TextField
                       label={
                         <span>
-                          Asset Name<span style={{ color: '#C72030' }}>*</span>
+                          Asset Name<span style={{ color: "#C72030" }}>*</span>
                         </span>
                       }
                       placeholder="Enter land name"
                       variant="outlined"
                       fullWidth
-                      value={extraFormFields.asset_name?.value || formData.name || ""}
+                      value={
+                        extraFormFields.asset_name?.value || formData.name || ""
+                      }
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           height: { xs: "36px", md: "45px" },
@@ -5230,12 +5623,16 @@ export const EditAssetDetailsPage = () => {
                         );
                       }}
                     />
-                     <TextField
+                    <TextField
                       label="Asset Id/Code"
                       placeholder="Enter unique identifier"
                       variant="outlined"
                       fullWidth
-                      value={extraFormFields.asset_number?.value || formData.asset_number || ""}
+                      value={
+                        extraFormFields.asset_number?.value ||
+                        formData.asset_number ||
+                        ""
+                      }
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           height: { xs: "36px", md: "45px" },
@@ -5260,7 +5657,9 @@ export const EditAssetDetailsPage = () => {
                         },
                       }}
                     >
-                      <InputLabel>Land Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                      <InputLabel>
+                        Land Type<span style={{ color: "#C72030" }}>*</span>
+                      </InputLabel>
                       <MuiSelect
                         label="Land Type"
                         value={extraFormFields.landType?.value || ""}
@@ -5276,12 +5675,15 @@ export const EditAssetDetailsPage = () => {
                       >
                         <MenuItem value="">Select Land Type</MenuItem>
                         <MenuItem value="Raw Land">Raw Land</MenuItem>
-                        <MenuItem value="Developed Land">Developed Land</MenuItem>
+                        <MenuItem value="Developed Land">
+                          Developed Land
+                        </MenuItem>
                         <MenuItem value="Leased">Leased</MenuItem>
                         <MenuItem value="Agricultural">Agricultural</MenuItem>
                         <MenuItem value="Special Use">Special Use</MenuItem>
                       </MuiSelect>
                     </FormControl>
+                    <div className="md:col-span-2">{renderCriticalField()}</div>
                     {/* Custom Fields */}
                     {(customFields.basicIdentification || []).map((field) => (
                       <div key={field.id} className="relative">
@@ -5340,7 +5742,7 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Location<span style={{ color: '#C72030' }}>*</span>
+                          Location<span style={{ color: "#C72030" }}>*</span>
                         </span>
                       }
                       placeholder="Full address or GPS coordinates"
@@ -5422,7 +5824,9 @@ export const EditAssetDetailsPage = () => {
                       <InputLabel>Zoning Classification</InputLabel>
                       <MuiSelect
                         label="Zoning Classification"
-                        value={extraFormFields.zoning_classification?.value || ""}
+                        value={
+                          extraFormFields.zoning_classification?.value || ""
+                        }
                         onChange={(e) =>
                           handleExtraFieldChange(
                             "zoning_classification",
@@ -5464,7 +5868,9 @@ export const EditAssetDetailsPage = () => {
                       >
                         <MenuItem value="">Select Status</MenuItem>
                         <MenuItem value="Clear">Clear</MenuItem>
-                        <MenuItem value="Under Mortgage">Under Mortgage</MenuItem>
+                        <MenuItem value="Under Mortgage">
+                          Under Mortgage
+                        </MenuItem>
                         <MenuItem value="Disputed">Disputed</MenuItem>
                       </MuiSelect>
                     </FormControl>
@@ -5528,7 +5934,7 @@ export const EditAssetDetailsPage = () => {
                       <TextField
                         label={
                           <span>
-                            Area<span style={{ color: '#C72030' }}>*</span>
+                            Area<span style={{ color: "#C72030" }}>*</span>
                           </span>
                         }
                         placeholder="Enter area"
@@ -5562,7 +5968,7 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel>Unit</InputLabel>
                         <MuiSelect
                           label="Unit"
-                        value={extraFormFields.land_unit?.value || ""}
+                          value={extraFormFields.land_unit?.value || ""}
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "land_unit",
@@ -5604,6 +6010,31 @@ export const EditAssetDetailsPage = () => {
                         );
                       }}
                     />
+                    <TextField
+                      label="Expiry Date"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      value={extraFormFields.land_expiry_date?.value || ""}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value;
+                        handleExtraFieldChange(
+                          "land_expiry_date",
+                          selectedDate,
+                          "date",
+                          "landSizeValue",
+                          "Expiry Date"
+                        );
+                      }}
+                    />
 
                     <div className="flex gap-2">
                       <FormControl
@@ -5617,7 +6048,11 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                        value={extraFormFields.currency?.value || (currency && currency.toLowerCase()) || ""}
+                          value={
+                            extraFormFields.currency?.value ||
+                            (currency && currency.toLowerCase()) ||
+                            ""
+                          }
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "currency",
@@ -5628,7 +6063,13 @@ export const EditAssetDetailsPage = () => {
                             )
                           }
                         >
-                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
+                          <MenuItem
+                            value={
+                              (currency && currency.toLowerCase()) || "inr"
+                            }
+                          >
+                            {currency}
+                          </MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -5795,7 +6236,10 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="">Select Improvements</MenuItem>
                         <MenuItem value="Fencing">Fencing</MenuItem>
                         <MenuItem value="Landscaping">Landscaping</MenuItem>
-                        <MenuItem value="Internal Roads"> Internal Roads</MenuItem>
+                        <MenuItem value="Internal Roads">
+                          {" "}
+                          Internal Roads
+                        </MenuItem>
                         <MenuItem value="Electricity">Electricity</MenuItem>
                         <MenuItem value="Water Access">Water Access</MenuItem>
                         <MenuItem value="Other">Other </MenuItem>
@@ -5806,7 +6250,9 @@ export const EditAssetDetailsPage = () => {
                       placeholder="Enter department or user"
                       variant="outlined"
                       fullWidth
-                      value={extraFormFields.responsible_department?.value || ""}
+                      value={
+                        extraFormFields.responsible_department?.value || ""
+                      }
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           height: { xs: "36px", md: "45px" },
@@ -5890,7 +6336,7 @@ export const EditAssetDetailsPage = () => {
                     //     // height: { xs: '36px', md: '45px' }
                     //   },
                     // }}
-                      sx={{
+                    sx={{
                       "& .MuiOutlinedInput-root": {
                         height: "auto !important",
                         padding: "2px !important",
@@ -5920,53 +6366,53 @@ export const EditAssetDetailsPage = () => {
                     }
                   />
                   {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    className="hidden"
-                    id="land-attachments"
-                    onChange={e => handleFileUpload('landAttachments', e.target.files)}
-                  />
-                  <label htmlFor="land-attachments" className="cursor-pointer">
-                    <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-600">
-                      Click to upload attachments
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Upload deed copy, layout, map, lease, etc.
-                    </p>
-                    <p className="text-xs text-yellow-600 mt-1">
-                      Max 10MB per file, 50MB total. Images will be compressed automatically.
-                    </p>
-                  </label>
-                  {attachments.landAttachments && attachments.landAttachments.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {attachments.landAttachments.map((file, idx) => (
-                        <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                          <div className="flex flex-col truncate">
-                            <span className="text-xs sm:text-sm truncate">{file.name}</span>
-                            <span className="text-xs text-gray-500">
-                              {(file.size / 1024 / 1024).toFixed(2)} MB
-                            </span>
-                          </div>
-                          <button onClick={() => removeFile('landAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                      <div className="text-xs text-gray-500 mt-1">
-                        Total: {attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
-                          ? `${(attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
-                          : `${(attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
-                        }
-                      </div>
-                        
+                                                                                                                                                                  <input
+                                                                                                                                                                    type="file"
+                                                                                                                                                                    multiple
+                                                                                                                                                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                                                                                                                                                    className="hidden"
+                                                                                                                                                                    id="land-attachments"
+                                                                                                                                                                    onChange={e => handleFileUpload('landAttachments', e.target.files)}
+                                                                                                                                                                  />
+                                                                                                                                                                  <label htmlFor="land-attachments" className="cursor-pointer">
+                                                                                                                                                                    <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                                                                                                                                                                    <p className="text-sm text-gray-600">
+                                                                                                                                                                      Click to upload attachments
+                                                                                                                                                                    </p>
+                                                                                                                                                                    <p className="text-xs text-gray-500 mt-1">
+                                                                                                                                                                      Upload deed copy, layout, map, lease, etc.
+                                                                                                                                                                    </p>
+                                                                                                                                                                    <p className="text-xs text-yellow-600 mt-1">
+                                                                                                                                                                      Max 10MB per file, 50MB total. Images will be compressed automatically.
+                                                                                                                                                                    </p>
+                                                                                                                                                                  </label>
+                                                                                                                                                                  {attachments.landAttachments && attachments.landAttachments.length > 0 && (
+                                                                                                                                                                    <div className="mt-2 space-y-1">
+                                                                                                                                                                      {attachments.landAttachments.map((file, idx) => (
+                                                                                                                                                                        <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                                                                                                                                                                          <div className="flex flex-col truncate">
+                                                                                                                                                                            <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                                                                                                                                                                            <span className="text-xs text-gray-500">
+                                                                                                                                                                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                                                                                                                                                                            </span>
+                                                                                                                                                                          </div>
+                                                                                                                                                                          <button onClick={() => removeFile('landAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                                                                                                                                                                            <X className="w-4 h-4" />
+                                                                                                                                                                          </button>
+                                                                                                                                                                        </div>
+                                                                                                                                                                      ))}
+                                                                                                                                                                      <div className="text-xs text-gray-500 mt-1">
+                                                                                                                                                                        Total: {attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
+                                                                                                                                                                          ? `${(attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
+                                                                                                                                                                          : `${(attachments.landAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
+                                                                                                                                                                        }
+                                                                                                                                                                      </div>
+                                                                                                                                                                        
 
-                    </div>
-                    
-                  )}
-                </div> */}
+                                                                                                                                                                    </div>
+                                                                                                                                                                    
+                                                                                                                                                                  )}
+                                                                                                                                                                </div> */}
 
                   {/* Custom Fields */}
                   {(customFields.miscellaneous || []).map((field) => (
@@ -6043,7 +6489,11 @@ export const EditAssetDetailsPage = () => {
                       placeholder="Enter alphanumeric code"
                       variant="outlined"
                       fullWidth
-                      value={extraFormFields.asset_number?.value || formData.asset_number || ""}
+                      value={
+                        extraFormFields.asset_number?.value ||
+                        formData.asset_number ||
+                        ""
+                      }
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           height: { xs: "36px", md: "45px" },
@@ -6063,13 +6513,15 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Asset Name <span style={{ color: '#C72030' }}>*</span>
+                          Asset Name <span style={{ color: "#C72030" }}>*</span>
                         </span>
                       }
                       placeholder="e.g., Flooring, IT Cabling"
                       variant="outlined"
                       fullWidth
-                      value={extraFormFields.asset_name?.value || formData.name || ""}
+                      value={
+                        extraFormFields.asset_name?.value || formData.name || ""
+                      }
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           height: { xs: "36px", md: "45px" },
@@ -6079,6 +6531,7 @@ export const EditAssetDetailsPage = () => {
                         handleFieldChange("name", e.target.value)
                       }
                     />
+                    <div className="md:col-span-2">{renderCriticalField()}</div>
 
                     {/* Custom Fields */}
                     {(customFields.leaseholdBasicId || []).map((field) => (
@@ -6141,7 +6594,8 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Location / Site<span style={{ color: '#C72030' }}>*</span>
+                          Location / Site
+                          <span style={{ color: "#C72030" }}>*</span>
                         </span>
                       }
                       placeholder="Enter location"
@@ -6174,58 +6628,58 @@ export const EditAssetDetailsPage = () => {
                       }}
                     >
                       <InputLabel>Leased Property ID</InputLabel>
-                        <TextField
-                      label="Leased Property ID"
-                      placeholder="Enter leased property ID"
-                      variant="outlined"
-                      fullWidth
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: { xs: "36px", md: "45px" },
-                        },
-                      }}
-                        onChange={(e) =>
-                        handleExtraFieldChange(
-                          "leased_property_id",
-                          e.target.value,
-                          "text",
-                          "leaseholdLocationAssoc",
-                          "Leased Property ID"
-                        )
-                      }
-                    />
-                      {/* <MuiSelect
+                      <TextField
                         label="Leased Property ID"
-                        value={extraFormFields.leased_property_id?.value || ""}
+                        placeholder="Enter leased property ID"
+                        variant="outlined"
+                        fullWidth
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            height: { xs: "36px", md: "45px" },
+                          },
+                        }}
                         onChange={(e) =>
                           handleExtraFieldChange(
                             "leased_property_id",
-                            (e.target as HTMLInputElement).value,
-                            "select",
+                            e.target.value,
+                            "text",
                             "leaseholdLocationAssoc",
                             "Leased Property ID"
                           )
                         }
-                      >
-                        <MenuItem value="">Select Property</MenuItem>
-                        <MenuItem value="Property 001">Property 001</MenuItem>
-                        <MenuItem value="Property 002">Property 002</MenuItem>
-                        <MenuItem value="Property 003">Property 003</MenuItem>
-                      </MuiSelect> */}
+                      />
+                      {/* <MuiSelect
+                                                                                                                                                                        label="Leased Property ID"
+                                                                                                                                                                        value={extraFormFields.leased_property_id?.value || ""}
+                                                                                                                                                                        onChange={(e) =>
+                                                                                                                                                                          handleExtraFieldChange(
+                                                                                                                                                                            "leased_property_id",
+                                                                                                                                                                            (e.target as HTMLInputElement).value,
+                                                                                                                                                                            "select",
+                                                                                                                                                                            "leaseholdLocationAssoc",
+                                                                                                                                                                            "Leased Property ID"
+                                                                                                                                                                          )
+                                                                                                                                                                        }
+                                                                                                                                                                      >
+                                                                                                                                                                        <MenuItem value="">Select Property</MenuItem>
+                                                                                                                                                                        <MenuItem value="Property 001">Property 001</MenuItem>
+                                                                                                                                                                        <MenuItem value="Property 002">Property 002</MenuItem>
+                                                                                                                                                                        <MenuItem value="Property 003">Property 003</MenuItem>
+                                                                                                                                                                      </MuiSelect> */}
                     </FormControl>
                     {/* <TextField
-                    label="Ownership Type"
-                    value="Lessee"
-                    variant="outlined"
-                    fullWidth
-                    disabled
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        height: { xs: '36px', md: '45px' }
-                      }
-                    }}
+                                                                                                                                                                    label="Ownership Type"
+                                                                                                                                                                    value="Lessee"
+                                                                                                                                                                    variant="outlined"
+                                                                                                                                                                    fullWidth
+                                                                                                                                                                    disabled
+                                                                                                                                                                    sx={{
+                                                                                                                                                                      '& .MuiOutlinedInput-root': {
+                                                                                                                                                                        height: { xs: '36px', md: '45px' }
+                                                                                                                                                                      }
+                                                                                                                                                                    }}
 
-                  /> */}
+                                                                                                                                                                  /> */}
 
                     {/* Custom Fields */}
                     {(customFields.leaseholdLocationAssoc || []).map(
@@ -6291,7 +6745,8 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Improvement Description<span style={{ color: '#C72030' }}>*</span>
+                          Improvement Description
+                          <span style={{ color: "#C72030" }}>*</span>
                         </span>
                       }
                       placeholder="Describe the improvement work"
@@ -6299,7 +6754,9 @@ export const EditAssetDetailsPage = () => {
                       fullWidth
                       multiline
                       rows={2}
-                      value={extraFormFields.improvement_description?.value || ""}
+                      value={
+                        extraFormFields.improvement_description?.value || ""
+                      }
                       sx={{
                         gridColumn: { md: "span 2" },
                         "& .MuiOutlinedInput-root": {
@@ -6346,7 +6803,9 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="HVAC">HVAC</MenuItem>
                         <MenuItem value="Plumbing">Plumbing</MenuItem>
                         <MenuItem value="Security">Security</MenuItem>
-                        <MenuItem value="IT Infrastructure">IT Infrastructure</MenuItem>
+                        <MenuItem value="IT Infrastructure">
+                          IT Infrastructure
+                        </MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <FormControl
@@ -6412,32 +6871,32 @@ export const EditAssetDetailsPage = () => {
                       }
                     />
                     {/* <DatePicker
-                      label="Date of Improvement"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: "outlined",
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          },
-                        },
-                      }}
-                      onChange={(date) => {
-                        // Format date to YYYY-MM-DD for backend compatibility
-                        const formattedDate = date
-                          ? date.toISOString().split("T")[0]
-                          : "";
-                        handleExtraFieldChange(
-                          "improvement_date",
-                          formattedDate,
-                          "date",
-                          "improvementDetails",
-                          "Improvement Date"
-                        );
-                      }}
-                    /> */}
+                                                                                                                                                                      label="Date of Improvement"
+                                                                                                                                                                      slotProps={{
+                                                                                                                                                                        textField: {
+                                                                                                                                                                          fullWidth: true,
+                                                                                                                                                                          variant: "outlined",
+                                                                                                                                                                          sx: {
+                                                                                                                                                                            "& .MuiOutlinedInput-root": {
+                                                                                                                                                                              height: { xs: "36px", md: "45px" },
+                                                                                                                                                                            },
+                                                                                                                                                                          },
+                                                                                                                                                                        },
+                                                                                                                                                                      }}
+                                                                                                                                                                      onChange={(date) => {
+                                                                                                                                                                        // Format date to YYYY-MM-DD for backend compatibility
+                                                                                                                                                                        const formattedDate = date
+                                                                                                                                                                          ? date.toISOString().split("T")[0]
+                                                                                                                                                                          : "";
+                                                                                                                                                                        handleExtraFieldChange(
+                                                                                                                                                                          "improvement_date",
+                                                                                                                                                                          formattedDate,
+                                                                                                                                                                          "date",
+                                                                                                                                                                          "improvementDetails",
+                                                                                                                                                                          "Improvement Date"
+                                                                                                                                                                        );
+                                                                                                                                                                      }}
+                                                                                                                                                                    /> */}
                     <TextField
                       label="Date of Improvement"
                       type="date"
@@ -6667,6 +7126,34 @@ export const EditAssetDetailsPage = () => {
                       }}
                     />
                     <TextField
+                      label="Expiry Date"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      value={
+                        extraFormFields.leasehold_financial_expiry_date
+                          ?.value || ""
+                      }
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value;
+                        handleExtraFieldChange(
+                          "leasehold_financial_expiry_date",
+                          selectedDate,
+                          "date",
+                          "leaseholdFinancial",
+                          "Expiry Date"
+                        );
+                      }}
+                    />
+                    <TextField
                       label="Current Book Value (OMR)"
                       placeholder="Enter value"
                       variant="outlined"
@@ -6696,28 +7183,28 @@ export const EditAssetDetailsPage = () => {
                       }
                     />
                     {/* <DatePicker
-                      label="Asset Capitalized On"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: "outlined",
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          },
-                        },
-                      }}
-                      onChange={(date) =>
-                        handleExtraFieldChange(
-                          "capitalization_date",
-                          date,
-                          "date",
-                          "leaseholdFinancial",
-                          "Capitalization Date"
-                        )
-                      }
-                    /> */}
+                                                                                                                                                                      label="Asset Capitalized On"
+                                                                                                                                                                      slotProps={{
+                                                                                                                                                                        textField: {
+                                                                                                                                                                          fullWidth: true,
+                                                                                                                                                                          variant: "outlined",
+                                                                                                                                                                          sx: {
+                                                                                                                                                                            "& .MuiOutlinedInput-root": {
+                                                                                                                                                                              height: { xs: "36px", md: "45px" },
+                                                                                                                                                                            },
+                                                                                                                                                                          },
+                                                                                                                                                                        },
+                                                                                                                                                                      }}
+                                                                                                                                                                      onChange={(date) =>
+                                                                                                                                                                        handleExtraFieldChange(
+                                                                                                                                                                          "capitalization_date",
+                                                                                                                                                                          date,
+                                                                                                                                                                          "date",
+                                                                                                                                                                          "leaseholdFinancial",
+                                                                                                                                                                          "Capitalization Date"
+                                                                                                                                                                        )
+                                                                                                                                                                      }
+                                                                                                                                                                    /> */}
 
                     <TextField
                       label="Asset Capitalized On"
@@ -6802,59 +7289,59 @@ export const EditAssetDetailsPage = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* <DatePicker
-                      label="Lease Start Date"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: "outlined",
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          },
-                        },
-                      }}
-                      onChange={(date) => {
-                        // Format date to YYYY-MM-DD for backend compatibility
-                        const formattedDate = date
-                          ? date.toISOString().split("T")[0]
-                          : "";
-                        handleExtraFieldChange(
-                          "lease_start_date",
-                          formattedDate,
-                          "date",
-                          "leaseholdLease",
-                          "Lease Start Date"
-                        );
-                      }}
-                    />
-                    <DatePicker
-                      label="Lease End Date"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: "outlined",
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          },
-                        },
-                      }}
-                      onChange={(date) => {
-                        // Format date to YYYY-MM-DD for backend compatibility
-                        const formattedDate = date
-                          ? date.toISOString().split("T")[0]
-                          : "";
-                        handleExtraFieldChange(
-                          "lease_end_date",
-                          formattedDate,
-                          "date",
-                          "leaseholdLease",
-                          "Lease End Date"
-                        );
-                      }}
-                    /> */}
+                                                                                                                                                                      label="Lease Start Date"
+                                                                                                                                                                      slotProps={{
+                                                                                                                                                                        textField: {
+                                                                                                                                                                          fullWidth: true,
+                                                                                                                                                                          variant: "outlined",
+                                                                                                                                                                          sx: {
+                                                                                                                                                                            "& .MuiOutlinedInput-root": {
+                                                                                                                                                                              height: { xs: "36px", md: "45px" },
+                                                                                                                                                                            },
+                                                                                                                                                                          },
+                                                                                                                                                                        },
+                                                                                                                                                                      }}
+                                                                                                                                                                      onChange={(date) => {
+                                                                                                                                                                        // Format date to YYYY-MM-DD for backend compatibility
+                                                                                                                                                                        const formattedDate = date
+                                                                                                                                                                          ? date.toISOString().split("T")[0]
+                                                                                                                                                                          : "";
+                                                                                                                                                                        handleExtraFieldChange(
+                                                                                                                                                                          "lease_start_date",
+                                                                                                                                                                          formattedDate,
+                                                                                                                                                                          "date",
+                                                                                                                                                                          "leaseholdLease",
+                                                                                                                                                                          "Lease Start Date"
+                                                                                                                                                                        );
+                                                                                                                                                                      }}
+                                                                                                                                                                    />
+                                                                                                                                                                    <DatePicker
+                                                                                                                                                                      label="Lease End Date"
+                                                                                                                                                                      slotProps={{
+                                                                                                                                                                        textField: {
+                                                                                                                                                                          fullWidth: true,
+                                                                                                                                                                          variant: "outlined",
+                                                                                                                                                                          sx: {
+                                                                                                                                                                            "& .MuiOutlinedInput-root": {
+                                                                                                                                                                              height: { xs: "36px", md: "45px" },
+                                                                                                                                                                            },
+                                                                                                                                                                          },
+                                                                                                                                                                        },
+                                                                                                                                                                      }}
+                                                                                                                                                                      onChange={(date) => {
+                                                                                                                                                                        // Format date to YYYY-MM-DD for backend compatibility
+                                                                                                                                                                        const formattedDate = date
+                                                                                                                                                                          ? date.toISOString().split("T")[0]
+                                                                                                                                                                          : "";
+                                                                                                                                                                        handleExtraFieldChange(
+                                                                                                                                                                          "lease_end_date",
+                                                                                                                                                                          formattedDate,
+                                                                                                                                                                          "date",
+                                                                                                                                                                          "leaseholdLease",
+                                                                                                                                                                          "Lease End Date"
+                                                                                                                                                                        );
+                                                                                                                                                                      }}
+                                                                                                                                                                    /> */}
                     <TextField
                       label="Lease Start Date"
                       type="date"
@@ -7000,7 +7487,9 @@ export const EditAssetDetailsPage = () => {
                       <InputLabel>Responsible Department</InputLabel>
                       <MuiSelect
                         label="Responsible Department"
-                        value={extraFormFields.responsible_department?.value || ""}
+                        value={
+                          extraFormFields.responsible_department?.value || ""
+                        }
                         onChange={(e) =>
                           handleExtraFieldChange(
                             "responsible_department",
@@ -7015,7 +7504,9 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="Facilities Management">
                           Facilities Management
                         </MenuItem>
-                        <MenuItem value="Administration">Administration</MenuItem>
+                        <MenuItem value="Administration">
+                          Administration
+                        </MenuItem>
                         <MenuItem value="Maintenance">Maintenance</MenuItem>
                         <MenuItem value="IT Department">IT Department</MenuItem>
                       </MuiSelect>
@@ -7044,52 +7535,52 @@ export const EditAssetDetailsPage = () => {
                       />
                     </div>
                     {/* <div className="md:col-span-2">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                      <input
-                        type="file"
-                        multiple
-                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                        className="hidden"
-                        id="leasehold-attachments"
-                        onChange={e => handleFileUpload('leaseholdAttachments', e.target.files)}
-                      />
-                      <label htmlFor="leasehold-attachments" className="cursor-pointer">
-                        <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm text-gray-600">
-                          Click to upload attachments
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Upload invoices, contracts, improvement photos, etc.
-                        </p>
-                        <p className="text-xs text-yellow-600 mt-1">
-                          Max 10MB per file, 50MB total. Images will be compressed automatically.
-                        </p>
-                      </label>
-                      {attachments.leaseholdAttachments && attachments.leaseholdAttachments.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {attachments.leaseholdAttachments.map((file, idx) => (
-                            <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                              <div className="flex flex-col truncate">
-                                <span className="text-xs sm:text-sm truncate">{file.name}</span>
-                                <span className="text-xs text-gray-500">
-                                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                                </span>
-                              </div>
-                              <button onClick={() => removeFile('leaseholdAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
-                          <div className="text-xs text-gray-500 mt-1">
-                            Total: {attachments.leaseholdAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
-                              ? `${(attachments.leaseholdAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
-                              : `${(attachments.leaseholdAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
-                            }
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div> */}
+                                                                                                                                                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                                                                                                                                                      <input
+                                                                                                                                                                        type="file"
+                                                                                                                                                                        multiple
+                                                                                                                                                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                                                                                                                                                        className="hidden"
+                                                                                                                                                                        id="leasehold-attachments"
+                                                                                                                                                                        onChange={e => handleFileUpload('leaseholdAttachments', e.target.files)}
+                                                                                                                                                                      />
+                                                                                                                                                                      <label htmlFor="leasehold-attachments" className="cursor-pointer">
+                                                                                                                                                                        <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                                                                                                                                                                        <p className="text-sm text-gray-600">
+                                                                                                                                                                          Click to upload attachments
+                                                                                                                                                                        </p>
+                                                                                                                                                                        <p className="text-xs text-gray-500 mt-1">
+                                                                                                                                                                          Upload invoices, contracts, improvement photos, etc.
+                                                                                                                                                                        </p>
+                                                                                                                                                                        <p className="text-xs text-yellow-600 mt-1">
+                                                                                                                                                                          Max 10MB per file, 50MB total. Images will be compressed automatically.
+                                                                                                                                                                        </p>
+                                                                                                                                                                      </label>
+                                                                                                                                                                      {attachments.leaseholdAttachments && attachments.leaseholdAttachments.length > 0 && (
+                                                                                                                                                                        <div className="mt-2 space-y-1">
+                                                                                                                                                                          {attachments.leaseholdAttachments.map((file, idx) => (
+                                                                                                                                                                            <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                                                                                                                                                                              <div className="flex flex-col truncate">
+                                                                                                                                                                                <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                                                                                                                                                                                <span className="text-xs text-gray-500">
+                                                                                                                                                                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                                                                                                                                                                </span>
+                                                                                                                                                                              </div>
+                                                                                                                                                                              <button onClick={() => removeFile('leaseholdAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                                                                                                                                                                                <X className="w-4 h-4" />
+                                                                                                                                                                              </button>
+                                                                                                                                                                            </div>
+                                                                                                                                                                          ))}
+                                                                                                                                                                          <div className="text-xs text-gray-500 mt-1">
+                                                                                                                                                                            Total: {attachments.leaseholdAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
+                                                                                                                                                                              ? `${(attachments.leaseholdAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
+                                                                                                                                                                              : `${(attachments.leaseholdAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
+                                                                                                                                                                            }
+                                                                                                                                                                          </div>
+                                                                                                                                                                        </div>
+                                                                                                                                                                      )}
+                                                                                                                                                                    </div>
+                                                                                                                                                                  </div> */}
 
                     {/* Custom Fields */}
                     {(customFields.leaseholdOversight || []).map((field) => (
@@ -7160,8 +7651,16 @@ export const EditAssetDetailsPage = () => {
                       placeholder="System-generated or manually entered"
                       variant="outlined"
                       fullWidth
-                      value={extraFormFields.asset_number?.value || formData.asset_number || ""}
-                      sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}
+                      value={
+                        extraFormFields.asset_number?.value ||
+                        formData.asset_number ||
+                        ""
+                      }
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
                       onChange={(e) => {
                         handleFieldChange("serial_number", e.target.value);
                         handleExtraFieldChange(
@@ -7176,18 +7675,35 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Asset Name <span style={{ color: '#C72030' }}>*</span>
+                          Asset Name <span style={{ color: "#C72030" }}>*</span>
                         </span>
                       }
                       placeholder="Name "
                       variant="outlined"
                       fullWidth
-                      value={extraFormFields.asset_name?.value || formData.name || ""}
-                      sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}
-                      onChange={(e) => handleFieldChange("name", e.target.value)}
+                      value={
+                        extraFormFields.asset_name?.value || formData.name || ""
+                      }
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(e) =>
+                        handleFieldChange("name", e.target.value)
+                      }
                     />
-                    <FormControl fullWidth sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}>
-                      <InputLabel>Vehicle Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                    <FormControl
+                      fullWidth
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                    >
+                      <InputLabel>
+                        Vehicle Type<span style={{ color: "#C72030" }}>*</span>
+                      </InputLabel>
                       <MuiSelect
                         label="Vehicle Type"
                         value={extraFormFields.vehicle_type?.value || ""}
@@ -7213,14 +7729,19 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Make & Model<span style={{ color: '#C72030' }}>*</span>
+                          Make & Model
+                          <span style={{ color: "#C72030" }}>*</span>
                         </span>
                       }
                       placeholder="e.g., Tata Ace, Honda Activa"
                       variant="outlined"
                       fullWidth
                       value={extraFormFields.make_model?.value || ""}
-                      sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
                       onChange={(e) =>
                         handleExtraFieldChange(
                           "make_model",
@@ -7234,14 +7755,19 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Registration Number<span style={{ color: '#C72030' }}>*</span>
+                          Registration Number
+                          <span style={{ color: "#C72030" }}>*</span>
                         </span>
                       }
                       placeholder="e.g., MH01AB1234"
                       variant="outlined"
                       fullWidth
                       value={extraFormFields.registration_number?.value || ""}
-                      sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
                       onChange={(e) =>
                         handleExtraFieldChange(
                           "registration_number",
@@ -7268,9 +7794,14 @@ export const EditAssetDetailsPage = () => {
                             checked={formData.asset_type === "true"}
                             className="w-4 h-4 text-[#C72030] border-gray-300"
                             style={{ accentColor: "#C72030" }}
-                            onChange={(e) => handleFieldChange("asset_type", e.target.value)}
+                            onChange={(e) =>
+                              handleFieldChange("asset_type", e.target.value)
+                            }
                           />
-                          <label htmlFor="asset-type-comprehensive" className="text-sm">
+                          <label
+                            htmlFor="asset-type-comprehensive"
+                            className="text-sm"
+                          >
                             Comprehensive
                           </label>
                         </div>
@@ -7283,14 +7814,20 @@ export const EditAssetDetailsPage = () => {
                             checked={formData.asset_type === "false"}
                             className="w-4 h-4 text-[#C72030] border-gray-300"
                             style={{ accentColor: "#C72030" }}
-                            onChange={(e) => handleFieldChange("asset_type", e.target.value)}
+                            onChange={(e) =>
+                              handleFieldChange("asset_type", e.target.value)
+                            }
                           />
-                          <label htmlFor="asset-type-non-comprehensive" className="text-sm">
+                          <label
+                            htmlFor="asset-type-non-comprehensive"
+                            className="text-sm"
+                          >
                             Non-Comprehensive
                           </label>
                         </div>
                       </div>
                     </div>
+                    <div className="md:col-span-2">{renderCriticalField()}</div>
 
                     {/* Custom Fields */}
                     {(customFields.vehicleBasicId || []).map((field) => (
@@ -7301,13 +7838,23 @@ export const EditAssetDetailsPage = () => {
                           variant="outlined"
                           fullWidth
                           value={field.value}
-                          sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              height: { xs: "36px", md: "45px" },
+                            },
+                          }}
                           onChange={(e) => {
-                            handleCustomFieldChange("vehicleBasicId", field.id, e.target.value);
+                            handleCustomFieldChange(
+                              "vehicleBasicId",
+                              field.id,
+                              e.target.value
+                            );
                           }}
                         />
                         <button
-                          onClick={() => removeCustomField("vehicleBasicId", field.id)}
+                          onClick={() =>
+                            removeCustomField("vehicleBasicId", field.id)
+                          }
                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
                         >
                           <X className="w-3 h-3" />
@@ -7317,8 +7864,6 @@ export const EditAssetDetailsPage = () => {
                   </div>
                 </CardContent>
               </Card>
-
-
 
               {/* Technical Specifications */}
               <Card>
@@ -7511,7 +8056,9 @@ export const EditAssetDetailsPage = () => {
                       <InputLabel>Assigned To / Department</InputLabel>
                       <MuiSelect
                         label="Assigned To / Department"
-                        value={extraFormFields.assigned_to_department?.value || ""}
+                        value={
+                          extraFormFields.assigned_to_department?.value || ""
+                        }
                         onChange={(e) =>
                           handleExtraFieldChange(
                             "assigned_to_department",
@@ -7523,8 +8070,12 @@ export const EditAssetDetailsPage = () => {
                         }
                       >
                         <MenuItem value="">Select Department/User</MenuItem>
-                        <MenuItem value="Administration">Administration</MenuItem>
-                        <MenuItem value="Human Resources">Human Resources</MenuItem>
+                        <MenuItem value="Administration">
+                          Administration
+                        </MenuItem>
+                        <MenuItem value="Human Resources">
+                          Human Resources
+                        </MenuItem>
                         <MenuItem value="Logistics">Logistics</MenuItem>
                         <MenuItem value="Maintenance">Maintenance</MenuItem>
                         <MenuItem value="Other">Other</MenuItem>
@@ -7584,7 +8135,9 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="">Select Permit Type</MenuItem>
                         <MenuItem value="Private">Private</MenuItem>
                         <MenuItem value="Commercial">Commercial</MenuItem>
-                        <MenuItem value="Transport Permit">Transport Permit</MenuItem>
+                        <MenuItem value="Transport Permit">
+                          Transport Permit
+                        </MenuItem>
                       </MuiSelect>
                     </FormControl>
 
@@ -7645,34 +8198,34 @@ export const EditAssetDetailsPage = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* <DatePicker
-                      label="Date of Purchase"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: "outlined",
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          },
-                        },
-                      }}
-                      onChange={(date) => {
-                        // Format date to YYYY-MM-DD for backend compatibility
-                        const formattedDate = date
-                          ? date.toISOString().split("T")[0]
-                          : "";
-                        handleExtraFieldChange(
-                          "purchase_date",
-                          formattedDate,
-                          "date",
-                          "vehicleFinancial",
-                          "Date of Purchase"
-                        );
-                        handleFieldChange("commisioning_date", formattedDate);
-                      }}
+                                                                                                                                                                      label="Date of Purchase"
+                                                                                                                                                                      slotProps={{
+                                                                                                                                                                        textField: {
+                                                                                                                                                                          fullWidth: true,
+                                                                                                                                                                          variant: "outlined",
+                                                                                                                                                                          sx: {
+                                                                                                                                                                            "& .MuiOutlinedInput-root": {
+                                                                                                                                                                              height: { xs: "36px", md: "45px" },
+                                                                                                                                                                            },
+                                                                                                                                                                          },
+                                                                                                                                                                        },
+                                                                                                                                                                      }}
+                                                                                                                                                                      onChange={(date) => {
+                                                                                                                                                                        // Format date to YYYY-MM-DD for backend compatibility
+                                                                                                                                                                        const formattedDate = date
+                                                                                                                                                                          ? date.toISOString().split("T")[0]
+                                                                                                                                                                          : "";
+                                                                                                                                                                        handleExtraFieldChange(
+                                                                                                                                                                          "purchase_date",
+                                                                                                                                                                          formattedDate,
+                                                                                                                                                                          "date",
+                                                                                                                                                                          "vehicleFinancial",
+                                                                                                                                                                          "Date of Purchase"
+                                                                                                                                                                        );
+                                                                                                                                                                        handleFieldChange("commisioning_date", formattedDate);
+                                                                                                                                                                      }}
 
-                    /> */}
+                                                                                                                                                                    /> */}
                     <TextField
                       label="Date of Purchase"
                       type="date"
@@ -7699,6 +8252,34 @@ export const EditAssetDetailsPage = () => {
                         handleFieldChange("commisioning_date", selectedDate);
                       }}
                     />
+                    <TextField
+                      label="Expiry Date"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      value={
+                        extraFormFields.vehicle_financial_expiry_date?.value ||
+                        ""
+                      }
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value;
+                        handleExtraFieldChange(
+                          "vehicle_financial_expiry_date",
+                          selectedDate,
+                          "date",
+                          "vehicleFinancial",
+                          "Expiry Date"
+                        );
+                      }}
+                    />
 
                     <div className="flex gap-2">
                       <FormControl
@@ -7712,7 +8293,11 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          value={extraFormFields.currency?.value || (currency && currency.toLowerCase()) || ""}
+                          value={
+                            extraFormFields.currency?.value ||
+                            (currency && currency.toLowerCase()) ||
+                            ""
+                          }
                           onChange={(e) => {
                             handleExtraFieldChange(
                               "currency",
@@ -7723,7 +8308,13 @@ export const EditAssetDetailsPage = () => {
                             );
                           }}
                         >
-                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
+                          <MenuItem
+                            value={
+                              (currency && currency.toLowerCase()) || "inr"
+                            }
+                          >
+                            {currency}
+                          </MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -7758,30 +8349,31 @@ export const EditAssetDetailsPage = () => {
                       />
                     </div>
                     {/* <DatePicker
-                      label="Warranty Expires On"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: "outlined",
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          },
-                        },
-                      }}
-                      onChange={(date) => {
-                        // Format date to YYYY-MM-DD for backend compatibility
-                        const formattedDate = date
-                          ? date.toISOString().split("T")[0]
-                          : "";
-                        handleFieldChange("warranty_expiry", formattedDate);
-                      }}
-                    /> */}
+                                                                                                                                                                      label="Warranty Expires On"
+                                                                                                                                                                      slotProps={{
+                                                                                                                                                                        textField: {
+                                                                                                                                                                          fullWidth: true,
+                                                                                                                                                                          variant: "outlined",
+                                                                                                                                                                          sx: {
+                                                                                                                                                                            "& .MuiOutlinedInput-root": {
+                                                                                                                                                                              height: { xs: "36px", md: "45px" },
+                                                                                                                                                                            },
+                                                                                                                                                                          },
+                                                                                                                                                                        },
+                                                                                                                                                                      }}
+                                                                                                                                                                      onChange={(date) => {
+                                                                                                                                                                        // Format date to YYYY-MM-DD for backend compatibility
+                                                                                                                                                                        const formattedDate = date
+                                                                                                                                                                          ? date.toISOString().split("T")[0]
+                                                                                                                                                                          : "";
+                                                                                                                                                                        handleFieldChange("warranty_expiry", formattedDate);
+                                                                                                                                                                      }}
+                                                                                                                                                                    /> */}
                     <TextField
                       label={
                         <span>
-                          Warranty Expires On<span style={{ color: '#C72030' }}>*</span>
+                          Warranty Expires On
+                          <span style={{ color: "#C72030" }}>*</span>
                         </span>
                       }
                       type="date"
@@ -8082,32 +8674,32 @@ export const EditAssetDetailsPage = () => {
                       }
                     />
                     {/* <DatePicker
-                      label="Last Service Date"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: "outlined",
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          },
-                        },
-                      }}
-                      onChange={(date) => {
-                        // Format date to YYYY-MM-DD for backend compatibility
-                        const formattedDate = date
-                          ? date.toISOString().split("T")[0]
-                          : "";
-                        handleExtraFieldChange(
-                          "last_service_date",
-                          formattedDate,
-                          "date",
-                          "vehiclePerformance",
-                          "Last Service Date"
-                        );
-                      }}
-                    /> */}
+                                                                                                                                                                      label="Last Service Date"
+                                                                                                                                                                      slotProps={{
+                                                                                                                                                                        textField: {
+                                                                                                                                                                          fullWidth: true,
+                                                                                                                                                                          variant: "outlined",
+                                                                                                                                                                          sx: {
+                                                                                                                                                                            "& .MuiOutlinedInput-root": {
+                                                                                                                                                                              height: { xs: "36px", md: "45px" },
+                                                                                                                                                                            },
+                                                                                                                                                                          },
+                                                                                                                                                                        },
+                                                                                                                                                                      }}
+                                                                                                                                                                      onChange={(date) => {
+                                                                                                                                                                        // Format date to YYYY-MM-DD for backend compatibility
+                                                                                                                                                                        const formattedDate = date
+                                                                                                                                                                          ? date.toISOString().split("T")[0]
+                                                                                                                                                                          : "";
+                                                                                                                                                                        handleExtraFieldChange(
+                                                                                                                                                                          "last_service_date",
+                                                                                                                                                                          formattedDate,
+                                                                                                                                                                          "date",
+                                                                                                                                                                          "vehiclePerformance",
+                                                                                                                                                                          "Last Service Date"
+                                                                                                                                                                        );
+                                                                                                                                                                      }}
+                                                                                                                                                                    /> */}
                     <TextField
                       label="Last Service Date"
                       type="date"
@@ -8261,86 +8853,86 @@ export const EditAssetDetailsPage = () => {
                       }
                     />
                     {/* <DatePicker
-                      label="Insurance Expiry Date"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: "outlined",
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          },
-                        },
-                      }}
-                      onChange={(date) => {
-                        // Format date to YYYY-MM-DD for backend compatibility
-                        const formattedDate = date
-                          ? date.toISOString().split("T")[0]
-                          : "";
-                        handleExtraFieldChange(
-                          "insurance_expiry_date",
-                          formattedDate,
-                          "date",
-                          "vehicleLegal",
-                          "Insurance Expiry Date"
-                        );
-                      }}
-                    />
-                    <DatePicker
-                      label="Fitness Certificate Expiry"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: "outlined",
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          },
-                        },
-                      }}
-                      onChange={(date) => {
-                        // Format date to YYYY-MM-DD for backend compatibility
-                        const formattedDate = date
-                          ? date.toISOString().split("T")[0]
-                          : "";
-                        handleExtraFieldChange(
-                          "fitness_certificate_expiry",
-                          formattedDate,
-                          "date",
-                          "vehicleLegal",
-                          "Fitness Certificate Expiry"
-                        );
-                      }}
-                    />
-                    <DatePicker
-                      label="PUC Expiry Date"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: "outlined",
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          },
-                        },
-                      }}
-                      onChange={(date) => {
-                        // Format date to YYYY-MM-DD for backend compatibility
-                        const formattedDate = date
-                          ? date.toISOString().split("T")[0]
-                          : "";
-                        handleExtraFieldChange(
-                          "puc_expiry_date",
-                          formattedDate,
-                          "date",
-                          "vehicleLegal",
-                          "PUC Expiry Date"
-                        );
-                      }}
-                    /> */}
+                                                                                                                                                                      label="Insurance Expiry Date"
+                                                                                                                                                                      slotProps={{
+                                                                                                                                                                        textField: {
+                                                                                                                                                                          fullWidth: true,
+                                                                                                                                                                          variant: "outlined",
+                                                                                                                                                                          sx: {
+                                                                                                                                                                            "& .MuiOutlinedInput-root": {
+                                                                                                                                                                              height: { xs: "36px", md: "45px" },
+                                                                                                                                                                            },
+                                                                                                                                                                          },
+                                                                                                                                                                        },
+                                                                                                                                                                      }}
+                                                                                                                                                                      onChange={(date) => {
+                                                                                                                                                                        // Format date to YYYY-MM-DD for backend compatibility
+                                                                                                                                                                        const formattedDate = date
+                                                                                                                                                                          ? date.toISOString().split("T")[0]
+                                                                                                                                                                          : "";
+                                                                                                                                                                        handleExtraFieldChange(
+                                                                                                                                                                          "insurance_expiry_date",
+                                                                                                                                                                          formattedDate,
+                                                                                                                                                                          "date",
+                                                                                                                                                                          "vehicleLegal",
+                                                                                                                                                                          "Insurance Expiry Date"
+                                                                                                                                                                        );
+                                                                                                                                                                      }}
+                                                                                                                                                                    />
+                                                                                                                                                                    <DatePicker
+                                                                                                                                                                      label="Fitness Certificate Expiry"
+                                                                                                                                                                      slotProps={{
+                                                                                                                                                                        textField: {
+                                                                                                                                                                          fullWidth: true,
+                                                                                                                                                                          variant: "outlined",
+                                                                                                                                                                          sx: {
+                                                                                                                                                                            "& .MuiOutlinedInput-root": {
+                                                                                                                                                                              height: { xs: "36px", md: "45px" },
+                                                                                                                                                                            },
+                                                                                                                                                                          },
+                                                                                                                                                                        },
+                                                                                                                                                                      }}
+                                                                                                                                                                      onChange={(date) => {
+                                                                                                                                                                        // Format date to YYYY-MM-DD for backend compatibility
+                                                                                                                                                                        const formattedDate = date
+                                                                                                                                                                          ? date.toISOString().split("T")[0]
+                                                                                                                                                                          : "";
+                                                                                                                                                                        handleExtraFieldChange(
+                                                                                                                                                                          "fitness_certificate_expiry",
+                                                                                                                                                                          formattedDate,
+                                                                                                                                                                          "date",
+                                                                                                                                                                          "vehicleLegal",
+                                                                                                                                                                          "Fitness Certificate Expiry"
+                                                                                                                                                                        );
+                                                                                                                                                                      }}
+                                                                                                                                                                    />
+                                                                                                                                                                    <DatePicker
+                                                                                                                                                                      label="PUC Expiry Date"
+                                                                                                                                                                      slotProps={{
+                                                                                                                                                                        textField: {
+                                                                                                                                                                          fullWidth: true,
+                                                                                                                                                                          variant: "outlined",
+                                                                                                                                                                          sx: {
+                                                                                                                                                                            "& .MuiOutlinedInput-root": {
+                                                                                                                                                                              height: { xs: "36px", md: "45px" },
+                                                                                                                                                                            },
+                                                                                                                                                                          },
+                                                                                                                                                                        },
+                                                                                                                                                                      }}
+                                                                                                                                                                      onChange={(date) => {
+                                                                                                                                                                        // Format date to YYYY-MM-DD for backend compatibility
+                                                                                                                                                                        const formattedDate = date
+                                                                                                                                                                          ? date.toISOString().split("T")[0]
+                                                                                                                                                                          : "";
+                                                                                                                                                                        handleExtraFieldChange(
+                                                                                                                                                                          "puc_expiry_date",
+                                                                                                                                                                          formattedDate,
+                                                                                                                                                                          "date",
+                                                                                                                                                                          "vehicleLegal",
+                                                                                                                                                                          "PUC Expiry Date"
+                                                                                                                                                                        );
+                                                                                                                                                                      }}
+                                                                                                                                                                    /> */}
                     <TextField
                       label="Insurance Expiry Date"
                       type="date"
@@ -8365,13 +8957,14 @@ export const EditAssetDetailsPage = () => {
                       }}
                     />
 
-
                     <TextField
                       label="Fitness Certificate Expiry"
                       type="date"
                       fullWidth
                       variant="outlined"
-                      value={extraFormFields.fitness_certificate_expiry?.value || ""}
+                      value={
+                        extraFormFields.fitness_certificate_expiry?.value || ""
+                      }
                       InputLabelProps={{ shrink: true }}
                       sx={{
                         "& .MuiOutlinedInput-root": {
@@ -8389,7 +8982,6 @@ export const EditAssetDetailsPage = () => {
                         );
                       }}
                     />
-
 
                     <TextField
                       label="PUC Expiry Date"
@@ -8496,24 +9088,24 @@ export const EditAssetDetailsPage = () => {
                     }
                   />
                   {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    className="hidden"
-                    id="vehicle-attachments"
-                    onChange={(e) => handleFileUpload('vehicleAttachments', e.target.files)}
-                  />
-                  <label htmlFor="vehicle-attachments" className="cursor-pointer">
-                    <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-600">
-                      Click to upload attachments
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Upload RC copy, insurance, permit, fitness, PUC, etc.
-                    </p>
-                  </label>
-                </div> */}
+                                                                                                                                                                  <input
+                                                                                                                                                                    type="file"
+                                                                                                                                                                    multiple
+                                                                                                                                                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                                                                                                                                                    className="hidden"
+                                                                                                                                                                    id="vehicle-attachments"
+                                                                                                                                                                    onChange={(e) => handleFileUpload('vehicleAttachments', e.target.files)}
+                                                                                                                                                                  />
+                                                                                                                                                                  <label htmlFor="vehicle-attachments" className="cursor-pointer">
+                                                                                                                                                                    <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                                                                                                                                                                    <p className="text-sm text-gray-600">
+                                                                                                                                                                      Click to upload attachments
+                                                                                                                                                                    </p>
+                                                                                                                                                                    <p className="text-xs text-gray-500 mt-1">
+                                                                                                                                                                      Upload RC copy, insurance, permit, fitness, PUC, etc.
+                                                                                                                                                                    </p>
+                                                                                                                                                                  </label>
+                                                                                                                                                                </div> */}
 
                   {/* Display uploaded vehicle attachments */}
                   {attachments.vehicleAttachments &&
@@ -8621,7 +9213,11 @@ export const EditAssetDetailsPage = () => {
                       placeholder="Enter unique identifier"
                       variant="outlined"
                       fullWidth
-                      value={extraFormFields.asset_number?.value || formData.asset_number || ""}
+                      value={
+                        extraFormFields.asset_number?.value ||
+                        formData.asset_number ||
+                        ""
+                      }
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           height: { xs: "36px", md: "45px" },
@@ -8641,13 +9237,15 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Asset Name <span style={{ color: '#C72030' }}>*</span>
+                          Asset Name <span style={{ color: "#C72030" }}>*</span>
                         </span>
                       }
                       placeholder="Enter building name"
                       variant="outlined"
                       fullWidth
-                      value={extraFormFields.asset_name?.value || formData.name || ""}
+                      value={
+                        extraFormFields.asset_name?.value || formData.name || ""
+                      }
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           height: { xs: "36px", md: "45px" },
@@ -8665,7 +9263,9 @@ export const EditAssetDetailsPage = () => {
                         },
                       }}
                     >
-                      <InputLabel>Building Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                      <InputLabel>
+                        Building Type<span style={{ color: "#C72030" }}>*</span>
+                      </InputLabel>
                       <MuiSelect
                         label="Building Type"
                         value={extraFormFields.building_type?.value || ""}
@@ -8684,11 +9284,14 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="Residential">Residential</MenuItem>
                         <MenuItem value="Industrial">Industrial</MenuItem>
                         <MenuItem value="Mixed Use">Mixed Use</MenuItem>
-                        <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
+                        <MenuItem value="Other (Manual Entry)">
+                          Other (Manual Entry)
+                        </MenuItem>
                       </MuiSelect>
                     </FormControl>
 
-                      {extraFormFields.building_type?.value === 'Other (Manual Entry)' && (
+                    {extraFormFields.building_type?.value ===
+                      "Other (Manual Entry)" && (
                         <TextField
                           label="Other Building Type"
                           placeholder="Enter other building type"
@@ -8711,6 +9314,7 @@ export const EditAssetDetailsPage = () => {
                           }
                         />
                       )}
+                    <div className="md:col-span-2">{renderCriticalField()}</div>
 
                     {/* Custom Fields */}
                     {(customFields.buildingBasicId || []).map((field) => (
@@ -8771,7 +9375,7 @@ export const EditAssetDetailsPage = () => {
                     <TextField
                       label={
                         <span>
-                          Location<span style={{ color: '#C72030' }}>*</span>
+                          Location<span style={{ color: "#C72030" }}>*</span>
                         </span>
                       }
                       placeholder="Full address"
@@ -8932,17 +9536,22 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="Steel">Steel</MenuItem>
                         <MenuItem value="Pre-Fab">Pre-Fab</MenuItem>
                         <MenuItem value="Load Bearing">Load Bearing</MenuItem>
-                        <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
+                        <MenuItem value="Other (Manual Entry)">
+                          Other (Manual Entry)
+                        </MenuItem>
                       </MuiSelect>
                     </FormControl>
 
-                      {extraFormFields.construction_type?.value === 'Other (Manual Entry)' && (
+                    {extraFormFields.construction_type?.value ===
+                      "Other (Manual Entry)" && (
                         <TextField
                           label="Other Construction Type"
                           placeholder="Enter other construction type"
                           variant="outlined"
                           fullWidth
-                          value={extraFormFields.other_construction_type?.value || ""}
+                          value={
+                            extraFormFields.other_construction_type?.value || ""
+                          }
                           sx={{
                             "& .MuiOutlinedInput-root": {
                               height: { xs: "36px", md: "45px" },
@@ -8986,7 +9595,8 @@ export const EditAssetDetailsPage = () => {
                       <TextField
                         label={
                           <span>
-                            Built-up Area<span style={{ color: '#C72030' }}>*</span>
+                            Built-up Area
+                            <span style={{ color: "#C72030" }}>*</span>
                           </span>
                         }
                         value={extraFormFields.built_up_area?.value || ""}
@@ -9020,7 +9630,9 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel>Unit</InputLabel>
                         <MuiSelect
                           label="Unit"
-                          value={extraFormFields.built_up_area_unit?.value || ""}
+                          value={
+                            extraFormFields.built_up_area_unit?.value || ""
+                          }
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "built_up_area_unit",
@@ -9037,28 +9649,28 @@ export const EditAssetDetailsPage = () => {
                       </FormControl>
                     </div>
                     {/* <DatePicker
-                      label="Date of Construction"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: "outlined",
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          },
-                        },
-                      }}
-                      onChange={(date) =>
-                        handleExtraFieldChange(
-                          "date_of_construction",
-                          date,
-                          "date",
-                          "buildingConstruction",
-                          "Date of Construction"
-                        )
-                      }
-                    /> */}
+                                                                                                                                                                      label="Date of Construction"
+                                                                                                                                                                      slotProps={{
+                                                                                                                                                                        textField: {
+                                                                                                                                                                          fullWidth: true,
+                                                                                                                                                                          variant: "outlined",
+                                                                                                                                                                          sx: {
+                                                                                                                                                                            "& .MuiOutlinedInput-root": {
+                                                                                                                                                                              height: { xs: "36px", md: "45px" },
+                                                                                                                                                                            },
+                                                                                                                                                                          },
+                                                                                                                                                                        },
+                                                                                                                                                                      }}
+                                                                                                                                                                      onChange={(date) =>
+                                                                                                                                                                        handleExtraFieldChange(
+                                                                                                                                                                          "date_of_construction",
+                                                                                                                                                                          date,
+                                                                                                                                                                          "date",
+                                                                                                                                                                          "buildingConstruction",
+                                                                                                                                                                          "Date of Construction"
+                                                                                                                                                                        )
+                                                                                                                                                                      }
+                                                                                                                                                                    /> */}
                     <TextField
                       label="Date of Construction"
                       type="date"
@@ -9084,7 +9696,6 @@ export const EditAssetDetailsPage = () => {
                         );
                       }}
                     />
-
 
                     {/* Custom Fields */}
                     {(customFields.buildingConstruction || []).map((field) => (
@@ -9145,28 +9756,28 @@ export const EditAssetDetailsPage = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* <DatePicker
-                      label="Date of Acquisition"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: "outlined",
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          },
-                        },
-                      }}
-                      onChange={(date) =>
-                        handleExtraFieldChange(
-                          "date_of_acquisition",
-                          date,
-                          "date",
-                          "buildingAcquisition",
-                          "Date of Acquisition"
-                        )
-                      }
-                    /> */}
+                                                                                                                                                                      label="Date of Acquisition"
+                                                                                                                                                                      slotProps={{
+                                                                                                                                                                        textField: {
+                                                                                                                                                                          fullWidth: true,
+                                                                                                                                                                          variant: "outlined",
+                                                                                                                                                                          sx: {
+                                                                                                                                                                            "& .MuiOutlinedInput-root": {
+                                                                                                                                                                              height: { xs: "36px", md: "45px" },
+                                                                                                                                                                            },
+                                                                                                                                                                          },
+                                                                                                                                                                        },
+                                                                                                                                                                      }}
+                                                                                                                                                                      onChange={(date) =>
+                                                                                                                                                                        handleExtraFieldChange(
+                                                                                                                                                                          "date_of_acquisition",
+                                                                                                                                                                          date,
+                                                                                                                                                                          "date",
+                                                                                                                                                                          "buildingAcquisition",
+                                                                                                                                                                          "Date of Acquisition"
+                                                                                                                                                                        )
+                                                                                                                                                                      }
+                                                                                                                                                                    /> */}
                     <TextField
                       label="Date of Acquisition"
                       type="date"
@@ -9192,6 +9803,34 @@ export const EditAssetDetailsPage = () => {
                         );
                       }}
                     />
+                    <TextField
+                      label="Expiry Date"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      value={
+                        extraFormFields.building_acquisition_expiry_date
+                          ?.value || ""
+                      }
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value;
+                        handleExtraFieldChange(
+                          "building_acquisition_expiry_date",
+                          selectedDate,
+                          "date",
+                          "buildingAcquisition",
+                          "Expiry Date"
+                        );
+                      }}
+                    />
 
                     <div className="flex gap-2">
                       <FormControl
@@ -9205,7 +9844,11 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          value={extraFormFields.acquisition_currency?.value || (currency && currency.toLowerCase()) || ""}
+                          value={
+                            extraFormFields.acquisition_currency?.value ||
+                            (currency && currency.toLowerCase()) ||
+                            ""
+                          }
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "acquisition_currency",
@@ -9216,7 +9859,13 @@ export const EditAssetDetailsPage = () => {
                             )
                           }
                         >
-                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
+                          <MenuItem
+                            value={
+                              (currency && currency.toLowerCase()) || "inr"
+                            }
+                          >
+                            {currency}
+                          </MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -9281,7 +9930,11 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          value={extraFormFields.book_value_currency?.value || (currency && currency.toLowerCase()) || ""}
+                          value={
+                            extraFormFields.book_value_currency?.value ||
+                            (currency && currency.toLowerCase()) ||
+                            ""
+                          }
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "book_value_currency",
@@ -9292,7 +9945,13 @@ export const EditAssetDetailsPage = () => {
                             )
                           }
                         >
-                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
+                          <MenuItem
+                            value={
+                              (currency && currency.toLowerCase()) || "inr"
+                            }
+                          >
+                            {currency}
+                          </MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -9330,7 +9989,11 @@ export const EditAssetDetailsPage = () => {
                         <InputLabel>Currency</InputLabel>
                         <MuiSelect
                           label="Currency"
-                          value={extraFormFields.market_value_currency?.value || (currency && currency.toLowerCase()) || ""}
+                          value={
+                            extraFormFields.market_value_currency?.value ||
+                            (currency && currency.toLowerCase()) ||
+                            ""
+                          }
                           onChange={(e) =>
                             handleExtraFieldChange(
                               "market_value_currency",
@@ -9341,7 +10004,13 @@ export const EditAssetDetailsPage = () => {
                             )
                           }
                         >
-                          <MenuItem value={(currency && currency.toLowerCase()) || "inr"}>{currency}</MenuItem>
+                          <MenuItem
+                            value={
+                              (currency && currency.toLowerCase()) || "inr"
+                            }
+                          >
+                            {currency}
+                          </MenuItem>
                         </MuiSelect>
                       </FormControl>
                       <TextField
@@ -9450,10 +10119,13 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="Office">Office</MenuItem>
                         <MenuItem value="Warehouse">Warehouse</MenuItem>
                         <MenuItem value="School">School</MenuItem>
-                        <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
+                        <MenuItem value="Other (Manual Entry)">
+                          Other (Manual Entry)
+                        </MenuItem>
                       </MuiSelect>
                     </FormControl>
-                      {extraFormFields.building_use?.value === 'Other (Manual Entry)' && (
+                    {extraFormFields.building_use?.value ===
+                      "Other (Manual Entry)" && (
                         <TextField
                           label="Other Building Use"
                           placeholder="Enter other building use"
@@ -9487,7 +10159,9 @@ export const EditAssetDetailsPage = () => {
                       <InputLabel>Fire Safety Certification</InputLabel>
                       <MuiSelect
                         label="Fire Safety Certification"
-                        value={extraFormFields.fire_safety_certification?.value || ""}
+                        value={
+                          extraFormFields.fire_safety_certification?.value || ""
+                        }
                         onChange={(e) =>
                           handleExtraFieldChange(
                             "fire_safety_certification",
@@ -9509,7 +10183,9 @@ export const EditAssetDetailsPage = () => {
                       placeholder="Enter certificate ID"
                       variant="outlined"
                       fullWidth
-                      value={extraFormFields.occupancy_certificate_no?.value || ""}
+                      value={
+                        extraFormFields.occupancy_certificate_no?.value || ""
+                      }
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           height: { xs: "36px", md: "45px" },
@@ -9535,49 +10211,51 @@ export const EditAssetDetailsPage = () => {
                     >
                       <InputLabel>Structural Safety Certificate</InputLabel>
                       {/* <MuiSelect
+                                                                                                                                                                        label="Structural Safety Certificate"
+                                                                                                                                                                        value={extraFormFields.structural_safety_certificate?.value || ""}
+                                                                                                                                                                        onChange={(e) =>
+                                                                                                                                                                          handleExtraFieldChange(
+                                                                                                                                                                            "structural_safety_certificate",
+                                                                                                                                                                            (e.target as HTMLInputElement).value,
+                                                                                                                                                                            "select",
+                                                                                                                                                                            "usage_and_compliance",
+                                                                                                                                                                            "Structural Safety Certificate"
+                                                                                                                                                                          )
+                                                                                                                                                                        }
+                                                                                                                                                                      >
+                                                                                                                                                                        <MenuItem value="">Select Status</MenuItem>
+                                                                                                                                                                        <MenuItem value="Yes">Yes</MenuItem>
+                                                                                                                                                                        <MenuItem value="No">No</MenuItem>
+                                                                                                                                                                        <MenuItem value="Last Updated">
+                                                                                                                                                                          Last Updated Date Option
+                                                                                                                                                                        </MenuItem>
+                                                                                                                                                                      </MuiSelect> */}
+
+                      <TextField
                         label="Structural Safety Certificate"
-                        value={extraFormFields.structural_safety_certificate?.value || ""}
+                        placeholder="Enter Structural Safety Certificate"
+                        variant="outlined"
+                        fullWidth
+                        type="date"
+                        value={
+                          extraFormFields.structural_safety_certificate
+                            ?.value || ""
+                        }
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            height: { xs: "36px", md: "45px" },
+                          },
+                        }}
                         onChange={(e) =>
                           handleExtraFieldChange(
                             "structural_safety_certificate",
                             (e.target as HTMLInputElement).value,
-                            "select",
+                            "date",
                             "usage_and_compliance",
                             "Structural Safety Certificate"
                           )
                         }
-                      >
-                        <MenuItem value="">Select Status</MenuItem>
-                        <MenuItem value="Yes">Yes</MenuItem>
-                        <MenuItem value="No">No</MenuItem>
-                        <MenuItem value="Last Updated">
-                          Last Updated Date Option
-                        </MenuItem>
-                      </MuiSelect> */}
-
-                        <TextField
-                      label="Structural Safety Certificate"
-                      placeholder="Enter Structural Safety Certificate"
-                      variant="outlined"
-                      fullWidth
-                      type="date"
-                        value={extraFormFields.structural_safety_certificate?.value || ""}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: { xs: "36px", md: "45px" },
-                        },
-                      }}
-                      onChange={(e) =>
-                        handleExtraFieldChange(
-                          "structural_safety_certificate",
-                          (e.target as HTMLInputElement).value,
-                          "date",
-                          "usage_and_compliance",
-                          "Structural Safety Certificate"
-                        )
-                      }
-
-                    />
+                      />
                     </FormControl>
                     <FormControl
                       fullWidth
@@ -9605,12 +10283,14 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="Water">Water</MenuItem>
                         <MenuItem value="Electricity">Electricity</MenuItem>
                         <MenuItem value="Both">Water & Electricity</MenuItem>
-                        <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
+                        <MenuItem value="Other (Manual Entry)">
+                          Other (Manual Entry)
+                        </MenuItem>
                       </MuiSelect>
                     </FormControl>
 
-                                        {
-                      extraFormFields.utility_connections?.value === 'Other (Manual Entry)' && (
+                    {extraFormFields.utility_connections?.value ===
+                      "Other (Manual Entry)" && (
                         <TextField
                           label="Other Utility Connection"
                           placeholder="Enter other utility connection"
@@ -9631,9 +10311,7 @@ export const EditAssetDetailsPage = () => {
                             )
                           }
                         />
-                      )
-
-                    }
+                      )}
 
                     {/* Custom Fields */}
                     {(customFields.buildingUsage || []).map((field) => (
@@ -9703,7 +10381,10 @@ export const EditAssetDetailsPage = () => {
                       <InputLabel>Maintenance Responsibility</InputLabel>
                       <MuiSelect
                         label="Maintenance Responsibility"
-                        value={extraFormFields.maintenance_responsibility?.value || ""}
+                        value={
+                          extraFormFields.maintenance_responsibility?.value ||
+                          ""
+                        }
                         onChange={(e) =>
                           handleExtraFieldChange(
                             "maintenance_responsibility",
@@ -9718,7 +10399,9 @@ export const EditAssetDetailsPage = () => {
                         <MenuItem value="Facilities Management">
                           Facilities Management
                         </MenuItem>
-                        <MenuItem value="Administration">Administration</MenuItem>
+                        <MenuItem value="Administration">
+                          Administration
+                        </MenuItem>
                         <MenuItem value="Outsourced">Outsourced</MenuItem>
                         <MenuItem value="Other">Other</MenuItem>
                       </MuiSelect>
@@ -9830,50 +10513,50 @@ export const EditAssetDetailsPage = () => {
                     }
                   />
                   {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.dwg"
-                    className="hidden"
-                    id="building-attachments"
-                    onChange={e => handleFileUpload('buildingAttachments', e.target.files)}
-                  />
-                  <label htmlFor="building-attachments" className="cursor-pointer">
-                    <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-600">
-                      Click to upload attachments
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Upload blueprints, tax receipts, occupancy certificate, etc.
-                    </p>
-                    <p className="text-xs text-yellow-600 mt-1">
-                      Max 10MB per file, 50MB total. Images will be compressed automatically.
-                    </p>
-                  </label>
-                  {attachments.buildingAttachments && attachments.buildingAttachments.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {attachments.buildingAttachments.map((file, idx) => (
-                        <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                          <div className="flex flex-col truncate">
-                            <span className="text-xs sm:text-sm truncate">{file.name}</span>
-                            <span className="text-xs text-gray-500">
-                              {(file.size / 1024 / 1024).toFixed(2)} MB
-                            </span>
-                          </div>
-                          <button onClick={() => removeFile('buildingAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                      <div className="text-xs text-gray-500 mt-1">
-                        Total: {attachments.buildingAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
-                          ? `${(attachments.buildingAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
-                          : `${(attachments.buildingAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
-                        }
-                      </div>
-                    </div>
-                  )}
-                </div> */}
+                                                                                                                                                                  <input
+                                                                                                                                                                    type="file"
+                                                                                                                                                                    multiple
+                                                                                                                                                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.dwg"
+                                                                                                                                                                    className="hidden"
+                                                                                                                                                                    id="building-attachments"
+                                                                                                                                                                    onChange={e => handleFileUpload('buildingAttachments', e.target.files)}
+                                                                                                                                                                  />
+                                                                                                                                                                  <label htmlFor="building-attachments" className="cursor-pointer">
+                                                                                                                                                                    <Archive className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                                                                                                                                                                    <p className="text-sm text-gray-600">
+                                                                                                                                                                      Click to upload attachments
+                                                                                                                                                                    </p>
+                                                                                                                                                                    <p className="text-xs text-gray-500 mt-1">
+                                                                                                                                                                      Upload blueprints, tax receipts, occupancy certificate, etc.
+                                                                                                                                                                    </p>
+                                                                                                                                                                    <p className="text-xs text-yellow-600 mt-1">
+                                                                                                                                                                      Max 10MB per file, 50MB total. Images will be compressed automatically.
+                                                                                                                                                                    </p>
+                                                                                                                                                                  </label>
+                                                                                                                                                                  {attachments.buildingAttachments && attachments.buildingAttachments.length > 0 && (
+                                                                                                                                                                    <div className="mt-2 space-y-1">
+                                                                                                                                                                      {attachments.buildingAttachments.map((file, idx) => (
+                                                                                                                                                                        <div key={idx} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                                                                                                                                                                          <div className="flex flex-col truncate">
+                                                                                                                                                                            <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                                                                                                                                                                            <span className="text-xs text-gray-500">
+                                                                                                                                                                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                                                                                                                                                                            </span>
+                                                                                                                                                                          </div>
+                                                                                                                                                                          <button onClick={() => removeFile('buildingAttachments', idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                                                                                                                                                                            <X className="w-4 h-4" />
+                                                                                                                                                                          </button>
+                                                                                                                                                                        </div>
+                                                                                                                                                                      ))}
+                                                                                                                                                                      <div className="text-xs text-gray-500 mt-1">
+                                                                                                                                                                        Total: {attachments.buildingAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024 < 1 
+                                                                                                                                                                          ? `${(attachments.buildingAttachments.reduce((total, file) => total + file.size, 0) / 1024).toFixed(0)} KB`
+                                                                                                                                                                          : `${(attachments.buildingAttachments.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(2)} MB`
+                                                                                                                                                                        }
+                                                                                                                                                                      </div>
+                                                                                                                                                                    </div>
+                                                                                                                                                                  )}
+                                                                                                                                                                </div> */}
 
                   {/* Custom Fields */}
                   {(customFields.buildingMiscellaneous || []).map((field) => (
@@ -9962,10 +10645,9 @@ export const EditAssetDetailsPage = () => {
                     {/* First row: Asset Name, Asset No, Serial No, Model No., Manufacturer */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                       <TextField
-
                         label={
                           <span>
-                            Asset Name<span style={{ color: '#C72030' }}>*</span>
+                            Asset Name<span style={{ color: "#C72030" }}>*</span>
                           </span>
                         }
                         placeholder="Enter Asset Name"
@@ -10093,7 +10775,7 @@ export const EditAssetDetailsPage = () => {
                         }}
                       >
                         <InputLabel id="group-select-label" shrink>
-                          Group<span style={{ color: '#C72030' }}>*</span>
+                          Group<span style={{ color: "#C72030" }}>*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="group-select-label"
@@ -10130,7 +10812,7 @@ export const EditAssetDetailsPage = () => {
                         }}
                       >
                         <InputLabel id="subgroup-select-label" shrink>
-                          Subgroup<span style={{ color: '#C72030' }}>*</span>
+                          Subgroup<span style={{ color: "#C72030" }}>*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="subgroup-select-label"
@@ -10179,10 +10861,7 @@ export const EditAssetDetailsPage = () => {
                           value={formData.pms_supplier_id || ""}
                           onChange={(e) => {
                             // setSelectedLoanedVendorId(e.target.value);
-                            handleFieldChange(
-                              "pms_supplier_id",
-                              e.target.value
-                            );
+                            handleFieldChange("pms_supplier_id", e.target.value);
                           }}
                           sx={fieldStyles}
                         >
@@ -10218,16 +10897,15 @@ export const EditAssetDetailsPage = () => {
                                 id="status-inuse"
                                 name="status"
                                 value="false"
-                                defaultChecked
+                                checked={formData.status === "in_use"}
                                 className="w-4 h-4 text-[#C72030] border-gray-300"
                                 style={{
                                   accentColor: "#C72030",
                                 }}
                                 onChange={(e) => {
-                                  handleFieldChange("breakdown", e.target.value)
-                                  handleFieldChange("status", "in_use")
-                                }
-                                }
+                                  handleFieldChange("breakdown", e.target.value);
+                                  handleFieldChange("status", "in_use");
+                                }}
                               />
                               <label htmlFor="status-inuse" className="text-sm">
                                 In Use
@@ -10239,17 +10917,20 @@ export const EditAssetDetailsPage = () => {
                                 id="status-breakdown"
                                 name="status"
                                 value="true"
+                                checked={formData.status === "breakdown"}
                                 className="w-4 h-4 text-[#C72030] border-gray-300"
                                 style={{
                                   accentColor: "#C72030",
                                 }}
                                 onChange={(e) => {
-                                  handleFieldChange("breakdown", e.target.value)
-                                  handleFieldChange("status", "breakdown")
-                                }
-                                }
+                                  handleFieldChange("breakdown", e.target.value);
+                                  handleFieldChange("status", "breakdown");
+                                }}
                               />
-                              <label htmlFor="status-breakdown" className="text-sm">
+                              <label
+                                htmlFor="status-breakdown"
+                                className="text-sm"
+                              >
                                 Breakdown
                               </label>
                             </div>
@@ -10328,7 +11009,10 @@ export const EditAssetDetailsPage = () => {
                                   handleFieldChange("asset_type", e.target.value)
                                 }
                               />
-                              <label htmlFor="asset-type-comprehensive" className="text-sm">
+                              <label
+                                htmlFor="asset-type-comprehensive"
+                                className="text-sm"
+                              >
                                 Comprehensive
                               </label>
                             </div>
@@ -10347,20 +11031,18 @@ export const EditAssetDetailsPage = () => {
                                   handleFieldChange("asset_type", e.target.value)
                                 }
                               />
-                              <label htmlFor="asset-type-non-comprehensive" className="text-sm">
+                              <label
+                                htmlFor="asset-type-non-comprehensive"
+                                className="text-sm"
+                              >
                                 Non-Comprehensive
                               </label>
                             </div>
                           </div>
                         </div>
-                        <div>
-                          {/* Empty div to maintain grid structure */}
-                        </div>
+                        <div>{/* Empty div to maintain grid structure */}</div>
                       </div>
                     </div>
-
-
-
 
                     {/* Custom Fields for Asset Details */}
                     {(customFields.assetDetails || []).map((field) => (
@@ -10428,7 +11110,7 @@ export const EditAssetDetailsPage = () => {
                         sx={{ minWidth: 120 }}
                       >
                         <InputLabel id="site-select-label" shrink>
-                          Site<span style={{ color: '#C72030' }}>*</span>
+                          Site<span style={{ color: "#C72030" }}>*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="site-select-label"
@@ -10459,7 +11141,7 @@ export const EditAssetDetailsPage = () => {
                         sx={{ minWidth: 120 }}
                       >
                         <InputLabel id="building-select-label" shrink>
-                          Building<span style={{ color: '#C72030' }}>*</span>
+                          Building<span style={{ color: "#C72030" }}>*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="building-select-label"
@@ -10512,10 +11194,7 @@ export const EditAssetDetailsPage = () => {
                             <em>Select Wing</em>
                           </MenuItem>
                           {wings.map((wing) => (
-                            <MenuItem
-                              key={wing.id}
-                              value={wing.id.toString()}
-                            >
+                            <MenuItem key={wing.id} value={wing.id.toString()}>
                               {wing.name}
                             </MenuItem>
                           ))}
@@ -10541,7 +11220,7 @@ export const EditAssetDetailsPage = () => {
                             handleFieldChange("pms_area_id", e.target.value);
                           }}
                           sx={fieldStyles}
-                          disabled={!selectedLocation.wing || loading.areas}
+                          disabled={!selectedLocation.building || loading.areas}
                         >
                           <MenuItem value="">
                             <em>Select Area</em>
@@ -10573,7 +11252,7 @@ export const EditAssetDetailsPage = () => {
                             handleFieldChange("pms_floor_id", e.target.value);
                           }}
                           sx={fieldStyles}
-                          disabled={!selectedLocation.area || loading.floors}
+                          disabled={!selectedLocation.building || loading.floors}
                         >
                           <MenuItem value="">
                             <em>Select Floor</em>
@@ -10607,16 +11286,13 @@ export const EditAssetDetailsPage = () => {
                             handleFieldChange("pms_room_id", e.target.value);
                           }}
                           sx={fieldStyles}
-                          disabled={!selectedLocation.floor || loading.rooms}
+                          disabled={!selectedLocation.building || loading.rooms}
                         >
                           <MenuItem value="">
                             <em>Select Room</em>
                           </MenuItem>
                           {rooms.map((room) => (
-                            <MenuItem
-                              key={room.id}
-                              value={room.id.toString()}
-                            >
+                            <MenuItem key={room.id} value={room.id.toString()}>
                               {room.name}
                             </MenuItem>
                           ))}
@@ -10677,34 +11353,34 @@ export const EditAssetDetailsPage = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       {/* <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">
-                          If Applicable
-                        </span>
-                        <div
-                          className="relative inline-block w-12 h-6"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            id="it-assets-toggle"
-                            checked={itAssetsToggle}
-                            onChange={(e) =>
-                              handleItAssetsToggleChange(e.target.checked)
-                            }
-                          />
-                          <label
-                            htmlFor="it-assets-toggle"
-                            className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${itAssetsToggle ? "bg-green-400" : "bg-gray-300"
-                              }`}
-                          >
-                            <span
-                              className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${itAssetsToggle ? "translate-x-6" : "translate-x-1"
-                                }`}
-                            ></span>
-                          </label>
-                        </div>
-                      </div> */}
+                                                                                                                                                                        <span className="text-sm text-gray-600">
+                                                                                                                                                                          If Applicable
+                                                                                                                                                                        </span>
+                                                                                                                                                                        <div
+                                                                                                                                                                          className="relative inline-block w-12 h-6"
+                                                                                                                                                                          onClick={(e) => e.stopPropagation()}
+                                                                                                                                                                        >
+                                                                                                                                                                          <input
+                                                                                                                                                                            type="checkbox"
+                                                                                                                                                                            className="sr-only peer"
+                                                                                                                                                                            id="it-assets-toggle"
+                                                                                                                                                                            checked={itAssetsToggle}
+                                                                                                                                                                            onChange={(e) =>
+                                                                                                                                                                              handleItAssetsToggleChange(e.target.checked)
+                                                                                                                                                                            }
+                                                                                                                                                                          />
+                                                                                                                                                                          <label
+                                                                                                                                                                            htmlFor="it-assets-toggle"
+                                                                                                                                                                            className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${itAssetsToggle ? "bg-green-400" : "bg-gray-300"
+                                                                                                                                                                              }`}
+                                                                                                                                                                          >
+                                                                                                                                                                            <span
+                                                                                                                                                                              className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${itAssetsToggle ? "translate-x-6" : "translate-x-1"
+                                                                                                                                                                                }`}
+                                                                                                                                                                            ></span>
+                                                                                                                                                                          </label>
+                                                                                                                                                                        </div>
+                                                                                                                                                                      </div> */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -10726,302 +11402,302 @@ export const EditAssetDetailsPage = () => {
                       )}
                     </div>
                   </div>
-                   {expandedSections.warranty && (
-                                     <div className="p-4 sm:p-6">
-                                       {/* System Details */}
-                                       <div className="mb-6">
-                                         <h3
-                                           className="font-semibold mb-4"
-                                           style={{
-                                             color: "#C72030",
-                                           }}
-                                         >
-                                           SYSTEM DETAILS
-                                         </h3>
-                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                           <TextField
-                                             label="OS"
-                                             placeholder="Enter OS"
-                                             name="os"
-                                             fullWidth
-                                             variant="outlined"
-                                             value={itAssetDetails.system_details.os}
-                                             onChange={(e) =>
-                                               handleItAssetDetailsChange(
-                                                 "system_details",
-                                                 "os",
-                                                 e.target.value
-                                               )
-                                             }
-                                             InputLabelProps={{
-                                               shrink: true,
-                                             }}
-                                             InputProps={{
-                                               sx: fieldStyles,
-                                             }}
-                                           />
-                 
-                                           <TextField
-                                             label="Total Memory"
-                                             placeholder="Enter Total Memory"
-                                             name="totalMemory"
-                                             fullWidth
-                                             variant="outlined"
-                                             value={itAssetDetails.system_details.memory}
-                                             onChange={(e) =>
-                                               handleItAssetDetailsChange(
-                                                 "system_details",
-                                                 "memory",
-                                                 e.target.value
-                                               )
-                                             }
-                                             InputLabelProps={{
-                                               shrink: true,
-                                             }}
-                                             InputProps={{
-                                               sx: fieldStyles,
-                                             }}
-                                           />
-                                           <TextField
-                                             label="Processor"
-                                             placeholder="Enter Processor"
-                                             name="processor"
-                                             fullWidth
-                                             variant="outlined"
-                                             value={itAssetDetails.system_details.processor}
-                                             onChange={(e) =>
-                                               handleItAssetDetailsChange(
-                                                 "system_details",
-                                                 "processor",
-                                                 e.target.value
-                                               )
-                                             }
-                                             InputLabelProps={{
-                                               shrink: true,
-                                             }}
-                                             InputProps={{
-                                               sx: fieldStyles,
-                                             }}
-                                           />
-                 
-                                           {/* Custom Fields for System Details */}
-                                           {(itAssetsCustomFields["System Details"] || []).map(
-                                             (field) => (
-                                               <div key={field.id} className="relative">
-                                                 <TextField
-                                                   label={field.name}
-                                                   placeholder={`Enter ${field.name}`}
-                                                   value={field.value}
-                                                   onChange={(e) =>
-                                                     handleItAssetsCustomFieldChange(
-                                                       "System Details",
-                                                       field.id,
-                                                       e.target.value
-                                                     )
-                                                   }
-                                                   fullWidth
-                                                   variant="outlined"
-                                                   InputLabelProps={{
-                                                     shrink: true,
-                                                   }}
-                                                   InputProps={{
-                                                     sx: fieldStyles,
-                                                   }}
-                                                 />
-                                                 <button
-                                                   onClick={() =>
-                                                     removeItAssetsCustomField(
-                                                       "System Details",
-                                                       field.id
-                                                     )
-                                                   }
-                                                   className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
-                                                 >
-                                                   <X className="w-4 h-4" />
-                                                 </button>
-                                               </div>
-                                             )
-                                           )}
-                                         </div>
-                                       </div>
-                 
-                                       {/* Hardware Details */}
-                                       <div>
-                                         <div className="flex items-center gap-2 mb-4">
-                                           {isEditingHardDiskHeading ? (
-                                             <div className="flex items-center gap-2">
-                                               <input
-                                                 type="text"
-                                                 value={editingHardDiskHeadingText}
-                                                 onChange={(e) =>
-                                                   setEditingHardDiskHeadingText(e.target.value)
-                                                 }
-                                                 className="font-semibold text-sm bg-transparent border-b focus:outline-none"
-                                                 style={{
-                                                   color: "#C72030",
-                                                   borderColor: "#C72030",
-                                                 }}
-                                                 onKeyDown={(e) => {
-                                                   if (e.key === "Enter") {
-                                                     setHardDiskHeading(
-                                                       editingHardDiskHeadingText
-                                                     );
-                                                     localStorage.setItem(
-                                                       "hardDiskHeading",
-                                                       editingHardDiskHeadingText
-                                                     );
-                                                     setIsEditingHardDiskHeading(false);
-                                                   }
-                                                   if (e.key === "Escape") {
-                                                     setEditingHardDiskHeadingText(
-                                                       hardDiskHeading
-                                                     );
-                                                     setIsEditingHardDiskHeading(false);
-                                                   }
-                                                 }}
-                                                 autoFocus
-                                               />
-                                               <button
-                                                 onClick={() => {
-                                                   setHardDiskHeading(editingHardDiskHeadingText);
-                                                   localStorage.setItem(
-                                                     "hardDiskHeading",
-                                                     editingHardDiskHeadingText
-                                                   );
-                                                   setIsEditingHardDiskHeading(false);
-                                                 }}
-                                                 className="text-green-600 hover:text-green-700"
-                                               >
-                                                 <Check className="w-4 h-4" />
-                                               </button>
-                                             </div>
-                                           ) : (
-                                             <div className="flex items-center gap-2">
-                                               <h3
-                                                 className="font-semibold"
-                                                 style={{ color: "#C72030" }}
-                                               >
-                                                 {hardDiskHeading}
-                                               </h3>
-                                               <button
-                                                 onClick={() => {
-                                                   setEditingHardDiskHeadingText(hardDiskHeading);
-                                                   setIsEditingHardDiskHeading(true);
-                                                 }}
-                                                 className="text-gray-500 hover:text-red-600 transition-colors"
-                                               >
-                                                 <Edit3 className="w-3 h-3" />
-                                               </button>
-                                             </div>
-                                           )}
-                                         </div>
-                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                           <TextField
-                                             label="Model"
-                                             placeholder="Enter Model"
-                                             name="hdModel"
-                                             fullWidth
-                                             variant="outlined"
-                                             value={itAssetDetails.hardware.model}
-                                             onChange={(e) =>
-                                               handleItAssetDetailsChange(
-                                                 "hardware",
-                                                 "model",
-                                                 e.target.value
-                                               )
-                                             }
-                                             InputLabelProps={{
-                                               shrink: true,
-                                             }}
-                                             InputProps={{
-                                               sx: fieldStyles,
-                                             }}
-                                           />
-                                           <TextField
-                                             label="Serial No."
-                                             placeholder="Enter Serial No."
-                                             name="hdSerialNo"
-                                             fullWidth
-                                             variant="outlined"
-                                             value={itAssetDetails.hardware.serial_no}
-                                             onChange={(e) =>
-                                               handleItAssetDetailsChange(
-                                                 "hardware",
-                                                 "serial_no",
-                                                 e.target.value
-                                               )
-                                             }
-                                             InputLabelProps={{
-                                               shrink: true,
-                                             }}
-                                             InputProps={{
-                                               sx: fieldStyles,
-                                             }}
-                                           />
-                                           <TextField
-                                             label="Capacity"
-                                             placeholder="Enter Capacity"
-                                             name="hdCapacity"
-                                             fullWidth
-                                             variant="outlined"
-                                             value={itAssetDetails.hardware.capacity}
-                                             onChange={(e) =>
-                                               handleItAssetDetailsChange(
-                                                 "hardware",
-                                                 "capacity",
-                                                 e.target.value
-                                               )
-                                             }
-                                             InputLabelProps={{
-                                               shrink: true,
-                                             }}
-                                             InputProps={{
-                                               sx: fieldStyles,
-                                             }}
-                                           />
-                 
-                                           {/* Custom Fields for Hardware Details */}
-                                           {(itAssetsCustomFields["Hardware Details"] || []).map(
-                                             (field) => (
-                                               <div key={field.id} className="relative">
-                                                 <TextField
-                                                   label={field.name}
-                                                   placeholder={`Enter ${field.name}`}
-                                                   value={field.value}
-                                                   onChange={(e) =>
-                                                     handleItAssetsCustomFieldChange(
-                                                       "Hardware Details",
-                                                       field.id,
-                                                       e.target.value
-                                                     )
-                                                   }
-                                                   fullWidth
-                                                   variant="outlined"
-                                                   InputLabelProps={{
-                                                     shrink: true,
-                                                   }}
-                                                   InputProps={{
-                                                     sx: fieldStyles,
-                                                   }}
-                                                 />
-                                                 <button
-                                                   onClick={() =>
-                                                     removeItAssetsCustomField(
-                                                       "Hardware Details",
-                                                       field.id
-                                                     )
-                                                   }
-                                                   className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
-                                                 >
-                                                   <X className="w-4 h-4" />
-                                                 </button>
-                                               </div>
-                                             )
-                                           )}
-                                         </div>
-                                       </div>
-                                     </div>
-                                   )}
+                  {expandedSections.warranty && (
+                    <div className="p-4 sm:p-6">
+                      {/* System Details */}
+                      <div className="mb-6">
+                        <h3
+                          className="font-semibold mb-4"
+                          style={{
+                            color: "#C72030",
+                          }}
+                        >
+                          SYSTEM DETAILS
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <TextField
+                            label="OS"
+                            placeholder="Enter OS"
+                            name="os"
+                            fullWidth
+                            variant="outlined"
+                            value={itAssetDetails.system_details.os}
+                            onChange={(e) =>
+                              handleItAssetDetailsChange(
+                                "system_details",
+                                "os",
+                                e.target.value
+                              )
+                            }
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            InputProps={{
+                              sx: fieldStyles,
+                            }}
+                          />
+
+                          <TextField
+                            label="Total Memory"
+                            placeholder="Enter Total Memory"
+                            name="totalMemory"
+                            fullWidth
+                            variant="outlined"
+                            value={itAssetDetails.system_details.memory}
+                            onChange={(e) =>
+                              handleItAssetDetailsChange(
+                                "system_details",
+                                "memory",
+                                e.target.value
+                              )
+                            }
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            InputProps={{
+                              sx: fieldStyles,
+                            }}
+                          />
+                          <TextField
+                            label="Processor"
+                            placeholder="Enter Processor"
+                            name="processor"
+                            fullWidth
+                            variant="outlined"
+                            value={itAssetDetails.system_details.processor}
+                            onChange={(e) =>
+                              handleItAssetDetailsChange(
+                                "system_details",
+                                "processor",
+                                e.target.value
+                              )
+                            }
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            InputProps={{
+                              sx: fieldStyles,
+                            }}
+                          />
+
+                          {/* Custom Fields for System Details */}
+                          {(itAssetsCustomFields["System Details"] || []).map(
+                            (field) => (
+                              <div key={field.id} className="relative">
+                                <TextField
+                                  label={field.name}
+                                  placeholder={`Enter ${field.name}`}
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    handleItAssetsCustomFieldChange(
+                                      "System Details",
+                                      field.id,
+                                      e.target.value
+                                    )
+                                  }
+                                  fullWidth
+                                  variant="outlined"
+                                  InputLabelProps={{
+                                    shrink: true,
+                                  }}
+                                  InputProps={{
+                                    sx: fieldStyles,
+                                  }}
+                                />
+                                <button
+                                  onClick={() =>
+                                    removeItAssetsCustomField(
+                                      "System Details",
+                                      field.id
+                                    )
+                                  }
+                                  className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Hardware Details */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-4">
+                          {isEditingHardDiskHeading ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={editingHardDiskHeadingText}
+                                onChange={(e) =>
+                                  setEditingHardDiskHeadingText(e.target.value)
+                                }
+                                className="font-semibold text-sm bg-transparent border-b focus:outline-none"
+                                style={{
+                                  color: "#C72030",
+                                  borderColor: "#C72030",
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    setHardDiskHeading(
+                                      editingHardDiskHeadingText
+                                    );
+                                    localStorage.setItem(
+                                      "hardDiskHeading",
+                                      editingHardDiskHeadingText
+                                    );
+                                    setIsEditingHardDiskHeading(false);
+                                  }
+                                  if (e.key === "Escape") {
+                                    setEditingHardDiskHeadingText(
+                                      hardDiskHeading
+                                    );
+                                    setIsEditingHardDiskHeading(false);
+                                  }
+                                }}
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => {
+                                  setHardDiskHeading(editingHardDiskHeadingText);
+                                  localStorage.setItem(
+                                    "hardDiskHeading",
+                                    editingHardDiskHeadingText
+                                  );
+                                  setIsEditingHardDiskHeading(false);
+                                }}
+                                className="text-green-600 hover:text-green-700"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <h3
+                                className="font-semibold"
+                                style={{ color: "#C72030" }}
+                              >
+                                {hardDiskHeading}
+                              </h3>
+                              <button
+                                onClick={() => {
+                                  setEditingHardDiskHeadingText(hardDiskHeading);
+                                  setIsEditingHardDiskHeading(true);
+                                }}
+                                className="text-gray-500 hover:text-red-600 transition-colors"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <TextField
+                            label="Model"
+                            placeholder="Enter Model"
+                            name="hdModel"
+                            fullWidth
+                            variant="outlined"
+                            value={itAssetDetails.hardware.model}
+                            onChange={(e) =>
+                              handleItAssetDetailsChange(
+                                "hardware",
+                                "model",
+                                e.target.value
+                              )
+                            }
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            InputProps={{
+                              sx: fieldStyles,
+                            }}
+                          />
+                          <TextField
+                            label="Serial No."
+                            placeholder="Enter Serial No."
+                            name="hdSerialNo"
+                            fullWidth
+                            variant="outlined"
+                            value={itAssetDetails.hardware.serial_no}
+                            onChange={(e) =>
+                              handleItAssetDetailsChange(
+                                "hardware",
+                                "serial_no",
+                                e.target.value
+                              )
+                            }
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            InputProps={{
+                              sx: fieldStyles,
+                            }}
+                          />
+                          <TextField
+                            label="Capacity"
+                            placeholder="Enter Capacity"
+                            name="hdCapacity"
+                            fullWidth
+                            variant="outlined"
+                            value={itAssetDetails.hardware.capacity}
+                            onChange={(e) =>
+                              handleItAssetDetailsChange(
+                                "hardware",
+                                "capacity",
+                                e.target.value
+                              )
+                            }
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            InputProps={{
+                              sx: fieldStyles,
+                            }}
+                          />
+
+                          {/* Custom Fields for Hardware Details */}
+                          {(itAssetsCustomFields["Hardware Details"] || []).map(
+                            (field) => (
+                              <div key={field.id} className="relative">
+                                <TextField
+                                  label={field.name}
+                                  placeholder={`Enter ${field.name}`}
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    handleItAssetsCustomFieldChange(
+                                      "Hardware Details",
+                                      field.id,
+                                      e.target.value
+                                    )
+                                  }
+                                  fullWidth
+                                  variant="outlined"
+                                  InputLabelProps={{
+                                    shrink: true,
+                                  }}
+                                  InputProps={{
+                                    sx: fieldStyles,
+                                  }}
+                                />
+                                <button
+                                  onClick={() =>
+                                    removeItAssetsCustomField(
+                                      "Hardware Details",
+                                      field.id
+                                    )
+                                  }
+                                  className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -11160,19 +11836,22 @@ export const EditAssetDetailsPage = () => {
                         {meterType === "SubMeter" && (
                           <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Parent Meter <span style={{ color: '#C72030' }}>*</span>
+                              Parent Meter{" "}
+                              <span style={{ color: "#C72030" }}>*</span>
                             </label>
                             <FormControl fullWidth>
                               <InputLabel>Parent Meter</InputLabel>
                               <MuiSelect
                                 label="Parent Meter"
-                              value={selectedParentMeterId}
+                                value={selectedParentMeterId}
                                 onChange={(e) => {
                                   const value = e.target.value;
-                                setSelectedParentMeterId(value);
-                                handleFieldChange("parent_meter_id", value);
-                              }}
-                              disabled={parentMeterLoading || !meterDetailsToggle}
+                                  setSelectedParentMeterId(value);
+                                  handleFieldChange("parent_meter_id", value);
+                                }}
+                                disabled={
+                                  parentMeterLoading || !meterDetailsToggle
+                                }
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     height: "45px",
@@ -11246,24 +11925,34 @@ export const EditAssetDetailsPage = () => {
                             </div>
 
                             {/* Meter Type ID Indicator */}
-                            {(meterCategoryType || subCategoryType || tertiaryCategory) && (
-                              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                  <span className="text-sm text-blue-700">
-                                    <strong>Selected Meter Type:</strong> {meterCategoryType}
-                                    {subCategoryType && ` → ${subCategoryType}`}
-                                    {tertiaryCategory && ` → ${tertiaryCategory}`}
-                                  </span>
+                            {(meterCategoryType ||
+                              subCategoryType ||
+                              tertiaryCategory) && (
+                                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                    <span className="text-sm text-blue-700">
+                                      <strong>Selected Meter Type:</strong>{" "}
+                                      {meterCategoryType}
+                                      {subCategoryType && ` → ${subCategoryType}`}
+                                      {tertiaryCategory && ` → ${tertiaryCategory}`}
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-blue-600 mt-1">
+                                    Asset Meter Type ID:{" "}
+                                    {(() => {
+                                      const meterTypeId = getAssetMeterTypeId(
+                                        meterCategoryType,
+                                        subCategoryType,
+                                        tertiaryCategory
+                                      );
+                                      return typeof meterTypeId === "number"
+                                        ? meterTypeId
+                                        : "Not mapped";
+                                    })()}
+                                  </div>
                                 </div>
-                                <div className="text-xs text-blue-600 mt-1">
-                                  Asset Meter Type ID: {(() => {
-                                    const meterTypeId = getAssetMeterTypeId(meterCategoryType, subCategoryType, tertiaryCategory);
-                                    return typeof meterTypeId === 'number' ? meterTypeId : 'Not mapped';
-                                  })()}
-                                </div>
-                              </div>
-                            )}
+                              )}
 
                             {/* Board Ratio Options (Second Image) */}
                             {showBoardRatioOptions && (
@@ -11285,7 +11974,9 @@ export const EditAssetDetailsPage = () => {
                                             subCategoryType === option.value
                                           }
                                           onChange={(e) => {
-                                            handleSubCategoryChange(e.target.value);
+                                            handleSubCategoryChange(
+                                              e.target.value
+                                            );
                                           }}
                                           className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                                           style={{
@@ -11326,7 +12017,9 @@ export const EditAssetDetailsPage = () => {
                                             subCategoryType === option.value
                                           }
                                           onChange={(e) => {
-                                            handleSubCategoryChange(e.target.value);
+                                            handleSubCategoryChange(
+                                              e.target.value
+                                            );
                                           }}
                                           className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                                           style={{
@@ -11367,7 +12060,9 @@ export const EditAssetDetailsPage = () => {
                                             subCategoryType === option.value
                                           }
                                           onChange={(e) => {
-                                            handleSubCategoryChange(e.target.value);
+                                            handleSubCategoryChange(
+                                              e.target.value
+                                            );
                                           }}
                                           className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                                           style={{
@@ -11408,7 +12103,9 @@ export const EditAssetDetailsPage = () => {
                                             tertiaryCategory === option.value
                                           }
                                           onChange={(e) => {
-                                            handleTertiaryCategoryChange(e.target.value);
+                                            handleTertiaryCategoryChange(
+                                              e.target.value
+                                            );
                                           }}
                                           className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                                           style={{
@@ -11449,7 +12146,9 @@ export const EditAssetDetailsPage = () => {
                                             subCategoryType === option.value
                                           }
                                           onChange={(e) => {
-                                            handleSubCategoryChange(e.target.value);
+                                            handleSubCategoryChange(
+                                              e.target.value
+                                            );
                                           }}
                                           className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                                           style={{
@@ -11584,14 +12283,15 @@ export const EditAssetDetailsPage = () => {
                       <TextField
                         label={
                           <span>
-                            Purchase Cost<span style={{ color: '#C72030' }}>*</span>
+                            Purchase Cost
+                            <span style={{ color: "#C72030" }}>*</span>
                           </span>
                         }
                         placeholder="Enter cost"
                         name="purchaseCost"
                         fullWidth
                         type="number"
-                          value={formData.purchase_cost || ""}
+                        value={formData.purchase_cost || ""}
                         variant="outlined"
                         InputLabelProps={{
                           shrink: true,
@@ -11606,7 +12306,8 @@ export const EditAssetDetailsPage = () => {
                       <TextField
                         label={
                           <span>
-                            Purchase Date<span style={{ color: '#C72030' }}>*</span>
+                            Purchase Date
+                            <span style={{ color: "#C72030" }}>*</span>
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -11614,7 +12315,7 @@ export const EditAssetDetailsPage = () => {
                         type="date"
                         fullWidth
                         variant="outlined"
-                          value={formData.purchased_on || ""} // <-- Prefill value
+                        value={formData.purchased_on || ""} // <-- Prefill value
                         InputLabelProps={{
                           shrink: true,
                         }}
@@ -11631,7 +12332,8 @@ export const EditAssetDetailsPage = () => {
                       <TextField
                         label={
                           <span>
-                            Commissioning Date<span style={{ color: '#C72030' }}>*</span>
+                            Commissioning Date
+                            <span style={{ color: "#C72030" }}>*</span>
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -11639,7 +12341,7 @@ export const EditAssetDetailsPage = () => {
                         type="date"
                         fullWidth
                         variant="outlined"
-                          value={formData.commisioning_date || ""}
+                        value={formData.commisioning_date || ""}
                         InputLabelProps={{
                           shrink: true,
                         }}
@@ -11653,14 +12355,15 @@ export const EditAssetDetailsPage = () => {
                       <TextField
                         label={
                           <span>
-                            Warranty Expires On<span style={{ color: '#C72030' }}>*</span>
+                            Warranty Expires On
+                            <span style={{ color: "#C72030" }}>*</span>
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
                         name="warrantyExpiresOn"
                         type="date"
                         fullWidth
-                          value={formData.warranty_expiry || ""}
+                        value={formData.warranty_expiry || ""}
                         variant="outlined"
                         InputLabelProps={{
                           shrink: true,
@@ -11824,44 +12527,44 @@ export const EditAssetDetailsPage = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     {/* <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openCustomFieldModal('depreciationRule');
-                    }}
-                    className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Custom Field
-                  </button> */}
+                                                                                                                                                                    onClick={(e) => {
+                                                                                                                                                                      e.stopPropagation();
+                                                                                                                                                                      openCustomFieldModal('depreciationRule');
+                                                                                                                                                                    }}
+                                                                                                                                                                    className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                                                                                                                                                                  >
+                                                                                                                                                                    <Plus className="w-4 h-4" />
+                                                                                                                                                                    Custom Field
+                                                                                                                                                                  </button> */}
                     {/* <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">If Applicable</span>
-                      <div
-                        className="relative inline-block w-12 h-6"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          id="depreciation-toggle"
-                          checked={depreciationToggle}
-                          onChange={(e) =>
-                            handleDepreciationToggleChange(e.target.checked)
-                          }
-                        />
-                        <label
-                          htmlFor="depreciation-toggle"
-                          className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${depreciationToggle ? "bg-green-400" : "bg-gray-300"
-                            }`}
-                        >
-                          <span
-                            className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${depreciationToggle
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                              }`}
-                          ></span>
-                        </label>
-                      </div>
-                    </div> */}
+                                                                                                                                                                      <span className="text-sm text-gray-600">If Applicable</span>
+                                                                                                                                                                      <div
+                                                                                                                                                                        className="relative inline-block w-12 h-6"
+                                                                                                                                                                        onClick={(e) => e.stopPropagation()}
+                                                                                                                                                                      >
+                                                                                                                                                                        <input
+                                                                                                                                                                          type="checkbox"
+                                                                                                                                                                          className="sr-only peer"
+                                                                                                                                                                          id="depreciation-toggle"
+                                                                                                                                                                          checked={depreciationToggle}
+                                                                                                                                                                          onChange={(e) =>
+                                                                                                                                                                            handleDepreciationToggleChange(e.target.checked)
+                                                                                                                                                                          }
+                                                                                                                                                                        />
+                                                                                                                                                                        <label
+                                                                                                                                                                          htmlFor="depreciation-toggle"
+                                                                                                                                                                          className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${depreciationToggle ? "bg-green-400" : "bg-gray-300"
+                                                                                                                                                                            }`}
+                                                                                                                                                                        >
+                                                                                                                                                                          <span
+                                                                                                                                                                            className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${depreciationToggle
+                                                                                                                                                                              ? "translate-x-6"
+                                                                                                                                                                              : "translate-x-1"
+                                                                                                                                                                              }`}
+                                                                                                                                                                          ></span>
+                                                                                                                                                                        </label>
+                                                                                                                                                                      </div>
+                                                                                                                                                                    </div> */}
                     {expandedSections.nonConsumption ? (
                       <ChevronUp className="w-5 h-5" />
                     ) : (
@@ -11874,17 +12577,17 @@ export const EditAssetDetailsPage = () => {
                   //   className={`p-4 sm:p-6 ${!depreciationToggle ? "opacity-50 pointer-events-none" : ""
                   //     }`}
                   // >
-                    <div className="p-4 sm:p-6">
+                  <div className="p-4 sm:p-6">
                     <div className="space-y-6">
                       {/* Method Section */}
                       <div>
                         {/* <label
-                          className={`text-sm font-medium mb-4 block ${!depreciationToggle
-                            ? "text-gray-400"
-                            : "text-gray-700"
-                            }`}
-                        > */}
-                         <label className="text-sm font-medium mb-4 block text-gray-700">
+                                                                                                                                                                          className={`text-sm font-medium mb-4 block ${!depreciationToggle
+                                                                                                                                                                            ? "text-gray-400"
+                                                                                                                                                                            : "text-gray-700"
+                                                                                                                                                                            }`}
+                                                                                                                                                                        > */}
+                        <label className="text-sm font-medium mb-4 block text-gray-700">
                           Method
                         </label>
                         <div className="flex gap-8">
@@ -11899,21 +12602,24 @@ export const EditAssetDetailsPage = () => {
                               style={{
                                 accentColor: "#C72030",
                               }}
-                                checked={formData.depreciation_method === "straight_line"}
-                                onChange={(e) =>
-                                  handleFieldChange(
-                                    "depreciation_method",
-                                    e.target.value
-                                  )
-                                }
+                              checked={
+                                formData.depreciation_method === "straight_line"
+                              }
+                              onChange={(e) =>
+                                handleFieldChange(
+                                  "depreciation_method",
+                                  e.target.value
+                                )
+                              }
                             />
                             <label
                               htmlFor="straight-line"
-                            //   className={`text-sm 
-                            //     ${!depreciationToggle ? "text-gray-400" : ""
-                            //     }`}
-                            // >
-                            className="text-sm">
+                              //   className={`text-sm
+                              //     ${!depreciationToggle ? "text-gray-400" : ""
+                              //     }`}
+                              // >
+                              className="text-sm"
+                            >
                               Straight Line
                             </label>
                           </div>
@@ -11928,19 +12634,19 @@ export const EditAssetDetailsPage = () => {
                               style={{
                                 accentColor: "#C72030",
                               }}
-                                checked={formData.depreciation_method === "wdv"}
-                                onChange={(e) =>
-                                  handleFieldChange(
-                                    "depreciation_method",
-                                    e.target.value
-                                  )
-                                }
+                              checked={formData.depreciation_method === "wdv"}
+                              onChange={(e) =>
+                                handleFieldChange(
+                                  "depreciation_method",
+                                  e.target.value
+                                )
+                              }
                             />
                             <label
                               htmlFor="wdv"
                               // className={`text-sm ${!depreciationToggle ? "text-gray-400" : ""
                               //   }`}
-                               className="text-sm"
+                              className="text-sm"
                             >
                               WDV
                             </label>
@@ -11955,15 +12661,19 @@ export const EditAssetDetailsPage = () => {
                             // <span>
                             //   Useful Life (Years){depreciationToggle && <span style={{ color: '#C72030' }}>*</span>}
                             // </span>
-                                                        <span>
-                              Useful Life (Years)<span style={{ color: '#C72030' }}>*</span>
+                            <span>
+                              Useful Life (Years)
+                              <span style={{ color: "#C72030" }}>*</span>
                             </span>
                           }
                           placeholder="Enter years"
                           variant="outlined"
                           fullWidth
                           type="number"
-                            disabled={!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0}
+                          disabled={
+                            !formData.purchase_cost ||
+                            parseFloat(formData.purchase_cost) <= 0
+                          }
                           sx={{
                             "& .MuiOutlinedInput-root": {
                               height: { xs: "36px", md: "45px" },
@@ -11981,7 +12691,7 @@ export const EditAssetDetailsPage = () => {
                               }
                             },
                           }}
-                            value={formData.useful_life || ""}
+                          value={formData.useful_life || ""}
                           onChange={(e) => {
                             const value = Math.max(0, Number(e.target.value)); // auto-correct to 0 if negative
 
@@ -11990,13 +12700,14 @@ export const EditAssetDetailsPage = () => {
                         />
 
                         <TextField
-                          required={
-                           !!formData.depreciation_method
-                          }
+                          required={!!formData.depreciation_method}
                           label={
                             <span>
                               {/* Salvage Value{depreciationToggle && <span style={{ color: '#C72030' }}>*</span>} */}
-                             Salvage Value{formData.depreciation_method && <span style={{ color: '#C72030' }}>*</span>}
+                              Salvage Value
+                              {formData.depreciation_method && (
+                                <span style={{ color: "#C72030" }}>*</span>
+                              )}
                             </span>
                           }
                           placeholder="Enter Value"
@@ -12004,7 +12715,10 @@ export const EditAssetDetailsPage = () => {
                           fullWidth
                           variant="outlined"
                           type="number"
-                           disabled={!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0}
+                          disabled={
+                            !formData.purchase_cost ||
+                            parseFloat(formData.purchase_cost) <= 0
+                          }
                           InputLabelProps={{
                             shrink: true,
                           }}
@@ -12030,20 +12744,18 @@ export const EditAssetDetailsPage = () => {
                           }
                           helperText={
                             // depreciationToggle &&
-                              !!formData.depreciation_method &&
+                            !!formData.depreciation_method &&
                               !formData.salvage_value
                               ? "Required"
                               : ""
                           }
-                            value={formData.salvage_value || ""}
+                          value={formData.salvage_value || ""}
                           onChange={(e) =>
                             handleFieldChange("salvage_value", e.target.value)
                           }
                         />
                         <TextField
-                          required={
-                           !!formData.depreciation_method
-                          }
+                          required={!!formData.depreciation_method}
                           label="Depreciation Rate"
                           placeholder="Enter Value"
                           name="depreciationRate"
@@ -12051,31 +12763,34 @@ export const EditAssetDetailsPage = () => {
                           type="number"
                           variant="outlined"
                           // disabled={!depreciationToggle}
-                             disabled={!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0}
+                          disabled={
+                            !formData.purchase_cost ||
+                            parseFloat(formData.purchase_cost) <= 0
+                          }
                           InputLabelProps={{
                             shrink: true,
                           }}
                           InputProps={{
                             sx: fieldStyles,
                           }}
-                        //   error={
-                        //     depreciationToggle &&
-                        //     !!formData.depreciation_method &&
-                        //     !formData.depreciation_rate
-                        //   }
-                        //   helperText={
-                        //     depreciationToggle &&
-                        //       !!formData.depreciation_method &&
-                        //       !formData.depreciation_rate
-                        //       ? "Required"
-                        //       : ""
-                        //   }
-                        //     value={formData.depreciation_rate || ""}
-                        //   onChange={(e) =>
-                        //     handleFieldChange("depreciation_rate", e.target.value)
-                        //   }
-                        // />
-                        error={
+                          //   error={
+                          //     depreciationToggle &&
+                          //     !!formData.depreciation_method &&
+                          //     !formData.depreciation_rate
+                          //   }
+                          //   helperText={
+                          //     depreciationToggle &&
+                          //       !!formData.depreciation_method &&
+                          //       !formData.depreciation_rate
+                          //       ? "Required"
+                          //       : ""
+                          //   }
+                          //     value={formData.depreciation_rate || ""}
+                          //   onChange={(e) =>
+                          //     handleFieldChange("depreciation_rate", e.target.value)
+                          //   }
+                          // />
+                          error={
                             !!formData.depreciation_method &&
                             !formData.depreciation_rate
                           }
@@ -12083,15 +12798,16 @@ export const EditAssetDetailsPage = () => {
                             !!formData.depreciation_method &&
                               !formData.depreciation_rate
                               ? "Required"
-                              : (!formData.purchase_cost || parseFloat(formData.purchase_cost) <= 0)
+                              : !formData.purchase_cost ||
+                                parseFloat(formData.purchase_cost) <= 0
                                 ? "Purchase Cost required first"
                                 : ""
                           }
-                          value={formData.depreciation_rate || ''}
+                          value={formData.depreciation_rate || ""}
                           onChange={(e) =>
                             handleFieldChange("depreciation_rate", e.target.value)
                           }
-                          />
+                        />
                       </div>
 
                       {/* Radio Options */}
@@ -12176,7 +12892,6 @@ export const EditAssetDetailsPage = () => {
                                     <label
                                       htmlFor="individual-asset"
                                       className="text-sm font-medium text-gray-700"
-                                        
                                     >
                                       Individual Asset
                                     </label>
@@ -12207,7 +12922,7 @@ export const EditAssetDetailsPage = () => {
                                       //   ? "text-gray-400"
                                       //   : "text-gray-700"
                                       //   }`}
-                                        className="text-sm font-medium text-gray-700"
+                                      className="text-sm font-medium text-gray-700"
                                     >
                                       Asset Group
                                     </label>
@@ -12227,16 +12942,20 @@ export const EditAssetDetailsPage = () => {
                                   <InputLabel>Select Assets</InputLabel>
                                   <MuiSelect
                                     label="Select Assets"
-                                  value=""
+                                    value=""
                                     onChange={(e) => {
                                       const value = e.target.value;
-                                    // Handle multiple selection
-                                    const currentAssets = formData.selected_asset_ids || [];
-                                    if (!currentAssets.includes(value)) {
-                                      const newAssets = [...currentAssets, value];
-                                      handleFieldChange("selected_asset_ids", newAssets);
-                                    }
-                                  }}
+                                      // Handle multiple selection
+                                      const currentAssets =
+                                        formData.selected_asset_ids || [];
+                                      if (!currentAssets.includes(value)) {
+                                        const newAssets = [...currentAssets, value];
+                                        handleFieldChange(
+                                          "selected_asset_ids",
+                                          newAssets
+                                        );
+                                      }
+                                    }}
                                     disabled={assetsLoading}
                                     sx={{
                                       "& .MuiOutlinedInput-root": {
@@ -12263,33 +12982,44 @@ export const EditAssetDetailsPage = () => {
                                 </FormControl>
 
                                 {/* Display selected assets */}
-                                {formData.selected_asset_ids && formData.selected_asset_ids.length > 0 && (
-                                  <div className="mt-3">
-                                    <div className="flex flex-wrap gap-2">
-                                      {formData.selected_asset_ids.map((assetId) => {
-                                        const asset = assets.find(a => a.id.toString() === assetId);
-                                        return asset ? (
-                                          <div
-                                            key={assetId}
-                                            className="inline-flex items-center bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full"
-                                          >
-                                            {asset.name}
-                                            <button
-                                              type="button"
-                                              className="ml-2 text-blue-600 hover:text-blue-800"
-                                              onClick={() => {
-                                                const newAssets = formData.selected_asset_ids.filter(id => id !== assetId);
-                                                handleFieldChange("selected_asset_ids", newAssets);
-                                              }}
-                                            >
-                                              ×
-                                            </button>
-                                          </div>
-                                        ) : null;
-                                      })}
+                                {formData.selected_asset_ids &&
+                                  formData.selected_asset_ids.length > 0 && (
+                                    <div className="mt-3">
+                                      <div className="flex flex-wrap gap-2">
+                                        {formData.selected_asset_ids.map(
+                                          (assetId) => {
+                                            const asset = assets.find(
+                                              (a) => a.id.toString() === assetId
+                                            );
+                                            return asset ? (
+                                              <div
+                                                key={assetId}
+                                                className="inline-flex items-center bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full"
+                                              >
+                                                {asset.name}
+                                                <button
+                                                  type="button"
+                                                  className="ml-2 text-blue-600 hover:text-blue-800"
+                                                  onClick={() => {
+                                                    const newAssets =
+                                                      formData.selected_asset_ids.filter(
+                                                        (id) => id !== assetId
+                                                      );
+                                                    handleFieldChange(
+                                                      "selected_asset_ids",
+                                                      newAssets
+                                                    );
+                                                  }}
+                                                >
+                                                  ×
+                                                </button>
+                                              </div>
+                                            ) : null;
+                                          }
+                                        )}
+                                      </div>
                                     </div>
-                                  </div>
-                                )}
+                                  )}
                               </div>
                             )}
 
@@ -12306,19 +13036,19 @@ export const EditAssetDetailsPage = () => {
                                       <InputLabel>Select Group</InputLabel>
                                       <MuiSelect
                                         label="Select Group"
-                                      value={formData.selected_group_id || ""}
+                                        value={formData.selected_group_id || ""}
                                         onChange={(e) => {
                                           const value = e.target.value;
-                                        handleFieldChange(
-                                          "selected_group_id",
-                                          value
-                                        );
-                                        handleFieldChange(
-                                          "selected_sub_group_id",
-                                          ""
-                                        ); // Reset sub group
-                                        fetchSubGroups(value);
-                                      }}
+                                          handleFieldChange(
+                                            "selected_group_id",
+                                            value
+                                          );
+                                          handleFieldChange(
+                                            "selected_sub_group_id",
+                                            ""
+                                          ); // Reset sub group
+                                          fetchSubGroups(value);
+                                        }}
                                         disabled={groupsLoading}
                                         sx={{
                                           "& .MuiOutlinedInput-root": {
@@ -12352,18 +13082,18 @@ export const EditAssetDetailsPage = () => {
                                       <InputLabel>Select Sub Group</InputLabel>
                                       <MuiSelect
                                         label="Select Sub Group"
-                                      value={formData.selected_sub_group_id || ""}
+                                        value={formData.selected_sub_group_id || ""}
                                         onChange={(e) => {
                                           const value = e.target.value;
-                                        handleFieldChange(
-                                          "selected_sub_group_id",
-                                          value
+                                          handleFieldChange(
+                                            "selected_sub_group_id",
+                                            value
                                           );
                                         }}
-                                      disabled={
-                                        !formData.selected_group_id ||
-                                        subGroupsLoading
-                                      }
+                                        disabled={
+                                          !formData.selected_group_id ||
+                                          subGroupsLoading
+                                        }
                                         sx={{
                                           "& .MuiOutlinedInput-root": {
                                             height: "45px",
@@ -12546,14 +13276,18 @@ export const EditAssetDetailsPage = () => {
                               const value = e.target.value;
                               if (allocationBasedOn === "department") {
                                 setSelectedDepartmentId(value);
-                                handleSingleFieldChange("allocation_ids", [value]);
+                                handleSingleFieldChange("allocation_ids", [
+                                  value,
+                                ]);
                                 handleFieldChange(
                                   "allocation_type",
                                   "department"
                                 );
                               } else {
                                 setSelectedUserId(value);
-                                handleSingleFieldChange("allocation_ids", [value]);
+                                handleSingleFieldChange("allocation_ids", [
+                                  value,
+                                ]);
                                 handleFieldChange("allocation_type", "users");
                               }
                             }}
@@ -12663,7 +13397,10 @@ export const EditAssetDetailsPage = () => {
                         }}
                       >
                         <InputLabel id="vendor-select-label" shrink>
-                          Vendor Name{assetLoanedToggle && <span style={{ color: '#C72030' }}>*</span>}
+                          Vendor Name
+                          {assetLoanedToggle && (
+                            <span style={{ color: "#C72030" }}>*</span>
+                          )}
                         </InputLabel>
                         <MuiSelect
                           labelId="vendor-select-label"
@@ -12697,7 +13434,10 @@ export const EditAssetDetailsPage = () => {
                       <TextField
                         label={
                           <span>
-                            Agreement Start Date{assetLoanedToggle && <span style={{ color: '#C72030' }}>*</span>}
+                            Agreement Start Date
+                            {assetLoanedToggle && (
+                              <span style={{ color: "#C72030" }}>*</span>
+                            )}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12730,7 +13470,10 @@ export const EditAssetDetailsPage = () => {
                       <TextField
                         label={
                           <span>
-                            Agreement End Date{assetLoanedToggle && <span style={{ color: '#C72030' }}>*</span>}
+                            Agreement End Date
+                            {assetLoanedToggle && (
+                              <span style={{ color: "#C72030" }}>*</span>
+                            )}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12798,7 +13541,6 @@ export const EditAssetDetailsPage = () => {
                             label="Vendor"
                             displayEmpty
                             value={selectedAmcVendorId}
-
                             onChange={(e) => {
                               const value = e.target.value;
                               setSelectedAmcVendorId(value);
@@ -12888,36 +13630,36 @@ export const EditAssetDetailsPage = () => {
                         />
 
                         {/* <TextField
-                          label="First Service"
-                          placeholder="dd/mm/yyyy"
-                          name="amcFirstService"
-                          type="date"
-                          fullWidth
-                          variant="outlined"
-                          value={formData.amc_detail.amc_first_service || ""}
-                          error={!!amcDateError && amcDateError.includes("First Service")}
-                          helperText={
-                            amcDateError && amcDateError.includes("First Service")
-                              ? amcDateError
-                              : ""
-                          }
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          InputProps={{
-                            sx: fieldStyles,
-                          }}
-                          inputProps={{
-                            min: formData.commisioning_date || undefined,
-                          }}
-                          onChange={(e) =>
-                            handleNestedFieldChange(
-                              "amc_detail",
-                              "amc_first_service",
-                              e.target.value
-                            )
-                          }
-                        /> */}
+                                                                                                                                                                          label="First Service"
+                                                                                                                                                                          placeholder="dd/mm/yyyy"
+                                                                                                                                                                          name="amcFirstService"
+                                                                                                                                                                          type="date"
+                                                                                                                                                                          fullWidth
+                                                                                                                                                                          variant="outlined"
+                                                                                                                                                                          value={formData.amc_detail.amc_first_service || ""}
+                                                                                                                                                                          error={!!amcDateError && amcDateError.includes("First Service")}
+                                                                                                                                                                          helperText={
+                                                                                                                                                                            amcDateError && amcDateError.includes("First Service")
+                                                                                                                                                                              ? amcDateError
+                                                                                                                                                                              : ""
+                                                                                                                                                                          }
+                                                                                                                                                                          InputLabelProps={{
+                                                                                                                                                                            shrink: true,
+                                                                                                                                                                          }}
+                                                                                                                                                                          InputProps={{
+                                                                                                                                                                            sx: fieldStyles,
+                                                                                                                                                                          }}
+                                                                                                                                                                          inputProps={{
+                                                                                                                                                                            min: formData.commisioning_date || undefined,
+                                                                                                                                                                          }}
+                                                                                                                                                                          onChange={(e) =>
+                                                                                                                                                                            handleNestedFieldChange(
+                                                                                                                                                                              "amc_detail",
+                                                                                                                                                                              "amc_first_service",
+                                                                                                                                                                              e.target.value
+                                                                                                                                                                            )
+                                                                                                                                                                          }
+                                                                                                                                                                        /> */}
                         <TextField
                           label="First Service"
                           placeholder="dd/mm/yyyy"
@@ -13047,7 +13789,9 @@ export const EditAssetDetailsPage = () => {
                             </MenuItem>
                             <MenuItem value="monthly">Monthly</MenuItem>
                             <MenuItem value="quarterly">Quarterly</MenuItem>
-                            <MenuItem value="semi_annually">Semi Annually</MenuItem>
+                            <MenuItem value="semi_annually">
+                              Semi Annually
+                            </MenuItem>
                             <MenuItem value="annually">Annually</MenuItem>
                           </MuiSelect>
                         </FormControl>
@@ -13380,11 +14124,13 @@ export const EditAssetDetailsPage = () => {
                   {/* Existing Asset Image */}
                   {existingAttachments.asset_image && (
                     <div className="mt-4">
-                      <div className="text-xs font-medium text-gray-600 mb-2">Existing Asset Image</div>
+                      <div className="text-xs font-medium text-gray-600 mb-2">
+                        Existing Asset Image
+                      </div>
                       <div className="flex items-center justify-between bg-gray-100 p-2 rounded">
                         <div className="flex items-center space-x-2">
-                          <img 
-                            src={existingAttachments.asset_image.document} 
+                          <img
+                            src={existingAttachments.asset_image.document}
                             alt={existingAttachments.asset_image.document_name}
                             className="w-8 h-8 object-cover rounded border"
                           />
@@ -13392,12 +14138,31 @@ export const EditAssetDetailsPage = () => {
                             {existingAttachments.asset_image.document_name}
                           </span>
                         </div>
-                        <button
-                          onClick={() => downloadAttachment(existingAttachments.asset_image!)}
-                          className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
-                        >
-                          <Download className="w-3 h-3" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() =>
+                              downloadAttachment(existingAttachments.asset_image!)
+                            }
+                            className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
+                          >
+                            <Download className="w-3 h-3" />
+                          </button>
+                          {existingAttachments.asset_image &&
+                            (existingAttachments as any).asset_image.id && (
+                              <button
+                                onClick={() =>
+                                  markExistingAttachmentForDeletion(
+                                    "asset_image",
+                                    (existingAttachments as any).asset_image.id
+                                  )
+                                }
+                                title="Remove existing image"
+                                className="text-red-500 hover:text-red-700 p-1 rounded"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -13416,7 +14181,6 @@ export const EditAssetDetailsPage = () => {
                   </div>
                 </div>
               </div>
-
 
               {/* Common Document Sections for All Categories */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -13522,51 +14286,70 @@ export const EditAssetDetailsPage = () => {
                         } else if (field.label === "Purchase Invoice") {
                           existingFiles = existingAttachments.asset_purchases;
                         } else if (field.label === "Other Documents") {
-                          existingFiles = existingAttachments.asset_other_uploads;
+                          existingFiles =
+                            existingAttachments.asset_other_uploads;
                         }
 
-                        return existingFiles.length > 0 && (
-                          <div className="mt-4">
-                            <div className="text-xs font-medium text-gray-600 mb-2">Existing Files</div>
-                            <div className="space-y-2">
-                              {existingFiles.map((file) => {
-                                const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
-                                const isPdf = file.document_name.endsWith('.pdf');
-                                const isExcel = file.document_name.endsWith('.xlsx') || file.document_name.endsWith('.xls') || file.document_name.endsWith('.csv');
-                                
-                                return (
-                                  <div key={file.id} className="flex items-center justify-between bg-gray-100 p-2 rounded">
-                                    <div className="flex items-center space-x-2">
-                                      {isImage ? (
-                                        <img src={file.document} alt={file.document_name} className="w-6 h-6 object-cover rounded border" />
-                                      ) : isPdf ? (
-                                        <div className="w-6 h-6 flex items-center justify-center border rounded text-red-600 bg-white">
-                                          <FileText className="w-3 h-3" />
-                                        </div>
-                                      ) : isExcel ? (
-                                        <div className="w-6 h-6 flex items-center justify-center border rounded text-green-600 bg-white">
-                                          <FileSpreadsheet className="w-3 h-3" />
-                                        </div>
-                                      ) : (
-                                        <div className="w-6 h-6 flex items-center justify-center border rounded text-gray-500 bg-white">
-                                          <FileIcon className="w-3 h-3" />
-                                        </div>
-                                      )}
-                                      <span className="text-xs text-gray-700 truncate max-w-[150px]">
-                                        {file.document_name}
-                                      </span>
-                                    </div>
-                                    <button
-                                      onClick={() => downloadAttachment(file)}
-                                      className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
+                        return (
+                          existingFiles.length > 0 && (
+                            <div className="mt-4">
+                              <div className="text-xs font-medium text-gray-600 mb-2">
+                                Existing Files
+                              </div>
+                              <div className="space-y-2">
+                                {existingFiles.map((file) => {
+                                  const isImage =
+                                    /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(
+                                      file.document_name
+                                    );
+                                  const isPdf =
+                                    file.document_name.endsWith(".pdf");
+                                  const isExcel =
+                                    file.document_name.endsWith(".xlsx") ||
+                                    file.document_name.endsWith(".xls") ||
+                                    file.document_name.endsWith(".csv");
+
+                                  return (
+                                    <div
+                                      key={file.id}
+                                      className="flex items-center justify-between bg-gray-100 p-2 rounded"
                                     >
-                                      <Download className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                );
-                              })}
+                                      <div className="flex items-center space-x-2">
+                                        {isImage ? (
+                                          <img
+                                            src={file.document}
+                                            alt={file.document_name}
+                                            className="w-6 h-6 object-cover rounded border"
+                                          />
+                                        ) : isPdf ? (
+                                          <div className="w-6 h-6 flex items-center justify-center border rounded text-red-600 bg-white">
+                                            <FileText className="w-3 h-3" />
+                                          </div>
+                                        ) : isExcel ? (
+                                          <div className="w-6 h-6 flex items-center justify-center border rounded text-green-600 bg-white">
+                                            <FileSpreadsheet className="w-3 h-3" />
+                                          </div>
+                                        ) : (
+                                          <div className="w-6 h-6 flex items-center justify-center border rounded text-gray-500 bg-white">
+                                            <FileIcon className="w-3 h-3" />
+                                          </div>
+                                        )}
+                                        <span className="text-xs text-gray-700 truncate max-w-[150px]">
+                                          {file.document_name}
+                                        </span>
+                                      </div>
+                                      <button
+                                        onClick={() => downloadAttachment(file)}
+                                        className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
+                                      >
+                                        <Download className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
+                          )
                         );
                       })()}
 
@@ -13595,7 +14378,7 @@ export const EditAssetDetailsPage = () => {
           <button
             onClick={handleSaveAndShow}
             className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md   text-sm sm:text-base"
-            // disabled={submitting}
+          // disabled={submitting}
           >
             Save & Show Details
           </button>

@@ -50,6 +50,7 @@ interface PackageData {
 interface PackageErrors {
   senderId?: string;
   recipientName?: string;
+  recipientEmail?: string;
   recipientMobile?: string;
   addressLine1?: string;
   city?: string;
@@ -75,6 +76,10 @@ const fieldStyles = {
     '&.Mui-focused': { color: '#C72030' },
   },
 };
+const MOBILE_NUMBER_REGEX = /^\d{10}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isValidMobileNumber = (value: string) => MOBILE_NUMBER_REGEX.test(value);
+const isValidEmail = (value: string) => EMAIL_REGEX.test(value);
 
 export const NewOutboundPage = () => {
   const navigate = useNavigate();
@@ -212,20 +217,22 @@ export const NewOutboundPage = () => {
     packageId: number,
     field: keyof PackageErrors,
     value: string,
+    options?: { isValid?: boolean; message?: string }
   ) => {
+    const isValid = options?.isValid ?? !!value;
+    const message = options?.message ?? '';
     setPackageErrors((prev) => {
       const updated = { ...(prev[packageId] || {}) };
-      if (value) {
+      if (isValid) {
         delete updated[field];
       } else {
-        updated[field] = '';
+        updated[field] = message;
       }
-      const next = { ...prev, [packageId]: updated };
       if (!Object.keys(updated).length) {
-        const { [packageId]: _, ...rest } = next;
+        const { [packageId]: _, ...rest } = prev;
         return rest;
       }
-      return next;
+      return { ...prev, [packageId]: updated };
     });
   };
 
@@ -234,10 +241,39 @@ export const NewOutboundPage = () => {
     field: keyof Omit<PackageData, 'id' | 'attachments'>,
     value: string,
   ) => {
+    let updatedValue = value;
+
+    if (field === 'recipientMobile') {
+      updatedValue = value.replace(/\D/g, '').slice(0, 10);
+    }
+
+    if (field === 'recipientEmail') {
+      updatedValue = value.trim();
+    }
+
     setPackages((prev) =>
-      prev.map((pkg) => (pkg.id === packageId ? { ...pkg, [field]: value } : pkg)),
+      prev.map((pkg) => (pkg.id === packageId ? { ...pkg, [field]: updatedValue } : pkg)),
     );
-    updatePackageErrors(packageId, field as keyof PackageErrors, value);
+
+    if (field === 'recipientMobile') {
+      updatePackageErrors(packageId, 'recipientMobile', updatedValue, {
+        isValid: isValidMobileNumber(updatedValue),
+        message: updatedValue
+          ? 'Enter a valid 10-digit mobile number'
+          : 'Recipient mobile is required',
+      });
+      return;
+    }
+
+    if (field === 'recipientEmail') {
+      updatePackageErrors(packageId, 'recipientEmail', updatedValue, {
+        isValid: updatedValue === '' || isValidEmail(updatedValue),
+        message: 'Enter a valid email address',
+      });
+      return;
+    }
+
+    updatePackageErrors(packageId, field as keyof PackageErrors, updatedValue);
   };
 
   const handleFileUpload = (packageId: number, files: FileList | null) => {
@@ -298,6 +334,12 @@ export const NewOutboundPage = () => {
       const errors: PackageErrors = {};
       if (!pkg.senderId) errors.senderId = 'Sender is required';
       if (!pkg.recipientName.trim()) errors.recipientName = 'Recipient name is required';
+      if (pkg.recipientEmail && !isValidEmail(pkg.recipientEmail)) {
+        errors.recipientEmail = 'Enter a valid email address';
+      }
+      if (!isValidMobileNumber(pkg.recipientMobile)) {
+        errors.recipientMobile = 'Enter a valid 10-digit mobile number';
+      }
       if (!pkg.addressLine1.trim()) errors.addressLine1 = 'Address Line 1 is required';
       if (!pkg.city.trim()) errors.city = 'City is required';
       if (!pkg.state) errors.state = 'State is required';
@@ -673,12 +715,15 @@ export const NewOutboundPage = () => {
                       fullWidth
                       label="Recipient's Email ID"
                       placeholder="Enter Recipient's Email"
+                      type="email"
                       value={pkg.recipientEmail}
                       onChange={(e) =>
                         handlePackageInputChange(pkg.id, 'recipientEmail', e.target.value)
                       }
                       InputLabelProps={{ shrink: true }}
                       InputProps={{ sx: fieldStyles }}
+                      error={!!packageErrors[pkg.id]?.recipientEmail}
+                      helperText={packageErrors[pkg.id]?.recipientEmail}
                     />
                   </div>
 
@@ -693,6 +738,9 @@ export const NewOutboundPage = () => {
                       }
                       InputLabelProps={{ shrink: true }}
                       InputProps={{ sx: fieldStyles }}
+                      inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 10 }}
+                      error={!!packageErrors[pkg.id]?.recipientMobile}
+                      helperText={packageErrors[pkg.id]?.recipientMobile}
                     />
                   </div>
 

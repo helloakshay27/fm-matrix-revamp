@@ -168,6 +168,8 @@ interface TaskRecord {
   duration: string;
   percentage: string;
   active: boolean;
+  task_approved_at: string | null;
+  task_approved_by: string | null;
 }
 
 interface ApiTaskResponse {
@@ -397,6 +399,8 @@ export const ScheduledTaskDashboard = () => {
       duration: task.duration || "", // Map duration field from API
       percentage: task.percentage ? `${task.percentage}%` : "", // Map percentage field from API with % symbol
       active: task.active !== false,
+      task_approved_at: task.task_approved_at,
+      task_approved_by: task.task_approved_by,
     }));
   };
 
@@ -616,7 +620,8 @@ export const ScheduledTaskDashboard = () => {
           "s[task_custom_form_schedule_type_eq]":
             calendarFilters["s[task_custom_form_schedule_type_eq]"] || "",
           "s[task_task_of_eq]": calendarFilters["s[task_task_of_eq]"] || "",
-          "s[custom_form_form_name_eq]": calendarFilters["s[custom_form_form_name_eq]"] || "",
+          "s[custom_form_form_name_eq]":
+            calendarFilters["s[custom_form_form_name_eq]"] || "",
         };
 
         console.log("📤 Calendar API params:", params);
@@ -1278,7 +1283,26 @@ export const ScheduledTaskDashboard = () => {
                       hideable: true,
                       draggable: true,
                     },
-                  ]}
+                    // Conditionally add columns for Closed status only
+                    ...(selectedStatus === "Closed"
+                      ? [
+                          {
+                            key: "task_approved_at",
+                            label: "Approved At",
+                            sortable: true,
+                            hideable: true,
+                            draggable: true,
+                          },
+                          {
+                            key: "task_approved_by",
+                            label: "Approved By",
+                            sortable: true,
+                            hideable: true,
+                            draggable: true,
+                          },
+                        ]
+                      : []),
+                  ].filter(Boolean)}
                   renderRow={(task) => ({
                     actions: (
                       <Button
@@ -1315,6 +1339,13 @@ export const ScheduledTaskDashboard = () => {
                     graceTime: task.graceTime,
                     duration: task.duration || "-",
                     percentage: task.percentage || "-",
+                    // Conditionally add fields for Closed status only
+                    ...(selectedStatus === "Closed"
+                      ? {
+                          task_approved_at: task.task_approved_at || "-",
+                          task_approved_by: task.task_approved_by || "-",
+                        }
+                      : {}),
                   })}
                   enableSearch={true}
                   enableSelection={true}

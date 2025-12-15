@@ -1,10 +1,12 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Eye, Plus, X } from "lucide-react";
+import { Eye, Plus, X, Flag, Check } from "lucide-react";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { InboundSelectionPanel } from "@/components/InboundSelectionPanel";
+import { InboundStats } from "@/components/InboundStats";
 import { Badge } from "@/components/ui/badge";
 import {
     Dialog,
@@ -21,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { getFullUrl, getAuthHeader, API_CONFIG } from '@/config/apiConfig';
 import {
     Pagination,
@@ -50,6 +52,8 @@ interface InboundMail {
     collectedOn: string;
     collectedBy: string;
     image?: string;
+    is_flagged?: boolean;
+    delegate_id?: number | null;
 }
 
 const MAIL_INBOUND_LIST_ENDPOINT = '/pms/admin/mail_inbounds.json';
@@ -127,11 +131,12 @@ const mapInboundRecord = (item: any): InboundMail => ({
     collectedOn: formatDate(item.collected_on),
     collectedBy: item.collected_by || item.collected_by_name || '',
     image: item.attachments?.[0]?.document_url || item.attachments?.[0]?.document?.url,
+    is_flagged: item.is_flagged || false,
+    delegate_id: (item.delegate_id && item.delegate_id !== 0) ? Number(item.delegate_id) : null,
 });
 
 export const InboundListPage = () => {
     const navigate = useNavigate();
-    const { toast } = useToast();
     const [inboundMails, setInboundMails] = useState<InboundMail[]>([]);
     const [showActionPanel, setShowActionPanel] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -157,6 +162,42 @@ export const InboundListPage = () => {
     const [vendors, setVendors] = useState<Array<{ id: number; name: string }>>([]);
     const [isLoadingVendors, setIsLoadingVendors] = useState(false);
 
+    // Search state
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Stats state
+    const [stats, setStats] = useState({ receives: 0, collected: 0, overdue: 0 });
+
+    // Counts from API
+    const [counts, setCounts] = useState({
+        recieved_count: 0,
+        collected_count: 0,
+        overdue_count: 0
+    });
+
+    // Selection and action modal state
+    const [selectedMails, setSelectedMails] = useState<number[]>([]);
+    // const [isActionModalOpen, setIsActionModalOpen] = useState(false); // Removed in favor of panel
+
+    // Delegate modal state
+    const [isDelegateModalOpen, setIsDelegateModalOpen] = useState(false);
+    const [selectedDelegateEmployee, setSelectedDelegateEmployee] = useState('');
+    const [delegateReason, setDelegateReason] = useState('');
+    const [delegateEmployees, setDelegateEmployees] = useState<Array<{ id: number; full_name: string }>>([]);
+    const [isLoadingDelegateEmployees, setIsLoadingDelegateEmployees] = useState(false);
+    const [isDelegatingPackage, setIsDelegatingPackage] = useState(false);
+
+    // Collect modal state
+    const [isCollectModalOpen, setIsCollectModalOpen] = useState(false);
+    const [selectedCollectEmployee, setSelectedCollectEmployee] = useState('');
+    const [passcode, setPasscode] = useState('');
+    const [collectEmployees, setCollectEmployees] = useState<Array<{ id: number; full_name: string }>>([]);
+    const [isLoadingCollectEmployees, setIsLoadingCollectEmployees] = useState(false);
+    const [isCollectingPackage, setIsCollectingPackage] = useState(false);
+
+    // Refresh trigger state
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
     useEffect(() => {
         const fetchInboundMails = async () => {
             setLoading(true);
@@ -177,6 +218,9 @@ export const InboundListPage = () => {
                 }
                 if (appliedFilterCollectedOn) {
                     queryParams.append('q[collected_on_eq]', formatDateForApi(appliedFilterCollectedOn));
+                }
+                if (searchQuery) {
+                    queryParams.append('q[search_all_fields_cont]', searchQuery);
                 }
 
                 const response = await fetch(`${getFullUrl(MAIL_INBOUND_LIST_ENDPOINT)}?${queryParams.toString()}`, {
@@ -201,6 +245,15 @@ export const InboundListPage = () => {
                 const mapped = records.map(mapInboundRecord);
                 setInboundMails(mapped);
 
+                // Extract counts from API response
+                if (data?.counts) {
+                    setCounts({
+                        recieved_count: data.counts.recieved_count || 0,
+                        collected_count: data.counts.collected_count || 0,
+                        overdue_count: data.counts.overdue_count || 0
+                    });
+                }
+
                 const paginationInfo =
                     data?.meta?.pagination ||
                     data?.pagination ||
@@ -223,17 +276,22 @@ export const InboundListPage = () => {
                 setTotalPages(derivedTotalPages);
             } catch (error) {
                 console.error('Error fetching inbound mails:', error);
-                toast({
-                    title: 'Error',
-                    description: 'Failed to load inbound mails',
-                    variant: 'destructive',
-                });
+                toast.error('Failed to load inbound mails');
             } finally {
                 setLoading(false);
             }
         };
         fetchInboundMails();
-    }, [toast, currentPage, appliedFilterStatus, appliedFilterVendor, appliedFilterReceivedOn, appliedFilterCollectedOn]);
+    }, [toast, currentPage, appliedFilterStatus, appliedFilterVendor, appliedFilterReceivedOn, appliedFilterCollectedOn, searchQuery, refreshTrigger]);
+
+    // Calculate stats using counts from API
+    useEffect(() => {
+        setStats({
+            receives: counts.recieved_count,
+            collected: counts.collected_count,
+            overdue: counts.overdue_count
+        });
+    }, [counts]);
 
     // Fetch vendors when filter modal opens
     useEffect(() => {
@@ -258,18 +316,14 @@ export const InboundListPage = () => {
                 setVendors(data.delivery_vendors || data || []);
             } catch (error) {
                 console.error('Error fetching vendors:', error);
-                toast({
-                    title: 'Error',
-                    description: 'Failed to load vendors',
-                    variant: 'destructive',
-                });
+                toast.error('Failed to load vendors');
             } finally {
                 setIsLoadingVendors(false);
             }
         };
 
         fetchVendors();
-    }, [isFilterModalOpen, toast]);
+    }, [isFilterModalOpen]);
 
     const statusOptions = useMemo(() => {
         const uniqueStatuses = new Set(
@@ -350,8 +404,8 @@ export const InboundListPage = () => {
 
     const columns: ColumnConfig[] = [
         {
-            key: 'view',
-            label: 'View',
+            key: 'actions',
+            label: 'Actions',
             sortable: false,
             draggable: false,
         },
@@ -448,16 +502,31 @@ export const InboundListPage = () => {
     ];
 
     const renderCell = (item: InboundMail, columnKey: string) => {
-        if (columnKey === 'view') {
+        if (columnKey === 'actions') {
             return (
-                <button
-                    onClick={() => handleViewInbound(item.id)}
-                    className="text-stone-800"
-                >
-                    <Eye className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => handleViewInbound(item.id)}
+                        className="text-stone-800 hover:text-[#C72030] transition-colors"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </button>
+                    <div title="Flag Mail">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleFlag(item.id);
+                            }}
+                            className={`${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'} hover:text-[#C72030] transition-colors cursor-pointer`}
+                        >
+                            <Flag className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
             );
         }
+
+
 
         if (columnKey === 'status') {
             const statusColors: { [key: string]: string } = {
@@ -499,6 +568,366 @@ export const InboundListPage = () => {
         setAppliedFilterCollectedOn('');
     };
 
+    // Handle flag toggle
+    const handleToggleFlag = async (id: number) => {
+        try {
+            const response = await fetch(
+                getFullUrl(`/pms/admin/mail_inbounds/${id}/flag_unflag`),
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': getAuthHeader(),
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to toggle flag');
+            }
+
+            // Get the current flag status before refresh
+            const mail = inboundMails.find(m => m.id === id);
+            const wasFlagged = mail?.is_flagged || false;
+
+            toast.dismiss();
+            toast.success(`Flag ${wasFlagged ? 'Deactivated' : 'Activated'}`);
+
+            // Refresh the list to show updated is_flagged status from API
+            setRefreshTrigger(prev => prev + 1);
+        } catch (error) {
+            console.error('Error toggling flag:', error);
+            toast.error('Failed to update flag status');
+        }
+    };
+
+    // Handle checkbox change
+    const handleCheckboxChange = (id: number, checked: boolean) => {
+        if (checked) {
+            setSelectedMails([id]); // Enforce single selection
+        } else {
+            setSelectedMails([]);
+        }
+    };
+
+    // Fetch delegate employees
+    const fetchDelegateEmployees = async () => {
+        if (selectedMails.length === 0) return;
+        setIsLoadingDelegateEmployees(true);
+        try {
+            const params = new URLSearchParams();
+            params.append('id', selectedMails[0].toString());
+            const response = await fetch(
+                `${getFullUrl('/pms/admin/mail_inbounds/employee_list.json')}?${params.toString()}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': getAuthHeader(),
+                        'Content-Type': 'application/json',
+                    },
+                },
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to load employees');
+            }
+
+            const data = await response.json();
+            setDelegateEmployees(data.users || data || []);
+        } catch (error) {
+            console.error('Employee list fetch failed:', error);
+            toast.error('Unable to load employees');
+        } finally {
+            setIsLoadingDelegateEmployees(false);
+        }
+    };
+
+    // Fetch collect employees
+    const fetchCollectEmployees = async () => {
+        if (selectedMails.length === 0) return;
+        setIsLoadingCollectEmployees(true);
+        try {
+            const params = new URLSearchParams();
+            params.append('id', selectedMails[0].toString());
+            const response = await fetch(
+                `${getFullUrl('/pms/admin/mail_inbounds/employee_list.json')}?${params.toString()}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': getAuthHeader(),
+                        'Content-Type': 'application/json',
+                    },
+                },
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to load employees');
+            }
+
+            const data = await response.json();
+            setCollectEmployees(data.users || data || []);
+        } catch (error) {
+            console.error('Employee list fetch failed:', error);
+            toast.error('Unable to load employees');
+        } finally {
+            setIsLoadingCollectEmployees(false);
+        }
+    };
+
+    // Handle delegate package (from action modal)
+    const handleDelegatePackageAction = () => {
+        setSelectedDelegateEmployee('');
+        setDelegateReason('');
+        setIsDelegateModalOpen(true);
+        fetchDelegateEmployees();
+    };
+
+    // Handle mark as collected (from action modal)
+    const handleMarkAsCollectedAction = () => {
+        setSelectedCollectEmployee('');
+        setPasscode('');
+        setIsCollectModalOpen(true);
+        fetchCollectEmployees();
+    };
+
+    // Submit delegate package
+    const handleSubmitDelegate = async () => {
+        if (!selectedDelegateEmployee) {
+            toast.error('Please select an employee');
+            return;
+        }
+        if (!delegateReason) {
+            toast.error('Please select a reason');
+            return;
+        }
+        if (selectedMails.length === 0) {
+            toast.error('No mail selected');
+            return;
+        }
+
+        try {
+            setIsDelegatingPackage(true);
+            const mailId = selectedMails[0];
+            const response = await fetch(
+                getFullUrl(`/pms/admin/mail_inbounds/${mailId}.json`),
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': getAuthHeader(),
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        mail_inbound: {
+                            delegate_id: selectedDelegateEmployee,
+                            delegate_reason: delegateReason,
+                        },
+                    }),
+                },
+            );
+
+            const responseData = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                const message = responseData?.message || 'Failed to delegate package';
+                toast.error(message);
+                throw new Error(message);
+            }
+
+            toast.success(responseData?.message || 'Package delegated successfully');
+            setIsDelegateModalOpen(false);
+            setSelectedDelegateEmployee('');
+            setDelegateReason('');
+            setSelectedMails([]);
+            // Refresh the list
+            const fetchInboundMails = async () => {
+                setLoading(true);
+                try {
+                    const queryParams = new URLSearchParams({
+                        page: currentPage.toString(),
+                        per_page: PER_PAGE.toString(),
+                    });
+
+                    if (appliedFilterStatus) {
+                        queryParams.append('q[status_eq]', appliedFilterStatus.toLowerCase());
+                    }
+                    if (appliedFilterVendor) {
+                        queryParams.append('q[delivery_vendor_id_eq]', appliedFilterVendor);
+                    }
+                    if (appliedFilterReceivedOn) {
+                        queryParams.append('q[receive_date_eq]', formatDateForApi(appliedFilterReceivedOn));
+                    }
+                    if (appliedFilterCollectedOn) {
+                        queryParams.append('q[collected_on_eq]', formatDateForApi(appliedFilterCollectedOn));
+                    }
+                    if (searchQuery) {
+                        queryParams.append('q[search_all_fields_cont]', searchQuery);
+                    }
+
+                    const response = await fetch(`${getFullUrl(MAIL_INBOUND_LIST_ENDPOINT)}?${queryParams.toString()}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': getAuthHeader(),
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const records = Array.isArray(data?.mail_inbounds)
+                            ? data.mail_inbounds
+                            : Array.isArray(data)
+                                ? data
+                                : data?.data || [];
+
+                        const mapped = records.map(mapInboundRecord);
+                        setInboundMails(mapped);
+                    }
+                } catch (error) {
+                    console.error('Error fetching inbound mails:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchInboundMails();
+        } catch (error) {
+            console.error('Delegate package failed:', error);
+        } finally {
+            setIsDelegatingPackage(false);
+        }
+    };
+
+    // Submit collect package
+    const handleSubmitCollect = async () => {
+        if (!selectedCollectEmployee) {
+            toast.error('Please select an employee');
+            return;
+        }
+        const trimmedPasscode = passcode.trim();
+        if (!trimmedPasscode) {
+            toast.error('Please enter passcode');
+            return;
+        }
+        if (!/^\d{6}$/.test(trimmedPasscode)) {
+            toast.error('Passcode must be a 6-digit number');
+            return;
+        }
+        if (selectedMails.length === 0) {
+            toast.error('No mail selected');
+            return;
+        }
+
+        try {
+            setIsCollectingPackage(true);
+            const mailId = selectedMails[0];
+            const response = await fetch(
+                getFullUrl(`/pms/admin/mail_inbounds/${mailId}/collect_package.json`),
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': getAuthHeader(),
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        collected_by_id: selectedCollectEmployee,
+                        passcode: trimmedPasscode,
+                    }),
+                },
+            );
+
+            const responseData = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                const message =
+                    responseData?.message || 'Failed to mark as collected';
+                toast.error(message);
+                throw new Error(message);
+            }
+
+            if (
+                responseData?.message &&
+                responseData.message.toLowerCase().includes('passcode')
+            ) {
+                toast.error(responseData.message);
+                return;
+            }
+
+            toast.success(responseData?.message || 'Package marked as collected');
+            setIsCollectModalOpen(false);
+            setPasscode('');
+            setSelectedCollectEmployee('');
+            setSelectedMails([]);
+            // Refresh the list
+            const fetchInboundMails = async () => {
+                setLoading(true);
+                try {
+                    const queryParams = new URLSearchParams({
+                        page: currentPage.toString(),
+                        per_page: PER_PAGE.toString(),
+                    });
+
+                    if (appliedFilterStatus) {
+                        queryParams.append('q[status_eq]', appliedFilterStatus.toLowerCase());
+                    }
+                    if (appliedFilterVendor) {
+                        queryParams.append('q[delivery_vendor_id_eq]', appliedFilterVendor);
+                    }
+                    if (appliedFilterReceivedOn) {
+                        queryParams.append('q[receive_date_eq]', formatDateForApi(appliedFilterReceivedOn));
+                    }
+                    if (appliedFilterCollectedOn) {
+                        queryParams.append('q[collected_on_eq]', formatDateForApi(appliedFilterCollectedOn));
+                    }
+                    if (searchQuery) {
+                        queryParams.append('q[search_all_fields_cont]', searchQuery);
+                    }
+
+                    const response = await fetch(`${getFullUrl(MAIL_INBOUND_LIST_ENDPOINT)}?${queryParams.toString()}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': getAuthHeader(),
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const records = Array.isArray(data?.mail_inbounds)
+                            ? data.mail_inbounds
+                            : Array.isArray(data)
+                                ? data
+                                : data?.data || [];
+
+                        const mapped = records.map(mapInboundRecord);
+                        setInboundMails(mapped);
+                    }
+                } catch (error) {
+                    console.error('Error fetching inbound mails:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchInboundMails();
+        } catch (error) {
+            console.error('Collect package failed:', error);
+        } finally {
+            setIsCollectingPackage(false);
+        }
+    };
+
+    const handleCardClick = (status: 'received' | 'collected' | 'overdue') => {
+        // Map the status to the API filter value
+        const statusMap = {
+            'received': 'received',
+            'collected': 'collected',
+            'overdue': 'overdue'
+        };
+
+        const apiStatus = statusMap[status];
+        setFilterStatus(apiStatus);
+        setAppliedFilterStatus(apiStatus);
+        setCurrentPage(1); // Reset to first page when filtering
+    };
+
     const leftActions = (
         <Button
             onClick={() => setShowActionPanel(true)}
@@ -511,6 +940,9 @@ export const InboundListPage = () => {
 
     return (
         <div className="p-[30px]">
+            {/* Stats Cards */}
+            <InboundStats stats={stats} onCardClick={handleCardClick} />
+
             {showActionPanel && (
                 <SelectionPanel
                     onAdd={() => navigate("/vas/mailroom/inbound/create")}
@@ -524,12 +956,27 @@ export const InboundListPage = () => {
                 columns={columns}
                 renderCell={renderCell}
                 onFilterClick={() => setIsFilterModalOpen(true)}
+                onSearch={(query) => {
+                    setSearchQuery(query);
+                    setCurrentPage(1); // Reset to first page on search
+                }}
                 storageKey="inbound-mail-table"
                 className="min-w-full"
                 emptyMessage="No inbound mails available"
                 leftActions={leftActions}
                 enableSearch={true}
-                enableSelection={false}
+                enableSelection={true}
+                selectable={true}
+                getItemId={(item) => item.id.toString()}
+                onSelectItem={(id: string, checked: boolean) => {
+                    const numId = parseInt(id, 10);
+                    if (checked) {
+                        setSelectedMails([numId]); // Enforce single selection
+                    } else {
+                        setSelectedMails([]);
+                    }
+                }}
+                selectedItems={selectedMails.map(id => id.toString())}
                 hideTableExport={true}
             />
 
@@ -695,6 +1142,172 @@ export const InboundListPage = () => {
                             className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white px-6"
                         >
                             Apply
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Inbound Selection Panel */}
+            {selectedMails.length > 0 && (
+                <InboundSelectionPanel
+                    selectedCount={selectedMails.length}
+                    selectedItems={inboundMails
+                        .filter(mail => selectedMails.includes(mail.id))
+                        .map(mail => ({
+                            id: mail.id,
+                            name: mail.recipientName || `Package #${mail.id}`,
+                            status: mail.status,
+                            delegate_id: mail.delegate_id
+                        }))
+                    }
+                    onDelegate={handleDelegatePackageAction}
+                    onCollect={handleMarkAsCollectedAction}
+                    onClearSelection={() => setSelectedMails([])}
+                />
+            )}
+
+            {/* Delegate Package Modal */}
+            <Dialog open={isDelegateModalOpen} onOpenChange={setIsDelegateModalOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+                        <DialogTitle className="text-lg font-semibold">DELEGATE PACKAGE</DialogTitle>
+                        <button
+                            onClick={() => setIsDelegateModalOpen(false)}
+                            className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+                        >
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Close</span>
+                        </button>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="employee" className="text-sm font-medium">
+                                Employee <span className="text-red-500">*</span>
+                            </Label>
+                            <Select value={selectedDelegateEmployee} onValueChange={setSelectedDelegateEmployee}>
+                                <SelectTrigger id="employee" className="w-full">
+                                    <SelectValue
+                                        placeholder={
+                                            isLoadingDelegateEmployees ? 'Loading employees...' : 'Select Employee'
+                                        }
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {isLoadingDelegateEmployees ? (
+                                        <SelectItem value="loading" disabled>
+                                            Loading employees...
+                                        </SelectItem>
+                                    ) : delegateEmployees.length ? (
+                                        delegateEmployees.map((employee) => (
+                                            <SelectItem key={employee.id} value={employee.id.toString()}>
+                                                {employee.full_name}
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <SelectItem value="no-employees" disabled>
+                                            No employees available
+                                        </SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="reason" className="text-sm font-medium">
+                                Reason <span className="text-red-500">*</span>
+                            </Label>
+                            <Select value={delegateReason} onValueChange={setDelegateReason}>
+                                <SelectTrigger id="reason" className="w-full">
+                                    <SelectValue placeholder="Select Reason" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Employee left the role">Employee left the role</SelectItem>
+                                    <SelectItem value="Employee is on a meeting">Employee is on a meeting</SelectItem>
+                                    <SelectItem value="Employee is on leave">Employee is on leave</SelectItem>
+                                    <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <div className="flex justify-end pt-4">
+                        <Button
+                            onClick={handleSubmitDelegate}
+                            className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white"
+                            disabled={isDelegatingPackage}
+                        >
+                            <Check className="w-4 h-4 mr-2" />
+                            {isDelegatingPackage ? 'Processing...' : 'Delegate Package'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Mark As Collected Modal */}
+            <Dialog open={isCollectModalOpen} onOpenChange={setIsCollectModalOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+                        <DialogTitle className="text-lg font-semibold">COLLECT PACKAGE</DialogTitle>
+                        <button
+                            onClick={() => setIsCollectModalOpen(false)}
+                            className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+                        >
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Close</span>
+                        </button>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="collect-employee" className="text-sm font-medium">
+                                Employee <span className="text-red-500">*</span>
+                            </Label>
+                            <Select value={selectedCollectEmployee} onValueChange={setSelectedCollectEmployee}>
+                                <SelectTrigger id="collect-employee" className="w-full">
+                                    <SelectValue
+                                        placeholder={
+                                            isLoadingCollectEmployees ? 'Loading employees...' : 'Select Employee'
+                                        }
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {isLoadingCollectEmployees ? (
+                                        <SelectItem value="loading" disabled>
+                                            Loading employees...
+                                        </SelectItem>
+                                    ) : collectEmployees.length ? (
+                                        collectEmployees.map((employee) => (
+                                            <SelectItem key={employee.id} value={employee.id.toString()}>
+                                                {employee.full_name}
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <SelectItem value="no-employees" disabled>
+                                            No employees available
+                                        </SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="passcode" className="text-sm font-medium">
+                                Passcode <span className="text-red-500">*</span>
+                            </Label>
+                            <Input
+                                id="passcode"
+                                type="password"
+                                placeholder="Enter Passcode"
+                                value={passcode}
+                                onChange={(e) => setPasscode(e.target.value)}
+                                className="w-full"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex justify-end pt-4">
+                        <Button
+                            onClick={handleSubmitCollect}
+                            className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white"
+                            disabled={isCollectingPackage}
+                        >
+                            <Check className="w-4 h-4 mr-2" />
+                            {isCollectingPackage ? 'Processing...' : 'Mark as Collected'}
                         </Button>
                     </div>
                 </DialogContent>

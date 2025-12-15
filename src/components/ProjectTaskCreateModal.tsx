@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import { CalendarIcon, X } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import axios from "axios";
-import { fetchProjectById, fetchProjects, removeTagFromProject, removeUserFromProject } from "@/store/slices/projectManagementSlice";
+import { fetchKanbanProjects, fetchProjectById, fetchProjects, removeTagFromProject, removeUserFromProject } from "@/store/slices/projectManagementSlice";
 import { fetchMilestoneById, fetchMilestones } from "@/store/slices/projectMilestoneSlice";
 import { createProjectTask, editProjectTask, fetchProjectTasks, fetchTargetDateTasks, fetchUserAvailability } from "@/store/slices/projectTasksSlice";
 import { FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
@@ -15,7 +14,6 @@ import { TaskDatePicker } from "./TaskDatePicker";
 import TasksOfDate from "./TasksOfDate";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { toast } from "sonner";
-import MuiSelectField from "./MuiSelectField";
 import MuiMultiSelect from "./MuiMultiSelect";
 import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
 
@@ -95,8 +93,8 @@ const TaskForm = ({
 
     const getProjects = async () => {
         try {
-            const response = await dispatch(fetchProjects({ baseUrl, token })).unwrap();
-            setProjects(response);
+            const response = await dispatch(fetchKanbanProjects({ baseUrl, token })).unwrap();
+            setProjects(response.project_managements);
         } catch (error) {
             console.log(error);
         }
@@ -104,7 +102,7 @@ const TaskForm = ({
 
     const fetchShifts = async (id) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/shifts/get_shifts.json?user_id=${id}`, {
+            const response = await axios.get(`https://${baseUrl}/pms/admin/user_shifts.json?user_id=${id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -336,11 +334,11 @@ const TaskForm = ({
                                     <em>Select Project</em>
                                 </MenuItem>
                                 {
-                                    projects.map((project) => (
+                                    (projects && projects.length > 0) ? projects?.map((project) => (
                                         <MenuItem key={project.id} value={project.id}>
                                             {project.title}
                                         </MenuItem>
-                                    ))
+                                    )) : <MenuItem disabled>No Projects Available</MenuItem>
                                 }
                             </Select>
                         </FormControl>
@@ -495,6 +493,7 @@ const TaskForm = ({
                             <div className="text-black flex items-center justify-between w-full">
                                 <CalendarIcon className="w-4 h-4" />
                                 <div>
+                                    Start Date : {" "}
                                     {startDate?.date?.toString().padStart(2, "0")}{" "}
                                     {monthNames[startDate.month]}
                                 </div>
@@ -525,6 +524,7 @@ const TaskForm = ({
                             <div className="text-black flex items-center justify-between w-full">
                                 <CalendarIcon className="w-4 h-4" />
                                 <div>
+                                    Target Date :{" "}
                                     {endDate.date.toString().padStart(2, "0")}{" "}
                                     {monthNames[endDate.month]}
                                 </div>
@@ -544,7 +544,7 @@ const TaskForm = ({
                     Duration <span className="text-red-600">*</span>
                 </label>
                 <DurationPicker
-                    value={taskDuration}
+                    dateWiseHours={[]}
                     onChange={setTaskDuration}
                     onDateWiseHoursChange={setDateWiseHours}
                     startDate={startDate}

@@ -184,8 +184,14 @@ export const fetchWings = createAsyncThunk(
 
 export const fetchAreas = createAsyncThunk(
   'location/fetchAreas',
-  async ({ buildingId, wingId }: { buildingId: number; wingId: number }) => {
-    const response = await apiClient.get(`/pms/areas.json?wing_id=${wingId}`);
+  async ({ buildingId, wingId }: { buildingId: number; wingId?: number }) => {
+    let url = '/pms/areas.json';
+    const params = [];
+    if (buildingId) params.push(`building_id=${buildingId}`);
+    if (wingId) params.push(`wing_id=${wingId}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    
+    const response = await apiClient.get(url);
     return response.data.areas || [];
   }
 );

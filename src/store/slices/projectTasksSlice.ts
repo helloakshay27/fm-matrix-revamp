@@ -30,8 +30,7 @@ export const createProjectTask = createAsyncThunk(
             })
             return response.data
         } catch (error) {
-            const message = error.response?.data?.error || error.error || 'Failed to create project task'
-            return rejectWithValue(message)
+            return rejectWithValue(error)
         }
     }
 )
@@ -41,6 +40,23 @@ export const editProjectTask = createAsyncThunk(
     async ({ token, baseUrl, id, data }: { token: string, baseUrl: string, id: string, data: any }, { rejectWithValue }) => {
         try {
             const response = await axios.put(`https://${baseUrl}/task_managements/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const updateTaskStatus = createAsyncThunk(
+    "updateTaskStatus",
+    async ({ token, baseUrl, id, data }: { token: string, baseUrl: string, id: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/task_managements/${id}/update_status.json`, data, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -66,6 +82,25 @@ export const fetchProjectTasksById = createAsyncThunk('fetchProjectTasksById', a
         return rejectWithValue(error);
     }
 })
+
+export const filterTasks = createAsyncThunk(
+    "filterTasks",
+    async ({ token, baseUrl, params }: { token: string, baseUrl: string, params: any }, { rejectWithValue }) => {
+        console.log(params)
+        try {
+            const response = await axios.get(`https://${baseUrl}/task_managements.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                params
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to filter tasks'
+            return rejectWithValue(message)
+        }
+    }
+)
 
 export const fetchUserAvailability = createAsyncThunk('fetchUserAvailability', async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
     try {
@@ -102,6 +137,8 @@ const fetchProjectTasksByIdSlice = createApiSlice("fetchProjectTasksById", fetch
 const fetchUserAvailabilitySlice = createApiSlice("fetchUserAvailability", fetchUserAvailability)
 const fetchTargetDateTasksSlice = createApiSlice("fetchTargetDateTasks", fetchTargetDateTasks)
 const editProjectTaskSlice = createApiSlice("editProjectTask", editProjectTask)
+const filterTasksSlice = createApiSlice("filterTasks", filterTasks)
+const updateTaskStatusSlice = createApiSlice("updateTaskStatus", updateTaskStatus)
 
 export const fetchProjectTasksReducer = fetchProjectTasksSlice.reducer
 export const createProjectTaskReducer = createProjectTaskSlice.reducer
@@ -109,3 +146,5 @@ export const fetchProjectTasksByIdReducer = fetchProjectTasksByIdSlice.reducer
 export const fetchUserAvailabilityReducer = fetchUserAvailabilitySlice.reducer
 export const fetchTargetDateTasksReducer = fetchTargetDateTasksSlice.reducer
 export const editProjectTaskReducer = editProjectTaskSlice.reducer
+export const filterTasksReducer = filterTasksSlice.reducer
+export const updateTaskStatusReducer = updateTaskStatusSlice.reducer

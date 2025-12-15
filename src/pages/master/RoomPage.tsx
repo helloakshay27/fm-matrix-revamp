@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Square, Check, Plus, FileDown, X, ChevronLeft, ChevronRight, Upload, Download, Loader2 } from 'lucide-react';
+import { Edit, Square, Check, Plus, FileDown, X, ChevronLeft, ChevronRight, Upload, Download, Loader2, QrCode } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { 
   fetchBuildings, 
@@ -36,6 +36,8 @@ export const RoomPage = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<any>(null);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [selectedQrCode, setSelectedQrCode] = useState<string>('');
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -90,12 +92,27 @@ export const RoomPage = () => {
     setCurrentPage(1);
   }, [rooms.data.length]);
 
-  // Fetch dependencies for add/edit forms
+  // Fetch dependencies for add form when building changes
   useEffect(() => {
     if (newRoom.building) {
-      dispatch(fetchWings(parseInt(newRoom.building)));
+      const buildingId = parseInt(newRoom.building);
+      dispatch(fetchWings(buildingId));
+      dispatch(fetchAreas({ buildingId, wingId: newRoom.wing ? parseInt(newRoom.wing) : undefined }));
+      dispatch(fetchFloors({ buildingId, wingId: newRoom.wing ? parseInt(newRoom.wing) : undefined, areaId: newRoom.area ? parseInt(newRoom.area) : undefined }));
+      dispatch(fetchUnits({ buildingId, wingId: newRoom.wing ? parseInt(newRoom.wing) : undefined, areaId: newRoom.area ? parseInt(newRoom.area) : undefined, floorId: newRoom.floor ? parseInt(newRoom.floor) : undefined }));
     }
-  }, [dispatch, newRoom.building]);
+  }, [dispatch, newRoom.building, newRoom.wing, newRoom.area, newRoom.floor]);
+
+  // Fetch dependencies for edit form when building changes
+  useEffect(() => {
+    if (editRoom.building) {
+      const buildingId = parseInt(editRoom.building);
+      dispatch(fetchWings(buildingId));
+      dispatch(fetchAreas({ buildingId, wingId: editRoom.wing ? parseInt(editRoom.wing) : undefined }));
+      dispatch(fetchFloors({ buildingId, wingId: editRoom.wing ? parseInt(editRoom.wing) : undefined, areaId: editRoom.area ? parseInt(editRoom.area) : undefined }));
+      dispatch(fetchUnits({ buildingId, wingId: editRoom.wing ? parseInt(editRoom.wing) : undefined, areaId: editRoom.area ? parseInt(editRoom.area) : undefined, floorId: editRoom.floor ? parseInt(editRoom.floor) : undefined }));
+    }
+  }, [dispatch, editRoom.building, editRoom.wing, editRoom.area, editRoom.floor]);
 
   useEffect(() => {
     if (newRoom.building && newRoom.wing) {
@@ -193,32 +210,39 @@ export const RoomPage = () => {
   };
 
   const handleAddRoom = async () => {
-    if (newRoom.building && newRoom.wing && newRoom.floor && newRoom.roomName.trim()) {
-      try {
-        await dispatch(createRoom({
-          name: newRoom.roomName,
-          building_id: parseInt(newRoom.building),
-          wing_id: parseInt(newRoom.wing),
-          area_id: newRoom.area ? parseInt(newRoom.area) : undefined,
-          floor_id: parseInt(newRoom.floor),
-          unit_id: newRoom.unit ? parseInt(newRoom.unit) : undefined,
-          create_qr: newRoom.createQrCode
-        }));
-        toast.success('Room created successfully');
-        setNewRoom({
-          building: '',
-          wing: '',
-          area: '',
-          floor: '',
-          unit: '',
-          roomName: '',
-          createQrCode: false
-        });
-        setIsAddDialogOpen(false);
-        dispatch(fetchAllRooms());
-      } catch (error) {
-        toast.error('Failed to create room');
-      }
+    if (!newRoom.building) {
+      toast.error('Please select a building');
+      return;
+    }
+    if (!newRoom.roomName.trim()) {
+      toast.error('Please enter room name');
+      return;
+    }
+    
+    try {
+      await dispatch(createRoom({
+        name: newRoom.roomName,
+        building_id: parseInt(newRoom.building),
+        wing_id: newRoom.wing ? parseInt(newRoom.wing) : null,
+        area_id: newRoom.area ? parseInt(newRoom.area) : null,
+        floor_id: newRoom.floor ? parseInt(newRoom.floor) : null,
+        unit_id: newRoom.unit ? parseInt(newRoom.unit) : null,
+        create_qr: newRoom.createQrCode
+      }));
+      toast.success('Room created successfully');
+      setNewRoom({
+        building: '',
+        wing: '',
+        area: '',
+        floor: '',
+        unit: '',
+        roomName: '',
+        createQrCode: false
+      });
+      setIsAddDialogOpen(false);
+      dispatch(fetchAllRooms());
+    } catch (error) {
+      toast.error('Failed to create room');
     }
   };
 
@@ -391,27 +415,36 @@ export const RoomPage = () => {
   };
 
   const handleUpdateRoom = async () => {
-    if (editingRoom && editRoom.roomName.trim()) {
-      try {
-        await dispatch(updateRoom({
-          id: editingRoom.id,
-          updates: {
-            name: editRoom.roomName,
-            building_id: parseInt(editRoom.building),
-            wing_id: parseInt(editRoom.wing),
-            area_id: editRoom.area ? parseInt(editRoom.area) : null,
-            floor_id: parseInt(editRoom.floor),
-            unit_id: editRoom.unit ? parseInt(editRoom.unit) : null,
-            active: editRoom.active
-          }
-        }));
-        toast.success('Room updated successfully');
-        setIsEditDialogOpen(false);
-        setEditingRoom(null);
-        dispatch(fetchAllRooms());
-      } catch (error) {
-        toast.error('Failed to update room');
-      }
+    if (!editingRoom) return;
+    
+    if (!editRoom.building) {
+      toast.error('Please select a building');
+      return;
+    }
+    if (!editRoom.roomName.trim()) {
+      toast.error('Please enter room name');
+      return;
+    }
+    
+    try {
+      await dispatch(updateRoom({
+        id: editingRoom.id,
+        updates: {
+          name: editRoom.roomName,
+          building_id: parseInt(editRoom.building),
+          wing_id: editRoom.wing ? parseInt(editRoom.wing) : null,
+          area_id: editRoom.area ? parseInt(editRoom.area) : null,
+          floor_id: editRoom.floor ? parseInt(editRoom.floor) : null,
+          unit_id: editRoom.unit ? parseInt(editRoom.unit) : null,
+          active: editRoom.active
+        }
+      }));
+      toast.success('Room updated successfully');
+      setIsEditDialogOpen(false);
+      setEditingRoom(null);
+      dispatch(fetchAllRooms());
+    } catch (error) {
+      toast.error('Failed to update room');
     }
   };
 
@@ -537,10 +570,13 @@ export const RoomPage = () => {
                       <Select 
                         value={newRoom.building} 
                         onValueChange={(value) => {
-                          const updatedNewRoom = { ...newRoom, building: value, wing: '', area: '', floor: '', unit: '' };
-                          setNewRoom(updatedNewRoom);
+                          setNewRoom({ ...newRoom, building: value, wing: '', area: '', floor: '', unit: '' });
                           if (value) {
-                            dispatch(fetchWings(parseInt(value)));
+                            const buildingId = parseInt(value);
+                            dispatch(fetchWings(buildingId));
+                            dispatch(fetchAreas({ buildingId }));
+                            dispatch(fetchFloors({ buildingId }));
+                            dispatch(fetchUnits({ buildingId }));
                           }
                         }}
                       >
@@ -562,10 +598,13 @@ export const RoomPage = () => {
                       <Select 
                         value={newRoom.wing} 
                         onValueChange={(value) => {
-                          const updatedNewRoom = { ...newRoom, wing: value, area: '', floor: '', unit: '' };
-                          setNewRoom(updatedNewRoom);
-                          if (value && updatedNewRoom.building) {
-                            dispatch(fetchAreas({ buildingId: parseInt(updatedNewRoom.building), wingId: parseInt(value) }));
+                          setNewRoom({ ...newRoom, wing: value, area: '', floor: '', unit: '' });
+                          if (value && newRoom.building) {
+                            const buildingId = parseInt(newRoom.building);
+                            const wingId = parseInt(value);
+                            dispatch(fetchAreas({ buildingId, wingId }));
+                            dispatch(fetchFloors({ buildingId, wingId }));
+                            dispatch(fetchUnits({ buildingId, wingId }));
                           }
                         }}
                         disabled={!newRoom.building}
@@ -588,17 +627,16 @@ export const RoomPage = () => {
                       <Select 
                         value={newRoom.area} 
                         onValueChange={(value) => {
-                          const updatedNewRoom = { ...newRoom, area: value, floor: '', unit: '' };
-                          setNewRoom(updatedNewRoom);
-                          if (value && updatedNewRoom.building && updatedNewRoom.wing) {
-                            dispatch(fetchFloors({ 
-                              buildingId: parseInt(updatedNewRoom.building), 
-                              wingId: parseInt(updatedNewRoom.wing), 
-                              areaId: parseInt(value) 
-                            }));
+                          setNewRoom({ ...newRoom, area: value, floor: '', unit: '' });
+                          if (value && newRoom.building) {
+                            const buildingId = parseInt(newRoom.building);
+                            const wingId = newRoom.wing ? parseInt(newRoom.wing) : undefined;
+                            const areaId = parseInt(value);
+                            dispatch(fetchFloors({ buildingId, wingId, areaId }));
+                            dispatch(fetchUnits({ buildingId, wingId, areaId }));
                           }
                         }}
-                        disabled={!newRoom.wing}
+                        disabled={!newRoom.building}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Area (Optional)" />
@@ -618,18 +656,16 @@ export const RoomPage = () => {
                       <Select 
                         value={newRoom.floor} 
                         onValueChange={(value) => {
-                          const updatedNewRoom = { ...newRoom, floor: value, unit: '' };
-                          setNewRoom(updatedNewRoom);
-                          if (value && updatedNewRoom.building && updatedNewRoom.wing && updatedNewRoom.area) {
-                            dispatch(fetchUnits({ 
-                              buildingId: parseInt(updatedNewRoom.building), 
-                              wingId: parseInt(updatedNewRoom.wing), 
-                              areaId: parseInt(updatedNewRoom.area),
-                              floorId: parseInt(value)
-                            }));
+                          setNewRoom({ ...newRoom, floor: value, unit: '' });
+                          if (value && newRoom.building) {
+                            const buildingId = parseInt(newRoom.building);
+                            const wingId = newRoom.wing ? parseInt(newRoom.wing) : undefined;
+                            const areaId = newRoom.area ? parseInt(newRoom.area) : undefined;
+                            const floorId = parseInt(value);
+                            dispatch(fetchUnits({ buildingId, wingId, areaId, floorId }));
                           }
                         }}
-                        disabled={!newRoom.wing}
+                        disabled={!newRoom.building}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Floor" />
@@ -649,7 +685,7 @@ export const RoomPage = () => {
                       <Select 
                         value={newRoom.unit} 
                         onValueChange={(value) => setNewRoom(prev => ({ ...prev, unit: value }))}
-                        disabled={!newRoom.floor}
+                        disabled={!newRoom.building}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Unit (Optional)" />
@@ -708,7 +744,7 @@ export const RoomPage = () => {
                     <Button 
                       onClick={handleAddRoom} 
                       className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
-                      disabled={!newRoom.building || !newRoom.wing || !newRoom.floor || !newRoom.roomName.trim()}
+                      disabled={!newRoom.building || !newRoom.roomName.trim()}
                     >
                       Submit
                     </Button>
@@ -753,25 +789,26 @@ export const RoomPage = () => {
                   <TableHead>Floor</TableHead>
                   <TableHead>Unit</TableHead>
                   <TableHead>Room</TableHead>
+                  <TableHead>QR Code</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rooms.loading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-4">
+                    <TableCell colSpan={10} className="text-center py-4">
                       Loading rooms...
                     </TableCell>
                   </TableRow>
                 ) : rooms.error ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-4 text-red-500">
+                    <TableCell colSpan={10} className="text-center py-4 text-red-500">
                       Error: {rooms.error}
                     </TableCell>
                   </TableRow>
                 ) : filteredRooms.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-4">
+                    <TableCell colSpan={10} className="text-center py-4">
                       {rooms.data.length === 0 ? 'No rooms available' : 'No rooms match your search'}
                     </TableCell>
                   </TableRow>
@@ -791,6 +828,23 @@ export const RoomPage = () => {
                         {room.unit?.unit_name || (room.unit_id ? `Unit ${room.unit_id}` : '-')}
                       </TableCell>
                       <TableCell>{room.name}</TableCell>
+                      <TableCell>
+                        {room.room_qr_code ? (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedQrCode(room.room_qr_code);
+                              setIsQrModalOpen(true);
+                            }}
+                            className="text-[#C72030] hover:text-[#C72030]/80"
+                          >
+                            <QrCode className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </TableCell>
                        <TableCell>
                          <button onClick={() => toggleRoomStatus(room.id)} className="cursor-pointer">
                            {room.active ? (
@@ -906,10 +960,13 @@ export const RoomPage = () => {
                   <Select 
                     value={editRoom.building} 
                     onValueChange={(value) => {
-                      const updatedEditRoom = { ...editRoom, building: value, wing: '', area: '', floor: '', unit: '' };
-                      setEditRoom(updatedEditRoom);
+                      setEditRoom({ ...editRoom, building: value, wing: '', area: '', floor: '', unit: '' });
                       if (value) {
-                        dispatch(fetchWings(parseInt(value)));
+                        const buildingId = parseInt(value);
+                        dispatch(fetchWings(buildingId));
+                        dispatch(fetchAreas({ buildingId }));
+                        dispatch(fetchFloors({ buildingId }));
+                        dispatch(fetchUnits({ buildingId }));
                       }
                     }}
                   >
@@ -931,10 +988,13 @@ export const RoomPage = () => {
                   <Select 
                     value={editRoom.wing} 
                     onValueChange={(value) => {
-                      const updatedEditRoom = { ...editRoom, wing: value, area: '', floor: '', unit: '' };
-                      setEditRoom(updatedEditRoom);
-                      if (value && updatedEditRoom.building) {
-                        dispatch(fetchAreas({ buildingId: parseInt(updatedEditRoom.building), wingId: parseInt(value) }));
+                      setEditRoom({ ...editRoom, wing: value, area: '', floor: '', unit: '' });
+                      if (value && editRoom.building) {
+                        const buildingId = parseInt(editRoom.building);
+                        const wingId = parseInt(value);
+                        dispatch(fetchAreas({ buildingId, wingId }));
+                        dispatch(fetchFloors({ buildingId, wingId }));
+                        dispatch(fetchUnits({ buildingId, wingId }));
                       }
                     }}
                     disabled={!editRoom.building}
@@ -957,17 +1017,16 @@ export const RoomPage = () => {
                   <Select 
                     value={editRoom.area} 
                     onValueChange={(value) => {
-                      const updatedEditRoom = { ...editRoom, area: value, floor: '', unit: '' };
-                      setEditRoom(updatedEditRoom);
-                      if (value && updatedEditRoom.building && updatedEditRoom.wing) {
-                        dispatch(fetchFloors({ 
-                          buildingId: parseInt(updatedEditRoom.building), 
-                          wingId: parseInt(updatedEditRoom.wing), 
-                          areaId: parseInt(value) 
-                        }));
+                      setEditRoom({ ...editRoom, area: value, floor: '', unit: '' });
+                      if (value && editRoom.building) {
+                        const buildingId = parseInt(editRoom.building);
+                        const wingId = editRoom.wing ? parseInt(editRoom.wing) : undefined;
+                        const areaId = parseInt(value);
+                        dispatch(fetchFloors({ buildingId, wingId, areaId }));
+                        dispatch(fetchUnits({ buildingId, wingId, areaId }));
                       }
                     }}
-                    disabled={!editRoom.wing}
+                    disabled={!editRoom.building}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Area (Optional)" />
@@ -987,18 +1046,16 @@ export const RoomPage = () => {
                   <Select 
                     value={editRoom.floor} 
                     onValueChange={(value) => {
-                      const updatedEditRoom = { ...editRoom, floor: value, unit: '' };
-                      setEditRoom(updatedEditRoom);
-                      if (value && updatedEditRoom.building && updatedEditRoom.wing && updatedEditRoom.area) {
-                        dispatch(fetchUnits({ 
-                          buildingId: parseInt(updatedEditRoom.building), 
-                          wingId: parseInt(updatedEditRoom.wing), 
-                          areaId: parseInt(updatedEditRoom.area),
-                          floorId: parseInt(value)
-                        }));
+                      setEditRoom({ ...editRoom, floor: value, unit: '' });
+                      if (value && editRoom.building) {
+                        const buildingId = parseInt(editRoom.building);
+                        const wingId = editRoom.wing ? parseInt(editRoom.wing) : undefined;
+                        const areaId = editRoom.area ? parseInt(editRoom.area) : undefined;
+                        const floorId = parseInt(value);
+                        dispatch(fetchUnits({ buildingId, wingId, areaId, floorId }));
                       }
                     }}
-                    disabled={!editRoom.wing}
+                    disabled={!editRoom.building}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Floor" />
@@ -1018,7 +1075,7 @@ export const RoomPage = () => {
                   <Select 
                     value={editRoom.unit} 
                     onValueChange={(value) => setEditRoom(prev => ({ ...prev, unit: value }))}
-                    disabled={!editRoom.floor}
+                    disabled={!editRoom.building}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Unit (Optional)" />
@@ -1059,10 +1116,49 @@ export const RoomPage = () => {
                 <Button 
                   onClick={handleUpdateRoom} 
                   className="bg-purple-600 hover:bg-purple-700 text-white px-8"
-                  disabled={!editRoom.roomName.trim() || !editRoom.building || !editRoom.wing || !editRoom.floor}
+                  disabled={!editRoom.roomName.trim() || !editRoom.building}
                 >
                   Submit
                 </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* QR Code Modal */}
+          <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Room QR Code</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center space-y-4 py-4">
+                {selectedQrCode ? (
+                  <>
+                    <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
+                      <img 
+                        src={selectedQrCode} 
+                        alt="Room QR Code" 
+                        className="w-64 h-64 object-contain"
+                      />
+                    </div>
+                    <Button
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = selectedQrCode;
+                        link.download = `room-qr-code-${Date.now()}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        toast.success('QR Code downloaded successfully');
+                      }}
+                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download QR Code
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-gray-500">No QR code available</p>
+                )}
               </div>
             </DialogContent>
           </Dialog>

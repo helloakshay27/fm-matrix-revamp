@@ -68,8 +68,7 @@ export const MobileRestaurantDetails: React.FC<
     null
   );
 
-
-  console.log("Hello:- Akshay Mugale")
+  console.log("Hello:- Akshay Mugale");
 
   // Restore preserved cart when coming back from items details
   useEffect(() => {
@@ -166,17 +165,17 @@ export const MobileRestaurantDetails: React.FC<
         if (item.id === itemId) {
           const currentQuantity = item.quantity || 0;
           const maxStock = item.stock || 0;
-          
+
           // If adding items, check stock limit
           if (change > 0 && currentQuantity >= maxStock) {
             // Don't allow adding more if we've reached stock limit
             return item;
           }
-          
+
           const newQuantity = Math.max(0, currentQuantity + change);
           // Ensure we don't exceed stock limit
           const finalQuantity = Math.min(newQuantity, maxStock);
-          
+
           return { ...item, quantity: finalQuantity };
         }
         return item;
@@ -218,7 +217,10 @@ export const MobileRestaurantDetails: React.FC<
   // Check if ordering is allowed today
   const isOrderingAllowed = () => {
     // If both can_book_today and can_order_today are false, don't allow ordering
-    if (restaurant.can_book_today === false && restaurant.can_order_today === false) {
+    if (
+      restaurant.can_book_today === false &&
+      restaurant.can_order_today === false
+    ) {
       return false;
     }
     // If either is true or both are undefined (backward compatibility), allow ordering
@@ -371,10 +373,12 @@ export const MobileRestaurantDetails: React.FC<
             {/* Space/Planet illustration using emojis */}
             <div className="relative">
               <div className="text-6xl mb-2">⏳</div>
-              <div className="absolute -top-2 -right-2 text-2xl animate-bounce">🍕</div>
+              <div className="absolute -top-2 -right-2 text-2xl animate-bounce">
+                🍕
+              </div>
               <div className="absolute -bottom-1 -left-3 text-2xl">🍩</div>
             </div>
-            
+
             <div className="space-y-2">
               <h3 className="text-xl font-semibold text-gray-800">
                 We'll be there soon - hang tight!
@@ -383,7 +387,7 @@ export const MobileRestaurantDetails: React.FC<
                 Looks like online ordering isn't available at this Time.
               </p>
             </div>
-            
+
             <div className="mt-4 pt-4 border-t border-gray-300 w-full">
               <p className="text-gray-500 text-sm font-medium tracking-wide">
                 EXPLORE OTHER OPTIONS
@@ -416,7 +420,7 @@ export const MobileRestaurantDetails: React.FC<
                     <>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-base font-semibold text-white bg-red-600 px-2 py-1 rounded">
-                          ORM{item.price}
+                          OMR{item.price}
                         </span>
                         {/* Optional original price if discount */}
                         {/* <span className="text-sm text-gray-400 line-through">ORM{item.originalPrice}</span> */}
@@ -426,7 +430,7 @@ export const MobileRestaurantDetails: React.FC<
                       </div>
                     </>
                   )}
-                
+
                 {/* Stock Information */}
                 <div className="mt-2">
                   {isOutOfStock(item) ? (

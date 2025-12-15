@@ -69,12 +69,16 @@ export const AddServicePRDashboard = () => {
   const [showRadio, setShowRadio] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
+  const [glAccountOptions, setGlAccountOptions] = useState([]);
+  const [taxCodeOptions, setTaxCodeOptions] = useState([]);
+  const [storageLocationOptions, setStorageLocationOptions] = useState([]);
 
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     contractor: "",
     plantDetail: "",
+    type: "",
     woDate: "",
     billingAddress: "",
     retention: "",
@@ -87,6 +91,7 @@ export const AddServicePRDashboard = () => {
     subject: "",
     description: "",
     termsConditions: "",
+    amcDeclared: "",
   });
 
   const [detailsForms, setDetailsForms] = useState([
@@ -94,6 +99,8 @@ export const AddServicePRDashboard = () => {
       id: 1,
       service: "",
       productDescription: "",
+      glCode: "",
+      taxCode: "",
       quantityArea: "",
       uom: "",
       expectedDate: "",
@@ -109,6 +116,7 @@ export const AddServicePRDashboard = () => {
       taxAmount: "",
       amount: "",
       totalAmount: "",
+      storageLocation: "",
       wbsCode: "",
     },
   ]);
@@ -116,6 +124,63 @@ export const AddServicePRDashboard = () => {
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [slid, setSlid] = useState(null);
+
+  // Fetch GL Account options
+  const fetchGlAccountOptions = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/get_additional_fields.json?q[fields_for_eq]=gl_account`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.additional_fields && Array.isArray(response.data.additional_fields)) {
+        setGlAccountOptions(response.data.additional_fields);
+      }
+    } catch (error) {
+      console.error("Error fetching GL Account options:", error);
+    }
+  };
+
+  // Fetch Tax Code options
+  const fetchTaxCodeOptions = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/get_additional_fields.json?q[fields_for_eq]=tax_code`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.additional_fields && Array.isArray(response.data.additional_fields)) {
+        setTaxCodeOptions(response.data.additional_fields);
+      }
+    } catch (error) {
+      console.error("Error fetching Tax Code options:", error);
+    }
+  };
+
+  // Fetch Storage Location options
+  const fetchStorageLocationOptions = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/get_additional_fields.json?q[fields_for_eq]=storage_location`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.additional_fields && Array.isArray(response.data.additional_fields)) {
+        setStorageLocationOptions(response.data.additional_fields);
+      }
+    } catch (error) {
+      console.error("Error fetching Storage Location options:", error);
+    }
+  };
 
   // Fetch saved PR details if saved_pr_id is present or create system log
   useEffect(() => {
@@ -138,6 +203,7 @@ export const AddServicePRDashboard = () => {
           setFormData({
             contractor: prData.pms_supplier_id || "",
             plantDetail: prData.plant_detail_id || "",
+            type: "",
             woDate: prData.wo_date ? prData.wo_date.split("T")[0] : "",
             billingAddress: prData.billing_address_id || "",
             retention: prData.retention || "",
@@ -150,6 +216,7 @@ export const AddServicePRDashboard = () => {
             subject: prData.subject || "",
             description: prData.description || "",
             termsConditions: prData.term_condition || "",
+            amcDeclared: prData.amc_declaration || "",
           });
 
           // Populate detailsForms
@@ -216,6 +283,7 @@ export const AddServicePRDashboard = () => {
         pms_work_order: {
           letter_of_indent: true,
           pms_supplier_id: formData.contractor,
+          pr_type: formData.type,
           plant_detail_id: formData.plantDetail,
           wo_date: formData.woDate,
           billing_address_id: formData.billingAddress,
@@ -229,10 +297,13 @@ export const AddServicePRDashboard = () => {
           subject: formData.subject,
           description: formData.description,
           term_condition: formData.termsConditions,
+          amc_declaration: formData.amcDeclared,
           ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
           pms_wo_inventories_attributes: detailsForms.map((item) => ({
             pms_service_id: item.service,
             prod_desc: item.productDescription,
+            gl_account: item.glCode,
+            tax_code: item.taxCode,
             quantity: item.quantityArea,
             unit: item.uom,
             expected_date: item.expectedDate,
@@ -248,6 +319,7 @@ export const AddServicePRDashboard = () => {
             taxable_value: item.taxAmount,
             total_value: item.amount,
             total_amount: item.totalAmount,
+            general_storage: item.storageLocation,
             ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
           })),
         },
@@ -332,6 +404,9 @@ export const AddServicePRDashboard = () => {
     fetchPlantDetails();
     fetchAddresses();
     fetchServices();
+    fetchGlAccountOptions();
+    fetchTaxCodeOptions();
+    fetchStorageLocationOptions();
   }, [dispatch, baseUrl, token]);
 
   useEffect(() => {
@@ -344,6 +419,7 @@ export const AddServicePRDashboard = () => {
           setFormData({
             contractor: data.pms_supplier_id,
             plantDetail: data.work_order.plant_detail_id,
+            type: "",
             woDate: data.work_order.date ? data.work_order.date.split("T")[0] : "",
             billingAddress: data.work_order.billing_address_id,
             retention: data.work_order?.payment_terms?.retention,
@@ -356,6 +432,7 @@ export const AddServicePRDashboard = () => {
             subject: data.work_order.subject,
             description: data.work_order.description,
             termsConditions: data.work_order.term_condition,
+            amcDeclared: data.work_order.amc_declaration || false,
           });
 
           setDetailsForms(data.inventories.map((item, index) => ({
@@ -492,6 +569,8 @@ export const AddServicePRDashboard = () => {
       id: newId,
       service: "",
       productDescription: "",
+      glCode: "",
+      taxCode: "",
       quantityArea: "",
       uom: "",
       expectedDate: "",
@@ -507,6 +586,7 @@ export const AddServicePRDashboard = () => {
       taxAmount: "",
       amount: "",
       totalAmount: "",
+      storageLocation: "",
       wbsCode: "",
     };
     setDetailsForms((prev) => [...prev, newForm]);
@@ -546,9 +626,26 @@ export const AddServicePRDashboard = () => {
       toast.error("Contractor is required");
       return false;
     }
+    if (!formData.plantDetail) {
+      toast.error("Plant Detail is required");
+      return false;
+    }
+    if (!formData.type) {
+      toast.error("Type is required");
+      return false;
+    }
     if (!formData.woDate) {
       toast.error("WO Date is required");
       return false;
+    }
+    if (formData.woDate) {
+      const woDate = new Date(formData.woDate);
+      const today = new Date();
+      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      if (woDate > today || woDate < thirtyDaysAgo) {
+        toast.error("WO Date must be current date or within past 30 days");
+        return false;
+      }
     }
     if (!formData.billingAddress) {
       toast.error("Billing Address is required");
@@ -558,8 +655,11 @@ export const AddServicePRDashboard = () => {
       toast.error("Related To is required");
       return false;
     }
-
-    // Details Forms Validation
+    if (formData.amcDeclared === "" || formData.amcDeclared === undefined || formData.amcDeclared === null) {
+      toast.error("Amc Declared is required");
+      return false;
+    }
+    
     for (const item of detailsForms) {
       if (!item.service) {
         toast.error("Service is required for all items");
@@ -567,6 +667,14 @@ export const AddServicePRDashboard = () => {
       }
       if (!item.productDescription) {
         toast.error("Product Description is required for all items");
+        return false;
+      }
+      if (!item.glCode) {
+        toast.error("GL Code is required for all items");
+        return false;
+      }
+      if (!item.taxCode) {
+        toast.error("Tax Code is required for all items");
         return false;
       }
       if (!item.quantityArea || isNaN(parseFloat(item.quantityArea)) || parseFloat(item.quantityArea) <= 0) {
@@ -581,6 +689,36 @@ export const AddServicePRDashboard = () => {
         toast.error("Rate must be a valid positive number for all items");
         return false;
       }
+      if (!item.storageLocation) {
+        toast.error("Storage Location is required for all items");
+        return false;
+      }
+    }
+
+    // WBS validation - mandatory only when radio option is visible
+    if (showRadio) {
+      if (!wbsSelection) {
+        toast.error("WBS Selection (Individual or All Items) is required");
+        return false;
+      }
+      if (wbsSelection === "overall" && !overallWbs) {
+        toast.error("WBS Code is required when 'All Items' is selected");
+        return false;
+      }
+      if (wbsSelection === "individual") {
+        for (const item of detailsForms) {
+          if (!item.wbsCode) {
+            toast.error("WBS Code is required for each item when 'Individual' is selected");
+            return false;
+          }
+        }
+      }
+    }
+
+    // Attachment validation - mandatory
+    if (attachedFiles.length === 0) {
+      toast.error("At least one attachment is required");
+      return false;
     }
 
     return true;
@@ -595,6 +733,7 @@ export const AddServicePRDashboard = () => {
       pms_work_order: {
         letter_of_indent: true,
         pms_supplier_id: formData.contractor,
+        pr_type: formData.type,
         plant_detail_id: formData.plantDetail,
         wo_date: formData.woDate,
         billing_address_id: formData.billingAddress,
@@ -608,10 +747,13 @@ export const AddServicePRDashboard = () => {
         subject: formData.subject,
         description: formData.description,
         term_condition: formData.termsConditions,
+        amc_declaration: formData.amcDeclared,
         ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
         pms_wo_inventories_attributes: detailsForms.map((item) => ({
           pms_service_id: item.service,
           prod_desc: item.productDescription,
+          gl_account: item.glCode,
+          tax_code: item.taxCode,
           quantity: item.quantityArea,
           unit: item.uom,
           expected_date: item.expectedDate,
@@ -627,6 +769,7 @@ export const AddServicePRDashboard = () => {
           taxable_value: item.taxAmount,
           total_value: item.amount,
           total_amount: item.totalAmount,
+          general_storage: item.storageLocation,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
@@ -694,9 +837,9 @@ export const AddServicePRDashboard = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Plant Detail</InputLabel>
+                <InputLabel shrink>Plant Detail*</InputLabel>
                 <MuiSelect
-                  label="Plant Detail"
+                  label="Plant Detail*"
                   value={formData.plantDetail}
                   onChange={handlePlantDetailsChange}
                   displayEmpty
@@ -713,6 +856,30 @@ export const AddServicePRDashboard = () => {
                 </MuiSelect>
               </FormControl>
 
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Type*</InputLabel>
+                <MuiSelect
+                  label="Type*"
+                  name="type"
+                  value={formData.type}
+                  onChange={(e) =>
+                    handleInputChange("type", e.target.value)
+                  }
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Type</em>
+                  </MenuItem>
+                  <MenuItem value="technical">
+                    Technical
+                  </MenuItem>
+                  <MenuItem value="non-technical">
+                    Non-Technical
+                  </MenuItem>
+                </MuiSelect>
+              </FormControl>
+
               <TextField
                 label="Select WO Date*"
                 value={formData.woDate}
@@ -724,6 +891,10 @@ export const AddServicePRDashboard = () => {
                 type="date"
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
+                inputProps={{
+                  min: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+                  max: new Date().toISOString().split("T")[0],
+                }}
               />
 
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -853,7 +1024,6 @@ export const AddServicePRDashboard = () => {
                 rows={2}
                 InputLabelProps={{ shrink: true }}
                 sx={{
-                  mt: 1,
                   "& .MuiOutlinedInput-root": {
                     height: "auto !important",
                     padding: "2px !important",
@@ -872,6 +1042,38 @@ export const AddServicePRDashboard = () => {
                   },
                 }}
               />
+
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "start",
+                  mt: 2,
+                }}
+              >
+                <FormLabel
+                  component="legend"
+                  sx={{ minWidth: "80px", fontSize: "14px", mb: 1 }}
+                >
+                  Amc Declared*
+                </FormLabel>
+                <RadioGroup
+                  row
+                  value={formData.amcDeclared === "" ? "" : (formData.amcDeclared ? "yes" : "no")}
+                  onChange={(e) => handleInputChange("amcDeclared", e.target.value === "yes")}
+                >
+                  <FormControlLabel
+                    value="yes"
+                    control={<Radio />}
+                    label="Yes"
+                  />
+                  <FormControlLabel
+                    value="no"
+                    control={<Radio />}
+                    label="No"
+                  />
+                </RadioGroup>
+              </Box>
 
               {showRadio && (
                 <Box
@@ -1002,6 +1204,72 @@ export const AddServicePRDashboard = () => {
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
                   />
+
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>GL Code*</InputLabel>
+                    <MuiSelect
+                      label="GL Code*"
+                      value={detailsData.glCode}
+                      onChange={(e) =>
+                        handleDetailsChange(detailsData.id, "glCode", e.target.value)
+                      }
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="">
+                        <em>Select GL Code</em>
+                      </MenuItem>
+                      {glAccountOptions.map((option) => (
+                        <MenuItem key={option.id} value={option.content.code}>
+                          {option.content.code} - {option.content.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>Tax Code*</InputLabel>
+                    <MuiSelect
+                      label="Tax Code*"
+                      value={detailsData.taxCode}
+                      onChange={(e) =>
+                        handleDetailsChange(detailsData.id, "taxCode", e.target.value)
+                      }
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="">
+                        <em>Select Tax Code</em>
+                      </MenuItem>
+                      {taxCodeOptions.map((option) => (
+                        <MenuItem key={option.id} value={option.content.code}>
+                          {option.content.code} - {option.content.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>Storage Location*</InputLabel>
+                    <MuiSelect
+                      label="Storage Location*"
+                      value={detailsData.storageLocation}
+                      onChange={(e) =>
+                        handleDetailsChange(detailsData.id, "storageLocation", e.target.value)
+                      }
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="">
+                        <em>Select Storage Location</em>
+                      </MenuItem>
+                      {storageLocationOptions.map((option) => (
+                        <MenuItem key={option.id} value={option.content.code}>
+                          {option.content.code} - {option.content.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
 
                   <TextField
                     label="Expected Date*"
@@ -1243,6 +1511,8 @@ export const AddServicePRDashboard = () => {
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
                   />
+
+                 
 
                   {wbsSelection === "individual" && (
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
