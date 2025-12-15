@@ -141,7 +141,7 @@ export const MoveAssetPage: React.FC = () => {
       area_id: areaId || null,
       room_id: roomId || null,
       allocate_to_id: allocatedToId || null,
-      allocate_type: allocateTo,
+      allocate_type: allocateTo === 'user' ? 'users' : allocateTo,
       comments: comments || "",
     }));
 
