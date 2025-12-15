@@ -7883,13 +7883,15 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                             { label: 'Issue Type', value: capitalizeWords(ticketData.issue_type) },
                             { label: 'Assigned To', value: ticketData.assigned_to || '-' },
                             { label: 'Behalf Of', value: ticketData.on_behalf_of || '-' },
-                            { label: 'Source', value: ticketData.service_or_asset || '-' },
+                            // { label: 'Source', value: ticketData.service_or_asset || '-' },
+                            { label: 'Created By', value: ticketData.created_by_name || '-' },
                           ],
                           [
-                            { label: 'Created By', value: ticketData.created_by_name || '-' },
+                            
                             { label: 'Updated By', value: ticketData.updated_by || '-' },
                             { label: 'Mode', value: ticketData.complaint_mode || '-' },
-                            { label: 'Identification', value: ticketData.proactive_reactive || '-' },
+                            { label: 'Status', value: ticketData.issue_status || '-' },
+                            // { label: 'Identification', value: ticketData.proactive_reactive || '-' },
                           ],
                         ].map((row, rIdx) => (
                           <div
