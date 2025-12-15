@@ -109,6 +109,18 @@ baseClient.interceptors.request.use(
         } else {
           throw new Error("Either org_id or email is required for Dev sites");
         }
+      } else if (isDevSite) {
+        if (orgId) {
+          apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
+          console.log("🔍 Using org_id for FM/Oman site:", orgId);
+        } else if (email) {
+          apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+          console.log("🔍 Using email for FM/Oman site:", email);
+        } else {
+          throw new Error(
+            "Either org_id or email is required for FM/Oman sites"
+          );
+        }
       } else {
         // Default fallback: prefer org_id, fallback to email
         if (orgId) {
