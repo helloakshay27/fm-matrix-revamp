@@ -419,7 +419,7 @@ class EmployeeTicketAPI {
 
     // Add attachments
     attachments.forEach((file) => {
-      formData.append('complaint[documents][]', file);
+      formData.append('attachments[]', file);
     });
 
     const response = await apiClient.post('/pms/admin/complaints.json', formData, {
