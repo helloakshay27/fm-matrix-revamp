@@ -541,6 +541,8 @@ const ProjectTasksPage = () => {
 
     const renderCell = (item: any, columnKey: string) => {
         switch (columnKey) {
+            case "title":
+                return <span className="w-[200px] truncate">{item.title}</span>
             case "status": {
                 const statusColors: { [key: string]: string } = {
                     open: "bg-red-100 text-red-800",

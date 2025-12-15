@@ -560,6 +560,8 @@ export const AddBookingSetupPage = () => {
       formDataToSend.append("cancel_hour", formData.canCancelBefore.hour);
       formDataToSend.append("cancel_min", formData.canCancelBefore.minute);
 
+      // test
+      // test again
       // Extra Info
       formDataToSend.append(
         "seater_info",
