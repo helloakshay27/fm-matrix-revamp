@@ -5,6 +5,13 @@ import { CheckSquare, Square, ChevronDown, Car, TrendingUp, BarChart3, Clock, Bu
 
 const parkingAnalyticsOptions = [
   { 
+    id: 'parking_statistics', 
+    label: 'Parking Statistics Overview', 
+    checked: true, 
+    endpoint: 'parking_statistics.json',
+    icon: BarChart3 
+  },
+  { 
     id: 'peak_hour_trends', 
     label: 'Peak Hour Trends', 
     checked: true, 
@@ -20,24 +27,17 @@ const parkingAnalyticsOptions = [
   },
   { 
     id: 'occupancy_rate', 
-    label: 'Occupancy Rate', 
+    label: 'Released vs Cancelled (Daily)', 
     checked: true, 
     endpoint: 'occupancy_rate.json',
     icon: Clock 
   },
   { 
     id: 'average_duration', 
-    label: 'Average Duration', 
+    label: 'Auto-Releases by Department', 
     checked: true, 
     endpoint: 'average_duration.json',
     icon: Clock 
-  },
-  { 
-    id: 'parking_statistics', 
-    label: 'Parking Statistics Overview', 
-    checked: true, 
-    endpoint: 'parking_statistics.json',
-    icon: BarChart3 
   },
   { 
     id: 'two_four_occupancy', 
@@ -48,7 +48,7 @@ const parkingAnalyticsOptions = [
   },
   { 
     id: 'floor_wise_occupancy', 
-    label: 'Floor-wise Occupancy', 
+    label: 'Floor-wise Occupancy (2W vs 4W)', 
     checked: true, 
     endpoint: 'floor_wise_occupancy.json',
     icon: Building2 
