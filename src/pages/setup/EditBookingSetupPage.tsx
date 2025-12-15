@@ -147,6 +147,7 @@ export const EditBookingSetupPage = () => {
         },
         blockDays: [
             {
+                id: undefined,
                 startDate: "",
                 endDate: "",
                 dayType: "entireDay",
@@ -305,6 +306,7 @@ export const EditBookingSetupPage = () => {
                     maximumPersonAllowed: responseData.max_people,
                 },
                 blockDays: responseData?.facility_blockings?.map((blocking: any) => ({
+                    id: blocking.facility_blocking?.id || blocking.id,
                     startDate: blocking.facility_blocking?.ondate || "",
                     endDate: "",
                     dayType: "entireDay",
@@ -312,6 +314,7 @@ export const EditBookingSetupPage = () => {
                     selectedSlots: [],
                 })) || [
                         {
+                            id: undefined,
                             startDate: "",
                             endDate: "",
                             dayType: "entireDay",
@@ -423,6 +426,7 @@ export const EditBookingSetupPage = () => {
 
     const addBlockDay = () => {
         const newBlockDay = {
+            id: undefined,
             startDate: "",
             endDate: "",
             dayType: "entireDay",
@@ -557,6 +561,10 @@ export const EditBookingSetupPage = () => {
                     "facility_setup[facility_charge_attributes][adult_member_charge]",
                     formData.chargeSetup.member.adult || "0"
                 );
+                formDataToSend.append(
+                    "facility_setup[facility_charge_attributes][child_member_charge]",
+                    formData.chargeSetup.member.child || "0"
+                );
             }
 
             // Charge Setup - Guest charges
@@ -564,6 +572,10 @@ export const EditBookingSetupPage = () => {
                 formDataToSend.append(
                     "facility_setup[facility_charge_attributes][adult_guest_charge]",
                     formData.chargeSetup.guest.adult || "0"
+                );
+                formDataToSend.append(
+                    "facility_setup[facility_charge_attributes][child_guest_charge]",
+                    formData.chargeSetup.guest.child || "0"
                 );
             }
 
@@ -579,6 +591,17 @@ export const EditBookingSetupPage = () => {
 
             // Block Days - Handle multiple block day records
             formData.blockDays.forEach((blockDay, index) => {
+                // Include ID only if it exists (existing block day from API)
+                if (blockDay.id) {
+                    console.log(`Block day ${index} has ID: ${blockDay.id} - will update existing record`);
+                    formDataToSend.append(
+                        `facility_setup[facility_blockings_attributes][${index}][id]`,
+                        blockDay.id.toString()
+                    );
+                } else {
+                    console.log(`Block day ${index} has no ID - will create new record`);
+                }
+
                 if (blockDay.startDate) {
                     formDataToSend.append(
                         `facility_setup[facility_blockings_attributes][${index}][ondate]`,
