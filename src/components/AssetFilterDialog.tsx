@@ -447,7 +447,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
         areaId: area || undefined,
         floorId: floor || undefined,
         roomId: room || undefined,
-        allocation_type_eq: allocationType || undefined,
+        allocation_type_eq: allocationType === 'user' ? 'users' : allocationType || undefined,
         allocation_ids_cont: allocatedToId?.toString() || undefined,
       };
 
