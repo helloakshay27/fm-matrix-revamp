@@ -560,11 +560,18 @@ export const AddBookingSetupPage = () => {
         .filter(([_, isSelected]) => isSelected)
         .map(([inventoryId]) => parseInt(inventoryId));
 
+      console.log('=== Selected Accessories ===');
+      console.log('formData.amenities:', formData.amenities);
+      console.log('selectedAccessories IDs:', selectedAccessories);
+      console.log('Total accessories selected:', selectedAccessories.length);
+      console.log('===========================');
+
       selectedAccessories.forEach((inventoryId, index) => {
         formDataToSend.append(
           `facility_setup[facility_setup_accessories_attributes][${index}][pms_inventory_id]`,
           inventoryId.toString()
         );
+        console.log(`Appending accessory [${index}]: pms_inventory_id = ${inventoryId}`);
       });
 
       // Facility Slots
@@ -666,6 +673,8 @@ export const AddBookingSetupPage = () => {
         formData.sharedContentInfo || ""
       );
 
+
+      console.log("Form Data to be sent:", formDataToSend);
       const response = await fetch(
         `https://${baseUrl}/pms/admin/facility_setups.json`,
         {

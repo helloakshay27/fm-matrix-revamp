@@ -41,7 +41,15 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
     }, [editingAccessory, open]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name } = e.target;
+        let { value } = e.target;
+
+        // For quantity field: allow only digits (no negative sign, no other chars)
+        if (name === 'quantity') {
+            // remove any non-digit characters (this strips '-' as well)
+            value = String(value).replace(/[^0-9]/g, '');
+        }
+
         setFormData((prev) => ({
             ...prev,
             [name]: value,
@@ -66,6 +74,12 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                 cost: formData.costPerUnit
             }
         }
+
+
+         console.log('Accessories API Request:', 
+               
+                payload,
+            );
         try {
             if (editingAccessory) {
                 // Update existing accessory
@@ -85,6 +99,8 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                 toast.success("Accessories added successfully")
             }
             onOpenChange(false)
+
+           
         } catch (error) {
             console.log(error)
             toast.error(editingAccessory ? "Failed to update accessories" : "Failed to add accessories")
@@ -128,6 +144,18 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                         name="quantity"
                         value={formData.quantity}
                         onChange={handleChange}
+                        onKeyDown={(e) => {
+                            // Block minus, plus, exponent, and non-numeric inputs
+                            const blockedKeys = ['-', '+', 'e', 'E'];
+                            if (blockedKeys.includes(e.key)) {
+                                e.preventDefault();
+                            }
+                        }}
+                        inputProps={{
+                            inputMode: 'numeric',
+                            pattern: '[0-9]*',
+                            min: 0
+                        }}
                         required
                     />
 

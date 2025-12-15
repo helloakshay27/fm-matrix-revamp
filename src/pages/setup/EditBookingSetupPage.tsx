@@ -124,7 +124,7 @@ export const EditBookingSetupPage = () => {
         description: "",
         termsConditions: "",
         cancellationText: "",
-        amenities: {} as Record<number, { name: string; selected: boolean; tag_id: number | null }>,
+        amenities: {} as Record<number, boolean>,
         seaterInfo: "Select a seater",
         floorInfo: "Select a floor",
         sharedContentInfo: "",
@@ -266,13 +266,9 @@ export const EditBookingSetupPage = () => {
                 description: responseData.description,
                 termsConditions: responseData.terms,
                 cancellationText: responseData.cancellation_policy,
-                amenities: responseData.amenity_info?.reduce((acc, amenity) => {
-                    // Map amenity names to inventory IDs when inventories are loaded
-                    acc[amenity.tag_id || amenity.name] = {
-                        name: amenity.name,
-                        selected: amenity.selected,
-                        tag_id: amenity.tag_id
-                    };
+                amenities: responseData.facility_setup_accessories?.reduce((acc, item) => {
+                    const accessory = item.facility_setup_accessory;
+                    acc[accessory.pms_inventory_id] = true; // Mark this inventory ID as selected
                     return acc;
                 }, {}) || {},
                 seaterInfo: responseData.seater_info,
@@ -723,22 +719,23 @@ export const EditBookingSetupPage = () => {
                 formDataToSend.append(`image_remove[]`, id);
             });
 
-            let index = 0;
-            Object.keys(formData.amenities).forEach((key) => {
-                const amenity = formData.amenities[key];
-                if (amenity.tag_id && !amenity.selected) {
-                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][id]`, amenity.tag_id);
-                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "1");
-                    index++;
-                } else if (amenity.selected) {
-                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
-                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, amenity.name);
-                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
-                    if (amenity.tag_id) {
-                        formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][id]`, amenity.tag_id);
-                    }
-                    index++;
-                }
+            // Facility Setup Accessories
+            const selectedAccessories = Object.entries(formData.amenities)
+                .filter(([_, isSelected]) => isSelected)
+                .map(([inventoryId]) => parseInt(inventoryId));
+
+            console.log('=== Selected Accessories (Edit) ===');
+            console.log('formData.amenities:', formData.amenities);
+            console.log('selectedAccessories IDs:', selectedAccessories);
+            console.log('Total accessories selected:', selectedAccessories.length);
+            console.log('====================================');
+
+            selectedAccessories.forEach((inventoryId, index) => {
+                formDataToSend.append(
+                    `facility_setup[facility_setup_accessories_attributes][${index}][pms_inventory_id]`,
+                    inventoryId.toString()
+                );
+                console.log(`Appending accessory [${index}]: pms_inventory_id = ${inventoryId}`);
             });
 
             // Facility Slots
@@ -2376,11 +2373,7 @@ export const EditBookingSetupPage = () => {
                                         <div className="col-span-full text-center text-gray-500">No inventories available</div>
                                     ) : (
                                         inventories.map((inventory) => {
-                                            const existingAmenity = Object.values(formData.amenities).find(
-                                                (amenity: any) => amenity.name === inventory.name
-                                            );
-                                            const isSelected = existingAmenity?.selected || false;
-                                            const tagId = existingAmenity?.tag_id || null;
+                                            const isSelected = formData.amenities[inventory.id] || false;
 
                                             return (
                                                 <div key={inventory.id} className="flex items-center space-x-2">
@@ -2392,11 +2385,7 @@ export const EditBookingSetupPage = () => {
                                                                 ...formData,
                                                                 amenities: {
                                                                     ...formData.amenities,
-                                                                    [inventory.id]: {
-                                                                        name: inventory.name,
-                                                                        selected: !!checked,
-                                                                        tag_id: tagId,
-                                                                    },
+                                                                    [inventory.id]: !!checked,
                                                                 },
                                                             })
                                                         }

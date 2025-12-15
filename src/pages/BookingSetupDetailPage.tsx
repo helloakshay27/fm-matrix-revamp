@@ -326,8 +326,9 @@ export const BookingSetupDetailPage = () => {
         description: response.description,
         termsConditions: response.terms,
         cancellationText: response.cancellation_policy,
-        amenities: response.amenity_info?.reduce((acc, amenity) => {
-          acc[amenity.name] = amenity.selected;
+        amenities: response.facility_setup_accessories?.reduce((acc, item) => {
+          const accessory = item.facility_setup_accessory;
+          acc[accessory.pms_inventory_id] = true; // Mark this inventory ID as selected
           return acc;
         }, {}) || {},
         seaterInfo: response.seater_info,
@@ -1269,7 +1270,7 @@ export const BookingSetupDetailPage = () => {
                     <div className="col-span-full text-center text-gray-500">No inventories available</div>
                   ) : (
                     inventories.map((inventory) => {
-                      const isSelected = formData.amenities[inventory.name] || false;
+                      const isSelected = formData.amenities[inventory.id] || false;
                       return (
                         <div key={inventory.id} className="flex items-center space-x-2">
                           <Checkbox

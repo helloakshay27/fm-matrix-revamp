@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Upload, X, Copy } from 'lucide-react';
+import { ArrowLeft, Upload, X, Copy, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     TextField,
@@ -13,7 +13,8 @@ import {
     FormControlLabel,
     Radio,
     Checkbox,
-    FormLabel
+    FormLabel,
+    Tooltip
 } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -2278,9 +2279,47 @@ export const AddGroupMembershipPage = () => {
                                                                 {plan.plan_amenities.map((amenity) => (
                                                                     <div key={amenity.id} className="flex items-center gap-2">
                                                                         <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                                                        
                                                                         <span className="text-sm text-gray-600">
                                                                             {amenity.facility_setup_name || amenity.facility_setup?.name || `Amenity #${amenity.facility_setup_id}`}
                                                                         </span>
+                                                                        <Tooltip
+                                                                            title={(
+                                                                                <div className="text-xs">
+                                                                                    {Array.isArray((amenity as any).facility_setup_assesories) && ((amenity as any).facility_setup_assesories.length > 0) && (
+                                                                                        <div className="mb-1">
+                                                                                            <div className="font-semibold">Accessories :</div>
+                                                                                            <div>
+                                                                                                {((amenity as any).facility_setup_assesories as string[]).join(', ')}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    )}
+                                                                                    {Array.isArray((amenity as any).facility_setup_accessories) && ((amenity as any).facility_setup_accessories.length > 0) && (
+                                                                                        <div className="mb-1">
+                                                                                            <div className="font-semibold">Accessories :</div>
+                                                                                            <div>
+                                                                                                {((amenity as any).facility_setup_accessories as string[]).join(', ')}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    )}
+                                                                                    {(((amenity as any).frequency) || ((amenity as any).slot_limit != null)) && (
+                                                                                        <div className="mt-1">
+                                                                                            <div className="font-semibold">Slot Limit :</div>
+                                                                                            <div>
+                                                                                                {((amenity as any).slot_limit != null && (amenity as any).frequency)
+                                                                                                    ? `${(amenity as any).slot_limit} ${(amenity as any).frequency}`
+                                                                                                    : ((amenity as any).frequency || '-')}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            )}
+                                                                            arrow
+                                                                        >
+                                                                            <span className="inline-flex items-center text-gray-500 cursor-pointer">
+                                                                                <Info className="w-3.5 h-3.5" />
+                                                                            </span>
+                                                                        </Tooltip>
                                                                     </div>
                                                                 ))}
                                                             </div>
