@@ -2,8 +2,8 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { createProject, fetchProjects, filterProjects } from "@/store/slices/projectManagementSlice";
-import { MenuItem, Select, TextField } from "@mui/material";
+import { changeProjectStatus, createProject, fetchProjects, filterProjects } from "@/store/slices/projectManagementSlice";
+import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import {
   ChartNoAxesColumn,
   ChevronDown,
@@ -117,12 +117,7 @@ const transformedProjects = (projects: any) => {
     return {
       id: project.id,
       title: project.title,
-      status: project.status
-        ? project.status
-          .split("_")
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ")
-        : "",
+      status: project.status,
       type: project.project_type_name,
       manager: project.project_owner_name,
       milestones: project.total_milestone_count,
@@ -168,6 +163,15 @@ const STATUS_OPTIONS = [
     label: "Overdue"
   }
 ]
+
+const statusOptions = [
+  { value: "active", label: "Active" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "on_hold", label: "On Hold" },
+  { value: "completed", label: "Completed" },
+  { value: "overdue", label: "Overdue" },
+]
+
 
 export const ProjectsDashboard = () => {
   const navigate = useNavigate();
@@ -224,7 +228,7 @@ export const ProjectsDashboard = () => {
 
   const getTeams = async () => {
     try {
-      const response = await dispatch(fetchProjectTeams({ baseUrl, token })).unwrap();
+      const response = await dispatch(fetchProjectTeams()).unwrap();
       setTeams(response);
     } catch (error) {
       console.log(error)
@@ -234,7 +238,7 @@ export const ProjectsDashboard = () => {
 
   const getProjectTypes = async () => {
     try {
-      const response = await dispatch(fetchProjectTypes({ baseUrl, token })).unwrap();
+      const response = await dispatch(fetchProjectTypes()).unwrap();
       setProjectTypes(response);
     } catch (error) {
       console.log(error)
@@ -244,7 +248,7 @@ export const ProjectsDashboard = () => {
 
   const getTags = async () => {
     try {
-      const response = await dispatch(fetchProjectsTags({ baseUrl, token })).unwrap();
+      const response = await dispatch(fetchProjectsTags()).unwrap();
       setTags(response);
     } catch (error) {
       console.log(error)
@@ -311,6 +315,16 @@ export const ProjectsDashboard = () => {
     </div>
   );
 
+  const handleStatusChange = async (id: number, status: string) => {
+    try {
+      await dispatch(changeProjectStatus({ token, baseUrl, id: String(id), payload: { project_management: { status } } })).unwrap();
+      fetchData();
+      toast.success("Project status changed successfully");
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   const renderCell = (item: any, columnKey: string) => {
     const renderProgressBar = (completed: number, total: number, color: string) => {
       const progress = total > 0 ? (completed / total) * 100 : 0;
@@ -360,6 +374,34 @@ export const ProjectsDashboard = () => {
       case "start_date":
       case "end_date":
         return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString('en-GB') : "-";
+      case "status":
+        return (
+          <FormControl
+            variant="standard"
+            sx={{ width: 128 }} // same as w-32
+          >
+            <Select
+              value={item.status}
+              onChange={(e) =>
+                handleStatusChange(item.id, e.target.value as string)
+              }
+              disableUnderline
+              sx={{
+                fontSize: "0.875rem",
+                cursor: "pointer",
+                "& .MuiSelect-select": {
+                  padding: "4px 0",
+                },
+              }}
+            >
+              {statusOptions.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )
       default:
         return item[columnKey] || "-";
     }
@@ -391,7 +433,6 @@ export const ProjectsDashboard = () => {
             <em>Select status</em>
           </MenuItem>
           <MenuItem value="active">Active</MenuItem>
-          <MenuItem value="inactive">Inactive</MenuItem>
         </Select>
       );
     }

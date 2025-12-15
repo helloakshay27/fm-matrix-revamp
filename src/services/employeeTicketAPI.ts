@@ -17,7 +17,10 @@ export interface CreateTicketFormData {
   proactive_reactive: string;
   reference_number?: string;
   heading: string;
-  complaint_mode: string;
+  complaint?: {
+    complaint_mode_id?: number;
+    supplier_id?: number;
+  };
   sub_category_id?: number;
   area_id?: number;
   tower_id?: number;
@@ -365,7 +368,11 @@ class EmployeeTicketAPI {
     formData.append('complaint[society_staff_type]', ticketData.society_staff_type);
     formData.append('complaint[proactive_reactive]', ticketData.proactive_reactive);
     formData.append('complaint[heading]', ticketData.heading);
-    formData.append('complaint[complaint_mode]', ticketData.complaint_mode);
+    
+    // Add complaint_mode_id from nested complaint object
+    if (ticketData.complaint?.complaint_mode_id) {
+      formData.append('complaint[complaint_mode_id]', ticketData.complaint.complaint_mode_id.toString());
+    }
     
     // Add severity if provided
     if (ticketData.severity) {
@@ -388,7 +395,10 @@ class EmployeeTicketAPI {
     if (ticketData.sub_category_id) {
       formData.append('complaint[sub_category_id]', ticketData.sub_category_id.toString());
     }
-    if (ticketData.supplier_id) {
+    // Check nested complaint object first, then fallback to top-level supplier_id
+    if (ticketData.complaint?.supplier_id) {
+      formData.append('complaint[supplier_id]', ticketData.complaint.supplier_id.toString());
+    } else if (ticketData.supplier_id) {
       formData.append('complaint[supplier_id]', ticketData.supplier_id.toString());
     }
     
@@ -419,7 +429,7 @@ class EmployeeTicketAPI {
 
     // Add attachments
     attachments.forEach((file) => {
-      formData.append('complaint[documents][]', file);
+      formData.append('attachments[]', file);
     });
 
     const response = await apiClient.post('/pms/admin/complaints.json', formData, {
