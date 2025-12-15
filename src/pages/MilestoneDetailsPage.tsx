@@ -13,9 +13,9 @@ import { format } from "date-fns";
 import { MenuItem, Select, TextField } from "@mui/material";
 
 interface Dependency {
-  milestone_title?: string;
+  title?: string;
   status?: string;
-  milestone_owner?: string;
+  owner_name?: string;
   start_date?: string;
   end_date?: string;
   duration?: string;
@@ -289,8 +289,9 @@ export const MilestoneDetailsPage = () => {
   };
 
   const handleAddDependency = async (newRowData: Partial<Dependency>) => {
+    console.log(newRowData)
     try {
-      if (!newRowData.milestone_title?.trim()) {
+      if (!newRowData.title?.trim()) {
         toast.error("Please enter milestone title");
         return;
       }
@@ -298,7 +299,7 @@ export const MilestoneDetailsPage = () => {
         toast.error("Please select start and end dates");
         return;
       }
-      if (!newRowData.milestone_owner) {
+      if (!newRowData.owner_name) {
         toast.error("Please select milestone owner");
         return;
       }
@@ -312,11 +313,11 @@ export const MilestoneDetailsPage = () => {
       // Create payload matching API expectations
       const payload = {
         milestone: {
-          title: newRowData.milestone_title,
+          title: newRowData.title,
           start_date: newRowData.start_date,
           end_date: newRowData.end_date,
           status: "open",
-          owner_id: newRowData.milestone_owner,
+          owner_id: newRowData.owner_name,
           project_management_id: id,
           depends_on_id: milestoneDetails?.id,
         },
@@ -549,7 +550,7 @@ export const MilestoneDetailsPage = () => {
                       />
                     );
                   }
-                  if (columnKey === "milestone_owner") {
+                  if (columnKey === "owner_name") {
                     return (
                       <Select
                         value={value || ""}
