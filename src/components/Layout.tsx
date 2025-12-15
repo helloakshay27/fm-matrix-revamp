@@ -93,7 +93,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   );
 
   const isLocalhost =
-    hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work");
 
   // Layout behavior:

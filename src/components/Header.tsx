@@ -91,7 +91,6 @@ export const Header = () => {
   const isWebSite = hostname.includes("web.gophygital.work");
 
   const isLocalhost =
-    hostname.includes("localhost") ||
     hostname.includes("lockated.gophygital.work");
   const navigate = useNavigate();
   const [notificationCount, setNotificationCount] = useState(3);
