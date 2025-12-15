@@ -291,6 +291,20 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       hideable: true,
       defaultVisible: visibleColumns.category,
     },
+    {
+      key: "allocationType",
+      label: "Allocation Type",
+      sortable: true,
+      hideable: true,
+      defaultVisible: visibleColumns.allocationType,
+    },
+    {
+      key: "allocatedTo",
+      label: "Allocated To",
+      sortable: true,
+      hideable: true,
+      defaultVisible: visibleColumns.allocatedTo,
+    },
     // Required fields that were missing
     {
       key: "purchaseDate",
@@ -551,6 +565,18 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       case "category":
         return (
           <span className="text-sm text-gray-600">{asset.category || "-"}</span>
+        );
+      case "allocationType":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.allocation_type || "-"}
+          </span>
+        );
+      case "allocatedTo":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.allocated_to || "-"}
+          </span>
         );
       case "purchaseDate":
         return (
