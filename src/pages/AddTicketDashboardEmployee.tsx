@@ -348,7 +348,6 @@ export const AddTicketDashboardEmployee = () => {
     referenceNumber: '',
     mode: '',
     vendor: '',
-    complaintMode: '',
     // Add location fields
     area: '',
     building: '',
@@ -356,6 +355,9 @@ export const AddTicketDashboardEmployee = () => {
     floor: '',
     room: ''
   });
+  
+  // State to store the auto-selected Web complaint mode ID
+  const [webComplaintModeId, setWebComplaintModeId] = useState<number | null>(null);
   // Set default proactiveReactive based on onBehalfOf selection
   useEffect(() => {
     let defaultValue = '';
@@ -647,7 +649,7 @@ export const AddTicketDashboardEmployee = () => {
     }
   };
 
-  // Load complaint modes
+  // Load complaint modes and auto-select "Web"
   const loadComplaintModes = async () => {
     setLoadingComplaintModes(true);
     try {
@@ -663,7 +665,17 @@ export const AddTicketDashboardEmployee = () => {
       console.log('Complaint modes response:', data);
 
       // The API returns an array directly, not wrapped in complaint_modes property
-      setComplaintModes(Array.isArray(data) ? data : []);
+      const modes = Array.isArray(data) ? data : [];
+      setComplaintModes(modes);
+      
+      // Auto-select "Web" mode
+      const webMode = modes.find(mode => mode.name.toLowerCase() === 'web');
+      if (webMode) {
+        setWebComplaintModeId(webMode.id);
+        console.log('Auto-selected Web complaint mode with ID:', webMode.id);
+      } else {
+        console.warn('Web complaint mode not found in API response');
+      }
     } catch (error) {
       console.error('Error loading complaint modes:', error);
       toast.error("Failed to load complaint modes", { description: "Error" });
@@ -986,7 +998,11 @@ export const AddTicketDashboardEmployee = () => {
       return;
     }
 
-    // Mode is set to 'web' by default - no validation needed
+    // Validate complaint mode is auto-selected
+    if (!webComplaintModeId) {
+      toast.error("Complaint mode not available. Please refresh the page.", { description: "Validation Error" });
+      return;
+    }
 
     // Validate user selection for behalf of others
     if (onBehalfOf !== 'self' && !selectedUserId) {
@@ -1021,7 +1037,9 @@ export const AddTicketDashboardEmployee = () => {
         ...(formData.vendor && { supplier_id: parseInt(formData.vendor) }),
         proactive_reactive: formData.proactiveReactive || '',
         heading: formData.description,
-        complaint_mode: 'web',
+        complaint: {
+          complaint_mode_id: webComplaintModeId
+        },
         ...(onBehalfOf === 'self' && userAccount?.id && { id_user: userAccount.id }),
         ...(onBehalfOf !== 'self' && selectedUserId && {
           sel_id_user: selectedUserId,

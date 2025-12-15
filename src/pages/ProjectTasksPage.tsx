@@ -2,11 +2,11 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
-import { createProjectTask, fetchProjectTasks, filterTasks } from "@/store/slices/projectTasksSlice";
+import { createProjectTask, editProjectTask, fetchProjectTasks, filterTasks, updateTaskStatus } from "@/store/slices/projectTasksSlice";
 import { ChartNoAxesColumn, ChevronDown, Edit, Eye, List, Plus, X } from "lucide-react";
 import { useEffect, useState, useRef, forwardRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Dialog, DialogContent, MenuItem, Select, Slide, TextField, Switch } from "@mui/material";
+import { Dialog, DialogContent, MenuItem, Select, Slide, TextField, Switch, FormControl } from "@mui/material";
 import { toast } from "sonner";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
@@ -39,6 +39,13 @@ const columns: ColumnConfig[] = [
     {
         key: "status",
         label: "Status",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "workflowStatus",
+        label: "Workflow Status",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -189,6 +196,14 @@ const validateDateRange = (startDate: string, endDate: string): { valid: boolean
 
     return { valid: true };
 };
+
+const statusOptions = [
+    { value: "open", label: "Open" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "on_hold", label: "On Hold" },
+    { value: "completed", label: "Completed" },
+    { value: "overdue", label: "Overdue" },
+]
 
 const ProjectTasksPage = () => {
     const { id, mid } = useParams();
@@ -528,80 +543,122 @@ const ProjectTasksPage = () => {
             >
                 <Eye className="w-4 h-4" />
             </Button>
-            {/* <Button
-                size="sm"
-                variant="ghost"
-                className="p-1"
-                title="Edit Task"
-            >
-                <Edit className="w-4 h-4" />
-            </Button> */}
         </div>
     );
+
+    const handleStatusChange = async (id: number, status: string) => {
+        try {
+            await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status } })).unwrap();
+            fetchData();
+            toast.success("Task status changed successfully");
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const handleUpdateTask = async (id: number, responsible_person_id: number) => {
+        try {
+            await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { responsible_person_id } })).unwrap();
+            fetchData();
+            toast.success("Task updated successfully");
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     const renderCell = (item: any, columnKey: string) => {
         switch (columnKey) {
             case "title":
                 return <span className="w-[200px] truncate">{item.title}</span>
             case "status": {
-                const statusColors: { [key: string]: string } = {
-                    open: "bg-red-100 text-red-800",
-                    in_progress: "bg-yellow-100 text-yellow-800",
-                    completed: "bg-green-100 text-green-800",
-                    on_hold: "bg-blue-100 text-blue-800",
-                    overdue: "bg-red-100 text-red-800"
-                };
-
-                const statusDotColors: { [key: string]: string } = {
-                    open: "bg-red-500",
-                    in_progress: "bg-yellow-500",
-                    completed: "bg-green-500",
-                    on_hold: "bg-blue-500",
-                    overdue: "bg-red-500"
-                };
-
-                const status = item.status || "open";
-                return (
-                    <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusColors[status] || statusColors.open}`}
+                return <FormControl
+                    variant="standard"
+                    sx={{ width: 128 }} // same as w-32
+                >
+                    <Select
+                        value={item.status}
+                        onChange={(e) =>
+                            handleStatusChange(item.id, e.target.value as string)
+                        }
+                        disableUnderline
+                        sx={{
+                            fontSize: "0.875rem",
+                            cursor: "pointer",
+                            "& .MuiSelect-select": {
+                                padding: "4px 0",
+                            },
+                        }}
                     >
-                        <span
-                            className={`w-1.5 h-1.5 rounded-full mr-1.5 ${statusDotColors[status] || statusDotColors.open}`}
-                        ></span>
-                        {status.charAt(0).toUpperCase() + status.slice(1).replace("_", " ")}
-                    </span>
-                );
+                        {statusOptions.map((opt) => (
+                            <MenuItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            }
+            case "workflowStatus": {
+                return <FormControl
+                    variant="standard"
+                    sx={{ width: 128 }} // same as w-32
+                >
+                    <Select
+                        value={item.status}
+                        onChange={(e) =>
+                            handleStatusChange(item.id, e.target.value as string)
+                        }
+                        disableUnderline
+                        sx={{
+                            fontSize: "0.875rem",
+                            cursor: "pointer",
+                            "& .MuiSelect-select": {
+                                padding: "4px 0",
+                            },
+                        }}
+                    >
+                        {statusOptions.map((opt) => (
+                            <MenuItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
             }
             case "responsible": {
-                return item.responsible_person?.name || item.responsible_person?.full_name || "-";
+                return <FormControl
+                    variant="standard"
+                    fullWidth
+                    sx={{
+                        minWidth: 200,
+                    }}
+                >
+                    <Select
+                        value={item.responsible_person_id ?? ""}
+                        onChange={(e) =>
+                            handleUpdateTask(item.id, Number(e.target.value))
+                        }
+                        disableUnderline
+                        sx={{
+                            fontSize: "0.875rem",
+                            cursor: "pointer",
+                            "& .MuiSelect-select": {
+                                padding: "4px 0",
+                            },
+                        }}
+                    >
+                        {users.map((user) => (
+                            <MenuItem key={user.id} value={user.id}>
+                                {user.full_name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
             }
             case "duration": {
                 return <CountdownTimer startDate={item.expected_start_date} targetDate={item.target_date} />;
             }
             case "priority": {
-                const priorityColors: { [key: string]: string } = {
-                    High: "bg-red-100 text-red-800",
-                    Medium: "bg-yellow-100 text-yellow-800",
-                    Low: "bg-green-100 text-green-800"
-                };
-
-                const priorityDotColors: { [key: string]: string } = {
-                    High: "bg-red-500",
-                    Medium: "bg-yellow-500",
-                    Low: "bg-green-500"
-                };
-
-                const priority = item.priority || "Medium";
-                return (
-                    <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${priorityColors[priority] || priorityColors.Medium}`}
-                    >
-                        <span
-                            className={`w-1.5 h-1.5 rounded-full mr-1.5 ${priorityDotColors[priority] || priorityDotColors.Medium}`}
-                        ></span>
-                        {priority}
-                    </span>
-                );
+                return item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-";
             }
             case "predecessor": {
                 return item.predecessor_task?.length || "-";

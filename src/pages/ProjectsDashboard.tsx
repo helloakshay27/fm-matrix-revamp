@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { changeProjectStatus, createProject, fetchProjects, filterProjects } from "@/store/slices/projectManagementSlice";
-import { MenuItem, Select, TextField } from "@mui/material";
+import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import {
   ChartNoAxesColumn,
   ChevronDown,
@@ -376,19 +376,31 @@ export const ProjectsDashboard = () => {
         return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString('en-GB') : "-";
       case "status":
         return (
-          <select
-            value={item.status}
-            onChange={(e) =>
-              handleStatusChange(item.id, e.target.value)
-            }
-            className="bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-sm cursor-pointer w-32"
+          <FormControl
+            variant="standard"
+            sx={{ width: 128 }} // same as w-32
           >
-            {statusOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            <Select
+              value={item.status}
+              onChange={(e) =>
+                handleStatusChange(item.id, e.target.value as string)
+              }
+              disableUnderline
+              sx={{
+                fontSize: "0.875rem",
+                cursor: "pointer",
+                "& .MuiSelect-select": {
+                  padding: "4px 0",
+                },
+              }}
+            >
+              {statusOptions.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         )
       default:
         return item[columnKey] || "-";
