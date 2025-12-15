@@ -95,6 +95,7 @@ interface Amenity {
     value: number;
     name: string;
     price?: string;
+    active?: number;
 }
 
 // Field styles for Material-UI components
@@ -425,7 +426,9 @@ export const AddGroupMembershipPage = () => {
             }
 
             const data = await response.json();
-            setAllAmenities(data.ameneties || []);
+            // Filter to show only active amenities
+            const activeAmenities = (data.ameneties || []).filter((amenity: Amenity) => amenity.active === 1);
+            setAllAmenities(activeAmenities);
         } catch (error) {
             console.error('Error loading amenities:', error);
             toast.error('Failed to load amenities');
@@ -1289,6 +1292,8 @@ export const AddGroupMembershipPage = () => {
 
     // Get plan amenity IDs
     const planAmenityIds = selectedPlan?.plan_amenities?.map(pa => pa.facility_setup_id) || [];
+    console.log("planAmenityIds :---", selectedPlan?.plan_amenities, "all amenities",allAmenities);
+    
 
     // Get available add-ons (amenities not in plan)
     const availableAddOns = allAmenities.filter(amenity => !planAmenityIds.includes(amenity.value));
@@ -2205,14 +2210,12 @@ export const AddGroupMembershipPage = () => {
                                 ))}
 
                                 {/* Submit Buttons */}
-                                <div className="flex justify-between gap-3 pt-6 border-t border-gray-200">
+                                <div className="flex justify-center gap-3 pt-6 border-t border-gray-200">
                                     <Button variant="outline" onClick={handleBackToStep1}>Back</Button>
-                                    <div className="flex gap-3">
-                                        <Button variant="outline" onClick={handleGoBack} disabled={isSubmitting}>Cancel</Button>
-                                        <Button onClick={handleSubmit} disabled={isSubmitting || !selectedPlanId} className="bg-[#C72030] hover:bg-[#A01020] text-white">
-                                            {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
-                                        </Button>
-                                    </div>
+                                    <Button variant="outline" onClick={handleGoBack} disabled={isSubmitting}>Cancel</Button>
+                                    <Button onClick={handleSubmit} disabled={isSubmitting || !selectedPlanId} className="bg-[#C72030] hover:bg-[#A01020] text-white">
+                                        {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
+                                    </Button>
                                 </div>
                             </>
                         )}
@@ -2305,7 +2308,8 @@ export const AddGroupMembershipPage = () => {
                                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                                         <h2 className="text-lg font-semibold text-[#1a1a1a] mb-2">Additional Amenities (Add-ons)</h2>
                                         <p className="text-sm text-gray-500 mb-6">Select additional amenities not included in your plan</p>
-
+                                        {console.log("availableAddOns :---", availableAddOns)}
+                                        
                                         {availableAddOns.length === 0 ? (
                                             <div className="text-center py-6 bg-gray-50 rounded-lg">
                                                 <p className="text-gray-500 text-sm">All available amenities are already included in your selected plan.</p>
@@ -2595,7 +2599,7 @@ export const AddGroupMembershipPage = () => {
                                     </div>
                                 )}
                                 {/* Submit Button */}
-                                <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                                <div className="flex justify-center gap-3 pt-6 border-t border-gray-200">
                                     <Button
                                         variant="outline"
                                         onClick={handleGoBack}

@@ -95,6 +95,7 @@ interface Amenity {
   value: number;
   name: string;
   price?: string;
+  active?: number;
 }
 
 // Field styles for Material-UI components
@@ -349,7 +350,9 @@ export const AddClubMembershipPage = () => {
       }
 
       const data = await response.json();
-      setAllAmenities(data.ameneties || []);
+      // Filter to show only active amenities
+      const activeAmenities = (data.ameneties || []).filter((amenity: Amenity) => amenity.active === 1);
+      setAllAmenities(activeAmenities);
     } catch (error) {
       console.error('Error loading amenities:', error);
       toast.error('Failed to load amenities');
