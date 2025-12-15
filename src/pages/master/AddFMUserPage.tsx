@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useLayout } from '@/contexts/LayoutContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useLayout } from "@/contexts/LayoutContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 import {
   TextField,
   Select,
@@ -11,54 +11,85 @@ import {
   FormControl,
   InputLabel,
   Box,
-} from '@mui/material';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
-import { createFmUser, fetchRoles, fetchSuppliers, fetchUnits } from '@/store/slices/fmUserSlice';
-import { fetchDepartmentData } from '@/store/slices/departmentSlice';
-import { fetchAllowedSites } from '@/store/slices/siteSlice';
-import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
-import { RootState } from '@/store/store';
-import { toast } from 'sonner';
-import { ticketManagementAPI } from '@/services/ticketManagementAPI';
-import axios from 'axios';
+} from "@mui/material";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { Entity, fetchEntities } from "@/store/slices/entitiesSlice";
+import {
+  createFmUser,
+  fetchRoles,
+  fetchSuppliers,
+  fetchUnits,
+} from "@/store/slices/fmUserSlice";
+import { fetchDepartmentData } from "@/store/slices/departmentSlice";
+import { fetchAllowedSites } from "@/store/slices/siteSlice";
+import { fetchAllowedCompanies } from "@/store/slices/projectSlice";
+import { RootState } from "@/store/store";
+import { toast } from "sonner";
+import { ticketManagementAPI } from "@/services/ticketManagementAPI";
+import axios from "axios";
+import { DuplicateUserDialog } from "@/components/DuplicateUserDialog";
 
 export const AddFMUserPage = () => {
   const dispatch = useAppDispatch();
-  const baseUrl = localStorage.getItem('baseUrl');
-  const token = localStorage.getItem('token');
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
 
-  const { data: entitiesData, loading, error } = useAppSelector((state) => state.entities);
-  const { data: suppliers, loading: suppliersLoading, error: suppliersError } = useAppSelector((state) => state.fetchSuppliers);
-  const { data: units, loading: unitsLoading, error: unitsError } = useAppSelector((state) => state.fetchUnits);
-  const { data: department, loading: departmentLoading, error: departmentError } = useAppSelector((state) => state.department);
-  const { data: roles, loading: roleLoading, error: roleError } = useAppSelector((state) => state.fetchRoles);
+  const {
+    data: entitiesData,
+    loading,
+    error,
+  } = useAppSelector((state) => state.entities);
+  const {
+    data: suppliers,
+    loading: suppliersLoading,
+    error: suppliersError,
+  } = useAppSelector((state) => state.fetchSuppliers);
+  const {
+    data: units,
+    loading: unitsLoading,
+    error: unitsError,
+  } = useAppSelector((state) => state.fetchUnits);
+  const {
+    data: department,
+    loading: departmentLoading,
+    error: departmentError,
+  } = useAppSelector((state) => state.department);
+  const {
+    data: roles,
+    loading: roleLoading,
+    error: roleError,
+  } = useAppSelector((state) => state.fetchRoles);
   const { sites } = useAppSelector((state) => state.site);
-  const { selectedCompany } = useAppSelector((state: RootState) => state.project);
+  const { selectedCompany } = useAppSelector(
+    (state: RootState) => state.project
+  );
 
   const hostname = window.location.hostname;
-  const isOmanSite = hostname.includes('oig.gophygital.work');
+  const isOmanSite = hostname.includes("oig.gophygital.work");
 
-  const [userCategories, setUserCategories] = useState([])
-  const [userAccount, setUserAccount] = useState({})
+  const [userCategories, setUserCategories] = useState([]);
+  const [userAccount, setUserAccount] = useState({});
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
 
-  const userId = JSON.parse(localStorage.getItem('user'))?.id;
+  const userId = JSON.parse(localStorage.getItem("user"))?.id;
 
   const fetchUserCategories = async () => {
     try {
-      const categories = await axios.get(`https://${baseUrl}/pms/admin/user_categories.json`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const categories = await axios.get(
+        `https://${baseUrl}/pms/admin/user_categories.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
       setUserCategories(categories.data);
     } catch (error) {
-      console.error('Error loading user categories:', error);
-      toast.error('Failed to load user categories');
+      console.error("Error loading user categories:", error);
+      toast.error("Failed to load user categories");
     }
-  }
+  };
 
   useEffect(() => {
     dispatch(fetchEntities());
@@ -67,7 +98,7 @@ export const AddFMUserPage = () => {
     dispatch(fetchDepartmentData());
     dispatch(fetchRoles({ baseUrl, token }));
     dispatch(fetchAllowedSites(userId));
-    dispatch(fetchAllowedCompanies())
+    dispatch(fetchAllowedCompanies());
     fetchUserCategories();
   }, [dispatch, baseUrl, token, userId]);
 
@@ -77,41 +108,48 @@ export const AddFMUserPage = () => {
         const account = await ticketManagementAPI.getUserAccount();
         setUserAccount(account);
       } catch (error) {
-        console.error('Error loading user account:', error);
-        toast.error('Failed to load user account');
+        console.error("Error loading user account:", error);
+        toast.error("Failed to load user account");
       }
     };
 
     loadUserAccount();
-  }, [])
+  }, []);
 
   useEffect(() => {
-    setCurrentSection('Master');
+    setCurrentSection("Master");
   }, [setCurrentSection]);
 
-  console.log(userAccount)
+  console.log(userAccount);
 
-  const [loadingSubmitting, setLoadingSubmitting] = useState(false)
+  const [loadingSubmitting, setLoadingSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    mobileNumber: '',
-    emailAddress: '',
-    gender: '',
-    selectEntity: '',
-    supplier: '',
-    employeeId: '',
-    baseSite: '',
-    selectBaseUnit: '',
-    selectDepartment: '',
-    designation: '',
-    selectUserType: '',
-    selectUserCategory: '',
-    selectRole: '',
-    selectAccessLevel: '',
-    selectEmailPreference: '',
+    firstName: "",
+    lastName: "",
+    mobileNumber: "",
+    emailAddress: "",
+    gender: "",
+    selectEntity: "",
+    supplier: "",
+    employeeId: "",
+    baseSite: "",
+    selectBaseUnit: "",
+    selectDepartment: "",
+    designation: "",
+    selectUserType: "",
+    selectUserCategory: "",
+    selectRole: "",
+    selectAccessLevel: "",
+    selectEmailPreference: "",
     selectedSites: [] as string[],
-    selectedCompanies: [] as string[]
+    selectedCompanies: [] as string[],
+    selectProfileType: "",
+  });
+
+  const [duplicateUserDialog, setDuplicateUserDialog] = useState({
+    open: false,
+    companies: [],
+    errorMessage: "",
   });
 
   const handleInputChange = (field: string, value: string | string[]) => {
@@ -128,54 +166,60 @@ export const AddFMUserPage = () => {
     // Restrict length based on isOmanSite
     const maxLength = isOmanSite ? 8 : 10;
     if (value.length <= maxLength) {
-      handleInputChange('mobileNumber', value);
+      handleInputChange("mobileNumber", value);
     }
   };
 
   const validateForm = () => {
     if (!formData.firstName) {
-      toast.error('Please enter first name')
-      return false
+      toast.error("Please enter first name");
+      return false;
     } else if (!formData.lastName) {
-      toast.error('Please enter last name')
-      return false
+      toast.error("Please enter last name");
+      return false;
     } else if (!formData.mobileNumber) {
-      toast.error('Please enter mobile number')
-      return false
+      toast.error("Please enter mobile number");
+      return false;
     } else if (!/^\d+$/.test(formData.mobileNumber)) {
-      toast.error('Mobile number must contain only digits')
-      return false
+      toast.error("Mobile number must contain only digits");
+      return false;
     } else if (isOmanSite && formData.mobileNumber.length !== 8) {
-      toast.error('Mobile number must be exactly 8 digits')
-      return false
+      toast.error("Mobile number must be exactly 8 digits");
+      return false;
     } else if (!isOmanSite && formData.mobileNumber.length !== 10) {
-      toast.error('Mobile number must be exactly 10 digits')
-      return false
+      toast.error("Mobile number must be exactly 10 digits");
+      return false;
     } else if (!formData.emailAddress) {
-      toast.error('Please enter email address')
-      return false
+      toast.error("Please enter email address");
+      return false;
     } else if (!formData.selectUserType) {
-      toast.error('Please select user type')
-      return false
+      toast.error("Please select user type");
+      return false;
     } else if (!formData.selectRole) {
-      toast.error('Please select role')
-      return false
+      toast.error("Please select role");
+      return false;
     } else if (!formData.selectAccessLevel) {
-      toast.error('Please select access level')
-      return false
-    } else if (formData.selectAccessLevel === 'Site' && formData.selectedSites.length === 0) {
-      toast.error('Please select at least one site')
-      return false
-    } else if (formData.selectAccessLevel === 'Company' && formData.selectedCompanies.length === 0) {
-      toast.error('Please select at least one company')
-      return false
+      toast.error("Please select access level");
+      return false;
+    } else if (
+      formData.selectAccessLevel === "Site" &&
+      formData.selectedSites.length === 0
+    ) {
+      toast.error("Please select at least one site");
+      return false;
+    } else if (
+      formData.selectAccessLevel === "Company" &&
+      formData.selectedCompanies.length === 0
+    ) {
+      toast.error("Please select at least one company");
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return
-    setLoadingSubmitting(true)
+    if (!validateForm()) return;
+    setLoadingSubmitting(true);
     const payload = {
       user: {
         site_id: formData.baseSite,
@@ -189,7 +233,10 @@ export const AddFMUserPage = () => {
             user_type: formData.selectUserType,
             lock_role_id: formData.selectRole,
             access_level: formData.selectAccessLevel,
-            access_to: formData.selectAccessLevel === 'Site' ? formData.selectedSites : formData.selectedCompanies,
+            access_to:
+              formData.selectAccessLevel === "Site"
+                ? formData.selectedSites
+                : formData.selectedCompanies,
             urgency_email_enabled: formData.selectEmailPreference,
           },
         ],
@@ -200,27 +247,76 @@ export const AddFMUserPage = () => {
         gender: formData.gender,
         entity_id: formData.selectEntity,
         supplier_id: formData.supplier,
-        user_category_id: formData.selectUserCategory
+        user_category_id: formData.selectUserCategory,
+        profile_type: formData.selectProfileType,
       },
     };
     try {
-      const response = await dispatch(createFmUser({ data: payload, baseUrl, token })).unwrap();
+      const response = await dispatch(
+        createFmUser({ data: payload, baseUrl, token })
+      ).unwrap();
       if (response.error || (response.errors && response.errors.length > 0)) {
         toast.error(response?.error || response?.errors[0]);
         return;
       }
-      toast.success('User added successfully');
-      navigate('/master/user/fm-users');
-    } catch (error) {
-      console.log(error)
-      toast.error(error);
+      toast.success("User added successfully");
+      navigate("/master/user/fm-users");
+    } catch (error: any) {
+      console.log(error);
+      if (error?.companies && error?.companies.length > 0) {
+        setDuplicateUserDialog({
+          open: true,
+          companies: error.companies,
+          errorMessage:
+            error.error || "User with this email and mobile already exists",
+        });
+      } else {
+        toast.error(error?.error || error?.message || "Failed to create user");
+      }
     } finally {
-      setLoadingSubmitting(false)
+      setLoadingSubmitting(false);
+    }
+  };
+
+  const handleAssignPermission = async () => {
+    try {
+      setLoadingSubmitting(true);
+      const payload = {
+        user: {
+          email: formData.emailAddress,
+          mobile: formData.mobileNumber,
+          user_type: formData.selectUserType,
+          access_level: formData.selectAccessLevel,
+          access_to:
+            formData.selectAccessLevel === "Site"
+              ? formData.selectedSites
+              : formData.selectedCompanies,
+          lock_role_id: formData.selectRole,
+        },
+      };
+
+      const response = await axios.post(
+        `https://${baseUrl}/pms/users/create_lock_user_permission.json?access_token=${token}`,
+        payload
+      );
+
+      if (response.data) {
+        toast.success("Permissions assigned successfully");
+        setDuplicateUserDialog((prev) => ({ ...prev, open: false }));
+        navigate("/master/user/fm-users");
+      }
+    } catch (error: any) {
+      console.error("Error assigning permissions:", error);
+      toast.error(
+        error.response?.data?.error || "Failed to assign permissions"
+      );
+    } finally {
+      setLoadingSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    navigate('/master/user/fm-users');
+    navigate("/master/user/fm-users");
   };
 
   return (
@@ -230,7 +326,7 @@ export const AddFMUserPage = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/master/user/fm-users')}
+          onClick={() => navigate("/master/user/fm-users")}
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
@@ -246,39 +342,46 @@ export const AddFMUserPage = () => {
           <CardContent className="space-y-6">
             <Box component="form" noValidate>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Row 1 */}
-                <div>
-                  <TextField
-                    fullWidth
-                    label="First Name"
-                    variant="outlined"
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    required
-                    InputLabelProps={{
-                      classes: {
-                        asterisk: "text-red-500", // Tailwind class for red color
-                      },
-                      shrink: true
-                    }}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    fullWidth
-                    label="Last Name"
-                    variant="outlined"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    required
-                    InputLabelProps={{
-                      classes: {
-                        asterisk: "text-red-500", // Tailwind class for red color
-                      },
-                      shrink: true
-                    }}
-                  />
-                </div>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  variant="outlined"
+                  value={formData.firstName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // allow only letters
+                    if (/^[A-Za-z]*$/.test(value)) {
+                      handleInputChange("firstName", value);
+                    }
+                  }}
+                  required
+                  InputLabelProps={{
+                    classes: { asterisk: "text-red-500" },
+                    shrink: true,
+                  }}
+                />
+
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  variant="outlined"
+                  value={formData.lastName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    // allow only letters
+                    if (/^[A-Za-z]*$/.test(value)) {
+                      handleInputChange("lastName", value);
+                    }
+                  }}
+                  required
+                  InputLabelProps={{
+                    classes: { asterisk: "text-red-500" },
+                    shrink: true,
+                  }}
+                />
+
                 <div>
                   <TextField
                     fullWidth
@@ -289,14 +392,14 @@ export const AddFMUserPage = () => {
                     required
                     inputProps={{
                       maxLength: isOmanSite ? 8 : 10,
-                      inputMode: 'numeric',
-                      pattern: '[0-9]*',
+                      inputMode: "numeric",
+                      pattern: "[0-9]*",
                     }}
                     InputLabelProps={{
                       classes: {
                         asterisk: "text-red-500", // Tailwind class for red color
                       },
-                      shrink: true
+                      shrink: true,
                     }}
                   />
                 </div>
@@ -309,13 +412,15 @@ export const AddFMUserPage = () => {
                     variant="outlined"
                     type="email"
                     value={formData.emailAddress}
-                    onChange={(e) => handleInputChange('emailAddress', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("emailAddress", e.target.value)
+                    }
                     required
                     InputLabelProps={{
                       classes: {
                         asterisk: "text-red-500", // Tailwind class for red color
                       },
-                      shrink: true
+                      shrink: true,
                     }}
                   />
                 </div>
@@ -324,7 +429,9 @@ export const AddFMUserPage = () => {
                     <InputLabel shrink>Gender</InputLabel>
                     <Select
                       value={formData.gender}
-                      onChange={(e) => handleInputChange('gender', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("gender", e.target.value)
+                      }
                       label="Gender"
                       displayEmpty
                     >
@@ -339,7 +446,9 @@ export const AddFMUserPage = () => {
                     <InputLabel shrink>Select Entity</InputLabel>
                     <Select
                       value={formData.selectEntity}
-                      onChange={(e) => handleInputChange('selectEntity', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("selectEntity", e.target.value)
+                      }
                       label="Select Entity"
                       displayEmpty
                     >
@@ -361,13 +470,19 @@ export const AddFMUserPage = () => {
                     <InputLabel shrink>Supplier</InputLabel>
                     <Select
                       value={formData.supplier}
-                      onChange={(e) => handleInputChange('supplier', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("supplier", e.target.value)
+                      }
                       label="Supplier"
                       displayEmpty
                     >
                       <MenuItem value="">Select Supplier</MenuItem>
-                      {suppliersLoading && <MenuItem disabled>Loading...</MenuItem>}
-                      {suppliersError && <MenuItem disabled>Error: {suppliersError}</MenuItem>}
+                      {suppliersLoading && (
+                        <MenuItem disabled>Loading...</MenuItem>
+                      )}
+                      {suppliersError && (
+                        <MenuItem disabled>Error: {suppliersError}</MenuItem>
+                      )}
                       {suppliers?.map((supplier) => (
                         <MenuItem key={supplier.id} value={supplier.id}>
                           {supplier.name}
@@ -382,7 +497,9 @@ export const AddFMUserPage = () => {
                     label="Employee ID"
                     variant="outlined"
                     value={formData.employeeId}
-                    onChange={(e) => handleInputChange('employeeId', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("employeeId", e.target.value)
+                    }
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
@@ -391,7 +508,9 @@ export const AddFMUserPage = () => {
                     <InputLabel shrink>Base Site</InputLabel>
                     <Select
                       value={formData.baseSite}
-                      onChange={(e) => handleInputChange('baseSite', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("baseSite", e.target.value)
+                      }
                       label="Base Site"
                       displayEmpty
                     >
@@ -411,13 +530,17 @@ export const AddFMUserPage = () => {
                     <InputLabel shrink>Select Base Unit</InputLabel>
                     <Select
                       value={formData.selectBaseUnit}
-                      onChange={(e) => handleInputChange('selectBaseUnit', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("selectBaseUnit", e.target.value)
+                      }
                       label="Select Base Unit"
                       displayEmpty
                     >
                       <MenuItem value="">Select Base Unit</MenuItem>
                       {unitsLoading && <MenuItem disabled>Loading...</MenuItem>}
-                      {unitsError && <MenuItem disabled>Error: {unitsError}</MenuItem>}
+                      {unitsError && (
+                        <MenuItem disabled>Error: {unitsError}</MenuItem>
+                      )}
                       {units?.map((unit) => (
                         <MenuItem key={unit.id} value={unit.id}>
                           {unit?.building?.name} - {unit.unit_name}
@@ -431,13 +554,19 @@ export const AddFMUserPage = () => {
                     <InputLabel shrink>Select Department</InputLabel>
                     <Select
                       value={formData.selectDepartment}
-                      onChange={(e) => handleInputChange('selectDepartment', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("selectDepartment", e.target.value)
+                      }
                       label="Select Department"
                       displayEmpty
                     >
                       <MenuItem value="">Select Department</MenuItem>
-                      {departmentLoading && <MenuItem disabled>Loading...</MenuItem>}
-                      {departmentError && <MenuItem disabled>Error: {departmentError}</MenuItem>}
+                      {departmentLoading && (
+                        <MenuItem disabled>Loading...</MenuItem>
+                      )}
+                      {departmentError && (
+                        <MenuItem disabled>Error: {departmentError}</MenuItem>
+                      )}
                       {department?.map((dept) => (
                         <MenuItem key={dept.id} value={dept.id}>
                           {dept.department_name}
@@ -451,7 +580,12 @@ export const AddFMUserPage = () => {
                     <InputLabel shrink>Select Email Preference</InputLabel>
                     <Select
                       value={formData.selectEmailPreference}
-                      onChange={(e) => handleInputChange('selectEmailPreference', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "selectEmailPreference",
+                          e.target.value
+                        )
+                      }
                       label="Select Email Preference"
                       displayEmpty
                     >
@@ -470,47 +604,66 @@ export const AddFMUserPage = () => {
                     label="Designation"
                     variant="outlined"
                     value={formData.designation}
-                    onChange={(e) => handleInputChange('designation', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("designation", e.target.value)
+                    }
                     InputLabelProps={{ shrink: true }}
+                    inputProps={{ maxLength: 50 }}
                   />
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select User Type<span className='text-red-500'>*</span></InputLabel>
+                    <InputLabel shrink>
+                      Select User Type<span className="text-red-500">*</span>
+                    </InputLabel>
                     <Select
                       value={formData.selectUserType}
-                      onChange={(e) => handleInputChange('selectUserType', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("selectUserType", e.target.value)
+                      }
                       label="Select User Type"
                       displayEmpty
                       required
                     >
                       <MenuItem value="">Select User Type</MenuItem>
                       <MenuItem value="pms_admin">Admin (Web & App)</MenuItem>
-                      <MenuItem value="pms_technician">Technician (App)</MenuItem>
+                      <MenuItem value="pms_technician">
+                        Technician (App)
+                      </MenuItem>
                       <MenuItem value="pms_hse">Head Site Engineer</MenuItem>
                       <MenuItem value="pms_se">Site Engineer</MenuItem>
-                      <MenuItem value="pms_occupant_admin">Customer Admin</MenuItem>
+                      <MenuItem value="pms_occupant_admin">
+                        Customer Admin
+                      </MenuItem>
                       <MenuItem value="pms_accounts">Accounts</MenuItem>
                       <MenuItem value="pms_po">Purchase Officer</MenuItem>
                       <MenuItem value="pms_qc">Quality Control</MenuItem>
                       <MenuItem value="pms_security">Security</MenuItem>
-                      <MenuItem value="pms_security_supervisor">Security Supervisor</MenuItem>
+                      <MenuItem value="pms_security_supervisor">
+                        Security Supervisor
+                      </MenuItem>
                     </Select>
                   </FormControl>
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Role<span className='text-red-500'>*</span></InputLabel>
+                    <InputLabel shrink>
+                      Select Role<span className="text-red-500">*</span>
+                    </InputLabel>
                     <Select
                       value={formData.selectRole}
-                      onChange={(e) => handleInputChange('selectRole', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("selectRole", e.target.value)
+                      }
                       label="Select Role"
                       displayEmpty
                       required
                     >
                       <MenuItem value="">Select Role</MenuItem>
                       {roleLoading && <MenuItem disabled>Loading...</MenuItem>}
-                      {roleError && <MenuItem disabled>Error: {roleError}</MenuItem>}
+                      {roleError && (
+                        <MenuItem disabled>Error: {roleError}</MenuItem>
+                      )}
                       {roles?.map((role) => (
                         <MenuItem key={role.id} value={role.id}>
                           {role.name}
@@ -523,16 +676,18 @@ export const AddFMUserPage = () => {
                 {/* Row 6 */}
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Access Level<span className='text-red-500'>*</span></InputLabel>
+                    <InputLabel shrink>
+                      Select Access Level<span className="text-red-500">*</span>
+                    </InputLabel>
                     <Select
                       value={formData.selectAccessLevel}
                       onChange={(e) => {
-                        handleInputChange('selectAccessLevel', e.target.value);
-                        if (e.target.value !== 'Site') {
-                          handleInputChange('selectedSites', []);
+                        handleInputChange("selectAccessLevel", e.target.value);
+                        if (e.target.value !== "Site") {
+                          handleInputChange("selectedSites", []);
                         }
-                        if (e.target.value !== 'Company') {
-                          handleInputChange('selectedCompanies', []);
+                        if (e.target.value !== "Company") {
+                          handleInputChange("selectedCompanies", []);
                         }
                       }}
                       label="Select Access Level"
@@ -547,20 +702,32 @@ export const AddFMUserPage = () => {
                 </div>
 
                 {/* Multiple Site Selection */}
-                {formData.selectAccessLevel === 'Site' && (
+                {formData.selectAccessLevel === "Site" && (
                   <div>
                     <FormControl fullWidth variant="outlined">
-                      <InputLabel shrink>Select Sites<span className='text-red-500'>*</span></InputLabel>
+                      <InputLabel shrink>
+                        Select Sites<span className="text-red-500">*</span>
+                      </InputLabel>
                       <Select
                         multiple
                         value={formData.selectedSites}
-                        onChange={(e) => handleInputChange('selectedSites', e.target.value as string[])}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "selectedSites",
+                            e.target.value as string[]
+                          )
+                        }
                         label="Select Sites"
                         displayEmpty
                         renderValue={(selected) =>
                           selected.length > 0
-                            ? sites?.filter(site => selected.includes(site.id.toString())).map(site => site.name || site.full_name).join(', ')
-                            : 'Select Sites'
+                            ? sites
+                              ?.filter((site) =>
+                                selected.includes(site.id.toString())
+                              )
+                              .map((site) => site.name || site.full_name)
+                              .join(", ")
+                            : "Select Sites"
                         }
                       >
                         {sites?.map((site) => (
@@ -572,26 +739,37 @@ export const AddFMUserPage = () => {
                     </FormControl>
                   </div>
                 )}
-                {formData.selectAccessLevel === 'Company' && (
+                {formData.selectAccessLevel === "Company" && (
                   <div>
                     <FormControl fullWidth variant="outlined">
-                      <InputLabel shrink>Select Companies<span className='text-red-500'>*</span></InputLabel>
+                      <InputLabel shrink>
+                        Select Companies<span className="text-red-500">*</span>
+                      </InputLabel>
                       <Select
                         multiple
                         value={formData.selectedCompanies}
-                        onChange={(e) => handleInputChange('selectedCompanies', e.target.value as string[])}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "selectedCompanies",
+                            e.target.value as string[]
+                          )
+                        }
                         label="Select Companies"
                         displayEmpty
                         renderValue={(selected) =>
                           selected.length > 0
-                            ? selectedCompany && selected.includes(selectedCompany.id.toString())
+                            ? selectedCompany &&
+                              selected.includes(selectedCompany.id.toString())
                               ? selectedCompany.name
-                              : 'Select Companies'
-                            : 'Select Companies'
+                              : "Select Companies"
+                            : "Select Companies"
                         }
                       >
                         {selectedCompany && (
-                          <MenuItem key={selectedCompany.id} value={selectedCompany.id.toString()}>
+                          <MenuItem
+                            key={selectedCompany.id}
+                            value={selectedCompany.id.toString()}
+                          >
                             {selectedCompany.name}
                           </MenuItem>
                         )}
@@ -604,19 +782,37 @@ export const AddFMUserPage = () => {
                     <InputLabel shrink>Select User Category</InputLabel>
                     <Select
                       value={formData.selectUserCategory}
-                      onChange={(e) => handleInputChange('selectUserCategory', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("selectUserCategory", e.target.value)
+                      }
                       label="Select User Category"
                       displayEmpty
                       required
                     >
                       <MenuItem value="">Select User Category</MenuItem>
-                      {
-                        userCategories?.map((category) => (
-                          <MenuItem key={category.id} value={category.id}>
-                            {category.name}
-                          </MenuItem>
-                        ))
+                      {userCategories?.map((category) => (
+                        <MenuItem key={category.id} value={category.id}>
+                          {category.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select Profile Type</InputLabel>
+                    <Select
+                      value={formData.selectProfileType}
+                      onChange={(e) =>
+                        handleInputChange("selectProfileType", e.target.value)
                       }
+                      label="Select Profile Type"
+                      displayEmpty
+                      required
+                    >
+                      <MenuItem value="">Select Profile Type</MenuItem>
+                      <MenuItem value="Technical">Technical</MenuItem>
+                      <MenuItem value="NonTechnical">NonTechnical</MenuItem>
                     </Select>
                   </FormControl>
                 </div>
@@ -642,6 +838,16 @@ export const AddFMUserPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      <DuplicateUserDialog
+        open={duplicateUserDialog.open}
+        onClose={() =>
+          setDuplicateUserDialog((prev) => ({ ...prev, open: false }))
+        }
+        onConfirm={handleAssignPermission}
+        companies={duplicateUserDialog.companies}
+        errorMessage={duplicateUserDialog.errorMessage}
+      />
     </div>
   );
 };

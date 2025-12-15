@@ -96,25 +96,13 @@ export const UnitPage = () => {
   // Fetch dependencies for add/edit forms
   useEffect(() => {
     if (newUnit.building) {
-      console.log('Fetching wings for building:', newUnit.building);
+      console.log('Fetching wings, areas, and floors for building:', newUnit.building);
       dispatch(fetchWings(parseInt(newUnit.building)));
-    }
-  }, [dispatch, newUnit.building]);
-
-  useEffect(() => {
-    if (newUnit.building && newUnit.wing) {
-      console.log('Fetching areas for building:', newUnit.building, 'wing:', newUnit.wing);
-      dispatch(fetchAreas({ buildingId: parseInt(newUnit.building), wingId: parseInt(newUnit.wing) }));
-    }
-  }, [dispatch, newUnit.building, newUnit.wing]);
-
-  useEffect(() => {
-    if (newUnit.building && newUnit.wing && newUnit.area) {
-      console.log('Fetching floors for building:', newUnit.building, 'wing:', newUnit.wing, 'area:', newUnit.area);
+      dispatch(fetchAreas({ buildingId: parseInt(newUnit.building), wingId: newUnit.wing ? parseInt(newUnit.wing) : undefined }));
       dispatch(fetchFloors({ 
         buildingId: parseInt(newUnit.building), 
-        wingId: parseInt(newUnit.wing), 
-        areaId: parseInt(newUnit.area)
+        wingId: newUnit.wing ? parseInt(newUnit.wing) : undefined,
+        areaId: newUnit.area ? parseInt(newUnit.area) : undefined
       }));
     }
   }, [dispatch, newUnit.building, newUnit.wing, newUnit.area]);
@@ -122,22 +110,13 @@ export const UnitPage = () => {
   // Fetch dependencies for edit forms
   useEffect(() => {
     if (editUnit.building && editingUnit) {
+      console.log('Fetching wings, areas, and floors for building in edit:', editUnit.building);
       dispatch(fetchWings(parseInt(editUnit.building)));
-    }
-  }, [dispatch, editUnit.building, editingUnit]);
-
-  useEffect(() => {
-    if (editUnit.building && editUnit.wing && editingUnit) {
-      dispatch(fetchAreas({ buildingId: parseInt(editUnit.building), wingId: parseInt(editUnit.wing) }));
-    }
-  }, [dispatch, editUnit.building, editUnit.wing, editingUnit]);
-
-  useEffect(() => {
-    if (editUnit.building && editUnit.wing && editUnit.area && editingUnit) {
+      dispatch(fetchAreas({ buildingId: parseInt(editUnit.building), wingId: editUnit.wing ? parseInt(editUnit.wing) : undefined }));
       dispatch(fetchFloors({ 
         buildingId: parseInt(editUnit.building), 
-        wingId: parseInt(editUnit.wing), 
-        areaId: parseInt(editUnit.area)
+        wingId: editUnit.wing ? parseInt(editUnit.wing) : undefined,
+        areaId: editUnit.area ? parseInt(editUnit.area) : undefined
       }));
     }
   }, [dispatch, editUnit.building, editUnit.wing, editUnit.area, editingUnit]);
@@ -265,26 +244,31 @@ export const UnitPage = () => {
   };
 
   const handleAddUnit = async () => {
-    if (newUnit.building && newUnit.wing && newUnit.area && newUnit.floor && newUnit.unitName.trim()) {
-      try {
-        await dispatch(createUnit({
-          unit_name: newUnit.unitName,
-          building_id: parseInt(newUnit.building),
-          wing_id: parseInt(newUnit.wing),
-          area_id: parseInt(newUnit.area),
-          floor_id: parseInt(newUnit.floor),
-          area: parseInt(newUnit.areaSize) || 0
-        }));
-        toast.success('Unit created successfully');
-        setNewUnit({ building: '', wing: '', area: '', floor: '', unitName: '', areaSize: '' });
-        setIsAddDialogOpen(false);
-        dispatch(fetchAllUnits());
-      } catch (error) {
-        console.error('Error creating unit:', error);
-        toast.error('Failed to create unit');
-      }
-    } else {
-      toast.error('Please fill in all required fields');
+    if (!newUnit.building) {
+      toast.error('Please select a building');
+      return;
+    }
+    if (!newUnit.unitName.trim()) {
+      toast.error('Please enter unit name');
+      return;
+    }
+    
+    try {
+      await dispatch(createUnit({
+        unit_name: newUnit.unitName,
+        building_id: parseInt(newUnit.building),
+        wing_id: newUnit.wing ? parseInt(newUnit.wing) : undefined,
+        area_id: newUnit.area ? parseInt(newUnit.area) : undefined,
+        floor_id: newUnit.floor ? parseInt(newUnit.floor) : undefined,
+        area: parseInt(newUnit.areaSize) || 0
+      }));
+      toast.success('Unit created successfully');
+      setNewUnit({ building: '', wing: '', area: '', floor: '', unitName: '', areaSize: '' });
+      setIsAddDialogOpen(false);
+      dispatch(fetchAllUnits());
+    } catch (error) {
+      console.error('Error creating unit:', error);
+      toast.error('Failed to create unit');
     }
   };
 
@@ -317,51 +301,57 @@ export const UnitPage = () => {
       active: unit.active
     });
     
-    // Load the dependencies immediately when editing starts
+    // Load all dependencies immediately when editing starts
     if (unit.building_id) {
       dispatch(fetchWings(unit.building_id));
-      
-      if (unit.wing_id) {
-        dispatch(fetchAreas({ buildingId: unit.building_id, wingId: unit.wing_id }));
-        
-        if (unit.area_id) {
-          dispatch(fetchFloors({ 
-            buildingId: unit.building_id, 
-            wingId: unit.wing_id, 
-            areaId: unit.area_id 
-          }));
-        }
-      }
+      dispatch(fetchAreas({ buildingId: unit.building_id, wingId: unit.wing_id || undefined }));
+      dispatch(fetchFloors({ 
+        buildingId: unit.building_id, 
+        wingId: unit.wing_id || undefined, 
+        areaId: unit.area_id || undefined
+      }));
     }
     
     setIsEditDialogOpen(true);
   };
 
   const handleUpdateUnit = async () => {
-    if (editingUnit && editUnit.unitName.trim() && editUnit.building && editUnit.wing && editUnit.area && editUnit.floor) {
-      try {
-        await dispatch(updateUnit({
-          id: editingUnit.id,
-          updates: {
-            unit_name: editUnit.unitName,
-            building_id: parseInt(editUnit.building),
-            wing_id: parseInt(editUnit.wing),
-            area_id: parseInt(editUnit.area),
-            floor_id: parseInt(editUnit.floor),
-            area: parseInt(editUnit.areaSize) || 0,
-            active: editUnit.active
-          }
-        }));
-        toast.success('Unit updated successfully');
-        setIsEditDialogOpen(false);
-        setEditingUnit(null);
-        dispatch(fetchAllUnits());
-      } catch (error) {
-        console.error('Error updating unit:', error);
-        toast.error('Failed to update unit');
-      }
-    } else {
-      toast.error('Please fill in all required fields');
+    if (!editingUnit) return;
+    
+    if (!editUnit.building) {
+      toast.error('Please select a building');
+      return;
+    }
+    if (!editUnit.unitName.trim()) {
+      toast.error('Please enter unit name');
+      return;
+    }
+    
+    const payload = {
+      unit_name: editUnit.unitName,
+      building_id: parseInt(editUnit.building),
+      wing_id: editUnit.wing ? parseInt(editUnit.wing) : null,
+      area_id: editUnit.area ? parseInt(editUnit.area) : null,
+      floor_id: editUnit.floor ? parseInt(editUnit.floor) : null,
+      area: parseInt(editUnit.areaSize) || 0,
+      active: editUnit.active
+    };
+    
+    console.log('🚀 Update Unit Payload:', payload);
+    console.log('📝 Current editUnit state:', editUnit);
+    
+    try {
+      await dispatch(updateUnit({
+        id: editingUnit.id,
+        updates: payload
+      }));
+      toast.success('Unit updated successfully');
+      setIsEditDialogOpen(false);
+      setEditingUnit(null);
+      dispatch(fetchAllUnits());
+    } catch (error) {
+      console.error('Error updating unit:', error);
+      toast.error('Failed to update unit');
     }
   };
 
@@ -476,6 +466,8 @@ export const UnitPage = () => {
                         setNewUnit(updatedNewUnit);
                         if (value) {
                           dispatch(fetchWings(parseInt(value)));
+                          dispatch(fetchAreas({ buildingId: parseInt(value), wingId: undefined }));
+                          dispatch(fetchFloors({ buildingId: parseInt(value), wingId: undefined, areaId: undefined }));
                         }
                       }}
                     >
@@ -499,8 +491,13 @@ export const UnitPage = () => {
                       onValueChange={(value) => {
                         const updatedNewUnit = { ...newUnit, wing: value, area: '', floor: '' };
                         setNewUnit(updatedNewUnit);
-                        if (value && updatedNewUnit.building) {
-                          dispatch(fetchAreas({ buildingId: parseInt(updatedNewUnit.building), wingId: parseInt(value) }));
+                        if (updatedNewUnit.building) {
+                          dispatch(fetchAreas({ buildingId: parseInt(updatedNewUnit.building), wingId: value ? parseInt(value) : undefined }));
+                          dispatch(fetchFloors({ 
+                            buildingId: parseInt(updatedNewUnit.building), 
+                            wingId: value ? parseInt(value) : undefined,
+                            areaId: undefined
+                          }));
                         }
                       }}
                       disabled={!newUnit.building}
@@ -525,15 +522,15 @@ export const UnitPage = () => {
                       onValueChange={(value) => {
                         const updatedNewUnit = { ...newUnit, area: value, floor: '' };
                         setNewUnit(updatedNewUnit);
-                        if (value && updatedNewUnit.building && updatedNewUnit.wing) {
+                        if (updatedNewUnit.building) {
                           dispatch(fetchFloors({ 
                             buildingId: parseInt(updatedNewUnit.building), 
-                            wingId: parseInt(updatedNewUnit.wing), 
-                            areaId: parseInt(value) 
+                            wingId: updatedNewUnit.wing ? parseInt(updatedNewUnit.wing) : undefined,
+                            areaId: value ? parseInt(value) : undefined
                           }));
                         }
                       }}
-                      disabled={!newUnit.wing}
+                      disabled={!newUnit.building}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select Area" />
@@ -553,7 +550,7 @@ export const UnitPage = () => {
                     <Select 
                       value={newUnit.floor} 
                       onValueChange={(value) => setNewUnit(prev => ({ ...prev, floor: value }))}
-                      disabled={!newUnit.area}
+                      disabled={!newUnit.building}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select Floor" />
@@ -792,6 +789,8 @@ export const UnitPage = () => {
                     setEditUnit(updatedEditUnit);
                     if (value) {
                       dispatch(fetchWings(parseInt(value)));
+                      dispatch(fetchAreas({ buildingId: parseInt(value), wingId: undefined }));
+                      dispatch(fetchFloors({ buildingId: parseInt(value), wingId: undefined, areaId: undefined }));
                     }
                   }}
                 >
@@ -815,8 +814,13 @@ export const UnitPage = () => {
                   onValueChange={(value) => {
                     const updatedEditUnit = { ...editUnit, wing: value, area: '', floor: '' };
                     setEditUnit(updatedEditUnit);
-                    if (value && updatedEditUnit.building) {
-                      dispatch(fetchAreas({ buildingId: parseInt(updatedEditUnit.building), wingId: parseInt(value) }));
+                    if (updatedEditUnit.building) {
+                      dispatch(fetchAreas({ buildingId: parseInt(updatedEditUnit.building), wingId: value ? parseInt(value) : undefined }));
+                      dispatch(fetchFloors({ 
+                        buildingId: parseInt(updatedEditUnit.building), 
+                        wingId: value ? parseInt(value) : undefined,
+                        areaId: undefined
+                      }));
                     }
                   }}
                   disabled={!editUnit.building}
@@ -841,15 +845,15 @@ export const UnitPage = () => {
                   onValueChange={(value) => {
                     const updatedEditUnit = { ...editUnit, area: value, floor: '' };
                     setEditUnit(updatedEditUnit);
-                    if (value && updatedEditUnit.building && updatedEditUnit.wing) {
+                    if (updatedEditUnit.building) {
                       dispatch(fetchFloors({ 
                         buildingId: parseInt(updatedEditUnit.building), 
-                        wingId: parseInt(updatedEditUnit.wing), 
-                        areaId: parseInt(value) 
+                        wingId: updatedEditUnit.wing ? parseInt(updatedEditUnit.wing) : undefined,
+                        areaId: value ? parseInt(value) : undefined
                       }));
                     }
                   }}
-                  disabled={!editUnit.wing}
+                  disabled={!editUnit.building}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Area" />
@@ -869,7 +873,7 @@ export const UnitPage = () => {
                 <Select 
                   value={editUnit.floor} 
                   onValueChange={(value) => setEditUnit(prev => ({ ...prev, floor: value }))}
-                  disabled={!editUnit.area}
+                  disabled={!editUnit.building}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Floor" />
@@ -922,7 +926,7 @@ export const UnitPage = () => {
               <Button 
                 onClick={handleUpdateUnit} 
                 className="bg-purple-600 hover:bg-purple-700 text-white px-8"
-                disabled={!editUnit.unitName.trim() || !editUnit.building || !editUnit.wing || !editUnit.area || !editUnit.floor}
+                disabled={!editUnit.unitName.trim() || !editUnit.building}
               >
                 Submit
               </Button>

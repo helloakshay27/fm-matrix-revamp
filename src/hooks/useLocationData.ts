@@ -86,18 +86,18 @@ export const useLocationData = () => {
     try {
       const url = `${API_CONFIG.BASE_URL}/pms/sites/${siteId}/buildings.json`;
       console.log('Fetching buildings from URL:', url);
-      
+
       const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
-      
+
       console.log('Buildings response status:', response.status);
       const data = await response.json();
       console.log('Buildings response data:', data);
-      
+
       setBuildings(data.buildings || []);
     } catch (error) {
       console.error('Error fetching buildings:', error);
@@ -117,16 +117,16 @@ export const useLocationData = () => {
     console.log('fetchWings called with buildingId:', buildingId);
     setLoading(prev => ({ ...prev, wings: true }));
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/wings.json?building_id=${buildingId}`;
+      const url = `${API_CONFIG.BASE_URL}/pms/wings.json?q[building_id_eq]=${buildingId}`;
       console.log('Fetching wings from URL:', url);
-      
+
       const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
-      
+
       console.log('Wings response status:', response.status);
       const data = await response.json();
       console.log('Wings response data:', data);
@@ -140,25 +140,30 @@ export const useLocationData = () => {
   };
 
   // Fetch areas
-  const fetchAreas = async (wingId: number) => {
-    if (!wingId) {
+  const fetchAreas = async (wingId: number, buildingId?: number) => {
+    if (!wingId && !buildingId) {
       setAreas([]);
       return;
     }
 
-    console.log('fetchAreas called with wingId:', wingId);
+    console.log('fetchAreas called with wingId:', wingId, 'buildingId:', buildingId);
     setLoading(prev => ({ ...prev, areas: true }));
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/areas.json?wing_id=${wingId}`;
+      // Build URL with both wing_id and building_id as query params
+      const params = new URLSearchParams();
+      if (wingId) params.append('q[wing_id_eq]', wingId.toString());
+      if (buildingId) params.append('q[building_id_eq]', buildingId.toString());
+
+      const url = `${API_CONFIG.BASE_URL}/pms/areas.json?${params.toString()}`;
       console.log('Fetching areas from URL:', url);
-      
+
       const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
-      
+
       console.log('Areas response status:', response.status);
       const data = await response.json();
       console.log('Areas response data:', data);
@@ -172,25 +177,31 @@ export const useLocationData = () => {
   };
 
   // Fetch floors
-  const fetchFloors = async (areaId: number) => {
-    if (!areaId) {
+  const fetchFloors = async (areaId: number, buildingId?: number, wingId?: number) => {
+    if (!areaId && !buildingId) {
       setFloors([]);
       return;
     }
 
-    console.log('fetchFloors called with areaId:', areaId);
+    console.log('fetchFloors called with areaId:', areaId, 'buildingId:', buildingId, 'wingId:', wingId);
     setLoading(prev => ({ ...prev, floors: true }));
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/floors.json?area_id=${areaId}`;
+      // Build URL with area_id, building_id, and wing_id as query params
+      const params = new URLSearchParams();
+      if (areaId) params.append('q[area_id_eq]', areaId.toString());
+      if (buildingId) params.append('q[building_id_eq]', buildingId.toString());
+      if (wingId) params.append('q[wing_id_eq]', wingId.toString());
+
+      const url = `${API_CONFIG.BASE_URL}/pms/floors.json?${params.toString()}`;
       console.log('Fetching floors from URL:', url);
-      
+
       const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
-      
+
       console.log('Floors response status:', response.status);
       const data = await response.json();
       console.log('Floors response data:', data);
@@ -204,29 +215,36 @@ export const useLocationData = () => {
   };
 
   // Fetch rooms
-  const fetchRooms = async (floorId: number) => {
-    if (!floorId) {
+  const fetchRooms = async (floorId: number, buildingId?: number, wingId?: number, areaId?: number) => {
+    if (!floorId && !buildingId) {
       setRooms([]);
       return;
     }
 
-    console.log('fetchRooms called with floorId:', floorId);
+    console.log('fetchRooms called with floorId:', floorId, 'buildingId:', buildingId, 'wingId:', wingId, 'areaId:', areaId);
     setLoading(prev => ({ ...prev, rooms: true }));
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/rooms.json?floor_id=${floorId}`;
+      // Build URL with floor_id, building_id, wing_id, and area_id as query params
+      const params = new URLSearchParams();
+      if (floorId) params.append('q[floor_id_eq]', floorId.toString());
+      if (buildingId) params.append('q[building_id_eq]', buildingId.toString());
+      if (wingId) params.append('q[wing_id_eq]', wingId.toString());
+      if (areaId) params.append('q[area_id_eq]', areaId.toString());
+
+      const url = `${API_CONFIG.BASE_URL}/pms/rooms.json?${params.toString()}`;
       console.log('Fetching rooms from URL:', url);
-      
+
       const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
-      
+
       console.log('Rooms response status:', response.status);
       const data = await response.json();
       console.log('Rooms response data:', data);
-      
+
       // Handle both array format and object with rooms property
       if (Array.isArray(data)) {
         setRooms(data);

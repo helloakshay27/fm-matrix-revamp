@@ -15,6 +15,7 @@ import {
   MessagesSquare,
   ChartArea,
   ChartAreaIcon,
+  Shield,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -89,6 +90,9 @@ export const Header = () => {
 
   const isWebSite = hostname.includes("web.gophygital.work");
 
+  const isLocalhost =
+    hostname.includes("localhost") ||
+    hostname.includes("lockated.gophygital.work");
   const navigate = useNavigate();
   const [notificationCount, setNotificationCount] = useState(3);
 
@@ -143,6 +147,9 @@ export const Header = () => {
   }, []);
 
   // Fetch VI account from baseUrl for vi-web (and localhost for dev)
+
+  const tempSwitchToAdmin =
+    localStorage.getItem("tempType") === "pms_organization_admin";
   useEffect(() => {
     if (!isViSite) return;
     try {
@@ -170,7 +177,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => { });
+        .catch(() => {});
     } catch {
       /* no-op */
     }
@@ -240,6 +247,29 @@ export const Header = () => {
     userDisplayName ||
     user.firstname ||
     "User";
+
+  /**
+   * VIEW SWITCHING LOGIC (ADMIN HEADER)
+   *
+   * This header is shown when user is in Admin View (default view)
+   *
+   * USER TYPE CHECK:
+   * - Check user.user_type from database (not localStorage)
+   * - If user_type === "pms_organization_admin": User can switch to Employee View
+   * - If user_type === "pms_occupant": User has employee-only access (no switcher shown)
+   *
+   * TO SWITCH TO EMPLOYEE VIEW:
+   * - Set localStorage.userType = "pms_occupant"
+   * - Reload page
+   * - Layout.tsx detects this and renders EmployeeHeader + EmployeeSidebar
+   */
+  const userType = localStorage.getItem("userType");
+
+  const tempType = localStorage.getItem("tempType");
+
+  const canSwitchToEmployee = userType === "pms_organization_admin";
+
+  const tempSwitchToEmployee = tempType === "pms_organization_admin";
 
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-20 w-full shadow-sm">
@@ -361,8 +391,6 @@ export const Header = () => {
                 <ChartArea className="w-4 h-4" />
                 Dashboard
               </button>
-
-
             )}
             {!isViSite && (
               <button
@@ -372,22 +400,17 @@ export const Header = () => {
                 <ChartAreaIcon className="w-4 h-4" />
                 Executive Dashboard
               </button>
-
-
             )}
 
             {isViSite && (
               <button
-                onClick={() =>
-                  navigate("/msafedashboard")
-                }
+                onClick={() => navigate("/msafedashboard")}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
               >
                 <Home className="w-4 h-4" />
                 MSafe Dashboard
               </button>
             )}
-
 
             {isWebSite && !isViSite && (
               <button
@@ -528,7 +551,6 @@ export const Header = () => {
                     strokeLinecap="round"
                   />
                 </svg>
-
               </button>
             </div>
           )}
@@ -554,15 +576,16 @@ export const Header = () => {
                   .toUpperCase()}
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 bg-white border border-[#D5DbDB] shadow-lg p-2">
-              <div className="px-2 py-2 mb-2 border-b border-gray-100">
-                <p className="font-medium text-sm">
+            <DropdownMenuContent className="w-72 bg-white border border-[#D5DbDB] shadow-lg p-0">
+              {/* User Info Header */}
+              <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
-                    ? `${viAccount.firstname || ""} ${viAccount.lastname || ""
-                      }`.trim() || "User"
+                    ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
+                      "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
-                <div className="flex items-center text-gray-600 text-xs mt-1">
+                <div className="flex items-center text-gray-600 text-xs mt-0.5">
                   <Mail className="w-3 h-3 mr-1" />
                   <span>
                     {(isViSite && viAccount
@@ -570,29 +593,91 @@ export const Header = () => {
                       : user.email) || ""}
                   </span>
                 </div>
-                <div className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded mt-2 inline-block">
-                  {(isViSite && viAccount
-                    ? viAccount.role_name || ""
-                    : userRoleName || user?.lock_role?.name) || "No Role"}{" "}
+
+                {/* User Type & Role Pills */}
+                <div className="flex items-center gap-2 mt-3">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-blue-50 text-blue-700 border-blue-200 font-medium"
+                  >
+                    <Shield className="w-3 h-3 mr-1" />
+                    {userRoleName}
+                  </Badge>
+                  {/* <Badge
+                    variant="outline"
+                    className="text-xs bg-purple-50 text-purple-700 border-purple-200 font-medium"
+                  >
+                    <User className="w-3 h-3 mr-1" />
+                    {tempSwitchToAdmin ? "Admin Access" : "Standard User"}
+                  </Badge> */}
                 </div>
               </div>
 
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  navigate("/login");
+              {/* View Switcher - Only shown for admin users (pms_organization_admin) */}
+              {(canSwitchToEmployee || tempSwitchToEmployee) && isLocalhost && (
+                <div className="px-3 py-3 bg-gray-50 border-b border-gray-200">
+                  <p className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">
+                    Switch View
+                  </p>
+                  <button
+                    onClick={() => {
+                      localStorage.setItem("userType", "pms_occupant");
+                      localStorage.setItem("selectedView", "employee");
+                      localStorage.setItem(
+                        "tempType",
+                        "pms_organization_admin"
+                      );
+                      window.location.href = "/vas/projects";
+                    }}
+                    className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm bg-white hover:bg-[#C72030] text-gray-700 hover:text-white transition-all duration-200 border border-gray-200 hover:border-[#C72030] group shadow-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      <span className="font-medium">Employee View</span>
+                    </div>
+                    <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                  <p className="text-xs text-gray-500 mt-2 px-1">
+                    Access simplified employee interface
+                  </p>
+                </div>
+              )}
 
-                  permissionService.clearUserData();
-                  clearAuth();
+              {/* Menu Items */}
+              <div className="py-1">
+                <DropdownMenuItem
+                  onClick={() => navigate("/profile")}
+                  className="mx-2 my-1 rounded-md"
+                >
+                  <User className="w-4 h-4 mr-2 text-gray-500" />
+                  <span className="font-medium">My Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => navigate("/settings")}
+                  className="mx-2 my-1 rounded-md"
+                >
+                  <Settings className="w-4 h-4 mr-2 text-gray-500" />
+                  <span className="font-medium">Settings</span>
+                </DropdownMenuItem>
+              </div>
 
-                  window.location.reload();
-                  // Clear stored user data from permissionService
-                }}
-                className="flex items-center gap-2 text-red-600 focus:text-red-700 focus:bg-red-50"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </DropdownMenuItem>
+              <DropdownMenuSeparator className="my-1" />
+
+              {/* Logout Button */}
+              <div className="p-2">
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigate("/login");
+                    permissionService.clearUserData();
+                    clearAuth();
+                    window.location.reload();
+                  }}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md font-medium"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

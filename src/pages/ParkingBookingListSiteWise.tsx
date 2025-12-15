@@ -18,6 +18,11 @@ import {
 } from "@/components/ui/pagination";
 import { BulkUploadModal } from "@/components/BulkUploadModal";
 import { ColumnVisibilityDropdown } from "@/components/ColumnVisibilityDropdown";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ParkingStatisticsCard } from "@/components/parking-analytics/ParkingStatisticsCard";
+import { ParkingFloorLayout } from "@/components/parking-analytics/ParkingFloorLayout";
+import { ParkingOccupancyChart } from "@/components/parking-analytics/ParkingOccupancyChart";
+import { FloorWiseOccupancyChart } from "@/components/parking-analytics/FloorWiseOccupancyChart";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useNavigate } from "react-router-dom";
 import { useLayout } from '@/contexts/LayoutContext';
@@ -1589,9 +1594,58 @@ const ParkingBookingListSiteWise = () => {
   return (
     <div className="p-6 space-y-6 min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">PARKING BOOKING LIST</h1>
-      </div>
+      </div> */}
+
+      {/* Tabs */}
+      <Tabs defaultValue="parking" className="w-full">
+        {/* <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+          <TabsTrigger
+            value="parking"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              strokeWidth={2}
+              className="lucide lucide-car w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+            >
+              <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+              <circle cx="7" cy="17" r="2" />
+              <path d="M9 17h6" />
+              <circle cx="17" cy="17" r="2" />
+            </svg>
+            Parking List
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="analytics"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              strokeWidth={2}
+              className="lucide lucide-chart-column w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+            >
+              <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+              <path d="M18 17V9" />
+              <path d="M13 17V5" />
+              <path d="M8 17v-3" />
+            </svg>
+            Analytics
+          </TabsTrigger>
+        </TabsList> */}
+
+        {/* Parking List Tab Content */}
+        <TabsContent value="parking" className="mt-6 space-y-6">
 
       {/* Stats Cards */}
       <SectionLoader loading={cardsLoading} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
@@ -2436,7 +2490,93 @@ const ParkingBookingListSiteWise = () => {
             </div>
           </div>
         );
-      })()}
+        })()}
+        </TabsContent>
+
+        {/* Analytics Tab Content */}
+        <TabsContent value="analytics" className="mt-6 space-y-6">
+          <ParkingStatisticsCard
+            data={{
+              total_slots: cards?.total_slots || 0,
+              occupied: (cards?.two_booked || 0) + (cards?.four_booked || 0),
+              vacant: (cards?.two_available || 0) + (cards?.four_available || 0),
+              checked_in: bookingData.filter(b => b.checked_in_at !== null).length,
+              checked_out: bookingData.filter(b => b.checked_out_at !== null).length,
+              utilization: cards?.total_slots 
+                ? Math.round((((cards?.two_booked || 0) + (cards?.four_booked || 0)) / cards.total_slots) * 100)
+                : 0,
+              two_wheeler: {
+                total: cards?.two_total || 0,
+                occupied: cards?.two_booked || 0,
+                vacant: cards?.two_available || 0,
+              },
+              four_wheeler: {
+                total: cards?.four_total || 0,
+                occupied: cards?.four_booked || 0,
+                vacant: cards?.four_available || 0,
+              },
+            }}
+          />
+
+          {/* 2W / 4W Occupancy Chart */}
+          <ParkingOccupancyChart
+            data={[
+              {
+                category: '2W',
+                lastYearOccupied: Math.round((cards?.two_booked || 0) * 0.9),
+                lastYearVacant: Math.round((cards?.two_available || 0) * 1.2),
+                thisYearOccupied: cards?.two_booked || 0,
+                thisYearVacant: cards?.two_available || 0
+              },
+              {
+                category: '4W',
+                lastYearOccupied: Math.round((cards?.four_booked || 0) * 0.95),
+                lastYearVacant: Math.round((cards?.four_available || 0) * 1.1),
+                thisYearOccupied: cards?.four_booked || 0,
+                thisYearVacant: cards?.four_available || 0
+              }
+            ]}
+            onDownload={async () => {
+              console.log('Downloading occupancy data...');
+              // Implement download logic here
+            }}
+          />
+
+          {/* Floor-wise Occupancy Chart */}
+          <FloorWiseOccupancyChart
+            data={[
+              { floor: 'B2', twoWheeler: 12, fourWheeler: 8, percentage: 11.1 },
+              { floor: 'B1', twoWheeler: 10, fourWheeler: 13, percentage: 10.0 },
+              { floor: 'G', twoWheeler: 8, fourWheeler: 17, percentage: 14.3 },
+              { floor: '1', twoWheeler: 6, fourWheeler: 10, percentage: 14.3 },
+              { floor: '2', twoWheeler: 4, fourWheeler: 9, percentage: 7.7 },
+            ]}
+            onDownload={async () => {
+              console.log('Downloading floor-wise occupancy data...');
+              // Implement download logic here
+            }}
+          />
+
+          {/* Floor Layout */}
+          <ParkingFloorLayout
+            floor="G (Live)"
+            building="Main Building"
+            slots={bookingData.slice(0, 36).map((booking, index) => ({
+              id: `S-${index + 1}`,
+              number: `S-${index + 1}`,
+              status: booking.status === 'confirmed' ? 'occupied' : 'vacant',
+              type: booking.category.toLowerCase().includes('two') || booking.category.toLowerCase().includes('bike') ? 'bike' : 'car',
+              bookingId: booking.id,
+              userName: booking.employee_name,
+              scheduledDate: booking.schedule_date,
+            }))}
+            onSlotClick={(slot) => {
+              console.log('Slot clicked:', slot);
+              // You can add navigation to booking details or show a modal here
+            }}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -52,10 +52,48 @@ export const fetchMilestoneById = createAsyncThunk(
     }
 )
 
+export const updateMilestoneStatus = createAsyncThunk(
+    "updateMilestoneStatus",
+    async ({ token, baseUrl, id, payload }: { token: string, baseUrl: string, id: string, payload: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/milestones/${id}.json`, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to update milestone status'
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const fetchDependentMilestones = createAsyncThunk(
+    "fetchDependentMilestones",
+    async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/milestones/${id}/dependent_milestones.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to fetch dependent milestones'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const createMilestoneSlice = createApiSlice("createMilestone", createMilestone);
 const fetchMilestonesSlice = createApiSlice("fetchMilestones", fetchMilestones);
 const fetchMilestoneByIdSlice = createApiSlice("fetchMilestoneById", fetchMilestoneById);
+const updateMilestoneStatusSlice = createApiSlice("updateMilestoneStatus", updateMilestoneStatus);
+const fetchDependentMilestonesSlice = createApiSlice("fetchDependentMilestones", fetchDependentMilestones);
 
 export const createMilestoneReducer = createMilestoneSlice.reducer;
 export const fetchMilestonesReducer = fetchMilestonesSlice.reducer;
 export const fetchMilestoneByIdReducer = fetchMilestoneByIdSlice.reducer;
+export const updateMilestoneStatusReducer = updateMilestoneStatusSlice.reducer;
+export const fetchDependentMilestonesReducer = fetchDependentMilestonesSlice.reducer;

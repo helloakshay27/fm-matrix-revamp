@@ -2,17 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     ArrowLeft,
     Package,
     Truck,
     FileText,
     Paperclip,
-    ChevronUp,
-    ChevronDown,
-    LucideIcon,
     X,
     Download,
+    User,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -80,48 +79,20 @@ interface OutboundMail {
     attachments: OutboundAttachment[];
 }
 
-const ExpandableSection = ({
-    title,
-    icon: Icon,
-    isExpanded,
-    onToggle,
-    children,
-    hasData = true
-}: {
-    title: string;
-    icon: LucideIcon;
-    isExpanded: boolean;
-    onToggle: () => void;
-    children: React.ReactNode;
-    hasData?: boolean;
-}) => (
-    <div className="bg-transparent border-none shadow-none rounded-lg mb-6">
-        <div
-            onClick={onToggle}
-            className="figma-card-header flex items-center justify-between cursor-pointer"
-        >
-            <div className="flex items-center gap-3">
-                <div className="figma-card-icon-wrapper">
-                    <Icon className="figma-card-icon" />
-                </div>
-                <h3 className="figma-card-title uppercase">
-                    {title}
-                </h3>
-            </div>
-            <div className="flex items-center gap-2">
-                {!hasData && (
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">No data</span>
-                )}
-                {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-600" /> : <ChevronDown className="w-5 h-5 text-gray-600" />}
-            </div>
-        </div>
-        {isExpanded && (
-            <div className="figma-card-content">
-                {children}
-            </div>
-        )}
-    </div>
-);
+const getAttachmentIcon = (type?: string) => {
+    switch (type) {
+        case 'pdf':
+            return '📄';
+        case 'image':
+            return '🖼️';
+        case 'excel':
+            return '📊';
+        case 'word':
+            return '📝';
+        default:
+            return '📎';
+    }
+};
 
 export const OutboundDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -147,24 +118,12 @@ export const OutboundDetailPage: React.FC = () => {
     });
 
     const [loading, setLoading] = useState(true);
-    const [expandedSections, setExpandedSections] = useState({
-        outboundDetails: true,
-        courierDetails: true,
-        logs: true,
-        attachments: true,
-    });
+    const [activeTab, setActiveTab] = useState('outbound-details');
 
     // Modal states
     const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
-
-    const toggleSection = (section: string) => {
-        setExpandedSections(prev => ({
-            ...prev,
-            [section]: !prev[section as keyof typeof prev],
-        }));
-    };
 
     const fetchOutboundDetails = useCallback(async () => {
         if (!id) return;
@@ -383,50 +342,29 @@ export const OutboundDetailPage: React.FC = () => {
         }
     };
 
-    const getAttachmentIcon = (type?: string) => {
-        switch (type) {
-            case 'pdf':
-                return '📄';
-            case 'image':
-                return '🖼️';
-            case 'excel':
-                return '📊';
-            case 'word':
-                return '📝';
-            default:
-                return '📎';
-        }
-    };
-
     if (loading) {
         return (
-            <div className="bg-gray-50 min-h-screen p-6">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-center h-64">
-                        <div className="text-gray-500">Loading...</div>
-                    </div>
+            <div className="p-6 bg-white min-h-screen">
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-lg">Loading outbound details...</div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="p-6 bg-white min-h-screen">
+        <div className="p-4 sm:p-6 bg-white min-h-screen">
             {/* Header */}
             <div className="mb-6">
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-                    <button onClick={handleBack} className="flex items-center gap-1 hover:text-[#C72030] transition-colors">
-                        <ArrowLeft className="w-4 h-4" />
-                        <span className="font-bold text-[#1a1a1a]">Mail Outbound List</span>
-                    </button>
-                    <span>›</span>
-                    <span>Outbound Details</span>
-                </div>
+                <button onClick={handleBack} className="flex items-center gap-1 hover:text-[#C72030] transition-colors mb-4 text-base">
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Outbound List
+                </button>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-4">
                     <div>
                         <h1 className="text-2xl font-bold text-[#1a1a1a]">OUTBOUND DETAILS ({outboundData.id})</h1>
-                        <div className="flex items-center gap-4 mt-2">
+                        <div className="flex items-center gap-4 mt-2 flex-wrap">
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-gray-600">No. Of Package:</span>
                                 <span className="text-sm font-semibold">{outboundData.numberOfPackages}</span>
@@ -436,7 +374,7 @@ export const OutboundDetailPage: React.FC = () => {
                             </Badge>
                         </div>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2 flex-wrap justify-end">
                         <Button
                             onClick={handleAddAttachments}
                             className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white"
@@ -447,148 +385,213 @@ export const OutboundDetailPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Outbound Details Section */}
-            <ExpandableSection
-                title="OUTBOUND DETAILS"
-                icon={Package}
-                isExpanded={expandedSections.outboundDetails}
-                onToggle={() => toggleSection('outboundDetails')}
-            >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
-                    <div className="space-y-4">
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Sender Name</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{outboundData.senderName}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Recipient Name</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{outboundData.recipientName}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Recipient Address</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{outboundData.recipientAddress}</span>
-                        </div>
-                    </div>
-                    <div className="space-y-4">
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Date of Sending</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{outboundData.dateOfSending}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Recipient Mobile</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{outboundData.recipientMobile}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Recipient Email ID</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{outboundData.recipientEmail}</span>
-                        </div>
-                    </div>
-                </div>
-            </ExpandableSection>
+            {/* Tab Section */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <Tabs defaultValue="outbound-details" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch border-b">
+                        {[
+                            { label: 'Outbound Details', value: 'outbound-details' },
+                            { label: 'Courier Details', value: 'courier-details' },
+                            { label: 'Logs', value: 'logs' },
+                            { label: 'Attachments', value: 'attachments' },
+                        ].map((tab) => (
+                            <TabsTrigger
+                                key={tab.value}
+                                value={tab.value}
+                                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-3 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0 text-sm"
+                            >
+                                {tab.label}
+                            </TabsTrigger>
+                        ))}
+                    </TabsList>
 
-            {/* Courier Details Section */}
-            <ExpandableSection
-                title="COURIER DETAILS"
-                icon={Truck}
-                isExpanded={expandedSections.courierDetails}
-                onToggle={() => toggleSection('courierDetails')}
-            >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
-                    <div className="space-y-4">
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Vendor</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{outboundData.vendor}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">AWB Number</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{outboundData.awbNumber}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Track Status</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{outboundData.trackStatus}</span>
-                        </div>
-                    </div>
-                    <div className="space-y-4">
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">SPOC Person</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{outboundData.spocPerson}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Contact Number</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{outboundData.contactNumber}</span>
-                        </div>
-                    </div>
-                </div>
-            </ExpandableSection>
-
-            {/* Logs Section */}
-            <ExpandableSection
-                title="LOGS"
-                icon={FileText}
-                isExpanded={expandedSections.logs}
-                onToggle={() => toggleSection('logs')}
-            >
-                <div className="space-y-4">
-                    {outboundData.logs.length === 0 ? (
-                        <p className="text-gray-500 text-sm">No logs available</p>
-                    ) : (
-                        outboundData.logs.map((log) => (
-                            <div key={log.id} className="flex flex-col gap-1">
-                                <p className="text-sm text-[#1a1a1a]">{log.message}</p>
-                                <p className="text-xs text-gray-500">{log.timestamp}</p>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </ExpandableSection>
-
-            {/* Attachments Section */}
-            <ExpandableSection
-                title="ATTACHMENTS"
-                icon={Paperclip}
-                isExpanded={expandedSections.attachments}
-                onToggle={() => toggleSection('attachments')}
-                hasData={outboundData.attachments.length > 0}
-            >
-                <div>
-                    {outboundData.attachments.length === 0 ? (
-                        <p className="text-gray-500 text-sm">No attachments available</p>
-                    ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {outboundData.attachments.map((attachment) => (
-                                <div
-                                    key={attachment.id}
-                                    className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow"
-                                >
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-2xl">{getAttachmentIcon(attachment.fileType)}</span>
-                                        <button
-                                            onClick={() => handleDownloadAttachment(attachment)}
-                                            className="text-gray-500 hover:text-gray-700"
-                                        >
-                                            <Download className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                    <p className="text-sm text-gray-700 truncate" title={attachment.name}>
-                                        {attachment.name}
-                                    </p>
+                    {/* OUTBOUND DETAILS TAB */}
+                    <TabsContent value="outbound-details" className="p-4 sm:p-6 text-[15px]">
+                        <div className="bg-white rounded-lg border text-[15px]">
+                            <div className="flex p-4 items-center">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                                    <Package className="w-5 h-5 text-[#C72030]" />
                                 </div>
-                            ))}
+                                <h2 className="text-lg font-bold">OUTBOUND DETAILS</h2>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 text-[15px] p-4 gap-6">
+                                <div className="space-y-3">
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Sender Name</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{outboundData.senderName}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Recipient Name</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{outboundData.recipientName}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Recipient Address</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{outboundData.recipientAddress}</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Date of Sending</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{outboundData.dateOfSending}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Recipient Mobile</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{outboundData.recipientMobile}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Recipient Email ID</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{outboundData.recipientEmail}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    )}
-                </div>
-            </ExpandableSection>
+                    </TabsContent>
+
+                    {/* COURIER DETAILS TAB */}
+                    <TabsContent value="courier-details" className="p-4 sm:p-6 text-[15px]">
+                        <div className="bg-white rounded-lg border text-[15px]">
+                            <div className="flex p-4 items-center">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                                    <Truck className="w-5 h-5 text-[#C72030]" />
+                                </div>
+                                <h2 className="text-lg font-bold">COURIER DETAILS</h2>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 text-[15px] p-4 gap-6">
+                                <div className="space-y-3">
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Vendor</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{outboundData.vendor}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">AWB Number</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{outboundData.awbNumber}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Track Status</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{outboundData.trackStatus}</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">SPOC Person</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{outboundData.spocPerson}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Contact Number</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{outboundData.contactNumber}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    {/* LOGS TAB */}
+                    <TabsContent value="logs" className="p-4 sm:p-6 text-[15px]">
+                        <div className="bg-white rounded-lg border text-[15px]">
+                            <div className="flex p-4 items-center">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                                    <FileText className="w-5 h-5 text-[#C72030]" />
+                                </div>
+                                <h2 className="text-lg font-bold">LOGS</h2>
+                            </div>
+                            <div className="p-4">
+                                {outboundData.logs && outboundData.logs.length ? (
+                                    <div className="space-y-4">
+                                        {outboundData.logs.map((log) => (
+                                            <div key={log.id} className="flex flex-col gap-1 border-l-4 border-[#C72030] pl-4 py-2">
+                                                <p className="text-sm text-[#1a1a1a] font-medium">{log.message}</p>
+                                                <p className="text-xs text-gray-500">{log.timestamp}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 text-gray-500">No logs available</div>
+                                )}
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    {/* ATTACHMENTS TAB */}
+                    <TabsContent value="attachments" className="p-4 sm:p-6 text-[15px]">
+                        <div className="bg-white rounded-lg border text-[15px]">
+                            <div className="flex p-4 items-center">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                                    <Paperclip className="w-5 h-5 text-[#C72030]" />
+                                </div>
+                                <h2 className="text-lg font-bold">ATTACHMENTS</h2>
+                            </div>
+                            <div className="p-4">
+                                {outboundData.attachments && outboundData.attachments.length > 0 ? (
+                                    <div className="flex flex-wrap gap-4">
+                                        {outboundData.attachments.map((attachment) => {
+                                            const isImage = attachment.fileType === 'image';
+                                            const isPdf = attachment.fileType === 'pdf';
+                                            const isExcel = attachment.fileType === 'excel';
+                                            const isWord = attachment.fileType === 'word';
+
+                                            return (
+                                                <div
+                                                    key={attachment.id}
+                                                    className="relative flex flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-sm hover:shadow-md transition-shadow"
+                                                >
+                                                    <div
+                                                        className={`w-14 h-14 flex items-center justify-center border rounded-md bg-white mb-2 ${isPdf
+                                                            ? 'text-red-600'
+                                                            : isExcel
+                                                                ? 'text-green-600'
+                                                                : isWord
+                                                                    ? 'text-blue-600'
+                                                                    : isImage
+                                                                        ? 'text-yellow-600'
+                                                                        : 'text-gray-600'
+                                                            }`}
+                                                    >
+                                                        <FileText className="w-6 h-6" />
+                                                    </div>
+
+                                                    <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                        {attachment.name}
+                                                    </span>
+
+                                                    <Button
+                                                        type="button"
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="absolute top-2 right-2 h-6 w-6 p-0 text-gray-600 hover:text-[#C72030] hover:bg-gray-100"
+                                                        onClick={() => handleDownloadAttachment(attachment)}
+                                                    >
+                                                        <Download className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8">
+                                        <p className="text-sm text-gray-500 mb-4">No attachments available</p>
+                                        <div className="border rounded-lg p-8 inline-block">
+                                            <FileText className="w-16 h-16 text-gray-300 mx-auto" />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </TabsContent>
+                </Tabs>
+            </div>
 
             {/* Add Attachments Modal */}
             <Dialog open={isAttachmentModalOpen} onOpenChange={setIsAttachmentModalOpen}>

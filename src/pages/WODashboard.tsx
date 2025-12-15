@@ -353,6 +353,12 @@ export const WODashboard = () => {
             {item?.all_level_approved ? "Approved" : item?.all_level_approved === false ? "Rejected" : "Pending"}
           </span>
         );
+      case "tds_amount":
+      case "retention_amount":
+      case "retention_outstanding":
+      case "qc_amount":
+      case "qc_outstanding":
+        return value.toFixed(2);
       case "active":
         return (
           <Switch

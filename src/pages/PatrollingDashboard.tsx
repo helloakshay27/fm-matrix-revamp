@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { ExportModal } from '@/components/ExportModal';
 import { PatrollingFilterModal, PatrollingFilters } from '@/components/PatrollingFilterModal';
@@ -15,6 +16,7 @@ import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { useDebounce } from '@/hooks/useDebounce';
+import { userService, User } from '@/services/userService';
 
 // Type definitions for the API response
 interface PatrollingItem {
@@ -100,7 +102,31 @@ const columns: ColumnConfig[] = [{
   sortable: true,
   hideable: true,
   draggable: true
-},  {
+}, {
+  key: 'start_date',
+  label: 'Start Date',
+  sortable: true,
+  hideable: true,
+  draggable: true
+}, {
+  key: 'end_date',
+  label: 'End Date',
+  sortable: true,
+  hideable: true,
+  draggable: true
+}, {
+  key: 'assignee',
+  label: 'Assignee',
+  sortable: true,
+  hideable: true,
+  draggable: true
+}, {
+  key: 'supervisor',
+  label: 'Supervisor',
+  sortable: true,
+  hideable: true,
+  draggable: true
+}, {
   key: 'grace_time',
   label: 'Grace Time',
   sortable: true,
@@ -129,6 +155,7 @@ export const PatrollingDashboard = () => {
   const [appliedFilters, setAppliedFilters] = useState<PatrollingFilters>({});
   const [patrollingData, setPatrollingData] = useState<PatrollingItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
   const [pagination, setPagination] = useState({
     current_page: 1,
     per_page: 10,
@@ -203,7 +230,38 @@ export const PatrollingDashboard = () => {
 
       if (result.success) {
         setPatrollingData(result.data);
-        setPagination(result.pagination);
+        
+        // Calculate correct pagination values to handle edge cases
+        const totalCount = result.pagination.total_count || 0;
+        
+        // If no data, set pagination to show nothing
+        if (totalCount === 0) {
+          setPagination({
+            current_page: 1,
+            per_page: per_page,
+            total_pages: 0,
+            total_count: 0,
+            has_next_page: false,
+            has_prev_page: false
+          });
+        } else {
+          const actualTotalPages = Math.ceil(totalCount / per_page);
+          const currentPageNum = Math.min(page, actualTotalPages);
+          
+          setPagination({
+            current_page: currentPageNum,
+            per_page: per_page,
+            total_pages: actualTotalPages,
+            total_count: totalCount,
+            has_next_page: currentPageNum < actualTotalPages,
+            has_prev_page: currentPageNum > 1
+          });
+
+          // If current page exceeds total pages after filter/search, reset to page 1
+          if (page > actualTotalPages) {
+            setCurrentPage(1);
+          }
+        }
       } else {
         throw new Error('Failed to fetch patrolling data');
       }
@@ -216,6 +274,19 @@ export const PatrollingDashboard = () => {
       setLoading(false);
     }
   };
+
+  // Fetch users on component mount
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const fetchedUsers = await userService.getEscalateToUsers();
+        setUsers(fetchedUsers);
+      } catch (error) {
+        console.error('Error loading users:', error);
+      }
+    };
+    loadUsers();
+  }, []);
 
   // Load data on component mount and when page/perPage/filters change
   useEffect(() => {
@@ -250,6 +321,13 @@ export const PatrollingDashboard = () => {
     setCurrentPage(1); // Reset to first page when changing page size
   };
 
+  // Helper function to get user name by ID
+  const getUserName = (userId: number | null | undefined): string => {
+    if (!userId) return '—';
+    const user = users.find(u => u.id === userId);
+    return user ? user.full_name : `User ${userId}`;
+  };
+
   // Helper function to get shift type (frequency type)
   const getShiftType = (schedules: PatrollingItem['schedules']) => {
     if (schedules.length === 0) return 'No shifts';
@@ -281,17 +359,37 @@ export const PatrollingDashboard = () => {
       </button>
     </div>,
     name: <div className="font-medium">{patrol.name}</div>,
-    checkpoints: <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+    checkpoints: <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-black">
       {patrol.checkpoints.length}
+    </span>,
+    start_date: <span className="text-sm text-gray-600">
+      {patrol.validity_start_date ? new Date(patrol.validity_start_date).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }) : '—'}
+    </span>,
+    end_date: <span className="text-sm text-gray-600">
+      {patrol.validity_end_date ? new Date(patrol.validity_end_date).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }) : '—'}
+    </span>,
+    assignee: <span className="text-sm text-gray-600">
+      {patrol.schedules.length > 0 ? getUserName(patrol.schedules[0].assigned_guard_id) : '—'}
+    </span>,
+    supervisor: <span className="text-sm text-gray-600">
+      {patrol.schedules.length > 0 ? getUserName(patrol.schedules[0].supervisor_id) : '—'}
     </span>,
     shift_type: <div className="text-sm text-gray-600">{getShiftType(patrol.schedules)}</div>,
     grace_time: <span className="text-sm text-gray-600">{patrol.grace_period_minutes} min</span>,
-    status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${patrol.active
-      ? 'bg-green-100 text-green-800'
-      : 'bg-red-100 text-red-800'
-      }`}>
-      {patrol.active ? 'Active' : 'Inactive'}
-    </span>
+    status: <div className="flex items-center justify-center">
+      <Switch
+        checked={patrol.active}
+        onCheckedChange={() => handleToggleStatus(patrol.id, patrol.active)}
+      />
+    </div>
   });
   const handleView = (id: number) => {
     console.log('View patrolling:', id);
@@ -350,50 +448,89 @@ export const PatrollingDashboard = () => {
       });
     }
   };
+
+  const handleToggleStatus = async (id: number, currentStatus: boolean) => {
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+
+      if (!baseUrl || !token) {
+        throw new Error('API configuration is missing');
+      }
+
+      const apiUrl = getFullUrl(`/patrolling/setup/${id}.json`);
+
+      const response = await fetch(apiUrl, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        },
+        body: JSON.stringify({
+          patrolling: {
+            active: !currentStatus
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Update local state optimistically
+      setPatrollingData(prev => prev.map(patrol =>
+        patrol.id === id ? { ...patrol, active: !currentStatus } : patrol
+      ));
+
+      toast.success(`Patrolling ${!currentStatus ? 'activated' : 'deactivated'} successfully!`, {
+        duration: 3000,
+      });
+    } catch (error: any) {
+      console.error('Error toggling patrolling status:', error);
+      toast.error(`Failed to update status: ${error.message}`, {
+        duration: 5000,
+      });
+      // Refresh data on error to ensure consistency
+      fetchPatrollingData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+    }
+  };
   return (
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Patrolling List</h1>
       </header>
 
-      {loading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
-          <span className="ml-2 text-gray-600">Loading patrolling data...</span>
-        </div>
-      )}
+      <EnhancedTaskTable
+        data={displayedData}
+        columns={columns}
+        renderRow={renderRow}
+        storageKey="patrolling-dashboard-v3"
+        hideTableExport={true}
+        hideTableSearch={false}
+        enableSearch={true}
+        isLoading={loading}
+        searchTerm={searchTerm}
+        onSearchChange={handleSearch}
+        onFilterClick={() => setIsFilterOpen(true)}
+        loading={loading}
+        leftActions={(
+          <Button className='bg-primary text-primary-foreground hover:bg-primary/90'  onClick={() => navigate('/security/patrolling/create')}>
+            <Plus className="w-4 h-4 mr-2" /> Add
+          </Button>
+        )}
+      />
 
-      {!loading && (
-        <>
-          <EnhancedTaskTable
-            data={displayedData}
-            columns={columns}
-            renderRow={renderRow}
-            storageKey="patrolling-dashboard-v3"
-            hideTableExport={true}
-            hideTableSearch={false}
-            enableSearch={true}
-
-            searchTerm={searchTerm}
-            onSearchChange={handleSearch}
-            onFilterClick={() => setIsFilterOpen(true)}
-            leftActions={(
-              <Button className='bg-primary text-primary-foreground hover:bg-primary/90'  onClick={() => navigate('/security/patrolling/create')}>
-                <Plus className="w-4 h-4 mr-2" /> Add
-              </Button>
-            )}
-          />
-
-          <TicketPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalRecords={totalRecords}
-            perPage={perPage}
-            isLoading={loading}
-            onPageChange={handlePageChange}
-            onPerPageChange={handlePerPageChange}
-          />
-        </>
+      {totalRecords > 0 && (
+        <TicketPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalRecords={totalRecords}
+          perPage={perPage}
+          isLoading={loading}
+          onPageChange={handlePageChange}
+          onPerPageChange={handlePerPageChange}
+        />
       )}
 
       <PatrollingFilterModal

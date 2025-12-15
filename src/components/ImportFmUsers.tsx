@@ -115,15 +115,7 @@ export const ImportFmUsers: React.FC<BulkUploadDialogProps> = ({
             link.remove();
             window.URL.revokeObjectURL(url); // cleanup
 
-            toast.success('Sample format downloaded successfully', {
-                position: 'top-right',
-                duration: 4000,
-                style: {
-                    background: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                },
-            });
+            toast.success('Sample format downloaded successfully');
         } catch (error) {
             console.error('Error downloading sample file:', error);
             toast.error('Failed to download sample file. Please try again.', {

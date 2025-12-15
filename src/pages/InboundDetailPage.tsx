@@ -2,15 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     ArrowLeft,
     Package,
     User,
     FileText,
     Paperclip,
-    ChevronUp,
-    ChevronDown,
-    LucideIcon,
     X,
     Check,
     Download,
@@ -114,6 +112,7 @@ interface InboundMail {
     image?: string;
     attachments?: InboundAttachment[];
     logs?: InboundLog[];
+    delegate_id?: number | null;
 }
 
 const MAIL_INBOUND_DETAIL_ENDPOINT = (recordId: string | number) => `/pms/admin/mail_inbounds/${recordId}.json`;
@@ -134,13 +133,8 @@ export const InboundDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // State for expandable sections
-    const [expandedSections, setExpandedSections] = useState({
-        packageDetails: true,
-        senderDetails: true,
-        logs: true,
-        attachments: true,
-    });
+    // State for active tab
+    const [activeTab, setActiveTab] = useState('package-details');
 
     // Modal states
     const [isDelegateModalOpen, setIsDelegateModalOpen] = useState(false);
@@ -164,13 +158,6 @@ export const InboundDetailPage = () => {
     const [isLoadingDelegateEmployees, setIsLoadingDelegateEmployees] = useState(false);
     const [isCollectingPackage, setIsCollectingPackage] = useState(false);
     const [isDelegatingPackage, setIsDelegatingPackage] = useState(false);
-
-    const toggleSection = (section: string) => {
-        setExpandedSections(prev => ({
-            ...prev,
-            [section]: !prev[section]
-        }));
-    };
 
     // Helper function to check if value has data
     const hasData = (value: string | undefined | null): boolean => {
@@ -290,6 +277,7 @@ export const InboundDetailPage = () => {
                 address: buildAddress(detail),
                 attachments,
                 logs,
+                delegate_id: (detail.delegate_id && detail.delegate_id !== 0) ? Number(detail.delegate_id) : null,
             };
 
             setInboundData(mapped);
@@ -632,67 +620,19 @@ export const InboundDetailPage = () => {
         );
     }
 
-    // Expandable Section Component
-    const ExpandableSection = ({
-        title,
-        icon: Icon,
-        isExpanded,
-        onToggle,
-        children,
-        hasData = true
-    }: {
-        title: string;
-        icon: LucideIcon;
-        isExpanded: boolean;
-        onToggle: () => void;
-        children: React.ReactNode;
-        hasData?: boolean;
-    }) => (
-        <div className="bg-transparent border-none shadow-none rounded-lg mb-6">
-            <div
-                onClick={onToggle}
-                className="figma-card-header flex items-center justify-between cursor-pointer"
-            >
-                <div className="flex items-center gap-3">
-                    <div className="figma-card-icon-wrapper">
-                        <Icon className="figma-card-icon" />
-                    </div>
-                    <h3 className="figma-card-title uppercase">
-                        {title}
-                    </h3>
-                </div>
-                <div className="flex items-center gap-2">
-                    {!hasData && (
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">No data</span>
-                    )}
-                    {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-600" /> : <ChevronDown className="w-5 h-5 text-gray-600" />}
-                </div>
-            </div>
-            {isExpanded && (
-                <div className="figma-card-content">
-                    {children}
-                </div>
-            )}
-        </div>
-    );
-
     return (
-        <div className="p-6 bg-white min-h-screen">
+        <div className="p-4 sm:p-6 bg-white min-h-screen">
             {/* Header */}
             <div className="mb-6">
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-                    <button onClick={handleBackToList} className="flex items-center gap-1 hover:text-[#C72030] transition-colors">
-                        <ArrowLeft className="w-4 h-4" />
-                        <span className="font-bold text-[#1a1a1a]">Mail Inbound List</span>
-                    </button>
-                    <span>›</span>
-                    <span>Inbound Details</span>
-                </div>
+                <button onClick={handleBackToList} className="flex items-center gap-1 hover:text-[#C72030] transition-colors mb-4 text-base">
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Inbound List
+                </button>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-4">
                     <div>
                         <h1 className="text-2xl font-bold text-[#1a1a1a]">INBOUND DETAILS ({inboundData.id})</h1>
-                        <div className="flex items-center gap-4 mt-2">
+                        <div className="flex items-center gap-4 mt-2 flex-wrap">
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-gray-600">No. Of Package:</span>
                                 <span className="text-sm font-semibold">1</span>
@@ -703,220 +643,262 @@ export const InboundDetailPage = () => {
                             <span className="text-sm text-gray-600">{inboundData.ageing}</span>
                         </div>
                     </div>
-                    {inboundData.status.toLowerCase() !== 'collected' && (
-                        <div className="flex gap-3">
+                    <div className="flex gap-2 flex-wrap justify-end">
+                        {inboundData.status.toLowerCase() !== 'collected' && (
                             <Button
                                 onClick={handleAddAttachments}
                                 className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white"
                             >
                                 Add Attachments
                             </Button>
+                        )}
+
+                        {['received', 'overdue'].includes(inboundData.status.toLowerCase()) && !inboundData.delegate_id && (
                             <Button
                                 onClick={handleDelegatePackage}
                                 className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white"
                             >
                                 Delegate Package
                             </Button>
+                        )}
+
+                        {inboundData.status.toLowerCase() !== 'collected' && (
                             <Button
                                 onClick={handleMarkAsCollected}
                                 className="bg-white hover:bg-gray-50 text-[#1a1a1a] border border-gray-300"
                             >
                                 Mark As Collected
                             </Button>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* Package Details Section */}
-            <ExpandableSection
-                title="PACKAGE DETAILS"
-                icon={Package}
-                isExpanded={expandedSections.packageDetails}
-                onToggle={() => toggleSection('packageDetails')}
-            >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
-                    <div className="space-y-4">
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Vendor Name</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.vendorName}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Department</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.department}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Collected On</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.collectedOn}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Delegate Package Reason</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.delegatePackageReason}</span>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Recipient Name</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.recipientName}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Received On</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.receivedOn}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Collected By</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.collectedBy}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">AWB Number</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.awbNumber}</span>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Received By</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.receivedBy}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Delegated To</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.delegatedTo}</span>
-                        </div>
-                    </div>
-                </div>
-            </ExpandableSection>
-
-            {/* Sender Details Section */}
-            <ExpandableSection
-                title="SENDER DETAILS"
-                icon={User}
-                isExpanded={expandedSections.senderDetails}
-                onToggle={() => toggleSection('senderDetails')}
-            >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
-                    <div className="space-y-4">
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Sender</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.sender}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Company</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.company}</span>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Mobile</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.mobile}</span>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-gray-500 w-48 flex-shrink-0 font-medium">Address</span>
-                            <span className="text-gray-500 mx-3">:</span>
-                            <span className="text-gray-900 font-semibold flex-1">{inboundData.address}</span>
-                        </div>
-                    </div>
-                </div>
-            </ExpandableSection>
-
-            {/* Logs Section */}
-            <ExpandableSection
-                title="LOGS"
-                icon={FileText}
-                isExpanded={expandedSections.logs}
-                onToggle={() => toggleSection('logs')}
-                hasData={Boolean(inboundData.logs && inboundData.logs.length)}
-            >
-                {inboundData.logs && inboundData.logs.length ? (
-                    <div className="space-y-4">
-                        {inboundData.logs.map((log) => (
-                            <div key={log.id} className="flex flex-col gap-1">
-                                <p className="text-sm text-[#1a1a1a]">{log.message}</p>
-                                <p className="text-xs text-gray-500">{log.timestamp}</p>
-                            </div>
+            {/* Tab Section */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <Tabs defaultValue="package-details" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch border-b">
+                        {[
+                            { label: 'Package Details', value: 'package-details' },
+                            { label: 'Sender Details', value: 'sender-details' },
+                            { label: 'Logs', value: 'logs' },
+                            { label: 'Attachments', value: 'attachments' },
+                        ].map((tab) => (
+                            <TabsTrigger
+                                key={tab.value}
+                                value={tab.value}
+                                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-3 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0 text-sm"
+                            >
+                                {tab.label}
+                            </TabsTrigger>
                         ))}
-                    </div>
-                ) : (
-                    <div className="text-sm text-gray-500">No logs available.</div>
-                )}
-            </ExpandableSection>
+                    </TabsList>
 
-            {/* Attachments Section */}
-            <ExpandableSection
-                title="Attachments"
-                icon={Paperclip}
-                isExpanded={expandedSections.attachments}
-                onToggle={() => toggleSection('attachments')}
-                hasData={inboundData.attachments && inboundData.attachments.length > 0}
-            >
-                {inboundData.attachments && inboundData.attachments.length > 0 ? (
-                    <div className="flex flex-wrap gap-4">
-                        {inboundData.attachments.map((attachment) => {
-                            const isImage = attachment.fileType === 'image';
-                            const isPdf = attachment.fileType === 'pdf';
-                            const isExcel = attachment.fileType === 'excel';
-                            const isWord = attachment.fileType === 'word';
-
-                            return (
-                                <div
-                                    key={attachment.id}
-                                    className="relative flex flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-sm"
-                                >
-                                    <div
-                                        className={`w-14 h-14 flex items-center justify-center border rounded-md bg-white mb-2 ${isPdf
-                                            ? 'text-red-600'
-                                            : isExcel
-                                                ? 'text-green-600'
-                                                : isWord
-                                                    ? 'text-blue-600'
-                                                    : isImage
-                                                        ? 'text-yellow-600'
-                                                        : 'text-gray-600'
-                                            }`}
-                                    >
-                                        <FileText className="w-6 h-6" />
-                                    </div>
-
-                                    <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                                        {attachment.name}
-                                    </span>
-
-                                    <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="ghost"
-                                        className="absolute top-2 right-2 h-6 w-6 p-0 text-gray-600 hover:text-black"
-                                        onClick={() => handleDownloadAttachment(attachment)}
-                                    >
-                                        <Download className="w-4 h-4" />
-                                    </Button>
+                    {/* PACKAGE DETAILS TAB */}
+                    <TabsContent value="package-details" className="p-4 sm:p-6 text-[15px]">
+                        <div className="bg-white rounded-lg border text-[15px]">
+                            <div className="flex p-4 items-center">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                                    <Package className="w-5 h-5 text-[#C72030]" />
                                 </div>
-                            );
-                        })}
-                    </div>
-                ) : (
-                    <div className="text-center py-8">
-                        <p className="text-sm text-gray-500">No attachments available</p>
-                        <div className="mt-4 border rounded-lg p-8 inline-block">
-                            <FileText className="w-16 h-16 text-gray-300 mx-auto" />
+                                <h2 className="text-lg font-bold">PACKAGE DETAILS</h2>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 text-[15px] p-4 gap-6">
+                                <div className="space-y-3">
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Vendor Name</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.vendorName}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Department</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.department}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Collected On</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.collectedOn}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Delegate Package Reason</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.delegatePackageReason}</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Recipient Name</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.recipientName}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Received On</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.receivedOn}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Collected By</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.collectedBy}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">AWB Number</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.awbNumber}</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Received By</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.receivedBy}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Delegated To</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.delegatedTo}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                )}
-            </ExpandableSection>
+                    </TabsContent>
+
+                    {/* SENDER DETAILS TAB */}
+                    <TabsContent value="sender-details" className="p-4 sm:p-6 text-[15px]">
+                        <div className="bg-white rounded-lg border text-[15px]">
+                            <div className="flex p-4 items-center">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                                    <User className="w-5 h-5 text-[#C72030]" />
+                                </div>
+                                <h2 className="text-lg font-bold">SENDER DETAILS</h2>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 text-[15px] p-4 gap-6">
+                                <div className="space-y-3">
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Sender</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.sender}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Company</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.company}</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Mobile</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.mobile}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="text-gray-500 w-48 flex-shrink-0">Address</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">{inboundData.address}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    {/* LOGS TAB */}
+                    <TabsContent value="logs" className="p-4 sm:p-6 text-[15px]">
+                        <div className="bg-white rounded-lg border text-[15px]">
+                            <div className="flex p-4 items-center">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                                    <FileText className="w-5 h-5 text-[#C72030]" />
+                                </div>
+                                <h2 className="text-lg font-bold">LOGS</h2>
+                            </div>
+                            <div className="p-4">
+                                {inboundData.logs && inboundData.logs.length ? (
+                                    <div className="space-y-4">
+                                        {inboundData.logs.map((log) => (
+                                            <div key={log.id} className="flex flex-col gap-1 border-l-4 border-[#C72030] pl-4 py-2">
+                                                <p className="text-sm text-[#1a1a1a] font-medium">{log.message}</p>
+                                                <p className="text-xs text-gray-500">{log.timestamp}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 text-gray-500">No logs available</div>
+                                )}
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    {/* ATTACHMENTS TAB */}
+                    <TabsContent value="attachments" className="p-4 sm:p-6 text-[15px]">
+                        <div className="bg-white rounded-lg border text-[15px]">
+                            <div className="flex p-4 items-center">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
+                                    <Paperclip className="w-5 h-5 text-[#C72030]" />
+                                </div>
+                                <h2 className="text-lg font-bold">ATTACHMENTS</h2>
+                            </div>
+                            <div className="p-4">
+                                {inboundData.attachments && inboundData.attachments.length > 0 ? (
+                                    <div className="flex flex-wrap gap-4">
+                                        {inboundData.attachments.map((attachment) => {
+                                            const isImage = attachment.fileType === 'image';
+                                            const isPdf = attachment.fileType === 'pdf';
+                                            const isExcel = attachment.fileType === 'excel';
+                                            const isWord = attachment.fileType === 'word';
+
+                                            return (
+                                                <div
+                                                    key={attachment.id}
+                                                    className="relative flex flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-sm hover:shadow-md transition-shadow"
+                                                >
+                                                    <div
+                                                        className={`w-14 h-14 flex items-center justify-center border rounded-md bg-white mb-2 ${isPdf
+                                                            ? 'text-red-600'
+                                                            : isExcel
+                                                                ? 'text-green-600'
+                                                                : isWord
+                                                                    ? 'text-blue-600'
+                                                                    : isImage
+                                                                        ? 'text-yellow-600'
+                                                                        : 'text-gray-600'
+                                                            }`}
+                                                    >
+                                                        <FileText className="w-6 h-6" />
+                                                    </div>
+
+                                                    <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                        {attachment.name}
+                                                    </span>
+
+                                                    <Button
+                                                        type="button"
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        className="absolute top-2 right-2 h-6 w-6 p-0 text-gray-600 hover:text-[#C72030] hover:bg-gray-100"
+                                                        onClick={() => handleDownloadAttachment(attachment)}
+                                                    >
+                                                        <Download className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8">
+                                        <p className="text-sm text-gray-500 mb-4">No attachments available</p>
+                                        <div className="border rounded-lg p-8 inline-block">
+                                            <FileText className="w-16 h-16 text-gray-300 mx-auto" />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </TabsContent>
+                </Tabs>
+            </div>
 
             {/* Delegate Package Modal */}
             <Dialog open={isDelegateModalOpen} onOpenChange={setIsDelegateModalOpen}>

@@ -489,7 +489,7 @@ export const EditSchedulePage = () => {
 
       // Load assets using the specific API endpoint
       const assetsResponse = await fetch(
-        `https://fm-uat-api.lockated.com/pms/assets/get_assets.json`,
+        `${API_CONFIG.BASE_URL}/pms/assets/get_assets.json`,
         {
           method: 'GET',
           headers: {
@@ -671,6 +671,15 @@ export const EditSchedulePage = () => {
     initialize();
   }, [id, customFormCode]);
 
+  // Handle createNew toggle changes - clear template data when disabled
+  useEffect(() => {
+    if (!createNew) {
+      // Clear template selection and reset questionSections to default
+      updateFormData('selectedTemplate', '');
+      loadTemplateData('');
+    }
+  }, [createNew]);
+
   // Handle name-to-ID mapping after both API data and dropdown data are loaded
   useEffect(() => {
     if (apiData && users.length > 0 && categories.length > 0 && groups.length > 0) {
@@ -753,9 +762,10 @@ export const EditSchedulePage = () => {
 
         // Validate supervisors against users
         if (users.length > 0 && prev.supervisors) {
-          const userExists = users.some(user => user.id.toString() === prev.supervisors);
+          const supervisorValue = prev.supervisors.toString();
+          const userExists = users.some(user => user.id.toString() === supervisorValue);
           if (!userExists) {
-            console.warn(`Invalid supervisors value: ${prev.supervisors}. Resetting to empty.`);
+            console.warn(`Invalid supervisors value: ${prev.supervisors}. Available users:`, users.map(u => u.id));
             updatedData.supervisors = '';
             hasChanges = true;
           }
@@ -799,6 +809,42 @@ export const EditSchedulePage = () => {
       });
     }
   }, [users, categories, suppliers, groups]);
+
+  // Helper function to normalize dropdown values
+  const normalizeDropdownValue = (value: string, validOptions: string[]): string => {
+    if (!value) return '';
+    
+    const normalizedValue = value.toLowerCase().trim();
+    
+    // Direct match
+    if (validOptions.includes(normalizedValue)) {
+      return normalizedValue;
+    }
+    
+    // Handle common variations
+    const variations: { [key: string]: string } = {
+      'hours': 'hour',
+      'hrs': 'hour',
+      'h': 'hour',
+      'mins': 'minutes',
+      'min': 'minutes',
+      'm': 'minutes',
+      'days': 'day',
+      'd': 'day',
+      'weeks': 'week',
+      'w': 'week',
+      'months': 'month',
+      'mo': 'month'
+    };
+    
+    // Check variations
+    if (variations[normalizedValue] && validOptions.includes(variations[normalizedValue])) {
+      return variations[normalizedValue];
+    }
+    
+    console.warn(`Unrecognized dropdown value: "${value}". Available options:`, validOptions);
+    return '';
+  };
 
   const loadScheduleData = async (scheduleId: string) => {
     if (!customFormCode) {
@@ -847,17 +893,17 @@ export const EditSchedulePage = () => {
         selectedUsers: data.asset_task.assigned_to?.map(user => user.id) || [],
         selectedGroups: [], // Will be populated after groups are loaded
         backupAssignee: data.asset_task.backup_assigned?.id?.toString() || '',
-        planDuration: data.asset_task.plan_type || '',
+        planDuration: normalizeDropdownValue(data.asset_task.plan_type || '', ['minutes', 'hour', 'day', 'week', 'month']),
         planDurationValue: data.asset_task.plan_value || '',
         emailTriggerRule: data.custom_form.rule_ids?.length > 0 ? data.custom_form.rule_ids[0]?.toString() : '',
         scanType: data.asset_task.scan_type || '',
         category: data.asset_task.category || '',
-        submissionTime: data.custom_form.submission_time_type || '',
+        submissionTime: normalizeDropdownValue(data.custom_form.submission_time_type || '', ['minutes', 'hour', 'day', 'week']),
         submissionTimeValue: data.custom_form.submission_time_value?.toString() || '',
-        supervisors: Array.isArray(data.custom_form.supervisors) && data.custom_form.supervisors.length > 0 ? data.custom_form.supervisors[0] : '',
+        supervisors: Array.isArray(data.custom_form.supervisors) && data.custom_form.supervisors.length > 0 ? data.custom_form.supervisors[0].toString() : '',
         lockOverdueTask: data.asset_task.overdue_task_start_status ? 'true' : 'false',
         frequency: data.asset_task.frequency || '',
-        graceTime: data.asset_task.grace_time_type || '',
+        graceTime: normalizeDropdownValue(data.asset_task.grace_time_type || '', ['minutes', 'hour', 'day', 'week']),
         graceTimeValue: data.asset_task.grace_time_value || '',
         endAt: data.asset_task.end_date ? data.asset_task.end_date.split('T')[0] : '',
         supplier: data.custom_form.supplier_id?.toString() || '',
@@ -875,6 +921,12 @@ export const EditSchedulePage = () => {
 
       console.log('API Response Data:', data);
       console.log('Mapped Form Data:', mappedFormData);
+
+      // Debug logging for dropdown values
+      console.log('Plan Duration API value:', data.asset_task.plan_type, '-> Normalized:', mappedFormData.planDuration);
+      console.log('Grace Time API value:', data.asset_task.grace_time_type, '-> Normalized:', mappedFormData.graceTime);
+      console.log('Submission Time API value:', data.custom_form.submission_time_type, '-> Normalized:', mappedFormData.submissionTime);
+      console.log('Supervisors API value:', data.custom_form.supervisors, '-> Normalized:', mappedFormData.supervisors);
 
       setFormData(prev => ({ ...prev, ...mappedFormData }));
 
@@ -931,11 +983,27 @@ export const EditSchedulePage = () => {
             weightage: item.weightage || '',
             rating: item.rating_enabled === 'true',
             reading: item.is_reading === 'true',
-            dropdownValues: item.values && item.values.length > 0 ? item.values : [{ label: '', type: 'positive' }],
-            radioValues: item.values && item.values.length > 0 ? item.values : [{ label: '', type: 'positive' }],
-            checkboxValues: item.values && item.values.length > 0 ? item.values.map(v => v.label || v) : [''],
+            dropdownValues: (() => {
+              if (item.values && Array.isArray(item.values) && item.values.length > 0) {
+                return item.values.map((val: any) => ({
+                  label: val.label || val.value || val || '',
+                  type: val.type || 'positive'
+                }));
+              }
+              return [{ label: '', type: 'positive' }];
+            })(),
+            radioValues: (() => {
+              if (item.values && Array.isArray(item.values) && item.values.length > 0) {
+                return item.values.map((val: any) => ({
+                  label: val.label || val.value || val || '',
+                  type: val.type || 'positive'
+                }));
+              }
+              return [{ label: '', type: 'positive' }];
+            })(),
+            checkboxValues: item.values && item.values.length > 0 ? item.values.map(v => v.label || v.value || v) : [''],
             checkboxSelectedStates: item.values && item.values.length > 0 ? item.values.map(() => false) : [false],
-            optionsInputsValues: item.values && item.values.length > 0 ? item.values.map(v => v.label || v) : ['']
+            optionsInputsValues: item.values && item.values.length > 0 ? item.values.map(v => v.label || v.value || v) : ['']
           }))
         }];
         setQuestionSections(mappedSections);
@@ -966,10 +1034,10 @@ export const EditSchedulePage = () => {
           const weekdays = cronParts[4] !== '*' ? cronParts[4].split(',').map(d => {
             const dayMap: { [key: string]: string } = {
               '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday',
-              '4': 'Thursday', '5': 'Friday', '6': 'Saturday'
+              '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday'
             };
             return dayMap[d] || d;
-          }) : [];
+          }).filter((day, index, array) => day && day.trim() && array.indexOf(day) === index) : [];
 
           // Convert numeric months to month names for UI
           const monthMap: { [key: string]: string } = {
@@ -1016,6 +1084,10 @@ export const EditSchedulePage = () => {
             betweenMonthStart: betweenMonthStart,
             betweenMonthEnd: betweenMonthEnd
           }));
+
+          // Debug logging for weekdays
+          console.log('EditSchedulePage - Parsed weekdays:', weekdays);
+          console.log('EditSchedulePage - selectedWeekdays:', weekdays);
         }
       }
 
@@ -1522,15 +1594,15 @@ export const EditSchedulePage = () => {
     // Build day part
     if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length > 0) {
       const weekdayMap: { [key: string]: string } = {
-        'Sunday': '1',
-        'Monday': '2',
-        'Tuesday': '3',
-        'Wednesday': '4',
-        'Thursday': '5',
-        'Friday': '6',
-        'Saturday': '7'
+        'Sunday': '0',
+        'Monday': '1',
+        'Tuesday': '2',
+        'Wednesday': '3',
+        'Thursday': '4',
+        'Friday': '5',
+        'Saturday': '6'
       };
-      dayOfWeek = timeSetupData.selectedWeekdays.map(day => weekdayMap[day]).join(',');
+      dayOfWeek = timeSetupData.selectedWeekdays.map(day => weekdayMap[day]).filter(val => val !== undefined && val !== '').join(',');
       dayOfMonth = '?';
     } else if (timeSetupData.dayMode === 'specific' && timeSetupData.selectedDays.length > 0) {
       dayOfMonth = timeSetupData.selectedDays.join(',');
@@ -1626,40 +1698,72 @@ export const EditSchedulePage = () => {
           subtype: "",
           required: task.mandatory ? "true" : "false",
           is_reading: task.reading ? "true" : "false",
-          hint: task.helpTextValue || "",
+          hint: task.helpText ? (task.helpTextValue || "") : "",
           values: values,
           weightage: task.weightage || "",
-          rating_enabled: task.rating ? "true" : "false"
+          rating_enabled: task.rating ? "true" : "false",
+          question_hint_image_ids: task.helpText && task.helpTextAttachments 
+            ? (() => {
+                // Get only existing attachment IDs (numeric, from original API data)
+                const existingIds = task.helpTextAttachments
+                  .map(attachment => {
+                    if (attachment.id && 
+                        !attachment.id.toString().startsWith('existing_') && 
+                        !attachment.id.toString().includes('-') &&
+                        !isNaN(Number(attachment.id))) {
+                      return attachment.id;
+                    }
+                    return null;
+                  })
+                  .filter(id => id !== null);
+                
+                // If no existing IDs found, return empty array (all are newly added)
+                return existingIds.length > 0 ? existingIds : [];
+              })()
+            : []
         };
       })
     );
 
     // Build custom_form object
     const customForm: any = {};
-    let taskCounter = 1; // Counter for individual tasks with help text attachments
+    let contentIndex = 1; // Track position in content array
     
     questionSections.forEach((section) => {
-      // Get tasks with help text attachments
-      const sectionTasks = section.tasks.filter(task => task.task.trim());
-      const helpTextTasks = sectionTasks.filter(task => task.helpText);
-      
-      helpTextTasks.forEach(task => {
-        // Validation: All helpText tasks must have helpTextValue and helpTextAttachments
-        if (!task.helpTextValue || !task.helpTextValue.trim()) {
-          throw new Error('Please enter Help Text for all tasks where Help Text is checked.');
-        }
-        if (!task.helpTextAttachments || task.helpTextAttachments.length === 0) {
-          throw new Error('Please attach a help file for all tasks where Help Text is checked.');
+      section.tasks.filter(task => task.task.trim()).forEach(task => {
+        // If this task has help text and attachments, add them with correct index
+        if (task.helpText) {
+          // Validation: All helpText tasks must have helpTextValue and helpTextAttachments
+          if (!task.helpTextValue || !task.helpTextValue.trim()) {
+            throw new Error('Please enter Help Text for all tasks where Help Text is checked.');
+          }
+          if (!task.helpTextAttachments || task.helpTextAttachments.length === 0) {
+            throw new Error('Please attach a help file for all tasks where Help Text is checked.');
+          }
+          
+          // Create individual question_for_{contentIndex} for each task with help text
+          customForm[`question_for_${contentIndex}`] = task.helpTextAttachments.map(attachment => {
+            // Handle both existing attachments (with URLs) and new attachments (with base64 content)
+            if (attachment.url && !attachment.content.startsWith('data:')) {
+              // Existing attachment from API - preserve as URL reference
+              return {
+                filename: attachment.name,
+                content: attachment.url, // Use URL for existing attachments
+                content_type: attachment.content_type,
+                attachment_id: attachment.id // Include ID for existing attachments
+              };
+            } else {
+              // New attachment with base64 content
+              return {
+                filename: attachment.name,
+                content: attachment.content,
+                content_type: attachment.content_type
+              };
+            }
+          });
         }
         
-        // Create individual question_for_{taskCounter} for each task with help text
-        customForm[`question_for_${taskCounter}`] = task.helpTextAttachments.map(attachment => ({
-          filename: attachment.name,
-          content: attachment.content,
-          content_type: attachment.content_type
-        }));
-        
-        taskCounter++;
+        contentIndex++;
       });
     });
 
@@ -2761,7 +2865,7 @@ export const EditSchedulePage = () => {
                 >
                   <MenuItem value="">Select Users</MenuItem>
                   {Array.isArray(users) && users.map((option) => (
-                    <MenuItem key={option.id} value={option.id}>{option.name || option.full_name} ({option.email})</MenuItem>
+                    <MenuItem key={option.id} value={option.id}>{option.name || option.full_name}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -2852,7 +2956,7 @@ export const EditSchedulePage = () => {
               >
                 <MenuItem value="">Select Backup Assignee</MenuItem>
                 {Array.isArray(users) && users.map((option) => (
-                  <MenuItem key={option.id} value={option.id.toString()}>{option.name || option.full_name} ({option.email})</MenuItem>
+                  <MenuItem key={option.id} value={option.id.toString()}>{option.name || option.full_name}</MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -3144,7 +3248,14 @@ export const EditSchedulePage = () => {
               <input
                 type="checkbox"
                 checked={createNew}
-                onChange={(e) => setCreateNew(e.target.checked)}
+                onChange={(e) => {
+                  const isChecked = e.target.checked;
+                  setCreateNew(isChecked);
+                  // If disabling createNew, clear template data immediately
+                  if (!isChecked) {
+                    updateFormData('selectedTemplate', '');
+                  }
+                }}
                 className="sr-only"
               />
               <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${createNew ? 'translate-x-6' : 'translate-x-1'}`}></span>
@@ -3479,8 +3590,22 @@ export const EditSchedulePage = () => {
                               { label: 'Yes', type: 'positive' },
                               { label: 'No', type: 'negative' }
                             ]);
-                          } else if (value !== 'dropdown') {
+                          } else if (value === 'radio') {
+                            updateTaskInSection(section.id, task.id, 'radioValues', [
+                              { label: 'Yes', type: 'positive' },
+                              { label: 'No', type: 'negative' }
+                            ]);
+                          } else if (value === 'checkbox') {
+                            updateTaskInSection(section.id, task.id, 'checkboxValues', ['Yes', 'No']);
+                            updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false, false]);
+                          } else if (value === 'options-inputs') {
+                            updateTaskInSection(section.id, task.id, 'optionsInputsValues', ['']);
+                          } else if (value !== 'dropdown' && value !== 'radio' && value !== 'checkbox' && value !== 'options-inputs') {
                             updateTaskInSection(section.id, task.id, 'dropdownValues', [{ label: '', type: 'positive' }]);
+                            updateTaskInSection(section.id, task.id, 'radioValues', [{ label: '', type: 'positive' }]);
+                            updateTaskInSection(section.id, task.id, 'checkboxValues', ['']);
+                            updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false]);
+                            updateTaskInSection(section.id, task.id, 'optionsInputsValues', ['']);
                           }
                         }}
                         disabled={task.reading && !formData.selectedTemplate}
@@ -3490,6 +3615,7 @@ export const EditSchedulePage = () => {
                         <MenuItem value="number">Numeric</MenuItem>
                         <MenuItem value="dropdown">Dropdown</MenuItem>
                         <MenuItem value="radio">Radio</MenuItem>
+                        <MenuItem value="checkbox">Checkbox</MenuItem>
                         <MenuItem value="date">Date</MenuItem>
                         <MenuItem value="options-inputs">Options & Inputs</MenuItem>
                       </Select>
@@ -3687,7 +3813,275 @@ export const EditSchedulePage = () => {
                     </Box>
                   )}
 
-                  {/* Similar configurations for radio, checkbox, etc. can be added here following the same pattern */}
+                  {/* Radio Input Type Configuration */}
+                  {task.inputType === 'radio' && (
+                    <Box sx={{ mt: 2 }}>
+                      <Box sx={{
+                        backgroundColor: '#F5F5F5',
+                        border: '1px solid #E0E0E0',
+                        borderRadius: 0,
+                        padding: 2
+                      }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                            Selected
+                          </Typography>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                            Enter Value
+                          </Typography>
+                        </Box>
+
+                        {task.radioValues && task.radioValues.map((value, valueIndex) => (
+                          <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                            <Radio
+                              checked={valueIndex === 0} // First option selected by default
+                              name={`radio-${section.id}-${task.id}`}
+                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            />
+
+                            <TextField
+                              fullWidth
+                              size="small"
+                              placeholder="Enter option value"
+                              value={value.label}
+                              onChange={(e) => {
+                                const newValues = [...task.radioValues];
+                                newValues[valueIndex] = { ...newValues[valueIndex], label: e.target.value };
+                                updateTaskInSection(section.id, task.id, 'radioValues', newValues);
+                              }}
+                              label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  backgroundColor: 'white'
+                                }
+                              }}
+                            />
+
+                            <FormControl variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
+                              <InputLabel shrink>Type</InputLabel>
+                              <Select
+                                label="Type"
+                                notched
+                                displayEmpty
+                                value={value.type || ''}
+                                onChange={(e) => {
+                                  const newValues = [...task.radioValues];
+                                  newValues[valueIndex] = { ...newValues[valueIndex], type: e.target.value };
+                                  updateTaskInSection(section.id, task.id, 'radioValues', newValues);
+                                }}
+                              >
+                                <MenuItem value="">Select Type</MenuItem>
+                                <MenuItem value="positive">P</MenuItem>
+                                <MenuItem value="negative">N</MenuItem>
+                              </Select>
+                            </FormControl>
+                            {task.radioValues.length > 1 && (
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  const newValues = task.radioValues.filter((_, idx) => idx !== valueIndex);
+                                  updateTaskInSection(section.id, task.id, 'radioValues', newValues);
+                                }}
+                                sx={{ color: '#C72030' }}
+                              >
+                                <Close />
+                              </IconButton>
+                            )}
+                          </Box>
+                        ))}
+
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                          <MuiButton
+                            variant="outlined"
+                            size="small"
+                            startIcon={<Add />}
+                            onClick={() => {
+                              const newValues = [...task.radioValues, { label: '', type: 'positive' }];
+                              updateTaskInSection(section.id, task.id, 'radioValues', newValues);
+                            }}
+                            sx={{
+                              color: '#C72030',
+                              borderColor: '#C72030',
+                              fontSize: '12px',
+                              padding: '4px 12px',
+                              '&:hover': {
+                                borderColor: '#C72030',
+                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                              }
+                            }}
+                          >
+                            Add Option
+                          </MuiButton>
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Checkbox Input Type Configuration */}
+                  {task.inputType === 'checkbox' && (
+                    <Box sx={{ mt: 2 }}>
+                      <Box sx={{
+                        backgroundColor: '#F5F5F5',
+                        border: '1px solid #E0E0E0',
+                        borderRadius: 0,
+                        padding: 2
+                      }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                            Selected
+                          </Typography>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                            Enter Value
+                          </Typography>
+                        </Box>
+
+                        {task.checkboxValues && task.checkboxValues.map((value, valueIndex) => (
+                          <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                            <Checkbox
+                              checked={task.checkboxSelectedStates?.[valueIndex] || false}
+                              onChange={(e) => {
+                                const newSelectedStates = [...(task.checkboxSelectedStates || [])];
+                                newSelectedStates[valueIndex] = e.target.checked;
+                                updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', newSelectedStates);
+                              }}
+                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            />
+
+                            <TextField
+                              fullWidth
+                              size="small"
+                              placeholder="Enter option value"
+                              value={value}
+                              onChange={(e) => {
+                                const newValues = [...task.checkboxValues];
+                                newValues[valueIndex] = e.target.value;
+                                updateTaskInSection(section.id, task.id, 'checkboxValues', newValues);
+                              }}
+                              label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  backgroundColor: 'white'
+                                }
+                              }}
+                            />
+
+                            {task.checkboxValues.length > 1 && (
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  const newValues = task.checkboxValues.filter((_, idx) => idx !== valueIndex);
+                                  const newSelectedStates = task.checkboxSelectedStates?.filter((_, idx) => idx !== valueIndex) || [];
+                                  updateTaskInSection(section.id, task.id, 'checkboxValues', newValues);
+                                  updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', newSelectedStates);
+                                }}
+                                sx={{ color: '#C72030' }}
+                              >
+                                <Close />
+                              </IconButton>
+                            )}
+                          </Box>
+                        ))}
+
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                          <MuiButton
+                            variant="outlined"
+                            size="small"
+                            startIcon={<Add />}
+                            onClick={() => {
+                              const newValues = [...task.checkboxValues, ''];
+                              const newSelectedStates = [...(task.checkboxSelectedStates || []), false];
+                              updateTaskInSection(section.id, task.id, 'checkboxValues', newValues);
+                              updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', newSelectedStates);
+                            }}
+                            sx={{
+                              color: '#C72030',
+                              borderColor: '#C72030',
+                              fontSize: '12px',
+                              padding: '4px 12px',
+                              '&:hover': {
+                                borderColor: '#C72030',
+                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                              }
+                            }}
+                          >
+                            Add Option
+                          </MuiButton>
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Options & Inputs Type Configuration */}
+                  {task.inputType === 'options-inputs' && (
+                    <Box sx={{ mt: 2 }}>
+                      <Box sx={{
+                        backgroundColor: '#F5F5F5',
+                        border: '1px solid #E0E0E0',
+                        borderRadius: 0,
+                        padding: 2
+                      }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
+                          Enter Value
+                        </Typography>
+                        {task.optionsInputsValues && task.optionsInputsValues.map((value, valueIndex) => (
+                          <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              placeholder="Enter option value"
+                              value={value}
+                              onChange={(e) => {
+                                const newValues = [...task.optionsInputsValues];
+                                newValues[valueIndex] = e.target.value;
+                                updateTaskInSection(section.id, task.id, 'optionsInputsValues', newValues);
+                              }}
+                              label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  backgroundColor: 'white'
+                                }
+                              }}
+                            />
+                            {task.optionsInputsValues.length > 1 && (
+                              <IconButton
+                                size="small"
+                                onClick={() => {
+                                  const newValues = task.optionsInputsValues.filter((_, idx) => idx !== valueIndex);
+                                  updateTaskInSection(section.id, task.id, 'optionsInputsValues', newValues);
+                                }}
+                                sx={{ color: '#C72030' }}
+                              >
+                                <Close />
+                              </IconButton>
+                            )}
+                          </Box>
+                        ))}
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                          <MuiButton
+                            variant="outlined"
+                            size="small"
+                            startIcon={<Add />}
+                            onClick={() => {
+                              const newValues = [...task.optionsInputsValues, ''];
+                              updateTaskInSection(section.id, task.id, 'optionsInputsValues', newValues);
+                            }}
+                            sx={{
+                              color: '#C72030',
+                              borderColor: '#C72030',
+                              fontSize: '12px',
+                              padding: '4px 12px',
+                              '&:hover': {
+                                borderColor: '#C72030',
+                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                              }
+                            }}
+                          >
+                            Add Option
+                          </MuiButton>
+                        </Box>
+                      </Box>
+                    </Box>
+                  )}
 
                 </Box>
               </Box>
@@ -3831,7 +4225,7 @@ export const EditSchedulePage = () => {
       </Box>
 
       {/* Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
         <CancelButton
           onClick={() => navigate('/maintenance/schedule')}
         >
@@ -3841,7 +4235,7 @@ export const EditSchedulePage = () => {
         <RedButton
           onClick={handleUpdateSchedule}
           disabled={isSubmitting}
-          startIcon={isSubmitting ? <LinearProgress size={20} /> : <Save />}
+          // startIcon={isSubmitting ? <LinearProgress size={20} /> : <Save />}
         >
           {isSubmitting ? 'Updating...' : 'Update Schedule'}
         </RedButton>

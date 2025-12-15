@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Building, X, ChevronLeft, ChevronRight, Check, Download, Upload, Loader2, Plus } from 'lucide-react';
+import { Edit, Building, X, ChevronLeft, ChevronRight, Check, Download, Upload, Loader2, Plus, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -43,6 +43,8 @@ export function FloorPage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [selectedQrCode, setSelectedQrCode] = useState<string>('');
   
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
@@ -64,24 +66,19 @@ export function FloorPage() {
   useEffect(() => {
     if (newFloorBuilding) {
       dispatch(fetchWings(newFloorBuilding));
-    }
-  }, [dispatch, newFloorBuilding]);
-
-  useEffect(() => {
-    if (newFloorBuilding && newFloorWing) {
-      dispatch(fetchAreas({ buildingId: newFloorBuilding, wingId: newFloorWing }));
+      dispatch(fetchAreas({ buildingId: newFloorBuilding, wingId: newFloorWing || undefined }));
     }
   }, [dispatch, newFloorBuilding, newFloorWing]);
 
   useEffect(() => {
     if (editFloorBuilding) {
+      console.log('🔄 Edit useEffect triggered:', {
+        editFloorBuilding,
+        editSelectedWing,
+        wingIdToPass: editSelectedWing || undefined
+      });
       dispatch(fetchWings(editFloorBuilding));
-    }
-  }, [dispatch, editFloorBuilding]);
-
-  useEffect(() => {
-    if (editFloorBuilding && editSelectedWing) {
-      dispatch(fetchAreas({ buildingId: editFloorBuilding, wingId: editSelectedWing }));
+      dispatch(fetchAreas({ buildingId: editFloorBuilding, wingId: editSelectedWing || undefined }));
     }
   }, [dispatch, editFloorBuilding, editSelectedWing]);
 
@@ -120,7 +117,7 @@ export function FloorPage() {
   };
 
   const handleAddFloor = async () => {
-    if (newFloorBuilding && newFloorWing && newFloorArea && newFloorName.trim()) {
+    if (newFloorBuilding && newFloorName.trim()) {
       try {
         await dispatch(createFloor({
           name: newFloorName,
@@ -149,10 +146,16 @@ export function FloorPage() {
     setEditSelectedWing(floor.wing_id);
     setEditSelectedArea(floor.area_id);
     setShowEditDialog(true);
+    
+    // Fetch wings and areas immediately when editing starts
+    if (floor.building_id) {
+      dispatch(fetchWings(floor.building_id));
+      dispatch(fetchAreas({ buildingId: floor.building_id, wingId: floor.wing_id || undefined }));
+    }
   };
 
   const handleUpdateFloor = async () => {
-    if (editingFloor && editFloorName.trim() && editSelectedWing && editSelectedArea) {
+    if (editingFloor && editFloorName.trim()) {
       try {
         await dispatch(updateFloor({
           id: editingFloor.id,
@@ -394,19 +397,20 @@ export function FloorPage() {
                   <TableHead>Wing</TableHead>
                   <TableHead>Area</TableHead>
                   <TableHead>Floor</TableHead>
+                  <TableHead>QR Code</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {floors.loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
+                    <TableCell colSpan={7} className="text-center py-4">
                       Loading floors...
                     </TableCell>
                   </TableRow>
                 ) : filteredFloors.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
+                    <TableCell colSpan={7} className="text-center py-4">
                       {floors.data.length === 0 ? 'No floors available' : 'No floors match your search'}
                     </TableCell>
                   </TableRow>
@@ -422,6 +426,23 @@ export function FloorPage() {
                       <TableCell>{floor.wing?.name || 'N/A'}</TableCell>
                       <TableCell>{floor.area?.name || 'N/A'}</TableCell>
                       <TableCell>{floor.name}</TableCell>
+                      <TableCell>
+                        {floor.qr_code_url ? (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedQrCode(floor.qr_code_url);
+                              setIsQrModalOpen(true);
+                            }}
+                            className="text-[#C72030] hover:text-[#C72030]/80"
+                          >
+                            <QrCode className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <span className="text-gray-400 text-sm">-</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <button onClick={() => toggleFloorStatus(floor.id)} className="cursor-pointer">
                           {floor.active ? (
@@ -574,7 +595,7 @@ export function FloorPage() {
               <Select 
                 value={newFloorArea?.toString() || ''} 
                 onValueChange={(value) => setNewFloorArea(parseInt(value))}
-                disabled={!newFloorWing}
+                disabled={!newFloorBuilding}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select area" />
@@ -611,7 +632,7 @@ export function FloorPage() {
               </Button>
               <Button 
                 onClick={handleAddFloor} 
-                disabled={!newFloorName.trim() || !newFloorBuilding || !newFloorWing || !newFloorArea}
+                disabled={!newFloorName.trim() || !newFloorBuilding}
                 className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
               >
                 Submit
@@ -638,7 +659,22 @@ export function FloorPage() {
               <label className="text-sm font-medium">Building</label>
               <Select 
                 value={editFloorBuilding?.toString() || ''} 
-                onValueChange={(value) => setEditFloorBuilding(parseInt(value))}
+                onValueChange={(value) => {
+                  const buildingId = parseInt(value);
+                  console.log('🏢 Building changed in edit:', {
+                    newBuildingId: buildingId,
+                    previousBuilding: editFloorBuilding,
+                    previousWing: editSelectedWing,
+                    previousArea: editSelectedArea
+                  });
+                  setEditFloorBuilding(buildingId);
+                  setEditSelectedWing(null);
+                  setEditSelectedArea(null);
+                  console.log('📡 Fetching wings and areas for building:', buildingId);
+                  // Fetch wings and areas for new building immediately
+                  dispatch(fetchWings(buildingId));
+                  dispatch(fetchAreas({ buildingId, wingId: undefined }));
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select building" />
@@ -656,7 +692,15 @@ export function FloorPage() {
               <label className="text-sm font-medium">Wing</label>
               <Select 
                 value={editSelectedWing?.toString() || ''} 
-                onValueChange={(value) => setEditSelectedWing(parseInt(value))}
+                onValueChange={(value) => {
+                  const wingId = parseInt(value);
+                  setEditSelectedWing(wingId);
+                  setEditSelectedArea(null);
+                  // Fetch areas for selected building and wing
+                  if (editFloorBuilding) {
+                    dispatch(fetchAreas({ buildingId: editFloorBuilding, wingId }));
+                  }
+                }}
                 disabled={!editFloorBuilding}
               >
                 <SelectTrigger>
@@ -676,13 +720,13 @@ export function FloorPage() {
               <Select 
                 value={editSelectedArea?.toString() || ''} 
                 onValueChange={(value) => setEditSelectedArea(parseInt(value))}
-                disabled={!editSelectedWing}
+                disabled={!editFloorBuilding}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select Area" />
                 </SelectTrigger>
                 <SelectContent>
-                  {areas.data.filter(area => Number(area.wing_id) === editSelectedWing).map((area) => (
+                  {areas.data.map((area) => (
                     <SelectItem key={area.id} value={area.id.toString()}>
                       {area.name}
                     </SelectItem>
@@ -711,7 +755,7 @@ export function FloorPage() {
             <div className="flex gap-2">
               <Button 
                 onClick={handleUpdateFloor} 
-                disabled={!editFloorName.trim() || !editSelectedWing || !editSelectedArea}
+                disabled={!editFloorName.trim()}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Update Floor
@@ -720,6 +764,45 @@ export function FloorPage() {
                 Close
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Code Modal */}
+      <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Floor QR Code</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center space-y-4 py-4">
+            {selectedQrCode ? (
+              <>
+                <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
+                  <img 
+                    src={selectedQrCode} 
+                    alt="Floor QR Code" 
+                    className="w-64 h-64 object-contain"
+                  />
+                </div>
+                <Button
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = selectedQrCode;
+                    link.download = `floor-qr-code-${Date.now()}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    toast.success('QR Code downloaded successfully');
+                  }}
+                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download QR Code
+                </Button>
+              </>
+            ) : (
+              <p className="text-gray-500">No QR code available</p>
+            )}
           </div>
         </DialogContent>
       </Dialog>

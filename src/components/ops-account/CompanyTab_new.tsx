@@ -1,14 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus, Download, Filter, Upload, Eye, Edit, Trash2, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { TicketPagination } from '@/components/TicketPagination';
-import { toast } from 'sonner';
-import { useApiConfig } from '@/hooks/useApiConfig';
-import { getUser } from '@/utils/auth';
-import { useDebounce } from '@/hooks/useDebounce';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Plus,
+  Download,
+  Filter,
+  Upload,
+  Eye,
+  Edit,
+  Trash2,
+  Loader2,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { TicketPagination } from "@/components/TicketPagination";
+import { toast } from "sonner";
+import { useApiConfig } from "@/hooks/useApiConfig";
+import { getUser } from "@/utils/auth";
+import { useDebounce } from "@/hooks/useDebounce";
 
 // Type definitions for the API response
 interface CompanyItem {
@@ -48,71 +57,71 @@ interface CompanyTabProps {
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
   {
-    key: 'actions',
-    label: 'Action',
+    key: "actions",
+    label: "Action",
     sortable: false,
     hideable: false,
-    draggable: false
+    draggable: false,
   },
   {
-    key: 'name',
-    label: 'Company Name',
+    key: "name",
+    label: "Company Name",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'organization',
-    label: 'Organization',
+    key: "organization",
+    label: "Organization",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'country',
-    label: 'Country',
+    key: "country",
+    label: "Country",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'billing_rate',
-    label: 'Billing Rate',
+    key: "billing_rate",
+    label: "Billing Rate",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'live_date',
-    label: 'Live Date',
+    key: "live_date",
+    label: "Live Date",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'created_at',
-    label: 'Created At',
+    key: "created_at",
+    label: "Created At",
     sortable: true,
     hideable: true,
-    draggable: true
-  }
+    draggable: true,
+  },
 ];
 
 export const CompanyTab: React.FC<CompanyTabProps> = ({
   searchQuery,
   setSearchQuery,
   entriesPerPage,
-  setEntriesPerPage
+  setEntriesPerPage,
 }) => {
   const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
-  
+
   // State management
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -120,7 +129,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
     total_pages: 1,
     total_count: 0,
     has_next_page: false,
-    has_prev_page: false
+    has_prev_page: false,
   });
 
   // Modal states
@@ -130,8 +139,10 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
-  
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
+    null
+  );
+
   // Dropdowns and permissions
   const [organizationsDropdown, setOrganizationsDropdown] = useState<any[]>([]);
   const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
@@ -145,8 +156,12 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   };
 
   const checkEditPermission = () => {
-    const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'your-specific-email@domain.com'];
+    const userEmail = user.email || "";
+    const allowedEmails = [
+      "abhishek.sharma@lockated.com",
+      "adhip.shetty@lockated.com",
+      "helloakshay27@gmail.com",
+    ];
     setCanEditCompany(allowedEmails.includes(userEmail));
   };
 
@@ -162,26 +177,28 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   }, [currentPage, perPage, debouncedSearchQuery]);
 
   // Fetch companies data from API
-  const fetchCompanies = async (page = 1, per_page = 10, search = '') => {
+  const fetchCompanies = async (page = 1, per_page = 10, search = "") => {
     setLoading(true);
     try {
       // Build API URL with parameters
-      let apiUrl = getFullUrl(`/pms/company_setups/company_index.json?page=${page}&per_page=${per_page}`);
+      let apiUrl = getFullUrl(
+        `/pms/company_setups/company_index.json?page=${page}&per_page=${per_page}`
+      );
 
       // Add search parameter
       if (search.trim()) {
         apiUrl += `&q[search_all_fields_cont]=${encodeURIComponent(search.trim())}`;
       }
 
-      console.log('🔗 API URL:', apiUrl);
+      console.log("🔗 API URL:", apiUrl);
 
       const response = await fetch(apiUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': getAuthHeader()
-        }
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
       });
 
       if (!response.ok) {
@@ -189,7 +206,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       }
 
       const result: CompanyApiResponse = await response.json();
-      console.log('Companies API response:', result);
+      console.log("Companies API response:", result);
 
       if (result && result.code === 200 && Array.isArray(result.data)) {
         setCompanies(result.data);
@@ -203,7 +220,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
             total_pages: Math.ceil(result.data.length / per_page),
             total_count: result.data.length,
             has_next_page: false,
-            has_prev_page: false
+            has_prev_page: false,
           });
         }
       } else if (result && Array.isArray(result.companies)) {
@@ -211,10 +228,10 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       } else if (Array.isArray(result)) {
         setCompanies(result);
       } else {
-        throw new Error('Invalid companies data format');
+        throw new Error("Invalid companies data format");
       }
     } catch (error: any) {
-      console.error('Error fetching companies:', error);
+      console.error("Error fetching companies:", error);
       toast.error(`Failed to load companies: ${error.message}`, {
         duration: 5000,
       });
@@ -226,10 +243,10 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const fetchOrganizationsDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/organizations.json'), {
+      const response = await fetch(getFullUrl("/organizations.json"), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
         },
       });
 
@@ -242,23 +259,23 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error fetching organizations:', error);
+      console.error("Error fetching organizations:", error);
     }
   };
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl('/headquarters.json'), {
+      const response = await fetch(getFullUrl("/headquarters.json"), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json',
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
         },
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Countries API response:', data);
-        
+        console.log("Countries API response:", data);
+
         if (Array.isArray(data)) {
           // Handle direct array format
           const uniqueCountries = new Map();
@@ -269,10 +286,16 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
               uniqueCountries.set(id, name);
             }
           });
-          
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
+
+          const countriesArray = Array.from(uniqueCountries.entries()).map(
+            ([id, name]) => ({ id: Number(id), name: String(name) })
+          );
           setCountriesDropdown(countriesArray);
-        } else if (data && data.headquarters && Array.isArray(data.headquarters)) {
+        } else if (
+          data &&
+          data.headquarters &&
+          Array.isArray(data.headquarters)
+        ) {
           // Handle nested headquarters format
           const uniqueCountries = new Map();
           data.headquarters.forEach((hq: any) => {
@@ -282,32 +305,34 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
               uniqueCountries.set(id, name);
             }
           });
-          
-          const countriesArray = Array.from(uniqueCountries.entries()).map(([id, name]) => ({ id: Number(id), name: String(name) }));
+
+          const countriesArray = Array.from(uniqueCountries.entries()).map(
+            ([id, name]) => ({ id: Number(id), name: String(name) })
+          );
           setCountriesDropdown(countriesArray);
         } else {
-          console.error('Countries data format unexpected:', data);
+          console.error("Countries data format unexpected:", data);
           setCountriesDropdown([]);
         }
       } else {
-        toast.error('Failed to fetch countries');
+        toast.error("Failed to fetch countries");
         setCountriesDropdown([]);
       }
     } catch (error) {
-      console.error('Error fetching countries:', error);
-      toast.error('Error fetching countries');
+      console.error("Error fetching countries:", error);
+      toast.error("Error fetching countries");
       setCountriesDropdown([]);
     }
   };
 
   // Handle search
   const handleSearch = (term: string) => {
-    console.log('Search query:', term);
+    console.log("Search query:", term);
     setSearchTerm(term);
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
     if (!term.trim()) {
-      fetchCompanies(1, perPage, '');
+      fetchCompanies(1, perPage, "");
     }
   };
 
@@ -324,36 +349,40 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   // Helper function to get organization name
   const getOrganizationName = (organizationId: number | null | undefined) => {
-    if (!organizationId) return 'Unknown';
-    const organization = organizationsDropdown.find(o => o.id && o.id.toString() === organizationId.toString());
-    return organization ? organization.name : 'Unknown';
+    if (!organizationId) return "Unknown";
+    const organization = organizationsDropdown.find(
+      (o) => o.id && o.id.toString() === organizationId.toString()
+    );
+    return organization ? organization.name : "Unknown";
   };
 
   // Helper function to get country name
   const getCountryName = (countryId: number | null | undefined) => {
-    if (!countryId) return 'Unknown';
-    const country = countriesDropdown.find(c => c.id && c.id.toString() === countryId.toString());
-    return country ? country.name : 'Unknown';
+    if (!countryId) return "Unknown";
+    const country = countriesDropdown.find(
+      (c) => c.id && c.id.toString() === countryId.toString()
+    );
+    return country ? country.name : "Unknown";
   };
 
   // Format date helper
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
       });
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid date';
+      console.error("Error formatting date:", error);
+      return "Invalid date";
     }
   };
 
   const totalRecords = pagination.total_count;
   const totalPages = pagination.total_pages;
-  
+
   // Use API data directly instead of client-side filtering
   const displayedData = companies;
 
@@ -390,7 +419,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
     name: (
       <div className="flex items-center gap-3">
         <div>
-          <div className="font-medium">{company?.name || 'N/A'}</div>
+          <div className="font-medium">{company?.name || "N/A"}</div>
           {company?.remarks && (
             <div className="text-sm text-gray-500">{company.remarks}</div>
           )}
@@ -409,7 +438,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
     ),
     billing_rate: (
       <div className="text-sm">
-        <div>{company?.billing_rate || '-'}</div>
+        <div>{company?.billing_rate || "-"}</div>
         {company?.billing_term && (
           <div className="text-gray-500">Term: {company.billing_term}</div>
         )}
@@ -424,23 +453,23 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       <span className="text-sm text-gray-600">
         {formatDate(company?.created_at)}
       </span>
-    )
+    ),
   });
 
   const handleView = (id: number) => {
-    console.log('View company:', id);
+    console.log("View company:", id);
     // Navigate to company details page
     navigate(`/ops-account/companies/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
-    console.log('Edit company:', id);
+    console.log("Edit company:", id);
     setSelectedCompanyId(id);
     setIsEditModalOpen(true);
   };
 
   const handleDelete = (id: number) => {
-    console.log('Delete company:', id);
+    console.log("Delete company:", id);
     setSelectedCompanyId(id);
     setIsDeleteModalOpen(true);
   };
@@ -449,25 +478,28 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
     if (!selectedCompanyId) return;
 
     if (!canEditCompany) {
-      toast.error('You do not have permission to delete companies');
+      toast.error("You do not have permission to delete companies");
       return;
     }
 
     try {
-      const response = await fetch(getFullUrl(`/pms/company_setups/${selectedCompanyId}.json`), {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': getAuthHeader()
+      const response = await fetch(
+        getFullUrl(`/pms/company_setups/${selectedCompanyId}.json`),
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
         }
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      toast.success('Company deleted successfully!', {
+      toast.success("Company deleted successfully!", {
         duration: 3000,
       });
 
@@ -476,7 +508,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       setIsDeleteModalOpen(false);
       setSelectedCompanyId(null);
     } catch (error: any) {
-      console.error('Error deleting company:', error);
+      console.error("Error deleting company:", error);
       toast.error(`Failed to delete company: ${error.message}`, {
         duration: 5000,
       });
@@ -509,16 +541,16 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
             searchTerm={searchTerm}
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
-            leftActions={(
-              <Button 
-                className='bg-primary text-primary-foreground hover:bg-primary/90'  
+            leftActions={
+              <Button
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={() => setIsAddModalOpen(true)}
                 disabled={!canEditCompany}
               >
                 <Plus className="w-4 h-4 mr-2" /> Add Company
               </Button>
-            )}
-            rightActions={(
+            }
+            rightActions={
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -538,7 +570,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                   Export
                 </Button>
               </div>
-            )}
+            }
           />
 
           <TicketPagination

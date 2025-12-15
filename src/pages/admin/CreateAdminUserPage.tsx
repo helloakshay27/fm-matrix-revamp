@@ -1,23 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { ArrowLeft, Plus, User } from 'lucide-react';
-import { toast } from 'sonner';
-import { useApiConfig } from '@/hooks/useApiConfig';
-import { createOrganizationAdmin, getOrganizations, getCompanies } from '@/services/adminUserAPI';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
+import { ArrowLeft, Plus, User } from "lucide-react";
+import { toast } from "sonner";
+import { useApiConfig } from "@/hooks/useApiConfig";
+import {
+  createOrganizationAdmin,
+  getOrganizations,
+  getCompanies,
+} from "@/services/adminUserAPI";
+import { DuplicateUserDialog } from "@/components/DuplicateUserDialog";
+import axios from "axios";
 
 const fieldStyles = {
-  height: '45px',
-  '& .MuiInputBase-root': {
-    height: '45px',
+  height: "45px",
+  "& .MuiInputBase-root": {
+    height: "45px",
   },
-  '& .MuiInputBase-input': {
-    padding: '12px 14px',
+  "& .MuiInputBase-input": {
+    padding: "12px 14px",
   },
-  '& .MuiSelect-select': {
-    padding: '12px 14px',
+  "& .MuiSelect-select": {
+    padding: "12px 14px",
   },
 };
 
@@ -25,10 +37,11 @@ const selectMenuProps = {
   PaperProps: {
     style: {
       maxHeight: 224,
-      backgroundColor: 'white',
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
       zIndex: 9999,
     },
   },
@@ -61,14 +74,14 @@ interface Company {
 export const CreateAdminUserPage = () => {
   const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
-  
+
   const [formData, setFormData] = useState<FormData>({
-    firstname: '',
-    lastname: '',
-    email: '',
-    mobile: '',
-    organization_id: '',
-    company_id: ''
+    firstname: "",
+    lastname: "",
+    email: "",
+    mobile: "",
+    organization_id: "",
+    company_id: "",
   });
 
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -78,6 +91,11 @@ export const CreateAdminUserPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingOrganizations, setLoadingOrganizations] = useState(false);
   const [loadingCompanies, setLoadingCompanies] = useState(false);
+  const [duplicateUserDialog, setDuplicateUserDialog] = useState({
+    open: false,
+    companies: [],
+    errorMessage: "",
+  });
 
   // Fetch organizations on component mount
   useEffect(() => {
@@ -89,16 +107,20 @@ export const CreateAdminUserPage = () => {
   useEffect(() => {
     if (formData.organization_id) {
       const filtered = companies.filter(
-        company => company.organization_id.toString() === formData.organization_id
+        (company) =>
+          company.organization_id.toString() === formData.organization_id
       );
       setFilteredCompanies(filtered);
       // Reset company selection if current selection is not in filtered list
-      if (formData.company_id && !filtered.find(c => c.id.toString() === formData.company_id)) {
-        setFormData(prev => ({ ...prev, company_id: '' }));
+      if (
+        formData.company_id &&
+        !filtered.find((c) => c.id.toString() === formData.company_id)
+      ) {
+        setFormData((prev) => ({ ...prev, company_id: "" }));
       }
     } else {
       setFilteredCompanies([]);
-      setFormData(prev => ({ ...prev, company_id: '' }));
+      setFormData((prev) => ({ ...prev, company_id: "" }));
     }
   }, [formData.organization_id, companies]);
 
@@ -106,17 +128,17 @@ export const CreateAdminUserPage = () => {
     setLoadingOrganizations(true);
     try {
       const result = await getOrganizations();
-      
+
       if (result.success && result.data) {
         setOrganizations(result.data);
       } else {
-        console.error('Failed to fetch organizations:', result.error);
-        toast.error(result.error || 'Failed to load organizations');
+        console.error("Failed to fetch organizations:", result.error);
+        toast.error(result.error || "Failed to load organizations");
         setOrganizations([]);
       }
     } catch (error) {
-      console.error('Error fetching organizations:', error);
-      toast.error('Error loading organizations');
+      console.error("Error fetching organizations:", error);
+      toast.error("Error loading organizations");
       setOrganizations([]);
     } finally {
       setLoadingOrganizations(false);
@@ -127,17 +149,17 @@ export const CreateAdminUserPage = () => {
     setLoadingCompanies(true);
     try {
       const result = await getCompanies();
-      
+
       if (result.success && result.data) {
         setCompanies(result.data);
       } else {
-        console.error('Failed to fetch companies:', result.error);
-        toast.error(result.error || 'Failed to load companies');
+        console.error("Failed to fetch companies:", result.error);
+        toast.error(result.error || "Failed to load companies");
         setCompanies([]);
       }
     } catch (error) {
-      console.error('Error fetching companies:', error);
-      toast.error('Error loading companies');
+      console.error("Error fetching companies:", error);
+      toast.error("Error loading companies");
       setCompanies([]);
     } finally {
       setLoadingCompanies(false);
@@ -145,43 +167,43 @@ export const CreateAdminUserPage = () => {
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const validateForm = (): boolean => {
     if (!formData.firstname.trim()) {
-      toast.error('First name is required');
+      toast.error("First name is required");
       return false;
     }
     if (!formData.lastname.trim()) {
-      toast.error('Last name is required');
+      toast.error("Last name is required");
       return false;
     }
     if (!formData.email.trim()) {
-      toast.error('Email is required');
+      toast.error("Email is required");
       return false;
     }
     if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      toast.error('Please enter a valid email address');
+      toast.error("Please enter a valid email address");
       return false;
     }
     if (!formData.mobile.trim()) {
-      toast.error('Mobile number is required');
+      toast.error("Mobile number is required");
       return false;
     }
     if (!formData.mobile.match(/^\d{10,15}$/)) {
-      toast.error('Please enter a valid mobile number (10-15 digits)');
+      toast.error("Please enter a valid mobile number (10-15 digits)");
       return false;
     }
     if (!formData.organization_id) {
-      toast.error('Organization is required');
+      toast.error("Organization is required");
       return false;
     }
     if (!formData.company_id) {
-      toast.error('Company is required');
+      toast.error("Company is required");
       return false;
     }
     return true;
@@ -200,34 +222,103 @@ export const CreateAdminUserPage = () => {
           email: formData.email.trim().toLowerCase(),
           mobile: formData.mobile.trim(),
           organization_id: parseInt(formData.organization_id),
-          company_id: parseInt(formData.company_id)
-        }
+          company_id: parseInt(formData.company_id),
+        },
       };
 
-      console.log('Creating admin user with payload:', payload);
+      console.log("Creating admin user with payload:", payload);
 
       const result = await createOrganizationAdmin(payload);
 
       if (result.success) {
-        console.log('Admin user created successfully:', result.data);
-        toast.success('Organization admin user created successfully!');
-        
+        console.log("Admin user created successfully:", result.data);
+        toast.success("Organization admin user created successfully!");
+
         // Navigate back to the users list or admin console
-        navigate('/ops-console/master/user/fm-users');
+        navigate("/ops-console/master/user/fm-users");
       } else {
-        console.error('Failed to create admin user:', result.error);
-        toast.error(result.error || 'Failed to create admin user');
+        console.error("Failed to create admin user:", result.error);
+
+        // Handle specific error messages
+        const errorMessage = result.error || "Failed to create admin user";
+        const errorData = result.errorData;
+
+        if (errorData?.companies && errorData.companies.length > 0) {
+          setDuplicateUserDialog({
+            open: true,
+            companies: errorData.companies,
+            errorMessage: errorMessage,
+          });
+        } else if (
+          errorMessage.toLowerCase().includes("user is already exists") ||
+          errorMessage.toLowerCase().includes("user already exists")
+        ) {
+          toast.error(
+            "User with this email or mobile already exists. Please use different credentials."
+          );
+        } else {
+          toast.error(errorMessage);
+        }
       }
-    } catch (error) {
-      console.error('Error creating admin user:', error);
-      toast.error('An unexpected error occurred. Please try again.');
+    } catch (error: any) {
+      console.error("Error creating admin user:", error);
+
+      // Check if error object has response data with message
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "";
+
+      if (
+        errorMessage.toLowerCase().includes("user is already exists") ||
+        errorMessage.toLowerCase().includes("user already exists")
+      ) {
+        toast.error(
+          "User with this email or mobile already exists. Please use different credentials."
+        );
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    navigate('/ops-console/master/user/fm-users');
+    navigate("/ops-console/admin/users");
+  };
+
+  const handleAssignPermission = async () => {
+    try {
+      setIsSubmitting(true);
+      const token = localStorage.getItem("token");
+      const baseUrl = localStorage.getItem("baseUrl");
+
+      const payload = {
+        user: {
+          email: formData.email,
+          mobile: formData.mobile,
+          organization_id: parseInt(formData.organization_id),
+          company_id: parseInt(formData.company_id),
+        },
+      };
+
+      const response = await axios.post(
+        `https://${baseUrl}/pms/users/create_lock_for_admin.json?access_token=${token}`,
+        payload
+      );
+
+      if (response.data) {
+        toast.success("Permissions assigned successfully");
+        setDuplicateUserDialog((prev) => ({ ...prev, open: false }));
+        navigate("/ops-console/master/user/fm-users");
+      }
+    } catch (error: any) {
+      console.error("Error assigning permissions:", error);
+      toast.error(
+        error.response?.data?.error || "Failed to assign permissions"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -243,8 +334,12 @@ export const CreateAdminUserPage = () => {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-semibold text-[#1a1a1a]">Create Organization Admin User</h1>
-          <p className="text-sm text-gray-600 mt-1">Create a new organization admin user with appropriate permissions</p>
+          <h1 className="text-2xl font-semibold text-[#1a1a1a]">
+            Create Organization Admin User
+          </h1>
+          <p className="text-sm text-gray-600 mt-1">
+            Create a new organization admin user with appropriate permissions
+          </p>
         </div>
       </div>
 
@@ -260,14 +355,18 @@ export const CreateAdminUserPage = () => {
           <CardContent className="space-y-6">
             {/* Personal Information */}
             <div className="space-y-6">
-              <h3 className="text-sm font-medium text-[#C72030] mb-4">Personal Information</h3>
-              
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">
+                Personal Information
+              </h3>
+
               <div className="grid grid-cols-2 gap-6">
                 <TextField
                   label="First Name"
                   placeholder="Enter first name"
                   value={formData.firstname}
-                  onChange={(e) => handleInputChange('firstname', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("firstname", e.target.value)
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -280,7 +379,9 @@ export const CreateAdminUserPage = () => {
                   label="Last Name"
                   placeholder="Enter last name"
                   value={formData.lastname}
-                  onChange={(e) => handleInputChange('lastname', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("lastname", e.target.value)
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -294,7 +395,7 @@ export const CreateAdminUserPage = () => {
                   placeholder="Enter email address"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -310,9 +411,9 @@ export const CreateAdminUserPage = () => {
                   value={formData.mobile}
                   onChange={(e) => {
                     // Only allow numbers
-                    const value = e.target.value.replace(/\D/g, '');
+                    const value = e.target.value.replace(/\D/g, "");
                     if (value.length <= 15) {
-                      handleInputChange('mobile', value);
+                      handleInputChange("mobile", value);
                     }
                   }}
                   fullWidth
@@ -327,14 +428,21 @@ export const CreateAdminUserPage = () => {
 
             {/* Organization Information */}
             <div className="space-y-6 mt-8">
-              <h3 className="text-sm font-medium text-[#C72030] mb-4">Organization Information</h3>
-              
+              <h3 className="text-sm font-medium text-[#C72030] mb-4">
+                Organization Information
+              </h3>
+
               <div className="grid grid-cols-2 gap-6">
                 <FormControl fullWidth variant="outlined" required>
                   <InputLabel shrink>Organization</InputLabel>
                   <MuiSelect
                     value={formData.organization_id}
-                    onChange={(e) => handleInputChange('organization_id', e.target.value as string)}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "organization_id",
+                        e.target.value as string
+                      )
+                    }
                     label="Organization"
                     displayEmpty
                     MenuProps={selectMenuProps}
@@ -342,7 +450,11 @@ export const CreateAdminUserPage = () => {
                     disabled={loadingOrganizations || isSubmitting}
                   >
                     <MenuItem value="">
-                      <em>{loadingOrganizations ? "Loading organizations..." : "Select Organization"}</em>
+                      <em>
+                        {loadingOrganizations
+                          ? "Loading organizations..."
+                          : "Select Organization"}
+                      </em>
                     </MenuItem>
                     {organizations.map((org) => (
                       <MenuItem key={org.id} value={org.id.toString()}>
@@ -356,22 +468,29 @@ export const CreateAdminUserPage = () => {
                   <InputLabel shrink>Company</InputLabel>
                   <MuiSelect
                     value={formData.company_id}
-                    onChange={(e) => handleInputChange('company_id', e.target.value as string)}
+                    onChange={(e) =>
+                      handleInputChange("company_id", e.target.value as string)
+                    }
                     label="Company"
                     displayEmpty
                     MenuProps={selectMenuProps}
                     sx={fieldStyles}
-                    disabled={loadingCompanies || !formData.organization_id || filteredCompanies.length === 0 || isSubmitting}
+                    disabled={
+                      loadingCompanies ||
+                      !formData.organization_id ||
+                      filteredCompanies.length === 0 ||
+                      isSubmitting
+                    }
                   >
                     <MenuItem value="">
                       <em>
                         {!formData.organization_id
                           ? "Select organization first"
                           : loadingCompanies
-                          ? "Loading companies..."
-                          : filteredCompanies.length === 0
-                          ? "No companies available"
-                          : "Select Company"}
+                            ? "Loading companies..."
+                            : filteredCompanies.length === 0
+                              ? "No companies available"
+                              : "Select Company"}
                       </em>
                     </MenuItem>
                     {filteredCompanies.map((company) => (
@@ -415,6 +534,16 @@ export const CreateAdminUserPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      <DuplicateUserDialog
+        open={duplicateUserDialog.open}
+        onClose={() =>
+          setDuplicateUserDialog((prev) => ({ ...prev, open: false }))
+        }
+        onConfirm={handleAssignPermission}
+        companies={duplicateUserDialog.companies}
+        errorMessage={duplicateUserDialog.errorMessage}
+      />
     </div>
   );
 };

@@ -1136,19 +1136,49 @@ const AddAssetPage = () => {
         newLocation.area = "";
         newLocation.floor = "";
         newLocation.room = "";
-        if (value) fetchWings(parseInt(value));
+        if (value) {
+          const buildingId = parseInt(value);
+          fetchWings(buildingId);
+          // Also fetch areas, floors, and rooms with buildingId filter
+          fetchAreas(0, buildingId);
+          fetchFloors(0, buildingId);
+          fetchRooms(0, buildingId);
+        }
       } else if (field === "wing") {
         newLocation.area = "";
         newLocation.floor = "";
         newLocation.room = "";
-        if (value) fetchAreas(parseInt(value));
+        if (value && newLocation.building) {
+          const wingId = parseInt(value);
+          const buildingId = parseInt(newLocation.building);
+          // Fetch areas for this wing
+          fetchAreas(wingId, buildingId);
+          // Also fetch floors and rooms with wing_id
+          fetchFloors(0, buildingId, wingId);
+          fetchRooms(0, buildingId, wingId);
+        }
       } else if (field === "area") {
         newLocation.floor = "";
         newLocation.room = "";
-        if (value) fetchFloors(parseInt(value));
+        if (value && newLocation.building) {
+          const areaId = parseInt(value);
+          const buildingId = parseInt(newLocation.building);
+          const wingId = newLocation.wing ? parseInt(newLocation.wing) : undefined;
+          // Fetch floors for this area, passing wing_id if available
+          fetchFloors(areaId, buildingId, wingId);
+          // Also fetch rooms with area_id and wing_id
+          fetchRooms(0, buildingId, wingId, areaId);
+        }
       } else if (field === "floor") {
         newLocation.room = "";
-        if (value) fetchRooms(parseInt(value));
+        if (value && newLocation.building) {
+          const floorId = parseInt(value);
+          const buildingId = parseInt(newLocation.building);
+          const wingId = newLocation.wing ? parseInt(newLocation.wing) : undefined;
+          const areaId = newLocation.area ? parseInt(newLocation.area) : undefined;
+          // Fetch rooms for this floor, passing all parent IDs
+          fetchRooms(floorId, buildingId, wingId, areaId);
+        }
       }
 
       return newLocation;
@@ -2082,7 +2112,7 @@ const AddAssetPage = () => {
   useEffect(() => {
     // Priority: selectedLocation.site, then formData.pms_site_id
     const siteIdToUse = selectedLocation.site || formData.pms_site_id;
-    
+
     if (siteIdToUse) {
       const siteId = parseInt(siteIdToUse);
       if (siteId) {
@@ -2151,7 +2181,7 @@ const AddAssetPage = () => {
     setUsersLoading(true);
     try {
       const response = await apiClient.get(
-        "/pms/users/get_escalate_to_users.json"
+        "/pms/users/get_escalate_to_users.json?type=Asset"
       );
       setUsers(response.data?.users || []);
     } catch (error) {
@@ -3055,44 +3085,44 @@ const AddAssetPage = () => {
     // and only for asset categories that have useful life fields
     const categoriesWithUsefulLife = [
       // "Leasehold Improvement",
-      "Furniture & Fixtures", 
+      "Furniture & Fixtures",
       "IT Equipment",
       "Machinery & Equipment",
       "Meter",
       "Tools & Instruments"
     ];
-    
-    if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0 && 
-        categoriesWithUsefulLife.includes(selectedAssetCategory)) {
-      if (!formData.useful_life) {
-        toast.error("Useful Life Required", {
-          description:
-            "Please enter the useful life for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Useful Life is required for Depreciation"];
-      }
 
-      if (!formData.salvage_value) {
-        toast.error("Salvage Value Required", {
-          description:
-            "Please enter the salvage value for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Salvage Value is required for Depreciation"];
-      }
+    if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0 &&
+      categoriesWithUsefulLife.includes(selectedAssetCategory)) {
+      // if (!formData.useful_life) {
+      //   toast.error("Useful Life Required", {
+      //     description:
+      //       "Please enter the useful life for depreciation calculation when purchase cost is provided.",
+      //     duration: 4000,
+      //   });
+      //   return ["Useful Life is required for Depreciation"];
+      // }
 
-      if (!formData.depreciation_rate) {
-        toast.error("Depreciation Rate Required", {
-          description:
-            "Please enter the depreciation rate for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Depreciation Rate is required for Depreciation"];
-      }
+      // if (!formData.salvage_value) {
+      //   toast.error("Salvage Value Required", {
+      //     description:
+      //       "Please enter the salvage value for depreciation calculation when purchase cost is provided.",
+      //     duration: 4000,
+      //   });
+      //   return ["Salvage Value is required for Depreciation"];
+      // }
+
+      // if (!formData.depreciation_rate) {
+      //   toast.error("Depreciation Rate Required", {
+      //     description:
+      //       "Please enter the depreciation rate for depreciation calculation when purchase cost is provided.",
+      //     duration: 4000,
+      //   });
+      //   return ["Depreciation Rate is required for Depreciation"];
+      // }
 
       // Validate Purchase Cost is not equal to Salvage Value
-      if (parseFloat(formData.purchase_cost) === parseFloat(formData.salvage_value)) {
+      if (formData.salvage_value && parseFloat(formData.purchase_cost) === parseFloat(formData.salvage_value)) {
         toast.error("Invalid Salvage Value", {
           description: "Purchase Cost cannot be equal to Salvage Value.",
           duration: 4000,
@@ -3101,7 +3131,7 @@ const AddAssetPage = () => {
       }
 
       // Validate Salvage Value is not greater than Purchase Cost
-      if (parseFloat(formData.salvage_value) > parseFloat(formData.purchase_cost)) {
+      if (formData.salvage_value && parseFloat(formData.salvage_value) > parseFloat(formData.purchase_cost)) {
         toast.error("Invalid Salvage Value", {
           description: "Salvage Value cannot be greater than Purchase Cost.",
           duration: 4000,
@@ -4910,6 +4940,30 @@ const AddAssetPage = () => {
                         );
                       }}
                     />
+                    <TextField
+                      label="Expiry Date"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value;
+                        handleExtraFieldChange(
+                          "land_expiry_date",
+                          selectedDate,
+                          "date",
+                          "landSizeValue",
+                          "Expiry Date"
+                        );
+                      }}
+                    />
 
                     <div className="flex gap-2">
                       <FormControl
@@ -5930,6 +5984,30 @@ const AddAssetPage = () => {
                         handleFieldChange(
                           "depreciation_rate",
                           value.toString()
+                        );
+                      }}
+                    />
+                    <TextField
+                      label="Expiry Date"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value;
+                        handleExtraFieldChange(
+                          "leasehold_financial_expiry_date",
+                          selectedDate,
+                          "date",
+                          "leaseholdFinancial",
+                          "Expiry Date"
                         );
                       }}
                     />
@@ -7142,6 +7220,30 @@ const AddAssetPage = () => {
                         handleFieldChange("commisioning_date", selectedDate);
                       }}
                     />
+                    <TextField
+                      label="Expiry Date"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value;
+                        handleExtraFieldChange(
+                          "vehicle_financial_expiry_date",
+                          selectedDate,
+                          "date",
+                          "vehicleFinancial",
+                          "Expiry Date"
+                        );
+                      }}
+                    />
 
                     <div className="flex gap-2">
                       <FormControl
@@ -8060,9 +8162,9 @@ const AddAssetPage = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <TextField
-                     label={<span>Asset Name <span style={{ color: '#C72030' }}>*</span></span>}
-                     
+                    <TextField
+                      label={<span>Asset Name <span style={{ color: '#C72030' }}>*</span></span>}
+
                       placeholder="Enter name"
                       variant="outlined"
                       fullWidth
@@ -8627,6 +8729,30 @@ const AddAssetPage = () => {
                           "date",
                           "buildingAcquisition",
                           "Date of Acquisition"
+                        );
+                      }}
+                    />
+                    <TextField
+                      label="Expiry Date"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: { xs: "36px", md: "45px" },
+                        },
+                      }}
+                      onChange={(event) => {
+                        const selectedDate = event.target.value;
+                        handleExtraFieldChange(
+                          "building_acquisition_expiry_date",
+                          selectedDate,
+                          "date",
+                          "buildingAcquisition",
+                          "Expiry Date"
                         );
                       }}
                     />
@@ -9943,7 +10069,7 @@ const AddAssetPage = () => {
                             handleFieldChange("pms_area_id", e.target.value);
                           }}
                           sx={fieldStyles}
-                          disabled={!selectedLocation.wing || loading.areas}
+                          disabled={!selectedLocation.building || loading.areas}
                         >
                           <MenuItem value="">
                             <em>Select Area</em>
@@ -9975,7 +10101,7 @@ const AddAssetPage = () => {
                             handleFieldChange("pms_floor_id", e.target.value);
                           }}
                           sx={fieldStyles}
-                          disabled={!selectedLocation.area || loading.floors}
+                          disabled={!selectedLocation.building || loading.floors}
                         >
                           <MenuItem value="">
                             <em>Select Floor</em>
@@ -10009,7 +10135,7 @@ const AddAssetPage = () => {
                             handleFieldChange("pms_room_id", e.target.value);
                           }}
                           sx={fieldStyles}
-                          disabled={!selectedLocation.floor || loading.rooms}
+                          disabled={!selectedLocation.building || loading.rooms}
                         >
                           <MenuItem value="">
                             <em>Select Room</em>
@@ -12724,7 +12850,7 @@ const AddAssetPage = () => {
           <button
             onClick={handleSaveAndShow}
             className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md   text-sm sm:text-base"
-            // disabled={submitting}
+          // disabled={submitting}
           >
             Save & Show Details
           </button>

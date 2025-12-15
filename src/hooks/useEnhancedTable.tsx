@@ -45,7 +45,7 @@ export function useEnhancedTable<T extends Record<string, any>>({
         }
       }
     }
-    
+
     const visibility: Record<string, boolean> = {};
     columns.forEach(col => {
       visibility[col.key] = col.defaultVisible !== false;
@@ -94,7 +94,7 @@ export function useEnhancedTable<T extends Record<string, any>>({
       if (prev.column !== columnKey) {
         return { column: columnKey, direction: 'asc' };
       }
-      
+
       switch (prev.direction) {
         case 'asc':
           return { column: columnKey, direction: 'desc' };
@@ -115,27 +115,27 @@ export function useEnhancedTable<T extends Record<string, any>>({
     return [...data].sort((a, b) => {
       const aVal = a[sortState.column!];
       const bVal = b[sortState.column!];
-      
+
       // Handle null/undefined values
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return sortState.direction === 'asc' ? 1 : -1;
       if (bVal == null) return sortState.direction === 'asc' ? -1 : 1;
-      
+
       // Type-aware comparison
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         return sortState.direction === 'asc' ? aVal - bVal : bVal - aVal;
       }
-      
+
       if (aVal instanceof Date && bVal instanceof Date) {
-        return sortState.direction === 'asc' 
-          ? aVal.getTime() - bVal.getTime() 
+        return sortState.direction === 'asc'
+          ? aVal.getTime() - bVal.getTime()
           : bVal.getTime() - aVal.getTime();
       }
-      
+
       // String comparison (case-insensitive)
       const aStr = String(aVal).toLowerCase();
       const bStr = String(bVal).toLowerCase();
-      
+
       if (aStr < bStr) return sortState.direction === 'asc' ? -1 : 1;
       if (aStr > bStr) return sortState.direction === 'asc' ? 1 : -1;
       return 0;
@@ -146,17 +146,17 @@ export function useEnhancedTable<T extends Record<string, any>>({
   const toggleColumnVisibility = useCallback((columnKey: string) => {
     setColumnVisibility(prev => {
       const newVisibility = { ...prev, [columnKey]: !prev[columnKey] };
-      
+
       // Ensure at least one column remains visible
       const visibleCount = Object.values(newVisibility).filter(Boolean).length;
       if (visibleCount === 0) {
         return prev; // Don't allow hiding all columns
       }
-      
+
       if (storageKey) {
         localStorage.setItem(`${storageKey}-visibility`, JSON.stringify(newVisibility));
       }
-      
+
       return newVisibility;
     });
   }, [storageKey]);
@@ -166,17 +166,17 @@ export function useEnhancedTable<T extends Record<string, any>>({
     setColumnOrder(prev => {
       const oldIndex = prev.indexOf(activeId);
       const newIndex = prev.indexOf(overId);
-      
+
       if (oldIndex === -1 || newIndex === -1) return prev;
-      
+
       const newOrder = [...prev];
       newOrder.splice(oldIndex, 1);
       newOrder.splice(newIndex, 0, activeId);
-      
+
       if (storageKey) {
         localStorage.setItem(`${storageKey}-order`, JSON.stringify(newOrder));
       }
-      
+
       return newOrder;
     });
   }, [storageKey]);
@@ -194,11 +194,11 @@ export function useEnhancedTable<T extends Record<string, any>>({
     columns.forEach(col => {
       defaultVisibility[col.key] = col.defaultVisible !== false;
     });
-    
+
     setColumnVisibility(defaultVisibility);
     setColumnOrder(columns.map(col => col.key));
     setSortState({ column: null, direction: null });
-    
+
     if (storageKey) {
       localStorage.removeItem(`${storageKey}-visibility`);
       localStorage.removeItem(`${storageKey}-order`);

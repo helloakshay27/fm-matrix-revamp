@@ -65,7 +65,10 @@ baseClient.interceptors.request.use(
 
       if (isOmanSite || isFmSite) {
         // FM/Oman sites: prefer org_id, fallback to email
-        if (orgId) {
+        if (organizationId) {
+          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
+          console.log("🔍 Using org_id for FM/Oman site:", orgId);
+        } else if (orgId) {
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
           console.log("🔍 Using org_id for FM/Oman site:", orgId);
         } else if (email) {
@@ -78,16 +81,33 @@ baseClient.interceptors.request.use(
         }
       } else if (isViSite) {
         // VI sites: use email
-        if (orgId) {
+
+        if (organizationId) {
+          apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
+          console.log("🔍 Using org_id for VI site:", orgId);
+        } else if (orgId) {
           apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?org_id=${orgId}`;
           console.log("🔍 Using org_id for VI site:", orgId);
         } else if (email) {
           apiUrl = `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`;
           console.log("🔍 Using email for VI site:", email);
         } else {
-          throw new Error(
-            "Either org_id or email is required for VI sites"
-          );
+          throw new Error("Either org_id or email is required for VI sites");
+        }
+      } else if (isDevSite) {
+        // Dev sites: use email
+
+        if (organizationId) {
+          apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
+          console.log("🔍 Using org_id for Dev site:", orgId);
+        } else if (orgId) {
+          apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
+          console.log("🔍 Using org_id for Dev site:", orgId);
+        } else if (email) {
+          apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+          console.log("🔍 Using email for Dev site:", email);
+        } else {
+          throw new Error("Either org_id or email is required for Dev sites");
         }
       } else if (isDevSite) {
         if (orgId) {
@@ -105,6 +125,9 @@ baseClient.interceptors.request.use(
         // Default fallback: prefer org_id, fallback to email
         if (orgId) {
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
+          console.log("🔍 Using org_id for default fallback:", orgId);
+        } else if (organizationId) {
+          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
           console.log("🔍 Using org_id for default fallback:", orgId);
         } else if (email) {
           apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;

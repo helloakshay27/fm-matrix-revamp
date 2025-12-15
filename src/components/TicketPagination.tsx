@@ -132,7 +132,7 @@ export const TicketPagination: React.FC<TicketPaginationProps> = ({
 
   return (
     <div className="flex items-center justify-between mt-6 gap-4">
-      <div className="flex items-center gap-2 text-sm text-gray-600">
+      {/* <div className="flex items-center gap-2 text-sm text-gray-600">
         <span>Show</span>
         <Select
           value={perPage.toString()}
@@ -150,11 +150,11 @@ export const TicketPagination: React.FC<TicketPaginationProps> = ({
           </SelectContent>
         </Select>
         <span>entries</span>
-      </div>
+      </div> */}
 
-      <div className="text-sm text-gray-600">
+      {/* <div className="text-sm text-gray-600">
         Showing {startRecord} to {endRecord} of {totalRecords} results
-      </div>
+      </div> */}
 
       <Pagination>
         <PaginationContent>

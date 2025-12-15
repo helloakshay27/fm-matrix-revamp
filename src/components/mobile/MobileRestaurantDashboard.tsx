@@ -138,12 +138,12 @@ export const MobileRestaurantDashboard: React.FC<
       restaurant: mockRestaurant,
       note: order.requests || "Previous order details",
       isExistingOrder: true,
-      showSuccessImmediately: false, 
+      showSuccessImmediately: false,
       totalPrice: order.total_amount,
       totalItems:
         order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
-      sourceParam: currentSource, 
-      isExternalScan: isExternalScan, 
+      sourceParam: currentSource,
+      isExternalScan: isExternalScan,
       orderData: {
         ...order,
         facility_id: order.facility_id || "",
@@ -237,21 +237,31 @@ export const MobileRestaurantDashboard: React.FC<
     }
   };
 
-
-  console.log("STATUS", restaurants[0]?.status)
-  console.log("Restaurant", restaurants[0])
+  console.log("STATUS", restaurants[0]?.status);
+  console.log("Restaurant", restaurants[0]);
 
   // Filter restaurants - show only restaurants with active status (true or 1)
-  const activeRestaurants = restaurants.filter(restaurant => {
+  // Filter restaurants - show only restaurants with active status (true or 1)
+  const activeRestaurants = restaurants.filter((restaurant) => {
     const status = restaurant.status as boolean | number | string | undefined;
-    // Show only restaurants where status is explicitly true (boolean) or 1 (number)
-    // Handle both boolean and number/string types
-    const isActive = status === true || status === 1 || status === "1";
-    console.log(`Restaurant ${restaurant.name}: status=${status}, isActive=${isActive}`);
+    // Show restaurant if:
+    // 1. Status is explicitly true/1
+    // 2. Status is undefined (assume active if not specified)
+    // 3. can_order_today is true
+    const isActive =
+      status === true ||
+      status === 1 ||
+      status === "1" ||
+      status === undefined ||
+      restaurant.can_order_today === true;
+
+    // console.log(`Restaurant ${restaurant.name}: status=${status}, isActive=${isActive}`);
     return isActive;
   });
 
-  console.log(`Total restaurants: ${restaurants.length}, Active restaurants: ${activeRestaurants.length}`);
+  console.log(
+    `Total restaurants: ${restaurants.length}, Active restaurants: ${activeRestaurants.length}`
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -357,8 +367,7 @@ export const MobileRestaurantDashboard: React.FC<
                         <div className="flex items-center text-gray-500 text-sm mb-2">
                           <MapPin className="w-4 h-4 mr-1" />
                           <span>
-                            {restaurant.location ||
-                              "Location not specified"}
+                            {restaurant.location || "Location not specified"}
                           </span>
                         </div>
 
@@ -438,7 +447,9 @@ export const MobileRestaurantDashboard: React.FC<
                       <p className="text-gray-600 text-sm">Order #{order.id}</p>
                       <div>
                         {/* <label className="text-xl font-semibold text-gray-900 mb-1">Meeting Room</label> */}
-                        <p className="text-gray-600 text-sm">{order?.location || order?.facility_name || ""}</p>
+                        <p className="text-gray-600 text-sm">
+                          {order?.location || order?.facility_name || ""}
+                        </p>
                       </div>
                     </div>
 

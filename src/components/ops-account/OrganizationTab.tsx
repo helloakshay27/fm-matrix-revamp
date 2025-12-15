@@ -1,20 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { AddOrganizationModal } from '@/components/AddOrganizationModal';
-import { EditOrganizationModal } from '@/components/EditOrganizationModal';
-import { DeleteOrganizationModal } from '@/components/DeleteOrganizationModal';
-import { OrganizationFilterModal, OrganizationFilters } from '@/components/OrganizationFilterModal';
-import { ExportModal } from '@/components/ExportModal';
-import { BulkUploadModal } from '@/components/BulkUploadModal';
-import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { TicketPagination } from '@/components/TicketPagination';
-import { toast } from 'sonner';
-import { useApiConfig } from '@/hooks/useApiConfig';
-import { getUser } from '@/utils/auth';
-import { useDebounce } from '@/hooks/useDebounce';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Plus,
+  Download,
+  Filter,
+  Upload,
+  Printer,
+  QrCode,
+  Eye,
+  Edit,
+  Trash2,
+  Loader2,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { AddOrganizationModal } from "@/components/AddOrganizationModal";
+import { EditOrganizationModal } from "@/components/EditOrganizationModal";
+import { DeleteOrganizationModal } from "@/components/DeleteOrganizationModal";
+import {
+  OrganizationFilterModal,
+  OrganizationFilters,
+} from "@/components/OrganizationFilterModal";
+import { ExportModal } from "@/components/ExportModal";
+import { BulkUploadModal } from "@/components/BulkUploadModal";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { TicketPagination } from "@/components/TicketPagination";
+import { toast } from "sonner";
+import { useApiConfig } from "@/hooks/useApiConfig";
+import { getUser } from "@/utils/auth";
+import { useDebounce } from "@/hooks/useDebounce";
 
 // Type definitions for the API response
 interface OrganizationItem {
@@ -84,64 +98,64 @@ interface OrganizationTabProps {
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
   {
-    key: 'actions',
-    label: 'Action',
+    key: "actions",
+    label: "Action",
     sortable: false,
     hideable: false,
-    draggable: false
+    draggable: false,
   },
   {
-    key: 'name',
-    label: 'Organization Name',
+    key: "name",
+    label: "Organization Name",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'domain',
-    label: 'Domain',
+    key: "domain",
+    label: "Domain",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'country',
-    label: 'Country',
+    key: "country",
+    label: "Country",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'status',
-    label: 'Status',
+    key: "status",
+    label: "Status",
     sortable: true,
     hideable: true,
-    draggable: true
+    draggable: true,
   },
   {
-    key: 'created_at',
-    label: 'Created At',
+    key: "created_at",
+    label: "Created At",
     sortable: true,
     hideable: true,
-    draggable: true
-  }
+    draggable: true,
+  },
 ];
 
 export const OrganizationTab: React.FC<OrganizationTabProps> = ({
   searchQuery,
   setSearchQuery,
   entriesPerPage,
-  setEntriesPerPage
+  setEntriesPerPage,
 }) => {
   const navigate = useNavigate();
   const { getFullUrl, getAuthHeader } = useApiConfig();
-  
+
   // State management
   const [organizations, setOrganizations] = useState<OrganizationItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
   const [appliedFilters, setAppliedFilters] = useState<OrganizationFilters>({});
   const [pagination, setPagination] = useState({
@@ -150,7 +164,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
     total_pages: 1,
     total_count: 0,
     has_next_page: false,
-    has_prev_page: false
+    has_prev_page: false,
   });
 
   // Modal states
@@ -160,8 +174,10 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState<number | null>(null);
-  
+  const [selectedOrganizationId, setSelectedOrganizationId] = useState<
+    number | null
+  >(null);
+
   // Countries dropdown and permissions
   const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
   const [canEditOrganization, setCanEditOrganization] = useState(false);
@@ -174,8 +190,12 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
   };
 
   const checkEditPermission = () => {
-    const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'your-specific-email@domain.com'];
+    const userEmail = user.email || "";
+    const allowedEmails = [
+      "abhishek.sharma@lockated.com",
+      "adhip.shetty@lockated.com",
+      "helloakshay27@gmail.com",
+    ];
     setCanEditOrganization(allowedEmails.includes(userEmail));
   };
 
@@ -186,15 +206,27 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 
   // Load data on component mount and when page/perPage/filters change
   useEffect(() => {
-    fetchOrganizations(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+    fetchOrganizations(
+      currentPage,
+      perPage,
+      debouncedSearchQuery,
+      appliedFilters
+    );
   }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
 
   // Fetch organizations data from API
-  const fetchOrganizations = async (page = 1, per_page = 10, search = '', filters: OrganizationFilters = {}) => {
+  const fetchOrganizations = async (
+    page = 1,
+    per_page = 10,
+    search = "",
+    filters: OrganizationFilters = {}
+  ) => {
     setLoading(true);
     try {
       // Build API URL with parameters
-      let apiUrl = getFullUrl(`/organizations.json?page=${page}&per_page=${per_page}`);
+      let apiUrl = getFullUrl(
+        `/organizations.json?page=${page}&per_page=${per_page}`
+      );
 
       // Add search parameter
       if (search.trim()) {
@@ -207,7 +239,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
       }
 
       if (filters.status) {
-        const isActive = filters.status === 'active';
+        const isActive = filters.status === "active";
         apiUrl += `&q[active_eq]=${isActive}`;
       }
 
@@ -215,15 +247,15 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
         apiUrl += `&q[domain_cont]=${encodeURIComponent(filters.domain)}`;
       }
 
-      console.log('🔗 API URL with filters:', apiUrl);
+      console.log("🔗 API URL with filters:", apiUrl);
 
       const response = await fetch(apiUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': getAuthHeader()
-        }
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
       });
 
       if (!response.ok) {
@@ -231,9 +263,13 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
       }
 
       const result: OrganizationApiResponse = await response.json();
-      console.log('Organizations API response:', result);
+      console.log("Organizations API response:", result);
 
-      if (result && result.organizations && Array.isArray(result.organizations)) {
+      if (
+        result &&
+        result.organizations &&
+        Array.isArray(result.organizations)
+      ) {
         setOrganizations(result.organizations);
         // Set pagination if available, otherwise use default
         if (result.pagination) {
@@ -245,14 +281,14 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
             total_pages: Math.ceil(result.organizations.length / per_page),
             total_count: result.organizations.length,
             has_next_page: false,
-            has_prev_page: false
+            has_prev_page: false,
           });
         }
       } else {
-        throw new Error('Invalid organizations data format');
+        throw new Error("Invalid organizations data format");
       }
     } catch (error: any) {
-      console.error('Error fetching organizations:', error);
+      console.error("Error fetching organizations:", error);
       toast.error(`Failed to load organizations: ${error.message}`, {
         duration: 5000,
       });
@@ -264,53 +300,55 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch('https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU');
+      const response = await fetch(
+        "https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU"
+      );
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Countries API response:', data);
-        
+        console.log("Countries API response:", data);
+
         // Map the API response to the expected dropdown format
         // API returns array of objects with id and name properties
         if (Array.isArray(data)) {
           const mappedCountries = data
             .filter((country) => country?.id && country?.name) // Filter out invalid entries
-            .map((country) => ({ 
-              id: Number(country.id), 
-              name: String(country.name) 
+            .map((country) => ({
+              id: Number(country.id),
+              name: String(country.name),
             }));
           setCountriesDropdown(mappedCountries);
         } else {
-          console.error('Countries data format unexpected:', data);
+          console.error("Countries data format unexpected:", data);
           setCountriesDropdown([]);
-          toast.error('Invalid countries data format');
+          toast.error("Invalid countries data format");
         }
       } else {
-        toast.error('Failed to fetch countries');
+        toast.error("Failed to fetch countries");
         setCountriesDropdown([]);
       }
     } catch (error) {
-      console.error('Error fetching countries:', error);
-      toast.error('Error fetching countries');
+      console.error("Error fetching countries:", error);
+      toast.error("Error fetching countries");
       setCountriesDropdown([]);
     }
   };
 
   // Handle filter application
   const handleApplyFilters = (filters: OrganizationFilters) => {
-    console.log('📊 Applying filters:', filters);
+    console.log("📊 Applying filters:", filters);
     setAppliedFilters(filters);
     setCurrentPage(1); // Reset to first page when applying filters
   };
 
   // Handle search
   const handleSearch = (term: string) => {
-    console.log('Search query:', term);
+    console.log("Search query:", term);
     setSearchTerm(term);
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
     if (!term.trim()) {
-      fetchOrganizations(1, perPage, '', appliedFilters);
+      fetchOrganizations(1, perPage, "", appliedFilters);
     }
   };
 
@@ -327,29 +365,31 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 
   // Helper function to get country name
   const getCountryName = (countryId: number | null | undefined) => {
-    if (!countryId) return 'Unknown';
-    const country = countriesDropdown.find(c => c.id && c.id.toString() === countryId.toString());
-    return country ? country.name : 'Unknown';
+    if (!countryId) return "Unknown";
+    const country = countriesDropdown.find(
+      (c) => c.id && c.id.toString() === countryId.toString()
+    );
+    return country ? country.name : "Unknown";
   };
 
   // Format date helper
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
       });
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid date';
+      console.error("Error formatting date:", error);
+      return "Invalid date";
     }
   };
 
   const totalRecords = pagination.total_count;
   const totalPages = pagination.total_pages;
-  
+
   // Use API data directly instead of client-side filtering
   const displayedData = organizations;
 
@@ -388,15 +428,15 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
         {org?.attachfile?.document_url && (
           <img
             src={org.attachfile.document_url}
-            alt={org?.name || 'Organization'}
+            alt={org?.name || "Organization"}
             className="w-8 h-8 rounded object-cover"
             onError={(e) => {
-              e.currentTarget.style.display = 'none';
+              e.currentTarget.style.display = "none";
             }}
           />
         )}
         <div>
-          <div className="font-medium">{org?.name || 'N/A'}</div>
+          <div className="font-medium">{org?.name || "N/A"}</div>
           {org?.sub_domain && (
             <div className="text-sm text-gray-500">{org.sub_domain}</div>
           )}
@@ -405,7 +445,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
     ),
     domain: (
       <div className="text-sm">
-        <div>{org?.domain || '-'}</div>
+        <div>{org?.domain || "-"}</div>
         {org?.front_domain && org.front_domain !== org.domain && (
           <div className="text-gray-500">Frontend: {org.front_domain}</div>
         )}
@@ -420,34 +460,34 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
           org?.active
-            ? 'bg-green-100 text-green-800'
-            : 'bg-red-100 text-red-800'
+            ? "bg-green-100 text-green-800"
+            : "bg-red-100 text-red-800"
         }`}
       >
-        {org?.active ? 'Active' : 'Inactive'}
+        {org?.active ? "Active" : "Inactive"}
       </span>
     ),
     created_at: (
       <span className="text-sm text-gray-600">
         {formatDate(org?.created_at)}
       </span>
-    )
+    ),
   });
 
   const handleView = (id: number) => {
-    console.log('View organization:', id);
+    console.log("View organization:", id);
     // Navigate to organization details page
     navigate(`/ops-account/organizations/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
-    console.log('Edit organization:', id);
+    console.log("Edit organization:", id);
     setSelectedOrganizationId(id);
     setIsEditModalOpen(true);
   };
 
   const handleDelete = (id: number) => {
-    console.log('Delete organization:', id);
+    console.log("Delete organization:", id);
     setSelectedOrganizationId(id);
     setIsDeleteModalOpen(true);
   };
@@ -456,34 +496,42 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
     if (!selectedOrganizationId) return;
 
     if (!canEditOrganization) {
-      toast.error('You do not have permission to delete organizations');
+      toast.error("You do not have permission to delete organizations");
       return;
     }
 
     try {
-      const response = await fetch(getFullUrl(`/organizations/${selectedOrganizationId}.json`), {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': getAuthHeader()
+      const response = await fetch(
+        getFullUrl(`/organizations/${selectedOrganizationId}.json`),
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
         }
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      toast.success('Organization deleted successfully!', {
+      toast.success("Organization deleted successfully!", {
         duration: 3000,
       });
 
       // Refresh the data
-      fetchOrganizations(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+      fetchOrganizations(
+        currentPage,
+        perPage,
+        debouncedSearchQuery,
+        appliedFilters
+      );
       setIsDeleteModalOpen(false);
       setSelectedOrganizationId(null);
     } catch (error: any) {
-      console.error('Error deleting organization:', error);
+      console.error("Error deleting organization:", error);
       toast.error(`Failed to delete organization: ${error.message}`, {
         duration: 5000,
       });
@@ -516,15 +564,15 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
             searchTerm={searchTerm}
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
-            leftActions={(
-              <Button 
-                className='bg-primary text-primary-foreground hover:bg-primary/90'  
+            leftActions={
+              <Button
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={() => setIsAddModalOpen(true)}
                 disabled={!canEditOrganization}
               >
                 <Plus className="w-4 h-4 mr-2" /> Add Organization
               </Button>
-            )}
+            }
             // rightActions={(
             //   <div className="flex items-center gap-2">
             //     <Button
@@ -565,7 +613,12 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={() => {
-          fetchOrganizations(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+          fetchOrganizations(
+            currentPage,
+            perPage,
+            debouncedSearchQuery,
+            appliedFilters
+          );
           setIsAddModalOpen(false);
         }}
         countriesDropdown={countriesDropdown}
@@ -581,7 +634,12 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
               setSelectedOrganizationId(null);
             }}
             onSuccess={() => {
-              fetchOrganizations(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+              fetchOrganizations(
+                currentPage,
+                perPage,
+                debouncedSearchQuery,
+                appliedFilters
+              );
               setIsEditModalOpen(false);
               setSelectedOrganizationId(null);
             }}
@@ -616,9 +674,14 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
         description="Upload a CSV file to import organizations"
         onImport={async (file: File) => {
           // Handle bulk upload logic here
-          console.log('Uploading organizations file:', file);
-          toast.success('Organizations uploaded successfully');
-          fetchOrganizations(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+          console.log("Uploading organizations file:", file);
+          toast.success("Organizations uploaded successfully");
+          fetchOrganizations(
+            currentPage,
+            perPage,
+            debouncedSearchQuery,
+            appliedFilters
+          );
           setIsBulkUploadOpen(false);
         }}
       />

@@ -576,6 +576,15 @@ export const AddSchedulePage = () => {
     }
   }, [formData.scheduleFor]);
 
+  // Handle createNew toggle changes - clear template data when disabled
+  useEffect(() => {
+    if (!createNew) {
+      // Clear template selection and reset questionSections to default
+      setFormData(prev => ({ ...prev, selectedTemplate: '' }));
+      loadTemplateData('');
+    }
+  }, [createNew]);
+
   // Initialize component with localStorage data or clear current step if refreshed on that step
   useEffect(() => {
     // Check if there's a saved draft for the current schedule type
@@ -3014,7 +3023,7 @@ export const AddSchedulePage = () => {
           subtype: "",
           required: task.mandatory ? "true" : "false",
           is_reading: task.reading ? "true" : "false",
-          hint: task.helpTextValue || "",
+          hint: task.helpText ? (task.helpTextValue || "") : "",
           values: values,
           weightage: task.weightage || "",
           rating_enabled: task.rating ? "true" : "false"
@@ -4764,7 +4773,14 @@ export const AddSchedulePage = () => {
                     <input
                       type="checkbox"
                       checked={createNew}
-                      onChange={(e) => setCreateNew(e.target.checked)}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        setCreateNew(isChecked);
+                        // If disabling createNew, clear template data immediately
+                        if (!isChecked) {
+                          setFormData(prev => ({ ...prev, selectedTemplate: '' }));
+                        }
+                      }}
                       className="sr-only"
                     />
                     <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${createNew ? 'translate-x-6' : 'translate-x-1'}`}></span>

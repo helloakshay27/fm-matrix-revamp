@@ -95,6 +95,10 @@ import { ScheduledTaskDashboard } from "./pages/maintenance/ScheduledTaskDashboa
 import { TaskDetailsPage } from "./pages/TaskDetailsPage";
 import { JobSheetPage } from "./pages/JobSheetPage";
 
+// Import Issue pages
+import IssuesListPage from "./pages/IssuesListPage";
+import IssueDetailsPage from "./pages/IssueDetailsPage";
+
 // Import Utility pages
 import { UtilityDashboard } from "./pages/UtilityDashboard";
 import { AddAssetDashboard } from "./pages/AddAssetDashboard";
@@ -149,6 +153,7 @@ import { VisitorsDashboard } from "./pages/VisitorsDashboard";
 import { VisitorsHistoryDashboard } from "./pages/VisitorsHistoryDashboard";
 import { VisitorDetailsPage } from "./pages/VisitorDetailsPage";
 import { PatrollingDashboard } from "./pages/PatrollingDashboard";
+import { PatrollingResponsePage } from "./pages/PatrollingResponsePage";
 import { PatrollingDetailsPage } from "./pages/PatrollingDetailsPage";
 import { PatrollingCreatePage } from "./pages/PatrollingCreatePage";
 import { PatrollingEditPage } from "./pages/PatrollingEditPage";
@@ -700,6 +705,7 @@ import AddSacHsn from "./pages/AddSacHsn";
 import { WOFeedsPage } from "./pages/WOFeedsPage";
 import { VendorPage } from "./pages/VendorPage";
 import { AddVendorPage } from "./pages/AddVendorPage";
+import { FinanceMasterPage } from "./pages/FinanceMasterPage";
 import MsafeReportDownload from "./pages/MsafeReportDownload";
 import MsafeDetailReportDownload from "./pages/MsafeDetailReportDownload";
 import DetailsVendorPage from "./pages/DetailsVendorPage";
@@ -756,6 +762,7 @@ import EmployeeDeletionHistory from "./components/EmployeeDeletionHistory";
 import AddAddressMaster from "./pages/master/AddAddressMaster";
 import EditAddressMaster from "./pages/master/EditAddressMaster";
 import MobileLMCPage from "./pages/MobileLMCPage";
+import { ViBusinessCard } from "./pages/mobile/ViBusinessCard";
 import { CompanyPartnersSetupDashboard } from "./pages/CompanyPartnersSetupDashboard";
 import { TestimonialsSetupDashboard } from "./pages/TestimonialsSetupDashboard";
 import BannerSetupDashboard from "./pages/BannerSetupDashboard";
@@ -800,6 +807,32 @@ import { SprintDashboard } from "./pages/SprintDashboard";
 import SprintDetailsPage from "./pages/SprintDetailsPage";
 import MilestoneDetailsPage from "./pages/MilestoneDetailsPage";
 import ProjectTaskDetails from "./pages/ProjectTaskDetails";
+import OpportunityDashboard from "./pages/OpportunityDashboard";
+import OpportunityDetailsPage from "./pages/OpportunityDetailsPage";
+import ProjectRoles from "./pages/ProjectRoles";
+import ProjectTeams from "./pages/ProjectTeams";
+import ProjectStatus from "./pages/ProjectStatus";
+import ProjectGroups from "./pages/ProjectGroups";
+import ProjectTemplates from "./pages/ProjectTemplates";
+import ProjectIssueTypes from "./pages/ProjectIssueTypes";
+import ProjectTypes from "./pages/ProjectTypes";
+import ProjectTags from "./pages/ProjectTags";
+import BusinessCard from "./pages/mobile/BusinessCard";
+import AskAI from "./pages/AskAI";
+import MinutesOfMeeting from "./pages/MinutesOfMeeting";
+import AddMoMPage from "./pages/AddMoMPage";
+import Todo from "./pages/Todo";
+import ProjectDocuments from "./pages/ProjectDocuments";
+import { TicketDashboardEmployee } from "./pages/TicketDashboardEmplooyee";
+import { AddTicketDashboardEmployee } from "./pages/AddTicketDashboardEmployee";
+import { VisitorsDashboardEmployee } from "./pages/VisitorsDashboardEmployee";
+import EmployeeBookingList from "./pages/EmployeeBookingList";
+import { EmployeeAddBookingPage } from "./pages/EmployeeAddBookingPage";
+import { EmployeeFnb } from "./pages/EmployeeFnb";
+import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
+import { VisitorFormPageEmployee } from "./pages/VisitorFormPageEmployee";
+import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
+import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -919,6 +952,8 @@ function App() {
                     path="settings/account/lock-module"
                     element={<LockModuleList />}
                   />
+
+
                   {/* <Route
                       path="settings/account/lock-module/view/:id"
                       element={<LockModuleView />}
@@ -1103,6 +1138,7 @@ function App() {
                   }
                 />
 
+
                 <Route
                   path="/bookings"
                   element={
@@ -1150,6 +1186,42 @@ function App() {
                   }
                 >
                   <Route index element={<Index />} />
+                  <Route
+                    path="/bookings-overview"
+                    element={
+                      <ProtectedRoute>
+                        <EmployeeBookingList />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/bookings-overview/add"
+                    element={
+                      <ProtectedRoute>
+                        <EmployeeAddBookingPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/bookings-overview/:id"
+                    element={
+                      <ProtectedRoute>
+                        <BookingDetailsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/employee/fnb"
+                    element={
+                      <ProtectedRoute>
+                        <EmployeeFnb needPadding={true} />
+                      </ProtectedRoute>
+                    }
+                  />
+
                   <Route path="/vas/channels" element={<ChannelsLayout />}>
                     <Route
                       index
@@ -1174,6 +1246,10 @@ function App() {
                     path="/vas/channels/tasks"
                     element={<ChannelTasksAll />}
                   />
+
+                  <Route path="/business-card" element={<BusinessCard />} />
+                  <Route path="/ask-ai" element={<AskAI />} />
+
                   <Route
                     path="/vas/channels/tasks/:id"
                     element={<ChatTaskDetailsPage />}
@@ -1416,6 +1492,12 @@ function App() {
                     element={<EditOccupantUserPage />}
                   />
 
+                  {/* Finance Master Routes */}
+                  <Route
+                    path="/master/finance"
+                    element={<FinanceMasterPage />}
+                  />
+
                   {/* CRM Routes */}
                   <Route path="/crm/campaign" element={<CRMCampaignPage />} />
                   <Route path="/crm/campaign/add" element={<AddLeadPage />} />
@@ -1559,12 +1641,21 @@ function App() {
 
                   {/* Ticket Routes */}
                   <Route
+                    path="/maintenance/ticket/employee"
+                    element={<TicketDashboardEmployee />}
+                  />
+                  <Route
                     path="/maintenance/ticket"
                     element={<TicketDashboard />}
                   />
+
                   <Route
                     path="/maintenance/ticket/add"
                     element={<AddTicketDashboard />}
+                  />
+                  <Route
+                    path="/maintenance/ticket/employee/add"
+                    element={<AddTicketDashboardEmployee />}
                   />
                   <Route
                     path="/maintenance/ticket/assign"
@@ -1618,6 +1709,10 @@ function App() {
                   <Route
                     path="/maintenance/ticket/:id/tag-vendor"
                     element={<TicketTagVendorPage />}
+                  />
+                  <Route
+                    path="/maintenance/ticket/employee/details/:id"
+                    element={<TicketDetailsEmployee />}
                   />
 
                   {/* Task Routes */}
@@ -1780,6 +1875,14 @@ function App() {
                     path="/security/visitor"
                     element={<VisitorsDashboard />}
                   />
+
+                  <Route
+                    path="/security/visitor/employee"
+                    element={<VisitorsDashboardEmployee />}
+                  />
+
+
+
 
                   {/* Incident Routes */}
                   <Route
@@ -2320,41 +2423,133 @@ function App() {
                     element={<DetailsVendorPage />}
                   />
                   <Route
-                    path="/maintenance/projects"
+                    path="/vas/projects"
                     element={<ProjectsDashboard />}
                   />
                   <Route
-                    path="/maintenance/projects/details/:id"
+                    path="/vas/projects/details/:id"
                     element={<ProjectDetailsPage />}
                   />
                   <Route
-                    path="/maintenance/projects/:id/milestones"
+                    path="/vas/projects/:id/milestones"
                     element={<ProjectMilestones />}
                   />
                   <Route
-                    path="/maintenance/projects/:id/milestones/:mid/tasks"
+                    path="/vas/projects/:id/milestones/:mid/tasks"
                     element={<ProjectTasksPage />}
                   />
                   <Route
-                  //   path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
-                  //   element={<ProjectTaskDetailsPage />}
-                  // />
-                  //   <Route
-                    path="/maintenance/projects/:id/milestones/:mid/tasks/:taskId"
+                    path="/vas/tasks"
+                    element={<ProjectTasksPage />}
+                  />
+                  <Route
+                    //   path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
+                    //   element={<ProjectTaskDetailsPage />}
+                    // />
+                    //   <Route
+                    path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetails />}
                   />
                   <Route
-                    path="/maintenance/sprint"
+                    path="/vas/sprint"
                     element={<SprintDashboard />}
                   />
                   <Route
-                    path="/maintenance/sprint/details/:id"
+                    path="/vas/sprint/details/:id"
                     element={<SprintDetailsPage />}
                   />
 
                   <Route
-                    path="/maintenance/projects/:projectId/milestones/:id"
+                    path="/vas/projects/:id/milestones/:mid"
                     element={<MilestoneDetailsPage />}
+                  />
+
+                  {/* Issues Routes */}
+                  <Route
+                    path="/vas/issues"
+                    element={<IssuesListPage />}
+                  />
+                  <Route
+                    path="/vas/issues/:id"
+                    element={<IssueDetailsPage />}
+                  />
+                  <Route
+                    path="/vas/projects/:id/issues"
+                    element={<IssuesListPage />}
+                  />
+                  <Route
+                    path="/vas/projects/:id/issues/:issueId"
+                    element={<IssueDetailsPage />}
+                  />
+
+                  <Route
+                    path="/vas/opportunity"
+                    element={<OpportunityDashboard />}
+                  />
+
+                  <Route
+                    path="/vas/opportunity/:id"
+                    element={<OpportunityDetailsPage />}
+                  />
+
+                  <Route
+                    path="/vas/todo"
+                    element={<Todo />}
+                  />
+
+                  <Route
+                    path="/vas/documents"
+                    element={<ProjectDocuments />}
+                  />
+
+                  <Route
+                    path="/vas/mom"
+                    element={<MinutesOfMeeting />}
+                  />
+
+                  <Route
+                    path="/vas/add-mom"
+                    element={<AddMoMPage />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/roles"
+                    element={<ProjectRoles />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/project-types"
+                    element={<ProjectTypes />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/project-tags"
+                    element={<ProjectTags />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/project-teams"
+                    element={<ProjectTeams />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/project-status"
+                    element={<ProjectStatus />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/project-groups"
+                    element={<ProjectGroups />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/project-templates"
+                    element={<ProjectTemplates />}
+                  />
+
+                  <Route
+                    path="/settings/project-task-setup/issue-types"
+                    element={<ProjectIssueTypes />}
                   />
 
                   {/* Utility Routes */}
@@ -2512,6 +2707,10 @@ function App() {
                     path="/security/visitor/add"
                     element={<VisitorFormPage />}
                   />
+                   <Route
+                    path="/security/visitor/employee/add"
+                    element={<VisitorFormPageEmployeeNew />}
+                  />
                   <Route
                     path="/security/visitor/history"
                     element={<VisitorsHistoryDashboard />}
@@ -2519,6 +2718,10 @@ function App() {
                   <Route
                     path="/security/visitor/details/:id"
                     element={<VisitorDetailsPage />}
+                  />
+                   <Route
+                    path="/security/visitor/employee/details/:id"
+                    element={<VisitorDetailsPageEmployee />}
                   />
                   <Route
                     path="/settings/visitor-management/setup"
@@ -2587,7 +2790,23 @@ function App() {
                     element={<PatrollingDashboard />}
                   />
                   <Route
+                    path="/security/patrolling/response"
+                    element={<PatrollingResponsePage />}
+                  />
+                  <Route
+                    path="/security/patrolling/create"
+                    element={<PatrollingCreatePage />}
+                  />
+                  <Route
+                    path="/security/patrolling/edit/:id"
+                    element={<PatrollingCreatePage />}
+                  />
+                  <Route
                     path="/security/patrolling/details/:id"
+                    element={<PatrollingDetailPage />}
+                  />
+                  <Route
+                    path="/security/patrolling/response/details/:id"
                     element={<PatrollingDetailPage />}
                   />
                   <Route
@@ -2601,10 +2820,6 @@ function App() {
                   <Route
                     path="/security/staff/add"
                     element={<AddStaffPage />}
-                  />
-                  <Route
-                    path="/security/patrolling"
-                    element={<PatrollingDashboard />}
                   />
                   <Route
                     path="/security/patrolling/create"
@@ -3483,6 +3698,7 @@ function App() {
                   }
                 />
                 <Route path="/mobile/lmc" element={<MobileLMCPage />} />
+                <Route path="/vi-business-card" element={<ViBusinessCard />} />
 
                 {/* Mobile Routes */}
                 <Route path="/mobile/tickets" element={<MobileTicketsPage />} />

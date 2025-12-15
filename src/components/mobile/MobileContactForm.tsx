@@ -42,12 +42,12 @@ export const MobileContactForm: React.FC = () => {
   const orgID = sessionStorage.getItem("org_id");
   const facilitySetupData = sessionStorage.getItem("facility_setup");
   const facilityData = facilitySetupData ? JSON.parse(facilitySetupData) : null;
-  
+
   // Check for token-based authentication
   const appToken = sessionStorage.getItem("app_token");
   const appUserInfo = sessionStorage.getItem("app_user_info");
   const userInfo = appUserInfo ? JSON.parse(appUserInfo) : null;
-  
+
   console.log("📋 STORED DATA:");
   console.log("  - siteID:", siteID);
   console.log("  - orgID:", orgID);
@@ -79,18 +79,28 @@ export const MobileContactForm: React.FC = () => {
 
   // Get facility ID from URL params or passed state or localStorage
   const storedFacilityId = sessionStorage.getItem("facility_id");
-  
+
   // 🔍 Enhanced session storage debugging
   console.log("🔍 SESSION STORAGE DEBUG:");
   console.log("  - All session storage keys:", Object.keys(sessionStorage));
-  console.log("  - Raw facility_id value:", sessionStorage.getItem("facility_id"));
-  console.log("  - facility_id type:", typeof sessionStorage.getItem("facility_id"));
-  console.log("  - facility_id length:", sessionStorage.getItem("facility_id")?.length);
+  console.log(
+    "  - Raw facility_id value:",
+    sessionStorage.getItem("facility_id")
+  );
+  console.log(
+    "  - facility_id type:",
+    typeof sessionStorage.getItem("facility_id")
+  );
+  console.log(
+    "  - facility_id length:",
+    sessionStorage.getItem("facility_id")?.length
+  );
   console.log("  - org_id value:", sessionStorage.getItem("org_id"));
   console.log("  - site_id value:", sessionStorage.getItem("site_id"));
-  
+
   console.log("Stored facility", storedFacilityId);
-  const finalFacilityId = searchParams.get("facilityId") || facilityId || storedFacilityId;
+  const finalFacilityId =
+    searchParams.get("facilityId") || facilityId || storedFacilityId;
   // Get source parameter from URL or passed state
   const finalSourceParam = searchParams.get("source") || sourceParam;
   const finalIsExternalScan = isExternalScan || finalSourceParam === "external";
@@ -116,9 +126,59 @@ export const MobileContactForm: React.FC = () => {
     customer_name: userInfo?.name || "",
     customer_email: userInfo?.email || "",
     delivery_address: facilityData?.fac_name || "",
-  });  console.log("formData", formData);
+  });
+  console.log("formData", formData);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingUserData, setIsLoadingUserData] = useState(false);
+
+  // Debounce timer for user data lookup
+  const userDataTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Function to fetch and auto-fill user data
+  const fetchUserData = async (mobile?: string, email?: string) => {
+    // Only fetch if we have complete mobile (8 digits) or valid email
+    const hasValidMobile = mobile && mobile.length === 8;
+    const hasValidEmail = email && validateEmail(email);
+
+    if (!hasValidMobile && !hasValidEmail) {
+      return;
+    }
+
+    setIsLoadingUserData(true);
+    try {
+      const params: { customer_mobile?: string; customer_email?: string } = {};
+      if (hasValidMobile) params.customer_mobile = mobile;
+      if (hasValidEmail) params.customer_email = email;
+
+      const result = await restaurantApi.getUserData(params);
+
+      if (result.success && result.data) {
+        console.log("✅ User data found, auto-filling form:", result.data);
+
+        // Auto-fill the form with user data from API
+        setFormData((prev) => ({
+          ...prev,
+          customer_name: result.data?.customer_name || prev.customer_name,
+          customer_mobile: result.data?.customer_mobile || prev.customer_mobile,
+          customer_email: result.data?.customer_email || prev.customer_email,
+          delivery_address:
+            result.data?.delivery_address || prev.delivery_address,
+        }));
+
+        toast({
+          title: "User Found",
+          description: "Your information has been auto-filled.",
+        });
+      } else {
+        console.log("ℹ️ No existing user data found");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setIsLoadingUserData(false);
+    }
+  };
 
   const handleBack = () => {
     navigate(-1);
@@ -129,16 +189,33 @@ export const MobileContactForm: React.FC = () => {
       ...prev,
       [field]: value,
     }));
+
+    // Clear existing timer
+    if (userDataTimerRef.current) {
+      clearTimeout(userDataTimerRef.current);
+    }
+
+    // Trigger user data lookup after user stops typing (500ms debounce)
+    if (field === "customer_mobile" || field === "customer_email") {
+      userDataTimerRef.current = setTimeout(() => {
+        // Use the latest value from the updated formData
+        setFormData((currentData) => {
+          const mobile =
+            field === "customer_mobile" ? value : currentData.customer_mobile;
+          const email =
+            field === "customer_email" ? value : currentData.customer_email;
+          fetchUserData(mobile, email);
+          return currentData; // Don't modify state, just read it
+        });
+      }, 500);
+    }
   };
 
   // Validation functions
   const validateMobile = (mobile: string) => {
-    // Oman mobile number format: 8-9 digits
-    // 8 digits: starting with 9, 8, 7, or 6
-    // 9 digits: various prefixes like 24, 25, 26, etc.
-    const mobile8Regex = /^[9876]\d{7}$/; // 8 digits starting with 9,8,7,6
-    const mobile9Regex = /^(23|24|25|26)\d{7}$/; // 9 digits starting with 24,25,26
-    return mobile8Regex.test(mobile) || mobile9Regex.test(mobile);
+    // Oman mobile number format: exactly 8 digits
+    const mobile8Regex = /^\d{8}$/; // Exactly 8 digits
+    return mobile8Regex.test(mobile);
   };
 
   const validateEmail = (email: string) => {
@@ -148,34 +225,34 @@ export const MobileContactForm: React.FC = () => {
 
   const isFormValid = () => {
     const errors = [];
-    
+
     // Check required fields
     if (!formData.customer_name.trim()) {
       errors.push("Name is required");
     }
-    
+
     if (!formData.customer_mobile.trim()) {
       errors.push("Mobile number is required");
     } else if (!validateMobile(formData.customer_mobile)) {
-      errors.push("Enter valid Oman number starting with 23/24, followed by 8–9 digits");
+      errors.push("Mobile number must be exactly 8 digits");
     }
-    
+
     if (!formData.customer_email.trim()) {
       errors.push("Email is required");
     } else if (!validateEmail(formData.customer_email)) {
       errors.push("Please enter a valid email address");
     }
-    
+
     if (!formData.delivery_address.trim()) {
       errors.push("Delivery address is required");
     }
-    
+
     return { isValid: errors.length === 0, errors };
   };
 
   const handleSubmit = async () => {
     const validation = isFormValid();
-    
+
     if (!validation.isValid) {
       toast({
         variant: "destructive",
@@ -191,7 +268,7 @@ export const MobileContactForm: React.FC = () => {
       // Priority 1: Token-based order for authenticated app users
       if (appToken) {
         console.log("🔑 TOKEN USER: Placing order with token authentication");
-        
+
         const tokenOrderData = {
           token: appToken,
           food_order: {
@@ -218,7 +295,8 @@ export const MobileContactForm: React.FC = () => {
             orderData: {
               id: result.data.order_id,
               restaurant_name: result.data.restaurant_name || restaurant.name,
-              customer_name: result.data.customer_name || formData.customer_name,
+              customer_name:
+                result.data.customer_name || formData.customer_name,
               total_amount: result.data.total_amount,
               message: result.data.message,
             },
@@ -231,19 +309,26 @@ export const MobileContactForm: React.FC = () => {
             isTokenUser: true,
             showSuccessImmediately: true,
           };
-          sessionStorage.setItem("latest_order_data", JSON.stringify(orderReviewData));
+          sessionStorage.setItem(
+            "latest_order_data",
+            JSON.stringify(orderReviewData)
+          );
 
           // Navigate to order review with success state
-          navigate(`/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`, {
-            state: orderReviewData,
-          });
+          navigate(
+            `/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`,
+            {
+              state: orderReviewData,
+            }
+          );
           return; // Exit early on success
         } else {
           console.error("❌ Token order placement failed:", result.message);
           toast({
             variant: "destructive",
             title: "Order Failed",
-            description: result.message || "Failed to place order. Please try again.",
+            description:
+              result.message || "Failed to place order. Please try again.",
           });
           return; // Exit on failure
         }
@@ -254,12 +339,13 @@ export const MobileContactForm: React.FC = () => {
 
       if (finalIsExternalScan && finalFacilityId && (siteId || siteID)) {
         // Use new QR order API for external users
-        const deliveryLocation = facilityData?.fac_name || formData.delivery_address;
+        const deliveryLocation =
+          facilityData?.fac_name || formData.delivery_address;
         const finalSiteId = siteId || parseInt(siteID || "0");
-        
+
         const qrOrderData = {
           customer_name: formData.customer_name,
-          customer_mobile: formData.customer_mobile, 
+          customer_mobile: formData.customer_mobile,
           customer_email: formData.customer_email,
           delivery_address: deliveryLocation,
           facility_id: parseInt(finalFacilityId),
@@ -288,7 +374,8 @@ export const MobileContactForm: React.FC = () => {
             orderData: {
               id: result.data.order_id, // Use actual order ID from API response
               restaurant_name: result.data.restaurant_name || restaurant.name,
-              customer_name: result.data.customer_name || formData.customer_name,
+              customer_name:
+                result.data.customer_name || formData.customer_name,
               total_amount: result.data.total_amount,
               message: result.data.message,
             },
@@ -302,12 +389,18 @@ export const MobileContactForm: React.FC = () => {
             sourceParam: finalSourceParam,
             showSuccessImmediately: true, // Show success immediately for external users
           };
-          sessionStorage.setItem("latest_order_data", JSON.stringify(orderReviewData));
+          sessionStorage.setItem(
+            "latest_order_data",
+            JSON.stringify(orderReviewData)
+          );
 
           // Navigate to order review with success state for external users
-          navigate(`/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`, {
-            state: orderReviewData,
-          });
+          navigate(
+            `/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`,
+            {
+              state: orderReviewData,
+            }
+          );
         } else {
           console.error("❌ QR order placement failed:", result.message);
           toast({
@@ -326,7 +419,8 @@ export const MobileContactForm: React.FC = () => {
         const user = storedUser ? JSON.parse(storedUser) : null;
         const userId = user?.id || null; // Use a default user ID for fallback
 
-        const deliveryLocation = facilityData?.fac_name || formData.delivery_address;
+        const deliveryLocation =
+          facilityData?.fac_name || formData.delivery_address;
 
         const orderData = {
           customer_name: formData.customer_name,
@@ -360,7 +454,8 @@ export const MobileContactForm: React.FC = () => {
             orderData: {
               id: result.data.order_id, // Use actual order ID from API response
               restaurant_name: result.data.restaurant_name || restaurant.name,
-              customer_name: result.data.customer_name || formData.customer_name,
+              customer_name:
+                result.data.customer_name || formData.customer_name,
               total_amount: result.data.total_amount || totalPrice,
               message: result.data.message,
             },
@@ -374,11 +469,17 @@ export const MobileContactForm: React.FC = () => {
             sourceParam: finalSourceParam,
             showSuccessImmediately: true,
           };
-          sessionStorage.setItem("latest_order_data", JSON.stringify(orderReviewData));
+          sessionStorage.setItem(
+            "latest_order_data",
+            JSON.stringify(orderReviewData)
+          );
 
-          navigate(`/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`, {
-            state: orderReviewData,
-          });
+          navigate(
+            `/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`,
+            {
+              state: orderReviewData,
+            }
+          );
         } else {
           console.error("❌ Fallback order placement failed:", result.message);
           toast({
@@ -410,7 +511,9 @@ export const MobileContactForm: React.FC = () => {
             <button onClick={handleBack} className="mr-4">
               <ArrowLeft className="w-6 h-6 text-gray-600" />
             </button>
-            <h1 className="text-lg font-semibold text-gray-900">Order Review</h1>
+            <h1 className="text-lg font-semibold text-gray-900">
+              Order Review
+            </h1>
           </div>
           {finalIsAppUser && (
             <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
@@ -433,33 +536,35 @@ export const MobileContactForm: React.FC = () => {
             {/* Contact Number */}
             <div>
               <Label
-              htmlFor="customer_mobile"
-              className="text-sm font-medium text-gray-700 mb-2 block"
+                htmlFor="customer_mobile"
+                className="text-sm font-medium text-gray-700 mb-2 block"
               >
-              Contact Number <span className="text-red-500">*</span>
-              {appToken && userInfo?.mobile && (
-                <span className="text-xs text-gray-500 ml-2">(From App)</span>
-              )}
+                Contact Number <span className="text-red-500">*</span>
+                {appToken && userInfo?.mobile && (
+                  <span className="text-xs text-gray-500 ml-2">(From App)</span>
+                )}
               </Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <span className="text-gray-500 text-sm">+968</span>
                 </div>
                 <Input
-                id="customer_mobile"
-                type="tel"
-                placeholder="24XXXXXX"
-                value={formData.customer_mobile}
-                onChange={(e) => {
-                  // Only allow digits and limit to 9 characters for Oman (8 or 9 digits)
-                  const value = e.target.value.replace(/\D/g, '').slice(0, 9);
-                  handleInputChange("customer_mobile", value);
-                }}
-                maxLength={9}
-                readOnly={appToken && userInfo?.mobile}
-                className={`w-full pl-16 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
-                  appToken && userInfo?.mobile ? 'bg-gray-50 cursor-not-allowed' : ''
-                }`}
+                  id="customer_mobile"
+                  type="tel"
+                  placeholder="XXXXXXXX"
+                  value={formData.customer_mobile}
+                  onChange={(e) => {
+                    // Only allow digits and limit to 8 characters
+                    const value = e.target.value.replace(/\D/g, "").slice(0, 8);
+                    handleInputChange("customer_mobile", value);
+                  }}
+                  maxLength={8}
+                  readOnly={appToken && userInfo?.mobile}
+                  className={`w-full pl-16 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
+                    appToken && userInfo?.mobile
+                      ? "bg-gray-50 cursor-not-allowed"
+                      : ""
+                  }`}
                 />
               </div>
             </div>
@@ -485,7 +590,9 @@ export const MobileContactForm: React.FC = () => {
                 }
                 readOnly={appToken && userInfo?.name}
                 className={`w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
-                  appToken && userInfo?.name ? 'bg-gray-50 cursor-not-allowed' : ''
+                  appToken && userInfo?.name
+                    ? "bg-gray-50 cursor-not-allowed"
+                    : ""
                 }`}
               />
             </div>
@@ -507,11 +614,16 @@ export const MobileContactForm: React.FC = () => {
                 placeholder="Enter Your Email Address"
                 value={formData.customer_email}
                 onChange={(e) =>
-                  handleInputChange("customer_email", e.target.value.toLowerCase())
+                  handleInputChange(
+                    "customer_email",
+                    e.target.value.toLowerCase()
+                  )
                 }
                 readOnly={appToken && userInfo?.email}
                 className={`w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
-                  appToken && userInfo?.email ? 'bg-gray-50 cursor-not-allowed' : ''
+                  appToken && userInfo?.email
+                    ? "bg-gray-50 cursor-not-allowed"
+                    : ""
                 }`}
               />
             </div>

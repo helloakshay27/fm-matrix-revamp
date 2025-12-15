@@ -420,10 +420,12 @@ const SectionLoader: React.FC<{
   className?: string;
 }> = ({ loading, children, className }) => {
   return (
-    <div className={`relative ${className ?? ""}`}>
-      {children}
+    <div className={`relative h-full flex flex-col ${className ?? ""}`}>
+      <div className="flex-1 overflow-auto">
+        {children}
+      </div>
       {loading && (
-        <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+        <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex items-center justify-center pointer-events-none">
           <div className="h-8 w-8 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />
         </div>
       )}
@@ -3168,85 +3170,122 @@ export const Dashboard = () => {
     <>
       <style>
         {`
+          /* Grid Layout Item Styles */
+          .react-grid-layout {
+            background: transparent;
+          }
+          
+          .react-grid-item {
+            overflow: visible !important;
+            background: transparent !important;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 0;
+            transition: box-shadow 0.3s ease;
+          }
+          
+          .react-grid-item > .react-resizable-handle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            bottom: 0;
+            right: 0;
+            cursor: se-resize;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><polygon points="10 0 10 10 0 10" fill="%23999" opacity="0.5"/></svg>') no-repeat bottom right;
+            background-origin: content-box;
+            box-sizing: border-box;
+            padding: 0 8px 8px 0;
+          }
+          
+          .react-grid-item > .react-resizable-handle::after {
+            content: "";
+            position: absolute;
+            right: 3px;
+            bottom: 3px;
+            width: 5px;
+            height: 5px;
+            border-right: 2px solid #999;
+            border-bottom: 2px solid #999;
+            opacity: 0.5;
+          }
 
+          /* Card wrapper - allows resize to work properly */
+          .analytics-card-wrapper {
+            height: 100%;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background: white;
+            display: flex;
+            flex-direction: column;
+          }
+          
+          .analytics-card-wrapper:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+          }
 
+          /* Card content - scales with resize */
+          .analytics-card-content {
+            flex: 1;
+            overflow: auto;
+            min-height: 0;
+          }
+
+          /* Placeholder styling for resize */
+          .react-grid-placeholder {
+            background: #e5e7eb !important;
+            opacity: 0.5 !important;
+            border-radius: 8px;
+            border: 2px dashed #999 !important;
+            z-index: 2;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -o-user-select: none;
+            user-select: none;
+          }
+
+          /* Card specific styles */
           [data-lov-name="Card"].bg-card,
           .bg-card {
-            height: 400px !important;
-            box-shadow: 0px 4px 14.2px 0px #0000001A;
-
+            height: 100% !important;
+            box-shadow: none !important;
+            border-radius: 0;
           }
-            .bg-card.coverage-card {
-            height: auto !important;
-            box-shadow: 0px 4px 14.2px 0px #0000001A;
-            max-height: 750px !important;
+          
+          .bg-card.coverage-card {
+            height: 100% !important;
+            max-height: none !important;
+            box-shadow: none !important;
           }
 
           [data-lov-name="CardContent"].p-6.pt-0,
           .bg-card .p-6.pt-0 {
-            height: 300px !important;
+            height: auto !important;
             overflow-y: auto !important;
           }
-            .tracking-tight{
-            color: #000000;
-              font-weight: 600;
-              leading-trim: NONE;
           
-            
-            }
-             .bg-card   svg , .cursor-grab svg {
+          .tracking-tight {
+            color: #000000;
+            font-weight: 600;
+          }
+          
+          .bg-card svg,
+          .cursor-grab svg {
+            color: #000000 !important;
+          }
 
-                        color: #000000 !important;
-
-            }
-
-              .bg-card button{
+          .bg-card button {
             border: none !important;
-            }
+          }
 
+          .bg-card button svg {
+            color: #000000 !important;
+          }
 
-           .bg-card button svg{
-
-                        color: #000000 !important;
-
-            }
-
-            h1, h2, h3, h4, h5, h6 {
-                color: #000000 !important;
-            }
-
-            /* Grid Layout Item Styles */
-            .react-grid-item {
-              overflow: hidden;
-              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-              border-radius: 8px;
-              background: white;
-              transition: box-shadow 0.3s ease;
-            }
-            
-            .react-grid-item:hover {
-              box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            }
-            
-            .react-grid-item > div {
-              height: 100%;
-              overflow: hidden;
-            }
-
-            /* Placeholder styling for resize */
-            .react-grid-placeholder {
-              background: #e5e7eb !important;
-              opacity: 0.5 !important;
-              border-radius: 8px;
-              border: none !important;
-              z-index: 2;
-              -webkit-user-select: none;
-              -moz-user-select: none;
-              -ms-user-select: none;
-              -o-user-select: none;
-              user-select: none;
-            }
-
+          h1, h2, h3, h4, h5, h6 {
+            color: #000000 !important;
+          }
         `}
       </style>
       <div className="flex min-h-screen bg-analytics-background">
@@ -3354,6 +3393,8 @@ export const Dashboard = () => {
                       resizeHandles={["se"]}
                       containerPadding={[0, 0]}
                       compactType="vertical"
+                      isDraggable={true}
+                      isResizable={true}
                     >
                       {/* Analytics Cards */}
                       {chartOrder.map((chartId) => {
@@ -3365,22 +3406,11 @@ export const Dashboard = () => {
                         const perCardLoading =
                           !!loadingMap?.[analytic.module]?.[analytic.endpoint];
 
-                        // Cards that should use auto height (simple stat cards only)
-                        const compactCards = [
-                          'customer_experience_feedback',
-                          'customer_rating_overview',
-                          'helpdesk_snapshot',
-                        ];
-                        
-                        const isCompactCard = compactCards.includes(analytic.endpoint);
-
                         return (
-                          <div key={analytic.id} className="cursor-move">
-                            <SectionLoader loading={perCardLoading}>
-                              <div className={isCompactCard ? "h-auto" : "h-full flex flex-col"}>
-                                <div className={isCompactCard ? "" : "flex-1 overflow-auto"}>
-                                  {renderAnalyticsCard(analytic)}
-                                </div>
+                          <div key={analytic.id} className="analytics-card-wrapper">
+                            <SectionLoader loading={perCardLoading} className="flex-1">
+                              <div className="analytics-card-content">
+                                {renderAnalyticsCard(analytic)}
                               </div>
                             </SectionLoader>
                           </div>

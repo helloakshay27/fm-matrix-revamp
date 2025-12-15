@@ -36,6 +36,29 @@ export const createProject = createAsyncThunk(
     }
 )
 
+export const fetchKanbanProjects = createAsyncThunk('fetchKanbanProjects', async ({ token, baseUrl }: { token: string, baseUrl: string }, { rejectWithValue }) => {
+    try {
+        let params = new URLSearchParams();
+        params.append(
+            'q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]',
+            JSON.parse(localStorage.getItem('user')).id
+        );
+        const response = await axios.get(
+            `https://${baseUrl}/project_managements/project_kanban.json?${params.toString()}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        return error.response.data;
+    }
+});
+
 export const fetchProjectById = createAsyncThunk(
     'fetchProjectById',
     async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
@@ -120,12 +143,53 @@ export const filterProjects = createAsyncThunk(
     }
 );
 
+export const attachFiles = createAsyncThunk(
+    'attachFiles',
+    async ({ token, baseUrl, id, payload }: { token: string, baseUrl: string, id: string, payload: FormData }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/project_managements/${id}.json`, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            return response.data;
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to upload files'
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const removeAttachment = createAsyncThunk(
+    'removeAttachment',
+    async ({ token, baseUrl, id, image_id }: { token: string, baseUrl: string, id: string, image_id: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.delete(
+                `https://${baseUrl}/project_managements/${id}/remove_attachemnts/${image_id}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to remove attachment'
+            return rejectWithValue(message);
+        }
+    }
+);
+
 const fetchProjectsSlice = createApiSlice("fetchProjects", fetchProjects);
 const createProjectSlice = createApiSlice("createProject", createProject);
 const fetchProjectByIdSlice = createApiSlice("fetchProjectById", fetchProjectById);
 const changeProjectStatusSlice = createApiSlice("changeProjectStatus", changeProjectStatus);
 const removeTagFromProjectSlice = createApiSlice("removeTagFromProject", removeTagFromProject);
 const filterProjectsSlice = createApiSlice("filterProjects", filterProjects);
+const attachFilesSlice = createApiSlice("attachFiles", attachFiles);
+const removeAttachmentSlice = createApiSlice("removeAttachment", removeAttachment);
+const fetchKanbanProjectsSlice = createApiSlice("fetchKanbanProjects", fetchKanbanProjects);
 
 export const fetchProjectsReducer = fetchProjectsSlice.reducer;
 export const createProjectReducer = createProjectSlice.reducer;
@@ -133,3 +197,6 @@ export const fetchProjectByIdReducer = fetchProjectByIdSlice.reducer;
 export const changeProjectStatusReducer = changeProjectStatusSlice.reducer;
 export const removeTagFromProjectReducer = removeTagFromProjectSlice.reducer;
 export const filterProjectsReducer = filterProjectsSlice.reducer;
+export const attachFilesReducer = attachFilesSlice.reducer;
+export const removeAttachmentReducer = removeAttachmentSlice.reducer;
+export const fetchKanbanProjectsReducer = fetchKanbanProjectsSlice.reducer;
