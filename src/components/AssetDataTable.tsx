@@ -695,8 +695,14 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       default:
         // Handle custom fields
         if (columnKey.startsWith("custom_")) {
-          const fieldKey = columnKey.replace("custom_", "");
-          const customFieldValue = asset[fieldKey];
+          // Priority 1: Check if the key exists directly (from updated AssetDashboard logic)
+          let customFieldValue = asset[columnKey];
+
+          // Priority 2: Fallback to stripping "custom_" (old logic)
+          if (customFieldValue === undefined) {
+            const fieldKey = columnKey.replace("custom_", "");
+            customFieldValue = asset[fieldKey];
+          }
 
           let displayValue = customFieldValue;
           if (customFieldValue && typeof customFieldValue === 'object') {

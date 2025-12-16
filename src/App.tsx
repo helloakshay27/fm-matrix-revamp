@@ -331,6 +331,7 @@ import { CreateRosterTemplateDashboard } from "./pages/setup/CreateRosterTemplat
 // Import Employee pages
 import { EmployeesDashboard } from "./pages/setup/EmployeesDashboard";
 import { EmployeeDashboard } from "./pages/EmployeeDashboard";
+import { EmployeeCalendarPage } from "./pages/EmployeeCalendarPage";
 import { AddEmployeeDashboard } from "./pages/setup/AddEmployeeDashboard";
 import { EditEmployeePage } from "./pages/setup/EditEmployeePage";
 
@@ -954,7 +955,6 @@ function App() {
                     element={<LockModuleList />}
                   />
 
-
                   {/* <Route
                       path="settings/account/lock-module/view/:id"
                       element={<LockModuleView />}
@@ -1139,7 +1139,6 @@ function App() {
                   }
                 />
 
-
                 <Route
                   path="/bookings"
                   element={
@@ -1214,7 +1213,7 @@ function App() {
                     }
                   />
 
-                   <Route
+                  <Route
                     path="/parking"
                     element={
                       <ProtectedRoute>
@@ -1577,7 +1576,6 @@ function App() {
                     element={<CRMWalletDetails />}
                   />
 
-
                   <Route
                     path="/msafedashboard"
                     element={<MsafeDashboardVI />}
@@ -1659,6 +1657,10 @@ function App() {
                   <Route
                     path="/employee/dashboard"
                     element={<EmployeeDashboard />}
+                  />
+                  <Route
+                    path="/employee/calendar"
+                    element={<EmployeeCalendarPage />}
                   />
                   <Route
                     path="/maintenance/ticket"
@@ -1817,9 +1819,7 @@ function App() {
                     path="/safety/permit/safety-check-form"
                     element={<PermitSafetyCheckForm />}
                   />
-                  <Route
-                    path="/safety/permit/vendor-form/:id?"
-                  />
+                  <Route path="/safety/permit/vendor-form/:id?" />
                   <Route
                     path="/safety/permit/fill-form/:id?"
                     element={<FillForm />}
@@ -1895,9 +1895,6 @@ function App() {
                     path="/security/visitor/employee"
                     element={<VisitorsDashboardEmployee />}
                   />
-
-
-
 
                   {/* Incident Routes */}
                   <Route
@@ -2437,10 +2434,7 @@ function App() {
                     path="/maintenance/vendor/view/:id"
                     element={<DetailsVendorPage />}
                   />
-                  <Route
-                    path="/vas/projects"
-                    element={<ProjectsDashboard />}
-                  />
+                  <Route path="/vas/projects" element={<ProjectsDashboard />} />
                   <Route
                     path="/vas/projects/details/:id"
                     element={<ProjectDetailsPage />}
@@ -2453,10 +2447,7 @@ function App() {
                     path="/vas/projects/:id/milestones/:mid/tasks"
                     element={<ProjectTasksPage />}
                   />
-                  <Route
-                    path="/vas/tasks"
-                    element={<ProjectTasksPage />}
-                  />
+                  <Route path="/vas/tasks" element={<ProjectTasksPage />} />
                   <Route
                     path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetails />}
@@ -2465,10 +2456,7 @@ function App() {
                     path="/vas/tasks/:taskId"
                     element={<ProjectTaskDetails />}
                   />
-                  <Route
-                    path="/vas/sprint"
-                    element={<SprintDashboard />}
-                  />
+                  <Route path="/vas/sprint" element={<SprintDashboard />} />
                   <Route
                     path="/vas/sprint/details/:id"
                     element={<SprintDetailsPage />}
@@ -2480,10 +2468,7 @@ function App() {
                   />
 
                   {/* Issues Routes */}
-                  <Route
-                    path="/vas/issues"
-                    element={<IssuesListPage />}
-                  />
+                  <Route path="/vas/issues" element={<IssuesListPage />} />
                   <Route
                     path="/vas/issues/:id"
                     element={<IssueDetailsPage />}
@@ -2507,25 +2492,13 @@ function App() {
                     element={<OpportunityDetailsPage />}
                   />
 
-                  <Route
-                    path="/vas/todo"
-                    element={<Todo />}
-                  />
+                  <Route path="/vas/todo" element={<Todo />} />
 
-                  <Route
-                    path="/vas/documents"
-                    element={<ProjectDocuments />}
-                  />
+                  <Route path="/vas/documents" element={<ProjectDocuments />} />
 
-                  <Route
-                    path="/vas/mom"
-                    element={<MinutesOfMeeting />}
-                  />
+                  <Route path="/vas/mom" element={<MinutesOfMeeting />} />
 
-                  <Route
-                    path="/vas/add-mom"
-                    element={<AddMoMPage />}
-                  />
+                  <Route path="/vas/add-mom" element={<AddMoMPage />} />
 
                   <Route
                     path="/settings/project-task-setup/roles"
@@ -2871,12 +2844,7 @@ function App() {
 
                   <Route
                     path="/mail-inbounds-create"
-                    element={
-
-
-                      <NewInboundPage />
-
-                    }
+                    element={<NewInboundPage />}
                   />
                   <Route
                     path="/vas/fnb"

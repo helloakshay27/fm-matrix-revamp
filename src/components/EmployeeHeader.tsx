@@ -41,8 +41,6 @@ import { useLayout } from "@/contexts/LayoutContext";
 import { permissionService } from "@/services/permissionService";
 import { Calendar } from "./ui/calendar";
 
-
-
 // Employee modules/packages
 const employeeModules = [
   { name: "Dashboard", icon: Home },
@@ -75,18 +73,22 @@ export const EmployeeHeader: React.FC = () => {
 
   // Module visibility management
   const [visibleModules, setVisibleModules] = useState<string[]>(() => {
-    const saved = localStorage.getItem('employeeVisibleModules');
-    return saved ? JSON.parse(saved) : employeeModules.slice(0, 10).map(m => m.name);
+    const saved = localStorage.getItem("employeeVisibleModules");
+    return saved
+      ? JSON.parse(saved)
+      : employeeModules.slice(0, 10).map((m) => m.name);
   });
 
   const MAX_VISIBLE_MODULES = 10;
   // Get displayed modules in the order they appear in visibleModules array
   const displayedModules = visibleModules
     .slice(0, MAX_VISIBLE_MODULES)
-    .map(name => employeeModules.find(m => m.name === name))
-    .filter(m => m !== undefined);
+    .map((name) => employeeModules.find((m) => m.name === name))
+    .filter((m) => m !== undefined);
   // Hidden modules are those NOT in the visibleModules list
-  const hiddenModules = employeeModules.filter(m => !visibleModules.includes(m.name));
+  const hiddenModules = employeeModules.filter(
+    (m) => !visibleModules.includes(m.name)
+  );
   // Get user data
   const user = getUser() || {
     id: 0,
@@ -95,7 +97,6 @@ export const EmployeeHeader: React.FC = () => {
     email: "",
   };
   const userFullName = `${user.firstname} ${user.lastname}`.trim();
-
 
   const handleLogout = () => {
     clearAuth();
@@ -153,7 +154,7 @@ export const EmployeeHeader: React.FC = () => {
         navigate("/parking");
         break;
       case "Calendar":
-        navigate("/calendar");
+        navigate("/employee/calendar");
         break;
       case "Booking":
         navigate("/bookings-overview");
@@ -179,13 +180,13 @@ export const EmployeeHeader: React.FC = () => {
   };
 
   const handleModuleDragStart = (e: React.DragEvent, moduleName: string) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', moduleName);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", moduleName);
   };
 
   const handleModuleDrop = (e: React.DragEvent, targetModuleName: string) => {
     e.preventDefault();
-    const draggedModuleName = e.dataTransfer.getData('text/plain');
+    const draggedModuleName = e.dataTransfer.getData("text/plain");
 
     if (draggedModuleName === targetModuleName) return;
 
@@ -201,7 +202,10 @@ export const EmployeeHeader: React.FC = () => {
       newVisibleModules.splice(targetIndex, 0, draggedModuleName);
 
       setVisibleModules(newVisibleModules);
-      localStorage.setItem('employeeVisibleModules', JSON.stringify(newVisibleModules));
+      localStorage.setItem(
+        "employeeVisibleModules",
+        JSON.stringify(newVisibleModules)
+      );
     }
     // Case 2: Dragged module is hidden, target is visible - swap them
     else if (draggedIndex === -1 && targetIndex !== -1) {
@@ -209,24 +213,29 @@ export const EmployeeHeader: React.FC = () => {
       newVisibleModules[targetIndex] = draggedModuleName;
 
       setVisibleModules(newVisibleModules);
-      localStorage.setItem('employeeVisibleModules', JSON.stringify(newVisibleModules));
+      localStorage.setItem(
+        "employeeVisibleModules",
+        JSON.stringify(newVisibleModules)
+      );
     }
   };
 
   const handleModuleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    e.dataTransfer.dropEffect = "move";
   };
 
   const toggleModuleVisibility = (moduleName: string) => {
     const newVisibleModules = visibleModules.includes(moduleName)
-      ? visibleModules.filter(m => m !== moduleName)
+      ? visibleModules.filter((m) => m !== moduleName)
       : [...visibleModules, moduleName];
 
     setVisibleModules(newVisibleModules);
-    localStorage.setItem('employeeVisibleModules', JSON.stringify(newVisibleModules));
+    localStorage.setItem(
+      "employeeVisibleModules",
+      JSON.stringify(newVisibleModules)
+    );
   };
-
 
   const userType = localStorage.getItem("userType");
 
@@ -358,8 +367,6 @@ export const EmployeeHeader: React.FC = () => {
               </defs>
             </svg>
           )}
-
-
         </div>
 
         {/* Center Section - Module Navigation */}
@@ -370,29 +377,38 @@ export const EmployeeHeader: React.FC = () => {
               {displayedModules.map((module) => {
                 const Icon = module.icon;
                 const isActive = currentSection === module.name;
-                const truncatedName = module.name.length > 8
-                  ? module.name.substring(0, 8) + '..'
-                  : module.name;
+                const truncatedName =
+                  module.name.length > 8
+                    ? module.name.substring(0, 8) + ".."
+                    : module.name;
 
                 return (
                   <Tooltip key={module.name}>
                     <TooltipTrigger asChild>
                       <button
                         draggable
-                        onDragStart={(e) => handleModuleDragStart(e, module.name)}
+                        onDragStart={(e) =>
+                          handleModuleDragStart(e, module.name)
+                        }
                         onDrop={(e) => handleModuleDrop(e, module.name)}
                         onDragOver={handleModuleDragOver}
                         onClick={() => handleModuleClick(module.name)}
-                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${isActive
-                          ? "bg-white text-[#C72030] shadow-sm"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                          }`}
+                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${
+                          isActive
+                            ? "bg-white text-[#C72030] shadow-sm"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                        }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
-                        <span className="hidden lg:inline text-[10px] sm:text-xs">{truncatedName}</span>
+                        <span className="hidden lg:inline text-[10px] sm:text-xs">
+                          {truncatedName}
+                        </span>
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-800">
+                    <TooltipContent
+                      side="bottom"
+                      className="bg-gray-900 text-white border-gray-800"
+                    >
                       <p className="text-xs font-medium">{module.name}</p>
                     </TooltipContent>
                   </Tooltip>
@@ -401,7 +417,10 @@ export const EmployeeHeader: React.FC = () => {
 
               {/* More modules dropdown */}
               {hiddenModules.length > 0 && (
-                <DropdownMenu open={isModuleMenuOpen} onOpenChange={setIsModuleMenuOpen}>
+                <DropdownMenu
+                  open={isModuleMenuOpen}
+                  onOpenChange={setIsModuleMenuOpen}
+                >
                   <DropdownMenuTrigger asChild>
                     <button className="flex flex-col items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md transition-all hover:bg-white/50 text-gray-600 hover:text-gray-900">
                       <svg
@@ -414,10 +433,15 @@ export const EmployeeHeader: React.FC = () => {
                         <circle cx="12" cy="5" r="1.5" fill="currentColor" />
                         <circle cx="12" cy="19" r="1.5" fill="currentColor" />
                       </svg>
-                      <span className="text-[10px] sm:text-xs font-medium hidden lg:inline">More</span>
+                      <span className="text-[10px] sm:text-xs font-medium hidden lg:inline">
+                        More
+                      </span>
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center" className="w-64 max-h-96 overflow-y-auto">
+                  <DropdownMenuContent
+                    align="center"
+                    className="w-64 max-h-96 overflow-y-auto"
+                  >
                     <div className="p-2">
                       <p className="text-xs font-semibold text-gray-500 mb-2 px-2">
                         More Modules
@@ -430,15 +454,20 @@ export const EmployeeHeader: React.FC = () => {
                             <button
                               key={module.name}
                               draggable
-                              onDragStart={(e) => handleModuleDragStart(e, module.name)}
+                              onDragStart={(e) =>
+                                handleModuleDragStart(e, module.name)
+                              }
                               onClick={() => handleModuleClick(module.name)}
-                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${isActive
-                                ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                                : "hover:bg-[#f6f4ee] text-gray-700"
-                                }`}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${
+                                isActive
+                                  ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                                  : "hover:bg-[#f6f4ee] text-gray-700"
+                              }`}
                             >
                               <Icon className="w-5 h-5 flex-shrink-0" />
-                              <span className="text-sm font-medium">{module.name}</span>
+                              <span className="text-sm font-medium">
+                                {module.name}
+                              </span>
                             </button>
                           );
                         })}
@@ -448,7 +477,8 @@ export const EmployeeHeader: React.FC = () => {
                           💡 Tip
                         </p>
                         <p className="text-xs text-gray-400 px-2">
-                          Drag modules from here to the header to swap with visible modules
+                          Drag modules from here to the header to swap with
+                          visible modules
                         </p>
                       </div>
                     </div>
@@ -461,7 +491,6 @@ export const EmployeeHeader: React.FC = () => {
 
         {/* Right Section - Actions */}
         <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
-
           <button
             className="p-1.5 sm:p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors"
             onClick={() => {
@@ -483,7 +512,6 @@ export const EmployeeHeader: React.FC = () => {
                 strokeLinecap="round"
               />
             </svg>
-
           </button>
           {/* Notifications */}
           <TooltipProvider delayDuration={300}>
@@ -504,16 +532,18 @@ export const EmployeeHeader: React.FC = () => {
                   )}
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="bg-gray-900 text-white border-gray-800">
+              <TooltipContent
+                side="bottom"
+                className="bg-gray-900 text-white border-gray-800"
+              >
                 <p className="text-xs font-medium">
                   {notificationCount > 0
-                    ? `${notificationCount} Notification${notificationCount > 1 ? 's' : ''}`
-                    : 'Notifications'}
+                    ? `${notificationCount} Notification${notificationCount > 1 ? "s" : ""}`
+                    : "Notifications"}
                 </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-
 
           {/* User Profile Dropdown */}
           <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
@@ -522,7 +552,6 @@ export const EmployeeHeader: React.FC = () => {
                 <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center flex-shrink-0">
                   <User className="w-4 h-4 text-white" />
                 </div>
-
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 p-0">
@@ -586,11 +615,17 @@ export const EmployeeHeader: React.FC = () => {
 
               {/* Menu Items */}
               <div className="py-1">
-                <DropdownMenuItem onClick={handleProfileClick} className="mx-2 my-1 rounded-md">
+                <DropdownMenuItem
+                  onClick={handleProfileClick}
+                  className="mx-2 my-1 rounded-md"
+                >
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSettingsClick} className="mx-2 my-1 rounded-md">
+                <DropdownMenuItem
+                  onClick={handleSettingsClick}
+                  className="mx-2 my-1 rounded-md"
+                >
                   <Settings className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">Settings</span>
                 </DropdownMenuItem>
