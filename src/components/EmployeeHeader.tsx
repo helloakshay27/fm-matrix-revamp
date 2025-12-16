@@ -138,7 +138,7 @@ export const EmployeeHeader: React.FC = () => {
       case "ID Card":
         navigate("/business-card");
         break;
-      case "Notes ":
+      case "To Do ":
         navigate("/vas/todo");
         break;
       case "Ask AI":
