@@ -3142,38 +3142,38 @@ const AddAssetPage = () => {
 
     // Meter Details validation (if applicable toggle is on)
     // IT Assets Details validation for IT Equipment
-    if (selectedAssetCategory === "IT Equipment") {
-      // System Details required fields
-      const systemFields = [
-        { key: "os", label: "OS" },
-        { key: "memory", label: "Total Memory" },
-        { key: "processor", label: "Processor" },
-      ];
-      for (const field of systemFields) {
-        if (!itAssetDetails.system_details[field.key]) {
-          toast.error(`${field.label} Required`, {
-            description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
-            duration: 4000,
-          });
-          return [`${field.label} is required in IT ASSETS DETAILS`];
-        }
-      }
-      // Hardware Details required fields
-      const hardwareFields = [
-        { key: "model", label: "Model" },
-        { key: "serial_no", label: "Serial No." },
-        { key: "capacity", label: "Capacity" },
-      ];
-      for (const field of hardwareFields) {
-        if (!itAssetDetails.hardware[field.key]) {
-          toast.error(`${field.label} Required`, {
-            description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
-            duration: 4000,
-          });
-          return [`${field.label} is required in IT ASSETS DETAILS`];
-        }
-      }
-    }
+    // if (selectedAssetCategory === "IT Equipment") {
+    //   // System Details required fields
+    //   const systemFields = [
+    //     { key: "os", label: "OS" },
+    //     { key: "memory", label: "Total Memory" },
+    //     { key: "processor", label: "Processor" },
+    //   ];
+    //   for (const field of systemFields) {
+    //     if (!itAssetDetails.system_details[field.key]) {
+    //       toast.error(`${field.label} Required`, {
+    //         description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
+    //         duration: 4000,
+    //       });
+    //       return [`${field.label} is required in IT ASSETS DETAILS`];
+    //     }
+    //   }
+    //   // Hardware Details required fields
+    //   const hardwareFields = [
+    //     { key: "model", label: "Model" },
+    //     { key: "serial_no", label: "Serial No." },
+    //     { key: "capacity", label: "Capacity" },
+    //   ];
+    //   for (const field of hardwareFields) {
+    //     if (!itAssetDetails.hardware[field.key]) {
+    //       toast.error(`${field.label} Required`, {
+    //         description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
+    //         duration: 4000,
+    //       });
+    //       return [`${field.label} is required in IT ASSETS DETAILS`];
+    //     }
+    //   }
+    // }
     if (
       meterType === "SubMeter" &&
       !selectedParentMeterId
@@ -5629,7 +5629,20 @@ const AddAssetPage = () => {
                       sx={{
                         gridColumn: { md: "span 2" },
                         "& .MuiOutlinedInput-root": {
-                          minHeight: { xs: "60px", md: "70px" },
+                          height: "auto !important",
+                          padding: "2px !important",
+                          display: "flex",
+                        },
+                        "& .MuiInputBase-input[aria-hidden='true']": {
+                          flex: 0,
+                          width: 0,
+                          height: 0,
+                          padding: "0 !important",
+                          margin: 0,
+                          display: "none",
+                        },
+                        "& .MuiInputBase-input": {
+                          resize: "none !important",
                         },
                       }}
                       onChange={(e) => {
