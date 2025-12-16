@@ -441,7 +441,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     },
     // Dynamic custom field columns
     ...availableCustomFields.map((field) => ({
-      key: `custom_${field.key}`,
+      key: `custom_${field.key.replace(/\s+/g, '_')}`,
       label: field.title,
       sortable: true,
       hideable: true,
