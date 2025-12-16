@@ -1,16 +1,23 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchIssues, deleteIssue } from "@/store/slices/issueSlice";
+import { fetchIssues, deleteIssue, updateIssue } from "@/store/slices/issueSlice";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, Eye, Edit, ChevronDown, List, ChartNoAxesColumn } from "lucide-react";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import AddIssueModal from "@/components/AddIssueModal";
+import { FormControl, MenuItem, Select } from "@mui/material";
+import axios from "axios";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 
 interface Issue {
     id?: string;
+    project_name?: string;
+    milestone_name?: string;
+    task_name?: string;
+    sub_task_name?: string;
     title?: string;
     description?: string;
     issue_type?: string;
@@ -35,6 +42,34 @@ const columns: ColumnConfig[] = [
     {
         key: "id",
         label: "ID",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "project_name",
+        label: "Project Name",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "milestone_name",
+        label: "Milestone Name",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "task_name",
+        label: "Task Name",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "sub_task_name",
+        label: "Subtask Name",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -69,18 +104,34 @@ const columns: ColumnConfig[] = [
     },
     {
         key: "assigned_to",
-        label: "Assigned To",
+        label: "Resible Person",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "start_date",
+        label: "Start Date",
         sortable: true,
         draggable: true,
         defaultVisible: true,
     },
     {
         key: "due_date",
-        label: "Due Date",
+        label: "End Date",
         sortable: true,
         draggable: true,
         defaultVisible: true,
     },
+];
+
+const ISSUSE_STATUS = [
+    { value: "open", label: "Open" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "on_hold", label: "On Hold" },
+    { value: "completed", label: "Completed" },
+    { value: "reopen", label: "Reopen" },
+    { value: "closed", label: "Closed" },
 ];
 
 const IssuesListPage = () => {
@@ -99,12 +150,16 @@ const IssuesListPage = () => {
     const mapIssueData = (issue: any): Issue => {
         return {
             id: issue.id?.toString() || "",
+            project_name: issue.project_management_name || "Not Selected",
+            milestone_name: issue.milstone_name || "Not Selected",
+            task_name: issue.task_management_name || "Not Selected",
+            sub_task_name: issue.sub_task_management_name || "Not Selected",
             title: issue.title || "",
             description: issue.description || "",
-            issue_type: issue.issue_type || issue.type_name || "",
+            issue_type: issue.issue_type || "",
             priority: issue.priority || "",
             status: issue.status || "Open",
-            assigned_to: issue.responsible_person?.name || issue.responsible_person_name || issue.assigned_to || "Unassigned",
+            assigned_to: issue.responsible_person_id,
             created_by: issue.created_by?.full_name || issue.created_by_name || "",
             created_at: issue.created_at || "",
             updated_at: issue.updated_at || "",
@@ -118,10 +173,54 @@ const IssuesListPage = () => {
 
     const issues: Issue[] = rawIssues.map(mapIssueData);
 
+    const [users, setUsers] = useState([])
+    const [issueTypeOptions, setIssueTypeOptions] = useState([]);
     const [openIssueModal, setOpenIssueModal] = useState(false);
     const [selectedView, setSelectedView] = useState<"List" | "Kanban">("List");
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
+
+    const getUsers = async () => {
+        try {
+            const response = await dispatch(fetchFMUsers()).unwrap();
+            setUsers(response.users);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        getUsers();
+    }, [])
+
+    const fetchData = async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/issue_types.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            const issueTypes = response.data.issue_types || response.data || [];
+            setIssueTypeOptions(
+                issueTypes.map((i: any) => ({
+                    value: i.id,
+                    label: i.name,
+                }))
+            );
+        } catch (error) {
+            console.error('Error fetching issue types:', error);
+            toast.error('Failed to load issue types.');
+        }
+    };
+
+    useEffect(() => {
+        if (baseUrl && token) {
+            fetchData();
+        }
+    }, [baseUrl, token]);
 
     useEffect(() => {
         dispatch(fetchIssues({ baseUrl, token, id: projectId })).unwrap();
@@ -153,54 +252,123 @@ const IssuesListPage = () => {
             >
                 <Eye className="w-4 h-4" />
             </Button>
-            {/* <Button
-                size="sm"
-                variant="ghost"
-                className="p-1"
-                onClick={() => setOpenIssueModal(true)}
-                title="Edit Issue"
-            >
-                <Edit className="w-4 h-4" />
-            </Button> */}
-            {/* <Button
-                size="sm"
-                variant="ghost"
-                className="p-1"
-                onClick={() => item.id && handleDeleteIssue(item.id)}
-                title="Delete Issue"
-            >
-                <Trash2 className="w-4 h-4 text-red-600" />
-            </Button> */}
         </div>
     );
 
+    const handleIssueTypeChange = async (issueId: string, newType: string) => {
+        try {
+            await dispatch(updateIssue({ baseUrl, token, id: issueId, data: { issue_type: newType } })).unwrap();
+            toast.success("Issue type updated successfully");
+            dispatch(fetchIssues({ baseUrl, token, id: projectId })).unwrap();
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const handleIssueUpdate = async (issueId: string, assignedToId: string) => {
+        try {
+            await dispatch(updateIssue({ baseUrl, token, id: issueId, data: { responsible_person_id: assignedToId } })).unwrap();
+            toast.success("Issue updated successfully");
+            dispatch(fetchIssues({ baseUrl, token, id: projectId })).unwrap();
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const handleIssueStatusChange = async (issueId: string, newStatus: string) => {
+        try {
+            await dispatch(updateIssue({ baseUrl, token, id: issueId, data: { status: newStatus } })).unwrap();
+            toast.success("Issue status updated successfully");
+            dispatch(fetchIssues({ baseUrl, token, id: projectId })).unwrap();
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     const renderCell = (item: any, columnKey: string) => {
         if (columnKey === "priority") {
-            const priorityColors: Record<string, string> = {
-                Urgent: "bg-red-100 text-red-800",
-                High: "bg-orange-100 text-orange-800",
-                Medium: "bg-yellow-100 text-yellow-800",
-                Low: "bg-green-100 text-green-800",
-            };
-            return (
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${priorityColors[item[columnKey]] || "bg-gray-100 text-gray-800"}`}>
-                    {item[columnKey]}
-                </span>
-            );
+            return item[columnKey]
         }
         if (columnKey === "status") {
-            const statusColors: Record<string, string> = {
-                Open: "bg-blue-100 text-blue-800",
-                "In Progress": "bg-purple-100 text-purple-800",
-                "On Hold": "bg-yellow-100 text-yellow-800",
-                Completed: "bg-green-100 text-green-800",
-                Closed: "bg-gray-100 text-gray-800",
-            };
-            return (
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[item[columnKey]] || "bg-gray-100 text-gray-800"}`}>
-                    {item[columnKey]}
-                </span>
-            );
+            return <FormControl
+                variant="standard"
+                sx={{ width: 128 }} // same as w-32
+            >
+                <Select
+                    value={item.status}
+                    onChange={(e) =>
+                        handleIssueStatusChange(item.id, e.target.value as string)
+                    }
+                    disableUnderline
+                    sx={{
+                        fontSize: "0.875rem",
+                        cursor: "pointer",
+                        "& .MuiSelect-select": {
+                            padding: "4px 0",
+                        },
+                    }}
+                >
+                    {ISSUSE_STATUS.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+        }
+        if (columnKey === "issue_type") {
+            return <FormControl
+                variant="standard"
+                sx={{ width: 128 }} // same as w-32
+            >
+                <Select
+                    value={item.issue_type}
+                    onChange={(e) =>
+                        handleIssueTypeChange(item.id, e.target.value as string)
+                    }
+                    disableUnderline
+                    sx={{
+                        fontSize: "0.875rem",
+                        cursor: "pointer",
+                        "& .MuiSelect-select": {
+                            padding: "4px 0",
+                        },
+                    }}
+                >
+                    {issueTypeOptions.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+        }
+        if (columnKey === "assigned_to") {
+            return <FormControl
+                variant="standard"
+                sx={{ width: 128 }} // same as w-32
+            >
+                <Select
+                    value={item.assigned_to}
+                    onChange={(e) =>
+                        handleIssueUpdate(item.id, e.target.value as string)
+                    }
+                    disableUnderline
+                    sx={{
+                        fontSize: "0.875rem",
+                        cursor: "pointer",
+                        "& .MuiSelect-select": {
+                            padding: "4px 0",
+                        },
+                    }}
+                >
+                    {users.map((user) => (
+                        <MenuItem key={user.id} value={user.id}>
+                            {user.full_name}
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
         }
         return item[columnKey];
     };
@@ -217,67 +385,15 @@ const IssuesListPage = () => {
         </>
     );
 
-    // const rightActions = (
-    //     <div className="flex items-center">
-    //         <div className="relative" ref={dropdownRef}>
-    //             <button
-    //                 onClick={() => setIsOpen(!isOpen)}
-    //                 className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
-    //             >
-    //                 <span className="text-[#C72030] font-medium flex items-center gap-2">
-    //                     {selectedView === "Kanban" ? (
-    //                         <>
-    //                             <ChartNoAxesColumn className="w-4 h-4" />
-    //                             Kanban
-    //                         </>
-    //                     ) : (
-    //                         <>
-    //                             <List className="w-4 h-4" />
-    //                             List
-    //                         </>
-    //                     )}
-    //                     <ChevronDown className="w-4 h-4" />
-    //                 </span>
-    //             </button>
-    //             {isOpen && (
-    //                 <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-    //                     <button
-    //                         onClick={() => {
-    //                             setSelectedView("List");
-    //                             setIsOpen(false);
-    //                         }}
-    //                         className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-    //                     >
-    //                         <List className="w-4 h-4" />
-    //                         List View
-    //                     </button>
-    //                     <button
-    //                         onClick={() => {
-    //                             setSelectedView("Kanban");
-    //                             setIsOpen(false);
-    //                         }}
-    //                         className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-    //                     >
-    //                         <ChartNoAxesColumn className="w-4 h-4" />
-    //                         Kanban View
-    //                     </button>
-    //                 </div>
-    //             )}
-    //         </div>
-    //     </div>
-    // );
-
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
             <EnhancedTable
                 data={issues}
                 columns={columns}
-                onRowClick={(item) => navigate(`/issues/${item.id}`)}
                 renderActions={renderActions}
                 renderCell={renderCell}
                 loading={loading}
                 leftActions={leftActions}
-                // rightActions={rightActions}
                 emptyMessage="No issues found. Create one to get started."
             />
 
