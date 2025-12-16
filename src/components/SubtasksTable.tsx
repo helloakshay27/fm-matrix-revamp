@@ -1,6 +1,9 @@
 import { EnhancedTable } from "./enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Subtask } from "@/pages/ProjectTaskDetails";
+import { useAppDispatch } from "@/store/hooks";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import { MenuItem, Select, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
 
 const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
@@ -140,6 +143,22 @@ const subtaskColumns: ColumnConfig[] = [
 ];
 
 const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData: () => Promise<void> }) => {
+    const dispatch = useAppDispatch();
+    const [users, setUsers] = useState([])
+
+    const getUsers = async () => {
+        try {
+            const response = await dispatch(fetchFMUsers()).unwrap();
+            setUsers(response.users);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        getUsers()
+    }, [])
+
     const renderSubtaskCell = (item: any, columnKey: string) => {
         if (columnKey === "status") {
             return (
@@ -171,6 +190,83 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
         return item[columnKey as keyof Subtask] || "-";
     };
 
+    const renderEditableCell = (columnKey: string, value: any, onChange: (val: any) => void) => {
+        if (columnKey === "responsible_person") {
+            return (
+                <Select
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    displayEmpty
+                    size="small"
+                    sx={{ minWidth: 150 }}
+                >
+                    <MenuItem value="">
+                        <em>Select Responsible Person</em>
+                    </MenuItem>
+                    {
+                        users.map((user: any) => (
+                            <MenuItem key={user.id} value={user.id}>
+                                {user.full_name || user.name}
+                            </MenuItem>
+                        ))
+                    }
+                </Select>
+            );
+        }
+        if (columnKey === "expected_start_date") {
+            return (
+                <TextField
+                    type="date"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    size="small"
+                    sx={{ minWidth: 130 }}
+                    InputLabelProps={{ shrink: true }}
+                />
+            );
+        }
+        if (columnKey === "target_date") {
+            return (
+                <TextField
+                    type="date"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    size="small"
+                    sx={{ minWidth: 130 }}
+                    InputLabelProps={{ shrink: true }}
+                />
+            );
+        }
+        if (columnKey === "priority") {
+            return (
+                <Select
+                    value={value || "Medium"}
+                    onChange={(e) => onChange(e.target.value)}
+                    displayEmpty
+                    size="small"
+                    sx={{ minWidth: 110 }}
+                >
+                    <MenuItem value="High">High</MenuItem>
+                    <MenuItem value="Medium">Medium</MenuItem>
+                    <MenuItem value="Low">Low</MenuItem>
+                </Select>
+            );
+        }
+        if (columnKey === "title") {
+            return (
+                <TextField
+                    type="text"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="Enter task title"
+                    size="small"
+                    sx={{ minWidth: 200 }}
+                />
+            );
+        }
+        return null;
+    }
+
     return (
         <div>
             <EnhancedTable
@@ -187,6 +283,8 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
                 className="min-w-[1200px] h-max"
                 renderCell={renderSubtaskCell}
                 canAddRow={true}
+                readonlyColumns={["id", "status", "duration"]}
+                renderEditableCell={renderEditableCell}
             />
         </div>
     )

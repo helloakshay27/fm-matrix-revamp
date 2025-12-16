@@ -1140,8 +1140,16 @@ export const EditAssetDetailsPage = () => {
   // Track existing attachment IDs that user marked for deletion
   const [attachmentsToDestroy, setAttachmentsToDestroy] = useState<{
     asset_image: number[];
+    asset_manuals: number[];
+    asset_other_uploads: number[];
+    asset_insurances: number[];
+    asset_purchases: number[];
   }>({
     asset_image: [],
+    asset_manuals: [],
+    asset_other_uploads: [],
+    asset_insurances: [],
+    asset_purchases: [],
   });
 
   const markExistingAttachmentForDeletion = (
@@ -1154,10 +1162,20 @@ export const EditAssetDetailsPage = () => {
     }));
 
     // Remove from visible existingAttachments so the UI updates immediately
-    setExistingAttachments((prev: any) => ({
-      ...prev,
-      [categoryKey === "asset_image" ? "asset_image" : categoryKey]: null,
-    }));
+    setExistingAttachments((prev: any) => {
+      if (categoryKey === "asset_image") {
+        return {
+          ...prev,
+          asset_image: null,
+        };
+      }
+      return {
+        ...prev,
+        [categoryKey]: (prev[categoryKey] || []).filter(
+          (attachment: any) => attachment.id !== id
+        ),
+      };
+    });
   };
 
   const [selectedAssetCategory, setSelectedAssetCategory] = useState("");
@@ -4278,9 +4296,18 @@ export const EditAssetDetailsPage = () => {
       duration: 2000,
     });
 
+    const removedDocumentIds = [
+      ...(attachmentsToDestroy.asset_image || []),
+      ...(attachmentsToDestroy.asset_manuals || []),
+      ...(attachmentsToDestroy.asset_other_uploads || []),
+      ...(attachmentsToDestroy.asset_insurances || []),
+      ...(attachmentsToDestroy.asset_purchases || []),
+    ];
+
     // Build the complete payload
     const payload = {
       pms_asset: {
+        removed_document_ids: removedDocumentIds,
         // Basic asset fields
         name: formData.name,
         asset_number: formData.asset_number,
@@ -4484,6 +4511,7 @@ export const EditAssetDetailsPage = () => {
       Object.entries(payload.pms_asset).forEach(([key, value]) => {
         if (
           ![
+            "removed_document_ids",
             "asset_manuals",
             "asset_insurances",
             "asset_purchases",
@@ -4513,6 +4541,12 @@ export const EditAssetDetailsPage = () => {
           }
         }
       });
+
+      if (removedDocumentIds.length > 0) {
+        removedDocumentIds.forEach((id) => {
+          formDataObj.append("pms_asset[removed_document_ids][]", String(id));
+        });
+      }
 
       // Handle nested objects specially for FormData - flatten them
       // Handle amc_detail
@@ -4887,9 +4921,18 @@ export const EditAssetDetailsPage = () => {
       description: "All required fields are filled. Creating asset...",
       duration: 2000,
     });
+    const removedDocumentIds = [
+      ...(attachmentsToDestroy.asset_image || []),
+      ...(attachmentsToDestroy.asset_manuals || []),
+      ...(attachmentsToDestroy.asset_other_uploads || []),
+      ...(attachmentsToDestroy.asset_insurances || []),
+      ...(attachmentsToDestroy.asset_purchases || []),
+    ];
+
     // Build the complete payload
     const payload = {
       pms_asset: {
+        removed_document_ids: removedDocumentIds,
         // Basic asset fields
         name: formData.name,
         asset_number: formData.asset_number,
@@ -5069,6 +5112,7 @@ export const EditAssetDetailsPage = () => {
       Object.entries(payload.pms_asset).forEach(([key, value]) => {
         if (
           ![
+            "removed_document_ids",
             "asset_manuals",
             "asset_insurances",
             "asset_purchases",
@@ -5098,6 +5142,12 @@ export const EditAssetDetailsPage = () => {
           }
         }
       });
+
+      if (removedDocumentIds.length > 0) {
+        removedDocumentIds.forEach((id) => {
+          formDataObj.append("pms_asset[removed_document_ids][]", String(id));
+        });
+      }
 
       // Handle nested objects specially for FormData - flatten them
       // Handle amc_detail
@@ -14338,12 +14388,44 @@ export const EditAssetDetailsPage = () => {
                                           {file.document_name}
                                         </span>
                                       </div>
-                                      <button
-                                        onClick={() => downloadAttachment(file)}
-                                        className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
-                                      >
-                                        <Download className="w-3 h-3" />
-                                      </button>
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          onClick={() => downloadAttachment(file)}
+                                          className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
+                                        >
+                                          <Download className="w-3 h-3" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            let categoryKey = "";
+                                            if (field.label === "Manuals Upload")
+                                              categoryKey = "asset_manuals";
+                                            else if (
+                                              field.label === "Insurance Details"
+                                            )
+                                              categoryKey = "asset_insurances";
+                                            else if (
+                                              field.label === "Purchase Invoice"
+                                            )
+                                              categoryKey = "asset_purchases";
+                                            else if (
+                                              field.label === "Other Documents"
+                                            )
+                                              categoryKey = "asset_other_uploads";
+
+                                            if (categoryKey) {
+                                              markExistingAttachmentForDeletion(
+                                                categoryKey as any,
+                                                file.id
+                                              );
+                                            }
+                                          }}
+                                          className="text-red-500 hover:text-red-700 p-1 rounded"
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </button>
+                                      </div>
                                     </div>
                                   );
                                 })}

@@ -19,14 +19,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, Slide } from "@mui/material";
+import { Dialog, DialogContent, FormControl, MenuItem, Slide, Select as MuiSelect } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { useAppDispatch } from "@/store/hooks";
-import { updateTaskStatus, fetchProjectTasksById } from "@/store/slices/projectTasksSlice";
+import { updateTaskStatus, fetchProjectTasksById, editProjectTask } from "@/store/slices/projectTasksSlice";
 import ProjectTaskEditModal from "@/components/ProjectTaskEditModal";
 import SubtasksTable from "@/components/SubtasksTable";
 import AddSubtaskModal from "@/components/AddSubtaskModal";
 import DependencyKanban from "@/components/DependencyKanban";
+import { fetchProjectStatuses } from "@/store/slices/projectStatusSlice";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -794,6 +795,7 @@ interface TaskDetails {
   workflow_status?: string;
   predecessor_task_ids?: number[];
   successor_task_ids?: number[];
+  project_status_id?: string;
 }
 
 export interface Subtask {
@@ -874,9 +876,43 @@ export const ProjectTaskDetails = () => {
   const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
   const [dependentTasks, setDependentTasks] = useState<any[]>([]);
   const [addingTodo, setAddingTodo] = useState(false);
+  const [statuses, setStatuses] = useState([])
+
+  console.log(statuses)
+
+  console.log(taskDetails)
 
   const firstContentRef = useRef<HTMLDivElement>(null);
   const secondContentRef = useRef<HTMLDivElement>(null);
+
+  const getStatuses = async () => {
+    try {
+      const response = await dispatch(fetchProjectStatuses()).unwrap();
+      setStatuses(response)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    getStatuses()
+  }, [])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(false);
+      }
+    };
+
+    if (openDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [openDropdown]);
 
   const fetchDependentTasks = async (taskData: TaskDetails) => {
     try {
@@ -990,9 +1026,20 @@ export const ProjectTaskDetails = () => {
         },
       })
     ).unwrap();
+    fetchData();
     toast.dismiss();
     toast.success("Status updated successfully");
   };
+
+  const handleWorkflowChange = async (newStatusId: string) => {
+    try {
+      await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { project_status_id: newStatusId } })).unwrap();
+      fetchData();
+      toast.success("Task status changed successfully");
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const handleOpenEditModal = () => {
     setOpenEditModal(true);
@@ -1319,15 +1366,23 @@ export const ProjectTaskDetails = () => {
                   <p className="text-sm font-medium text-gray-600">Workflow Status:</p>
                 </div>
                 <div className="flex-1">
-                  <Select defaultValue={taskDetails.workflow_status?.toLowerCase()}>
+                  <Select
+                    value={String(taskDetails.project_status_id) || "1"}
+                    onValueChange={(value) =>
+                      handleWorkflowChange(value)
+                    }
+                  >
                     <SelectTrigger className="w-[180px] h-9 bg-[#C72030] text-white border-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="on_hold">On Hold</SelectItem>
+                      {
+                        statuses.map((status: any) => (
+                          <SelectItem key={status.id} value={String(status.id)}>
+                            {status.status}
+                          </SelectItem>
+                        ))
+                      }
                     </SelectContent>
                   </Select>
                 </div>
@@ -1367,7 +1422,7 @@ export const ProjectTaskDetails = () => {
           {/* Dependency Tab */}
           {activeTab === "dependency" && (
             <DependencyKanban
-              taskId={taskId}
+              currentTask={taskDetails}
               dependencies={dependentTasks}
               onDependenciesChange={fetchData}
             />

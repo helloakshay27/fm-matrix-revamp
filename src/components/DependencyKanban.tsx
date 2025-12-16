@@ -1,241 +1,243 @@
-import { useAppDispatch } from "@/store/hooks";
+import { useEffect, useState } from "react";
+import DependencyTaskCard from "./DependencyTaskCard";
+import DependencyKanbanBoard from "./DependencyKanbanBoard";
 import {
     DndContext,
     DragEndEvent,
     closestCorners,
     DragStartEvent,
-    DragOverlay,
 } from "@dnd-kit/core";
-import { useCallback, useState, useEffect } from "react";
-import KanbanBoard from "./KanbanBoard";
-import { editProjectTask } from "@/store/slices/projectTasksSlice";
-import Xarrow from "react-xarrows";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchProjectTasks, fetchProjectTasksById, createTaskDependency, updateTaskDependency, deleteTaskDependency } from "@/store/slices/projectTasksSlice";
+import { useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
-
-export const cardsTitle = [
-    {
-        id: 1,
-        title: "Overdue",
-        color: "#FF2733",
-        add: false,
-    },
-    {
-        id: 2,
-        title: "Open",
-        color: "#E4636A",
-        add: true,
-    },
-    {
-        id: 3,
-        title: "In Progress",
-        color: "#08AEEA",
-        add: true,
-    },
-    {
-        id: 4,
-        title: "On Hold",
-        color: "#7BD2B5",
-        add: true,
-    },
-    {
-        id: 5,
-        title: "Completed",
-        color: "#83D17A",
-        add: false,
-    },
-];
 
 interface DependencyTask {
-    id?: string;
+    id?: string | number;
     title?: string;
-    status?: string;
+    section?: string;
     priority?: string;
     responsible_person_name?: string;
-    predecessor_task_ids?: number[];
-    successor_task_ids?: number[];
+    milestone?: string | object;
+    target_date?: string;
+    predecessor_task?: number[];
+    successor_task?: number[];
+    parent_id?: number;
+    sub_tasks_managements?: DependencyTask[];
+    milestone_id?: string | number;
+    task_dependencies?: any[];
 }
 
 interface DependencyKanbanProps {
-    taskId?: string;
+    currentTask?: DependencyTask;
     dependencies?: DependencyTask[];
     onDependenciesChange?: () => void;
 }
 
-const DependencyKanban = ({ taskId, dependencies = [], onDependenciesChange }: DependencyKanbanProps) => {
+const DependencyKanban = ({
+    currentTask,
+    dependencies = [],
+    onDependenciesChange,
+}: DependencyKanbanProps) => {
+    const { tid, id } = useParams<{ tid?: string; id?: string }>();
+    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem('baseUrl') || '';
     const dispatch = useAppDispatch();
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
 
-    const [arrowLinks, setArrowLinks] = useState([]);
-    const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
-    const [droppedTasks, setDroppedTasks] = useState<{ [key: string]: string }>({});
+    const { data: tasks = {} } = useAppSelector((state: any) => state.fetchProjectTasks);
+    const { data: task } = useAppSelector((state: any) => state.fetchProjectTasksById);
+
     const [taskData, setTaskData] = useState<DependencyTask[]>([]);
+    const [parentTask, setParentTask] = useState<DependencyTask | null>(null);
+    const [draggedItem, setDraggedItem] = useState<any>(null);
 
+    // ✅ Fetch milestone tasks only if it's a main task (no parent)
     useEffect(() => {
-        setTaskData(dependencies || []);
-    }, [dependencies]);
-
-    const handleDragStart = useCallback((event: DragStartEvent) => {
-        const activeData = event.active.data.current;
-        if (activeData?.type === "TASK") {
-            setDraggedTaskId(activeData.taskId?.toString() || null);
+        if (task?.milestone_id && !task?.parent_id) {
+            dispatch(fetchProjectTasks({ baseUrl, token, id: task.milestone_id }));
         }
-    }, []);
+    }, [dispatch, token, task?.milestone_id, task?.parent_id]);
 
-    const handleDragEnd = useCallback(
-        (event: DragEndEvent) => {
-            const { active, over } = event;
-            setDraggedTaskId(null);
-
-            if (!over) return;
-
-            const activeData = active.data.current;
-            const overData = over.data.current;
-
-            if (activeData?.type === "TASK" && overData?.type === "KANBAN_COLUMN") {
-                const taskId = activeData.taskId;
-                const task = activeData.task;
-                const newStatus = overData.title;
-
-                if (
-                    task.status === newStatus ||
-                    (newStatus === "active" && task.status === "open")
-                ) {
-                    return;
+    // ✅ If current task has a parent, fetch parent details (locally)
+    useEffect(() => {
+        const getParentTask = async () => {
+            if (task?.parent_id) {
+                const res = await dispatch(fetchProjectTasksById({ baseUrl, token, id: task.parent_id })).unwrap();
+                if (res) {
+                    setParentTask(res); // store parent locally
                 }
-
-                const statusMap: { [key: string]: string } = {
-                    overdue: "overdue",
-                    open: "open",
-                    in_progress: "in_progress",
-                    on_hold: "on_hold",
-                    completed: "completed",
-                };
-
-                setDroppedTasks((prev) => ({
-                    ...prev,
-                    [taskId]: statusMap[newStatus] || newStatus,
-                }));
-
-                dispatch(
-                    editProjectTask({
-                        baseUrl,
-                        token,
-                        id: taskId,
-                        data: { status: statusMap[newStatus] || newStatus },
-                    })
-                )
-                    .unwrap()
-                    .then(() => {
-                        toast.success("Task status updated");
-                        onDependenciesChange?.();
-                    })
-                    .catch((error) => {
-                        toast.error(error?.message || "Failed to update status");
-                        setDroppedTasks((prev) => {
-                            const newState = { ...prev };
-                            delete newState[taskId];
-                            return newState;
-                        });
-                    });
+                dispatch(fetchProjectTasksById({ baseUrl, token, id: tid }));
             }
-        },
-        [dispatch, baseUrl, token, onDependenciesChange]
-    );
+        };
+        getParentTask();
+    }, [dispatch, token]);
 
-    const toggleArrowLink = useCallback((sourceId: string, targetId: string) => {
-        setArrowLinks((prevLinks) => {
-            const sourceNum = parseInt(sourceId.replace("task-", ""));
-            const targetIds = Array.from(
-                new Set([
-                    ...prevLinks
-                        .filter((link) => link.sourceId === sourceId)
-                        .map((link) => parseInt(link.targetId.replace("task-", ""))),
-                ])
-            );
+    console.log(task);
+    // ✅ Build taskData based on whether it’s a main or subtask
+    useEffect(() => {
+        // Case 1: Subtask (has parent_id)
+        if (task?.parent_id && parentTask?.id) {
+            const predecessorIds = (task?.predecessor_task || []).flat();
+            const successorIds = (task?.successor_task || []).flat();
 
-            if (targetIds.includes(parseInt(targetId.replace("task-", "")))) {
-                return prevLinks.filter(
-                    (link) => !(link.sourceId === sourceId && link.targetId === targetId)
-                );
-            } else {
-                const newLinks = [
-                    parseInt(targetId.replace("task-", "")),
-                    ...targetIds,
-                ]
-                    .filter(
-                        (targetNum) =>
-                            !prevLinks.some(
-                                (link) =>
-                                    link.sourceId === sourceId &&
-                                    link.targetId === `task-${targetNum}`
-                            )
-                    )
-                    .map((targetNum) => ({ sourceId, targetId: `task-${targetNum}` }));
-                return [...prevLinks, ...newLinks];
-            }
-        });
-    }, []);
-
-    const buildDependencyArrows = () => {
-        const arrows: any[] = [];
-
-        taskData.forEach((task) => {
-            if (task.id) {
-                const taskIdNum = parseInt(task.id.toString());
-
-                // Handle predecessor tasks
-                if (Array.isArray(task.predecessor_task_ids)) {
-                    task.predecessor_task_ids.forEach((predId) => {
-                        if (predId) {
-                            arrows.push({
-                                sourceId: `task-${predId}`,
-                                targetId: `task-${taskIdNum}`,
-                                type: "predecessor",
-                            });
-                        }
-                    });
+            const updatedData = (parentTask?.sub_tasks_managements || []).map((t: DependencyTask) => {
+                if (t.id === task.id) {
+                    return { ...t, section: 'Main Task' };
+                } else if (predecessorIds.includes(Number(t.id))) {
+                    return { ...t, section: 'Predecessor' };
+                } else if (successorIds.includes(Number(t.id))) {
+                    return { ...t, section: 'Successor' };
+                } else {
+                    return { ...t, section: 'List of Tasks' };
                 }
+            });
 
-                // Handle successor tasks
-                if (Array.isArray(task.successor_task_ids)) {
-                    task.successor_task_ids.forEach((succId) => {
-                        if (succId) {
-                            arrows.push({
-                                sourceId: `task-${taskIdNum}`,
-                                targetId: `task-${succId}`,
-                                type: "successor",
-                            });
-                        }
-                    });
+            console.log("Case 1 - Subtask:", updatedData);
+            setTaskData(updatedData);
+        }
+
+        // Case 2: Main task (no parent)
+        else if (tasks.task_managements?.length > 0 && task?.id) {
+            const predecessorIds = (task?.predecessor_task || []).flat();
+            const successorIds = (task?.successor_task || []).flat();
+
+            const updatedData = (tasks?.task_managements || []).map((t: DependencyTask) => {
+                if (t.id === task.id) {
+                    return { ...t, section: 'Main Task' };
+                } else if (predecessorIds.includes(Number(t.id))) {
+                    return { ...t, section: 'Predecessor' };
+                } else if (successorIds.includes(Number(t.id))) {
+                    return { ...t, section: 'Successor' };
+                } else {
+                    return { ...t, section: 'List of Tasks' };
                 }
-            }
-        });
+            });
 
-        return arrows;
+            console.log("Case 2 - Main task:", updatedData);
+            setTaskData(updatedData);
+        }
+    }, [tasks, task, parentTask]);
+
+
+
+    const handleDragStart = (event: DragStartEvent) => {
+        const activeData = event.active.data.current;
+        console.log("Drag start:", activeData);
+        if (activeData?.type === "TASK") {
+            setDraggedItem(activeData.task);
+        }
     };
 
-    const dependencyArrows = buildDependencyArrows();
-    const allArrows = [
-        ...arrowLinks,
-        ...dependencyArrows.filter(
-            (dep) =>
-                !arrowLinks.some(
-                    (link) =>
-                        link.sourceId === dep.sourceId && link.targetId === dep.targetId
-                )
-        ),
-    ];
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        setDraggedItem(null);
 
-    // if (!taskData || taskData.length === 0) {
-    //     return (
-    //         <div className="text-center py-12 text-gray-500">
-    //             <p className="text-sm">No dependent tasks found</p>
-    //         </div>
-    //     );
-    // }
+        console.log("Drag end:", { active: active?.data.current, over: over?.data.current });
+
+        if (!over || !active) return;
+
+        const activeData = active.data.current;
+        const overData = over.data.current;
+
+        if (activeData?.type === "TASK" && overData?.type === "KANBAN_COLUMN") {
+            const draggedTaskId = activeData.taskId;
+            const newSection = overData.title;
+
+            console.log("Drop detected:", { draggedTaskId, newSection });
+
+            // Update task data with new section
+            setTaskData((prev) =>
+                prev.map((t) =>
+                    t.id === draggedTaskId ? { ...t, section: newSection } : t
+                )
+            );
+
+            // Handle dependency updates
+            if (["Predecessor", "Successor"].includes(newSection) && task?.id) {
+                // Find if dependency already exists
+                const dependencyId = (task?.task_dependencies as any)?.find(
+                    (d: any) => d.dependent_task_id === draggedTaskId
+                )?.id;
+
+                const payload = {
+                    task_dependency: {
+                        task_id: task.id,
+                        dependent_task_id: draggedTaskId,
+                        active: true,
+                        dependence_type: newSection,
+                    },
+                };
+
+                const predecessorIds = (task?.predecessor_task || []).flat();
+                const successorIds = (task?.successor_task || []).flat();
+
+                const alreadyPredecessor = predecessorIds.includes(Number(draggedTaskId));
+                const alreadySuccessor = successorIds.includes(Number(draggedTaskId));
+
+                if (alreadyPredecessor || alreadySuccessor) {
+                    // Update existing dependency
+                    if (dependencyId) {
+                        dispatch(
+                            updateTaskDependency({
+                                token: token || '',
+                                baseUrl: baseUrl || '',
+                                id: dependencyId.toString(),
+                                data: payload,
+                            })
+                        )
+                            .unwrap()
+                            .then(() => {
+                                toast.success("Dependency updated successfully");
+                                onDependenciesChange?.();
+                            })
+                            .catch((error) => {
+                                toast.error(error?.message || "Failed to update dependency");
+                            });
+                    }
+                } else {
+                    // Create new dependency
+                    dispatch(
+                        createTaskDependency({
+                            token: token || '',
+                            baseUrl: baseUrl || '',
+                            data: payload,
+                        })
+                    )
+                        .unwrap()
+                        .then(() => {
+                            toast.success("Dependency created successfully");
+                            onDependenciesChange?.();
+                        })
+                        .catch((error) => {
+                            toast.error(error?.message || "Failed to create dependency");
+                        });
+                }
+            } else if (newSection === "List of Tasks") {
+                // Delete dependency
+                const dependencyId = (task?.task_dependencies as any)?.find(
+                    (d: any) => d.dependent_task_id === draggedTaskId
+                )?.id;
+
+                if (dependencyId) {
+                    dispatch(
+                        deleteTaskDependency({
+                            token: token || '',
+                            baseUrl: baseUrl || '',
+                            id: dependencyId.toString(),
+                        })
+                    )
+                        .unwrap()
+                        .then(() => {
+                            toast.success("Dependency deleted successfully");
+                            onDependenciesChange?.();
+                        })
+                        .catch((error) => {
+                            toast.error(error?.message || "Failed to delete dependency");
+                        });
+                }
+            }
+        }
+    };
 
     return (
         <DndContext
@@ -243,156 +245,44 @@ const DependencyKanban = ({ taskId, dependencies = [], onDependenciesChange }: D
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex gap-4 overflow-x-auto pb-4 relative mt-4 h-full min-h-[450px]">
-                {cardsTitle.map((card) => {
-                    const filteredTasks = (taskData || []).filter((task) => {
-                        const droppedStatus = droppedTasks[task.id || ""];
-                        const taskStatus = droppedStatus || task.status;
+            <div className="min-h-[400px] my-3 flex items-start gap-1 max-w-full overflow-x-auto overflow-y-auto flex-nowrap">
+                {["List of Tasks", "Predecessor", "Main Task", "Successor"].map((section) => {
+                    const filteredTasks = taskData.filter((task) => task.section === section);
+                    console.log(filteredTasks)
+                    const isDropDisabled = section === "Main Task";
 
-                        const normalizedCardStatus =
-                            card.title.toLowerCase().replace(/\s+/g, "_");
-                        const normalizedTaskStatus = (taskStatus || "open")
-                            .toLowerCase()
-                            .replace(/\s+/g, "_");
-
-                        return normalizedTaskStatus === normalizedCardStatus;
-                    });
+                    console.log(`Section "${section}":`, filteredTasks);
 
                     return (
-                        <KanbanBoard
-                            key={card.id}
-                            add={card.add}
-                            color={card.color}
-                            count={filteredTasks.length}
-                            title={card.title}
+                        <DependencyKanbanBoard
+                            key={section}
+                            title={section}
+                            onDrop={isDropDisabled ? undefined : undefined}
                         >
                             {filteredTasks.length > 0 ? (
                                 filteredTasks.map((task) => (
-                                    <DependencyTaskCard
-                                        key={task.id}
-                                        task={task}
-                                        isDragging={draggedTaskId === task.id?.toString()}
-                                    />
+                                    <div key={task.id} className="w-full">
+                                        <DependencyTaskCard
+                                            task={task}
+                                            draggable={section !== "Main Task"}
+                                        />
+                                    </div>
                                 ))
                             ) : (
-                                <div className="flex items-center justify-center h-32 text-gray-400">
-                                    <p className="text-xs">No tasks</p>
-                                </div>
+                                <img
+                                    src="/draganddrop.svg"
+                                    alt="svg"
+                                    className="w-full"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = "none";
+                                    }}
+                                />
                             )}
-                        </KanbanBoard>
-                    );
-                })}
-
-                {allArrows.map((link, index) => {
-                    const isDependencyArrow = dependencyArrows.some(
-                        (dep) =>
-                            dep.sourceId === link.sourceId &&
-                            dep.targetId === link.targetId
-                    );
-
-                    let dashness: any = false;
-                    let strokeWidth = 1.5;
-                    let color = "#DA2400";
-
-                    if (isDependencyArrow) {
-                        const dependency = dependencyArrows.find(
-                            (dep) =>
-                                dep.sourceId === link.sourceId &&
-                                dep.targetId === link.targetId
-                        );
-
-                        if (dependency?.type === "predecessor") {
-                            dashness = false;
-                            strokeWidth = 1;
-                            color = "#DA2400";
-                        } else if (dependency?.type === "successor") {
-                            dashness = { strokeLen: 8, nonStrokeLen: 6 };
-                            strokeWidth = 1.5;
-                            color = "#DA2400";
-                        }
-                    }
-
-                    return (
-                        <Xarrow
-                            key={`${link.sourceId}-${link.targetId}-${index}`}
-                            start={link.sourceId}
-                            end={link.targetId}
-                            strokeWidth={strokeWidth}
-                            headSize={6}
-                            curveness={0.3}
-                            color={color}
-                            lineColor={color}
-                            showHead={true}
-                            dashness={dashness}
-                            path="smooth"
-                        />
+                        </DependencyKanbanBoard>
                     );
                 })}
             </div>
         </DndContext>
-    );
-};
-
-// Simple task card component for dependency kanban
-const DependencyTaskCard = ({ task, isDragging }: { task: DependencyTask; isDragging: boolean }) => {
-    const statusColors: { [key: string]: string } = {
-        overdue: "bg-red-100 border-red-300",
-        open: "bg-orange-100 border-orange-300",
-        in_progress: "bg-blue-100 border-blue-300",
-        on_hold: "bg-green-100 border-green-300",
-        completed: "bg-green-200 border-green-400",
-    };
-
-    const taskStatus = (task.status || "open").toLowerCase().replace(/\s+/g, "_");
-    const cardClass = statusColors[taskStatus] || "bg-gray-100 border-gray-300";
-
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
-        id: `task-${task.id}`,
-        data: {
-            type: "TASK",
-            taskId: task.id,
-            task: task,
-        },
-    });
-
-    return (
-        <div
-            ref={setNodeRef}
-            {...attributes}
-            {...listeners}
-            style={{
-                opacity: isDragging ? 0.5 : 1,
-                cursor: isDragging ? "grabbing" : "grab",
-                transform: CSS.Translate.toString(transform),
-            }}
-            id={`task-${task.id}`}
-            className={`${cardClass} border rounded-lg p-3 mb-2 cursor-move hover:shadow-md transition-shadow`}
-            data-task-id={task.id}
-        >
-            <div className="flex flex-col gap-2">
-                <div className="flex items-start justify-between">
-                    <h4 className="text-sm font-medium text-gray-800 flex-1 line-clamp-2">
-                        {task.title}
-                    </h4>
-                </div>
-
-                {task.responsible_person_name && (
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-600">
-                            {task.responsible_person_name}
-                        </span>
-                    </div>
-                )}
-
-                {task.priority && (
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-700">
-                            Priority: {task.priority}
-                        </span>
-                    </div>
-                )}
-            </div>
-        </div>
     );
 };
 
