@@ -23,6 +23,7 @@ import { OwnerCostTab } from "@/components/asset-details/OwnerCostTab";
 import { RepairReplaceModal } from "@/components/RepairReplaceModal";
 import { QRCodeModal } from "@/components/QRCodeModal";
 import { StatusBadge } from "@/components/StatusBadge";
+import { useToast } from "@/hooks/use-toast";
 
 export const AssetDetailsPage = () => {
   const { id } = useParams();
@@ -40,6 +41,8 @@ export const AssetDetailsPage = () => {
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [showEnable, setShowEnable] = useState(false);
   const [activeTab, setActiveTab] = useState("asset-info");
+  const [isPrintingQR, setIsPrintingQR] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchAsset = async () => {
@@ -107,6 +110,60 @@ export const AssetDetailsPage = () => {
 
   const handleCreateChecklist = () => {
     console.log("Create Checklist clicked");
+  };
+
+  const handlePrintQRCode = async () => {
+    if (!assetData?.id) return;
+
+    setIsPrintingQR(true);
+
+    try {
+      const urlParams = new URLSearchParams();
+      urlParams.append("asset_ids[]", assetData.id);
+
+      const url = `${API_CONFIG.BASE_URL}/pms/assets/print_qr_codes?${urlParams.toString()}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: getAuthHeader(),
+          Accept: "application/pdf",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `QR code generation failed: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const blob = await response.blob();
+
+      // Create and trigger download
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = "qr_codes.pdf";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+
+      toast({
+        title: "QR Code Generated",
+        description: "Successfully downloaded the QR code PDF.",
+      });
+    } catch (error) {
+      console.error("QR code generation error:", error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate QR code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPrintingQR(false);
+    }
   };
 
   const handleSwitchChange = (checked: boolean) => {
@@ -355,6 +412,7 @@ export const AssetDetailsPage = () => {
         qrCode={assetData.qr_url}
         serviceName={assetData.name}
         site={assetData.building?.name || "NA"}
+        handleDownloadQR={handlePrintQRCode}
       />
     </div>
   );
