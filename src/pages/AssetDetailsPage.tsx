@@ -354,7 +354,7 @@ export const AssetDetailsPage = () => {
         onClose={() => setIsQRModalOpen(false)}
         qrCode={assetData.qr_url}
         serviceName={assetData.name}
-        site={assetData.building?.name || "Main Building"}
+        site={assetData.building?.name || "NA"}
       />
     </div>
   );

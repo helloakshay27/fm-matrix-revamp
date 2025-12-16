@@ -110,51 +110,53 @@ export const AllocateToSection: React.FC<AllocateToSectionProps> = ({
             </div>
           </RadioGroup>
         </div>
-        <div className="flex-1 max-w-full lg:max-w-xs">
-          <ThemeProvider theme={dropdownTheme}>
-            <TextField
-              select
-              label={allocateTo === 'department' ? 'Department' : 'User'}
-              value={allocatedToId || ''}
-              onChange={(e) => setAllocatedToId(e.target.value ? Number(e.target.value) : null)}
-              variant="outlined"
-              size="small"
-              placeholder={allocateTo === 'department' ? 'Select Department' : 'Select User'}
-              disabled={loading.departments || loading.users}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (selected) => {
-                  if (!selected) {
-                    return <span style={{ color: '#9CA3AF' }}>{allocateTo === 'department' ? 'Select Department' : 'Select User'}</span>;
-                  }
-                  if (allocateTo === 'department') {
-                    const dept = departments.find(d => d.id === Number(selected));
-                    return dept?.department_name || 'Select Department';
-                  } else {
-                    const user = users.find(u => u.id === Number(selected));
-                    return user?.full_name || 'Select User';
-                  }
-                },
-              }}
-            >
-              {allocateTo === 'department'
-                ? departments.map((dept) => (
-                  <MenuItem key={dept.id} value={dept.id}>
-                    {dept.department_name}
-                  </MenuItem>
-                ))
-                : users.map((user) => (
-                  <MenuItem key={user.id} value={user.id}>
-                    {user.full_name}
-                  </MenuItem>
-                ))
-              }
-            </TextField>
-          </ThemeProvider>
-        </div>
+        {allocateTo && (
+          <div className="flex-1 max-w-full lg:max-w-xs">
+            <ThemeProvider theme={dropdownTheme}>
+              <TextField
+                select
+                label={allocateTo === 'department' ? 'Department' : 'User'}
+                value={allocatedToId || ''}
+                onChange={(e) => setAllocatedToId(e.target.value ? Number(e.target.value) : null)}
+                variant="outlined"
+                size="small"
+                placeholder={allocateTo === 'department' ? 'Select Department' : 'Select User'}
+                disabled={loading.departments || loading.users}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (selected) => {
+                    if (!selected) {
+                      return <span style={{ color: '#9CA3AF' }}>{allocateTo === 'department' ? 'Select Department' : 'Select User'}</span>;
+                    }
+                    if (allocateTo === 'department') {
+                      const dept = departments.find(d => d.id === Number(selected));
+                      return dept?.department_name || 'Select Department';
+                    } else {
+                      const user = users.find(u => u.id === Number(selected));
+                      return user?.full_name || 'Select User';
+                    }
+                  },
+                }}
+              >
+                {allocateTo === 'department'
+                  ? departments.map((dept) => (
+                    <MenuItem key={dept.id} value={dept.id}>
+                      {dept.department_name}
+                    </MenuItem>
+                  ))
+                  : users.map((user) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.full_name}
+                    </MenuItem>
+                  ))
+                }
+              </TextField>
+            </ThemeProvider>
+          </div>
+        )}
       </div>
     </div>
   );
