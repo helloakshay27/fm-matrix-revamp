@@ -23,6 +23,8 @@ import { EmployeeSidebar } from "./EmployeeSidebar";
 import { EmployeeDynamicHeader } from "./EmployeeDynamicHeader";
 import { EmployeeHeader } from "./EmployeeHeader";
 import { ViewSelectionModal } from "./ViewSelectionModal";
+import { ZycusSidebar } from "./ZycusSidebar";
+import { ZycusDynamicHeader } from "./ZycusDynamicHeader";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -140,6 +142,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <ZxSidebar />;
     }
 
+    if (selectedCompany?.id === 294) {
+      return <ZycusSidebar />;
+    }
+
     if (selectedCompany?.id === 304) {
       return <PrimeSupportSidebar />;
     }
@@ -188,9 +194,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (selectedCompany?.id === 189) {
       return <ZxDynamicHeader />;
     }
+
+    if (selectedCompany?.id === 294) {
+      return <ZycusDynamicHeader />;
+    }
+
     if (selectedCompany?.id === 304) {
       return <PrimeSupportDynamicHeader />;
     }
+
     if (
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
