@@ -17,6 +17,7 @@ import {
   Home,
   MessageSquare,
   Calendar1,
+  Car,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -50,7 +51,7 @@ const employeeModules = [
   { name: "Visitors", icon: Users },
   { name: "MOM", icon: FileText },
   { name: "Book Seats", icon: Calendar1 },
-  { name: "Parking", icon: Package },
+  { name: "Parking", icon: Car },
   { name: "Calendar", icon: Calendar1 },
   { name: "Booking", icon: Package },
   { name: "F&B", icon: ChartArea },
@@ -149,7 +150,7 @@ export const EmployeeHeader: React.FC = () => {
         navigate("/vas/space-management/bookings");
         break;
       case "Parking":
-        navigate("/parking/employee");
+        navigate("/parking");
         break;
       case "Calendar":
         navigate("/calendar");

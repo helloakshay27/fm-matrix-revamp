@@ -16,6 +16,8 @@ interface FloorOccupancyData {
   floor: string;
   twoWheeler: number;
   fourWheeler: number;
+  lastYearTwoWheeler?: number;
+  lastYearFourWheeler?: number;
   percentage?: number;
 }
 
@@ -39,6 +41,7 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
   const [loading, setLoading] = useState(false);
   const [apiData, setApiData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [occupancyView, setOccupancyView] = useState<'current' | 'yoy'>('current');
   const { toast } = useToast();
 
   // Fetch data from API
@@ -165,7 +168,26 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
 
   // Transform API data to chart format
   const getChartData = (): FloorOccupancyData[] => {
-    if (apiData?.data?.current_year?.floors) {
+    if (occupancyView === 'yoy' && apiData?.data?.current_year?.floors && apiData?.data?.previous_year?.floors) {
+      // YoY comparison: merge current and previous year data
+      const currentFloors = apiData.data.current_year.floors;
+      const previousFloors = apiData.data.previous_year.floors;
+      
+      return currentFloors
+        .filter((floor: any) => floor.total_capacity > 0)
+        .map((floor: any, index: number) => {
+          const prevFloor = previousFloors[index] || {};
+          return {
+            floor: floor.floor_name,
+            twoWheeler: floor.two_wheeler.total_occupied || 0,
+            fourWheeler: floor.four_wheeler.total_occupied || 0,
+            lastYearTwoWheeler: prevFloor.two_wheeler?.total_occupied || 0,
+            lastYearFourWheeler: prevFloor.four_wheeler?.total_occupied || 0,
+            percentage: floor.occupancy_pct || 0
+          };
+        });
+    } else if (apiData?.data?.current_year?.floors) {
+      // Current year only
       const floors = apiData.data.current_year.floors;
       return floors
         .filter((floor: any) => floor.total_capacity > 0) // Filter out empty floors
@@ -251,6 +273,30 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
         )}
         {chartData.length > 0 ? (
           <>
+            {/* Toggle Buttons */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setOccupancyView('current')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  occupancyView === 'current'
+                    ? 'bg-[#f2eee9] text-[#bf213e]'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Current Year
+              </button>
+              <button
+                onClick={() => setOccupancyView('yoy')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  occupancyView === 'yoy'
+                    ? 'bg-[#f2eee9] text-[#bf213e]'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Compare YoY
+              </button>
+            </div>
+
             <div className="w-full overflow-x-auto">
               <ResponsiveContainer width="100%" height={400} className="min-w-[500px]">
                 <BarChart 
@@ -284,20 +330,55 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
                       return <span style={{ color: '#6b7280', fontSize: '14px' }}>{value}</span>;
                     }}
                   />
-                  <Bar 
-                    dataKey="twoWheeler" 
-                    stackId="stack"
-                    fill={CHART_COLORS.twoWheeler}
-                    name="2W"
-                    radius={[0, 0, 0, 0]}
-                  />
-                  <Bar 
-                    dataKey="fourWheeler" 
-                    stackId="stack"
-                    fill={CHART_COLORS.fourWheeler}
-                    name="4W"
-                    radius={[4, 4, 0, 0]}
-                  />
+                  {occupancyView === 'current' ? (
+                    <>
+                      <Bar 
+                        dataKey="twoWheeler" 
+                        stackId="stack"
+                        fill={CHART_COLORS.twoWheeler}
+                        name="2W"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="fourWheeler" 
+                        stackId="stack"
+                        fill={CHART_COLORS.fourWheeler}
+                        name="4W"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Bar 
+                        dataKey="lastYearTwoWheeler" 
+                        stackId="lastYear"
+                        fill="#DAD6CA"
+                        name="Last Year 2W"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="lastYearFourWheeler" 
+                        stackId="lastYear"
+                        fill="#E8E5DD"
+                        name="Last Year 4W"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="twoWheeler" 
+                        stackId="thisYear"
+                        fill={CHART_COLORS.twoWheeler}
+                        name="This Year 2W"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="fourWheeler" 
+                        stackId="thisYear"
+                        fill={CHART_COLORS.fourWheeler}
+                        name="This Year 4W"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </>
+                  )}
                 </BarChart>
               </ResponsiveContainer>
             </div>

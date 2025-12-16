@@ -833,6 +833,7 @@ import { EmployeeFnb } from "./pages/EmployeeFnb";
 import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
 import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
 import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
+import ParkingBookingListEmployee from "./pages/ParkingBookingListEmployee";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1209,6 +1210,15 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <BookingDetailsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                   <Route
+                    path="/parking"
+                    element={
+                      <ProtectedRoute>
+                        <ParkingBookingListEmployee />
                       </ProtectedRoute>
                     }
                   />
