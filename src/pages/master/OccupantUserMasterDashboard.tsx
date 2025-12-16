@@ -37,7 +37,7 @@ import { OccupantUsersFilterDialog } from "@/components/OccupantUsersFilterDialo
 import { useAppSelector } from "@/store/hooks";
 import { debounce } from "lodash";
 
-const columns: ColumnConfig[] =  [
+const columns: ColumnConfig[] = [
   { key: "id", label: "ID", sortable: true, draggable: true },
   { key: "active", label: "Active", sortable: true, draggable: true },
   { key: "name", label: "User Name", sortable: true, draggable: true },
@@ -45,6 +45,7 @@ const columns: ColumnConfig[] =  [
   { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
   { key: "email", label: "Email", sortable: true, draggable: true },
   // { key: "company", label: "Vendor Company Name", sortable: true, draggable: true },
+  { key: "departmentName", label: "Department", sortable: true, draggable: true },
   { key: "entity", label: "Entity Name", sortable: true, draggable: true },
   { key: "department", label: "Unit", sortable: true, draggable: true },
   // { key: "role", label: "Role", sortable: true, draggable: true },
@@ -366,7 +367,7 @@ export const OccupantUserMasterDashboard = () => {
   const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
-    
+
     if (!baseUrl || !token) {
       toast.error("Missing authentication credentials");
       return;
@@ -530,6 +531,8 @@ export const OccupantUserMasterDashboard = () => {
         return user.accessLevel || "";
       case "department":
         return user.department || "";
+      case "departmentName":
+        return user.departmentName || "";
       case "entity":
         return user.entity || "";
       case "company":
