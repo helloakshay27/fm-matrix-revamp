@@ -330,6 +330,7 @@ import { CreateRosterTemplateDashboard } from "./pages/setup/CreateRosterTemplat
 
 // Import Employee pages
 import { EmployeesDashboard } from "./pages/setup/EmployeesDashboard";
+import { EmployeeDashboard } from "./pages/EmployeeDashboard";
 import { AddEmployeeDashboard } from "./pages/setup/AddEmployeeDashboard";
 import { EditEmployeePage } from "./pages/setup/EditEmployeePage";
 
@@ -832,6 +833,7 @@ import { EmployeeFnb } from "./pages/EmployeeFnb";
 import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
 import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
 import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
+import ParkingBookingListEmployee from "./pages/ParkingBookingListEmployee";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1212,6 +1214,15 @@ function App() {
                     }
                   />
 
+                   <Route
+                    path="/parking"
+                    element={
+                      <ProtectedRoute>
+                        <ParkingBookingListEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+
                   <Route
                     path="/employee/fnb"
                     element={
@@ -1566,6 +1577,7 @@ function App() {
                     element={<CRMWalletDetails />}
                   />
 
+
                   <Route
                     path="/msafedashboard"
                     element={<MsafeDashboardVI />}
@@ -1642,6 +1654,11 @@ function App() {
                   <Route
                     path="/maintenance/ticket/employee"
                     element={<TicketDashboardEmployee />}
+                  />
+
+                  <Route
+                    path="/employee/dashboard"
+                    element={<EmployeeDashboard />}
                   />
                   <Route
                     path="/maintenance/ticket"
@@ -1802,7 +1819,6 @@ function App() {
                   />
                   <Route
                     path="/safety/permit/vendor-form/:id?"
-                    element={<VendorPermitForm />}
                   />
                   <Route
                     path="/safety/permit/fill-form/:id?"

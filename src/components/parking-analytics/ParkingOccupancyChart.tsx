@@ -41,6 +41,7 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
   const [loading, setLoading] = useState(false);
   const [apiData, setApiData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [occupancyView, setOccupancyView] = useState<'current' | 'yoy'>('current');
   const { toast } = useToast();
 
   // Fetch data from API
@@ -263,7 +264,32 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
           </div>
         )}
         {chartData.length > 0 ? (
-          <div className="w-full overflow-x-auto">
+          <>
+            {/* Toggle Buttons */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setOccupancyView('current')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  occupancyView === 'current'
+                    ? 'bg-[#f2eee9] text-[#bf213e]'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Current Year
+              </button>
+              <button
+                onClick={() => setOccupancyView('yoy')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  occupancyView === 'yoy'
+                    ? 'bg-[#f2eee9] text-[#bf213e]'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Compare YoY
+              </button>
+            </div>
+
+            <div className="w-full overflow-x-auto">
             <ResponsiveContainer width="100%" height={400} className="min-w-[600px]">
               <BarChart 
                 data={chartData} 
@@ -294,33 +320,53 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
                     return <span style={{ color: '#6b7280', fontSize: '14px' }}>{labels[value] || value}</span>;
                   }}
                 />
-                <Bar 
-                  dataKey="lastYearOccupied" 
-                  fill={CHART_COLORS.lastYearOccupied}
-                  name="lastYearOccupied"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="lastYearVacant" 
-                  fill={CHART_COLORS.lastYearVacant}
-                  name="lastYearVacant"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="thisYearOccupied" 
-                  fill={CHART_COLORS.thisYearOccupied}
-                  name="thisYearOccupied"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="thisYearVacant" 
-                  fill={CHART_COLORS.thisYearVacant}
-                  name="thisYearVacant"
-                  radius={[4, 4, 0, 0]}
-                />
+                {occupancyView === 'current' ? (
+                  <>
+                    <Bar 
+                      dataKey="thisYearOccupied" 
+                      fill={CHART_COLORS.thisYearOccupied}
+                      name="thisYearOccupied"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="thisYearVacant" 
+                      fill={CHART_COLORS.thisYearVacant}
+                      name="thisYearVacant"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Bar 
+                      dataKey="lastYearOccupied" 
+                      fill={CHART_COLORS.lastYearOccupied}
+                      name="lastYearOccupied"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="lastYearVacant" 
+                      fill={CHART_COLORS.lastYearVacant}
+                      name="lastYearVacant"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="thisYearOccupied" 
+                      fill={CHART_COLORS.thisYearOccupied}
+                      name="thisYearOccupied"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="thisYearVacant" 
+                      fill={CHART_COLORS.thisYearVacant}
+                      name="thisYearVacant"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </>
+                )}
               </BarChart>
             </ResponsiveContainer>
           </div>
+          </>
         ) : (
           <div className="flex items-center justify-center h-48">
             <p className="text-gray-500">No occupancy data available</p>

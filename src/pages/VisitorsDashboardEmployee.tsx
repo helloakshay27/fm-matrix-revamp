@@ -1860,11 +1860,14 @@ export const VisitorsDashboardEmployee = () => {
               leftActions={
                 <div className="flex gap-3">
                   <Button
-                    onClick={() => setIsActionPanelOpen(true)}
+                    onClick={() => {
+                      setIsNewVisitorDialogOpen(true);
+                      setIsActionPanelOpen(false);
+                    }}
                     className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Action
+                    Add Visitor
                   </Button>
                 </div>
               }

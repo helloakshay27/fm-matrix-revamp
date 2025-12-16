@@ -161,47 +161,89 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
         ];
 
         return (
-          <div className="w-full h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={peakHourData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-                <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="time" 
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
-                  label={{ value: 'Bookings', angle: -90, position: 'insideLeft', fill: '#6b7280', fontSize: 12 }}
-                />
-                <Tooltip />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                <Line 
-                  type="monotone" 
-                  dataKey="lastYear" 
-                  name="Last Year" 
-                  stroke="#DAD6CA" 
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                  dot={{ r: 4, fill: '#DAD6CA' }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="thisYear" 
-                  name="This Year" 
-                  stroke="#C4B99D" 
-                  strokeWidth={2}
-                  dot={{ r: 5, fill: '#C4B99D', stroke: '#ffffff', strokeWidth: 2 }}
-                  activeDot={{ r: 7 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="w-full">
+            {/* Toggle Buttons */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setOccupancyView('current')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  occupancyView === 'current'
+                    ? 'bg-[#f2eee9] text-[#bf213e]'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Current Year
+              </button>
+              <button
+                onClick={() => setOccupancyView('yoy')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  occupancyView === 'yoy'
+                    ? 'bg-[#f2eee9] text-[#bf213e]'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Compare YoY
+              </button>
+            </div>
+
+            {/* Chart */}
+            <div className="w-full h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={peakHourData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
+                  <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="time" 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    label={{ value: 'Bookings', angle: -90, position: 'insideLeft', fill: '#6b7280', fontSize: 12 }}
+                  />
+                  <Tooltip />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                  
+                  {occupancyView === 'current' ? (
+                    <Line 
+                      type="monotone" 
+                      dataKey="thisYear" 
+                      name="This Year" 
+                      stroke="#C4B99D" 
+                      strokeWidth={2}
+                      dot={{ r: 5, fill: '#C4B99D', stroke: '#ffffff', strokeWidth: 2 }}
+                      activeDot={{ r: 7 }}
+                    />
+                  ) : (
+                    <>
+                      <Line 
+                        type="monotone" 
+                        dataKey="lastYear" 
+                        name="Last Year" 
+                        stroke="#DAD6CA" 
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={{ r: 4, fill: '#DAD6CA' }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="thisYear" 
+                        name="This Year" 
+                        stroke="#C4B99D" 
+                        strokeWidth={2}
+                        dot={{ r: 5, fill: '#C4B99D', stroke: '#ffffff', strokeWidth: 2 }}
+                        activeDot={{ r: 7 }}
+                      />
+                    </>
+                  )}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         );
       }
 
       case 'bookingPatterns': {
         // Transform API data or use sample data
-        const bookingPatternData = apiData?.data ? [
+        const bookingPatternDataAll = apiData?.data ? [
           { 
             year: `${apiData.data.previous_year.year}`, 
             occupied: apiData.data.previous_year.occupied || 0, 
@@ -229,31 +271,63 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
           },
         ];
 
+        // Filter data based on view
+        const bookingPatternData = occupancyView === 'current' 
+          ? [bookingPatternDataAll[1]] // Only current year
+          : bookingPatternDataAll; // Both years
+
         return (
-          <div className="w-full h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={bookingPatternData} margin={{ top: 20, right: 30, left: 10, bottom: 60 }}>
-                <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="year" 
-                  tick={{ fontSize: 14, fill: '#6b7280', fontWeight: 500 }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
-                  domain={[0, 100]}
-                  ticks={[0, 25, 50, 75, 100]}
-                />
-                <Tooltip />
-                <Legend 
-                  verticalAlign="bottom" 
-                  height={36} 
-                  iconType="square"
-                  wrapperStyle={{ paddingTop: '20px' }}
-                />
-                <Bar dataKey="occupied" name="Occupied" fill="#8b7355" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="vacant" name="Vacant" fill="#c4b99d" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="w-full">
+            {/* Toggle Buttons */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setOccupancyView('current')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  occupancyView === 'current'
+                    ? 'bg-[#f2eee9] text-[#bf213e]'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Current Year
+              </button>
+              <button
+                onClick={() => setOccupancyView('yoy')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  occupancyView === 'yoy'
+                    ? 'bg-[#f2eee9] text-[#bf213e]'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Compare YoY
+              </button>
+            </div>
+
+            {/* Chart */}
+            <div className="w-full h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={bookingPatternData} margin={{ top: 20, right: 30, left: 10, bottom: 60 }}>
+                  <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="year" 
+                    tick={{ fontSize: 14, fill: '#6b7280', fontWeight: 500 }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    domain={[0, 100]}
+                    ticks={[0, 25, 50, 75, 100]}
+                  />
+                  <Tooltip />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36} 
+                    iconType="square"
+                    wrapperStyle={{ paddingTop: '20px' }}
+                  />
+                  <Bar dataKey="occupied" name="Occupied" fill="#8b7355" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="vacant" name="Vacant" fill="#c4b99d" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         );
       }
@@ -274,7 +348,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                 onClick={() => setOccupancyView('current')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   occupancyView === 'current'
-                    ? 'bg-[#2c3e50] text-white'
+                    ? 'bg-[#f2eee9] text-[#bf213e]'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
@@ -284,7 +358,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                 onClick={() => setOccupancyView('yoy')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   occupancyView === 'yoy'
-                    ? 'bg-[#2c3e50] text-white'
+                    ? 'bg-[#f2eee9] text-[#bf213e]'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
@@ -311,15 +385,6 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     <>
                       <Line 
                         type="monotone" 
-                        dataKey="thisYearCancelled" 
-                        name="Cancelled" 
-                        stroke="#c4b99d" 
-                        strokeWidth={2}
-                        dot={{ r: 5, fill: '#c4b99d', stroke: '#ffffff', strokeWidth: 2 }}
-                        activeDot={{ r: 7 }}
-                      />
-                      <Line 
-                        type="monotone" 
                         dataKey="thisYearReleased" 
                         name="Released" 
                         stroke="#c4b99d" 
@@ -327,18 +392,18 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                         dot={{ r: 5, fill: '#c4b99d', stroke: '#ffffff', strokeWidth: 2 }}
                         activeDot={{ r: 7 }}
                       />
+                      <Line 
+                        type="monotone" 
+                        dataKey="thisYearCancelled" 
+                        name="Cancelled" 
+                        stroke="#8b7355" 
+                        strokeWidth={2}
+                        dot={{ r: 5, fill: '#8b7355', stroke: '#ffffff', strokeWidth: 2 }}
+                        activeDot={{ r: 7 }}
+                      />
                     </>
                   ) : (
                     <>
-                      <Line 
-                        type="monotone" 
-                        dataKey="lastYearCancelled" 
-                        name="Last Year Cancelled" 
-                        stroke="#c4b99d" 
-                        strokeWidth={2}
-                        dot={{ r: 5, fill: '#c4b99d', stroke: '#ffffff', strokeWidth: 2 }}
-                        activeDot={{ r: 7 }}
-                      />
                       <Line 
                         type="monotone" 
                         dataKey="lastYearReleased" 
@@ -346,17 +411,18 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                         stroke="#c4b99d" 
                         strokeWidth={2}
                         strokeDasharray="5 5"
-                        dot={{ r: 5, fill: '#c4b99d', stroke: '#ffffff', strokeWidth: 2 }}
-                        activeDot={{ r: 7 }}
+                        dot={{ r: 4, fill: '#c4b99d' }}
+                        activeDot={{ r: 6 }}
                       />
                       <Line 
                         type="monotone" 
-                        dataKey="thisYearCancelled" 
-                        name="This Year Cancelled" 
-                        stroke="#c4b99d" 
+                        dataKey="lastYearCancelled" 
+                        name="Last Year Cancelled" 
+                        stroke="#8b7355" 
                         strokeWidth={2}
-                        dot={{ r: 5, fill: '#c4b99d', stroke: '#ffffff', strokeWidth: 2 }}
-                        activeDot={{ r: 7 }}
+                        strokeDasharray="5 5"
+                        dot={{ r: 4, fill: '#8b7355' }}
+                        activeDot={{ r: 6 }}
                       />
                       <Line 
                         type="monotone" 
@@ -365,6 +431,15 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                         stroke="#c4b99d" 
                         strokeWidth={2}
                         dot={{ r: 5, fill: '#c4b99d', stroke: '#ffffff', strokeWidth: 2 }}
+                        activeDot={{ r: 7 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="thisYearCancelled" 
+                        name="This Year Cancelled" 
+                        stroke="#8b7355" 
+                        strokeWidth={2}
+                        dot={{ r: 5, fill: '#8b7355', stroke: '#ffffff', strokeWidth: 2 }}
                         activeDot={{ r: 7 }}
                       />
                     </>
@@ -378,36 +453,91 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
 
       case 'averageDuration': {
         // Sample data for Auto-Releases by Department (Horizontal Bar Chart)
-        const durationData = [
-          { category: 'HR', count: 25 },
-          { category: 'Sales', count: 45 },
-          { category: 'Support', count: 62 },
-          { category: 'Admin', count: 38 },
+        const durationDataAll = [
+          { category: 'HR', thisYear: 25, lastYear: 22 },
+          { category: 'Sales', thisYear: 45, lastYear: 40 },
+          { category: 'Support', thisYear: 62, lastYear: 58 },
+          { category: 'Admin', thisYear: 38, lastYear: 35 },
         ];
 
         return (
-          <div className="w-full h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart 
-                data={durationData} 
-                layout="vertical"
-                margin={{ top: 10, right: 30, left: 60, bottom: 10 }}
+          <div className="w-full">
+            {/* Toggle Buttons */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setOccupancyView('current')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  occupancyView === 'current'
+                    ? 'bg-[#f2eee9] text-[#bf213e]'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
               >
-                <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
-                <XAxis 
-                  type="number"
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
-                />
-                <YAxis 
-                  type="category"
-                  dataKey="category" 
-                  tick={{ fontSize: 14, fill: '#6b7280' }}
-                  width={80}
-                />
-                <Tooltip />
-                <Bar dataKey="count" fill="#c4b99d" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+                Current Year
+              </button>
+              <button
+                onClick={() => setOccupancyView('yoy')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  occupancyView === 'yoy'
+                    ? 'bg-[#f2eee9] text-[#bf213e]'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Compare YoY
+              </button>
+            </div>
+
+            {/* Chart */}
+            <div className="w-full h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={durationDataAll} 
+                  layout="vertical"
+                  margin={{ top: 10, right: 30, left: 80, bottom: 10 }}
+                >
+                  <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                  <XAxis 
+                    type="number"
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                  />
+                  <YAxis 
+                    type="category"
+                    dataKey="category" 
+                    tick={{ fontSize: 14, fill: '#6b7280' }}
+                    width={80}
+                  />
+                  <Tooltip />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36} 
+                    iconType="square"
+                  />
+                  
+                  {occupancyView === 'current' ? (
+                    <Bar 
+                      dataKey="thisYear" 
+                      name="This Year" 
+                      fill="#c4b99d" 
+                      radius={[0, 4, 4, 0]} 
+                    />
+                  ) : (
+                    <>
+                      <Bar 
+                        dataKey="lastYear" 
+                        name="Last Year" 
+                        fill="#DAD6CA" 
+                        radius={[0, 4, 4, 0]} 
+                      />
+                      <Bar 
+                        dataKey="thisYear" 
+                        name="This Year" 
+                        fill="#c4b99d" 
+                        radius={[0, 4, 4, 0]} 
+                      />
+                    </>
+                  )}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         );
       }
