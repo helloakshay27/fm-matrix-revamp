@@ -319,12 +319,12 @@ export const BookingDetailsPage = () => {
                 <span className="text-gray-900 font-medium">₹{bookings?.sub_total?.toFixed(2) || '0.00'}</span>
               </div>
 
-              {/* {bookings?.discount && bookings.discount > 0 && ( */}
+              {bookings?.discount != null && bookings.discount > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <span className="text-gray-600">Discount</span>
                   <span className="text-green-600 font-medium">- ₹{bookings.discount.toFixed(2)}</span>
                 </div>
-              {/* )} */}
+              )}
 
               <div className="flex justify-between items-center py-2 border-b border-gray-200">
                 <span className="text-gray-600">GST</span>
