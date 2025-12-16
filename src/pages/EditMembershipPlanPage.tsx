@@ -249,7 +249,7 @@ export const EditMembershipPlanPage = () => {
                 facility_setup_id: amenity.facility_setup_id,
                 access: "free",
                 frequency: details.frequency,
-                limit: details.limit,
+                slot_limit: details.limit,
                 allow_extra_booking: details.allowExtraBooking,
                 extra_booking_price: details.extraBookingPrice,
                 price: details.price,

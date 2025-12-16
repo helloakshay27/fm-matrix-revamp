@@ -996,6 +996,7 @@ export const EditBookingSetupPage = () => {
                         </div>
                     </div>
 
+
                     {/* Charge Setup Card */}
                     <div className="bg-white rounded-lg border-2 p-6 space-y-6">
                         <div className="flex items-center gap-3">
