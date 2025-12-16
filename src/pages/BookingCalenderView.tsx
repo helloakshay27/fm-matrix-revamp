@@ -4,7 +4,7 @@ import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
 import axios from "axios";
 import { ArrowUpDown, Bell, ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const BookingCalenderView = () => {
@@ -30,6 +30,9 @@ const BookingCalenderView = () => {
     const [currentMonth, setCurrentMonth] = useState(initialMonth);
     const [currentYear, setCurrentYear] = useState(initialYear);
     const [showActionPanel, setShowActionPanel] = useState(false);
+
+    const datesContainerRef = useRef<HTMLDivElement | null>(null);
+    const dateRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
     const getFacilities = async () => {
         try {
@@ -123,6 +126,20 @@ const BookingCalenderView = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (!datesContainerRef.current || !selectedDateForApi) return;
+
+        const targetEl = dateRefs.current[selectedDateForApi];
+        if (targetEl) {
+            const container = datesContainerRef.current;
+            const targetOffset = targetEl.offsetLeft - container.offsetLeft;
+            // Position selected date ~300px left of center
+            const centerScroll = targetOffset - (container.clientWidth / 2) + (targetEl.clientWidth / 2);
+            const scrollLeft = Math.max(centerScroll + 376, 0);
+            container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+        }
+    }, [selectedDateForApi, dates]);
 
     const fetchTimeSlotsForDate = async (date) => {
         try {
@@ -322,7 +339,7 @@ const BookingCalenderView = () => {
             {/* Calendar Container */}
             <div className="flex flex-col gap-0">
                 {/* Dates Header - Separate Scrolling */}
-                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
+                <div ref={datesContainerRef} className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
                     <div className="min-w-fit flex">
                         <div className="w-32 flex-shrink-0 bg-[#d8d8d8] border border-gray-400 py-1 sticky left-0 z-10">
                             <div className="flex items-center justify-between gap-2">
@@ -350,6 +367,11 @@ const BookingCalenderView = () => {
                             {dates.map((dateInfo, idx) => (
                                 <div
                                     key={idx}
+                                    ref={(el) => {
+                                        if (el) {
+                                            dateRefs.current[dateInfo.fullDate] = el;
+                                        }
+                                    }}
                                     onClick={() => !dateInfo.isOff && !dateInfo.isBlocked && (
                                         setSelectedDate(dateInfo.date),
                                         setSelectedDateForApi(dateInfo.fullDate)
