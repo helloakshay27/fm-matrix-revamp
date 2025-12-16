@@ -62,13 +62,24 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
     const isLocalhost =
       hostname.includes("localhost") ||
       hostname.includes("lockated.gophygital.work");
+
+    const isPulseSite =
+      hostname.includes("pulse.lockated.com") || hostname.includes("localhost");
+
     // For employee users, don't auto-detect section changes
     // They manually select modules via EmployeeHeader
-    if (isEmployeeUser && isLocalhost) {
+    if ((isEmployeeUser && isLocalhost) || isPulseSite) {
       console.log(
         `👤 Employee mode: Skipping auto-detection, keeping section: ${currentSection}`
       );
-      return;
+
+      if (path.startsWith("/settings")) {
+        newSection = "Settings";
+      } else if (path.startsWith("/master")) {
+        newSection = "Master";
+      } else {
+        return;
+      }
     }
 
     // Define route patterns and their corresponding sections
@@ -97,9 +108,8 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
       newSection = "Settings";
     } else if (path.startsWith("/dashboard")) {
       newSection = "Dashboard";
-    } else {
-      // For any other route, default to Dashboard
-      newSection = "Dashboard";
+    } else if (path.startsWith("/pulse")) {
+      newSection = "Pulse Privilege";
     }
 
     // Always update the section when route changes

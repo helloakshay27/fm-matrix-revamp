@@ -23,6 +23,8 @@ import { EmployeeSidebar } from "./EmployeeSidebar";
 import { EmployeeDynamicHeader } from "./EmployeeDynamicHeader";
 import { EmployeeHeader } from "./EmployeeHeader";
 import { ViewSelectionModal } from "./ViewSelectionModal";
+import { PulseSidebar } from "./PulseSidebar";
+import { PulseDynamicHeader } from "./PulseDynamicHeader";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -92,8 +94,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       : null
   );
 
-  const isLocalhost =
-    hostname.includes("lockated.gophygital.work");
+  const isLocalhost = hostname.includes("lockated.gophygital.work");
+
+  // Detect Pulse site - used for fallback when no API role exists
+  const isPulseSite =
+    hostname.includes("pulse.lockated.com") ||
+    hostname.includes("pulse.gophygital.work") ||
+    hostname.includes("localhost") || // Pulse-specific port
+    location.pathname.startsWith("/pulse");
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -143,6 +151,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return <PrimeSupportSidebar />;
     }
 
+    // Pulse Privilege - Company ID 305 OR isPulseSite fallback
+    if (selectedCompany?.id === 305 || isPulseSite) {
+      return <PulseSidebar />;
+    }
+
     if (
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
@@ -190,6 +203,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (selectedCompany?.id === 304) {
       return <PrimeSupportDynamicHeader />;
     }
+
+    // Pulse Privilege - Company ID 305 OR isPulseSite fallback
+    if (selectedCompany?.id === 305 || isPulseSite) {
+      return <PulseDynamicHeader />;
+    }
+
     if (
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
@@ -302,7 +321,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             : isSidebarCollapsed
               ? "ml-16"
               : "ml-64"
-          } ${isEmployeeUser ? "pt-16" : "pt-28"} transition-all duration-300`}
+        } ${isEmployeeUser ? "pt-16" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>
