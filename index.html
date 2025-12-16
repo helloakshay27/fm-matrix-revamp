@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="FM Matrix" />
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; connect-src 'self' https://live-api.gophygital.work https://uat.lockated.com https://*.gophygital.work https://*.lockated.com wss://*.gophygital.work wss://*.lockated.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; frame-src 'self' https://preview--nexus-facility-flow.lovable.app https://ai.lockated.com;"
@@ -10,9 +14,19 @@
     <title>FM Matrix</title>
     <link
       rel="icon"
-      href="/fm-matrix-revamp/public/favicon.ico"
-      type="image/x-icon"
+      type="image/png"
+      sizes="32x32"
+      href="/favicon-32x32.png?v=2"
     />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/pwa-192x192.png?v=2"
+    />
+    <link rel="shortcut icon" href="/favicon-32x32.png?v=2" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png?v=2" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
