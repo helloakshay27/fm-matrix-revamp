@@ -363,6 +363,16 @@ const modulesByPackage = {
                 },
             ],
         },
+        {
+            name: "Gate Number",
+            icon: DoorOpen,
+            href: "/master/gate-number",
+        },
+        {
+            name: "Gate Pass Type",
+            icon: Ticket,
+            href: "/master/gate-pass-type",
+        },
 
         // {
         //   name: 'Inventory Sub Type',
@@ -929,33 +939,66 @@ const modulesByPackage = {
                 },
             ],
         },
-
-
         {
-            name: "Value Added Services",
-            icon: Star,
-            href: "/settings/vas",
+            name: "Security",
+            icon: Shield,
+            href: "/settings/security",
             subItems: [
-
                 {
-                    name: "Parking Management",
+                    name: "Visitor Management",
+                    href: "/settings/visitor-management/setup",
+                    subItems: [
+                        { name: "Setup", href: "/settings/visitor-management/setup" },
+                        {
+                            name: "Visiting Purpose",
+                            href: "/settings/visitor-management/visiting-purpose",
+                        },
+                        {
+                            name: "Support Staff",
+                            href: "/settings/visitor-management/support-staff",
+                        },
+                        { name: "Icons", href: "/settings/visitor-management/icons" },
+                    ],
+                },
+                {
+                    name: "Gate Pass",
+                    href: "/security/gate-pass",
                     subItems: [
                         {
-                            name: "Parking Category",
-                            href: "/settings/vas/parking-management/parking-category",
+                            name: "Materials Type",
+                            href: "/security/gate-pass/materials-type",
                         },
-                        {
-                            name: "Slot Configuration",
-                            href: "/settings/vas/parking-management/slot-configuration",
-                        },
-                        {
-                            name: "Time Slot Setup",
-                            href: "/settings/vas/parking-management/time-slot-setup",
-                        },
+                        { name: "Items Name", href: "/security/gate-pass/items-name" },
                     ],
                 },
             ],
         },
+
+        // {
+        //     name: "Value Added Services",
+        //     icon: Star,
+        //     href: "/settings/vas",
+        //     subItems: [
+
+        //         {
+        //             name: "Parking Management",
+        //             subItems: [
+        //                 {
+        //                     name: "Parking Category",
+        //                     href: "/settings/vas/parking-management/parking-category",
+        //                 },
+        //                 {
+        //                     name: "Slot Configuration",
+        //                     href: "/settings/vas/parking-management/slot-configuration",
+        //                 },
+        //                 {
+        //                     name: "Time Slot Setup",
+        //                     href: "/settings/vas/parking-management/time-slot-setup",
+        //                 },
+        //             ],
+        //         },
+        //     ],
+        // },
 
         // {
         //   name: 'Currency',
