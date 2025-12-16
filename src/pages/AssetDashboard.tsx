@@ -311,7 +311,7 @@ export const AssetDashboard = () => {
   const transformedAssets: TableAsset[] = assets.map((asset, index) => ({
     id: asset.id?.toString() || '',
     name: asset.name || '',
-    serialNumber: (currentPage - 1) * 15 + index + 1,
+    serialNumber: asset.serial_number || '-',
     assetNumber: asset.asset_number || '',
     status: asset.status as 'in_use' | 'in_storage' | 'breakdown' | 'disposed',
     siteName: asset.site_name || '',
@@ -364,12 +364,12 @@ export const AssetDashboard = () => {
       if (coreKeysToSkip.has(field.key)) return acc;
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
-        acc[field.key] =
+        acc[`custom_${field.key}`] =
           customFieldObj.field_value !== null && customFieldObj.field_value !== undefined
             ? customFieldObj.field_value
             : '';
       } else {
-        acc[field.key] = asset[field.key] || '';
+        acc[`custom_${field.key}`] = asset[field.key] || '';
       }
       return acc;
     }, {} as Record<string, any>),
@@ -378,7 +378,7 @@ export const AssetDashboard = () => {
   const transformedSearchedAssets: TableAsset[] = searchedAssets.map((asset, index) => ({
     id: asset.id?.toString() || '',
     name: asset.name || '',
-    serialNumber: (currentPage - 1) * 15 + index + 1,
+    serialNumber: asset.serial_number || '-',
     assetNumber: asset.assetNumber || '',
     status: asset.status as 'in_use' | 'in_storage' | 'breakdown' | 'disposed',
     siteName: asset.siteName || '',
@@ -429,12 +429,12 @@ export const AssetDashboard = () => {
       if (coreKeysToSkip.has(field.key)) return acc;
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
-        acc[field.key] =
+        acc[`custom_${field.key}`] =
           customFieldObj.field_value !== null && customFieldObj.field_value !== undefined
             ? customFieldObj.field_value
             : '';
       } else {
-        acc[field.key] = asset[field.key] || '';
+        acc[`custom_${field.key}`] = asset[field.key] || '';
       }
       return acc;
     }, {} as Record<string, any>),
