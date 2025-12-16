@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Car, CheckCircle, AlertTriangle, MapPin, Bike, Plus, Download, Upload, Search, Eye, Filter, X, XCircle } from 'lucide-react';
+import { Car, CheckCircle, AlertTriangle, MapPin, Bike, Plus, Download, Upload, Search, Eye, Filter, X, XCircle, Calendar } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -23,6 +23,8 @@ import { ParkingStatisticsCard } from "@/components/parking-analytics/ParkingSta
 import { ParkingFloorLayout } from "@/components/parking-analytics/ParkingFloorLayout";
 import { ParkingOccupancyChart } from "@/components/parking-analytics/ParkingOccupancyChart";
 import { FloorWiseOccupancyChart } from "@/components/parking-analytics/FloorWiseOccupancyChart";
+import { ParkingAnalyticsSelector } from "@/components/ParkingAnalyticsSelector";
+import { ParkingAnalyticsCard } from "@/components/ParkingAnalyticsCard";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useNavigate } from "react-router-dom";
 import { useLayout } from '@/contexts/LayoutContext';
@@ -261,6 +263,7 @@ const ParkingBookingListSiteWise = () => {
   const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<number | null>(null);
+  const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const navigate = useNavigate();
   const { isSidebarCollapsed } = useLayout();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -441,6 +444,44 @@ const ParkingBookingListSiteWise = () => {
     { key: 'cancel', label: 'Cancel', visible: true }
   ]);
 
+  // Analytics state
+  const [selectedAnalytics, setSelectedAnalytics] = useState<string[]>([
+    'peak_hour_trends',
+    'booking_patterns',
+    'occupancy_rate',
+    'average_duration',
+    'parking_statistics',
+    'two_four_occupancy',
+    'floor_wise_occupancy'
+  ]);
+
+  // Analytics date range state - default to last year to today
+  const getDefaultAnalyticsDateRange = () => {
+    const today = new Date();
+    const lastYear = new Date();
+    lastYear.setFullYear(today.getFullYear() - 1);
+
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+
+    return {
+      startDate: formatDate(lastYear),
+      endDate: formatDate(today)
+    };
+  };
+
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<{ startDate: string; endDate: string }>(getDefaultAnalyticsDateRange());
+
+  // Convert DD/MM/YYYY to YYYY-MM-DD for API
+  const convertToApiDate = (ddmmyyyy: string): string => {
+    const [day, month, year] = ddmmyyyy.split('/');
+    return `${year}-${month}-${day}`;
+  };
+
   // Debounce search term to avoid excessive API calls
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -467,13 +508,41 @@ const ParkingBookingListSiteWise = () => {
       const params = new URLSearchParams();
       params.append('page', page.toString());
       
-      // Add search query
+      // Add search query - intelligently route to email, first name, or last name
       if (searchQuery.trim()) {
         console.log('🔍 Search Query Debug:');
         console.log('Search query value:', searchQuery);
         console.log('Search query trimmed:', searchQuery.trim());
         console.log('Search query type:', typeof searchQuery);
-        params.append('q[user_full_name_or_user_email_or_user_designation_cont]', searchQuery.trim());
+        const trimmedQuery = searchQuery.trim();
+        
+        // Check if it's an email (contains @)
+        if (trimmedQuery.includes('@')) {
+          console.log('🔍 Detected email search');
+          params.append('q[user_email_eq]', trimmedQuery);
+        }
+        // Check if it contains a space (first name and last name)
+        else if (trimmedQuery.includes(' ')) {
+          const nameParts = trimmedQuery.split(' ').filter(part => part.length > 0);
+          if (nameParts.length >= 2) {
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' '); // Join remaining parts as last name
+            console.log('🔍 Detected full name search');
+            console.log('First name:', firstName);
+            console.log('Last name:', lastName);
+            params.append('q[user_firstname_eq]', firstName);
+            params.append('q[user_last_name_eq]', lastName);
+          } else {
+            // Only one part after splitting, treat as first name
+            console.log('🔍 Detected single name search (first name)');
+            params.append('q[user_firstname_eq]', nameParts[0]);
+          }
+        }
+        // Single word without @ - treat as first name
+        else {
+          console.log('🔍 Detected single name search (first name)');
+          params.append('q[user_firstname_eq]', trimmedQuery);
+        }
       }
       
       // Add filter parameters
@@ -1009,9 +1078,31 @@ const ParkingBookingListSiteWise = () => {
       params.append('end_date', exportDateRange.endDate);
       
       // Add current applied filters to export parameters
-      // Search query
+      // Search query - intelligently route to email, first name, or last name
       if (debouncedSearchTerm.trim()) {
-        params.append('q[user_full_name_or_user_email_or_user_designation_cont]', debouncedSearchTerm.trim());
+        const trimmedQuery = debouncedSearchTerm.trim();
+        
+        // Check if it's an email (contains @)
+        if (trimmedQuery.includes('@')) {
+          params.append('q[user_email_eq]', trimmedQuery);
+        }
+        // Check if it contains a space (first name and last name)
+        else if (trimmedQuery.includes(' ')) {
+          const nameParts = trimmedQuery.split(' ').filter(part => part.length > 0);
+          if (nameParts.length >= 2) {
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' '); // Join remaining parts as last name
+            params.append('q[user_firstname_eq]', firstName);
+            params.append('q[user_last_name_eq]', lastName);
+          } else {
+            // Only one part after splitting, treat as first name
+            params.append('q[user_firstname_eq]', nameParts[0]);
+          }
+        }
+        // Single word without @ - treat as first name
+        else {
+          params.append('q[user_firstname_eq]', trimmedQuery);
+        }
       }
       
       // Category filter
@@ -1583,6 +1674,13 @@ const ParkingBookingListSiteWise = () => {
     setCurrentPage(1);
   };
 
+  // Handle analytics filter apply
+  const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
+    setAnalyticsDateRange(filters);
+    // You can add additional logic here to fetch analytics data with the new date range
+    console.log('Analytics date range updated:', filters);
+  };
+
   // Get unique values for filter dropdowns
   const getUniqueValues = (key: keyof ParkingBookingSite) => {
     return Array.from(new Set(bookingData.map(item => {
@@ -1600,7 +1698,7 @@ const ParkingBookingListSiteWise = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="parking" className="w-full">
-        {/* <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
             value="parking"
             className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
@@ -1642,7 +1740,7 @@ const ParkingBookingListSiteWise = () => {
             </svg>
             Analytics
           </TabsTrigger>
-        </TabsList> */}
+        </TabsList>
 
         {/* Parking List Tab Content */}
         <TabsContent value="parking" className="mt-6 space-y-6">
@@ -2495,70 +2593,129 @@ const ParkingBookingListSiteWise = () => {
 
         {/* Analytics Tab Content */}
         <TabsContent value="analytics" className="mt-6 space-y-6">
-          <ParkingStatisticsCard
-            data={{
-              total_slots: cards?.total_slots || 0,
-              occupied: (cards?.two_booked || 0) + (cards?.four_booked || 0),
-              vacant: (cards?.two_available || 0) + (cards?.four_available || 0),
-              checked_in: bookingData.filter(b => b.checked_in_at !== null).length,
-              checked_out: bookingData.filter(b => b.checked_out_at !== null).length,
-              utilization: cards?.total_slots 
-                ? Math.round((((cards?.two_booked || 0) + (cards?.four_booked || 0)) / cards.total_slots) * 100)
-                : 0,
-              two_wheeler: {
-                total: cards?.two_total || 0,
-                occupied: cards?.two_booked || 0,
-                vacant: cards?.two_available || 0,
-              },
-              four_wheeler: {
-                total: cards?.four_total || 0,
-                occupied: cards?.four_booked || 0,
-                vacant: cards?.four_available || 0,
-              },
-            }}
-          />
+          {/* Header with Filter and Analytics Selector */}
+          <div className="flex justify-end items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsAnalyticsFilterOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+            >
+              <Calendar className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">
+                {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
+              </span>
+              <Filter className="w-4 h-4 text-gray-600" />
+            </Button>
 
-          {/* 2W / 4W Occupancy Chart */}
-          <ParkingOccupancyChart
-            data={[
-              {
-                category: '2W',
-                lastYearOccupied: Math.round((cards?.two_booked || 0) * 0.9),
-                lastYearVacant: Math.round((cards?.two_available || 0) * 1.2),
-                thisYearOccupied: cards?.two_booked || 0,
-                thisYearVacant: cards?.two_available || 0
-              },
-              {
-                category: '4W',
-                lastYearOccupied: Math.round((cards?.four_booked || 0) * 0.95),
-                lastYearVacant: Math.round((cards?.four_available || 0) * 1.1),
-                thisYearOccupied: cards?.four_booked || 0,
-                thisYearVacant: cards?.four_available || 0
-              }
-            ]}
-            onDownload={async () => {
-              console.log('Downloading occupancy data...');
-              // Implement download logic here
-            }}
-          />
+            <ParkingAnalyticsSelector
+              onSelectionChange={(selected) => setSelectedAnalytics(selected)}
+            />
+          </div>
 
-          {/* Floor-wise Occupancy Chart */}
-          <FloorWiseOccupancyChart
-            data={[
-              { floor: 'B2', twoWheeler: 12, fourWheeler: 8, percentage: 11.1 },
-              { floor: 'B1', twoWheeler: 10, fourWheeler: 13, percentage: 10.0 },
-              { floor: 'G', twoWheeler: 8, fourWheeler: 17, percentage: 14.3 },
-              { floor: '1', twoWheeler: 6, fourWheeler: 10, percentage: 14.3 },
-              { floor: '2', twoWheeler: 4, fourWheeler: 9, percentage: 7.7 },
-            ]}
-            onDownload={async () => {
-              console.log('Downloading floor-wise occupancy data...');
-              // Implement download logic here
-            }}
-          />
+          {/* Statistics Overview */}
+          {selectedAnalytics.includes('parking_statistics') && (
+            <ParkingStatisticsCard
+              data={{
+                total_slots: cards?.total_slots || 0,
+                occupied: (cards?.two_booked || 0) + (cards?.four_booked || 0),
+                vacant: (cards?.two_available || 0) + (cards?.four_available || 0),
+                checked_in: bookingData.filter(b => b.checked_in_at !== null).length,
+                checked_out: bookingData.filter(b => b.checked_out_at !== null).length,
+                utilization: cards?.total_slots 
+                  ? Math.round((((cards?.two_booked || 0) + (cards?.four_booked || 0)) / cards.total_slots) * 100)
+                  : 0,
+                two_wheeler: {
+                  total: cards?.two_total || 0,
+                  occupied: cards?.two_booked || 0,
+                  vacant: cards?.two_available || 0,
+                },
+                four_wheeler: {
+                  total: cards?.four_total || 0,
+                  occupied: cards?.four_booked || 0,
+                  vacant: cards?.four_available || 0,
+                },
+              }}
+            />
+          )}
+
+          {/* Analytics Cards Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {selectedAnalytics.includes('peak_hour_trends') && (
+              <ParkingAnalyticsCard
+                title="Peak Hour Trends"
+                data={{}}
+                type="peakHourTrends"
+                startDate={convertToApiDate(analyticsDateRange.startDate)}
+                endDate={convertToApiDate(analyticsDateRange.endDate)}
+              />
+            )}
+            {selectedAnalytics.includes('booking_patterns') && (
+              <ParkingAnalyticsCard
+                title="2-Year Parking Comparison"
+                data={{}}
+                type="bookingPatterns"
+              />
+            )}
+            
+            {selectedAnalytics.includes('two_four_occupancy') && (
+              <ParkingOccupancyChart
+                data={[
+                  {
+                    category: '2W',
+                    lastYearOccupied: Math.round((cards?.two_booked || 0) * 0.9),
+                    lastYearVacant: Math.round((cards?.two_available || 0) * 1.2),
+                    thisYearOccupied: cards?.two_booked || 0,
+                    thisYearVacant: cards?.two_available || 0
+                  },
+                  {
+                    category: '4W',
+                    lastYearOccupied: Math.round((cards?.four_booked || 0) * 0.95),
+                    lastYearVacant: Math.round((cards?.four_available || 0) * 1.1),
+                    thisYearOccupied: cards?.four_booked || 0,
+                    thisYearVacant: cards?.four_available || 0
+                  }
+                ]}
+                onDownload={async () => {
+                  console.log('Downloading occupancy data...');
+                  // Implement download logic here
+                }}
+              />
+            )}
+            {selectedAnalytics.includes('floor_wise_occupancy') && (
+              <FloorWiseOccupancyChart
+                data={[
+                  { floor: 'B2', twoWheeler: 12, fourWheeler: 8, percentage: 11.1 },
+                  { floor: 'B1', twoWheeler: 10, fourWheeler: 13, percentage: 10.0 },
+                  { floor: 'G', twoWheeler: 8, fourWheeler: 17, percentage: 14.3 },
+                  { floor: '1', twoWheeler: 6, fourWheeler: 10, percentage: 14.3 },
+                  { floor: '2', twoWheeler: 4, fourWheeler: 9, percentage: 7.7 },
+                ]}
+                startDate={convertToApiDate(analyticsDateRange.startDate)}
+                endDate={convertToApiDate(analyticsDateRange.endDate)}
+                onDownload={async () => {
+                  console.log('Downloading floor-wise occupancy data...');
+                  // Implement download logic here
+                }}
+              />
+            )}
+            {selectedAnalytics.includes('occupancy_rate') && (
+              <ParkingAnalyticsCard
+                title="Released vs Cancelled (Daily)"
+                data={{}}
+                type="occupancyRate"
+              />
+            )}
+            {selectedAnalytics.includes('average_duration') && (
+              <ParkingAnalyticsCard
+                title="Auto-Releases by Department"
+                data={{}}
+                type="averageDuration"
+              />
+            )}
+          </div>
 
           {/* Floor Layout */}
-          <ParkingFloorLayout
+          {/* <ParkingFloorLayout
             floor="G (Live)"
             building="Main Building"
             slots={bookingData.slice(0, 36).map((booking, index) => ({
@@ -2574,9 +2731,81 @@ const ParkingBookingListSiteWise = () => {
               console.log('Slot clicked:', slot);
               // You can add navigation to booking details or show a modal here
             }}
-          />
+          /> */}
         </TabsContent>
       </Tabs>
+
+      {/* Analytics Filter Dialog */}
+      <Dialog open={isAnalyticsFilterOpen} onOpenChange={setIsAnalyticsFilterOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Filter Parking Analytics</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                value={analyticsDateRange.startDate ? (() => {
+                  const [day, month, year] = analyticsDateRange.startDate.split('/');
+                  return `${year}-${month}-${day}`;
+                })() : ''}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const [year, month, day] = e.target.value.split('-');
+                    setAnalyticsDateRange(prev => ({ ...prev, startDate: `${day}/${month}/${year}` }));
+                  }
+                }}
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                value={analyticsDateRange.endDate ? (() => {
+                  const [day, month, year] = analyticsDateRange.endDate.split('/');
+                  return `${year}-${month}-${day}`;
+                })() : ''}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const [year, month, day] = e.target.value.split('-');
+                    setAnalyticsDateRange(prev => ({ ...prev, endDate: `${day}/${month}/${year}` }));
+                  }
+                }}
+                className="h-10"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4 pt-6">
+            <Button 
+              onClick={() => {
+                handleAnalyticsFilterApply(analyticsDateRange);
+                setIsAnalyticsFilterOpen(false);
+              }}
+              className="flex-1 h-11"
+            >
+              Apply Filters
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsAnalyticsFilterOpen(false)}
+              className="flex-1 h-11"
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setAnalyticsDateRange(getDefaultAnalyticsDateRange());
+              }}
+              className="flex-1 h-11"
+            >
+              Reset
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
