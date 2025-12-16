@@ -119,7 +119,14 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         // remove "actions"
         .filter((key) => key !== "actions")
         // convert camelCase → snake_case
-        .map((key) => key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase());
+        .map((key) => {
+          const snakeCaseKey = key
+            .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+            .toLowerCase();
+          return snakeCaseKey.startsWith("custom_")
+            ? snakeCaseKey.replace("custom_", "")
+            : snakeCaseKey;
+        });
 
       // ✅ Pass as a JSON string in the `fields` query parameter
       const fieldsParam = encodeURIComponent(JSON.stringify(visibleColumnKeys));
