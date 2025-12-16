@@ -5,7 +5,6 @@ import { useLayout } from '../contexts/LayoutContext';
 const packages = [
     'Maintenance',
     'Security',
-    'Value Added Services',
     'Master',
     'Settings'
 ];
