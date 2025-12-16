@@ -122,7 +122,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
   const [area, setArea] = useState('');
   const [floor, setFloor] = useState('');
   const [room, setRoom] = useState('');
-  const [allocationType, setAllocationType] = useState('department');
+  const [allocationType, setAllocationType] = useState('');
   const [allocatedToId, setAllocatedToId] = useState<number | null>(null);
 
   // API data states
@@ -489,7 +489,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       setArea('');
       setFloor('');
       setRoom('');
-      setAllocationType('department');
+      setAllocationType('');
       setAllocatedToId(null);
 
       // Clear dependent data arrays
