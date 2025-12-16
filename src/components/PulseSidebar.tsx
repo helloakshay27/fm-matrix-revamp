@@ -46,7 +46,7 @@ const modulesByPackage = {
     {
       name: "Banners",
       icon: ImageIcon,
-      href: "/pulse/banners",
+      href: "/pulse/community-modules/banner-setup",
     },
     {
       name: "Stepathon",
@@ -76,7 +76,7 @@ const modulesByPackage = {
     {
       name: "Events",
       icon: Calendar,
-      href: "/pulse/events",
+      href: "/crm/events",
     },
     {
       name: "Curated Services",

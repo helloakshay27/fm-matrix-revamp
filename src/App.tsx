@@ -3445,6 +3445,35 @@ function App() {
 
                 {/* Settings Routes */}
 
+                  <Route
+                  path="/pulse"
+                  element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <div />
+                      </Layout>
+                    </ProtectedRoute>
+                  }
+                >
+                   <Route
+                    path="/pulse/community-modules/banner-setup"
+                    element={<BannerSetupDashboard />}
+                  />
+                  <Route
+                    path="/pulse/community-modules/banner-setup/:id"
+                    element={<BannerDetailsPage />}
+                  />
+                                    <Route path="/pulse/events" element={<CRMEventsPage />} />
+                  <Route path="/pulse/events/add" element={<AddEventPage />} />
+                  <Route
+                    path="/pulse/events/details/:id"
+                    element={<CRMEventDetailsPage />}
+                  />
+
+                  
+
+                </Route>
+
                 <Route
                   path="/settings"
                   element={
