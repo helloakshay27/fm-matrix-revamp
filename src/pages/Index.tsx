@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePermissions } from "@/contexts/PermissionsContext";
 import { findFirstAccessibleRoute } from "@/utils/dynamicNavigation";
 
@@ -22,9 +22,13 @@ const Index = () => {
 
     // Fallback logic if no specific route found or no user role
     const hostname = window.location.hostname;
-    const isViSite = hostname.includes('vi-web.gophygital.work');
+    const isViSite = hostname.includes("vi-web.gophygital.work");
     const userType = localStorage.getItem("userType");
-    const isLocalhost = hostname.includes('localhost') || hostname.includes('lockated.gophygital.work');
+    const isLocalhost =
+      hostname.includes("localhost") ||
+      hostname.includes("lockated.gophygital.work");
+    const isPulseSite =
+      hostname.includes("pulse.lockated.com") || hostname.includes("localhost");
 
     if (userType && isLocalhost) {
       // Navigate based on userType
@@ -36,9 +40,11 @@ const Index = () => {
     }
 
     if (isViSite) {
-      navigate('/safety/m-safe/internal', { replace: true });
+      navigate("/safety/m-safe/internal", { replace: true });
+    } else if (isPulseSite) {
+      navigate("/maintenance/ticket", { replace: true });
     } else {
-      navigate('/maintenance/asset', { replace: true });
+      navigate("/maintenance/asset", { replace: true });
     }
   }, [navigate, userRole, loading]);
 
