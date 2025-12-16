@@ -63,6 +63,7 @@ export interface OccupantUser {
   appDownloaded: string;
   lockUserId?: string | null;
   entity?: string;
+  departmentName?: string;
 }
 
 interface Pagination {
@@ -130,23 +131,23 @@ export const fetchOccupantUsers = createAsyncThunk(
     const transformedUsers: OccupantUser[] = response.data.occupant_users.map(
       (user) => ({
         id: user.id,
-        company: user.vendor_name ,
+        company: user.vendor_name,
         name: `${user.firstname} ${user.lastname}`,
         mobile: `${user.mobile}`,
         email: user.email,
         gender: user.gender,
-        department: user.unit_name ,
+        department: user.unit_name,
         status: user.lock_user_permission.status,
         employeeId: user.lock_user_permission?.employee_id,
         accessLevel: user.lock_user_permission?.access_level,
         role: user.role_name,
         createdBy: user.created_by_name,
-        type: user.user_type === "pms_occupant_admin" ? "Admin" : "Member",
-        active: user.department?.active ? "Yes" : "No",
+        active: user.active ? "Yes" : "No",
         faceRecognition: user.face_added ? "Yes" : "No",
         appDownloaded: user.app_downloaded,
         lockUserId: user.lock_user_permission.id ?? null,
-        entity: user.entity_name
+        entity: user.entity_name,
+        departmentName: user.department?.department_name
       })
     );
 

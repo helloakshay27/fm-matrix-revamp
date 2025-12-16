@@ -35,6 +35,10 @@ export interface FMUser {
   lock_user_permission_status?: string;
   face_added?: boolean;
   app_downloaded?: string;
+  department?: {
+    id: number;
+    department_name: string;
+  };
 }
 
 export interface FMUserResponse {

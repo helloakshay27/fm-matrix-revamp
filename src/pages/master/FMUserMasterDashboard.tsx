@@ -47,6 +47,7 @@ interface TransformedFMUser {
   appDownloaded: boolean;
   active: boolean;
   lockUserId: string | null;
+  department: string;
 }
 
 interface PaginationState {
@@ -99,6 +100,7 @@ const transformFMUserData = (apiUser: FMUser): TransformedFMUser => ({
   appDownloaded: apiUser.app_downloaded === "Yes",
   active: apiUser.lock_user_permission?.active ?? false,
   lockUserId: apiUser.lock_user_permission?.id ?? null,
+  department: apiUser.department?.department_name ?? "",
 });
 
 const columns: ColumnConfig[] = [
@@ -120,6 +122,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     draggable: true,
   },
+  { key: "department", label: "Department", sortable: true, draggable: true },
   { key: "unit", label: "Unit", sortable: true, draggable: true },
   { key: "role", label: "Role", sortable: true, draggable: true },
   {
