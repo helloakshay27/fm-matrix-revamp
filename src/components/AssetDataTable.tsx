@@ -767,7 +767,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         loading={loading}
         rowClassName={getRowClassName}
         isRowDisabled={isRowDisabled}
-        key={`asset-table-${availableCustomFields.length}`} // Force re-render when custom fields change
+        key={`asset-table-${availableCustomFields.map(f => f.key).join('-')}`} // Force re-render when custom fields change
         leftActions={
           shouldShow("assets", "add") ? (
             <Button size="sm" className="mr-2" onClick={handleActionClick}>
