@@ -830,7 +830,6 @@ import EmployeeBookingList from "./pages/EmployeeBookingList";
 import { EmployeeAddBookingPage } from "./pages/EmployeeAddBookingPage";
 import { EmployeeFnb } from "./pages/EmployeeFnb";
 import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
-import { VisitorFormPageEmployee } from "./pages/VisitorFormPageEmployee";
 import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
 import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
 // import RouteLogger from "./components/RouteLogger";
@@ -2443,11 +2442,11 @@ function App() {
                     element={<ProjectTasksPage />}
                   />
                   <Route
-                    //   path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
-                    //   element={<ProjectTaskDetailsPage />}
-                    // />
-                    //   <Route
                     path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
+                    element={<ProjectTaskDetails />}
+                  />
+                  <Route
+                    path="/vas/tasks/:taskId"
                     element={<ProjectTaskDetails />}
                   />
                   <Route
@@ -2707,7 +2706,7 @@ function App() {
                     path="/security/visitor/add"
                     element={<VisitorFormPage />}
                   />
-                   <Route
+                  <Route
                     path="/security/visitor/employee/add"
                     element={<VisitorFormPageEmployeeNew />}
                   />
@@ -2719,7 +2718,7 @@ function App() {
                     path="/security/visitor/details/:id"
                     element={<VisitorDetailsPage />}
                   />
-                   <Route
+                  <Route
                     path="/security/visitor/employee/details/:id"
                     element={<VisitorDetailsPageEmployee />}
                   />

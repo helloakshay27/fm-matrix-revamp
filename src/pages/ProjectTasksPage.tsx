@@ -13,6 +13,8 @@ import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
 import TaskManagementKanban from "@/components/TaskManagementKanban";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { TransitionProps } from "@mui/material/transitions";
+import { fetchStatuses } from "@/store/slices/statusesSlice";
+import { fetchProjectStatuses } from "@/store/slices/projectStatusSlice";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -74,6 +76,13 @@ const columns: ColumnConfig[] = [
     {
         key: "duration",
         label: "Duration",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "efforts_duration",
+        label: "Efforts Duration",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -221,6 +230,7 @@ const ProjectTasksPage = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [openStatusOptions, setOpenStatusOptions] = useState(false)
     const [selectedFilterOption, setSelectedFilterOption] = useState("all")
+    const [statuses, setStatuses] = useState([])
     const [isMyTasks, setIsMyTasks] = useState(() => {
         return localStorage.getItem('myTasks') === 'true'
     });
@@ -233,6 +243,19 @@ const ProjectTasksPage = () => {
         total_count: 0,
     })
     const [loading, setLoading] = useState(false)
+
+    const getStatuses = async () => {
+        try {
+            const response = await dispatch(fetchProjectStatuses()).unwrap();
+            setStatuses(response)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    useEffect(() => {
+        getStatuses()
+    }, [])
 
     const fetchData = async (page: number = 1) => {
         try {
@@ -516,6 +539,7 @@ const ProjectTasksPage = () => {
                 ...(id && { project_management_id: id }),
                 ...(mid && { milestone_id: mid }),
                 task_allocation_times_attributes: allocation,
+                estimated_hour: 8 * allocation.length,
             }
         }
         try {
@@ -532,13 +556,21 @@ const ProjectTasksPage = () => {
         }
     };
 
+    const handleView = (id) => {
+        if (location.pathname.startsWith("/vas/tasks")) {
+            navigate(`/vas/tasks/${id}`);
+        } else {
+            navigate(`/vas/projects/${id}/milestones/${mid}/tasks/${id}`)
+        }
+    }
+
     const renderActions = (item: any) => (
         <div className="flex items-center justify-center gap-2">
             <Button
                 size="sm"
                 variant="ghost"
                 className="p-1"
-                onClick={() => navigate(`/vas/projects/${id}/milestones/${mid}/tasks/${item.id}`)}
+                onClick={() => handleView(item.id)}
                 title="View Task Details"
             >
                 <Eye className="w-4 h-4" />
@@ -549,6 +581,16 @@ const ProjectTasksPage = () => {
     const handleStatusChange = async (id: number, status: string) => {
         try {
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status } })).unwrap();
+            fetchData();
+            toast.success("Task status changed successfully");
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const handleWorkflowStatusChange = async (id: number, status: string) => {
+        try {
+            await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { project_status_id: status } })).unwrap();
             fetchData();
             toast.success("Task status changed successfully");
         } catch (error) {
@@ -603,9 +645,9 @@ const ProjectTasksPage = () => {
                     sx={{ width: 128 }} // same as w-32
                 >
                     <Select
-                        value={item.status}
+                        value={item.project_status_id ?? "1"}
                         onChange={(e) =>
-                            handleStatusChange(item.id, e.target.value as string)
+                            handleWorkflowStatusChange(item.id, e.target.value as string)
                         }
                         disableUnderline
                         sx={{
@@ -616,9 +658,9 @@ const ProjectTasksPage = () => {
                             },
                         }}
                     >
-                        {statusOptions.map((opt) => (
-                            <MenuItem key={opt.value} value={opt.value}>
-                                {opt.label}
+                        {statuses.map((opt) => (
+                            <MenuItem key={opt.id} value={opt.id}>
+                                {opt.status}
                             </MenuItem>
                         ))}
                     </Select>
@@ -656,6 +698,9 @@ const ProjectTasksPage = () => {
             }
             case "duration": {
                 return <CountdownTimer startDate={item.expected_start_date} targetDate={item.target_date} />;
+            }
+            case "efforts_duration": {
+                return `${item.estimated_hour || 0} hours`
             }
             case "priority": {
                 return item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-";
@@ -1003,6 +1048,45 @@ const ProjectTasksPage = () => {
         );
     }
 
+    // Render subtasks as collapsible child rows
+    const renderChildrenRows = (children: any[], parentId: string) => {
+        return (
+            <>
+                {children.map((subtask, idx) => (
+                    <tr
+                        key={`${parentId}-subtask-${idx}`}
+                        className="bg-blue-50 hover:bg-blue-100 border-b border-gray-200"
+                    >
+                        {/* Collapse column (empty for subtasks) */}
+                        <td className="p-4 text-center w-12 min-w-12"></td>
+
+                        {/* Indented actions cell */}
+                        <td className="p-4 text-center w-16 min-w-16">
+                            <div className="flex justify-center items-center gap-2 ml-4">
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="p-1"
+                                    onClick={() => handleView(subtask.id)}
+                                    title="View Subtask Details"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </td>
+
+                        {/* Subtask data in same columns */}
+                        {columns.map((column) => (
+                            <td key={`${parentId}-subtask-${idx}-${column.key}`} className="p-4 text-left min-w-32">
+                                {renderCell(subtask, column.key)}
+                            </td>
+                        ))}
+                    </tr>
+                ))}
+            </>
+        );
+    };
+
     return (
         <div className="p-6">
             <EnhancedTable
@@ -1022,6 +1106,9 @@ const ProjectTasksPage = () => {
                 }}
                 renderEditableCell={renderEditableCell}
                 newRowPlaceholder="Click to add new task"
+                collapsible={true}
+                getChildrenKey={() => "sub_tasks_managements"}
+                renderChildrenRows={renderChildrenRows}
             />
 
             <Dialog
