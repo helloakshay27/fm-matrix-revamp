@@ -362,14 +362,15 @@ export const AssetDashboard = () => {
         'warranty', 'amc'
       ]);
       if (coreKeysToSkip.has(field.key)) return acc;
+      const sanitizedKey = field.key.replace(/\s+/g, '_');
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
-        acc[`custom_${field.key}`] =
+        acc[`custom_${sanitizedKey}`] =
           customFieldObj.field_value !== null && customFieldObj.field_value !== undefined
             ? customFieldObj.field_value
             : '';
       } else {
-        acc[`custom_${field.key}`] = asset[field.key] || '';
+        acc[`custom_${sanitizedKey}`] = asset[field.key] || '';
       }
       return acc;
     }, {} as Record<string, any>),
@@ -427,14 +428,15 @@ export const AssetDashboard = () => {
         'warranty', 'amc'
       ]);
       if (coreKeysToSkip.has(field.key)) return acc;
+      const sanitizedKey = field.key.replace(/\s+/g, '_');
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
-        acc[`custom_${field.key}`] =
+        acc[`custom_${sanitizedKey}`] =
           customFieldObj.field_value !== null && customFieldObj.field_value !== undefined
             ? customFieldObj.field_value
             : '';
       } else {
-        acc[`custom_${field.key}`] = asset[field.key] || '';
+        acc[`custom_${sanitizedKey}`] = asset[field.key] || '';
       }
       return acc;
     }, {} as Record<string, any>),
