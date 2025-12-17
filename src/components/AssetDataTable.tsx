@@ -114,18 +114,44 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       const currentVisibility = columnVisibility || visibleColumns;
 
       // Transform keys:
-      const visibleColumnKeys = Object.keys(currentVisibility)
-        .filter((key) => currentVisibility[key] === true)
+      const customKeyToFieldMap = new Map();
+      availableCustomFields.forEach(field => {
+        const colKey = `custom_${field.key.replace(/\s+/g, '_')}`;
+        customKeyToFieldMap.set(colKey, field.key);
+      });
+
+      console.log("Custom Field Map:", Object.fromEntries(customKeyToFieldMap));
+      console.log("Visible Keys before processing:", Object.keys(currentVisibility).filter(k => currentVisibility[k]));
+
+      // Transform keys:
+      // 1. Get all currently defined column keys from the `columns` prop
+      const definedColumnKeys = new Set(columns.map(col => col.key));
+
+      // 2. Intersect currentVisibility with definedColumnKeys to ensure we only export valid, existing columns
+      const validVisibleKeys = Object.keys(currentVisibility).filter(key =>
+        currentVisibility[key] === true && definedColumnKeys.has(key)
+      );
+
+      // Transform keys:
+      const visibleColumnKeys = validVisibleKeys
         // remove "actions"
         .filter((key) => key !== "actions")
         // convert camelCase → snake_case
         .map((key) => {
-          const snakeCaseKey = key
+          // Check if it's a custom field column
+          if (key.startsWith("custom_")) {
+            // Use the lookup map
+            if (customKeyToFieldMap.has(key)) {
+              return customKeyToFieldMap.get(key);
+            }
+            // Fallback: This is likely where 'PO_Number' comes from if lookup fails
+            return key.replace("custom_", "");
+          }
+
+          // Standard fields: convert camelCase to snake_case
+          return key
             .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
             .toLowerCase();
-          return snakeCaseKey.startsWith("custom_")
-            ? snakeCaseKey.replace("custom_", "")
-            : snakeCaseKey;
         });
 
       // ✅ Pass as a JSON string in the `fields` query parameter
