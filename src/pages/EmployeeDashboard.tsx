@@ -53,6 +53,7 @@ export const EmployeeDashboard: React.FC = () => {
   const [recentFnBOrders, setRecentFnBOrders] = useState<any[]>([]);
   const [recentTasks, setRecentTasks] = useState<any[]>([]);
   const [recentTodos, setRecentTodos] = useState<any[]>([]);
+  const [recentSeatBookings, setRecentSeatBookings] = useState<any[]>([]);
 
   // Get user data from localStorage
   const userId = localStorage.getItem("userId") || "87989";
@@ -255,6 +256,48 @@ export const EmployeeDashboard: React.FC = () => {
     fetchRecentTodos();
   }, [userData.userId, token, baseUrl, visibleWidgets]);
 
+  // Fetch recent seat bookings from API
+  useEffect(() => {
+    const fetchRecentSeatBookings = async () => {
+      if (!visibleWidgets.includes("seats")) return;
+
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `${baseUrl}${API_CONFIG.ENDPOINTS.SEAT_BOOKINGS}?q[user_id_eq]=${userData.userId}&page=1&per_page=3&access_token=${token}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch seat bookings");
+        }
+
+        const data = await response.json();
+
+        // Map API data to our seat booking format
+        const mappedBookings = (data.seat_bookings || []).map(
+          (booking: any) => ({
+            id: booking.id,
+            seat: booking.category,
+            floor: `${booking.building}, ${booking.floor}`,
+            date: booking.booking_date,
+            status: booking.status,
+            slots: booking.slots,
+            booking_day: booking.booking_day,
+          })
+        );
+
+        setRecentSeatBookings(mappedBookings);
+      } catch (error) {
+        console.error("Error fetching seat bookings:", error);
+        toast.error("Failed to load seat bookings");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecentSeatBookings();
+  }, [userData.userId, token, baseUrl, visibleWidgets]);
+
   // Helper function to format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -306,7 +349,7 @@ export const EmployeeDashboard: React.FC = () => {
     bookings: [],
     documents: [],
     visitors: [],
-    seats: [],
+    seats: recentSeatBookings,
   };
 
   const getStatusColor = (status: string) => {
@@ -328,6 +371,9 @@ export const EmployeeDashboard: React.FC = () => {
         return "text-green-600 bg-green-50";
       case "approved":
         return "text-green-600 bg-green-50";
+      case "cancelled":
+      case "canceled":
+        return "text-red-600 bg-red-50";
       default:
         return "text-gray-600 bg-gray-50";
     }
@@ -388,7 +434,7 @@ export const EmployeeDashboard: React.FC = () => {
               mockData.tickets.map((ticket) => (
                 <div
                   key={ticket.id}
-                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100"
+                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer border border-gray-100"
                   onClick={() => navigate(`/tickets/details/${ticket.id}`)}
                 >
                   <div className="flex items-start justify-between mb-2">
@@ -432,7 +478,8 @@ export const EmployeeDashboard: React.FC = () => {
               mockData.tasks.map((task) => (
                 <div
                   key={task.id}
-                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100"
+                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer border border-gray-100"
+                  onClick={() => navigate(`/vas/tasks/${task.id}`)}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <p className="font-medium text-gray-900 text-sm flex-1">
@@ -487,7 +534,8 @@ export const EmployeeDashboard: React.FC = () => {
               mockData.todos.map((todo) => (
                 <div
                   key={todo.id}
-                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100"
+                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer border border-gray-100"
+                  onClick={() => navigate("/vas/todo")}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <p className="font-medium text-gray-900 text-sm flex-1">
@@ -523,7 +571,7 @@ export const EmployeeDashboard: React.FC = () => {
               mockData.bookings.map((booking) => (
                 <div
                   key={booking.id}
-                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100"
+                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer border border-gray-100"
                 >
                   <p className="font-medium text-gray-900 text-sm mb-2">
                     {booking.title}
@@ -550,7 +598,7 @@ export const EmployeeDashboard: React.FC = () => {
               mockData.documents.map((doc) => (
                 <div
                   key={doc.id}
-                  className="flex items-center gap-3 p-4 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100"
+                  className="flex items-center gap-3 p-4 bg-gray-50 rounded-md hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer border border-gray-100"
                   onClick={() => navigate("/vas/documents")}
                 >
                   <FileText className="w-8 h-8 text-gray-400 flex-shrink-0" />
@@ -576,8 +624,10 @@ export const EmployeeDashboard: React.FC = () => {
               mockData.visitors.map((visitor) => (
                 <div
                   key={visitor.id}
-                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100"
-                  onClick={() => navigate("/security/visitor/employee")}
+                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer border border-gray-100"
+                  onClick={() =>
+                    navigate(`/security/visitor/employee/details/${visitor.id}`)
+                  }
                 >
                   <p className="font-medium text-gray-900 text-sm mb-1">
                     {visitor.name}
@@ -598,24 +648,42 @@ export const EmployeeDashboard: React.FC = () => {
                 </div>
               ))}
 
-            {widgetId === "seats" && mockData.seats.length === 0 && (
-              <div className="text-center py-8 text-gray-500 text-sm">
-                No seat bookings found
+            {widgetId === "seats" && isLoading && (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mb-2"></div>
+                <p className="text-gray-500 text-sm">
+                  Loading seat bookings...
+                </p>
               </div>
             )}
             {widgetId === "seats" &&
+              !isLoading &&
+              mockData.seats.length === 0 && (
+                <div className="text-center py-8 text-gray-500 text-sm">
+                  No seat bookings found
+                </div>
+              )}
+            {widgetId === "seats" &&
+              !isLoading &&
               mockData.seats.map((seat) => (
                 <div
                   key={seat.id}
-                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100"
+                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer border border-gray-100"
                   onClick={() => navigate("/vas/space-management/bookings")}
                 >
                   <p className="font-medium text-gray-900 text-sm mb-1">
                     {seat.seat}
                   </p>
                   <p className="text-xs text-gray-600 mb-2">{seat.floor}</p>
+                  {seat.slots && (
+                    <p className="text-xs text-gray-500 mb-2">{seat.slots}</p>
+                  )}
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-600">{seat.date}</span>
+                    <span className="text-gray-600">
+                      {seat.booking_day
+                        ? `${seat.booking_day}, ${seat.date}`
+                        : seat.date}
+                    </span>
                     <span
                       className={`px-2 py-1 rounded ${getStatusColor(
                         seat.status
@@ -643,7 +711,7 @@ export const EmployeeDashboard: React.FC = () => {
               mockData.fnb.map((order) => (
                 <div
                   key={order.id}
-                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors cursor-pointer border border-gray-100"
+                  className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer border border-gray-100"
                   onClick={() => navigate(`/vas/restaurants`)}
                 >
                   <div className="flex items-start justify-between mb-2">

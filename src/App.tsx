@@ -839,6 +839,7 @@ import ProfileDetailsPage from "./pages/ProfileDetailsPage";
 import PlaceFnbOrder from "./pages/PlaceFnbOrder";
 import { SpaceManagementBookingsDashboardEmployee } from "./pages/SpaceManagementBookingsDashboardEmployee";
 import { SpaceManagementBookingDetailsPage } from "./pages/SpaceManagementBookingDetailsPage";
+import EmployeeWallet from "./pages/EmployeeWallet";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1222,6 +1223,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <ProfileDetailsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/employee-wallet"
+                    element={
+                      <ProtectedRoute>
+                        <EmployeeWallet />
                       </ProtectedRoute>
                     }
                   />

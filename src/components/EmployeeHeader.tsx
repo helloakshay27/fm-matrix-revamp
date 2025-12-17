@@ -18,6 +18,7 @@ import {
   MessageSquare,
   Calendar1,
   Car,
+  Wallet,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -40,6 +41,8 @@ import { getUser, clearAuth } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { permissionService } from "@/services/permissionService";
 import { Calendar } from "./ui/calendar";
+import axios from "axios";
+import { toast } from "sonner";
 
 // Employee modules/packages
 const employeeModules = [
@@ -60,12 +63,49 @@ const employeeModules = [
 ];
 
 export const EmployeeHeader: React.FC = () => {
+  const baseUrl = localStorage.getItem("baseUrl") || "";
+  const token = localStorage.getItem("token") || "";
+  const id = JSON.parse(localStorage.getItem("user") || "{}").id || "";
+
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isModuleMenuOpen, setIsModuleMenuOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
   const [userRoleName, setUserRoleName] = useState<string | null>(null);
+  const [availableBalance, setAvailableBalance] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchWalleteDetails = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/wallet/balance.json?user_id=${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log(response.data);
+      setAvailableBalance(response.data.available_amount);
+    } catch (error: any) {
+      console.log(error);
+      if (error.response?.data?.message === "Wallet not found") {
+        console.log(error);
+      } else {
+        toast.error("Failed to load wallet details");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id && baseUrl && token) {
+      fetchWalleteDetails();
+    }
+  }, [id, baseUrl, token]);
 
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const { selectedSite } = useSelector((state: RootState) => state.site);
@@ -255,7 +295,8 @@ export const EmployeeHeader: React.FC = () => {
 
   const isLocalhost =
     hostname.includes("localhost") ||
-    hostname.includes("lockated.gophygital.work");
+    hostname.includes("lockated.gophygital.work") ||
+    hostname.includes("fm-matrix.lockated.com");
   return (
     <header className="fixed top-0 left-0 right-0 h-14 sm:h-16 bg-white border-b border-gray-200 z-[100] shadow-sm">
       <div className="flex items-center justify-between h-full px-2 sm:px-4 lg:px-6 max-w-[1920px] mx-auto">
@@ -492,6 +533,12 @@ export const EmployeeHeader: React.FC = () => {
 
         {/* Right Section - Actions */}
         <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
+          <button
+            className="flex items-center gap-2"
+            onClick={() => navigate("/employee-wallet")}
+          >
+            <Wallet /> ₹ {availableBalance.toFixed(2)}
+          </button>
           <button
             className="p-1.5 sm:p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors"
             onClick={() => {

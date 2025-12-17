@@ -92,7 +92,8 @@ export const Header = () => {
 
   const isLocalhost =
     hostname.includes("localhost") ||
-    hostname.includes("lockated.gophygital.work");
+    hostname.includes("lockated.gophygital.work") ||
+    hostname.includes("fm-matrix.lockated.com");
   const navigate = useNavigate();
   const [notificationCount, setNotificationCount] = useState(3);
 
