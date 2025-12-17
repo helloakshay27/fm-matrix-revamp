@@ -462,8 +462,19 @@ export const OccupantUserMasterDashboard = () => {
         throw new Error("Failed to update user status");
       }
 
-      // Update local state
+      // Update both local states for immediate UI update
       setOccupantUser((prevUsers: any[]) =>
+        prevUsers.map((user) =>
+          user.id === selectedUser.id
+            ? {
+              ...user,
+              status: selectedStatus,
+            }
+            : user
+        )
+      );
+
+      setOccupantUsersState((prevUsers: any[]) =>
         prevUsers.map((user) =>
           user.id === selectedUser.id
             ? {
@@ -490,7 +501,7 @@ export const OccupantUserMasterDashboard = () => {
       case "active":
         return (
           <Switch
-            checked={user.active === "Yes" || user.active === true || user.active === "true"}
+            checked={user.active}
             onCheckedChange={(checked) =>
               handleToggleUserStatus(user.lockUserId ?? "", checked)
             }
