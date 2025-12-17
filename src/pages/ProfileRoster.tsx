@@ -419,7 +419,8 @@ const ProfileRoster = ({ rosterId }) => {
                         <div>
                             <label className="text-sm font-medium text-gray-700 block mb-2">Status</label>
                             <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${rosterTemplate.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {rosterTemplate.active ? 'Active' : 'Inactive'}
+                                {/* {rosterTemplate.active ? 'Active' : 'Inactive'} */}
+                                Active
                             </span>
                         </div>
                     </div>
