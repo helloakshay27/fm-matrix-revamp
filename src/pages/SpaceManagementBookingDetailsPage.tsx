@@ -249,6 +249,8 @@ export const SpaceManagementBookingDetailsPage = () => {
               )}
             </Card>
 
+            
+
             {/* Employee Information Section */}
             <Card className="shadow-sm bg-white" style={{ border: '1px solid #E5E7EB' }}>
               <CardHeader 
