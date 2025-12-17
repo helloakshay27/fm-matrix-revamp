@@ -309,9 +309,9 @@ export const EditBookingSetupPage = () => {
                     id: blocking.facility_blocking?.id || blocking.id,
                     startDate: blocking.facility_blocking?.ondate || "",
                     endDate: "",
-                    dayType: "entireDay",
+                    dayType: blocking.facility_blocking?.block_slot && blocking.facility_blocking?.block_slot.length > 0 ? "selectedSlots" : "entireDay",
                     blockReason: blocking.facility_blocking?.reason || "",
-                    selectedSlots: [],
+                    selectedSlots: blocking.facility_blocking?.block_slot?.map((slotId: string) => parseInt(slotId)) || [],
                 })) || [
                         {
                             id: undefined,
@@ -319,8 +319,36 @@ export const EditBookingSetupPage = () => {
                             endDate: "",
                             dayType: "entireDay",
                             blockReason: "",
+                            selectedSlots: [],
                         },
                     ],
+            });
+            
+            console.log('=== Block Days Loaded ===');
+            console.log('Raw facility_blockings:', responseData?.facility_blockings);
+            console.log('Mapped blockDays:', responseData?.facility_blockings?.map((blocking: any) => ({
+                id: blocking.facility_blocking?.id,
+                date: blocking.facility_blocking?.ondate,
+                dayType: blocking.facility_blocking?.block_slot && blocking.facility_blocking?.block_slot.length > 0 ? "selectedSlots" : "entireDay",
+                block_slot_raw: blocking.facility_blocking?.block_slot,
+                selectedSlots_parsed: blocking.facility_blocking?.block_slot?.map((slotId: string) => parseInt(slotId)),
+            })));
+            
+            // Fetch slots for all block days that have dates (so slots can be displayed)
+            responseData?.facility_blockings?.forEach((blocking: any, index: number) => {
+                const ondate = blocking.facility_blocking?.ondate;
+                const blockSlot = blocking.facility_blocking?.block_slot;
+                const dayType = blockSlot && blockSlot.length > 0 ? "selectedSlots" : "entireDay";
+                
+                // Only fetch slots if it's a selectedSlots type (or if we want to show available slots for potential editing)
+                if (ondate && dayType === "selectedSlots") {
+                    console.log(`Fetching slots for block day ${index}:`, { 
+                        date: ondate, 
+                        blockSlotIds: blockSlot,
+                        willPreselect: blockSlot?.map((slotId: string) => parseInt(slotId))
+                    });
+                    fetchBlockDaySlots(id!, ondate, index);
+                }
             });
             const transformedRules = responseData.cancellation_rules?.map((rule) => ({
                 description: rule.description,
@@ -397,7 +425,7 @@ export const EditBookingSetupPage = () => {
         try {
             const formattedDate = date.replace(/-/g, '/');
             const response = await axios.get(
-                `https://${baseUrl}/pms/admin/facility_setups/${facilityId}/get_schedules.json`,
+                `https://${baseUrl}/pms/admin/facility_setups/${facilityId}/all_schedules_for_facility_setup.json`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -410,6 +438,8 @@ export const EditBookingSetupPage = () => {
             );
 
             if (response.data && response.data.slots) {
+                console.log(`Slots fetched for block day ${blockIndex}:`, response.data.slots);
+                console.log(`Sample slot IDs:`, response.data.slots.slice(0, 3).map((s: any) => ({ id: s.id, type: typeof s.id, ampm: s.ampm })));
                 setBlockDaySlots(prev => ({
                     ...prev,
                     [blockIndex]: response.data.slots
@@ -590,7 +620,16 @@ export const EditBookingSetupPage = () => {
             );
 
             // Block Days - Handle multiple block day records
+            console.log('=== Preparing Block Days Payload ===');
             formData.blockDays.forEach((blockDay, index) => {
+                console.log(`Block day ${index}:`, {
+                    id: blockDay.id,
+                    startDate: blockDay.startDate,
+                    dayType: blockDay.dayType,
+                    selectedSlots: blockDay.selectedSlots,
+                    selectedSlotsCount: blockDay.selectedSlots?.length || 0
+                });
+                
                 // Include ID only if it exists (existing block day from API)
                 if (blockDay.id) {
                     console.log(`Block day ${index} has ID: ${blockDay.id} - will update existing record`);
@@ -618,12 +657,18 @@ export const EditBookingSetupPage = () => {
 
                 // Add selected slots if dayType is selectedSlots
                 if (blockDay.dayType === "selectedSlots" && blockDay.selectedSlots && blockDay.selectedSlots.length > 0) {
+                    console.log(`Adding ${blockDay.selectedSlots.length} slot IDs to payload for block day ${index}:`, blockDay.selectedSlots);
                     blockDay.selectedSlots.forEach((slotId: number) => {
+                        console.log(`  Adding slot ID: ${slotId} (type: ${typeof slotId})`);
                         formDataToSend.append(
                             `facility_setup[facility_blockings_attributes][${index}][block_slot][]`,
                             slotId.toString()
                         );
                     });
+                } else if (blockDay.dayType === "selectedSlots") {
+                    console.log(`Block day ${index} is selectedSlots type but no slots selected`);
+                } else {
+                    console.log(`Block day ${index} is entireDay type - no slots to add`);
                 }
 
                 // Default values for facility blockings
@@ -1711,7 +1756,7 @@ export const EditBookingSetupPage = () => {
                                 <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                     <CalendarDays className="w-4 h-4" />
                                 </div>
-                                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days</h3>
+                                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days </h3>
                             </div>
                             <Button
                                 onClick={addBlockDay}
@@ -1811,34 +1856,43 @@ export const EditBookingSetupPage = () => {
                                                 <h4 className="text-sm font-medium text-gray-700 mb-3">Select Slots</h4>
                                                 {blockDaySlots[blockIndex]?.length > 0 ? (
                                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                                        {blockDaySlots[blockIndex].map((slot) => (
-                                                            <div key={slot.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    id={`slot-${blockIndex}-${slot.id}`}
-                                                                    checked={blockDay.selectedSlots?.includes(slot.id) || false}
-                                                                    onChange={(e) => {
-                                                                        const newBlockDays = [...formData.blockDays];
-                                                                        if ((e.target as HTMLInputElement).checked) {
-                                                                            newBlockDays[blockIndex].selectedSlots = [...(blockDay.selectedSlots || []), slot.id];
-                                                                        } else {
-                                                                            newBlockDays[blockIndex].selectedSlots = (blockDay.selectedSlots || []).filter((id: number) => id !== slot.id);
-                                                                        }
-                                                                        setFormData({
-                                                                            ...formData,
-                                                                            blockDays: newBlockDays,
-                                                                        });
-                                                                    }}
-                                                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                                                />
-                                                                <label
-                                                                    htmlFor={`slot-${blockIndex}-${slot.id}`}
-                                                                    className="cursor-pointer text-sm font-medium"
-                                                                >
-                                                                    {slot.ampm}
-                                                                </label>
-                                                            </div>
-                                                        ))}
+                                                        {blockDaySlots[blockIndex].map((slot) => {
+                                                            const isChecked = blockDay.selectedSlots?.includes(slot.id) || false;
+                                                            console.log(`Block ${blockIndex} - Slot ${slot.id} (${slot.ampm}):`, {
+                                                                slotId: slot.id,
+                                                                slotIdType: typeof slot.id,
+                                                                selectedSlots: blockDay.selectedSlots,
+                                                                isChecked: isChecked
+                                                            });
+                                                            return (
+                                                                <div key={slot.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        id={`slot-${blockIndex}-${slot.id}`}
+                                                                        checked={isChecked}
+                                                                        onChange={(e) => {
+                                                                            const newBlockDays = [...formData.blockDays];
+                                                                            if ((e.target as HTMLInputElement).checked) {
+                                                                                newBlockDays[blockIndex].selectedSlots = [...(blockDay.selectedSlots || []), slot.id];
+                                                                            } else {
+                                                                                newBlockDays[blockIndex].selectedSlots = (blockDay.selectedSlots || []).filter((id: number) => id !== slot.id);
+                                                                            }
+                                                                            setFormData({
+                                                                                ...formData,
+                                                                                blockDays: newBlockDays,
+                                                                            });
+                                                                        }}
+                                                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                                    />
+                                                                    <label
+                                                                        htmlFor={`slot-${blockIndex}-${slot.id}`}
+                                                                        className="cursor-pointer text-sm font-medium"
+                                                                    >
+                                                                        {slot.ampm}
+                                                                    </label>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 ) : blockDay.startDate ? (
                                                     <p className="text-sm text-gray-500">No slots available for the selected date</p>

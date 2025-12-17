@@ -119,6 +119,7 @@ export const BookingSetupDetailPage = () => {
   const [isPremiumSlots, setIsPremiumSlots] = useState<{ [key: string]: boolean }>({});
   const [inventories, setInventories] = useState<any[]>([]);
   const [loadingInventories, setLoadingInventories] = useState(false);
+  const [blockDaySlots, setBlockDaySlots] = useState<{ [key: number]: any[] }>({});
   const [formData, setFormData] = useState({
     facilityName: "",
     isBookable: true,
@@ -163,12 +164,14 @@ export const BookingSetupDetailPage = () => {
       minimumPersonAllowed: "1",
       maximumPersonAllowed: "1",
     },
-    blockDays: {
-      startDate: "",
-      endDate: "",
-      dayType: "entireDay",
-      blockReason: "",
-    },
+    blockDays: [] as Array<{
+      id: number;
+      startDate: string;
+      endDate: string;
+      dayType: string;
+      blockReason: string;
+      selectedSlots: string[];
+    }>,
   });
   const [departments, setDepartments] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
@@ -222,6 +225,38 @@ export const BookingSetupDetailPage = () => {
 
   const handleAdditionalOpen = () => {
     setAdditionalOpen(!additionalOpen);
+  };
+
+  const fetchBlockDaySlots = async (facilityId: string, date: string, blockIndex: number) => {
+    try {
+      const formattedDate = date.replace(/-/g, '/');
+      const response = await axios.get(
+        `https://${baseUrl}/pms/admin/facility_setups/${facilityId}/get_schedules.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          params: {
+            on_date: formattedDate,
+          }
+        }
+      );
+
+      if (response.data && response.data.slots) {
+        console.log(`Slots fetched for block day ${blockIndex}:`, response.data.slots);
+        setBlockDaySlots(prev => ({
+          ...prev,
+          [blockIndex]: response.data.slots
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching block day slots:', error);
+      setBlockDaySlots(prev => ({
+        ...prev,
+        [blockIndex]: []
+      }));
+    }
   };
 
   const fetchDepartments = async () => {
@@ -287,10 +322,14 @@ export const BookingSetupDetailPage = () => {
   }
 
   const fetchFacilityBookingDetails = async () => {
+    console.log('🔍 fetchFacilityBookingDetails CALLED');
     try {
+      console.log('🚀 Fetching facility booking details...');
       const response = await dispatch(
         facilityBookingSetupDetails({ baseUrl, token, id })
       ).unwrap();
+      console.log('✅ API Response received:', response);
+      console.log('📦 facility_blockings from response:', response?.facility_blockings);
       setFormData({
         facilityName: response.fac_name,
         isBookable: response.fac_type === "bookable" ? true : false,
@@ -349,13 +388,41 @@ export const BookingSetupDetailPage = () => {
           minimumPersonAllowed: response.min_people,
           maximumPersonAllowed: response.max_people,
         },
-        blockDays: {
-          startDate: response?.facility_blockings[0]?.facility_blocking?.ondate,
+        blockDays: response?.facility_blockings?.map((blocking: any) => ({
+          id: blocking.facility_blocking?.id,
+          startDate: blocking.facility_blocking?.ondate || "",
           endDate: "",
-          dayType: "entireDay",
-          blockReason: response?.facility_blockings[0]?.facility_blocking?.reason,
-        },
+          dayType: blocking.facility_blocking?.block_slot && blocking.facility_blocking?.block_slot.length > 0 ? "selectedSlots" : "entireDay",
+          blockReason: blocking.facility_blocking?.reason || "",
+          selectedSlots: blocking.facility_blocking?.block_slot || [],
+        })) || [],
       });
+      
+      console.log('=== Block Days Debug ===');
+      console.log('Raw facility_blockings from API:', response?.facility_blockings);
+      console.log('Total facility_blockings count:', response?.facility_blockings?.length);
+      console.log('Mapped blockDays:', response?.facility_blockings?.map((blocking: any) => ({
+        id: blocking.facility_blocking?.id,
+        startDate: blocking.facility_blocking?.ondate,
+        dayType: blocking.facility_blocking?.block_slot && blocking.facility_blocking?.block_slot.length > 0 ? "selectedSlots" : "entireDay",
+        blockReason: blocking.facility_blocking?.reason,
+        selectedSlots: blocking.facility_blocking?.block_slot,
+      })));
+      console.log('======================');
+      
+      // Fetch slots for ALL block days (so we can display them in the UI)
+      response?.facility_blockings?.forEach((blocking: any, index: number) => {
+        const ondate = blocking.facility_blocking?.ondate;
+        
+        if (ondate) {
+          console.log(`Fetching slots for block day ${index}:`, { 
+            date: ondate, 
+            blockSlotIds: blocking.facility_blocking?.block_slot
+          });
+          fetchBlockDaySlots(id!, ondate, index);
+        }
+      });
+      
       const transformedRules = response.cancellation_rules?.map((rule: any) => ({
         description: rule.description,
         time: {
@@ -593,13 +660,13 @@ export const BookingSetupDetailPage = () => {
                   {formData.isBookable ? "Bookable" : formData.isRequest ? "Request" : "-"}
                 </span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Department</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.department ? departments.find(d => d.id === formData.department)?.department_name || "-" : "-"}
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -872,62 +939,90 @@ export const BookingSetupDetailPage = () => {
               <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Block Days</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TextField
-                label="Date"
-                type="date"
-                value={formData.blockDays.startDate}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-              {/* <TextField
-                label="End Date"
-                type="date"
-                value={formData.blockDays.endDate}
-                variant="outlined"
-                InputProps={{ readOnly: true }}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              /> */}
-            </div>
+            {formData.blockDays.length > 0 ? (
+              <div className="space-y-6">
+                {formData.blockDays.map((blockDay, index) => (
+                  <div key={blockDay.id || index} className="p-4 border rounded-lg space-y-4">
+                    <h4 className="text-sm font-semibold text-gray-700">Block Day {index + 1}</h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <TextField
+                        label="Date"
+                        type="date"
+                        value={blockDay.startDate}
+                        variant="outlined"
+                        InputProps={{ readOnly: true }}
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />
+                    </div>
 
-            <div className="flex gap-6 px-1">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="entireDay"
-                  name="dayType"
-                  checked={formData.blockDays.dayType === "entireDay"}
-                  disabled
-                  className="text-blue-600"
-                />
-                <label htmlFor="entireDay">Entire Day</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="selectedSlots"
-                  name="dayType"
-                  checked={formData.blockDays.dayType === "selectedSlots"}
-                  disabled
-                  className="text-blue-600"
-                />
-                <label htmlFor="selectedSlots">Selected Slots</label>
-              </div>
-            </div>
+                    <div className="flex gap-6 px-1">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id={`entireDay-${index}`}
+                          name={`dayType-${index}`}
+                          checked={blockDay.dayType === "entireDay"}
+                          disabled
+                          className="text-blue-600"
+                        />
+                        <label htmlFor={`entireDay-${index}`}>Entire Day</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id={`selectedSlots-${index}`}
+                          name={`dayType-${index}`}
+                          checked={blockDay.dayType === "selectedSlots"}
+                          disabled
+                          className="text-blue-600"
+                        />
+                        <label htmlFor={`selectedSlots-${index}`}>Selected Slots</label>
+                      </div>
+                    </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
-              <Textarea
-                value={formData.blockDays.blockReason}
-                className="min-h-[100px]"
-                readOnly
-              />
-            </div>
+                    {blockDay.dayType === "selectedSlots" && blockDay.selectedSlots.length > 0 && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">Blocked Slots</label>
+                        {blockDaySlots[index]?.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {blockDay.selectedSlots.map((slotId) => {
+                              const slot = blockDaySlots[index]?.find((s: any) => s.id.toString() === slotId);
+                              return (
+                                <div key={slotId} className="px-3 py-2 bg-blue-50 border border-blue-200 rounded text-sm font-medium text-blue-700">
+                                  {slot ? slot.ampm : `Slot ${slotId}`}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {blockDay.selectedSlots.map((slotId) => (
+                              <div key={slotId} className="px-3 py-2 bg-gray-100 rounded border border-gray-300 text-sm">
+                                Slot {slotId}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
+                      <Textarea
+                        value={blockDay.blockReason}
+                        className="min-h-[100px]"
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">No block days configured</p>
+            )}
           </div>
 
           {/* Configure Payment */}

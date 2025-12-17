@@ -90,6 +90,11 @@ export const AddFacilityBookingPage = () => {
   const [openTerms, setOpenTerms] = useState(false);
   const [complementaryReason, setComplementaryReason] = useState('');
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
+  const [numberOfGuests, setNumberOfGuests] = useState<number>(0);
+  const [bookingRuleData, setBookingRuleData] = useState<{
+    can_book: boolean;
+    rate: number;
+  } | null>(null);
   const [peopleTable, setPeopleTable] = useState<Array<{
     srNo: number;
     role: string;
@@ -292,6 +297,13 @@ export const AddFacilityBookingPage = () => {
             }
           });
           console.log('Booking Rule for User Response:', bookingRuleResponse.data);
+          
+          // Store booking rule data in state
+          if (bookingRuleResponse.data) {
+            setBookingRuleData(bookingRuleResponse.data);
+            console.log('Booking rule rate:', bookingRuleResponse.data.rate);
+          }
+          
           console.log('================================');
         } catch (amenityError: any) {
           console.error('Error fetching amenity booking by club plan:', amenityError);
@@ -619,7 +631,7 @@ export const AddFacilityBookingPage = () => {
         {/* Form Fields Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Client Dropdown - only for occupant users */}
-          {userType === 'occupant' && (
+          {/* {userType === 'occupant' && (
             <div className="space-y-2">
               <TextField
                 select
@@ -657,7 +669,7 @@ export const AddFacilityBookingPage = () => {
                 ))}
               </TextField>
             </div>
-          )}
+          )} */}
 
           {/* User Selection - occupant, fm, or guest users */}
           <div className="space-y-2">
@@ -988,7 +1000,7 @@ export const AddFacilityBookingPage = () => {
         )}
 
 
-        {/* People Table Section */}
+        {/* People Table Section
         {facilityDetails && peopleTable.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold mb-4">Invited User</h2>
@@ -1084,27 +1096,30 @@ export const AddFacilityBookingPage = () => {
               </table>
             </div>
           </div>
-         )} 
+         )}  */}
 
         {/* Cost Summary Section */}
-        {facilityDetails && peopleTable.length > 0 && peopleTable.some(row => row.role && row.user) && (
+        { selectedUser && userType === 'occupant' && facilityDetails && (
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Cost Summary</h2>
             <div className="space-y-3">
-              {/* Calculate costs based on roles */}
+              {/* Calculate costs based on initially selected user */}
               {(() => {
-                const staffMemberCount = peopleTable.filter(row => (row.role === 'staff' || row.role === 'member') && row.user).length;
-                const guestCount = peopleTable.filter(row => row.role === 'guest' && row.user).length;
-                
                 const adultMemberCharge = facilityDetails.facility_charge?.adult_member_charge || 0;
                 const adultGuestCharge = facilityDetails.facility_charge?.adult_guest_charge || 0;
                 const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge || 0;
                 
-                const staffMemberTotal = staffMemberCount * adultMemberCharge;
-                const guestTotal = guestCount * adultGuestCharge;
-                const slotTotal = selectedSlots.length * perSlotCharge;
+                // Use booking rule rate for members if available, otherwise use facility charge
+                const memberRate = bookingRuleData?.rate || adultMemberCharge;
                 
-                const subtotalBeforeDiscount = staffMemberTotal + guestTotal + slotTotal;
+                // Determine user charge based on user type
+                const userCharge = (userType === 'fm' || userType === 'occupant') ? memberRate : adultGuestCharge;
+                const userChargeLabel = (userType === 'fm' || userType === 'occupant') ? 'Member Charge' : 'Guest Charge';
+                
+                const slotTotal = selectedSlots.length * perSlotCharge;
+                const guestChargeTotal = numberOfGuests * adultGuestCharge;
+                
+                const subtotalBeforeDiscount = userCharge + guestChargeTotal + slotTotal;
                 const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
                 const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
                 
@@ -1117,27 +1132,49 @@ export const AddFacilityBookingPage = () => {
 
                 return (
                   <>
-                    {/* Staff/Member Charges */}
-                    {staffMemberCount > 0 && (
+                    {/* User Charge */}
+                    {userCharge > 0 && (
                       <div className="flex justify-between items-center py-2 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-700">Staff/Member Charges</span>
-                          <span className="text-sm text-gray-500">({staffMemberCount} x ₹{adultMemberCharge.toFixed(2)})</span>
+                          <span className="text-gray-700">{userChargeLabel}</span>
+                          <span className="text-sm text-gray-500">(1 x ₹{userCharge.toFixed(2)})</span>
                         </div>
-                        <span className="font-medium">₹{staffMemberTotal.toFixed(2)}</span>
+                        <span className="font-medium">₹{userCharge.toFixed(2)}</span>
                       </div>
                     )}
 
-                    {/* Guest Charges */}
-                    {guestCount > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">Guest Charges</span>
-                          <span className="text-sm text-gray-500">({guestCount} x ₹{adultGuestCharge.toFixed(2)})</span>
+                    {/* Guest Charge */}
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-700">Guest Charge</span>
+                        <div className="flex items-center gap-1">
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={numberOfGuests}
+                            onChange={(e) => setNumberOfGuests(Math.max(0, parseInt(e.target.value) || 0))}
+                            variant="outlined"
+                            placeholder="No. of guests"
+                            sx={{
+                              width: '100px',
+                              '& .MuiOutlinedInput-root': {
+                                height: '36px',
+                                '& input': {
+                                  textAlign: 'right',
+                                  padding: '8px 12px'
+                                }
+                              }
+                            }}
+                            inputProps={{
+                              min: 0,
+                              step: 1
+                            }}
+                          />
+                          <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)}</span>
                         </div>
-                        <span className="font-medium">₹{guestTotal.toFixed(2)}</span>
                       </div>
-                    )}
+                      <span className="font-medium">₹{(numberOfGuests * adultGuestCharge).toFixed(2)}</span>
+                    </div>
 
                     {/* Slot Charges */}
                     {selectedSlots.length > 0 && perSlotCharge > 0 && (
@@ -1218,14 +1255,6 @@ export const AddFacilityBookingPage = () => {
                         <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
                       </div>
                     )}
-
-                    {/* Total Tax */}
-                    {/* {totalTax > 0 && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <span className="text-gray-700 font-medium">Total Tax</span>
-                        <span className="font-medium">₹{totalTax.toFixed(2)}</span>
-                      </div>
-                    )} */}
 
                     {/* Grand Total */}
                     <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
