@@ -835,6 +835,8 @@ import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
 import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
 import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
 import ParkingBookingListEmployee from "./pages/ParkingBookingListEmployee";
+import ProfileDetailsPage from "./pages/ProfileDetailsPage";
+import PlaceFnbOrder from "./pages/PlaceFnbOrder";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1214,6 +1216,15 @@ function App() {
                   />
 
                   <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <ProfileDetailsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
                     path="/parking"
                     element={
                       <ProtectedRoute>
@@ -1227,6 +1238,15 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <EmployeeFnb needPadding={true} />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/employee/fnb/add"
+                    element={
+                      <ProtectedRoute>
+                        <PlaceFnbOrder />
                       </ProtectedRoute>
                     }
                   />

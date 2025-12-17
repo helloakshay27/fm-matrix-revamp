@@ -31,7 +31,7 @@ export const fetchMoMs = createAsyncThunk(
         try {
             const token = localStorage.getItem('token');
             const baseUrl = localStorage.getItem('baseUrl');
-            const response = await axios.get(`https://${baseUrl}/mom_details.json`, {
+            const response = await axios.get(`https://${baseUrl}/mom_details.json?q[mom_attendees_attendees_id_or_created_by_id_eq]=${JSON.parse(localStorage.getItem('user')).id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
