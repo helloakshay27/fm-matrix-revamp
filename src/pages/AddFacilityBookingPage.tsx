@@ -12,6 +12,7 @@ import { fetchActiveFacilities } from '@/store/slices/facilitySetupsSlice';
 import { fetchOccupantUsers } from '@/store/slices/occupantUsersSlice';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
@@ -273,29 +274,25 @@ export const AddFacilityBookingPage = () => {
     console.log('========================');
      const token= localStorage.getItem('token') 
      console.log('Token for Amenity API:', token);
-    if (userType === 'occupant' && selectedUser && selectedFacility) {
+    if (userType === 'occupant' && selectedUser ) {
       const fetchAmenityBooking = async () => {
         try {
           const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
           
-          console.log('✅ Calling amenity API with:', {
-            user_id: selectedUser,
-            facility_setup_id: facilityId
-          });
-          
-          const amenityResponse = await apiClient.get('/club_members/amenity_booking_by_club_plan', {
-            params: {
-              user_id: selectedUser,
-              facility_setup_id: facilityId
-            },
+         
+
+          // Fetch booking rule for user
+          console.log('=== Calling Booking Rule API ===');
+          const baseUrl = localStorage.getItem('baseUrl');
+          const bookingRuleResponse = await axios.get(`https://${baseUrl}/pms/admin/facility_setups/${facilityId}/booking_rule_for_user?user_id=${selectedUser}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Accept': 'application/json, text/plain, */*',
               'Content-Type': 'application/json'
             }
           });
-          
-          console.log('Amenity Booking by Club Plan Response:', amenityResponse.data);
+          console.log('Booking Rule for User Response:', bookingRuleResponse.data);
+          console.log('================================');
         } catch (amenityError: any) {
           console.error('Error fetching amenity booking by club plan:', amenityError);
           if (amenityError.response) {
@@ -941,6 +938,55 @@ export const AddFacilityBookingPage = () => {
             </div>
           )}
         </div>
+
+        {/* Charge Details Table */}
+        {facilityDetails?.facility_charge && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Charge Details</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-[#E5E0D3]">
+                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Sr No.</th>
+                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">User Type</th>
+                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Charge</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {facilityDetails.facility_charge.adult_member_charge != null && (
+                    <tr className="hover:bg-gray-50">
+                      <td className="border border-gray-300 px-4 py-3">1</td>
+                      <td className="border border-gray-300 px-4 py-3">Adult Member</td>
+                      <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.adult_member_charge.toFixed(2)}</td>
+                    </tr>
+                  )}
+                  {facilityDetails.facility_charge.child_member_charge != null && (
+                    <tr className="hover:bg-gray-50">
+                      <td className="border border-gray-300 px-4 py-3">2</td>
+                      <td className="border border-gray-300 px-4 py-3">Child Member</td>
+                      <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.child_member_charge.toFixed(2)}</td>
+                    </tr>
+                  )}
+                  {facilityDetails.facility_charge.adult_guest_charge != null && (
+                    <tr className="hover:bg-gray-50">
+                      <td className="border border-gray-300 px-4 py-3">3</td>
+                      <td className="border border-gray-300 px-4 py-3">Adult Guest</td>
+                      <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.adult_guest_charge.toFixed(2)}</td>
+                    </tr>
+                  )}
+                  {facilityDetails.facility_charge.child_guest_charge != null && (
+                    <tr className="hover:bg-gray-50">
+                      <td className="border border-gray-300 px-4 py-3">4</td>
+                      <td className="border border-gray-300 px-4 py-3">Child Guest</td>
+                      <td className="border border-gray-300 px-4 py-3">₹{facilityDetails.facility_charge.child_guest_charge.toFixed(2)}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
 
         {/* People Table Section */}
         {facilityDetails && peopleTable.length > 0 && (

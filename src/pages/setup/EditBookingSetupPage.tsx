@@ -555,8 +555,8 @@ export const EditBookingSetupPage = () => {
             // formData.perSlotChasrge
             // );
 
-            // Charge Setup - Member charges
-            if (formData.chargeSetup.member.selected) {
+            // Charge Setup - Member charges (pass if selected or if any value exists)
+            if (formData.chargeSetup.member.selected || formData.chargeSetup.member.adult || formData.chargeSetup.member.child) {
                 formDataToSend.append(
                     "facility_setup[facility_charge_attributes][adult_member_charge]",
                     formData.chargeSetup.member.adult || "0"
@@ -567,8 +567,8 @@ export const EditBookingSetupPage = () => {
                 );
             }
 
-            // Charge Setup - Guest charges
-            if (formData.chargeSetup.guest.selected) {
+            // Charge Setup - Guest charges (pass if selected or if any value exists)
+            if (formData.chargeSetup.guest.selected || formData.chargeSetup.guest.adult || formData.chargeSetup.guest.child) {
                 formDataToSend.append(
                     "facility_setup[facility_charge_attributes][adult_guest_charge]",
                     formData.chargeSetup.guest.adult || "0"

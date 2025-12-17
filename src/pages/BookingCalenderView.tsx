@@ -136,7 +136,7 @@ const BookingCalenderView = () => {
             const targetOffset = targetEl.offsetLeft - container.offsetLeft;
             // Position selected date ~300px left of center
             const centerScroll = targetOffset - (container.clientWidth / 2) + (targetEl.clientWidth / 2);
-            const scrollLeft = Math.max(centerScroll + 376, 0);
+            const scrollLeft = Math.max(centerScroll + 300, 0);
             container.scrollTo({ left: scrollLeft, behavior: "smooth" });
         }
     }, [selectedDateForApi, dates]);
