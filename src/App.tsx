@@ -835,6 +835,11 @@ import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
 import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
 import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
 import ParkingBookingListEmployee from "./pages/ParkingBookingListEmployee";
+import ProfileDetailsPage from "./pages/ProfileDetailsPage";
+import PlaceFnbOrder from "./pages/PlaceFnbOrder";
+import { SpaceManagementBookingsDashboardEmployee } from "./pages/SpaceManagementBookingsDashboardEmployee";
+import { SpaceManagementBookingDetailsPage } from "./pages/SpaceManagementBookingDetailsPage";
+import EmployeeWallet from "./pages/EmployeeWallet";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1214,6 +1219,23 @@ function App() {
                   />
 
                   <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <ProfileDetailsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/employee-wallet"
+                    element={
+                      <ProtectedRoute>
+                        <EmployeeWallet />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
                     path="/parking"
                     element={
                       <ProtectedRoute>
@@ -1227,6 +1249,15 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <EmployeeFnb needPadding={true} />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/employee/fnb/add"
+                    element={
+                      <ProtectedRoute>
+                        <PlaceFnbOrder />
                       </ProtectedRoute>
                     }
                   />
@@ -3008,6 +3039,22 @@ function App() {
                   <Route
                     path="/vas/space-management/bookings"
                     element={<SpaceManagementBookingsDashboard />}
+                  />
+                  <Route
+                    path="/employee/space-management/bookings"
+                    element={
+                      <ProtectedRoute>
+                        <SpaceManagementBookingsDashboardEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/vas/space-management/bookings/details/:id"
+                    element={
+                      <ProtectedRoute>
+                        <SpaceManagementBookingDetailsPage />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/vas/space-management/seat-requests"

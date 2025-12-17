@@ -15,8 +15,10 @@ import {
   CheckSquare,
   Users,
   Briefcase,
+  Ticket,
 } from "lucide-react";
 import { toast } from "sonner";
+import { API_CONFIG } from "@/config/apiConfig";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +32,7 @@ interface UnifiedCalendarEvent {
   title: string;
   start: string;
   end?: string;
-  type: "project" | "booking" | "todo" | "meeting";
+  type: "Task" | "Issue" | "Meeting" | "Facility" | "Todo";
   status?: string;
   color?: string;
   description?: string;
@@ -91,61 +93,82 @@ export const EmployeeUnifiedCalendar: React.FC<
       dateTo: formatDate(new Date(currentYear, 11, 31)), // Dec 31 of current year
     };
   };
-
   // Filter states
   const [activeFilters, setActiveFilters] = useState(() => {
     const defaultRange = getDefaultDateRange();
     return {
       dateFrom: defaultRange.dateFrom,
       dateTo: defaultRange.dateTo,
-      showProjects: true,
-      showBookings: true,
-      showTodos: true,
+      showTasks: true,
+      showIssues: true,
       showMeetings: true,
+      showFacilities: true,
+      showTodos: true,
     };
   });
 
-  // Mock data - Replace with actual API calls
-  const [events, setEvents] = useState<UnifiedCalendarEvent[]>([
-    {
-      id: "1",
-      title: "Project Review Meeting",
-      start: moment().add(1, "day").hours(10).minutes(0).toISOString(),
-      end: moment().add(1, "day").hours(11).minutes(0).toISOString(),
-      type: "project",
-      status: "In Progress",
-      color: "#3b82f6",
-      description: "Quarterly project review",
-    },
-    {
-      id: "2",
-      title: "Conference Room A Booking",
-      start: moment().add(2, "days").hours(14).minutes(0).toISOString(),
-      end: moment().add(2, "days").hours(15).minutes(30).toISOString(),
-      type: "booking",
-      status: "Confirmed",
-      color: "#22c55e",
-      location: "Floor 3, Wing A",
-    },
-    {
-      id: "3",
-      title: "Complete Report Submission",
-      start: moment().add(3, "days").hours(17).minutes(0).toISOString(),
-      type: "todo",
-      status: "Pending",
-      color: "#f59e0b",
-    },
-    {
-      id: "4",
-      title: "Team Standup",
-      start: moment().hours(9).minutes(30).toISOString(),
-      end: moment().hours(10).minutes(0).toISOString(),
-      type: "meeting",
-      status: "Scheduled",
-      color: "#ec4899",
-      location: "Meeting Room B",
-    },
-  ]);
+  // State for events fetched from API
+  const [events, setEvents] = useState<UnifiedCalendarEvent[]>([]);
+
+  // Helper function to get color based on event type
+  const getColorForType = (type: string) => {
+    switch (type) {
+      case "Task":
+        return "#3b82f6"; // blue
+      case "Issue":
+        return "#ef4444"; // red
+      case "Meeting":
+        return "#ec4899"; // pink
+      case "Facility":
+        return "#22c55e"; // green
+      case "Todo":
+        return "#f59e0b"; // orange
+      default:
+        return "#6b7280"; // gray
+    }
+  };
+
+  // Fetch calendar data from API
+  useEffect(() => {
+    const fetchCalendarData = async () => {
+      setIsLoading(true);
+      try {
+        const token = API_CONFIG.TOKEN;
+        const baseUrl = API_CONFIG.BASE_URL;
+
+        const response = await fetch(
+          `${baseUrl}${API_CONFIG.ENDPOINTS.COMBINED_CALENDAR_DATA}?access_token=${token}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch calendar data");
+        }
+
+        const data = await response.json();
+
+        // Map API data to calendar event format
+        const mappedEvents = (data.calendar_data || []).map((item: any) => ({
+          id: item.id.toString(),
+          title: item.title,
+          start: item.start_date || item.start_time,
+          end: item.end_date || item.end_time,
+          type: item.type,
+          status: item.status,
+          description: item.description,
+          color: getColorForType(item.type),
+        }));
+
+        setEvents(mappedEvents);
+      } catch (error) {
+        console.error("Error fetching calendar data:", error);
+        toast.error("Failed to load calendar events");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCalendarData();
+  }, []);
 
   // Event hover/click states
   const [hoveredEvent, setHoveredEvent] = useState<any>(null);
@@ -161,10 +184,8 @@ export const EmployeeUnifiedCalendar: React.FC<
     const parts = dateStr.trim().split("/");
     if (parts.length === 3) {
       const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in JS
       const year = parseInt(parts[2], 10);
-
-      // Validate the parsed values
       if (
         !isNaN(day) &&
         !isNaN(month) &&
@@ -187,10 +208,12 @@ export const EmployeeUnifiedCalendar: React.FC<
   // Filter events based on active filters
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
-      if (!activeFilters.showProjects && event.type === "project") return false;
-      if (!activeFilters.showBookings && event.type === "booking") return false;
-      if (!activeFilters.showTodos && event.type === "todo") return false;
-      if (!activeFilters.showMeetings && event.type === "meeting") return false;
+      if (!activeFilters.showTasks && event.type === "Task") return false;
+      if (!activeFilters.showIssues && event.type === "Issue") return false;
+      if (!activeFilters.showMeetings && event.type === "Meeting") return false;
+      if (!activeFilters.showFacilities && event.type === "Facility")
+        return false;
+      if (!activeFilters.showTodos && event.type === "Todo") return false;
       return true;
     });
   }, [events, activeFilters]);
@@ -278,20 +301,25 @@ export const EmployeeUnifiedCalendar: React.FC<
     if (onNavigateToDetails) {
       onNavigateToDetails(eventType, eventId);
     } else {
-      // Default navigation logic
+      // Default navigation logic based on event type
       switch (eventType) {
-        case "project":
-          navigate(`/employee/projects/${eventId}`);
+        case "Task":
+          navigate(`/vas/tasks/${eventId}`);
           break;
-        case "booking":
-          navigate(`/bookings/${eventId}`);
+        case "Issue":
+          navigate(`/vas/tickets/${eventId}`);
           break;
-        case "todo":
-          navigate(`/employee/tasks/${eventId}`);
+        case "Meeting":
+          navigate(`/employee/meetings/${eventId}`);
           break;
-        case "meeting":
-          navigate(`/bookings/${eventId}`);
+        case "Facility":
+          navigate(`/employee/facilities/${eventId}`);
           break;
+        case "Todo":
+          navigate(`/vas/todo`);
+          break;
+        default:
+          console.warn("Unknown event type:", eventType);
       }
     }
   };
@@ -324,14 +352,16 @@ export const EmployeeUnifiedCalendar: React.FC<
 
   const getEventTypeIcon = (type: string) => {
     switch (type) {
-      case "project":
-        return <Briefcase className="w-4 h-4" />;
-      case "booking":
-        return <Calendar className="w-4 h-4" />;
-      case "todo":
+      case "Task":
         return <CheckSquare className="w-4 h-4" />;
-      case "meeting":
+      case "Issue":
+        return <Ticket className="w-4 h-4" />;
+      case "Meeting":
         return <Users className="w-4 h-4" />;
+      case "Facility":
+        return <Calendar className="w-4 h-4" />;
+      case "Todo":
+        return <Briefcase className="w-4 h-4" />;
       default:
         return <Calendar className="w-4 h-4" />;
     }
@@ -339,14 +369,16 @@ export const EmployeeUnifiedCalendar: React.FC<
 
   const getEventTypeLabel = (type: string) => {
     switch (type) {
-      case "project":
-        return "Project";
-      case "booking":
-        return "Booking";
-      case "todo":
-        return "To-Do";
-      case "meeting":
+      case "Task":
+        return "Task";
+      case "Issue":
+        return "Issue";
+      case "Meeting":
         return "Meeting";
+      case "Facility":
+        return "Facility";
+      case "Todo":
+        return "To-Do";
       default:
         return "Event";
     }
@@ -428,54 +460,36 @@ export const EmployeeUnifiedCalendar: React.FC<
               onClick={() =>
                 setActiveFilters((prev) => ({
                   ...prev,
-                  showProjects: !prev.showProjects,
+                  showTasks: !prev.showTasks,
                 }))
               }
               className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                activeFilters.showProjects
+                activeFilters.showTasks
                   ? "bg-blue-100 text-blue-700 border border-blue-300"
                   : "bg-gray-100 text-gray-500 border border-gray-300"
               }`}
             >
               <div className="flex items-center gap-1">
-                <Briefcase className="w-3 h-3" />
-                Projects
-              </div>
-            </button>
-            <button
-              onClick={() =>
-                setActiveFilters((prev) => ({
-                  ...prev,
-                  showBookings: !prev.showBookings,
-                }))
-              }
-              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                activeFilters.showBookings
-                  ? "bg-green-100 text-green-700 border border-green-300"
-                  : "bg-gray-100 text-gray-500 border border-gray-300"
-              }`}
-            >
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                Bookings
-              </div>
-            </button>
-            <button
-              onClick={() =>
-                setActiveFilters((prev) => ({
-                  ...prev,
-                  showTodos: !prev.showTodos,
-                }))
-              }
-              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                activeFilters.showTodos
-                  ? "bg-orange-100 text-orange-700 border border-orange-300"
-                  : "bg-gray-100 text-gray-500 border border-gray-300"
-              }`}
-            >
-              <div className="flex items-center gap-1">
                 <CheckSquare className="w-3 h-3" />
-                To-Do
+                Tasks
+              </div>
+            </button>
+            <button
+              onClick={() =>
+                setActiveFilters((prev) => ({
+                  ...prev,
+                  showIssues: !prev.showIssues,
+                }))
+              }
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeFilters.showIssues
+                  ? "bg-red-100 text-red-700 border border-red-300"
+                  : "bg-gray-100 text-gray-500 border border-gray-300"
+              }`}
+            >
+              <div className="flex items-center gap-1">
+                <Ticket className="w-3 h-3" />
+                Issues
               </div>
             </button>
             <button
@@ -494,6 +508,42 @@ export const EmployeeUnifiedCalendar: React.FC<
               <div className="flex items-center gap-1">
                 <Users className="w-3 h-3" />
                 Meetings
+              </div>
+            </button>
+            <button
+              onClick={() =>
+                setActiveFilters((prev) => ({
+                  ...prev,
+                  showFacilities: !prev.showFacilities,
+                }))
+              }
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeFilters.showFacilities
+                  ? "bg-green-100 text-green-700 border border-green-300"
+                  : "bg-gray-100 text-gray-500 border border-gray-300"
+              }`}
+            >
+              <div className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                Facilities
+              </div>
+            </button>
+            <button
+              onClick={() =>
+                setActiveFilters((prev) => ({
+                  ...prev,
+                  showTodos: !prev.showTodos,
+                }))
+              }
+              className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                activeFilters.showTodos
+                  ? "bg-orange-100 text-orange-700 border border-orange-300"
+                  : "bg-gray-100 text-gray-500 border border-gray-300"
+              }`}
+            >
+              <div className="flex items-center gap-1">
+                <Briefcase className="w-3 h-3" />
+                Todos
               </div>
             </button>
           </div>
@@ -517,10 +567,11 @@ export const EmployeeUnifiedCalendar: React.FC<
       <div className="flex items-center gap-6 text-sm">
         <span className="font-medium">Legends</span>
         {[
-          ["#3b82f6", "Projects", <Briefcase className="w-3 h-3" />],
-          ["#22c55e", "Bookings", <Calendar className="w-3 h-3" />],
-          ["#f59e0b", "To-Do", <CheckSquare className="w-3 h-3" />],
+          ["#3b82f6", "Tasks", <CheckSquare className="w-3 h-3" />],
+          ["#ef4444", "Issues", <Ticket className="w-3 h-3" />],
           ["#ec4899", "Meetings", <Users className="w-3 h-3" />],
+          ["#22c55e", "Facilities", <Calendar className="w-3 h-3" />],
+          ["#f59e0b", "Todos", <Briefcase className="w-3 h-3" />],
         ].map(([color, label, icon]) => (
           <div key={label as string} className="flex items-center gap-2">
             <div
@@ -875,24 +926,29 @@ export const EmployeeUnifiedCalendar: React.FC<
               <div className="space-y-3">
                 {[
                   {
-                    key: "showProjects",
-                    label: "Projects",
-                    icon: <Briefcase className="w-4 h-4" />,
-                  },
-                  {
-                    key: "showBookings",
-                    label: "Bookings",
-                    icon: <Calendar className="w-4 h-4" />,
-                  },
-                  {
-                    key: "showTodos",
-                    label: "To-Do Items",
+                    key: "showTasks",
+                    label: "Tasks",
                     icon: <CheckSquare className="w-4 h-4" />,
+                  },
+                  {
+                    key: "showIssues",
+                    label: "Issues",
+                    icon: <Ticket className="w-4 h-4" />,
                   },
                   {
                     key: "showMeetings",
                     label: "Meetings",
                     icon: <Users className="w-4 h-4" />,
+                  },
+                  {
+                    key: "showFacilities",
+                    label: "Facilities",
+                    icon: <Calendar className="w-4 h-4" />,
+                  },
+                  {
+                    key: "showTodos",
+                    label: "To-Do Items",
+                    icon: <Briefcase className="w-4 h-4" />,
                   },
                 ].map(({ key, label, icon }) => (
                   <div key={key} className="flex items-center gap-3">
@@ -926,18 +982,23 @@ export const EmployeeUnifiedCalendar: React.FC<
                   setActiveFilters({
                     dateFrom: moment().subtract(7, "days").format("DD/MM/YYYY"),
                     dateTo: moment().format("DD/MM/YYYY"),
-                    showProjects: true,
-                    showBookings: true,
-                    showTodos: true,
+                    showTasks: true,
+                    showIssues: true,
                     showMeetings: true,
+                    showFacilities: true,
+                    showTodos: true,
                   });
+                  setHasAppliedCustomFilters(false);
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 Reset
               </button>
               <button
-                onClick={() => setIsFilterModalOpen(false)}
+                onClick={() => {
+                  setIsFilterModalOpen(false);
+                  setHasAppliedCustomFilters(true);
+                }}
                 className="px-4 py-2 bg-[#C72030] text-white rounded-md hover:bg-[#a01828] transition-colors text-sm font-medium"
               >
                 Apply Filters
