@@ -246,7 +246,7 @@ export const ClubGroupMembershipDetails = () => {
 
       const data = await response.json();
       const plan = data.plans?.find((p: MembershipPlan) => p.id === planId);
-      
+
       if (plan) {
         setMembershipPlanName(plan.name);
         setMembershipPlanUserLimit(plan.user_limit || null);
@@ -327,11 +327,11 @@ export const ClubGroupMembershipDetails = () => {
   };
 
   const handleBackToList = () => {
-    navigate('/club-management/membership');
+    navigate('/club-management/membership/groups');
   };
 
   const handleEdit = () => {
-    navigate(`/club-management/membership/${id}/edit`);
+    navigate(`/club-management/group-membership/${id}/edit`);
   };
 
   const formatDate = (dateString: string | null) => {
@@ -476,7 +476,7 @@ export const ClubGroupMembershipDetails = () => {
 
       // Get the blob from response
       const blob = await response.blob();
-      
+
       // Create a download link
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -547,7 +547,7 @@ export const ClubGroupMembershipDetails = () => {
               {membershipData.club_members?.length || 0} Members • Start: {formatDate(membershipData.start_date)} - End: {formatDate(membershipData.end_date)}
             </div>
           </div>
-          
+
           <div className="flex gap-3">
             <Button
               onClick={handleEdit}
@@ -907,16 +907,22 @@ export const ClubGroupMembershipDetails = () => {
                               Item Name
                             </th>
                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                              Quantity
-                            </th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                              Rate
-                            </th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               Amount
                             </th>
                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                              Discount
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               GST Rate
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                              CGST
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                              SGST
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                              IGST
                             </th>
                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               GST Amount
@@ -930,12 +936,40 @@ export const ClubGroupMembershipDetails = () => {
                           {billDetail.lock_account_bill_charges.map((charge) => (
                             <tr key={charge.id}>
                               <td className="px-4 py-3 text-sm text-gray-900">{charge.name}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right">{charge.quantity || '-'}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right">{charge.rate ? `₹ ${charge.rate.toFixed(2)}` : '-'}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right">₹ {charge.amount.toFixed(2)}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right">{charge.gst_rate.toFixed(2)}%</td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right">₹ {charge.gst_amount.toFixed(2)}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">₹ {charge.total_amount.toFixed(2)}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                                ₹ {charge.amount?.toFixed(2)}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                                {charge.discount ? `-₹ ${Number(charge.discount).toFixed(2)}` : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                                {charge.gst_rate !== null && charge.gst_rate !== undefined
+                                  ? `${charge.gst_rate.toFixed(2)}%`
+                                  : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                                {charge.cgst_amount !== null && charge.cgst_amount !== undefined
+                                  ? `₹ ${charge.cgst_amount.toFixed(2)}`
+                                  : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                                {charge.sgst_amount !== null && charge.sgst_amount !== undefined
+                                  ? `₹ ${charge.sgst_amount.toFixed(2)}`
+                                  : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                                {charge.igst_amount !== null && charge.igst_amount !== undefined
+                                  ? `₹ ${charge.igst_amount.toFixed(2)}`
+                                  : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                                {charge.gst_amount !== null && charge.gst_amount !== undefined
+                                  ? `₹ ${charge.gst_amount.toFixed(2)}`
+                                  : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">
+                                ₹ {charge.total_amount.toFixed(2)}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -945,7 +979,7 @@ export const ClubGroupMembershipDetails = () => {
                 )}
 
                 {/* Tax Breakdown (if GST components exist) */}
-                {billDetail.lock_account_bill_charges.some(c => c.cgst_amount || c.sgst_amount || c.igst_amount) && (
+                {/* {billDetail.lock_account_bill_charges.some(c => c.cgst_amount || c.sgst_amount || c.igst_amount) && (
                   <div>
                     <h3 className="text-md font-semibold text-gray-900 mb-3">Tax Breakdown</h3>
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -977,7 +1011,7 @@ export const ClubGroupMembershipDetails = () => {
                       </div>
                     </div>
                   </div>
-                )}
+                )} */}
 
                 {/* Bill Summary */}
                 <div>
@@ -1029,7 +1063,7 @@ export const ClubGroupMembershipDetails = () => {
                 </div>
 
                 {/* Additional Information */}
-                {(billDetail.note || billDetail.bill_cycle_id || billDetail.bill_frequency_id) && (
+                {/* {(billDetail.note || billDetail.bill_cycle_id || billDetail.bill_frequency_id) && (
                   <div>
                     <h3 className="text-md font-semibold text-gray-900 mb-3">Additional Information</h3>
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -1065,7 +1099,7 @@ export const ClubGroupMembershipDetails = () => {
                       </div>
                     </div>
                   </div>
-                )}
+                )} */}
               </div>
             ) : (
               <p className="text-gray-500 text-center py-8">No bill details available</p>
@@ -1277,7 +1311,7 @@ export const ClubGroupMembershipDetails = () => {
                           return Object.entries(QUESTION_SECTIONS).map(([sectionKey, section]) => {
                             // Filter questions that exist in answers
                             const sectionQuestions = section.questionIds.filter(qId => parsedAnswers[qId]);
-                            
+
                             if (sectionQuestions.length === 0) return null;
 
                             return (

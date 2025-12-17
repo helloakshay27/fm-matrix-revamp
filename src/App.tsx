@@ -1565,6 +1565,10 @@ function App() {
                     path="/club-management/membership/add-group"
                     element={<AddGroupMembershipPage />}
                   />
+                  <Route
+                    path="/club-management/group-membership/:id/edit"
+                    element={<AddGroupMembershipPage />}
+                  />
 
                   <Route
                     path="/club-management/membership/group-details/:id"

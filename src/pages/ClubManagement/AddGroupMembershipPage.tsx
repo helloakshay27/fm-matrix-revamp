@@ -443,7 +443,7 @@ export const AddGroupMembershipPage = () => {
             const baseUrl = API_CONFIG.BASE_URL;
             const token = API_CONFIG.TOKEN;
 
-            const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members/${membershipId}.json`);
+            const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${membershipId}.json`);
             url.searchParams.append('access_token', token || '');
 
             const response = await fetch(url.toString(), {
@@ -458,65 +458,38 @@ export const AddGroupMembershipPage = () => {
             }
 
             const data = await response.json();
-            console.log('Loaded membership data:', data);
+            console.log('Loaded group allocation data:', data);
+            console.log('Members data:', data.members);
+            console.log('Allocation payment detail:', data.allocation_payment_detail);
 
-            // Populate form with existing data using updateMember
-            updateMember(members[0].id, {
-                userSelectionMode: 'select', // Always use select mode for edit
-                selectedUser: data.user_id?.toString() || '',
-                selectedUserId: data.user_id,
-                formData: {
-                    firstName: data.user_name?.split(' ')[0] || '',
-                    lastName: data.user_name?.split(' ').slice(1).join(' ') || '',
-                    email: data.user_email || '',
-                    mobile: data.user_mobile || '',
-                    dateOfBirth: data.date_of_birth || '',
-                    gender: data.gender || '',
-                    emergencyContactName: data.emergency_contact_name || '',
-                    address: data.user?.addresses[0]?.address || '',
-                    address_line_two: data.user?.addresses[0]?.address_line_two || '',
-                    city: data.user?.addresses[0]?.city || '',
-                    state: data.user?.addresses[0]?.state || '',
-                    country: data.user?.addresses[0]?.country || '',
-                    pin_code: data.user?.addresses[0]?.pin_code || '',
-                    address_type: data.user?.addresses[0]?.address_type || 'residential',
-                    residentType: '',
-                    relationWithOwner: '',
-                    membershipNumber: data.membership_number || '',
-                    accessCardId: data.access_card_id || '',
-                    membershipType: data.membership_type || '',
-                    referredBy: data.referred_by || '',
-                }
-            });
-
-            // Set dates
+            // Set shared allocation details
             if (data.start_date) {
+                console.log('Setting start date:', data.start_date);
                 setStartDate(dayjs(data.start_date));
             }
             if (data.end_date) {
+                console.log('Setting end date:', data.end_date);
                 setEndDate(dayjs(data.end_date));
             }
-
-            // Set access card
-            setCardAllocated(data.access_card_enabled || false);
-
-            // Set membership plan
+            if (data.referred_by) {
+                console.log('Setting referred_by:', data.referred_by);
+                setReferredBy(data.referred_by);
+            }
+            if (data.club_members && data.club_members[0]?.emergency_contact_name) {
+                console.log('Setting emergency_contact_name:', data.club_members[0].emergency_contact_name);
+                setEmergencyContactName(data.club_members[0].emergency_contact_name);
+            }
             if (data.membership_plan_id) {
+                console.log('Setting membership_plan_id:', data.membership_plan_id);
                 setSelectedPlanId(data.membership_plan_id);
             }
 
-            // Set custom amenities
-            if (data.custom_amenities && Array.isArray(data.custom_amenities)) {
-                const amenityIds = data.custom_amenities.map((a: any) => a.facility_setup_id);
-                setSelectedAddOns(amenityIds);
-            }
-
             // Set payment details
-            if (data.member_payment_detail) {
-                const paymentDetail = data.member_payment_detail;
-                setEditablePlanCost(paymentDetail.base_amount || '');
+            if (data.allocation_payment_detail) {
+                const paymentDetail = data.allocation_payment_detail;
+                setEditablePlanCost(paymentDetail.base_amount?.toString() || '');
+
                 if (paymentDetail.discount) {
-                    // Calculate discount percentage from discount amount
                     const baseAmount = parseFloat(paymentDetail.base_amount) || 0;
                     if (baseAmount > 0) {
                         const discountAmt = parseFloat(paymentDetail.discount) || 0;
@@ -525,7 +498,6 @@ export const AddGroupMembershipPage = () => {
                     }
                 }
                 if (paymentDetail.cgst) {
-                    // Calculate CGST percentage
                     const subtotalAmount = parseFloat(paymentDetail.base_amount) || 0;
                     if (subtotalAmount > 0) {
                         const cgstAmt = parseFloat(paymentDetail.cgst) || 0;
@@ -534,189 +506,232 @@ export const AddGroupMembershipPage = () => {
                     }
                 }
                 if (paymentDetail.sgst) {
-                    // Calculate SGST percentage
                     const subtotalAmount = parseFloat(paymentDetail.base_amount) || 0;
                     if (subtotalAmount > 0) {
                         const sgstAmt = parseFloat(paymentDetail.sgst) || 0;
-                        const sgstPct = (sgtAmt / subtotalAmount) * 100;
+                        const sgstPct = (sgstAmt / subtotalAmount) * 100;
                         setSgstPercentage(sgstPct.toString());
                     }
                 }
             }
 
-            // Set health & wellness information from answers using updateMember
-            const memberUpdates: Partial<MemberData> = {};
+            // Handle members array - API returns club_members
+            const membersArray = data.club_members || data.members || [];
+            if (Array.isArray(membersArray) && membersArray.length > 0) {
+                console.log('Processing members array, count:', membersArray.length);
+                const loadedMembers: MemberData[] = membersArray.map((memberData: any, index: number) => {
+                    console.log(`Processing member ${index + 1}:`, memberData);
+                    const memberId = Date.now().toString() + index;
 
-            if (data.answers && Array.isArray(data.answers) && data.answers.length > 0) {
-                const answersObj = data.answers[0];
+                    // Determine user selection mode
+                    const hasUserId = memberData.user_id !== undefined && memberData.user_id !== null;
+                    console.log(`Member ${index + 1} has user_id:`, hasUserId, memberData.user_id);
 
-                // Question 1: Injuries
-                if (answersObj['1']) {
-                    const answer1 = answersObj['1'][0];
-                    memberUpdates.hasInjuries = answer1.answer?.toLowerCase() === 'yes' ? 'yes' : answer1.answer?.toLowerCase() === 'no' ? 'no' : '';
-                    if (answer1.comments) {
-                        memberUpdates.injuryDetails = answer1.comments;
+                    // Extract data from nested user object or direct fields
+                    const userData = memberData.user || memberData;
+                    const firstName = userData.firstname || memberData.first_name || '';
+                    const lastName = userData.lastname || memberData.last_name || '';
+                    const email = userData.email || memberData.user_email || '';
+                    const mobile = userData.mobile || memberData.user_mobile || '';
+                    const birthDate = userData.birth_date || '';
+                    const gender = userData.gender || '';
+
+                    // Build member object
+                    const newMember: MemberData = {
+                        id: memberId,
+                        userSelectionMode: hasUserId ? 'select' : 'manual',
+                        selectedUser: hasUserId ? memberData.user_id?.toString() : '',
+                        selectedUserId: hasUserId ? memberData.user_id : null,
+                        formData: {
+                            firstName: firstName,
+                            lastName: lastName,
+                            email: email,
+                            mobile: mobile,
+                            dateOfBirth: birthDate,
+                            gender: gender,
+                            emergencyContactName: memberData.emergency_contact_name || '',
+                            address: userData.addresses?.[0]?.address || '',
+                            address_line_two: userData.addresses?.[0]?.address_line_two || '',
+                            city: userData.addresses?.[0]?.city || '',
+                            state: userData.addresses?.[0]?.state || '',
+                            country: userData.addresses?.[0]?.country || '',
+                            pin_code: userData.addresses?.[0]?.pin_code || '',
+                            address_type: userData.addresses?.[0]?.address_type || 'residential',
+                            residentType: '',
+                            relationWithOwner: '',
+                            membershipNumber: memberData.membership_number || '',
+                            accessCardId: memberData.access_card_id?.toString() || '',
+                            membershipType: '',
+                            referredBy: memberData.referred_by || '',
+                        },
+                        idCardFile: null,
+                        residentPhotoFile: null,
+                        attachmentFiles: [],
+                        idCardPreview: memberData.identification_image || null,
+                        residentPhotoPreview: memberData.avatar ? (memberData.avatar.startsWith('%2F') ? `https://fm-uat-api.lockated.com${decodeURIComponent(memberData.avatar)}` : memberData.avatar) : null,
+                        attachmentPreviews: [],
+                        hasInjuries: '',
+                        injuryDetails: '',
+                        hasPhysicalRestrictions: '',
+                        hasCurrentMedication: '',
+                        pilatesExperience: '',
+                        fitnessGoals: [],
+                        fitnessGoalsOther: '',
+                        interestedSessions: [],
+                        interestedSessionsOther: '',
+                        heardAbout: '',
+                        motivations: [],
+                        updatePreferences: [],
+                        communicationChannel: [],
+                        profession: '',
+                        companyName: '',
+                        corporateInterest: '',
+                    };
+
+                    // Parse snag_answers (new format)
+                    if (memberData.snag_answers && Array.isArray(memberData.snag_answers)) {
+                        console.log(`Member ${index + 1} has snag_answers:`, memberData.snag_answers.length);
+                        const snagByQ: { [key: number]: string[] } = {};
+                        memberData.snag_answers.forEach((a: any) => {
+                            const q = Number(a.question_id);
+                            if (!snagByQ[q]) snagByQ[q] = [];
+                            if (a.ans_descr !== undefined && a.ans_descr !== null) {
+                                snagByQ[q].push(String(a.ans_descr));
+                            }
+                        });
+
+                        // Map questions to member fields
+                        if (snagByQ[1] && snagByQ[1].length > 0) {
+                            const val = snagByQ[1][0].toUpperCase();
+                            newMember.hasInjuries = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+                        }
+                        if (snagByQ[2] && snagByQ[2].length > 0) {
+                            const val = snagByQ[2][0].toUpperCase();
+                            newMember.hasPhysicalRestrictions = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+                        }
+                        if (snagByQ[3] && snagByQ[3].length > 0) {
+                            const val = snagByQ[3][0].toUpperCase();
+                            newMember.hasCurrentMedication = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+                        }
+                        if (snagByQ[4] && snagByQ[4].length > 0) {
+                            newMember.pilatesExperience = snagByQ[4][0] || '';
+                        }
+                        if (snagByQ[5] && snagByQ[5].length > 0) {
+                            newMember.fitnessGoals = snagByQ[5];
+                        }
+                        if (snagByQ[6] && snagByQ[6].length > 0) {
+                            newMember.interestedSessions = snagByQ[6];
+                        }
+                        if (snagByQ[7] && snagByQ[7].length > 0) {
+                            newMember.heardAbout = snagByQ[7][0] || '';
+                        }
+                        if (snagByQ[8] && snagByQ[8].length > 0) {
+                            newMember.motivations = snagByQ[8];
+                        }
+                        if (snagByQ[9] && snagByQ[9].length > 0) {
+                            newMember.updatePreferences = snagByQ[9];
+                        }
+                        if (snagByQ[10] && snagByQ[10].length > 0) {
+                            newMember.communicationChannel = snagByQ[10];
+                        }
+                        if (snagByQ[11] && snagByQ[11].length > 0) {
+                            newMember.profession = snagByQ[11][0] || '';
+                        }
+                        if (snagByQ[12] && snagByQ[12].length > 0) {
+                            newMember.companyName = snagByQ[12][0] || '';
+                        }
+                        if (snagByQ[13] && snagByQ[13].length > 0) {
+                            const val = snagByQ[13][0].toUpperCase();
+                            newMember.corporateInterest = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+                        }
                     }
-                }
+                    // Also parse old format answers if present
+                    else if (memberData.answers && Array.isArray(memberData.answers) && memberData.answers.length > 0) {
+                        const answersObj = memberData.answers[0];
 
-                // Question 2: Physical restrictions
-                if (answersObj['2']) {
-                    const answer2 = answersObj['2'][0];
-                    memberUpdates.hasPhysicalRestrictions = answer2.answer?.toLowerCase() === 'yes' ? 'yes' : answer2.answer?.toLowerCase() === 'no' ? 'no' : '';
-                }
-
-                // Question 3: Current medication
-                if (answersObj['3']) {
-                    const answer3 = answersObj['3'][0];
-                    memberUpdates.hasCurrentMedication = answer3.answer?.toLowerCase() === 'yes' ? 'yes' : answer3.answer?.toLowerCase() === 'no' ? 'no' : '';
-                }
-
-                // Question 4: Pilates experience
-                if (answersObj['4']) {
-                    const answer4 = answersObj['4'][0];
-                    memberUpdates.pilatesExperience = answer4.answer || '';
-                }
-
-                // Question 5: Fitness goals
-                if (answersObj['5']) {
-                    const goals = answersObj['5'].map((ans: any) => ans.answer).filter(Boolean);
-                    memberUpdates.fitnessGoals = goals;
-                    const otherGoal = answersObj['5'].find((ans: any) => ans.answer === 'Other');
-                    if (otherGoal && otherGoal.comments) {
-                        memberUpdates.fitnessGoalsOther = otherGoal.comments;
+                        if (answersObj['1']) {
+                            const answer1 = answersObj['1'][0];
+                            newMember.hasInjuries = answer1.answer?.toLowerCase() === 'yes' ? 'yes' : answer1.answer?.toLowerCase() === 'no' ? 'no' : '';
+                            if (answer1.comments) newMember.injuryDetails = answer1.comments;
+                        }
+                        if (answersObj['2']) {
+                            newMember.hasPhysicalRestrictions = answersObj['2'][0]?.answer?.toLowerCase() === 'yes' ? 'yes' : answersObj['2'][0]?.answer?.toLowerCase() === 'no' ? 'no' : '';
+                        }
+                        if (answersObj['3']) {
+                            newMember.hasCurrentMedication = answersObj['3'][0]?.answer?.toLowerCase() === 'yes' ? 'yes' : answersObj['3'][0]?.answer?.toLowerCase() === 'no' ? 'no' : '';
+                        }
+                        if (answersObj['4']) {
+                            newMember.pilatesExperience = answersObj['4'][0]?.answer || '';
+                        }
+                        if (answersObj['5']) {
+                            newMember.fitnessGoals = answersObj['5'].map((ans: any) => ans.answer).filter(Boolean);
+                            const otherGoal = answersObj['5'].find((ans: any) => ans.answer === 'Other');
+                            if (otherGoal?.comments) newMember.fitnessGoalsOther = otherGoal.comments;
+                        }
+                        if (answersObj['6']) {
+                            newMember.interestedSessions = answersObj['6'].map((ans: any) => ans.answer).filter(Boolean);
+                            const otherSession = answersObj['6'].find((ans: any) => ans.answer === 'Other');
+                            if (otherSession?.comments) newMember.interestedSessionsOther = otherSession.comments;
+                        }
+                        if (answersObj['7']) {
+                            newMember.heardAbout = answersObj['7'][0]?.answer || '';
+                        }
+                        if (answersObj['8']) {
+                            newMember.motivations = answersObj['8'].map((ans: any) => ans.answer).filter(Boolean);
+                        }
+                        if (answersObj['9']) {
+                            newMember.updatePreferences = answersObj['9'].map((ans: any) => ans.answer).filter(Boolean);
+                        }
+                        if (answersObj['10']) {
+                            newMember.communicationChannel = answersObj['10'].map((ans: any) => ans.answer).filter(Boolean);
+                        }
+                        if (answersObj['11']) {
+                            newMember.profession = answersObj['11'][0]?.answer || '';
+                        }
+                        if (answersObj['12']) {
+                            newMember.companyName = answersObj['12'][0]?.answer || '';
+                        }
+                        if (answersObj['13']) {
+                            newMember.corporateInterest = answersObj['13'][0]?.answer?.toLowerCase() === 'yes' ? 'yes' : answersObj['13'][0]?.answer?.toLowerCase() === 'no' ? 'no' : '';
+                        }
                     }
-                }
 
-                // Question 6: Interested sessions
-                if (answersObj['6']) {
-                    const sessions = answersObj['6'].map((ans: any) => ans.answer).filter(Boolean);
-                    memberUpdates.interestedSessions = sessions;
-                    const otherSession = answersObj['6'].find((ans: any) => ans.answer === 'Other');
-                    if (otherSession && otherSession.comments) {
-                        memberUpdates.interestedSessionsOther = otherSession.comments;
+                    // Set access card status from first member
+                    if (index === 0 && memberData.access_card_enabled !== undefined) {
+                        setCardAllocated(memberData.access_card_enabled);
                     }
-                }
 
-                // Question 7: How did you hear about the club
-                if (answersObj['7']) {
-                    const answer7 = answersObj['7'][0];
-                    memberUpdates.heardAbout = answer7.answer || '';
-                }
+                    // Set custom amenities from first member
+                    if (index === 0 && memberData.custom_amenities && Array.isArray(memberData.custom_amenities)) {
+                        const amenityIds = memberData.custom_amenities
+                            .filter((a: any) => a.access === true)
+                            .map((a: any) => a.facility_setup_id);
+                        setSelectedAddOns(amenityIds);
+                    }
 
-                // Question 8: Motivations
-                if (answersObj['8']) {
-                    const motivations = answersObj['8'].map((ans: any) => ans.answer).filter(Boolean);
-                    memberUpdates.motivations = motivations;
-                }
-
-                // Question 9: Update preferences
-                if (answersObj['9']) {
-                    const preferences = answersObj['9'].map((ans: any) => ans.answer).filter(Boolean);
-                    memberUpdates.updatePreferences = preferences;
-                }
-
-                // Question 10: Communication channels
-                if (answersObj['10']) {
-                    const channels = answersObj['10'].map((ans: any) => ans.answer).filter(Boolean);
-                    memberUpdates.communicationChannel = channels;
-                }
-
-                // Question 11: Profession
-                if (answersObj['11']) {
-                    const answer11 = answersObj['11'][0];
-                    memberUpdates.profession = answer11.answer || '';
-                }
-
-                // Question 12: Company name
-                if (answersObj['12']) {
-                    const answer12 = answersObj['12'][0];
-                    memberUpdates.companyName = answer12.answer || '';
-                }
-
-                // Question 13: Corporate interest
-                if (answersObj['13']) {
-                    const answer13 = answersObj['13'][0];
-                    memberUpdates.corporateInterest = answer13.answer?.toLowerCase() === 'yes' ? 'yes' : answer13.answer?.toLowerCase() === 'no' ? 'no' : '';
-                }
-            } else if (data.snag_answers && Array.isArray(data.snag_answers)) {
-                // New format: snag_answers is an array of answers with `question_id` and `ans_descr`
-                const snagByQ: { [key: number]: string[] } = {};
-                data.snag_answers.forEach((a: any) => {
-                    const q = Number(a.question_id);
-                    if (!snagByQ[q]) snagByQ[q] = [];
-                    if (a.ans_descr !== undefined && a.ans_descr !== null) snagByQ[q].push(String(a.ans_descr));
+                    return newMember;
                 });
 
-                // Map fields using snagByQ
-                if (snagByQ[1] && snagByQ[1].length > 0) {
-                    const val = snagByQ[1][0].toLowerCase();
-                    memberUpdates.hasInjuries = val === 'yes' ? 'yes' : val === 'no' ? 'no' : '';
-                }
-                if (snagByQ[2] && snagByQ[2].length > 0) {
-                    const val = snagByQ[2][0].toLowerCase();
-                    memberUpdates.hasPhysicalRestrictions = val === 'yes' ? 'yes' : val === 'no' ? 'no' : '';
-                }
-                if (snagByQ[3] && snagByQ[3].length > 0) {
-                    const val = snagByQ[3][0].toLowerCase();
-                    memberUpdates.hasCurrentMedication = val === 'yes' ? 'yes' : val === 'no' ? 'no' : '';
-                }
-                if (snagByQ[4] && snagByQ[4].length > 0) {
-                    memberUpdates.pilatesExperience = snagByQ[4][0] || '';
-                }
-                if (snagByQ[5] && snagByQ[5].length > 0) {
-                    memberUpdates.fitnessGoals = snagByQ[5].map((s) => s);
-                }
-                if (snagByQ[6] && snagByQ[6].length > 0) {
-                    memberUpdates.interestedSessions = snagByQ[6].map((s) => s);
-                }
-                if (snagByQ[7] && snagByQ[7].length > 0) {
-                    memberUpdates.heardAbout = snagByQ[7][0] || '';
-                }
-                if (snagByQ[8] && snagByQ[8].length > 0) {
-                    memberUpdates.motivations = snagByQ[8].map((s) => s);
-                }
-                if (snagByQ[9] && snagByQ[9].length > 0) {
-                    memberUpdates.updatePreferences = snagByQ[9].map((s) => s);
-                }
-                if (snagByQ[10] && snagByQ[10].length > 0) {
-                    memberUpdates.communicationChannel = snagByQ[10].map((s) => s);
-                }
-                if (snagByQ[11] && snagByQ[11].length > 0) {
-                    memberUpdates.profession = snagByQ[11][0] || '';
-                }
-                if (snagByQ[12] && snagByQ[12].length > 0) {
-                    memberUpdates.companyName = snagByQ[12][0] || '';
-                }
-                if (snagByQ[13] && snagByQ[13].length > 0) {
-                    const val = snagByQ[13][0].toLowerCase();
-                    memberUpdates.corporateInterest = val === 'yes' ? 'yes' : val === 'no' ? 'no' : '';
-                }
+                // Update members state with loaded data
+                setMembers(loadedMembers);
+                console.log('Members state updated with:', loadedMembers);
+
+                // Update member IDs for all cards
+                const memberIds = loadedMembers.map(m => m.id);
+                console.log('Updating member IDs for all cards:', memberIds);
+                setUserMemberIds(memberIds);
+                setAddressMemberIds(memberIds);
+                setDocumentMemberIds(memberIds);
+                setHealthMemberIds(memberIds);
+                setActivityMemberIds(memberIds);
+                setLifestyleMemberIds(memberIds);
+                setOccupationMemberIds(memberIds);
+            } else {
+                console.warn('No members found in API response or invalid format');
             }
 
-            // Apply all member updates at once
-            if (Object.keys(memberUpdates).length > 0) {
-                updateMember(members[0].id, memberUpdates);
-            }
-
-            // Set existing image previews for the member (but not the files, as they're already on server)
-            const imageUpdates: Partial<MemberData> = {};
-            if (data.identification_image) {
-                imageUpdates.idCardPreview = data.identification_image;
-            }
-
-            if (data.avatar) {
-                // Handle avatar URL format
-                const avatarUrl = data.avatar?.startsWith('%2F')
-                    ? `https://fm-uat-api.lockated.com${decodeURIComponent(data.avatar)}`
-                    : data.avatar;
-                imageUpdates.residentPhotoPreview = avatarUrl;
-            }
-
-            if (Object.keys(imageUpdates).length > 0) {
-                updateMember(members[0].id, imageUpdates);
-            }
-
-            toast.success('Membership data loaded');
+            toast.success('Group membership data loaded successfully');
+            console.log('Final state - Plan ID:', selectedPlanId, 'Start:', startDate?.format('YYYY-MM-DD'), 'End:', endDate?.format('YYYY-MM-DD'));
         } catch (error) {
             console.error('Error loading membership data:', error);
             toast.error('Failed to load membership data');
@@ -1017,7 +1032,7 @@ export const AddGroupMembershipPage = () => {
             return;
         }
 
-        if (emergencyContactName && !validateMobile(emergencyContactName)) {
+        if (emergencyContactName && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)) {
             toast.error('Please enter a valid 10-digit emergency contact number');
             return;
         }
@@ -1122,6 +1137,7 @@ export const AddGroupMembershipPage = () => {
                     start_date: startDate ? startDate.format('YYYY-MM-DD') : null,
                     end_date: endDate ? endDate.format('YYYY-MM-DD') : null,
                     referred_by: referredBy,
+                    emergency_contact_name: emergencyContactName,
                     total_members: members.length,
                     group_leader_mobile: groupLeader.formData.mobile,
                     allocation_payment_detail_attributes: {
@@ -1210,7 +1226,7 @@ export const AddGroupMembershipPage = () => {
     };
 
     const handleGoBack = () => {
-        navigate('/club-management/membership');
+        navigate('/club-management/membership/groups');
     };
 
     // Add validation helper functions
@@ -1237,6 +1253,14 @@ export const AddGroupMembershipPage = () => {
 
     // Handle next step with proper validation
     const handleNext = () => {
+        console.log('handleNext called - Current state:', {
+            selectedPlanId,
+            startDate: startDate?.format('YYYY-MM-DD'),
+            endDate: endDate?.format('YYYY-MM-DD'),
+            emergencyContactName,
+            currentStep
+        });
+
         // Validation for step 1 (Membership Plan Selection)
         if (!selectedPlanId) {
             toast.error('Please select a membership plan');
@@ -1260,16 +1284,22 @@ export const AddGroupMembershipPage = () => {
             return;
         }
 
-        // Validate emergency contact if provided
-        if (emergencyContactName && !validateMobile(emergencyContactName)) {
-            toast.error('Please enter a valid 10-digit emergency contact number');
+        // Validate emergency contact if provided - only validate format, not mandatory
+        if (emergencyContactName && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)) {
+            toast.error('Emergency contact must be a valid 10-digit phone number');
+            console.log('Emergency contact validation failed:', emergencyContactName);
             return;
         }
 
+        console.log('All validations passed, moving to step 2');
+
         // Move to next step
         setCurrentStep(2);
-        // Scroll to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Scroll to top after a small delay to ensure state update
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
     };
 
     // Handle back to step 1
@@ -1293,8 +1323,8 @@ export const AddGroupMembershipPage = () => {
 
     // Get plan amenity IDs
     const planAmenityIds = selectedPlan?.plan_amenities?.map(pa => pa.facility_setup_id) || [];
-    console.log("planAmenityIds :---", selectedPlan?.plan_amenities, "all amenities",allAmenities);
-    
+    console.log("planAmenityIds :---", selectedPlan?.plan_amenities, "all amenities", allAmenities);
+
 
     // Get available add-ons (amenities not in plan)
     const availableAddOns = allAmenities.filter(amenity => !planAmenityIds.includes(amenity.value));
@@ -1440,7 +1470,7 @@ export const AddGroupMembershipPage = () => {
     useEffect(() => {
         if (startDate && membershipType) {
             let newEndDate: Dayjs | null = null;
-            
+
             switch (membershipType) {
                 case 'Day Pass':
                     newEndDate = startDate.add(1, 'day');
@@ -1460,12 +1490,24 @@ export const AddGroupMembershipPage = () => {
                 default:
                     newEndDate = null;
             }
-            
+
             if (newEndDate) {
                 setEndDate(newEndDate);
             }
         }
     }, [startDate, membershipType]);
+
+    // Debug effect to log state changes
+    useEffect(() => {
+        if (isEditMode) {
+            console.log('State updated - Members count:', members.length);
+            console.log('State updated - Selected Plan:', selectedPlanId);
+            console.log('State updated - Start Date:', startDate?.format('YYYY-MM-DD'));
+            console.log('State updated - End Date:', endDate?.format('YYYY-MM-DD'));
+            console.log('State updated - Emergency Contact:', emergencyContactName);
+            console.log('State updated - Referred By:', referredBy);
+        }
+    }, [members, selectedPlanId, startDate, endDate, emergencyContactName, referredBy, isEditMode]);
 
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -1695,12 +1737,13 @@ export const AddGroupMembershipPage = () => {
                                                             value={member.formData.dateOfBirth ? dayjs(member.formData.dateOfBirth, 'YYYY-MM-DD') : null}
                                                             onChange={(newValue) => {
                                                                 if (newValue) {
+                                                                    const selectedDate = dayjs(newValue);
                                                                     // Check if selected date is in the future
-                                                                    if (newValue.isAfter(dayjs())) {
+                                                                    if (selectedDate.isAfter(dayjs())) {
                                                                         toast.error('Date of Birth cannot be a future date');
                                                                         return;
                                                                     }
-                                                                    updateMember(member.id, { formData: { ...member.formData, dateOfBirth: newValue.format('YYYY-MM-DD') } });
+                                                                    updateMember(member.id, { formData: { ...member.formData, dateOfBirth: selectedDate.format('YYYY-MM-DD') } });
                                                                 } else {
                                                                     updateMember(member.id, { formData: { ...member.formData, dateOfBirth: '' } });
                                                                 }
@@ -1754,7 +1797,7 @@ export const AddGroupMembershipPage = () => {
                                                             sx={fieldStyles}
                                                             fullWidth
                                                             type="tel"
-                                                            inputProps={{ 
+                                                            inputProps={{
                                                                 maxLength: 10,
                                                                 pattern: '[0-9]*',
                                                                 inputMode: 'numeric'
@@ -1853,7 +1896,7 @@ export const AddGroupMembershipPage = () => {
                                                         sx={fieldStyles}
                                                         fullWidth
                                                         type="tel"
-                                                        inputProps={{ 
+                                                        inputProps={{
                                                             maxLength: 6,
                                                             pattern: '[0-9]*',
                                                             inputMode: 'numeric'
@@ -2279,7 +2322,7 @@ export const AddGroupMembershipPage = () => {
                                                                 {plan.plan_amenities.map((amenity) => (
                                                                     <div key={amenity.id} className="flex items-center gap-2">
                                                                         <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                                                                        
+
                                                                         <span className="text-sm text-gray-600">
                                                                             {amenity.facility_setup_name || amenity.facility_setup?.name || `Amenity #${amenity.facility_setup_id}`}
                                                                         </span>
@@ -2347,8 +2390,7 @@ export const AddGroupMembershipPage = () => {
                                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                                         <h2 className="text-lg font-semibold text-[#1a1a1a] mb-2">Additional Amenities (Add-ons)</h2>
                                         <p className="text-sm text-gray-500 mb-6">Select additional amenities not included in your plan</p>
-                                        {console.log("availableAddOns :---", availableAddOns)}
-                                        
+
                                         {availableAddOns.length === 0 ? (
                                             <div className="text-center py-6 bg-gray-50 rounded-lg">
                                                 <p className="text-gray-500 text-sm">All available amenities are already included in your selected plan.</p>
@@ -2389,60 +2431,45 @@ export const AddGroupMembershipPage = () => {
                                     </div>
                                 )}
 
-                                 {/* Shared Membership Details */}
+                                {/* Shared Membership Details */}
                                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                                     <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">Shared Membership Details</h2>
-                                    
-                                    <div className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <FormControl fullWidth sx={fieldStyles}>
-                                                <InputLabel>Membership Type</InputLabel>
-                                                <Select value={membershipType} onChange={(e) => setMembershipType(e.target.value)} label="Membership Type">
-                                                    <MenuItem value=""><em>Select Type</em></MenuItem>
-                                                    {MEMBERSHIP_TYPE_OPTIONS.map((opt) => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
-                                                </Select>
-                                            </FormControl>
 
-                                            <FormControl fullWidth sx={fieldStyles}>
-                                                <InputLabel>Referred By</InputLabel>
-                                                <Select value={referredBy} onChange={(e) => setReferredBy(e.target.value)} label="Referred By">
-                                                    <MenuItem value=""><em>Select</em></MenuItem>
-                                                    {REFERRED_BY_OPTIONS.map((opt) => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
-                                                </Select>
-                                            </FormControl>
-                                        </div>
+                                    <div className="space-y-6">
 
                                         <TextField
-                                            label="Emergency Contact"
+                                            label="Emergency Contact (Optional)"
                                             value={emergencyContactName}
                                             onChange={(e) => {
                                                 const value = e.target.value;
                                                 // Only allow numbers and limit to 10 digits
                                                 if (value === '' || /^\d{0,10}$/.test(value)) {
                                                     setEmergencyContactName(value);
-                                                } else {
-                                                    toast.error('Emergency contact should contain only digits and must be 10 digits');
                                                 }
                                             }}
                                             onBlur={() => {
-                                                if (emergencyContactName && !validateMobile(emergencyContactName)) {
-                                                    toast.error('Please enter a valid 10-digit emergency contact number');
+                                                if (emergencyContactName && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)) {
+                                                    toast.warning('Emergency contact should be a valid 10-digit phone number');
                                                 }
                                             }}
                                             sx={fieldStyles}
                                             fullWidth
                                             type="tel"
-                                            placeholder="Phone Number"
-                                            inputProps={{ 
+                                            placeholder="10-digit Phone Number"
+                                            inputProps={{
                                                 maxLength: 10,
                                                 pattern: '[0-9]*',
                                                 inputMode: 'numeric'
                                             }}
-                                            error={emergencyContactName !== '' && !validateMobile(emergencyContactName)}
-                                            helperText={emergencyContactName !== '' && !validateMobile(emergencyContactName) ? 'Emergency contact must be exactly 10 digits' : ''}
+                                            error={emergencyContactName !== '' && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)}
+                                            helperText={
+                                                emergencyContactName !== '' && emergencyContactName.trim() !== '' && !validateMobile(emergencyContactName)
+                                                    ? 'Emergency contact must be exactly 10 digits'
+                                                    : ''
+                                            }
                                         />
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
                                             <DatePicker
                                                 label="Start Date *"
                                                 value={startDate}
@@ -2531,7 +2558,7 @@ export const AddGroupMembershipPage = () => {
                                                             }}
                                                             type="number"
                                                             size="small"
-                                                            inputProps={{ 
+                                                            inputProps={{
                                                                 min: 0,
                                                                 max: 100,
                                                                 step: 0.01
@@ -2572,7 +2599,7 @@ export const AddGroupMembershipPage = () => {
                                                             }}
                                                             type="number"
                                                             size="small"
-                                                            inputProps={{ 
+                                                            inputProps={{
                                                                 min: 0,
                                                                 max: 100,
                                                                 step: 0.01
@@ -2604,7 +2631,7 @@ export const AddGroupMembershipPage = () => {
                                                             }}
                                                             type="number"
                                                             size="small"
-                                                            inputProps={{ 
+                                                            inputProps={{
                                                                 min: 0,
                                                                 max: 100,
                                                                 step: 0.01

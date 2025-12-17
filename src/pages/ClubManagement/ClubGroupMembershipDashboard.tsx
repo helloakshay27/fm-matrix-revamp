@@ -573,14 +573,14 @@ export const ClubGroupMembershipDashboard = () => {
           >
             <Eye className="w-4 h-4" />
           </Button>
-          {/* <Button
+          <Button
             variant="ghost"
-            onClick={() => navigate(`/club-management/membership/group/${item.id}/edit`)}
+            onClick={() => navigate(`/club-management/group-membership/${item.id}/edit`)}
             title="Edit"
             className="p-0"
           >
             <Edit className="w-4 h-4" />
-          </Button> */}
+          </Button>
         </div>
       );
     }

@@ -1311,7 +1311,7 @@ export const AddClubMembershipPage = () => {
         ) : (
           <div className="space-y-6">
             {/* Step 1: User Details and Forms */}
-            {currentStep === 1 && (
+            {(currentStep === 1 || isEditMode) && (
               <>
                 {/* Card 1: User Selection Mode */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -2559,7 +2559,7 @@ export const AddClubMembershipPage = () => {
                   </div>
                 </div>
 
-                {/* Submit Button */}
+                {/* Submit/Stepper Buttons */}
                 <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
                   <Button
                     variant="outline"
@@ -2567,18 +2567,29 @@ export const AddClubMembershipPage = () => {
                   >
                     Cancel
                   </Button>
-                  <Button
-                    onClick={handleNext}
-                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                  >
-                    Next
-                  </Button>
+                  {/* If edit mode, show Update button, else show Next */}
+                  {isEditMode ? (
+                    <Button
+                      onClick={handleSubmit}
+                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Updating...' : 'Update'}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleNext}
+                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    >
+                      Next
+                    </Button>
+                  )}
                 </div>
               </>
             )}
 
             {/* Step 2: Membership Plan & Add-ons */}
-            {currentStep === 2 && (
+            {!isEditMode && currentStep === 2 && (
               <>
                 {/* Card 9: Membership Plan Selection */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
