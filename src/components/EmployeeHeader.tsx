@@ -47,16 +47,18 @@ const employeeModules = [
   { name: "Project Task", icon: FolderKanban },
   { name: "Ticket", icon: Ticket },
   { name: "Visitors", icon: Users },
-  { name: "MOM", icon: FileText },
-  { name: "Book Seats", icon: Calendar1 },
-  { name: "Parking", icon: Car },
   { name: "Calendar", icon: Calendar1 },
-  { name: "Booking", icon: Package },
-  { name: "F&B", icon: ChartArea },
   { name: "Documents", icon: FileText },
   { name: "ID Card", icon: User },
-  { name: "Notes", icon: MessageSquare },
+  { name: "MOM", icon: FileText },
+  { name: "TO DO", icon: MessageSquare },
   { name: "Ask AI", icon: ChartArea },
+  { name: "Book Seats", icon: Calendar1 },
+  { name: "Parking", icon: Car },
+  { name: "Booking", icon: Package },
+  { name: "F&B", icon: ChartArea },
+  
+
 ];
 
 export const EmployeeHeader: React.FC = () => {
@@ -141,12 +143,13 @@ export const EmployeeHeader: React.FC = () => {
       case "Ticket":
         navigate("/maintenance/ticket/employee");
         break;
-      case "MOM":
-        navigate("/vas/mom");
-        break;
       case "Visitors":
         navigate("/security/visitor/employee");
         break;
+      case "MOM":
+        navigate("/vas/mom");
+        break;
+
       case "Book Seats":
         navigate("/vas/space-management/bookings");
         break;
@@ -393,11 +396,10 @@ export const EmployeeHeader: React.FC = () => {
                         onDrop={(e) => handleModuleDrop(e, module.name)}
                         onDragOver={handleModuleDragOver}
                         onClick={() => handleModuleClick(module.name)}
-                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${
-                          isActive
-                            ? "bg-white text-[#C72030] shadow-sm"
-                            : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                        }`}
+                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${isActive
+                          ? "bg-white text-[#C72030] shadow-sm"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                          }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
                         <span className="hidden lg:inline text-[10px] sm:text-xs">
@@ -458,11 +460,10 @@ export const EmployeeHeader: React.FC = () => {
                                 handleModuleDragStart(e, module.name)
                               }
                               onClick={() => handleModuleClick(module.name)}
-                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${
-                                isActive
-                                  ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                                  : "hover:bg-[#f6f4ee] text-gray-700"
-                              }`}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${isActive
+                                ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                                : "hover:bg-[#f6f4ee] text-gray-700"
+                                }`}
                             >
                               <Icon className="w-5 h-5 flex-shrink-0" />
                               <span className="text-sm font-medium">
