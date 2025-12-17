@@ -159,6 +159,8 @@ const ProfileAssets = () => {
 
     const renderCell = (item: any, columnKey: string) => {
         switch (columnKey) {
+            case "status":
+                return item?.status.replace(/_/g, ' ').charAt(0).toUpperCase() + item?.status.replace(/_/g, ' ').slice(1) || '-';
             case "building":
                 return item?.building?.name || '-';
             case "wing":
