@@ -4,8 +4,35 @@ import ProfileRoster from './ProfileRoster'
 import ProfileWallet from '@/components/ProfileWallet'
 import ProfileAttendance from '@/components/ProfileAttendance'
 import ProfileAssets from '@/components/ProfileAssets'
+import { useEffect, useState } from 'react'
+import axios from 'axios'
 
 const ProfileDetailsPage = () => {
+    const baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    const id = JSON.parse(localStorage.getItem('user')).id
+
+    const [details, setDetails] = useState({})
+
+    const fetchUserDetails = async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/user_details/${id}.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+
+            console.log(response)
+            setDetails(response.data)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    useEffect(() => {
+        fetchUserDetails();
+    }, [])
+
     return (
         <div className='p-6'>
             <Tabs defaultValue={"basic_info"} className='w-full'>
@@ -28,7 +55,7 @@ const ProfileDetailsPage = () => {
                 </TabsList>
 
                 <TabsContent value="basic_info">
-                    <ProfileBasicInfo />
+                    <ProfileBasicInfo details={details} />
                 </TabsContent>
                 <TabsContent value="assets">
                     <ProfileAssets />
@@ -37,7 +64,7 @@ const ProfileDetailsPage = () => {
                     <ProfileAttendance />
                 </TabsContent>
                 <TabsContent value="my_roster">
-                    <ProfileRoster />
+                    <ProfileRoster rosterId={details?.lock_user_permission?.user_roaster_id} />
                 </TabsContent>
                 <TabsContent value="my_wallet">
                     <ProfileWallet />
