@@ -169,6 +169,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
+      "sumitra.patil@lockated.com"
     ];
     setCanEditRegion(allowedEmails.includes(userEmail));
   };
@@ -482,11 +483,10 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     ),
     status: (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          region?.active
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${region?.active
             ? "bg-green-100 text-green-800"
             : "bg-red-100 text-red-800"
-        }`}
+          }`}
       >
         {region?.active ? "Active" : "Inactive"}
       </span>
@@ -592,27 +592,27 @@ export const RegionTab: React.FC<RegionTabProps> = ({
                 <Plus className="w-4 h-4 mr-2" /> Add Region
               </Button>
             }
-            // rightActions={(
-            //   <div className="flex items-center gap-2">
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsBulkUploadOpen(true)}
-            //       disabled={!canEditRegion}
-            //     >
-            //       <Upload className="w-4 h-4 mr-2" />
-            //       Bulk Upload
-            //     </Button>
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsExportOpen(true)}
-            //     >
-            //       <Download className="w-4 h-4 mr-2" />
-            //       Export
-            //     </Button>
-            //   </div>
-            // )}
+          // rightActions={(
+          //   <div className="flex items-center gap-2">
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsBulkUploadOpen(true)}
+          //       disabled={!canEditRegion}
+          //     >
+          //       <Upload className="w-4 h-4 mr-2" />
+          //       Bulk Upload
+          //     </Button>
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsExportOpen(true)}
+          //     >
+          //       <Download className="w-4 h-4 mr-2" />
+          //       Export
+          //     </Button>
+          //   </div>
+          // )}
           />
 
           <TicketPagination

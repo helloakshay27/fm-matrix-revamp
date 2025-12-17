@@ -171,6 +171,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
+      "sumitra.patil@lockated.com"
     ];
     setCanEditCountry(allowedEmails.includes(userEmail));
   };
@@ -470,11 +471,10 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 case "active":
                   return (
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        country.active
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${country.active
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
-                      }`}
+                        }`}
                     >
                       {country.active ? "Active" : "Inactive"}
                     </span>
@@ -496,34 +496,34 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 Add Headquarter
               </Button>
             }
-            // rightActions={(
-            //   <div className="flex items-center gap-2">
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsFilterOpen(true)}
-            //     >
-            //       <Filter className="w-4 h-4 mr-2" />
-            //       Filter
-            //     </Button>
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsBulkUploadOpen(true)}
-            //     >
-            //       <Upload className="w-4 h-4 mr-2" />
-            //       Import
-            //     </Button>
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsExportOpen(true)}
-            //     >
-            //       <Download className="w-4 h-4 mr-2" />
-            //       Export
-            //     </Button>
-            //   </div>
-            // )}
+          // rightActions={(
+          //   <div className="flex items-center gap-2">
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsFilterOpen(true)}
+          //     >
+          //       <Filter className="w-4 h-4 mr-2" />
+          //       Filter
+          //     </Button>
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsBulkUploadOpen(true)}
+          //     >
+          //       <Upload className="w-4 h-4 mr-2" />
+          //       Import
+          //     </Button>
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsExportOpen(true)}
+          //     >
+          //       <Download className="w-4 h-4 mr-2" />
+          //       Export
+          //     </Button>
+          //   </div>
+          // )}
           />
 
           <TicketPagination
