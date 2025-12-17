@@ -169,6 +169,10 @@ export const API_CONFIG = {
     // Task Management endpoints
     MY_TASKS: "/task_managements/my_tasks.json",
     MY_TODOS: "/todos.json",
+    // Seat Bookings endpoint
+    SEAT_BOOKINGS: "/pms/admin/seat_bookings.json",
+    // Combined Calendar Data endpoint
+    COMBINED_CALENDAR_DATA: "/users/combined_calendar_data.json",
     // Assets data report export endpoint
     ASSETS_DATA_EXPORT: "/pms/assets/assets_data_report.xlsx",
     // Recent assets endpoint
