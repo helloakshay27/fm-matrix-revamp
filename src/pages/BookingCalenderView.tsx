@@ -262,11 +262,11 @@ const BookingCalenderView = () => {
 
     return (
         <div className="pt-2 space-y-6">
-            <div className="flex items-center justify-end">
+            {/* <div className="flex items-center justify-end">
                 <Button variant="outline" className="w-[40px] h-[40px]">
                     <Bell className="w-5 h-5" />
                 </Button>
-            </div>
+            </div> */}
 
             {/* Header Controls */}
             <div className="flex items-center justify-between">
