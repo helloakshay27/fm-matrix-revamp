@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,6 +12,40 @@ import { SpaceManagementExportDialog } from "@/components/SpaceManagementExportD
 import { EditBookingDialog } from "@/components/EditBookingDialog";
 import { CancelBookingDialog } from "@/components/CancelBookingDialog";
 import { ColumnVisibilityDropdown } from "@/components/ColumnVisibilityDropdown";
+import { getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+
+// API Response Interfaces
+interface SeatBooking {
+  id: number;
+  resource_id: number;
+  resource_type: string;
+  user_id: number;
+  booking_date: string;
+  status: string;
+  cancelled_by_id: number | null;
+  cancelled_at: string | null;
+  seat_configuration_id: number;
+  user_name: string;
+  user_email: string;
+  booking_day: string;
+  category: string;
+  building: string;
+  floor: string;
+  designation: string;
+  department: string;
+  slots: string;
+  created_at: string;
+}
+
+interface SeatBookingsApiResponse {
+  pagination: {
+    current_page: number;
+    total_count: number;
+    total_pages: number;
+  };
+  seat_bookings: SeatBooking[];
+}
+
 export const SpaceManagementBookingsDashboardEmployee = () => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -21,6 +56,13 @@ export const SpaceManagementBookingsDashboardEmployee = () => {
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 1
+  });
   
   // Column visibility state
   const [visibleColumns, setVisibleColumns] = useState<string[]>([
@@ -42,82 +84,87 @@ export const SpaceManagementBookingsDashboardEmployee = () => {
     'cancel'
   ]);
 
-  const [bookingData, setBookingData] = useState([{
-    id: "142179",
-    employeeId: "73974",
-    employeeName: "HO Occupant 2",
-    employeeEmail: "hooccupant2@locatard.com",
-    scheduleDate: "29 December 2023",
-    day: "Friday",
-    category: "Angular War",
-    building: "Jyoti Tower",
-    floor: "2nd Floor",
-    designation: "",
-    department: "",
-    slotsAndSeat: "10:00 AM to 08:00 PM - HR 1",
-    status: "Cancelled",
-    createdOn: "15/02/2023, 5:44 PM"
-  }, {
-    id: "142150",
-    employeeId: "71905",
-    employeeName: "Prashant P",
-    employeeEmail: "889853791@gmail.com",
-    scheduleDate: "29 December 2023",
-    day: "Friday",
-    category: "Angular War",
-    building: "Jyoti Tower",
-    floor: "2nd Floor",
-    designation: "",
-    department: "",
-    slotsAndSeat: "10:00 AM to 08:00 PM - S7",
-    status: "Cancelled",
-    createdOn: "15/02/2023, 5:43 PM"
-  }, {
-    id: "142219",
-    employeeId: "71903",
-    employeeName: "Bilal Shaikh",
-    employeeEmail: "bilal.shaikh@locatard.com",
-    scheduleDate: "29 December 2023",
-    day: "Friday",
-    category: "Angular War",
-    building: "Jyoti Tower",
-    floor: "2nd Floor",
-    designation: "Sr. Flutter developer",
-    department: "Tech",
-    slotsAndSeat: "10:00 AM to 08:00 PM - S4",
-    status: "Confirmed",
-    createdOn: "15/02/2023, 5:44 PM"
-  }, {
-    id: "142094",
-    employeeId: "73975",
-    employeeName: "HO Occupant 3",
-    employeeEmail: "hooccupant3@locatard.com",
-    scheduleDate: "29 December 2023",
-    day: "Friday",
-    category: "Angular War",
-    building: "Jyoti Tower",
-    floor: "2nd Floor",
-    designation: "",
-    department: "Technology",
-    slotsAndSeat: "10:00 AM to 08:00 PM - Technology",
-    status: "Confirmed",
-    createdOn: "15/02/2023, 5:44 PM"
-  }, {
-    id: "305213",
-    employeeId: "71902",
-    employeeName: "Abdul G",
-    employeeEmail: "abdul.g@locatard.com",
-    scheduleDate: "7 February 2025",
-    day: "Friday",
-    category: "Meeting Room",
-    building: "Urbanwrk",
-    floor: "1st Floor",
-    designation: "Project Manager",
-    department: "Operations",
-    slotsAndSeat: "04:45 PM to 05:45 PM - Meeting Room 100",
-    status: "Pending",
-    createdOn: "7/02/2025, 4:45 PM"
-  }]);
+  const [bookingData, setBookingData] = useState<any[]>([]);
+
+  // Get current user ID from localStorage
+  const getCurrentUserId = () => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        return user.id ? user.id.toString() : null;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // Fetch seat bookings from API
+  const fetchSeatBookings = async (page = 1) => {
+    try {
+      setLoading(true);
+      const currentUserId = getCurrentUserId();
+      
+      if (!currentUserId) {
+        toast.error('User not found. Please log in again.');
+        return;
+      }
+
+      const url = getFullUrl('/pms/admin/seat_bookings.json');
+      const options = getAuthenticatedFetchOptions();
+      
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('q[user_id_eq]', currentUserId);
+      
+      const fullUrl = `${url}?${params.toString()}`;
+      console.log('🔍 Fetching seat bookings from:', fullUrl);
+      
+      const response = await fetch(fullUrl, options);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data: SeatBookingsApiResponse = await response.json();
+      console.log('📊 Seat bookings data:', data);
+      
+      // Transform API data to match UI structure
+      const transformedBookings = data.seat_bookings.map((booking) => ({
+        id: booking.id.toString(),
+        employeeId: booking.user_id.toString(),
+        employeeName: booking.user_name,
+        employeeEmail: booking.user_email,
+        scheduleDate: booking.booking_date,
+        day: booking.booking_day,
+        category: booking.category,
+        building: booking.building,
+        floor: booking.floor,
+        designation: booking.designation,
+        department: booking.department,
+        slotsAndSeat: booking.slots,
+        status: booking.status,
+        createdOn: booking.created_at
+      }));
+      
+      setBookingData(transformedBookings);
+      setPagination(data.pagination);
+      
+    } catch (error) {
+      console.error('❌ Error fetching seat bookings:', error);
+      toast.error('Failed to load seat bookings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchSeatBookings(currentPage);
+  }, [currentPage]);
+
   const handleFilterApply = (filters: any) => {
     console.log('Applied filters:', filters);
   };
@@ -158,6 +205,10 @@ export const SpaceManagementBookingsDashboardEmployee = () => {
     });
     setBookingData(updatedBookings);
     console.log('Booking cancelled successfully');
+    toast.success('Booking cancelled successfully');
+    
+    // Refresh data from API
+    fetchSeatBookings(currentPage);
   };
 
   // Filter bookings based on search term
@@ -196,34 +247,7 @@ export const SpaceManagementBookingsDashboardEmployee = () => {
         {/* Action Buttons and Search Bar */}
         <div className="flex items-center justify-between gap-3 mb-6">
           <div className="flex gap-3">
-            {/* <Button onClick={() => setIsImportOpen(true)} style={{
-            backgroundColor: '#C72030',
-            color: 'white'
-          }} className="hover:opacity-90 px-4 py-2 rounded flex items-center gap-2 border-0">
-              <Upload className="w-4 h-4" />
-              Import
-            </Button> */}
-            {/* <Button onClick={() => setIsExportOpen(true)} style={{
-            backgroundColor: '#C72030',
-            color: 'white'
-          }} className="hover:opacity-90 px-4 py-2 rounded flex items-center gap-2 border-0">
-              <Download className="w-4 h-4" />
-              Export
-            </Button> */}
-            {/* <Button onClick={() => setIsRosterExportOpen(true)} style={{
-            backgroundColor: '#C72030',
-            color: 'white'
-          }} className="hover:opacity-90 px-4 py-2 rounded flex items-center gap-2 border-0">
-              <FileText className="w-4 h-4" />
-              Roster Export
-            </Button> */}
-            {/* <Button onClick={() => setIsFilterOpen(true)} style={{
-            backgroundColor: '#C72030',
-            color: 'white'
-          }} className="hover:opacity-90 px-4 py-2 rounded flex items-center gap-2 border-0">
-              <Filter className="w-4 h-4" />
-              Filters
-            </Button> */}
+           
           </div>
 
           {/* Right side - Search and Column Visibility */}
@@ -289,7 +313,15 @@ export const SpaceManagementBookingsDashboardEmployee = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredBookingData.length === 0 ? <TableRow>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={visibleColumns.length} className="text-center py-8">
+                      <div className="flex items-center justify-center">
+                        <div className="h-8 w-8 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredBookingData.length === 0 ? <TableRow>
                     <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-gray-500">
                       {searchTerm ? 'No bookings found matching your search.' : 'No bookings found.'}
                     </TableCell>
