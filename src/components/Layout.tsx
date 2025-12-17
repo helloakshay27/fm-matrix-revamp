@@ -96,7 +96,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const isLocalhost =
     hostname.includes("localhost") ||
-    hostname.includes("lockated.gophygital.work");
+    hostname.includes("lockated.gophygital.work") ||
+    hostname.includes("fm-matrix.lockated.com");
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -315,7 +316,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             : isSidebarCollapsed
               ? "ml-16"
               : "ml-64"
-          } ${isEmployeeUser ? "pt-16" : "pt-28"} transition-all duration-300`}
+        } ${isEmployeeUser ? "pt-16" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>
