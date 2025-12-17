@@ -165,6 +165,10 @@ export const API_CONFIG = {
     // Restaurant endpoints
     RESTAURANTS: "/pms/admin/restaurants",
     RESTAURANT_MENU: "/pms/admin/restaurants",
+    FOOD_ORDERS: "/pms/admin/restaurants", // Base path, will append /{restaurantId}/food_orders.json
+    // Task Management endpoints
+    MY_TASKS: "/task_managements/my_tasks.json",
+    MY_TODOS: "/todos.json",
     // Assets data report export endpoint
     ASSETS_DATA_EXPORT: "/pms/assets/assets_data_report.xlsx",
     // Recent assets endpoint
