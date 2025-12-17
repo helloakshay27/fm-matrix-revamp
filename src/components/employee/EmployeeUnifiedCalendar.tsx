@@ -128,6 +128,8 @@ export const EmployeeUnifiedCalendar: React.FC<
     }
   };
 
+  const userId = localStorage.getItem("userId") || "87989";
+
   // Fetch calendar data from API
   useEffect(() => {
     const fetchCalendarData = async () => {
@@ -137,7 +139,7 @@ export const EmployeeUnifiedCalendar: React.FC<
         const baseUrl = API_CONFIG.BASE_URL;
 
         const response = await fetch(
-          `${baseUrl}${API_CONFIG.ENDPOINTS.COMBINED_CALENDAR_DATA}?access_token=${token}`
+          `${baseUrl}${API_CONFIG.ENDPOINTS.COMBINED_CALENDAR_DATA}?access_token=${token}&id=${userId}`
         );
 
         if (!response.ok) {
