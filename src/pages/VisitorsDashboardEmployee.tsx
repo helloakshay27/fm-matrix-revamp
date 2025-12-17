@@ -92,6 +92,9 @@ const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: 
   }
 };
 
+  const userId = localStorage.getItem("userId") || "87989";
+
+
 const getVisitorHistory = async (siteId: number, page: number = 1, perPage: number = 20, searchTerm?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.VISITOR_HISTORY);
@@ -102,6 +105,7 @@ const getVisitorHistory = async (siteId: number, page: number = 1, perPage: numb
     urlWithParams.searchParams.append('site_id', siteId.toString());
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
+    urlWithParams.searchParams.append('id', userId);
 
     // Add dynamic search filter if provided
     if (searchTerm && searchTerm.trim() !== '') {
