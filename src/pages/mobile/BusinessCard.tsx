@@ -65,12 +65,11 @@ export const BusinessCard: React.FC = () => {
         baseUrl = baseUrl.replace(/\/$/, "");
 
         // Build the API URL - using card as token in Authorization header
-        const apiUrl = `${baseUrl}/pms/users/user_info.json?is_token=true`;
+        const apiUrl = `${baseUrl}/pms/users/user_info.json?is_token=true&token=${token}`;
 
         const response = await fetch(apiUrl, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
