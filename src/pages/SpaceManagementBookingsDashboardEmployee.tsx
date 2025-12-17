@@ -231,7 +231,7 @@ export const SpaceManagementBookingsDashboardEmployee = () => {
     { key: 'slotsAndSeat', label: 'Slots & Seat No.' },
     { key: 'status', label: 'Status' },
     { key: 'createdOn', label: 'Created On' },
-    { key: 'cancel', label: 'Cancel' }
+    // { key: 'cancel', label: 'Cancel' }
   ];
 
   return <div className="p-6 min-h-screen bg-white">
@@ -309,7 +309,7 @@ export const SpaceManagementBookingsDashboardEmployee = () => {
                   {visibleColumns.includes('slotsAndSeat') && <TableHead className="font-semibold text-gray-700">Slots & Seat No.</TableHead>}
                   {visibleColumns.includes('status') && <TableHead className="font-semibold text-gray-700">Status</TableHead>}
                   {visibleColumns.includes('createdOn') && <TableHead className="font-semibold text-gray-700">Created On</TableHead>}
-                  {visibleColumns.includes('cancel') && <TableHead className="font-semibold text-gray-700">Cancel</TableHead>}
+                  {/* {visibleColumns.includes('cancel') && <TableHead className="font-semibold text-gray-700">Cancel</TableHead>} */}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -353,13 +353,13 @@ export const SpaceManagementBookingsDashboardEmployee = () => {
                         </TableCell>
                       )}
                       {visibleColumns.includes('createdOn') && <TableCell>{booking.createdOn}</TableCell>}
-                      {visibleColumns.includes('cancel') && (
+                      {/* {visibleColumns.includes('cancel') && (
                         <TableCell>
                           <Button size="sm" onClick={() => handleCancelBooking(booking)} className="bg-[#C72030] hover:bg-[#B01E2A] text-white" disabled={booking.status === 'Cancelled'}>
                             {booking.status === 'Cancelled' ? 'Cancelled' : 'Cancel'}
                           </Button>
                         </TableCell>
-                      )}
+                      )} */}
                     </TableRow>)}
               </TableBody>
             </Table>

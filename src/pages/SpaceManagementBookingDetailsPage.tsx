@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, Clock, MapPin, User, Building, Mail, Phone, Briefcase, ChevronDown, ChevronUp, MessageSquare, FileText, History } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, MapPin, User, ChevronDown, ChevronUp } from "lucide-react";
+import { getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 
 interface BookingDetails {
   id: string;
@@ -27,10 +28,33 @@ interface BookingDetails {
   notes?: string;
 }
 
+// API Response Interface
+interface SeatBookingApiResponse {
+  id: number;
+  resource_id: number;
+  resource_type: string;
+  user_id: number;
+  booking_date: string;
+  status: string;
+  cancelled_by_id: number | null;
+  cancelled_at: string | null;
+  seat_configuration_id: number;
+  user_name: string;
+  user_email: string;
+  booking_day: string;
+  category: string;
+  building: string;
+  floor: string;
+  designation: string;
+  department: string;
+  slots: string;
+  created_at: string;
+}
+
 export const SpaceManagementBookingDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("details");
+  const [loading, setLoading] = useState(true);
 
   // Expandable sections state
   const [expandedSections, setExpandedSections] = useState({
@@ -48,59 +72,120 @@ export const SpaceManagementBookingDetailsPage = () => {
     }));
   };
 
-  // Static booking data - in real app, fetch from API
+  // Booking data state
   const [booking, setBooking] = useState<BookingDetails>({
-    id: "142179",
-    employeeId: "73974",
-    employeeName: "HO Occupant 2",
-    employeeEmail: "hooccupant2@locatard.com",
-    employeePhone: "+91 98765 43210",
-    scheduleDate: "29 December 2023",
-    day: "Friday",
-    category: "Angular War",
-    building: "Jyoti Tower",
-    floor: "2nd Floor",
-    designation: "Senior Developer",
-    department: "Technology",
-    slotsAndSeat: "10:00 AM to 08:00 PM - HR 1",
-    status: "Confirmed",
-    createdOn: "15/02/2023, 5:44 PM",
-    checkInTime: "10:15 AM",
-    checkOutTime: "07:45 PM",
-    notes: "Window seat preferred"
+    id: "",
+    employeeId: "",
+    employeeName: "",
+    employeeEmail: "",
+    employeePhone: "",
+    scheduleDate: "",
+    day: "",
+    category: "",
+    building: "",
+    floor: "",
+    designation: "",
+    department: "",
+    slotsAndSeat: "",
+    status: "",
+    createdOn: "",
   });
 
-  // Activity log data
-  const activityLogs = [
-    {
-      id: 1,
-      action: "Booking Created",
-      performedBy: "HO Occupant 2",
-      timestamp: "15/02/2023, 5:44 PM",
-      details: "Booking created for 29 December 2023"
-    },
-    {
-      id: 2,
-      action: "Booking Confirmed",
-      performedBy: "System",
-      timestamp: "15/02/2023, 5:45 PM",
-      details: "Booking automatically confirmed"
-    },
-    {
-      id: 3,
-      action: "Check-In",
-      performedBy: "HO Occupant 2",
-      timestamp: "29/12/2023, 10:15 AM",
-      details: "Employee checked in"
-    },
-    {
-      id: 4,
-      action: "Check-Out",
-      performedBy: "HO Occupant 2",
-      timestamp: "29/12/2023, 07:45 PM",
-      details: "Employee checked out"
-    }
-  ];
+  // Fetch booking details from API
+  useEffect(() => {
+    const fetchBookingDetails = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        
+        // Get current user ID from localStorage
+        const userData = localStorage.getItem('user');
+        let currentUserId = null;
+        if (userData) {
+          try {
+            const user = JSON.parse(userData);
+            currentUserId = user.id ? user.id.toString() : null;
+          } catch (error) {
+            console.error('Error parsing user data:', error);
+          }
+        }
+        
+        const url = getFullUrl(`/pms/admin/seat_bookings/${id}.json`);
+        const options = getAuthenticatedFetchOptions();
+        
+        // Add query parameter for user_id
+        const params = new URLSearchParams();
+        if (currentUserId) {
+          params.append('q[user_id_eq]', currentUserId);
+        }
+        
+        const fullUrl = `${url}?${params.toString()}`;
+        console.log('🔍 Fetching booking details from:', fullUrl);
+        
+        const response = await fetch(fullUrl, options);
+        
+        console.log('📡 Response status:', response.status);
+        console.log('📡 Response headers:', response.headers);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Response error:', errorText);
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Check if response has content
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const responseText = await response.text();
+          console.error('❌ Non-JSON response:', responseText);
+          throw new Error('Response is not JSON');
+        }
+        
+        const responseText = await response.text();
+        console.log('📄 Response text:', responseText);
+        
+        if (!responseText || responseText.trim() === '') {
+          console.error('❌ Empty response');
+          throw new Error('Empty response from server');
+        }
+        
+        const data: SeatBookingApiResponse = JSON.parse(responseText);
+        console.log('📊 Booking details data:', data);
+        
+        // Transform API data to match UI structure
+        setBooking({
+          id: data.id.toString(),
+          employeeId: data.user_id.toString(),
+          employeeName: data.user_name,
+          employeeEmail: data.user_email,
+          employeePhone: "+91 98765 43210", // Not available in API, using placeholder
+          scheduleDate: data.booking_date,
+          day: data.booking_day,
+          category: data.category,
+          building: data.building,
+          floor: data.floor,
+          designation: data.designation,
+          department: data.department,
+          slotsAndSeat: data.slots,
+          status: data.status,
+          createdOn: data.created_at,
+          checkInTime: undefined, // Not available in current API response
+          checkOutTime: undefined, // Not available in current API response
+          notes: undefined // Not available in current API response
+        });
+        
+      } catch (error) {
+        console.error('❌ Error fetching booking details:', error);
+        toast.error('Failed to load booking details');
+        navigate('/employee/space-management/bookings');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookingDetails();
+  }, [id, navigate]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -117,6 +202,11 @@ export const SpaceManagementBookingDetailsPage = () => {
 
   return (
     <div className="p-6 min-h-screen" style={{ backgroundColor: 'white' }}>
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="h-12 w-12 rounded-full border-4 border-gray-300 border-t-gray-600 animate-spin" />
+        </div>
+      ) : (
       <div className="mb-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm mb-4" style={{ color: '#6B7280' }}>
@@ -150,7 +240,8 @@ export const SpaceManagementBookingDetailsPage = () => {
             </Button>
             <div>
               <h1 className="text-2xl font-bold" style={{ color: '#1A1A1A' }}>
-                Booking #{booking.id}
+                Booking 
+                {/* #{booking.id} */}
               </h1>
               <p className="text-sm" style={{ color: '#6B7280' }}>{booking.employeeName}</p>
             </div>
@@ -167,37 +258,10 @@ export const SpaceManagementBookingDetailsPage = () => {
           </Badge>
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-white p-1 rounded-lg mb-6" style={{ border: '1px solid #E5E7EB' }}>
-            <TabsTrigger 
-              value="details" 
-              className="px-6 py-2 rounded transition-all"
-              style={{
-                backgroundColor: activeTab === 'details' ? '#C72030' : 'transparent',
-                color: activeTab === 'details' ? '#FFFFFF' : '#6B7280',
-                fontWeight: activeTab === 'details' ? '500' : '400'
-              }}
-            >
-              Details
-            </TabsTrigger>
-            <TabsTrigger 
-              value="activity" 
-              className="px-6 py-2 rounded transition-all"
-              style={{
-                backgroundColor: activeTab === 'activity' ? '#C72030' : 'transparent',
-                color: activeTab === 'activity' ? '#FFFFFF' : '#6B7280',
-                fontWeight: activeTab === 'activity' ? '500' : '400'
-              }}
-            >
-              Activity Log
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Details Tab */}
-          <TabsContent value="details" className="space-y-4">
-            {/* Booking Information Section */}
-            <Card className="shadow-sm bg-white" style={{ border: '1px solid #E5E7EB' }}>
+        {/* Details Section - No Tabs */}
+        <div className="space-y-4">
+          {/* Booking Information Section */}
+          <Card className="shadow-sm bg-white" style={{ border: '1px solid #E5E7EB' }}>
               <CardHeader 
                 className="cursor-pointer hover:bg-gray-100 transition-colors"
                 style={{ backgroundColor: '#f6f4ee', borderBottom: '1px solid #E5E7EB' }}
@@ -248,8 +312,6 @@ export const SpaceManagementBookingDetailsPage = () => {
                 </CardContent>
               )}
             </Card>
-
-            
 
             {/* Employee Information Section */}
             <Card className="shadow-sm bg-white" style={{ border: '1px solid #E5E7EB' }}>
@@ -376,55 +438,11 @@ export const SpaceManagementBookingDetailsPage = () => {
                 </CardContent>
               )}
             </Card>
-          </TabsContent>
-
-          {/* Activity Log Tab */}
-          <TabsContent value="activity" className="space-y-4">
-            <Card className="shadow-sm bg-white" style={{ border: '1px solid #E5E7EB' }}>
-              <CardHeader style={{ backgroundColor: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                <CardTitle className="text-base font-semibold flex items-center gap-2" style={{ color: '#1A1A1A' }}>
-                  <History className="w-5 h-5" style={{ color: '#C72030' }} />
-                  Activity Timeline
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {activityLogs.map((log, index) => (
-                    <div key={log.id} className="flex gap-4 relative">
-                      {/* Timeline line */}
-                      {index !== activityLogs.length - 1 && (
-                        <div className="absolute left-[15px] top-8 bottom-0 w-0.5" style={{ backgroundColor: '#E5E7EB' }}></div>
-                      )}
-                      
-                      {/* Timeline dot */}
-                      <div className="relative z-10">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
-                          <History className="w-4 h-4 text-white" />
-                        </div>
-                      </div>
-                      
-                      {/* Activity content */}
-                      <div className="flex-1 pb-4">
-                        <div className="rounded-lg p-4" style={{ backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB' }}>
-                          <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-semibold text-sm" style={{ color: '#1A1A1A' }}>{log.action}</h4>
-                            <span className="text-xs" style={{ color: '#6B7280' }}>{log.timestamp}</span>
-                          </div>
-                          <p className="text-sm mb-1" style={{ color: '#6B7280' }}>{log.details}</p>
-                          <p className="text-xs" style={{ color: '#9CA3AF' }}>By: {log.performedBy}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
 
         {/* Action Buttons */}
         <div className="flex gap-3 mt-6">
-          {booking.status !== 'Cancelled' && (
+          {/* {booking.status !== 'Cancelled' && (
             <Button
               className="hover:opacity-90 px-6 py-2 rounded"
               style={{
@@ -435,7 +453,7 @@ export const SpaceManagementBookingDetailsPage = () => {
             >
               Cancel Booking
             </Button>
-          )}
+          )} */}
           <Button
             variant="outline"
             className="px-6 py-2 rounded hover:bg-gray-50 bg-white"
@@ -449,6 +467,7 @@ export const SpaceManagementBookingDetailsPage = () => {
           </Button>
         </div>
       </div>
+      )}
     </div>
   );
 };
