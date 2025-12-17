@@ -1,46 +1,15 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 
-interface UserDetails {
-    firstname: string
-    lastname: string
-    email: string
-    role: string
-    reportingManager: string
-    active: boolean
-}
-
-interface Project {
-    id: string
-    name: string
-    type: string
-    createdAt: string
-}
-
-const ProfileBasicInfo = () => {
+const ProfileBasicInfo = ({ details }) => {
     const baseUrl = localStorage.getItem('baseUrl') || '';
     const token = localStorage.getItem('token') || '';
     const id = JSON.parse(localStorage.getItem('user')).id
 
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [modalAction, setModalAction] = useState<'Clone' | 'ReassignTo' | null>(null)
-    const [details, setDetails] = useState({})
+
     const [projects, setProjects] = useState([])
-
-    const fetchUserDetails = async () => {
-        try {
-            const response = await axios.get(`https://${baseUrl}/user_details/${id}.json`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
-
-            console.log(response)
-            setDetails(response.data)
-        } catch (error) {
-            console.log(error)
-        }
-    }
 
     const fetchAssociatedProjects = async () => {
         try {
@@ -57,19 +26,8 @@ const ProfileBasicInfo = () => {
     }
 
     useEffect(() => {
-        fetchUserDetails();
         fetchAssociatedProjects();
     }, [])
-
-    // Sample data - replace with actual data from props or context
-    const userDetails: UserDetails = {
-        firstname: 'John',
-        lastname: 'Doe',
-        email: 'john.doe@example.com',
-        role: 'Project Manager',
-        reportingManager: 'Jane Smith',
-        active: true,
-    }
 
     const getInitials = () => {
         return `${details?.firstname?.charAt(0).toUpperCase()}${details?.lastname?.charAt(0).toUpperCase()}`
