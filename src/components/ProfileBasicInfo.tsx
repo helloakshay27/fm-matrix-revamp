@@ -71,29 +71,8 @@ const ProfileBasicInfo = () => {
         active: true,
     }
 
-    const associatedProjects: Project[] = [
-        {
-            id: '1',
-            name: 'FM Matrix Revamp',
-            type: 'Development',
-            createdAt: '2024-01-15',
-        },
-        {
-            id: '2',
-            name: 'Dashboard Redesign',
-            type: 'Design',
-            createdAt: '2024-02-20',
-        },
-        {
-            id: '3',
-            name: 'API Integration',
-            type: 'Backend',
-            createdAt: '2024-03-10',
-        },
-    ]
-
     const getInitials = () => {
-        return `${userDetails.firstname.charAt(0).toUpperCase()}${userDetails.lastname.charAt(0).toUpperCase()}`
+        return `${details.firstname.charAt(0).toUpperCase()}${details.lastname.charAt(0).toUpperCase()}`
     }
 
     const formatDate = (dateString: string) => {
@@ -117,14 +96,14 @@ const ProfileBasicInfo = () => {
                     {/* User Info */}
                     <div className="flex flex-col gap-3">
                         <span className="font-semibold text-base">
-                            {`${userDetails.firstname.charAt(0).toUpperCase()}${userDetails.firstname.slice(1)} ${userDetails.lastname.charAt(0).toUpperCase()}${userDetails.lastname.slice(1)}`}
+                            {`${details.firstname.charAt(0).toUpperCase()}${details.firstname.slice(1)} ${details.lastname.charAt(0).toUpperCase()}${details.lastname.slice(1)}`}
                         </span>
                         <div className="flex justify-between gap-10 text-[12px]">
-                            <span>{`Email Id: ${userDetails.email}`}</span>
-                            <span>{`Role: ${userDetails.role}`}</span>
-                            <span>{`Reports To: ${userDetails.reportingManager}`}</span>
-                            <span className={`${userDetails.active ? 'text-green-600' : 'text-yellow-600'}`}>
-                                {userDetails.active ? 'Active' : 'Inactive'}
+                            <span>{`Email Id: ${details.email}`}</span>
+                            <span>{`Role: ${details?.lock_role?.name}`}</span>
+                            <span>{`Reports To: ${details.report_to?.name || "N/A"}`}</span>
+                            <span className={`${details.active ? 'text-green-600' : 'text-yellow-600'}`}>
+                                {details.active ? 'Active' : 'Inactive'}
                             </span>
                         </div>
                     </div>
@@ -153,14 +132,14 @@ const ProfileBasicInfo = () => {
                     <div className="flex justify-center items-center gap-20 h-[120px] bg-white rounded-lg shadow-sm p-4">
                         <div className="text-center">
                             <h1 className="block mb-4 font-bold text-sm">Milestones</h1>
-                            <span className="block mb-2 text-sm">open: 0</span>
-                            <span className="text-sm">closed: 0</span>
+                            <span className="block mb-2 text-sm">Open: {details?.open_milestones_count || 0}</span>
+                            <span className="text-sm">Closed: {details?.completed_milestones_count || 0}</span>
                         </div>
                         <span className="border-l-2 border-gray-300 h-[80px]"></span>
                         <div className="text-center">
                             <h1 className="block mb-4 font-bold text-sm">Tasks</h1>
-                            <span className="block mb-2 text-sm">open: 0</span>
-                            <span className="text-sm">closed: 0</span>
+                            <span className="block mb-2 text-sm">Open: {details?.open_tasks_count || 0}</span>
+                            <span className="text-sm">Closed: {details?.completed_tasks_count || 0}</span>
                         </div>
                     </div>
                 </div>
