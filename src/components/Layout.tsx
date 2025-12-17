@@ -95,9 +95,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   );
 
   const isLocalhost =
-    hostname.includes("localhost") ||
+    hostname.includes("fm-matrix.lockated.com") ||
     hostname.includes("lockated.gophygital.work") ||
-    hostname.includes("fm-matrix.lockated.com");
+    hostname.includes("localhost");
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -109,7 +109,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const renderSidebar = () => {
     // Check if user is employee (pms_occupant) - Employee layout takes priority
     // Only show sidebar for "Project Task" module, hide for other modules
-    if (isEmployeeUser && isLocalhost) {
+    if (isEmployeeUser) {
       // Only render sidebar for Project Task module
       if (currentSection === "Project Task") {
         return <EmployeeSidebar />;
@@ -179,7 +179,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const renderDynamicHeader = () => {
     // Check if user is employee (pms_occupant) - Employee layout takes priority
     // Employees don't need dynamic header, they use EmployeeHeader instead
-    if (isEmployeeUser && isLocalhost) {
+    if (isEmployeeUser) {
       return null; // No dynamic header for employees
     }
 
@@ -294,12 +294,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* View Selection Modal - Choose Admin or Employee View */}
 
       <ViewSelectionModal
-        isOpen={!isEmployeeUser && isLocalhost ? showViewModal : false}
+        isOpen={!isEmployeeUser ? showViewModal : false}
         onComplete={() => setShowViewModal(false)}
       />
 
       {/* Conditional Header - Use EmployeeHeader for employee users */}
-      {isEmployeeUser && isLocalhost ? <EmployeeHeader /> : <Header />}
+      {isEmployeeUser ? <EmployeeHeader /> : <Header />}
 
       {renderSidebar()}
       {renderDynamicHeader()}
@@ -307,7 +307,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <main
         className={`${
           // For employee users, only add left margin if on Project Task module
-          isEmployeeUser && isLocalhost
+          isEmployeeUser
             ? currentSection === "Project Task"
               ? isSidebarCollapsed
                 ? "ml-16"
