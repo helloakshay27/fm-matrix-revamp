@@ -190,10 +190,10 @@ const MinutesOfMeeting = () => {
                 onClick={openAddDialog}
             >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Meeting
+                Add 
             </Button>
         </>
-    )
+    );
 
     return (
         <div className="p-6">
