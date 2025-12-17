@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
-import viBusinessCardBg from "../../assets/VI-businesscard.png";
+import viBusinessCardBg from "../../assets/banner/Frame 1707480435.png";
 import { API_CONFIG } from "@/config/apiConfig";
 
 interface UserCardData {
@@ -65,11 +65,12 @@ export const BusinessCard: React.FC = () => {
         baseUrl = baseUrl.replace(/\/$/, "");
 
         // Build the API URL - using card as token in Authorization header
-        const apiUrl = `${baseUrl}/pms/users/user_info.json?is_token=true&token=${token}`;
+        const apiUrl = `${baseUrl}/pms/users/user_info.json?is_token=true`;
 
         const response = await fetch(apiUrl, {
           method: "GET",
           headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
