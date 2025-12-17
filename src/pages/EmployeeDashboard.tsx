@@ -435,7 +435,7 @@ export const EmployeeDashboard: React.FC = () => {
                 <div
                   key={ticket.id}
                   className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer border border-gray-100"
-                  onClick={() => navigate(`/tickets/details/${ticket.id}`)}
+                  onClick={() => navigate(`maintenance/ticket/employee/details/${ticket.id}`)}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <p className="font-medium text-gray-900 text-sm flex-1">
@@ -712,7 +712,7 @@ export const EmployeeDashboard: React.FC = () => {
                 <div
                   key={order.id}
                   className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer border border-gray-100"
-                  onClick={() => navigate(`/vas/restaurants`)}
+                  onClick={() => navigate(`/vas/fnb/details/123/restaurant-order/${order.id}`)}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
