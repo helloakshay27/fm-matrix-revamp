@@ -615,7 +615,7 @@ export const Header = () => {
               </div>
 
               {/* View Switcher - Only shown for admin users (pms_organization_admin) */}
-              {(canSwitchToEmployee || tempSwitchToEmployee) && isLocalhost && (
+              {(canSwitchToEmployee || tempSwitchToEmployee) && (
                 <div className="px-3 py-3 bg-gray-50 border-b border-gray-200">
                   <p className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">
                     Switch View
