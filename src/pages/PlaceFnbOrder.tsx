@@ -293,7 +293,7 @@ const PlaceFnbOrder = () => {
                                                 {item.quantity === 0 ? (
                                                     <button
                                                         onClick={() => handleQuantityChange(item.id, 1)}
-                                                        className="ml-4 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                                        className="ml-4 flex items-center gap-2 px-4 py-2 bg-[#c72030] text-white rounded-lg hover:bg-[#c72030] transition-colors"
                                                     >
                                                         <Plus size={18} />
                                                         Add
@@ -387,7 +387,7 @@ const PlaceFnbOrder = () => {
                             <button
                                 onClick={handlePlaceOrder}
                                 disabled={isPlacingOrder || !selectedRestaurant || selectedItems.length === 0}
-                                className="w-full px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                                className="w-full px-4 py-3 bg-[#c72030] text-white font-semibold rounded-lg hover:bg-[#c72030] disabled:bg-red-200 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                             >
                                 {isPlacingOrder ? (
                                     <>
