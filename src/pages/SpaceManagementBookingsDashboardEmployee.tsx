@@ -335,8 +335,8 @@ export const SpaceManagementBookingsDashboardEmployee = () => {
                       )}
                       {visibleColumns.includes('id') && <TableCell>{booking.id}</TableCell>}
                       {visibleColumns.includes('employeeId') && <TableCell>{booking.employeeId}</TableCell>}
-                      {visibleColumns.includes('employeeName') && <TableCell className="text-blue-600">{booking.employeeName}</TableCell>}
-                      {visibleColumns.includes('employeeEmail') && <TableCell className="text-blue-600">{booking.employeeEmail}</TableCell>}
+                      {visibleColumns.includes('employeeName') && <TableCell className="text-black">{booking.employeeName}</TableCell>}
+                      {visibleColumns.includes('employeeEmail') && <TableCell className="text-black">{booking.employeeEmail}</TableCell>}
                       {visibleColumns.includes('scheduleDate') && <TableCell>{booking.scheduleDate}</TableCell>}
                       {visibleColumns.includes('day') && <TableCell>{booking.day}</TableCell>}
                       {visibleColumns.includes('category') && <TableCell>{booking.category}</TableCell>}

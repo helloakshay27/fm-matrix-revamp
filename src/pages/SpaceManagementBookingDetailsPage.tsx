@@ -341,7 +341,7 @@ export const SpaceManagementBookingDetailsPage = () => {
                     </div>
                     <div>
                       <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Email</p>
-                      <p className="text-sm" style={{ color: '#2563EB' }}>{booking.employeeEmail}</p>
+                      <p className="text-sm" style={{ color: '#1A1A1A' }}>{booking.employeeEmail}</p>
                     </div>
                     <div>
                       <p className="text-xs font-medium uppercase mb-1" style={{ color: '#9CA3AF' }}>Phone</p>
