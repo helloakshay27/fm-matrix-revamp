@@ -336,7 +336,7 @@ export const AddMembershipPlanPage = () => {
                     <em>Select Payment Plan</em>
                   </MenuItem>
                   {paymentPlans.map((plan, index) => (
-                    <MenuItem key={index} value={index.toString()}>
+                    <MenuItem key={plan.id || index} value={plan.id?.toString() || ""}>
                       {plan.name}
                     </MenuItem>
                   ))}

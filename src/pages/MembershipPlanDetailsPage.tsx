@@ -168,7 +168,7 @@ export const MembershipPlanDetailsPage = () => {
         price: data.price,
         userLimit: data.user_limit,
         renewalTerms: data.renewal_terms,
-        paymentFrequency: data.payment_frequency || "",
+        paymentFrequency: data.payment_plan?.name || "",
         usageLimits: data.usage_limits || "",
         discountEligibility: data.discount_eligibility || "",
         amenities: data.plan_amenities.map((amenity) => amenity.facility_setup_id),

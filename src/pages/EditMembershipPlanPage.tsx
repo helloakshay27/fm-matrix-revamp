@@ -189,7 +189,7 @@ export const EditMembershipPlanPage = () => {
         name: data.name,
         price: data.price,
         userLimit: data.user_limit,
-        renewalTerms: data.renewal_terms,
+        renewalTerms: data.renewal_terms || "",
         payment_plan_id: data.payment_plan_id?.toString() || "",
         amenities: data.plan_amenities,
         amenityDetails: amenityDetailsMap,
@@ -424,7 +424,7 @@ export const EditMembershipPlanPage = () => {
                     <em>Select Payment Plan</em>
                   </MenuItem>
                   {paymentPlans.map((plan, index) => (
-                    <MenuItem key={index} value={index.toString()}>
+                    <MenuItem key={plan.id || index} value={plan.id?.toString() || ""}>
                       {plan.name}
                     </MenuItem>
                   ))}
