@@ -460,7 +460,7 @@ export const AddClubMembershipPage = () => {
           const subtotalAmount = parseFloat(paymentDetail.base_amount) || 0;
           if (subtotalAmount > 0) {
             const sgstAmt = parseFloat(paymentDetail.sgst) || 0;
-            const sgstPct = (sgstAmt / subtotalAmount) * 100;
+            const sgstPct = (sgtAmt / subtotalAmount) * 100;
             setSgstPercentage(sgstPct.toString());
           }
         }
@@ -859,10 +859,84 @@ export const AddClubMembershipPage = () => {
 
   // Handle form submission
   const handleSubmit = async () => {
-    // Step 2 validation
+    // Validate plan selection - required in both modes
     if (!selectedPlanId) {
       toast.error('Please select a membership plan');
       return;
+    }
+
+    // Validate shared membership details
+    if (!startDate) {
+      toast.error('Please select start date (mandatory)');
+      return;
+    }
+
+    if (!endDate) {
+      toast.error('Please select end date (mandatory)');
+      return;
+    }
+
+    // Validate that end date is after start date
+    if (endDate && startDate && endDate.isBefore(startDate)) {
+      toast.error('End date must be after start date');
+      return;
+    }
+
+    // Step 1 validations - only validate user details in edit mode or when on step 2
+    if (isEditMode || currentStep === 2) {
+      if (userSelectionMode === 'select' && !selectedUserId) {
+        toast.error('Please select a user');
+        return;
+      }
+
+      if (userSelectionMode === 'manual') {
+        if (!formData.firstName || !formData.lastName) {
+          toast.error('Please enter first name and last name');
+          return;
+        }
+        if (!validateName(formData.firstName)) {
+          toast.error('First name must contain only alphabets and be at least 2 characters');
+          return;
+        }
+        if (!validateName(formData.lastName)) {
+          toast.error('Last name must contain only alphabets and be at least 2 characters');
+          return;
+        }
+        if (!formData.email) {
+          toast.error('Please enter email address');
+          return;
+        }
+        if (!validateEmail(formData.email)) {
+          toast.error('Please enter a valid email address');
+          return;
+        }
+        if (!formData.mobile) {
+          toast.error('Please enter mobile number');
+          return;
+        }
+        if (!validateMobile(formData.mobile)) {
+          toast.error('Please enter a valid 10-digit mobile number');
+          return;
+        }
+      }
+
+      // Mandatory file validations - only for add mode
+      if (!isEditMode) {
+        if (!idCardFile) {
+          toast.error('Please upload ID card (mandatory)');
+          return;
+        }
+
+        if (!residentPhotoFile) {
+          toast.error('Please upload resident photo (mandatory)');
+          return;
+        }
+      }
+
+      if (cardAllocated && !formData.accessCardId) {
+        toast.error('Please enter access card ID');
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -1205,10 +1279,12 @@ export const AddClubMembershipPage = () => {
 
     // Move to next step
     setCurrentStep(2);
+
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
+  console.log("currentStep:---",currentStep);
+  
   // Handle back to step 1
   const handleBackToStep1 = () => {
     setCurrentStep(1);
@@ -1311,7 +1387,7 @@ export const AddClubMembershipPage = () => {
         ) : (
           <div className="space-y-6">
             {/* Step 1: User Details and Forms */}
-            {(currentStep === 1 || isEditMode) && (
+            {currentStep === 1 && (
               <>
                 {/* Card 1: User Selection Mode */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -2559,7 +2635,7 @@ export const AddClubMembershipPage = () => {
                   </div>
                 </div>
 
-                {/* Submit/Stepper Buttons */}
+                {/* Submit/Update Buttons */}
                 <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
                   <Button
                     variant="outline"
@@ -2567,29 +2643,18 @@ export const AddClubMembershipPage = () => {
                   >
                     Cancel
                   </Button>
-                  {/* If edit mode, show Update button, else show Next */}
-                  {isEditMode ? (
-                    <Button
-                      onClick={handleSubmit}
-                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? 'Updating...' : 'Update'}
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleNext}
-                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                    >
-                      Next
-                    </Button>
-                  )}
+                  <Button
+                    onClick={handleNext}
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                  >
+                    Next
+                  </Button>
                 </div>
               </>
             )}
 
             {/* Step 2: Membership Plan & Add-ons */}
-            {!isEditMode && currentStep === 2 && (
+            {currentStep === 2 && (
               <>
                 {/* Card 9: Membership Plan Selection */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
