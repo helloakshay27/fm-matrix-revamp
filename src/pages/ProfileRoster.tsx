@@ -395,10 +395,10 @@ const ProfileRoster = ({ rosterId }) => {
                     <div className="flex items-center gap-2 mt-1">
                         <Building2 className="w-4 h-4 text-gray-500" />
                         <span className="text-sm text-gray-600">{currentLocation}</span>
-                        <span className="text-sm text-gray-400">•</span>
+                        {/* <span className="text-sm text-gray-400">•</span>
                         <span className={`text-sm px-2 py-1 rounded-full ${rosterTemplate.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                             {rosterTemplate.active ? 'Active' : 'Inactive'}
-                        </span>
+                        </span> */}
                     </div>
                 </div>
             </header>
@@ -471,7 +471,7 @@ const ProfileRoster = ({ rosterId }) => {
                 </Section>
 
                 {/* Location & Department */}
-                <Section title="Location & Department" icon={MapPin}>
+                {/* <Section title="Location & Department" icon={MapPin}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="text-sm font-medium text-gray-700 block mb-2">Location</label>
@@ -494,7 +494,7 @@ const ProfileRoster = ({ rosterId }) => {
                             </div>
                         </div>
                     </div>
-                </Section>
+                </Section> */}
 
                 {/* Shift & Employees */}
                 <Section title="Shift & Employees" icon={Clock}>
@@ -519,7 +519,7 @@ const ProfileRoster = ({ rosterId }) => {
                             )}
                         </div>
 
-                        <div>
+                        {/* <div>
                             <label className="text-sm font-medium text-gray-700 block mb-2">
                                 Assigned Employees ({getSelectedEmployees().length})
                             </label>
@@ -543,12 +543,12 @@ const ProfileRoster = ({ rosterId }) => {
                             ) : (
                                 <p className="text-gray-500 italic">No employees assigned</p>
                             )}
-                        </div>
+                        </div> */}
                     </div>
                 </Section>
 
                 {/* Date Range */}
-                <Section title="Date Range" icon={Calendar}>
+                {/* <Section title="Date Range" icon={Calendar}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="text-sm font-medium text-gray-700 block mb-2">Start Date</label>
@@ -559,7 +559,7 @@ const ProfileRoster = ({ rosterId }) => {
                             <p className="text-gray-900">{new Date(rosterTemplate.end_date).toLocaleDateString()}</p>
                         </div>
                     </div>
-                </Section>
+                </Section> */}
             </div>
         </div>
     );
