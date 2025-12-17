@@ -149,7 +149,7 @@ export const EmployeeHeader: React.FC = () => {
         break;
 
       case "Book Seats":
-        navigate("/vas/space-management/bookings");
+        navigate("/employee/space-management/bookings");
         break;
       case "Parking":
         navigate("/parking");

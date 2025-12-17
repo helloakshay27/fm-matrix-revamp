@@ -72,7 +72,7 @@ const ProfileBasicInfo = () => {
     }
 
     const getInitials = () => {
-        return `${details.firstname.charAt(0).toUpperCase()}${details.lastname.charAt(0).toUpperCase()}`
+        return `${details?.firstname?.charAt(0).toUpperCase()}${details?.lastname?.charAt(0).toUpperCase()}`
     }
 
     const formatDate = (dateString: string) => {
@@ -96,7 +96,7 @@ const ProfileBasicInfo = () => {
                     {/* User Info */}
                     <div className="flex flex-col gap-3">
                         <span className="font-semibold text-base">
-                            {`${details.firstname.charAt(0).toUpperCase()}${details.firstname.slice(1)} ${details.lastname.charAt(0).toUpperCase()}${details.lastname.slice(1)}`}
+                            {`${details?.firstname?.charAt(0)?.toUpperCase()}${details?.firstname?.slice(1)} ${details?.lastname?.charAt(0)?.toUpperCase()}${details?.lastname?.slice(1)}`}
                         </span>
                         <div className="flex justify-between gap-10 text-[12px]">
                             <span>{`Email Id: ${details.email}`}</span>

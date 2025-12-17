@@ -837,6 +837,8 @@ import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
 import ParkingBookingListEmployee from "./pages/ParkingBookingListEmployee";
 import ProfileDetailsPage from "./pages/ProfileDetailsPage";
 import PlaceFnbOrder from "./pages/PlaceFnbOrder";
+import { SpaceManagementBookingsDashboardEmployee } from "./pages/SpaceManagementBookingsDashboardEmployee";
+import { SpaceManagementBookingDetailsPage } from "./pages/SpaceManagementBookingDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -3028,6 +3030,22 @@ function App() {
                   <Route
                     path="/vas/space-management/bookings"
                     element={<SpaceManagementBookingsDashboard />}
+                  />
+                  <Route
+                    path="/employee/space-management/bookings"
+                    element={
+                      <ProtectedRoute>
+                        <SpaceManagementBookingsDashboardEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/vas/space-management/bookings/details/:id"
+                    element={
+                      <ProtectedRoute>
+                        <SpaceManagementBookingDetailsPage />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/vas/space-management/seat-requests"

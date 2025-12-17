@@ -501,6 +501,54 @@ const ParkingBookingListEmployee = () => {
         
         const response = await fetchParkingBookings(currentPage, debouncedSearchTerm, buildApiFilterParams());
         
+        // Fetch parking categories to identify two/four wheeler category IDs
+        const categoriesUrl = getFullUrl('/pms/admin/parking_categories.json');
+        const categoriesOptions = getAuthenticatedFetchOptions();
+        const categoriesResponse = await fetch(categoriesUrl, categoriesOptions);
+        const categoriesData = await categoriesResponse.json();
+        const parkingCategoriesData = categoriesData.parking_categories || [];
+        
+        // Identify two wheeler and four wheeler category IDs
+        const twoWheelerCategory = parkingCategoriesData.find((cat: any) => {
+          const lower = cat.name.toLowerCase();
+          return lower.includes('two') || lower.includes('2') || lower.includes('bike');
+        });
+        const twoWheelerCategoryId = twoWheelerCategory ? twoWheelerCategory.id.toString() : null;
+        
+        const fourWheelerCategory = parkingCategoriesData.find((cat: any) => {
+          const lower = cat.name.toLowerCase();
+          return lower.includes('four') || lower.includes('4') || lower.includes('car');
+        });
+        const fourWheelerCategoryId = fourWheelerCategory ? fourWheelerCategory.id.toString() : null;
+        
+        // Fetch cancelled counts for two wheeler and four wheeler
+        const buildCancelledFilterParams = (categoryId: string | null) => {
+          const baseParams = buildApiFilterParams();
+          return {
+            ...baseParams,
+            category: categoryId || undefined,
+            status: 'cancelled' // Override status to cancelled for count
+          };
+        };
+        
+        // Fetch cancelled counts using separate API calls
+        const [twoWheelerCancelledResponse, fourWheelerCancelledResponse] = await Promise.all([
+          twoWheelerCategoryId 
+            ? fetchParkingBookings(1, '', buildCancelledFilterParams(twoWheelerCategoryId))
+            : Promise.resolve({ pagination: { total_count: 0 }, parking_bookings: [], cards: {} }),
+          fourWheelerCategoryId 
+            ? fetchParkingBookings(1, '', buildCancelledFilterParams(fourWheelerCategoryId))
+            : Promise.resolve({ pagination: { total_count: 0 }, parking_bookings: [], cards: {} })
+        ]);
+        
+        // Get cancelled counts from API pagination total_count (not from current page)
+        const twoWheelerCancelled = twoWheelerCancelledResponse.pagination.total_count || 0;
+        const fourWheelerCancelled = fourWheelerCancelledResponse.pagination.total_count || 0;
+        
+        console.log('🔍 Cancelled Bookings Debug:');
+        console.log('Two Wheeler Cancelled Count:', twoWheelerCancelled);
+        console.log('Four Wheeler Cancelled Count:', fourWheelerCancelled);
+        
         // Set raw API data
         setBookings(response.parking_bookings);
         
@@ -515,19 +563,6 @@ const ParkingBookingListEmployee = () => {
         // Set cards data from API response cards object
         console.log('📊 Cards data from API:', response.cards);
         if (response.cards) {
-          // Calculate cancelled slots for each category from bookings data
-          const twoCancelled = response.parking_bookings.filter(b => 
-            b.status === 'cancelled' && 
-            (b.parking_configuration.parking_category.name.toLowerCase().includes('two') ||
-             b.parking_configuration.parking_category.name.toLowerCase().includes('bike'))
-          ).length;
-          
-          const fourCancelled = response.parking_bookings.filter(b => 
-            b.status === 'cancelled' && 
-            (b.parking_configuration.parking_category.name.toLowerCase().includes('four') ||
-             b.parking_configuration.parking_category.name.toLowerCase().includes('car'))
-          ).length;
-
           setCards({
             total_slots: response.cards.total_slots,
             two_total: response.cards.two_total,
@@ -538,8 +573,8 @@ const ParkingBookingListEmployee = () => {
             two_booked: response.cards.two_booked,
             alloted: response.cards.alloted,
             vacant: response.cards.vacant,
-            two_cancelled: twoCancelled,
-            four_cancelled: fourCancelled,
+            two_cancelled: twoWheelerCancelled,
+            four_cancelled: fourWheelerCancelled,
           });
         } else {
           // Fallback if cards object is not available
