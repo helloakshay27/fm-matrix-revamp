@@ -71,7 +71,7 @@ const modulesByPackage = {
     {
       name: "Visitors",
       icon: UserRoundSearch,
-      href: "/pulse/visitors",
+      href: "/pulse/visitor",
     },
     {
       name: "Events",

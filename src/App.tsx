@@ -3469,6 +3469,18 @@ function App() {
                     path="/pulse/events/details/:id"
                     element={<CRMEventDetailsPage />}
                   />
+                   <Route
+                    path="/pulse/visitor"
+                    element={<VisitorsDashboard />}
+                  />
+                  <Route
+                    path="/pulse/visitor/add"
+                    element={<VisitorFormPage />}
+                  />
+  <Route
+                    path="/pulse/visitor/details/:id"
+                    element={<VisitorDetailsPage />}
+                  />
 
                   
 
