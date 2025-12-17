@@ -1238,13 +1238,19 @@ export const EditAssetDetailsPage = () => {
       const nextExtra: Record<string, ExtraFormField> = {};
       let categoryFromExtra = "";
 
+      const customFieldsUpdate: Record<string, any[]> = {};
+      const itAssetsCustomFieldsUpdate: Record<string, any[]> = {};
+
       attributes.forEach((attr: any) => {
         const key = attr?.field_name;
         if (!key) return;
 
         const value = attr?.field_value ?? "";
-        const groupKey = attr?.group_name || ""; // e.g. basicIdentification
+        const groupKey = attr?.group_name || ""; // e.g. basicIdentification, assetDetails
         const description = attr?.field_description || "";
+
+        // Format label from field_name if description is missing
+        const label = description || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
         nextExtra[key] = {
           value,
@@ -1252,6 +1258,40 @@ export const EditAssetDetailsPage = () => {
           groupType: groupKey,
           fieldDescription: description,
         };
+
+        // Map to customFields state for dynamic rendering
+        // We include specific keys that we know are used for dynamic sections
+        if (groupKey) {
+          // Check if it belongs to IT Assets special sections
+          if (groupKey === "system_details") {
+            if (!itAssetsCustomFieldsUpdate["System Details"]) itAssetsCustomFieldsUpdate["System Details"] = [];
+            itAssetsCustomFieldsUpdate["System Details"].push({
+              id: attr.id,
+              name: label,
+              value: value
+            });
+            // Also add to customFields for payload consistency if needed
+            if (!customFieldsUpdate["system_details"]) customFieldsUpdate["system_details"] = [];
+            customFieldsUpdate["system_details"].push({ id: attr.id, name: label, value: value });
+          } else if (groupKey === "hardware") {
+            if (!itAssetsCustomFieldsUpdate["Hardware Details"]) itAssetsCustomFieldsUpdate["Hardware Details"] = [];
+            itAssetsCustomFieldsUpdate["Hardware Details"].push({
+              id: attr.id,
+              name: label,
+              value: value
+            });
+            if (!customFieldsUpdate["hardware"]) customFieldsUpdate["hardware"] = [];
+            customFieldsUpdate["hardware"].push({ id: attr.id, name: label, value: value });
+          } else {
+            // Generic sections like assetDetails, buildingMiscellaneous, etc.
+            if (!customFieldsUpdate[groupKey]) customFieldsUpdate[groupKey] = [];
+            customFieldsUpdate[groupKey].push({
+              id: attr.id,
+              name: label,
+              value: value
+            });
+          }
+        }
 
         if (description === "Asset Category" && value) {
           categoryFromExtra = value;
@@ -1267,6 +1307,33 @@ export const EditAssetDetailsPage = () => {
           setFormData((prev) => ({ ...prev, warranty_period: value }));
         }
       });
+
+      // Update customFields state
+      if (Object.keys(customFieldsUpdate).length > 0) {
+        setCustomFields((prev) => {
+          const next = { ...prev };
+          Object.keys(customFieldsUpdate).forEach((section) => {
+            // We append to existing if we want, or replace. 
+            // Since this is prefill (edit mode), we should probably replace or ensure we don't duplicate.
+            // But since 'prev' might be empty initial state, replacing is safer for the prefilled data.
+            // However, we must be careful not to wipe out empty arrays if we only update some sections.
+            // Here we only update sections that have data.
+            next[section] = customFieldsUpdate[section];
+          });
+          return next;
+        });
+      }
+
+      // Update itAssetsCustomFields state
+      if (Object.keys(itAssetsCustomFieldsUpdate).length > 0) {
+        setItAssetsCustomFields((prev) => {
+          const next = { ...prev };
+          Object.keys(itAssetsCustomFieldsUpdate).forEach((section) => {
+            next[section] = itAssetsCustomFieldsUpdate[section];
+          });
+          return next;
+        });
+      }
 
       if (Object.keys(nextExtra).length > 0) {
         setExtraFormFields((prev) => ({ ...prev, ...nextExtra }));
