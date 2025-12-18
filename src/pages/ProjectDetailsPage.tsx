@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useLayout } from "@/contexts/LayoutContext";
 import { useAppDispatch } from "@/store/hooks";
 import { changeProjectStatus, fetchProjectById, attachFiles, removeAttachment } from "@/store/slices/projectManagementSlice";
 import { ArrowLeft, ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
@@ -295,6 +296,12 @@ const Attachments = ({ attachments, id }) => {
 };
 
 const ProjectDetailsPage = () => {
+    const { setCurrentSection } = useLayout();
+
+    useEffect(() => {
+        setCurrentSection("Project Task");
+    }, [setCurrentSection]);
+
     const { id } = useParams();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();

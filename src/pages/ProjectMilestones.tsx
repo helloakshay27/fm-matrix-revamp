@@ -8,8 +8,15 @@ import { fetchFMUsers } from '@/store/slices/fmUserSlice'
 import { toast } from 'sonner'
 import MilestoneList from '@/components/MilestoneList'
 import MilestoneKanban from '@/components/MilestoneKanban'
+import { useLayout } from '@/contexts/LayoutContext'
 
 const ProjectMilestones = () => {
+    const { setCurrentSection } = useLayout();
+
+    useEffect(() => {
+        setCurrentSection("Project Task");
+    }, [setCurrentSection]);
+
     const dispatch = useAppDispatch();
 
     const [selectedView, setSelectedView] = useState<"Kanban" | "Gantt" | "List">("Gantt");

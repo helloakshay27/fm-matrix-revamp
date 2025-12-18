@@ -19,11 +19,23 @@ const KanbanBoard = ({ color, add, title, count = 0, children, className, onDrop
         <div
             ref={setNodeRef}
             className={`bg-[#DEE6E8] h-full ${isCollapsed ? "min-w-[4rem]" : "min-w-[250px]"} rounded-[5px] px-2 py-3 flex flex-col gap-4 transition-all duration-200 ${isOver ? "ring-2 ring-blue-500 bg-blue-50" : ""} ${className}`}
-        // style={
-        //     window.location.pathname === '/sprint'
-        //         ? { minWidth: isCollapsed ? '4rem' : '250px', maxWidth: !isCollapsed && "250px" }
-        //         : { minWidth: isCollapsed && "4rem", maxWidth: !isCollapsed && "20%" }
-        // }
+            onDragOver={(e) => {
+                // Allow native HTML5 drag (used for subtasks) to drop on this column
+                e.preventDefault();
+            }}
+            onDrop={(e) => {
+                e.preventDefault();
+                if (!onDrop) return;
+
+                try {
+                    const raw = e.dataTransfer.getData("application/reactflow");
+                    if (!raw) return;
+                    const data = JSON.parse(raw);
+                    onDrop(data, columnStatus);
+                } catch (error) {
+                    console.error("Failed to handle drop on Kanban column", error);
+                }
+            }}
         >
             <div
                 className={`w-full relative transition-transform duration-200 ${isCollapsed ? "rotate-90" : "rotate-0"}`}
