@@ -2888,10 +2888,10 @@ function App() {
                     path="/security/patrolling/create"
                     element={<PatrollingCreatePage />}
                   />
-                  <Route
+                  {/* <Route
                     path="/security/patrolling/edit/:id"
                     element={<PatrollingCreatePage />}
-                  />
+                  /> */}
                   <Route
                     path="/security/patrolling/details/:id"
                     element={<PatrollingDetailPage />}

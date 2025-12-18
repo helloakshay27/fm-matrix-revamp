@@ -43,101 +43,66 @@ const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.
 // Custom Location Selector for Checkpoints (without Groups)
 const CheckpointLocationSelector: React.FC<{
   fieldStyles: any;
-  onLocationChange: (location: {
-    buildingId: number | null;
-    wingId: number | null;
-    areaId: number | null;
-    floorId: number | null;
-    roomId: number | null;
-  }) => void;
+  onLocationChange: (field: 'building' | 'wing' | 'area' | 'floor' | 'room', value: number | null) => void;
   disabled?: boolean;
   checkpointIndex: number;
-  currentLocation: {
+  checkpoint: {
     buildingId: number | null;
     wingId: number | null;
     areaId: number | null;
     floorId: number | null;
     roomId: number | null;
+    locationData: {
+      buildings: { id: number; name: string }[];
+      wings: { id: number; name: string }[];
+      areas: { id: number; name: string }[];
+      floors: { id: number; name: string }[];
+      rooms: { id: number; name: string }[];
+    };
   };
-}> = ({ fieldStyles, onLocationChange, disabled = false, checkpointIndex, currentLocation }) => {
-  const dispatch = useDispatch<AppDispatch>();
-  const {
-    sites,
-    buildings,
-    wings,
-    areas,
-    floors,
-    rooms,
-    loading
-  } = useSelector((state: RootState) => state.serviceLocation);
+}> = ({ fieldStyles, onLocationChange, disabled = false, checkpointIndex, checkpoint }) => {
+  const [loadingStates, setLoadingStates] = React.useState({
+    buildings: false,
+    wings: false,
+    areas: false,
+    floors: false,
+    rooms: false
+  });
 
-  // Use currentLocation from props instead of Redux state to avoid conflicts between checkpoints
-  const selectedBuildingId = currentLocation.buildingId;
-  const selectedWingId = currentLocation.wingId;
-  const selectedAreaId = currentLocation.areaId;
-  const selectedFloorId = currentLocation.floorId;
-  const selectedRoomId = currentLocation.roomId;
-
+  // Fetch buildings on mount
   useEffect(() => {
-    const siteId = localStorage.getItem('selectedSiteId');
-    if (siteId) {
-      dispatch(fetchAllBuildings(parseInt(siteId)));
+    const fetchBuildings = async () => {
+      const siteId = localStorage.getItem('selectedSiteId');
+      if (!siteId) return;
+
+      setLoadingStates(prev => ({ ...prev, buildings: true }));
+      try {
+        const url = `${API_CONFIG.BASE_URL}/pms/sites/${siteId}/buildings.json`;
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': getAuthHeader(),
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch buildings');
+        
+        const data = await response.json();
+        const items = Array.isArray(data) ? data : (data.buildings || []);
+        
+        // Update the checkpoint's locationData
+        onLocationChange('building', null); // This will trigger the parent to update locationData
+      } catch (error) {
+        console.error('Error fetching buildings:', error);
+      } finally {
+        setLoadingStates(prev => ({ ...prev, buildings: false }));
+      }
+    };
+
+    if (checkpoint.locationData.buildings.length === 0) {
+      fetchBuildings();
     }
-  }, [dispatch]);
-
-  const handleBuildingChange = (buildingId: number) => {
-    dispatch(fetchWings(buildingId));
-    onLocationChange({
-      buildingId,
-      wingId: null,
-      areaId: null,
-      floorId: null,
-      roomId: null,
-    });
-  };
-
-  const handleWingChange = (wingId: number) => {
-    dispatch(fetchAreas(wingId));
-    onLocationChange({
-      buildingId: selectedBuildingId,
-      wingId,
-      areaId: null,
-      floorId: null,
-      roomId: null,
-    });
-  };
-
-  const handleAreaChange = (areaId: number) => {
-    dispatch(fetchFloors(areaId));
-    onLocationChange({
-      buildingId: selectedBuildingId,
-      wingId: selectedWingId,
-      areaId,
-      floorId: null,
-      roomId: null,
-    });
-  };
-
-  const handleFloorChange = (floorId: number) => {
-    dispatch(fetchRooms(floorId));
-    onLocationChange({
-      buildingId: selectedBuildingId,
-      wingId: selectedWingId,
-      areaId: selectedAreaId,
-      floorId,
-      roomId: null,
-    });
-  };
-
-  const handleRoomChange = (roomId: number) => {
-    onLocationChange({
-      buildingId: selectedBuildingId,
-      wingId: selectedWingId,
-      areaId: selectedAreaId,
-      floorId: selectedFloorId,
-      roomId,
-    });
-  };
+  }, []);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -145,21 +110,19 @@ const CheckpointLocationSelector: React.FC<{
       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
         <InputLabel shrink>Building *</InputLabel>
         <MuiSelect
-          value={selectedBuildingId || ''}
-          onChange={(e) => handleBuildingChange(Number(e.target.value))}
+          value={checkpoint.buildingId || ''}
+          onChange={(e) => onLocationChange('building', Number(e.target.value) || null)}
           label="Building *"
           notched
           displayEmpty
-          disabled={disabled || loading.buildings}
+          disabled={disabled || loadingStates.buildings}
         >
           <MenuItem value="">Select Building</MenuItem>
-          {Array.isArray(buildings) && buildings.map((building) => (
-            <MenuItem key={building.id} value={building.id}>
-              {building.name}
-            </MenuItem>
+          {checkpoint.locationData.buildings.map(building => (
+            <MenuItem key={building.id} value={building.id}>{building.name}</MenuItem>
           ))}
         </MuiSelect>
-        {loading.buildings && (
+        {loadingStates.buildings && (
           <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
             <CircularProgress size={16} />
           </div>
@@ -170,21 +133,19 @@ const CheckpointLocationSelector: React.FC<{
       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
         <InputLabel shrink>Wing</InputLabel>
         <MuiSelect
-          value={selectedWingId || ''}
-          onChange={(e) => handleWingChange(Number(e.target.value))}
+          value={checkpoint.wingId || ''}
+          onChange={(e) => onLocationChange('wing', Number(e.target.value) || null)}
           label="Wing"
           notched
           displayEmpty
-          disabled={disabled || !selectedBuildingId || loading.wings}
+          disabled={disabled || !checkpoint.buildingId || loadingStates.wings}
         >
           <MenuItem value="">Select Wing</MenuItem>
-          {Array.isArray(wings) && wings.map((wing) => (
-            <MenuItem key={wing.id} value={wing.id}>
-              {wing.name}
-            </MenuItem>
+          {checkpoint.locationData.wings.map(wing => (
+            <MenuItem key={wing.id} value={wing.id}>{wing.name}</MenuItem>
           ))}
         </MuiSelect>
-        {loading.wings && (
+        {loadingStates.wings && (
           <div className="absolute s right-8 top-1/2 transform -translate-y-1/2">
             <CircularProgress size={16} />
           </div>
@@ -195,21 +156,19 @@ const CheckpointLocationSelector: React.FC<{
       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
         <InputLabel shrink>Area</InputLabel>
         <MuiSelect
-          value={selectedAreaId || ''}
-          onChange={(e) => handleAreaChange(Number(e.target.value))}
+          value={checkpoint.areaId || ''}
+          onChange={(e) => onLocationChange('area', Number(e.target.value) || null)}
           label="Area"
           notched
           displayEmpty
-          disabled={disabled || !selectedWingId || loading.areas}
+          disabled={disabled || !checkpoint.buildingId || loadingStates.areas}
         >
           <MenuItem value="">Select Area</MenuItem>
-          {Array.isArray(areas) && areas.map((area) => (
-            <MenuItem key={area.id} value={area.id}>
-              {area.name}
-            </MenuItem>
+          {checkpoint.locationData.areas.map(area => (
+            <MenuItem key={area.id} value={area.id}>{area.name}</MenuItem>
           ))}
         </MuiSelect>
-        {loading.areas && (
+        {loadingStates.areas && (
           <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
             <CircularProgress size={16} />
           </div>
@@ -220,21 +179,19 @@ const CheckpointLocationSelector: React.FC<{
       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
         <InputLabel shrink>Floor</InputLabel>
         <MuiSelect
-          value={selectedFloorId || ''}
-          onChange={(e) => handleFloorChange(Number(e.target.value))}
+          value={checkpoint.floorId || ''}
+          onChange={(e) => onLocationChange('floor', Number(e.target.value) || null)}
           label="Floor"
           notched
           displayEmpty
-          disabled={disabled || !selectedBuildingId || loading.floors}
+          disabled={disabled || !checkpoint.buildingId || loadingStates.floors}
         >
           <MenuItem value="">Select Floor</MenuItem>
-          {Array.isArray(floors) && floors.map((floor) => (
-            <MenuItem key={floor.id} value={floor.id}>
-              {floor.name}
-            </MenuItem>
+          {checkpoint.locationData.floors.map(floor => (
+            <MenuItem key={floor.id} value={floor.id}>{floor.name}</MenuItem>
           ))}
         </MuiSelect>
-        {loading.floors && (
+        {loadingStates.floors && (
           <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
             <CircularProgress size={16} />
           </div>
@@ -245,21 +202,19 @@ const CheckpointLocationSelector: React.FC<{
       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
         <InputLabel shrink>Room</InputLabel>
         <MuiSelect
-          value={selectedRoomId || ''}
-          onChange={(e) => handleRoomChange(Number(e.target.value))}
+          value={checkpoint.roomId || ''}
+          onChange={(e) => onLocationChange('room', Number(e.target.value) || null)}
           label="Room"
           notched
           displayEmpty
-          disabled={disabled || !selectedFloorId || loading.rooms}
+          disabled={disabled || !checkpoint.floorId || loadingStates.rooms}
         >
           <MenuItem value="">Select Room</MenuItem>
-          {Array.isArray(rooms) && rooms.map((room) => (
-            <MenuItem key={room.id} value={room.id}>
-              {room.name}
-            </MenuItem>
+          {checkpoint.locationData.rooms.map(room => (
+            <MenuItem key={room.id} value={room.id}>{room.name}</MenuItem>
           ))}
         </MuiSelect>
-        {loading.rooms && (
+        {loadingStates.rooms && (
           <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
             <CircularProgress size={16} />
           </div>
@@ -315,6 +270,14 @@ export const PatrollingCreatePage: React.FC = () => {
     areaId: number | null;
     roomId: number | null;
     scheduleIds: string[];
+    // Store fetched location data per checkpoint
+    locationData: {
+      buildings: { id: number; name: string }[];
+      wings: { id: number; name: string }[];
+      areas: { id: number; name: string }[];
+      floors: { id: number; name: string }[];
+      rooms: { id: number; name: string }[];
+    };
   };
 
   const [patrolName, setPatrolName] = useState('');
@@ -454,7 +417,14 @@ export const PatrollingCreatePage: React.FC = () => {
       floorId: null,
       areaId: null,
       roomId: null,
-      scheduleIds: []
+      scheduleIds: [],
+      locationData: {
+        buildings: [],
+        wings: [],
+        areas: [],
+        floors: [],
+        rooms: []
+      }
     },
   ]);
 
@@ -475,12 +445,89 @@ export const PatrollingCreatePage: React.FC = () => {
     loadFmUsers();
   }, []);
 
+  // Fetch location data for a specific checkpoint
+  const fetchLocationDataForCheckpoint = async (
+    checkpointIndex: number,
+    field: 'buildings' | 'wings' | 'areas' | 'floors' | 'rooms',
+    params: { siteId?: number; buildingId?: number; wingId?: number; areaId?: number; floorId?: number }
+  ) => {
+    try {
+      let url = '';
+      switch (field) {
+        case 'buildings':
+          url = `${API_CONFIG.BASE_URL}/pms/sites/${params.siteId}/buildings.json`;
+          break;
+        case 'wings':
+          url = `${API_CONFIG.BASE_URL}/pms/wings.json?q[building_id_eq]=${params.buildingId}`;
+          break;
+        case 'areas': {
+          const areaParams = new URLSearchParams();
+          if (params.wingId) areaParams.append('q[wing_id_eq]', params.wingId.toString());
+          if (params.buildingId) areaParams.append('q[building_id_eq]', params.buildingId.toString());
+          url = `${API_CONFIG.BASE_URL}/pms/areas.json?${areaParams.toString()}`;
+          break;
+        }
+        case 'floors': {
+          const floorParams = new URLSearchParams();
+          if (params.areaId) floorParams.append('q[area_id_eq]', params.areaId.toString());
+          if (params.buildingId) floorParams.append('q[building_id_eq]', params.buildingId.toString());
+          if (params.wingId) floorParams.append('q[wing_id_eq]', params.wingId.toString());
+          url = `${API_CONFIG.BASE_URL}/pms/floors.json?${floorParams.toString()}`;
+          break;
+        }
+        case 'rooms': {
+          const roomParams = new URLSearchParams();
+          if (params.floorId) roomParams.append('q[floor_id_eq]', params.floorId.toString());
+          if (params.buildingId) roomParams.append('q[building_id_eq]', params.buildingId.toString());
+          if (params.wingId) roomParams.append('q[wing_id_eq]', params.wingId.toString());
+          if (params.areaId) roomParams.append('q[area_id_eq]', params.areaId.toString());
+          url = `${API_CONFIG.BASE_URL}/pms/rooms.json?${roomParams.toString()}`;
+          break;
+        }
+      }
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) throw new Error(`Failed to fetch ${field}`);
+      
+      const data = await response.json();
+      // Handle both array format and object with field property
+      const items = Array.isArray(data) ? data : (data[field] || []);
+      
+      setCheckpoints(prev => prev.map((checkpoint, i) => {
+        if (i !== checkpointIndex) return checkpoint;
+        return {
+          ...checkpoint,
+          locationData: {
+            ...checkpoint.locationData,
+            [field]: items
+          }
+        };
+      }));
+    } catch (error) {
+      console.error(`Error fetching ${field}:`, error);
+    }
+  };
+
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
     },
   };
+
+  // Fetch buildings for the first checkpoint on mount
+  useEffect(() => {
+    const siteId = localStorage.getItem('selectedSiteId');
+    if (siteId && checkpoints.length > 0 && checkpoints[0].locationData.buildings.length === 0) {
+      fetchLocationDataForCheckpoint(0, 'buildings', { siteId: parseInt(siteId) });
+    }
+  }, []);
 
   // Input change handlers for controlled fields
   const handlePatrolNameChange = (value: string) => setPatrolName(value);
@@ -546,6 +593,7 @@ export const PatrollingCreatePage: React.FC = () => {
     options: [],
     optionsText: ''
   }]);
+  
   const addShift = () => setShifts(prev => [...prev, {
     id: Date.now().toString(),
     start: '',
@@ -555,17 +603,37 @@ export const PatrollingCreatePage: React.FC = () => {
     scheduleId: Date.now().toString(),
     timeSetup: { ...defaultTimeSetup }
   }]);
-  const addCheckpoint = () => setCheckpoints(prev => [...prev, {
-    id: Date.now().toString(),
-    name: '',
-    description: '',
-    buildingId: null,
-    wingId: null,
-    floorId: null,
-    areaId: null,
-    roomId: null,
-    scheduleIds: []
-  }]);
+
+  const addCheckpoint = async () => {
+    const newCheckpoint: Checkpoint = {
+      id: Date.now().toString(),
+      name: '',
+      description: '',
+      buildingId: null,
+      wingId: null,
+      floorId: null,
+      areaId: null,
+      roomId: null,
+      scheduleIds: [],
+      locationData: {
+        buildings: [],
+        wings: [],
+        areas: [],
+        floors: [],
+        rooms: []
+      }
+    };
+
+    // Add the new checkpoint
+    setCheckpoints(prev => [...prev, newCheckpoint]);
+
+    // Fetch buildings for the new checkpoint
+    const newIndex = checkpoints.length;
+    const siteId = localStorage.getItem('selectedSiteId');
+    if (siteId) {
+      await fetchLocationDataForCheckpoint(newIndex, 'buildings', { siteId: parseInt(siteId) });
+    }
+  };
 
   const removeCheckpoint = (idx: number) => setCheckpoints(prev => prev.filter((_, i) => i !== idx));
   const removeQuestion = (idx: number) => setQuestions(prev => prev.filter((_, i) => i !== idx));
@@ -578,29 +646,145 @@ export const PatrollingCreatePage: React.FC = () => {
       // Clean up references to this shift in all checkpoints
       setCheckpoints(prev => prev.map(checkpoint => ({
         ...checkpoint,
-        scheduleIds: checkpoint.scheduleIds.filter(scheduleId => scheduleId !== shiftToRemove.scheduleId)
+        scheduleIds: checkpoint.scheduleIds.filter(
+          (scheduleId) => scheduleId !== shiftToRemove.scheduleId
+        ),
       })));
     }
   };
+  // Handle location changes for checkpoints with cascading behavior
+  const handleLocationChange = async (
+    checkpointIndex: number,
+    field: 'building' | 'wing' | 'area' | 'floor' | 'room',
+    value: number | null
+  ) => {
+    const checkpoint = checkpoints[checkpointIndex];
+    
+    // First update state and clear dependent fields
+    setCheckpoints(prev => prev.map((item, i) => {
+      if (i !== checkpointIndex) return item;
 
-  // Handle location changes for checkpoints
-  const handleLocationChange = (checkpointIndex: number, location: {
-    buildingId: number | null;
-    wingId: number | null;
-    areaId: number | null;
-    floorId: number | null;
-    roomId: number | null;
-  }) => {
-    setCheckpoints(prev => prev.map((item, i) =>
-      i === checkpointIndex ? {
-        ...item,
-        buildingId: location.buildingId,
-        wingId: location.wingId,
-        floorId: location.floorId,
-        areaId: location.areaId,
-        roomId: location.roomId
-      } : item
-    ));
+      const newLocationData = { ...item.locationData };
+      
+      // Reset dependent fields and clear their data when parent changes
+      switch (field) {
+        case 'building':
+          newLocationData.wings = [];
+          newLocationData.areas = [];
+          newLocationData.floors = [];
+          newLocationData.rooms = [];
+          return {
+            ...item,
+            buildingId: value,
+            wingId: null,
+            areaId: null,
+            floorId: null,
+            roomId: null,
+            locationData: newLocationData
+          };
+
+        case 'wing':
+          newLocationData.areas = [];
+          newLocationData.floors = [];
+          newLocationData.rooms = [];
+          return {
+            ...item,
+            wingId: value,
+            areaId: null,
+            floorId: null,
+            roomId: null,
+            locationData: newLocationData
+          };
+
+        case 'area':
+          newLocationData.floors = [];
+          newLocationData.rooms = [];
+          return {
+            ...item,
+            areaId: value,
+            floorId: null,
+            roomId: null,
+            locationData: newLocationData
+          };
+
+        case 'floor':
+          newLocationData.rooms = [];
+          return {
+            ...item,
+            floorId: value,
+            roomId: null,
+            locationData: newLocationData
+          };
+
+        case 'room':
+          return {
+            ...item,
+            roomId: value
+          };
+      }
+
+      return item;
+    }));
+
+    // Then fetch new data for this specific checkpoint
+    const siteId = localStorage.getItem('selectedSiteId');
+    
+    switch (field) {
+      case 'building':
+        if (value) {
+          await fetchLocationDataForCheckpoint(checkpointIndex, 'wings', { buildingId: value });
+          await fetchLocationDataForCheckpoint(checkpointIndex, 'areas', { buildingId: value });
+          await fetchLocationDataForCheckpoint(checkpointIndex, 'floors', { buildingId: value });
+          await fetchLocationDataForCheckpoint(checkpointIndex, 'rooms', { buildingId: value });
+        }
+        break;
+
+      case 'wing':
+        if (value && checkpoint.buildingId) {
+          await fetchLocationDataForCheckpoint(checkpointIndex, 'areas', { 
+            buildingId: checkpoint.buildingId, 
+            wingId: value 
+          });
+          await fetchLocationDataForCheckpoint(checkpointIndex, 'floors', { 
+            buildingId: checkpoint.buildingId, 
+            wingId: value 
+          });
+          await fetchLocationDataForCheckpoint(checkpointIndex, 'rooms', { 
+            buildingId: checkpoint.buildingId, 
+            wingId: value 
+          });
+        }
+        break;
+
+      case 'area':
+        if (value && checkpoint.buildingId) {
+          const wingId = checkpoint.wingId || undefined;
+          await fetchLocationDataForCheckpoint(checkpointIndex, 'floors', { 
+            buildingId: checkpoint.buildingId, 
+            wingId, 
+            areaId: value 
+          });
+          await fetchLocationDataForCheckpoint(checkpointIndex, 'rooms', { 
+            buildingId: checkpoint.buildingId, 
+            wingId, 
+            areaId: value 
+          });
+        }
+        break;
+
+      case 'floor':
+        if (value && checkpoint.buildingId) {
+          const wingId = checkpoint.wingId || undefined;
+          const areaId = checkpoint.areaId || undefined;
+          await fetchLocationDataForCheckpoint(checkpointIndex, 'rooms', { 
+            buildingId: checkpoint.buildingId, 
+            wingId, 
+            areaId, 
+            floorId: value 
+          });
+        }
+        break;
+    }
   };
 
   // Helper function to get shift names by schedule IDs
@@ -1524,16 +1708,10 @@ export const PatrollingCreatePage: React.FC = () => {
                 {/* Location Selector (without Groups) */}
                 <CheckpointLocationSelector
                   fieldStyles={fieldStyles}
-                  onLocationChange={(location) => handleLocationChange(idx, location)}
+                  onLocationChange={(field, value) => handleLocationChange(idx, field, value)}
                   disabled={isSubmitting}
                   checkpointIndex={idx}
-                  currentLocation={{
-                    buildingId: c.buildingId,
-                    wingId: c.wingId,
-                    areaId: c.areaId,
-                    floorId: c.floorId,
-                    roomId: c.roomId,
-                  }}
+                  checkpoint={c}
                 />
 
                 {/* Schedule Selection - Only show if there are named shifts */}
