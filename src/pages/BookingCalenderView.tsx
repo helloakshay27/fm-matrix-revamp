@@ -82,7 +82,7 @@ const BookingCalenderView = () => {
             const generatedDates = Array.from({ length: daysInMonth }, (_, i) => {
                 const dateObj = new Date(currentYear, monthIndex, i + 1);
                 const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
-                const isOff = dayName === "Sunday"; // Example: Sundays off
+                const isOff = false;
                 const formattedDate = dateObj.toLocaleDateString("en-GB"); // dd/mm/yyyy
                 const yyyy = dateObj.getFullYear();
                 const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
@@ -143,10 +143,10 @@ const BookingCalenderView = () => {
 
     const fetchTimeSlotsForDate = async (date) => {
         try {
-            // Generate time slots from 9 AM to 9 PM with 15-minute intervals
+            // Generate time slots from 5 AM to 9 PM with 15-minute intervals
             const timeSlots = [];
-            for (let i = 0; i < 12; i++) {
-                const startHour = i + 9;
+            for (let i = 0; i < 16; i++) {
+                const startHour = i + 5;
                 const startAmPm = startHour < 12 ? "AM" : "PM";
 
                 // Create 4 fifteen-minute slots for each hour

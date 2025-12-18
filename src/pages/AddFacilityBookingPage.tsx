@@ -47,7 +47,7 @@ export const AddFacilityBookingPage = () => {
   const facilities = Array.isArray(facilitySetupsResponse?.facility_setups) ? facilitySetupsResponse.facility_setups :
     Array.isArray(facilitySetupsResponse) ? facilitySetupsResponse : [];
 
-  const [userType, setUserType] = useState('fm');
+  const [userType, setUserType] = useState('occupant');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
@@ -90,7 +90,7 @@ export const AddFacilityBookingPage = () => {
   const [openTerms, setOpenTerms] = useState(false);
   const [complementaryReason, setComplementaryReason] = useState('');
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
-  const [numberOfGuests, setNumberOfGuests] = useState<number>(0);
+  const [numberOfGuests, setNumberOfGuests] = useState<number>(1);
   const [bookingRuleData, setBookingRuleData] = useState<{
     can_book: boolean;
     rate: number;
@@ -526,6 +526,8 @@ export const AddFacilityBookingPage = () => {
           sub_total: subtotalAfterDiscount,
           amount_full: amountFull,
           booked_members_attributes: bookedMembersAttributes,
+          member_count: userType === 'occupant' ? 1 : 0,
+          guest_count: numberOfGuests,
           ...(paymentMethod === 'complementary' && { complementary_payment_reason: complementaryReason }),
         },
         on_behalf_of: userType === 'occupant' ? 'occupant-user' : userType === 'guest' ? 'guest-user' : 'fm-user',
@@ -613,10 +615,7 @@ export const AddFacilityBookingPage = () => {
         {/* User Type Selection */}
         <div>
           <RadioGroup value={userType} onValueChange={setUserType} className="flex gap-6">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="fm" id="fm" />
-              <Label htmlFor="fm">Staff</Label>
-            </div>
+            
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="occupant" id="occupant" />
               <Label htmlFor="occupant">Members</Label>
@@ -624,6 +623,11 @@ export const AddFacilityBookingPage = () => {
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="guest" id="guest" />
               <Label htmlFor="guest">Guest</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="fm" id="fm" />
+              <Label htmlFor="fm">Staff</Label>
             </div>
           </RadioGroup>
         </div>
@@ -1099,7 +1103,7 @@ export const AddFacilityBookingPage = () => {
          )}  */}
 
         {/* Cost Summary Section */}
-        { selectedUser && userType === 'occupant' && facilityDetails && (
+        { selectedUser  && facilityDetails && (
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-lg font-semibold mb-4">Cost Summary</h2>
             <div className="space-y-3">
@@ -1113,13 +1117,22 @@ export const AddFacilityBookingPage = () => {
                 const memberRate = bookingRuleData?.rate || adultMemberCharge;
                 
                 // Determine user charge based on user type
-                const userCharge = (userType === 'fm' || userType === 'occupant') ? memberRate : adultGuestCharge;
-                const userChargeLabel = (userType === 'fm' || userType === 'occupant') ? 'Member Charge' : 'Guest Charge';
+                // Staff and Guest users get guest charge, only occupants get member charge
+                const userCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
+                const userChargeLabel = userType === 'occupant' ? 'Member Charge' : 'Guest Charge';
+                
+                // Number of slots selected
+                const slotsCount = selectedSlots.length;
+                const hasSlots = slotsCount > 0;
+                
+                // Multiply member/guest charge by number of slots only if slots are selected
+                const totalUserCharge = hasSlots ? (userCharge * slotsCount) : userCharge;
                 
                 const slotTotal = selectedSlots.length * perSlotCharge;
-                const guestChargeTotal = numberOfGuests * adultGuestCharge;
+                const guestChargePerSlot = numberOfGuests * adultGuestCharge;
+                const totalGuestCharge = hasSlots ? (guestChargePerSlot * slotsCount) : guestChargePerSlot;
                 
-                const subtotalBeforeDiscount = userCharge + guestChargeTotal + slotTotal;
+                const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
                 const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
                 const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
                 
@@ -1132,14 +1145,26 @@ export const AddFacilityBookingPage = () => {
 
                 return (
                   <>
-                    {/* User Charge */}
-                    {userCharge > 0 && (
+                {/* Slots Count - Only show when slots are selected */}
+                {hasSlots && (
+                  <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-blue-50">
+                    <span className="text-gray-700 font-medium">Number of Slots Selected</span>
+                    <span className="font-semibold text-blue-600">{slotsCount}</span>
+                  </div>
+                )}
+
+                    {/* Member Charge - Only for occupant users */}
+                    {userType === 'occupant' && userCharge > 0 && (
                       <div className="flex justify-between items-center py-2 border-b border-gray-200">
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-700">{userChargeLabel}</span>
-                          <span className="text-sm text-gray-500">(1 x ₹{userCharge.toFixed(2)})</span>
+                          <span className="text-gray-700">Member Charge</span>
+                          {hasSlots ? (
+                            <span className="text-sm text-gray-500">(1 x ₹{userCharge.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''})</span>
+                          ) : (
+                            <span className="text-sm text-gray-500">(1 x ₹{userCharge.toFixed(2)})</span>
+                          )}
                         </div>
-                        <span className="font-medium">₹{userCharge.toFixed(2)}</span>
+                        <span className="font-medium">₹{totalUserCharge.toFixed(2)}</span>
                       </div>
                     )}
 
@@ -1152,7 +1177,7 @@ export const AddFacilityBookingPage = () => {
                             type="number"
                             size="small"
                             value={numberOfGuests}
-                            onChange={(e) => setNumberOfGuests(Math.max(0, parseInt(e.target.value) || 0))}
+                            onChange={(e) => setNumberOfGuests(Math.max(1, parseInt(e.target.value) || 1))}
                             variant="outlined"
                             placeholder="No. of guests"
                             sx={{
@@ -1166,14 +1191,18 @@ export const AddFacilityBookingPage = () => {
                               }
                             }}
                             inputProps={{
-                              min: 0,
+                              min: 1,
                               step: 1
                             }}
                           />
-                          <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)}</span>
+                          {hasSlots ? (
+                            <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''}</span>
+                          ) : (
+                            <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)}</span>
+                          )}
                         </div>
                       </div>
-                      <span className="font-medium">₹{(numberOfGuests * adultGuestCharge).toFixed(2)}</span>
+                      <span className="font-medium">₹{totalGuestCharge.toFixed(2)}</span>
                     </div>
 
                     {/* Slot Charges */}
