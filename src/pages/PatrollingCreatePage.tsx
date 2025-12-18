@@ -1451,9 +1451,9 @@ export const PatrollingCreatePage: React.FC = () => {
             </div>
           ))}
           <div className="flex justify-end">
-            <Button variant="outline" onClick={addShift} disabled={isSubmitting}>
+            {/* <Button variant="outline" onClick={addShift} disabled={isSubmitting}>
               <Plus className="w-4 h-4 mr-2" /> Add Schedule
-            </Button>
+            </Button> */}
           </div>
         </div>
       </Section>
