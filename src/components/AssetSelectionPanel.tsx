@@ -22,7 +22,8 @@ interface Asset {
 
 interface AssetSelectionPanelProps {
   selectedCount: number;
-  selectedAssets: Asset[];
+  selectedAssets: Asset[]; // For display purposes
+  selectedAssetIds: string[]; // For API operations
   onMoveAsset: () => void;
   onDisposeAsset: () => void;
   onPrintQRCode: () => void;
@@ -33,6 +34,7 @@ interface AssetSelectionPanelProps {
 export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   selectedCount,
   selectedAssets,
+  selectedAssetIds,
   onMoveAsset,
   onDisposeAsset,
   onPrintQRCode,
@@ -67,7 +69,7 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
     try {
       const params = {
         q: {
-          id_in: selectedAssets.map((asset) => asset.id),
+          id_in: selectedAssetIds,
         },
       };
 
@@ -138,19 +140,18 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
     setIsPrintingQR(true);
 
     try {
-      const urlParams = new URLSearchParams();
-      selectedAssets.forEach((asset) => {
-        urlParams.append("asset_ids[]", asset.id);
-      });
-
-      const url = `${BASE_URL}/pms/assets/print_qr_codes?${urlParams.toString()}`;
+      const url = `${BASE_URL}/pms/assets/print_qr_codes`;
 
       const response = await fetch(url, {
         method: "POST",
         headers: {
           Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
           Accept: "application/pdf",
         },
+        body: JSON.stringify({
+          asset_ids: selectedAssetIds,
+        }),
       });
 
       if (!response.ok) {
@@ -217,6 +218,14 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
     );
   };
 
+  // If we have selected IDs but no objects (e.g. bulk select across pages), show generic text
+  const safeGetDisplayText = () => {
+    if (selectedCount > 0 && selectedAssets.length === 0) {
+      return `${selectedCount} item(s) selected`;
+    }
+    return getDisplayText();
+  }
+
   return (
     <div
       className="fixed bg-white border border-gray-200 rounded-sm shadow-lg z-50"
@@ -232,7 +241,7 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
               Selection
             </span>
             <span className="text-[12px] font-medium text-[#6B7280] break-words leading-tight">
-              {getDisplayText()}
+              {safeGetDisplayText()}
             </span>
           </div>
         </div>

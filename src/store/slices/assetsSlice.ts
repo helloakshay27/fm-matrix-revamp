@@ -63,6 +63,7 @@ interface AssetsState {
   data: Asset[]
   totalValue?: number
   available_custom_fields?: Array<{ key: string; title: string }>
+  asset_ids?: number[]
 }
 
 const initialState: AssetsState = {
@@ -76,6 +77,7 @@ const initialState: AssetsState = {
   data: [],
   totalValue: 0,
   available_custom_fields: [],
+  asset_ids: [],
 }
 
 // Async thunk for fetching assets data with filters
@@ -148,6 +150,7 @@ const assetsSlice = createSlice({
         state.totalPages = action.payload.pagination?.total_pages || 0
         state.totalValue = action.payload.total_value || 0
         state.available_custom_fields = action.payload.available_custom_fields || []
+        state.asset_ids = action.payload.asset_ids || []
         if (action.payload.appliedFilters) {
           state.filters = action.payload.appliedFilters
         }

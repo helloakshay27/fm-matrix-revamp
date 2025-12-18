@@ -155,6 +155,7 @@ export const AssetDashboard = () => {
     filters,
     totalValue,
     available_custom_fields: reduxCustomFields,
+    asset_ids: allAssetIds,
   } = useSelector((state: RootState) => state.assets);
 
   // Local state
@@ -572,6 +573,17 @@ export const AssetDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
+      // If we have allAssetIds from API, use those
+      if (allAssetIds && allAssetIds.length > 0) {
+        setSelectedAssets(
+          allAssetIds
+            .filter((id) => id !== null && id !== undefined)
+            .map((id) => id.toString())
+        );
+        return;
+      }
+
+      // Fallback to visible assets if for some reason API didn't return IDs
       const enabledAssetIds = displayAssets
         .filter((asset) => !asset.disabled)
         .map((asset) => asset.id);
@@ -793,6 +805,7 @@ export const AssetDashboard = () => {
                   <AssetSelectionPanel
                     selectedCount={selectedAssets.length}
                     selectedAssets={selectedAssetObjects}
+                    selectedAssetIds={selectedAssets}
                     onMoveAsset={handleMoveAsset}
                     onDisposeAsset={handleDisposeAsset}
                     onPrintQRCode={handlePrintQRCode}
