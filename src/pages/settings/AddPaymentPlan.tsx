@@ -12,10 +12,10 @@ interface PaymentSchedule {
 }
 
 const FREQUENCY_OPTIONS = [
-  { value: 'monthly', label: 'Monthly', months: 1 },
+  { value: 'monthly', label: 'Monthly', months: 12 },
   { value: 'quarterly', label: 'Quarterly', months: 3 },
-  { value: 'half_yearly', label: 'Half Yearly', months: 6 },
-  { value: 'yearly', label: 'Yearly', months: 12 },
+  { value: 'half_yearly', label: 'Half Yearly', months: 2 },
+  { value: 'yearly', label: 'Yearly', months: 1 },
 ];
 
 export const AddPaymentPlan = () => {
