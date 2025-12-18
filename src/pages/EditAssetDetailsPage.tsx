@@ -2830,33 +2830,8 @@ export const EditAssetDetailsPage = () => {
       });
     });
 
-    // IT Assets custom fields - only include fields with non-empty values and changes only
-    Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
-      (itAssetsCustomFields[sectionKey] || []).forEach((field) => {
-        // Only add field if it has a non-empty value
-        if (!isEmpty(field.value)) {
-          console.log(
-            `Including IT assets field: ${field.name} = ${field.value}`
-          );
-          const original = findOriginal(field.name, sectionKey);
-          const originalValue = original?.value ?? undefined;
-          if (String(field.value ?? "") !== String(originalValue ?? "")) {
-            addOrReplace({
-              ...(original?.id && { id: original.id }),
-              field_name: field.name,
-              field_value: field.value,
-              group_name: sectionKey,
-              field_description: "custom_field",
-              _destroy: false,
-            });
-          }
-        } else {
-          console.log(
-            `Skipping empty IT assets field: ${field.name} (value: ${field.value})`
-          );
-        }
-      });
-    });
+    // IT Assets custom fields are already synchronized with customFields, 
+    // so we don't need to iterate over them separately to avoid duplicates.
 
     // Standard extra fields (dynamic) - with proper date formatting; include changes only
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
@@ -3540,31 +3515,31 @@ export const EditAssetDetailsPage = () => {
       },
       "Furniture & Fixtures": {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
+        locationFields: ["site"],
         warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "IT Equipment": {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
+        locationFields: ["site"],
         warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "Machinery & Equipment": {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
+        locationFields: ["site"],
         warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "Tools & Instruments": {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
+        locationFields: ["site"],
         warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       Meter: {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
+        locationFields: ["site"],
         warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
@@ -3694,11 +3669,11 @@ export const EditAssetDetailsPage = () => {
       },
       "Furniture & Fixtures": {
         description:
-          "Furniture assets require basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) as they are fixed to specific locations.",
+          "Furniture assets require basic identification, group selection, purchase details, warranty, and location information (Site minimum) as they are fixed to specific locations.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -3706,11 +3681,11 @@ export const EditAssetDetailsPage = () => {
       },
       "IT Equipment": {
         description:
-          "IT Equipment requires basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for proper asset tracking.",
+          "IT Equipment requires basic identification, group selection, purchase details, warranty, and location information (Site minimum) for proper asset tracking.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -3718,11 +3693,11 @@ export const EditAssetDetailsPage = () => {
       },
       "Machinery & Equipment": {
         description:
-          "Machinery requires basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for maintenance and tracking.",
+          "Machinery requires basic identification, group selection, purchase details, warranty, and location information (Site minimum) for maintenance and tracking.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -3730,11 +3705,11 @@ export const EditAssetDetailsPage = () => {
       },
       "Tools & Instruments": {
         description:
-          "Tools require basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for inventory management.",
+          "Tools require basic identification, group selection, purchase details, warranty, and location information (Site minimum) for inventory management.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -3742,11 +3717,11 @@ export const EditAssetDetailsPage = () => {
       },
       Meter: {
         description:
-          "Meter assets require basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for utility monitoring and maintenance.",
+          "Meter assets require basic identification, group selection, purchase details, warranty, and location information (Site minimum) for utility monitoring and maintenance.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -3856,31 +3831,31 @@ export const EditAssetDetailsPage = () => {
       },
       "Furniture & Fixtures": {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // Furniture needs location
+        locationFields: ["site"], // Furniture needs location
         warrantyFields: ["warranty_expiry"], // Furniture typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "IT Equipment": {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // IT Equipment needs location
+        locationFields: ["site"], // IT Equipment needs location
         warrantyFields: ["warranty_expiry"], // IT Equipment typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "Machinery & Equipment": {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // Machinery needs location
+        locationFields: ["site"], // Machinery needs location
         warrantyFields: ["warranty_expiry"], // Machinery typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "Tools & Instruments": {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // Tools need location
+        locationFields: ["site"], // Tools need location
         warrantyFields: ["warranty_expiry"], // Tools typically have warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       Meter: {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // Meters need location
+        locationFields: ["site"], // Meters need location
         warrantyFields: ["warranty_expiry"], // Meters typically have warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
@@ -11258,7 +11233,7 @@ export const EditAssetDetailsPage = () => {
                         sx={{ minWidth: 120 }}
                       >
                         <InputLabel id="building-select-label" shrink>
-                          Building<span style={{ color: "#C72030" }}>*</span>
+                          Building
                         </InputLabel>
                         <MuiSelect
                           labelId="building-select-label"
