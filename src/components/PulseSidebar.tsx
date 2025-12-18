@@ -87,6 +87,13 @@ const modulesByPackage = {
       name: "Pulse Privilege",
       icon: Shield,
       href: "/pulse/pulse-privilege",
+      subItems: [
+        { name: "Plus Service", href: "/pulse/pulse-privilege/plus-service" },
+        {
+          name: "Service Category",
+          href: "/pulse/pulse-privilege/service-category",
+        },
+      ],
     },
     {
       name: "Documents",

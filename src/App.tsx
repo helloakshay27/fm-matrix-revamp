@@ -767,6 +767,12 @@ import { CompanyPartnersSetupDashboard } from "./pages/CompanyPartnersSetupDashb
 import { TestimonialsSetupDashboard } from "./pages/TestimonialsSetupDashboard";
 import BannerSetupDashboard from "./pages/BannerSetupDashboard";
 import AmenitySetupDashboard from "./pages/AmenitySetupDashboard";
+import PlusServiceDashboard from "./pages/PlusServiceDashboard";
+import { AddPlusServicePage } from "./pages/AddPlusServicePage";
+import { EditPlusServicePage } from "./pages/EditPlusServicePage";
+import ServiceCategoryDashboard from "./pages/ServiceCategoryDashboard";
+import { AddServiceCategoryPage } from "./pages/AddServiceCategoryPage";
+import { EditServiceCategoryPage } from "./pages/EditServiceCategoryPage";
 import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
 import BannerDetailsPage from "./pages/BannerDetailsPage";
 import AmenityDetailsPage from "./pages/AmenityDetailsPage";
@@ -3480,6 +3486,34 @@ function App() {
   <Route
                     path="/pulse/visitor/details/:id"
                     element={<VisitorDetailsPage />}
+                  />
+
+                  {/* Plus Service Routes */}
+                  <Route
+                    path="/pulse/pulse-privilege/plus-service"
+                    element={<PlusServiceDashboard />}
+                  />
+                  <Route
+                    path="/pulse/pulse-privilege/plus-service/create"
+                    element={<AddPlusServicePage />}
+                  />
+                  <Route
+                    path="/pulse/pulse-privilege/plus-service/edit/:id"
+                    element={<EditPlusServicePage />}
+                  />
+
+                  {/* Service Category Routes */}
+                  <Route
+                    path="/pulse/pulse-privilege/service-category"
+                    element={<ServiceCategoryDashboard />}
+                  />
+                  <Route
+                    path="/pulse/pulse-privilege/service-category/create"
+                    element={<AddServiceCategoryPage />}
+                  />
+                  <Route
+                    path="/pulse/pulse-privilege/service-category/edit/:id"
+                    element={<EditServiceCategoryPage />}
                   />
 
                   
