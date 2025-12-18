@@ -108,7 +108,7 @@ const ChannelSidebar = () => {
     }, [newConversationModal]);
 
     return (
-        <div className="w-64 h-[calc(100vh-112px)] py-3 border-r border-gray-200 shadow-md space-y-2 relative">
+        <div className={`w-64 ${localStorage.getItem('selectedView') === 'employee' ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} py-3 border-r border-gray-200 shadow-md space-y-2 relative`}>
             <div className="w-full px-3" onClick={() => setNewConversationModal(true)}>
                 <Button className="w-full">+ New Chat</Button>
             </div>
