@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Trash2, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { ImageCropperr } from './ImageCropperr';
 
 interface UploadedImage {
     id: number;
@@ -56,6 +57,9 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
     const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>(initialImages);
     const [selectedRatio, setSelectedRatio] = useState<RatioOption | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [cropperOpen, setCropperOpen] = useState(false);
+    const [currentImage, setCurrentImage] = useState<string>('');
+    const [currentFile, setCurrentFile] = useState<File | null>(null);
 
     const handleRatioClick = (ratio: RatioOption) => {
         setSelectedRatio(ratio);
@@ -80,50 +84,71 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
             return;
         }
 
-        // Process image
+        // Read image and open cropper
         const reader = new FileReader();
         reader.onload = (e) => {
             const base64 = e.target?.result as string;
-            const img = new Image();
-            
-            img.onload = () => {
-                const actualRatio = img.width / img.height;
-                const targetRatio = selectedRatio.ratio;
-                const isValidRatio = Math.abs(actualRatio - targetRatio) < 0.1;
-                const detectedRatio = ratios.find(r => Math.abs(actualRatio - r.ratio) < 0.1)?.label ||
-                    actualRatio.toFixed(2);
-
-                if (!isValidRatio && !includeInvalidRatios) {
-                    toast.error(
-                        `Invalid image ratio. Detected: ${detectedRatio}, Expected: ${selectedRatio.label}`
-                    );
-                    setSelectedRatio(null);
-                    return;
-                }
-
-                const newImage: UploadedImage = {
-                    id: Date.now(),
-                    name: file.name,
-                    file,
-                    size: file.size / (1024 * 1024), // MB
-                    ratio: selectedRatio.label,
-                    isValidRatio,
-                    uploadTime: new Date().toLocaleTimeString(),
-                    preview: base64,
-                    type: 'image',
-                };
-
-                const updated = [...uploadedImages, newImage];
-                setUploadedImages(updated);
-                onImagesChange(updated);
-                setSelectedRatio(null);
-            };
-            
-            img.src = base64;
+            setCurrentImage(base64);
+            setCurrentFile(file);
+            setCropperOpen(true);
         };
         
         reader.readAsDataURL(file);
         event.target.value = '';
+    };
+
+    const handleCropComplete = (result: { base64: string; file: File } | null) => {
+        setCropperOpen(false);
+        
+        if (!result || !selectedRatio) {
+            setSelectedRatio(null);
+            setCurrentImage('');
+            setCurrentFile(null);
+            return;
+        }
+
+        const { base64, file } = result;
+        const img = new Image();
+        
+        img.onload = () => {
+            const actualRatio = img.width / img.height;
+            const targetRatio = selectedRatio.ratio;
+            const isValidRatio = Math.abs(actualRatio - targetRatio) < 0.1;
+            const detectedRatio = ratios.find(r => Math.abs(actualRatio - r.ratio) < 0.1)?.label ||
+                actualRatio.toFixed(2);
+
+            if (!isValidRatio && !includeInvalidRatios) {
+                toast.error(
+                    `Invalid image ratio. Detected: ${detectedRatio}, Expected: ${selectedRatio.label}`
+                );
+                setSelectedRatio(null);
+                setCurrentImage('');
+                setCurrentFile(null);
+                return;
+            }
+
+            const newImage: UploadedImage = {
+                id: Date.now(),
+                name: file.name,
+                file,
+                size: file.size / (1024 * 1024),
+                ratio: selectedRatio.label,
+                isValidRatio,
+                uploadTime: new Date().toLocaleTimeString(),
+                preview: base64,
+                type: 'image',
+            };
+
+            const updated = [...uploadedImages, newImage];
+            setUploadedImages(updated);
+            onImagesChange(updated);
+            setSelectedRatio(null);
+            setCurrentImage('');
+            setCurrentFile(null);
+            toast.success(`Image uploaded for ${selectedRatio.label}`);
+        };
+        
+        img.src = base64;
     };
 
     const handleRemoveImage = (id: number) => {
@@ -489,6 +514,20 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* Image Cropper - Always render outside conditional */}
+            {selectedRatio && currentFile && (
+                <ImageCropperr
+                    open={cropperOpen}
+                    image={currentImage}
+                    onComplete={handleCropComplete}
+                    originalFile={currentFile}
+                    selectedRatio={{
+                        label: selectedRatio.label,
+                        ratio: selectedRatio.ratio,
+                    }}
+                />
             )}
         </div>
     );
