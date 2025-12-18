@@ -192,14 +192,14 @@ const ServiceCategoryDashboard = () => {
   const renderActions = (item: ServiceCategory) => {
     return (
       <div className="flex gap-2">
-        <Button
+        {/* <Button
           size="sm"
           variant="ghost"
           className="p-1"
           onClick={() => navigate(`/pulse/pulse-privilege/service-category/${item.id}`)}
         >
           <Eye className="w-4 h-4" />
-        </Button>
+        </Button> */}
         <Button
           size="sm"
           variant="ghost"
@@ -208,14 +208,14 @@ const ServiceCategoryDashboard = () => {
         >
           <Edit className="w-4 h-4" />
         </Button>
-        <Button
+        {/* <Button
           size="sm"
           variant="ghost"
           className="p-1 text-red-600 hover:text-red-700"
           onClick={() => handleDelete(item)}
         >
           <Trash2 className="w-4 h-4" />
-        </Button>
+        </Button> */}
       </div>
     );
   };
