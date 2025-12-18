@@ -913,68 +913,68 @@ function App() {
     fetchCurrency();
   }, [baseUrl, token, selectedSite?.id, dispatch]);
 
-  useEffect(() => {
-    console.log('🔌 WebSocket connection effect running');
+  // useEffect(() => {
+  //   console.log('🔌 WebSocket connection effect running');
 
-    if (token) {
-      console.log('✅ Token available, connecting...');
-      connect(token, socketUrl);
-    } else {
-      console.error('❌ No token available for WebSocket connection');
-    }
+  //   if (token) {
+  //     console.log('✅ Token available, connecting...');
+  //     connect(token, socketUrl);
+  //   } else {
+  //     console.error('❌ No token available for WebSocket connection');
+  //   }
 
-    // return () => {
-    //   console.log('🧹 Cleaning up WebSocket subscriptions');
-    // };
-  }, [token, connect]);
+  //   // return () => {
+  //   //   console.log('🧹 Cleaning up WebSocket subscriptions');
+  //   // };
+  // }, [token, connect]);
 
-  useEffect(() => {
-    const subscriptionTimer = setTimeout(() => {
-      const sub = webSocketManager.subscribeToUserNotifications({
-        onConnected: () => {
-          console.log('🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!');
-          setIsSubscribed(true);
-          toast.success('Real-time connection established!', { duration: 2000 });
-        },
-        onMessageNotification: (message) => {
-          if (message.user_id === currentUser.id) {
-            return;
-          }
+  // useEffect(() => {
+  //   const subscriptionTimer = setTimeout(() => {
+  //     const sub = webSocketManager.subscribeToUserNotifications({
+  //       onConnected: () => {
+  //         console.log('🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!');
+  //         setIsSubscribed(true);
+  //         toast.success('Real-time connection established!', { duration: 2000 });
+  //       },
+  //       onMessageNotification: (message) => {
+  //         if (message.user_id === currentUser.id) {
+  //           return;
+  //         }
 
-          if (!('Notification' in window)) {
-            toast.error('Not supported');
-            return;
-          }
+  //         if (!('Notification' in window)) {
+  //           toast.error('Not supported');
+  //           return;
+  //         }
 
-          const sender = message?.user?.firstname + ' ' + message?.user?.lastname;
+  //         const sender = message?.user?.firstname + ' ' + message?.user?.lastname;
 
-          Notification.requestPermission().then((permission) => {
-            if (permission === 'granted') {
-              const notification = new Notification(sender, {
-                body: message.body,
-              });
+  //         Notification.requestPermission().then((permission) => {
+  //           if (permission === 'granted') {
+  //             const notification = new Notification(sender, {
+  //               body: message.body,
+  //             });
 
-              notification.onclick = () => {
-                window.focus();
-                navigate(`/channels/messages/${message.conversation_id}`);
-              };
-            }
-          });
-        },
-        onDisconnected: () => {
-          console.log('❌ Chat subscription disconnected');
-          setIsSubscribed(false);
-          toast.error('Real-time chat disconnected');
-        },
-      });
-      console.log('📋 Subscription object:', sub);
-    }, 2000); // Wait 2 seconds for connection to establish
+  //             notification.onclick = () => {
+  //               window.focus();
+  //               navigate(`/channels/messages/${message.conversation_id}`);
+  //             };
+  //           }
+  //         });
+  //       },
+  //       onDisconnected: () => {
+  //         console.log('❌ Chat subscription disconnected');
+  //         setIsSubscribed(false);
+  //         toast.error('Real-time chat disconnected');
+  //       },
+  //     });
+  //     console.log('📋 Subscription object:', sub);
+  //   }, 2000); // Wait 2 seconds for connection to establish
 
-    return () => {
-      console.log('⏰ Clearing subscription timer');
-      clearTimeout(subscriptionTimer);
-    };
-  }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
+  //   return () => {
+  //     console.log('⏰ Clearing subscription timer');
+  //     clearTimeout(subscriptionTimer);
+  //   };
+  // }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
 
   return (
     <>
