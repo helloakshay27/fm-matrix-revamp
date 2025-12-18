@@ -69,6 +69,7 @@ interface Role {
 
 interface LockUserPermission {
   id?: number;
+  user_type?: string;
   employee_id?: string;
   designation?: string;
   access_level?: string;
@@ -320,7 +321,7 @@ export const EditFMUserPage = () => {
         selectBaseUnit: userData.unit_id || "",
         selectDepartment: userData.department_id || "",
         designation: userData.lock_user_permission?.designation || "",
-        selectUserType: userData.user_type || "",
+        selectUserType: userData.lock_user_permission?.user_type || "",
         selectRole: userData.lock_user_permission?.lock_role_id || "",
         selectAccessLevel: userData.lock_user_permission?.access_level || "",
         selectEmailPreference: userData.urgency_email_enabled?.toString() || "",
