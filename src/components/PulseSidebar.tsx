@@ -46,7 +46,7 @@ const modulesByPackage = {
     {
       name: "Banners",
       icon: ImageIcon,
-      href: "/pulse/community-modules/banner-setup",
+      href: "/pulse/community-modules/banner-list",
     },
     {
       name: "Stepathon",

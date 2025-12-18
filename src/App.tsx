@@ -765,7 +765,10 @@ import MobileLMCPage from "./pages/MobileLMCPage";
 import { ViBusinessCard } from "./pages/mobile/ViBusinessCard";
 import { CompanyPartnersSetupDashboard } from "./pages/CompanyPartnersSetupDashboard";
 import { TestimonialsSetupDashboard } from "./pages/TestimonialsSetupDashboard";
-import BannerSetupDashboard from "./pages/BannerSetupDashboard";
+import BannerListPage from "./pages/BannerListPage";
+import BannerDetailsPage from "./pages/BannerDetailsPage";
+import BannerAddPage from "./pages/BannerAddPage";
+import BannerEditPage from "./pages/BannerEditPage";
 import AmenitySetupDashboard from "./pages/AmenitySetupDashboard";
 import PlusServiceDashboard from "./pages/PlusServiceDashboard";
 import { AddPlusServicePage } from "./pages/AddPlusServicePage";
@@ -774,7 +777,6 @@ import ServiceCategoryDashboard from "./pages/ServiceCategoryDashboard";
 import { AddServiceCategoryPage } from "./pages/AddServiceCategoryPage";
 import { EditServiceCategoryPage } from "./pages/EditServiceCategoryPage";
 import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
-import BannerDetailsPage from "./pages/BannerDetailsPage";
 import AmenityDetailsPage from "./pages/AmenityDetailsPage";
 import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
 import WeeklyReport from "./components/WeeklyReport";
@@ -3462,11 +3464,19 @@ function App() {
                   }
                 >
                   <Route
-                    path="/pulse/community-modules/banner-setup"
-                    element={<BannerSetupDashboard />}
+                    path="/pulse/community-modules/banner-list"
+                    element={<BannerListPage />}
                   />
                   <Route
-                    path="/pulse/community-modules/banner-setup/:id"
+                    path="/pulse/community-modules/banner-list/add"
+                    element={<BannerAddPage />}
+                  />
+                  <Route
+                    path="/pulse/community-modules/banner-list/edit/:id"
+                    element={<BannerEditPage />}
+                  />
+                  <Route
+                    path="/pulse/community-modules/banner-list/:id"
                     element={<BannerDetailsPage />}
                   />
                   <Route path="/pulse/events" element={<CRMEventsPage />} />
@@ -3712,7 +3722,7 @@ function App() {
                   />
                   <Route
                     path="/settings/community-modules/banner-setup"
-                    element={<BannerSetupDashboard />}
+                    element={<BannerListPage />}
                   />
                   <Route
                     path="/settings/community-modules/banner-setup/:id"
