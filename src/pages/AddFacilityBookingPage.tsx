@@ -463,16 +463,29 @@ export const AddFacilityBookingPage = () => {
 
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
       
-      // Calculate cost summary
-      const staffMemberCount = peopleTable.filter(row => (row.role === 'staff' || row.role === 'member') && row.user).length;
-      const guestCount = peopleTable.filter(row => row.role === 'guest' && row.user).length;
-      
+      // Calculate cost summary - matching the display logic
       const adultMemberCharge = facilityDetails?.facility_charge?.adult_member_charge || 0;
       const adultGuestCharge = facilityDetails?.facility_charge?.adult_guest_charge || 0;
       const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge || 0;
       
-      const memberCharges = staffMemberCount * adultMemberCharge;
-      const guestCharges = guestCount * adultGuestCharge;
+      // Use booking rule rate for members if available, otherwise use facility charge
+      const memberRate = bookingRuleData?.rate || adultMemberCharge;
+      
+      // Determine user charge based on user type
+      const userCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
+      
+      // Number of slots selected
+      const slotsCount = selectedSlots.length;
+      const hasSlots = slotsCount > 0;
+      
+      // Calculate member charges (only for occupant users)
+      const memberCharges = userType === 'occupant' ? (hasSlots ? (userCharge * slotsCount) : userCharge) : 0;
+      
+      // Calculate guest charges
+      const guestChargePerSlot = numberOfGuests * adultGuestCharge;
+      const guestCharges = hasSlots ? (guestChargePerSlot * slotsCount) : guestChargePerSlot;
+      
+      // Calculate slot charges
       const slotCharges = selectedSlots.length * perSlotCharge;
       
       const subtotalBeforeDiscount = memberCharges + guestCharges + slotCharges;
