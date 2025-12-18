@@ -1326,7 +1326,7 @@ export const EditBookingSetupPage = () => {
                                 <div>End Time</div>
                                 <div>Concurrent Slots</div>
                                 <div>Slot by</div>
-                                <div>Wrap Time</div>
+                                {/* <div>Wrap Time</div> */}
                             </div>
                             {formData.slots.map((slot, index) => (
                                 <div key={index} className="grid grid-cols-7 gap-2 mb-2">
@@ -1501,7 +1501,7 @@ export const EditBookingSetupPage = () => {
                                             <MenuItem value={270}>4 and a half hours</MenuItem>
                                         </Select>
                                     </FormControl>
-                                    <TextField
+                                    {/* <TextField
                                         size="small"
                                         onChange={(e) => {
                                             const newSlots = [...formData.slots];
@@ -1510,7 +1510,7 @@ export const EditBookingSetupPage = () => {
                                         }}
                                         value={slot.wrapTime}
                                         variant="outlined"
-                                    />
+                                    /> */}
                                 </div>
                             ))}
                             <div className="space-y-4 mt-4">
@@ -2399,7 +2399,7 @@ export const EditBookingSetupPage = () => {
 
                         <div className="space-y-3">
                             <div className="font-medium text-gray-700">
-                                Cancellation Policy
+                                Cancellation Policy <span>*</span>
                             </div>
                             <Textarea
                                 placeholder="Enter cancellation text"

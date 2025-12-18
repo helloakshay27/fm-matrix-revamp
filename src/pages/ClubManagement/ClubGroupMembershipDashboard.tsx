@@ -110,6 +110,7 @@ export const ClubGroupMembershipDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMembershipTypeModalOpen, setIsMembershipTypeModalOpen] = useState(false);
   const [membershipType, setMembershipType] = useState<'individual' | 'group'>('individual');
+  const [modalData, setModalData] = useState<{isOpen: boolean, title: string, items: string[]}>({isOpen: false, title: '', items: []});
   const [filters, setFilters] = useState<ClubMembershipFilters>({
     search: '',
     clubMemberEnabled: '',
@@ -604,7 +605,18 @@ export const ClubGroupMembershipDashboard = () => {
             <span key={idx} className="text-sm">{name}</span>
           ))}
           {names.length > 2 && (
-            <span className="text-xs text-gray-500">+{names.length - 2} more</span>
+            <span 
+              className="text-xs text-blue-600 cursor-pointer hover:underline" 
+              onClick={() => {
+                setModalData({
+                  isOpen: true,
+                  title: 'Member Names',
+                  items: names
+                });
+              }}
+            >
+              +{names.length - 2} more
+            </span>
           )}
         </div>
       );
@@ -620,7 +632,18 @@ export const ClubGroupMembershipDashboard = () => {
             <span key={idx} className="text-sm">{email}</span>
           ))}
           {emails.length > 2 && (
-            <span className="text-xs text-gray-500">+{emails.length - 2} more</span>
+            <span 
+              className="text-xs text-blue-600 cursor-pointer hover:underline" 
+              onClick={() => {
+                setModalData({
+                  isOpen: true,
+                  title: 'Member Emails',
+                  items: emails
+                });
+              }}
+            >
+              +{emails.length - 2} more
+            </span>
           )}
         </div>
       );
@@ -636,7 +659,18 @@ export const ClubGroupMembershipDashboard = () => {
             <span key={idx} className="text-sm">{mobile}</span>
           ))}
           {mobiles.length > 2 && (
-            <span className="text-xs text-gray-500">+{mobiles.length - 2} more</span>
+            <span 
+              className="text-xs text-blue-600 cursor-pointer hover:underline" 
+              onClick={() => {
+                setModalData({
+                  isOpen: true,
+                  title: 'Member Mobiles',
+                  items: mobiles
+                });
+              }}
+            >
+              +{mobiles.length - 2} more
+            </span>
           )}
         </div>
       );
@@ -778,6 +812,30 @@ export const ClubGroupMembershipDashboard = () => {
         onClose={() => setIsFilterOpen(false)}
         onApply={handleFilterApply}
       />
+
+      {/* Member Details Modal */}
+      <Dialog open={modalData.isOpen} onOpenChange={(open) => setModalData({...modalData, isOpen: open})}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{modalData.title}</DialogTitle>
+            <DialogDescription>
+              Total: {modalData.items.length} items
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 mt-4">
+            {modalData.items.map((item, idx) => (
+              <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <span className="text-sm">{item}</span>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setModalData({isOpen: false, title: '', items: []})} variant="outline">
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

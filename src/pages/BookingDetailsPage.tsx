@@ -322,7 +322,7 @@ export const BookingDetailsPage = () => {
               {bookings?.discount != null && bookings.discount > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <span className="text-gray-600">Discount</span>
-                  <span className="text-green-600 font-medium">- ₹{bookings.discount.toFixed(2)}</span>
+                  <span className="text-green-600 font-medium"> ₹{bookings.discount.toFixed(2)}</span>
                 </div>
               )}
 

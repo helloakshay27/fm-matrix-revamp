@@ -744,7 +744,7 @@ export const ClubGroupMembershipDetails = () => {
                   <div className="flex items-start">
                     <span className="text-gray-500 min-w-[140px]">Discount</span>
                     <span className="text-gray-500 mx-2">:</span>
-                    <span className="text-gray-900 font-medium">-₹ {membershipData.allocation_payment_detail.discount}</span>
+                    <span className="text-gray-900 font-medium">₹ {membershipData.allocation_payment_detail.discount}</span>
                   </div>
                 )}
                 <div className="flex items-start">
@@ -964,7 +964,7 @@ export const ClubGroupMembershipDetails = () => {
                                 ₹ {charge.amount?.toFixed(2)}
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                                {charge.discount ? `-₹ ${Number(charge.discount).toFixed(2)}` : '-'}
+                                {charge.discount ? `₹ ${Number(charge.discount).toFixed(2)}` : '-'}
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-900 text-right">
                                 {charge.gst_rate !== null && charge.gst_rate !== undefined

@@ -1135,7 +1135,7 @@ export const AddBookingSetupPage = () => {
                 <div>End Time</div>
                 <div>Concurrent Slots</div>
                 <div>Slot by</div>
-                <div>Wrap Time</div>
+                {/* <div>Wrap Time</div> */}
                 <div>Action</div>
               </div>
 
@@ -1345,7 +1345,7 @@ export const AddBookingSetupPage = () => {
                     </Select>
                   </FormControl>
 
-                  <TextField
+                  {/* <TextField
                     size="small"
                     value={slot.wrapTime}
                     onChange={(e) => {
@@ -1358,7 +1358,7 @@ export const AddBookingSetupPage = () => {
                       }
                     }}
                     variant="outlined"
-                  />
+                  /> */}
 
                   <Button
                     size="sm"
@@ -2106,7 +2106,7 @@ export const AddBookingSetupPage = () => {
 
             <div className="space-y-3">
               <div className="font-medium text-gray-700">
-                Cancellation Policy
+                Cancellation Policy <span>*</span>
               </div>
               <Textarea
                 placeholder="Enter cancellation text"

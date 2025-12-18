@@ -783,13 +783,13 @@ export const BookingSetupDetailPage = () => {
                         {slot.slotBy || "-"}
                       </span>
                     </div>
-                    <div className="flex items-start">
+                    {/* <div className="flex items-start">
                       <span className="text-gray-500 min-w-[140px]">Wrap Time</span>
                       <span className="text-gray-500 mx-2">:</span>
                       <span className="text-gray-900 font-medium">
                         {slot.wrapTime || "-"}
                       </span>
-                    </div>
+                    </div> */}
                   </div>
                   {index < formData.slots.length - 1 && <hr className="mt-4" />}
                 </div>
@@ -1078,13 +1078,13 @@ export const BookingSetupDetailPage = () => {
                   {formData.igstPercentage || "-"}
                 </span>
               </div>
-              <div className="flex items-start">
+              {/* <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Per Slot Charge</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.perSlotCharge || "-"}
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -1327,7 +1327,7 @@ export const BookingSetupDetailPage = () => {
 
             <div className="space-y-3">
               <div className="font-medium text-gray-700">
-                Cancellation Policy
+                Cancellation Policy<span>*</span>
               </div>
               <Textarea
                 placeholder="Enter cancellation text"

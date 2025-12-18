@@ -1223,7 +1223,7 @@ export const AddFacilityBookingPage = () => {
                           <span className="text-gray-500">%</span>
                         </div>
                       </div>
-                      <span className="font-medium">- ₹{discountAmount.toFixed(2)}</span>
+                      <span className="font-medium"> ₹{discountAmount.toFixed(2)}</span>
                     </div>
 
                     {/* Subtotal After Discount */}
