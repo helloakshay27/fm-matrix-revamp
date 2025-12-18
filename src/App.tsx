@@ -4,10 +4,11 @@ import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { Toaster as SonnerToaster, toast } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
 import { PermissionsProvider } from "./contexts/PermissionsContext";
 import { EnhancedSelectProvider } from "./providers/EnhancedSelectProvider";
@@ -840,6 +841,7 @@ import PlaceFnbOrder from "./pages/PlaceFnbOrder";
 import { SpaceManagementBookingsDashboardEmployee } from "./pages/SpaceManagementBookingsDashboardEmployee";
 import { SpaceManagementBookingDetailsPage } from "./pages/SpaceManagementBookingDetailsPage";
 import EmployeeWallet from "./pages/EmployeeWallet";
+import { useWebSocket } from "./hooks/useWebSocket";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -852,6 +854,13 @@ function App() {
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
   useRouteLogger();
+
+  const navigate = useNavigate()
+
+  const { manager: webSocketManager, connect } = useWebSocket();
+  const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
+  const currentUser = JSON.parse(localStorage.getItem('user'));
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Initialize global MUI Select search enhancer
   useEffect(() => {
@@ -903,6 +912,69 @@ function App() {
 
     fetchCurrency();
   }, [baseUrl, token, selectedSite?.id, dispatch]);
+
+  useEffect(() => {
+    console.log('🔌 WebSocket connection effect running');
+
+    if (token) {
+      console.log('✅ Token available, connecting...');
+      connect(token, socketUrl);
+    } else {
+      console.error('❌ No token available for WebSocket connection');
+    }
+
+    // return () => {
+    //   console.log('🧹 Cleaning up WebSocket subscriptions');
+    // };
+  }, [token, connect]);
+
+  useEffect(() => {
+    const subscriptionTimer = setTimeout(() => {
+      const sub = webSocketManager.subscribeToUserNotifications({
+        onConnected: () => {
+          console.log('🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!');
+          setIsSubscribed(true);
+          toast.success('Real-time connection established!', { duration: 2000 });
+        },
+        onMessageNotification: (message) => {
+          if (message.user_id === currentUser.id) {
+            return;
+          }
+
+          if (!('Notification' in window)) {
+            toast.error('Not supported');
+            return;
+          }
+
+          const sender = message?.user?.firstname + ' ' + message?.user?.lastname;
+
+          Notification.requestPermission().then((permission) => {
+            if (permission === 'granted') {
+              const notification = new Notification(sender, {
+                body: message.body,
+              });
+
+              notification.onclick = () => {
+                window.focus();
+                navigate(`/channels/messages/${message.conversation_id}`);
+              };
+            }
+          });
+        },
+        onDisconnected: () => {
+          console.log('❌ Chat subscription disconnected');
+          setIsSubscribed(false);
+          toast.error('Real-time chat disconnected');
+        },
+      });
+      console.log('📋 Subscription object:', sub);
+    }, 2000); // Wait 2 seconds for connection to establish
+
+    return () => {
+      console.log('⏰ Clearing subscription timer');
+      clearTimeout(subscriptionTimer);
+    };
+  }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
 
   return (
     <>
@@ -1267,7 +1339,7 @@ function App() {
                       index
                       element={
                         <div
-                          className={`flex justify-center items-center h-[calc(100vh-112px)] w-[calc(100vw-32rem)]`}
+                          className={`flex justify-center items-center ${localStorage.getItem('selectedView') === 'employee' ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
                         >
                           Select a Chat/Group to view messages
                         </div>
