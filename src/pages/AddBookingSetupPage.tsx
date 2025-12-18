@@ -617,7 +617,7 @@ export const AddBookingSetupPage = () => {
         );
         formDataToSend.append(
           `facility_slots[][wrap_time]`,
-          slot.wrapTime || "5"
+          slot.wrapTime || "0"
         );
       });
 

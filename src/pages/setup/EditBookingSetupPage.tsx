@@ -353,9 +353,9 @@ export const EditBookingSetupPage = () => {
             const transformedRules = responseData.cancellation_rules?.map((rule) => ({
                 description: rule.description,
                 time: {
-                    type: rule.hour,
-                    value: rule.min,
-                    day: rule.day,
+                    type: rule.hour?.toString().padStart(2, "0") || "00",
+                    value: rule.min?.toString().padStart(2, "0") || "00",
+                    day: rule.day?.toString() || "0",
                 },
                 deduction: rule.deduction?.toString() || "",
             })) || [];

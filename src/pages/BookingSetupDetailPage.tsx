@@ -231,7 +231,7 @@ export const BookingSetupDetailPage = () => {
     try {
       const formattedDate = date.replace(/-/g, '/');
       const response = await axios.get(
-        `https://${baseUrl}/pms/admin/facility_setups/${facilityId}/get_schedules.json`,
+        `https://${baseUrl}/pms/admin/facility_setups/${facilityId}/all_schedules_for_facility_setup.json`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -426,9 +426,9 @@ export const BookingSetupDetailPage = () => {
       const transformedRules = response.cancellation_rules?.map((rule: any) => ({
         description: rule.description,
         time: {
-          type: rule.hour, // You can dynamically determine this if needed
-          value: rule.min,
-          day: rule.day,
+          type: rule.hour?.toString().padStart(2, "0") || "00",
+          value: rule.min?.toString().padStart(2, "0") || "00",
+          day: rule.day?.toString() || "0",
         },
         deduction: rule.deduction?.toString() || '',
       })) || [];
@@ -983,28 +983,34 @@ export const BookingSetupDetailPage = () => {
                       </div>
                     </div>
 
-                    {blockDay.dayType === "selectedSlots" && blockDay.selectedSlots.length > 0 && (
+                    {blockDay.dayType === "selectedSlots" && (
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-2 block">Blocked Slots</label>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">Select Slots to Block</label>
                         {blockDaySlots[index]?.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                            {blockDay.selectedSlots.map((slotId) => {
-                              const slot = blockDaySlots[index]?.find((s: any) => s.id.toString() === slotId);
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {blockDaySlots[index].map((slot: any) => {
+                              const isBlocked = blockDay.selectedSlots.includes(slot.id.toString());
                               return (
-                                <div key={slotId} className="px-3 py-2 bg-blue-50 border border-blue-200 rounded text-sm font-medium text-blue-700">
-                                  {slot ? slot.ampm : `Slot ${slotId}`}
+                                <div key={slot.id} className="flex items-center space-x-2 p-3 border rounded-lg bg-gray-50">
+                                  <input
+                                    type="checkbox"
+                                    id={`block-slot-${index}-${slot.id}`}
+                                    checked={isBlocked}
+                                    disabled
+                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-not-allowed"
+                                  />
+                                  <label
+                                    htmlFor={`block-slot-${index}-${slot.id}`}
+                                    className="text-sm font-medium cursor-not-allowed"
+                                  >
+                                    {slot.ampm}
+                                  </label>
                                 </div>
                               );
                             })}
                           </div>
                         ) : (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                            {blockDay.selectedSlots.map((slotId) => (
-                              <div key={slotId} className="px-3 py-2 bg-gray-100 rounded border border-gray-300 text-sm">
-                                Slot {slotId}
-                              </div>
-                            ))}
-                          </div>
+                          <div className="text-gray-500 text-sm">Loading slots...</div>
                         )}
                       </div>
                     )}
@@ -1266,32 +1272,35 @@ export const BookingSetupDetailPage = () => {
                       variant="outlined"
                       value={rule.time.day}
                       InputProps={{ readOnly: true }}
+                      disabled
                     />
                     <span>DD</span>
 
-                    {/* Type: Hr or Day */}
+                    {/* Hours: 0 - 24 */}
                     <FormControl size="small" style={{ width: "80px" }}>
                       <Select
                         value={rule.time.type}
                         disabled
                       >
-                        <MenuItem value="Hr">Hr</MenuItem>
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <MenuItem key={i + 1} value={(i + 1).toString()}>
-                            {i + 1}
+                        {Array.from({ length: 25 }, (_, i) => (
+                          <MenuItem
+                            key={i}
+                            value={i.toString().padStart(2, "0")}
+                          >
+                            {i.toString().padStart(2, "0")}
                           </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
                     <span>HH</span>
 
-                    {/* Value: 0 - 23 */}
+                    {/* Minutes: 0 - 59 */}
                     <FormControl size="small" style={{ width: "80px" }}>
                       <Select
                         value={rule.time.value}
                         disabled
                       >
-                        {Array.from({ length: 24 }, (_, i) => (
+                        {Array.from({ length: 60 }, (_, i) => (
                           <MenuItem
                             key={i}
                             value={i.toString().padStart(2, "0")}
