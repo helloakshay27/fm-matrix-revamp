@@ -1577,18 +1577,36 @@ export const EditSchedulePage = () => {
     let month = '*';
     let dayOfWeek = '?';
 
-    // Build minute part
-    if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes.length > 0) {
-      minute = timeSetupData.selectedMinutes.join(',');
+    // Build minute part - deduplicate, sort and format
+    if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes && timeSetupData.selectedMinutes.length > 0) {
+      // Remove duplicates, filter out null/undefined, convert to numbers, sort, and format
+      const uniqueMinutes = [...new Set(timeSetupData.selectedMinutes.filter(m => m != null && m !== ''))];
+      const sortedMinutes = uniqueMinutes
+        .map(m => parseInt(String(m)))
+        .filter(m => !isNaN(m) && m >= 0 && m <= 59)
+        .sort((a, b) => a - b)
+        .map(m => m.toString().padStart(2, '0'));
+      if (sortedMinutes.length > 0) {
+        minute = sortedMinutes.join(',');
+      }
     } else if (timeSetupData.minuteMode === 'between') {
       const start = parseInt(timeSetupData.betweenMinuteStart);
       const end = parseInt(timeSetupData.betweenMinuteEnd);
       minute = `${start}-${end}`;
     }
 
-    // Build hour part
-    if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours.length > 0) {
-      hour = timeSetupData.selectedHours.join(',');
+    // Build hour part - deduplicate, sort and format
+    if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours && timeSetupData.selectedHours.length > 0) {
+      // Remove duplicates, filter out null/undefined, convert to numbers, sort, and format
+      const uniqueHours = [...new Set(timeSetupData.selectedHours.filter(h => h != null && h !== ''))];
+      const sortedHours = uniqueHours
+        .map(h => parseInt(String(h)))
+        .filter(h => !isNaN(h) && h >= 0 && h <= 23)
+        .sort((a, b) => a - b)
+        .map(h => h.toString().padStart(2, '0'));
+      if (sortedHours.length > 0) {
+        hour = sortedHours.join(',');
+      }
     }
 
     // Build day part
@@ -1789,16 +1807,34 @@ export const EditSchedulePage = () => {
     if (editTiming) {
       cronExpression = buildCronExpression();
 
-      // Build minute cron field
-      if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes.length > 0) {
+      // Build minute cron field - deduplicate, sort and format
+      if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes && timeSetupData.selectedMinutes.length > 0) {
         cronMinute = "specificMinute";
-        cronMinuteSpecificSpecific = timeSetupData.selectedMinutes.join(',');
+        // Remove duplicates, filter out null/undefined, convert to numbers, sort, and format
+        const uniqueMinutes = [...new Set(timeSetupData.selectedMinutes.filter(m => m != null && m !== ''))];
+        const sortedMinutes = uniqueMinutes
+          .map(m => parseInt(String(m)))
+          .filter(m => !isNaN(m) && m >= 0 && m <= 59)
+          .sort((a, b) => a - b)
+          .map(m => m.toString().padStart(2, '0'));
+        if (sortedMinutes.length > 0) {
+          cronMinuteSpecificSpecific = sortedMinutes.join(',');
+        }
       }
 
-      // Build hour cron field
-      if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours.length > 0) {
+      // Build hour cron field - deduplicate, sort and format
+      if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours && timeSetupData.selectedHours.length > 0) {
         cronHour = "specificHour";
-        cronHourSpecificSpecific = timeSetupData.selectedHours.join(',');
+        // Remove duplicates, filter out null/undefined, convert to numbers, sort, and format
+        const uniqueHours = [...new Set(timeSetupData.selectedHours.filter(h => h != null && h !== ''))];
+        const sortedHours = uniqueHours
+          .map(h => parseInt(String(h)))
+          .filter(h => !isNaN(h) && h >= 0 && h <= 23)
+          .sort((a, b) => a - b)
+          .map(h => h.toString().padStart(2, '0'));
+        if (sortedHours.length > 0) {
+          cronHourSpecificSpecific = sortedHours.join(',');
+        }
       }
 
       // Build day cron field
@@ -2462,9 +2498,9 @@ export const EditSchedulePage = () => {
             mb: 2,
             flexWrap: 'wrap'
           }}>
-            {attachments.map((attachment) => {
+            {attachments.filter(attachment => attachment && attachment.name).map((attachment) => {
               // Check if the file is an image by extension or mime type if available
-              const isImage = attachment.name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
+              const isImage = attachment.name?.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
               return (
                 <Box
                   key={attachment.id}
