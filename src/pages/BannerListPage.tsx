@@ -177,14 +177,14 @@ const BannerListPage = () => {
     const renderActions = (item: any) => {
         return (
             <div className="flex gap-2">
-                <Button
+                {/* <Button
                     size="sm"
                     variant="ghost"
                     className="p-1"
                     onClick={() => navigate(`/pulse/community-modules/banner-list/${item.id}`)}
                 >
                     <Eye className="w-4 h-4" />
-                </Button>
+                </Button> */}
                 <Button
                     size="sm"
                     variant="ghost"
