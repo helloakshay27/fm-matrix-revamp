@@ -89,8 +89,8 @@ const transformFMUserData = (apiUser: FMUser): TransformedFMUser => ({
   employeeId: apiUser.lock_user_permission?.employee_id ?? null,
   createdBy: apiUser.created_by_name,
   accessLevel: apiUser.lock_user_permission?.access_level ?? null,
-  type: apiUser.user_type
-    ? apiUser.user_type
+  type: apiUser.lock_user_permission?.user_type
+    ? apiUser.lock_user_permission.user_type
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ")

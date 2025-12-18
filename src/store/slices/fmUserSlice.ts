@@ -30,6 +30,7 @@ export interface FMUser {
     status: string;
     active: boolean;
     id: string;
+    user_type?: string;
   };
   user_type?: string;
   lock_user_permission_status?: string;
