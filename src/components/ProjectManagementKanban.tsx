@@ -3,7 +3,8 @@ import KanbanBoard from "./KanbanBoard";
 import ProjectCard from "./ProjectCard";
 import { DndContext, DragEndEvent, closestCorners, DragStartEvent, DragOverlay } from "@dnd-kit/core";
 import { changeProjectStatus } from "@/store/slices/projectManagementSlice";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useLayout } from "@/contexts/LayoutContext";
 
 export const cardsTitle = [
     {
@@ -39,6 +40,12 @@ export const cardsTitle = [
 ];
 
 const ProjectManagementKanban = () => {
+    const { setCurrentSection } = useLayout();
+
+    useEffect(() => {
+        setCurrentSection("Project Task");
+    }, [setCurrentSection]);
+
     const { data } = useAppSelector((state) => state.filterProjects);
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");

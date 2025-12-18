@@ -11,6 +11,7 @@ import { createMilestone, fetchDependentMilestones, fetchMilestoneById, updateMi
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { format } from "date-fns";
 import { MenuItem, Select, TextField } from "@mui/material";
+import { useLayout } from "@/contexts/LayoutContext";
 
 interface Dependency {
   title?: string;
@@ -161,6 +162,12 @@ function formatToDDMMYYYY_AMPM(dateString: string | undefined) {
 }
 
 export const MilestoneDetailsPage = () => {
+  const { setCurrentSection } = useLayout();
+
+  useEffect(() => {
+    setCurrentSection("Project Task");
+  }, [setCurrentSection]);
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { id, mid } = useParams<{ id: string; mid: string }>();

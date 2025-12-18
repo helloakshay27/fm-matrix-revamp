@@ -28,6 +28,7 @@ import SubtasksTable from "@/components/SubtasksTable";
 import AddSubtaskModal from "@/components/AddSubtaskModal";
 import DependencyKanban from "@/components/DependencyKanban";
 import { fetchProjectStatuses } from "@/store/slices/projectStatusSlice";
+import { useLayout } from "@/contexts/LayoutContext";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -857,6 +858,12 @@ const mapDisplayToApiStatus = (displayStatus) => {
 };
 
 export const ProjectTaskDetails = () => {
+  const { setCurrentSection } = useLayout();
+
+  useEffect(() => {
+    setCurrentSection("Project Task");
+  }, [setCurrentSection]);
+
   const navigate = useNavigate();
   const { id, mid, taskId } = useParams<{ id: string; mid: string; taskId: string }>();
   const dispatch = useAppDispatch();

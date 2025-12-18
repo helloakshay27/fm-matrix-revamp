@@ -15,6 +15,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { TransitionProps } from "@mui/material/transitions";
 import { fetchStatuses } from "@/store/slices/statusesSlice";
 import { fetchProjectStatuses } from "@/store/slices/projectStatusSlice";
+import { useLayout } from "@/contexts/LayoutContext";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -215,6 +216,12 @@ const statusOptions = [
 ]
 
 const ProjectTasksPage = () => {
+    const { setCurrentSection } = useLayout();
+
+    useEffect(() => {
+        setCurrentSection("Project Task");
+    }, [setCurrentSection]);
+
     const { id, mid } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
