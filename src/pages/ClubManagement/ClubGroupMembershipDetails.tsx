@@ -936,9 +936,9 @@ export const ClubGroupMembershipDetails = () => {
                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               Discount
                             </th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                            {/* <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               GST Rate
-                            </th>
+                            </th> */}
                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                               CGST
                             </th>
@@ -966,11 +966,11 @@ export const ClubGroupMembershipDetails = () => {
                               <td className="px-4 py-3 text-sm text-gray-900 text-right">
                                 {charge.discount ? `₹ ${Number(charge.discount).toFixed(2)}` : '-'}
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                              {/* <td className="px-4 py-3 text-sm text-gray-900 text-right">
                                 {charge.gst_rate !== null && charge.gst_rate !== undefined
                                   ? `${charge.gst_rate.toFixed(2)}%`
                                   : '-'}
-                              </td>
+                              </td> */}
                               <td className="px-4 py-3 text-sm text-gray-900 text-right">
                                 {charge.cgst_amount !== null && charge.cgst_amount !== undefined
                                   ? `₹ ${charge.cgst_amount.toFixed(2)}`

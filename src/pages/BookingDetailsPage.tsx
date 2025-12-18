@@ -298,7 +298,7 @@ export const BookingDetailsPage = () => {
               <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                 <CreditCard className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">PAYMENT DETAILS</h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">PAYMENT DETAILS+</h3>
             </div>
             <Button
               onClick={handleDownloadInvoice}
@@ -314,11 +314,54 @@ export const BookingDetailsPage = () => {
             <div className="bg-gray-50 p-4 rounded-lg space-y-3">
               <h4 className="font-semibold text-gray-900 mb-3">Payment Summary</h4>
               
+              {/* Number of Slots Selected */}
+              {bookings?.selected_slots && bookings.selected_slots.length > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-blue-50">
+                  <span className="text-gray-700 font-medium">Number of Slots Selected</span>
+                  <span className="font-semibold text-blue-600">{bookings.selected_slots.length}</span>
+                </div>
+              )}
+
+              {/* Member Charge */}
+              {bookings?.member_count != null && bookings.member_count > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-700">Member Charge</span>
+                    <span className="text-sm text-gray-500">({bookings.member_count} member{bookings.member_count > 1 ? 's' : ''})</span>
+                  </div>
+                  <span className="font-medium">₹{((bookings?.member_charges || 0)).toFixed(2)}</span>
+                </div>
+              )}
+
+              {/* Guest Charge */}
+              {bookings?.guest_count != null && bookings.guest_count > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-700">Guest Charge</span>
+                    <span className="text-sm text-gray-500">({bookings.guest_count} guest{bookings.guest_count > 1 ? 's' : ''})</span>
+                  </div>
+                  <span className="font-medium">₹{((bookings?.guest_charges || 0)).toFixed(2)}</span>
+                </div>
+              )}
+
+              {/* Slot Charges */}
+              {bookings?.slot_charges != null && bookings.slot_charges > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-700">Slot Charges</span>
+                    <span className="text-sm text-gray-500">({bookings.selected_slots?.length || 0} slot{(bookings.selected_slots?.length || 0) > 1 ? 's' : ''})</span>
+                  </div>
+                  <span className="font-medium">₹{bookings.slot_charges.toFixed(2)}</span>
+                </div>
+              )}
+
+              {/* Subtotal */}
               <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="text-gray-600">Subtotal</span>
+                <span className="text-gray-700 font-medium">Subtotal</span>
                 <span className="text-gray-900 font-medium">₹{bookings?.sub_total?.toFixed(2) || '0.00'}</span>
               </div>
 
+              {/* Discount */}
               {bookings?.discount != null && bookings.discount > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <span className="text-gray-600">Discount</span>
@@ -326,16 +369,37 @@ export const BookingDetailsPage = () => {
                 </div>
               )}
 
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="text-gray-600">GST</span>
-                <span className="text-gray-900 font-medium">₹{bookings?.gst?.toFixed(2) || '0.00'}</span>
-              </div>
+              {/* Subtotal After Discount */}
+              {bookings?.discount != null && bookings.discount > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <span className="text-gray-700 font-medium">Subtotal After Discount</span>
+                  <span className="font-medium">₹{((bookings.sub_total || 0) - (bookings.discount || 0)).toFixed(2)}</span>
+                </div>
+              )}
 
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="text-gray-600">SGST</span>
-                <span className="text-gray-900 font-medium">₹{bookings?.sgst?.toFixed(2) || '0.00'}</span>
-              </div>
+              {/* CGST */}
+              {bookings?.cgst_amount != null && bookings.cgst_amount > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-700">CGST</span>
+                    {bookings?.gst != null && <span className="text-sm text-gray-500">({bookings.gst}%)</span>}
+                  </div>
+                  <span className="text-gray-900 font-medium">₹{bookings.cgst_amount.toFixed(2)}</span>
+                </div>
+              )}
 
+              {/* SGST */}
+              {bookings?.sgst_amount != null && bookings.sgst_amount > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-700">SGST</span>
+                    {bookings?.sgst != null && <span className="text-sm text-gray-500">({bookings.sgst}%)</span>}
+                  </div>
+                  <span className="text-gray-900 font-medium">₹{bookings.sgst_amount.toFixed(2)}</span>
+                </div>
+              )}
+
+              {/* Convenience Charge */}
               {bookings?.conv_charge && bookings.conv_charge > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <span className="text-gray-600">Convenience Charge</span>
@@ -343,8 +407,9 @@ export const BookingDetailsPage = () => {
                 </div>
               )}
 
+              {/* Grand Total */}
               <div className="flex justify-between items-center py-3 bg-[#8B4B8C] bg-opacity-10 px-4 rounded-lg mt-2">
-                <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Total Amount</span>
+                <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>Grand Total</span>
                 <span className="text-lg font-bold" style={{ color: '#8B4B8C' }}>₹{bookings?.amount_full?.toFixed(2) || '0.00'}</span>
               </div>
             </div>
