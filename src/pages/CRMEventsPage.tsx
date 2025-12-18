@@ -150,22 +150,11 @@ export const CRMEventsPage = () => {
   };
 
   const handleAdd = () => {
-    const currentPath = window.location.pathname;
-
-    if (currentPath.includes("club-management")) {
-      navigate("/club-management/events/add");
-    } else {
-      navigate("/crm/events/add");
-    }
+    navigate("/pulse/events/add");
   };
 
   const handleView = (id: number) => {
-    const currentPath = window.location.pathname;
-    if (currentPath.includes("club-management")) {
-      navigate(`/club-management/events/details/${id}`);
-    } else {
-      navigate(`/crm/events/details/${id}`);
-    }
+    navigate(`/pulse/events/details/${id}`);
   }
 
   // Render cell content

@@ -2713,7 +2713,7 @@ function App() {
                     path="/security/visitor/add"
                     element={<VisitorFormPage />}
                   />
-                   <Route
+                  <Route
                     path="/security/visitor/employee/add"
                     element={<VisitorFormPageEmployeeNew />}
                   />
@@ -2725,7 +2725,7 @@ function App() {
                     path="/security/visitor/details/:id"
                     element={<VisitorDetailsPage />}
                   />
-                   <Route
+                  <Route
                     path="/security/visitor/employee/details/:id"
                     element={<VisitorDetailsPageEmployee />}
                   />
@@ -3451,7 +3451,7 @@ function App() {
 
                 {/* Settings Routes */}
 
-                  <Route
+                <Route
                   path="/pulse"
                   element={
                     <ProtectedRoute>
@@ -3461,7 +3461,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 >
-                   <Route
+                  <Route
                     path="/pulse/community-modules/banner-setup"
                     element={<BannerSetupDashboard />}
                   />
@@ -3469,13 +3469,13 @@ function App() {
                     path="/pulse/community-modules/banner-setup/:id"
                     element={<BannerDetailsPage />}
                   />
-                                    <Route path="/pulse/events" element={<CRMEventsPage />} />
+                  <Route path="/pulse/events" element={<CRMEventsPage />} />
                   <Route path="/pulse/events/add" element={<AddEventPage />} />
                   <Route
                     path="/pulse/events/details/:id"
                     element={<CRMEventDetailsPage />}
                   />
-                   <Route
+                  <Route
                     path="/pulse/visitor"
                     element={<VisitorsDashboard />}
                   />
@@ -3483,7 +3483,7 @@ function App() {
                     path="/pulse/visitor/add"
                     element={<VisitorFormPage />}
                   />
-  <Route
+                  <Route
                     path="/pulse/visitor/details/:id"
                     element={<VisitorDetailsPage />}
                   />
@@ -3515,8 +3515,16 @@ function App() {
                     path="/pulse/pulse-privilege/service-category/edit/:id"
                     element={<EditServiceCategoryPage />}
                   />
+                  <Route
+                    path="/pulse/amenity"
+                    element={<AmenitySetupDashboard />}
+                  />
+                  <Route
+                    path="/pulse/amenity/:id"
+                    element={<AmenityDetailsPage />}
+                  />
 
-                  
+
 
                 </Route>
 
