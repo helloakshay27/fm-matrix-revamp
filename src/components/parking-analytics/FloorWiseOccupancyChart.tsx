@@ -384,7 +384,7 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
             </div>
 
             {/* Percentage Row */}
-            <div className="mt-4 flex justify-center gap-8 px-4">
+            {/* <div className="mt-4 flex justify-center gap-8 px-4">
               {chartData.map((floor, index) => (
                 <div key={index} className="text-center min-w-[60px]">
                   <div className="text-sm font-semibold text-gray-700 mb-1">{floor.floor}</div>
@@ -393,7 +393,7 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
                   </div>
                 </div>
               ))}
-            </div>
+            </div> */}
           </>
         ) : (
           <div className="flex items-center justify-center h-48">

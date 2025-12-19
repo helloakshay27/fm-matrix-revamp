@@ -836,6 +836,7 @@ import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
 import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
 import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
 import ParkingBookingListEmployee from "./pages/ParkingBookingListEmployee";
+import ParkingBookingAddEmployee from "./pages/ParkingBookingAddEmployee";
 import ProfileDetailsPage from "./pages/ProfileDetailsPage";
 import PlaceFnbOrder from "./pages/PlaceFnbOrder";
 import { SpaceManagementBookingsDashboardEmployee } from "./pages/SpaceManagementBookingsDashboardEmployee";
@@ -1312,6 +1313,24 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <ParkingBookingListEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/parking-booking-employee"
+                    element={
+                      <ProtectedRoute>
+                        <ParkingBookingListEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/parking-booking-employee/add"
+                    element={
+                      <ProtectedRoute>
+                        <ParkingBookingAddEmployee />
                       </ProtectedRoute>
                     }
                   />

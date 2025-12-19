@@ -5,6 +5,33 @@ import { Download, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 
+// Format large numbers for display (e.g., 1000 -> 1K, 1000000 -> 1M)
+const formatNumber = (value: number): string => {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`;
+  } else if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}K`;
+  }
+  return value.toString();
+};
+
+// Custom tooltip formatter
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <p className="font-semibold text-gray-900 mb-2">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} style={{ color: entry.color }} className="text-sm">
+            {entry.name}: <span className="font-semibold">{entry.value.toLocaleString()}</span>
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 interface ParkingAnalyticsCardProps {
   title: string;
   data: any;
@@ -197,9 +224,10 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                   />
                   <YAxis 
                     tick={{ fontSize: 12, fill: '#6b7280' }}
+                    tickFormatter={formatNumber}
                     label={{ value: 'Bookings', angle: -90, position: 'insideLeft', fill: '#6b7280', fontSize: 12 }}
                   />
-                  <Tooltip />
+                  <Tooltip content={<CustomTooltip />} />
                   <Legend verticalAlign="bottom" height={36} iconType="circle" />
                   
                   {occupancyView === 'current' ? (
@@ -313,10 +341,9 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                   />
                   <YAxis 
                     tick={{ fontSize: 12, fill: '#6b7280' }}
-                    domain={[0, 100]}
-                    ticks={[0, 25, 50, 75, 100]}
+                    tickFormatter={formatNumber}
                   />
-                  <Tooltip />
+                  <Tooltip content={<CustomTooltip />} />
                   <Legend 
                     verticalAlign="bottom" 
                     height={36} 
@@ -377,8 +404,9 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                   />
                   <YAxis 
                     tick={{ fontSize: 12, fill: '#6b7280' }}
+                    tickFormatter={formatNumber}
                   />
-                  <Tooltip />
+                  <Tooltip content={<CustomTooltip />} />
                   <Legend verticalAlign="bottom" height={36} iconType="circle" />
                   
                   {occupancyView === 'current' ? (
@@ -498,6 +526,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                   <XAxis 
                     type="number"
                     tick={{ fontSize: 12, fill: '#6b7280' }}
+                    tickFormatter={formatNumber}
                   />
                   <YAxis 
                     type="category"
@@ -505,7 +534,7 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     tick={{ fontSize: 14, fill: '#6b7280' }}
                     width={80}
                   />
-                  <Tooltip />
+                  <Tooltip content={<CustomTooltip />} />
                   <Legend 
                     verticalAlign="bottom" 
                     height={36} 
