@@ -435,7 +435,9 @@ export const EmployeeDashboard: React.FC = () => {
                 <div
                   key={ticket.id}
                   className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer border border-gray-100"
-                  onClick={() => navigate(`maintenance/ticket/employee/details/${ticket.id}`)}
+                  onClick={() =>
+                    navigate(`maintenance/ticket/employee/details/${ticket.id}`)
+                  }
                 >
                   <div className="flex items-start justify-between mb-2">
                     <p className="font-medium text-gray-900 text-sm flex-1">
@@ -712,7 +714,11 @@ export const EmployeeDashboard: React.FC = () => {
                 <div
                   key={order.id}
                   className="p-4 bg-gray-50 rounded-md hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer border border-gray-100"
-                  onClick={() => navigate(`/vas/fnb/details/123/restaurant-order/${order.id}`)}
+                  onClick={() =>
+                    navigate(
+                      `/vas/fnb/details/123/restaurant-order/${order.id}`
+                    )
+                  }
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
@@ -746,9 +752,7 @@ export const EmployeeDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <EmployeeHeader />
-
-      <main className="pt-20 pb-8 px-6 max-w-[1400px] mx-auto">
+      <main className="pt-12 pb-8 px-6 max-w-[1400px] mx-auto">
         {/* Welcome Section with Edit Button */}
         <div className="mb-6 flex items-start justify-between">
           <div>
