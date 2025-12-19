@@ -54,6 +54,9 @@ export const AddPlusServicePage = () => {
     description: "",
     service_category_id: "",
     order_no: "",
+    mobile: "",
+    address: "",
+    active: true,
   });
 
   const [attachment, setAttachment] = useState<File | null>(null);
@@ -170,9 +173,18 @@ export const AddPlusServicePage = () => {
       formDataToSend.append("plus_service[name]", formData.name);
       formDataToSend.append("plus_service[description]", formData.description);
       formDataToSend.append("plus_service[service_category_id]", formData.service_category_id);
+      formDataToSend.append("plus_service[active]", formData.active.toString());
 
       if (formData.order_no) {
         formDataToSend.append("plus_service[order_no]", formData.order_no);
+      }
+
+      if (formData.mobile) {
+        formDataToSend.append("plus_service[mobile]", formData.mobile);
+      }
+
+      if (formData.address) {
+        formDataToSend.append("plus_service[address]", formData.address);
       }
 
       if (attachment) {
@@ -294,6 +306,46 @@ export const AddPlusServicePage = () => {
                 value={formData.order_no}
                 onChange={(e) => handleInputChange("order_no", e.target.value)}
                 placeholder="Enter Order Number"
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+            </div>
+
+            {/* Second Row - Mobile and Address */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Mobile */}
+              <TextField
+                fullWidth
+                label="Mobile"
+                type="tel"
+                value={formData.mobile}
+                onChange={(e) => handleInputChange("mobile", e.target.value)}
+                placeholder="Enter Mobile Number"
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+
+              {/* Address */}
+              <TextField
+                fullWidth
+                label="Address"
+                value={formData.address}
+                onChange={(e) => handleInputChange("address", e.target.value)}
+                placeholder="Enter Address"
                 variant="outlined"
                 slotProps={{
                   inputLabel: {

@@ -24,6 +24,20 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "mobile",
+    label: "Mobile",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "address",
+    label: "Address",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "attachment",
     label: "Attachment",
     sortable: false,
