@@ -3488,25 +3488,25 @@ export const EditAssetDetailsPage = () => {
       Land: {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: [],
+        // warrantyFields: [],
         categorySpecificFields: ["land_type", "location", "area"],
       },
       Building: {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: [],
+        // warrantyFields: [],
         categorySpecificFields: ["building_type", "location", "built_up_area"],
       },
       "Leasehold Improvement": {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: [],
+        // warrantyFields: [],
         categorySpecificFields: ["improvement_description", "location_site"],
       },
       Vehicle: {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [
           "vehicle_type",
           "make_model",
@@ -3516,31 +3516,31 @@ export const EditAssetDetailsPage = () => {
       "Furniture & Fixtures": {
         ...baseValidationRules,
         locationFields: ["site"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "IT Equipment": {
         ...baseValidationRules,
         locationFields: ["site"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "Machinery & Equipment": {
         ...baseValidationRules,
         locationFields: ["site"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "Tools & Instruments": {
         ...baseValidationRules,
         locationFields: ["site"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       Meter: {
         ...baseValidationRules,
         locationFields: ["site"],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
     };
@@ -3789,7 +3789,7 @@ export const EditAssetDetailsPage = () => {
       Land: {
         ...baseValidationRules,
         locationFields: [], // Land doesn't require location selection as it IS a location
-        warrantyFields: [], // Land typically doesn't have warranty
+        // warrantyFields: [], // Land typically doesn't have warranty
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Land
           // 'land_type', // From Basic Identification (required: true)
@@ -3800,7 +3800,7 @@ export const EditAssetDetailsPage = () => {
       Building: {
         ...baseValidationRules,
         locationFields: [], // Buildings are locations themselves
-        warrantyFields: [], // Buildings typically don't have warranty expiry
+        // warrantyFields: [], // Buildings typically don't have warranty expiry
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Building
           "building_type", // From Basic Identification (required: true)
@@ -3811,7 +3811,7 @@ export const EditAssetDetailsPage = () => {
       "Leasehold Improvement": {
         ...baseValidationRules,
         locationFields: [], // Improvements are tied to specific leased properties
-        warrantyFields: [], // Improvements typically don't have warranty expiry
+        // warrantyFields: [], // Improvements typically don't have warranty expiry
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Leasehold Improvement
           "improvement_description", // From Basic Identification (required: true)
@@ -3821,7 +3821,7 @@ export const EditAssetDetailsPage = () => {
       Vehicle: {
         ...baseValidationRules,
         locationFields: [], // Vehicles are mobile, don't require fixed location
-        warrantyFields: [], // Warranty is optional - only required if user selects "Under Warranty: Yes"
+        // warrantyFields: [], // Warranty is optional - only required if user selects "Under Warranty: Yes"
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Vehicle
           "vehicle_type", // From Basic Identification (required: true)
@@ -3832,31 +3832,31 @@ export const EditAssetDetailsPage = () => {
       "Furniture & Fixtures": {
         ...baseValidationRules,
         locationFields: ["site"], // Furniture needs location
-        warrantyFields: ["warranty_expiry"], // Furniture typically has warranty
+        // warrantyFields: ["warranty_expiry"], // Furniture typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "IT Equipment": {
         ...baseValidationRules,
         locationFields: ["site"], // IT Equipment needs location
-        warrantyFields: ["warranty_expiry"], // IT Equipment typically has warranty
+        // warrantyFields: ["warranty_expiry"], // IT Equipment typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "Machinery & Equipment": {
         ...baseValidationRules,
         locationFields: ["site"], // Machinery needs location
-        warrantyFields: ["warranty_expiry"], // Machinery typically has warranty
+        // warrantyFields: ["warranty_expiry"], // Machinery typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "Tools & Instruments": {
         ...baseValidationRules,
         locationFields: ["site"], // Tools need location
-        warrantyFields: ["warranty_expiry"], // Tools typically have warranty
+        // warrantyFields: ["warranty_expiry"], // Tools typically have warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       Meter: {
         ...baseValidationRules,
         locationFields: ["site"], // Meters need location
-        warrantyFields: ["warranty_expiry"], // Meters typically have warranty
+        // warrantyFields: ["warranty_expiry"], // Meters typically have warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
     };
@@ -12376,7 +12376,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Purchase Cost
-                            <span style={{ color: "#C72030" }}>*</span>
+                            {/* <span style={{ color: "#C72030" }}>*</span> */}
                           </span>
                         }
                         placeholder="Enter cost"
@@ -12399,7 +12399,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Purchase Date
-                            <span style={{ color: "#C72030" }}>*</span>
+                            {/* <span style={{ color: "#C72030" }}>*</span> */}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12425,7 +12425,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Commissioning Date
-                            <span style={{ color: "#C72030" }}>*</span>
+                            {/* <span style={{ color: "#C72030" }}>*</span> */}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12448,7 +12448,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Warranty Expires On
-                            <span style={{ color: "#C72030" }}>*</span>
+                            {/* <span style={{ color: "#C72030" }}>*</span> */}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12497,9 +12497,9 @@ export const EditAssetDetailsPage = () => {
                               name="underWarranty"
                               value="yes"
                               className="w-4 h-4 text-[#C72030] border-gray-300"
-                              style={{
-                                accentColor: "#C72030",
-                              }}
+                              // style={{
+                              //   accentColor: "#C72030",
+                              // }}
                               checked={underWarranty === "yes"}
                               onChange={(e) => {
                                 setUnderWarranty(e.target.value);
@@ -12517,9 +12517,9 @@ export const EditAssetDetailsPage = () => {
                               name="underWarranty"
                               value="no"
                               className="w-4 h-4 text-[#C72030] border-gray-300"
-                              style={{
-                                accentColor: "#C72030",
-                              }}
+                              // style={{
+                              //   accentColor: "#C72030",
+                              // }}
                               onChange={(e) => {
                                 setUnderWarranty(e.target.value);
                                 handleFieldChange("warranty", "No");
