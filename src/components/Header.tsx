@@ -602,7 +602,10 @@ export const Header = () => {
                     className="text-xs bg-blue-50 text-blue-700 border-blue-200 font-medium"
                   >
                     <Shield className="w-3 h-3 mr-1" />
-                    {userRoleName}
+                    {(isViSite && viAccount
+                      ? viAccount.role_name || ""
+                      : userRoleName || user?.lock_role?.name) ||
+                      "No Role"}{" "}
                   </Badge>
                   {/* <Badge
                     variant="outline"
