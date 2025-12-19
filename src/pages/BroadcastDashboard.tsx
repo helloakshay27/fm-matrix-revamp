@@ -200,22 +200,11 @@ export const BroadcastDashboard = () => {
   };
 
   const handleAdd = () => {
-    const currentPath = window.location.pathname;
-
-    if (currentPath.includes("club-management")) {
-      navigate("/club-management/broadcast/add");
-    } else {
-      navigate("/crm/broadcast/add");
-    }
+    navigate("/pulse/notices/add");
   };
 
   const handleView = (id: number) => {
-    const currentPath = window.location.pathname;
-    if (currentPath.includes("club-management")) {
-      navigate(`/club-management/broadcast/details/${id}`);
-    } else {
-      navigate(`/crm/broadcast/details/${id}`);
-    }
+    navigate(`/pulse/notices/details/${id}`);
   }
 
   const handleApplyFilter = async (data) => {

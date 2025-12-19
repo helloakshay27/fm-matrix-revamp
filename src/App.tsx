@@ -838,7 +838,7 @@ import EmployeeBookingList from "./pages/EmployeeBookingList";
 import { EmployeeAddBookingPage } from "./pages/EmployeeAddBookingPage";
 import { EmployeeFnb } from "./pages/EmployeeFnb";
 import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
-import { VisitorFormPageEmployee } from "./pages/VisitorFormPageEmployee";
+// import { VisitorFormPageEmployee } from "./pages/VisitorFormPageEmployee";
 import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
 import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
 // import RouteLogger from "./components/RouteLogger";
@@ -3485,6 +3485,11 @@ function App() {
                     path="/pulse/events/details/:id"
                     element={<CRMEventDetailsPage />}
                   />
+
+                  <Route path="/pulse/notices" element={<BroadcastDashboard />} />
+                  <Route path="/pulse/notices/add" element={<AddBroadcastPage />} />
+                  <Route path="/pulse/notices/details/:id" element={<BroadcastDetailsPage />} />
+
                   <Route
                     path="/pulse/visitor"
                     element={<VisitorsDashboard />}
