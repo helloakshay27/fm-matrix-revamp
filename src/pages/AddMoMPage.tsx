@@ -22,6 +22,7 @@ import { createMoM } from '../store/slices/momSlice';
 import MuiSelectField from '../components/MuiSelectField';
 import { API_CONFIG } from '../config/apiConfig';
 import { toast } from 'sonner';
+import { useLayout } from '@/contexts/LayoutContext';
 
 // Define types for form data
 interface Attendee {
@@ -56,6 +57,12 @@ interface FormData {
 }
 
 const AddMoMPage = () => {
+    const { setCurrentSection } = useLayout();
+
+    useEffect(() => {
+        setCurrentSection("Project Task");
+    }, [setCurrentSection]);
+
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
 
