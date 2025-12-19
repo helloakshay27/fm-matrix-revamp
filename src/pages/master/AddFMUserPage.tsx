@@ -642,6 +642,9 @@ export const AddFMUserPage = () => {
                       <MenuItem value="pms_security_supervisor">
                         Security Supervisor
                       </MenuItem>
+                      <MenuItem value="pms_occupant">
+                        User (Customer User)
+                      </MenuItem>
                     </Select>
                   </FormControl>
                 </div>
@@ -722,11 +725,11 @@ export const AddFMUserPage = () => {
                         renderValue={(selected) =>
                           selected.length > 0
                             ? sites
-                              ?.filter((site) =>
-                                selected.includes(site.id.toString())
-                              )
-                              .map((site) => site.name || site.full_name)
-                              .join(", ")
+                                ?.filter((site) =>
+                                  selected.includes(site.id.toString())
+                                )
+                                .map((site) => site.name || site.full_name)
+                                .join(", ")
                             : "Select Sites"
                         }
                       >
