@@ -147,7 +147,7 @@ const BannerAddPage = () => {
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <TextField
-                                label="Title*"
+                                label="Title"
                                 name="title"
                                 type="text"
                                 fullWidth

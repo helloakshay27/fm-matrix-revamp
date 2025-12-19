@@ -406,8 +406,8 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
         }
 
         .continue-btn {
-          background: #de7007;
-          color: white;
+          background: #f2eee9;
+          color: #dc2626;
           border: none;
           padding: 12px 24px;
           border-radius: 6px;
@@ -418,7 +418,7 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
         }
 
         .continue-btn:hover {
-          background: #c45a05;
+          background: #f2eee9;
         }
 
         @media (max-width: 768px) {
