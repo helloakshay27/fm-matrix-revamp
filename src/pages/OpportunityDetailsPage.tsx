@@ -5,6 +5,7 @@ import axios from 'axios';
 import { getFullUrl } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import ConvertModal from '@/components/ConvertModal';
+import { useLayout } from '@/contexts/LayoutContext';
 // TODO: Implement comments and user mentions when dependencies are available
 // import { Mention, MentionsInput } from 'react-mentions';
 // import { fetchUsers } from '@/redux/slices/userSlice';
@@ -414,6 +415,12 @@ const mapDisplayToApiStatus = (displayStatus: string): string => {
 };
 
 const OpportunityDetailsPage = () => {
+    const { setCurrentSection } = useLayout();
+
+    useEffect(() => {
+        setCurrentSection("Project Task");
+    }, [setCurrentSection]);
+
     const token = localStorage.getItem('token');
     const { id } = useParams();
     const navigate = useNavigate();

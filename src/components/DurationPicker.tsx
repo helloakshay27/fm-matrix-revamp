@@ -32,7 +32,7 @@ export const DurationPicker = ({
     const [manualDuration, setManualDuration] = useState("");
     const [totalHoursInput, setTotalHoursInput] = useState("");
     const pickerRef = useRef(null);
-    console.log(resposiblePerson)
+
     const parseHours = (val) => {
         if (!val) return 0;
         if (typeof val === "number") return val;
@@ -44,6 +44,12 @@ export const DurationPicker = ({
         const num = parseFloat(val);
         return isNaN(num) ? 0 : num;
     };
+
+    useEffect(() => {
+        if (endDate) {
+            setIsOpen(true);
+        }
+    }, [endDate]);
 
     const formatTotalHours = (total) => {
         const totalMinutes = Math.round(total * 60);

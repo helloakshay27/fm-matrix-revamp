@@ -18,6 +18,8 @@ import { useAppDispatch } from "@/store/hooks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { createProject } from "@/store/slices/projectManagementSlice";
 import AddMilestoneForm from "./AddMilestoneForm";
+import { AddTeamModal } from "./AddTeamModal";
+import { AddTagModal } from "./AddTagModal";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -39,6 +41,8 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
     const token = localStorage.getItem('token');
 
     const [selectedTab, setSelectedTab] = useState("details")
+    const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+    const [isTagModalOpen, setIsTagModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         title: "",
         isChannel: false,
@@ -282,6 +286,7 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                                             <div className="flex justify-end">
                                                 <label
                                                     className="text-[12px] text-[red] cursor-pointer"
+                                                    onClick={() => setIsTeamModalOpen(true)}
                                                 >
                                                     <i>Create new team</i>
                                                 </label>
@@ -356,6 +361,7 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                                         <div>
                                             <div
                                                 className="text-[12px] text-[red] text-right cursor-pointer mt-2"
+                                                onClick={() => setIsTagModalOpen(true)}
                                             >
                                                 <i>Create new tag</i>
                                             </div>
@@ -412,6 +418,16 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                         </div>
                     </TabsContent>
                 </Tabs>
+                <AddTeamModal
+                    isOpen={isTeamModalOpen}
+                    onClose={() => setIsTeamModalOpen(false)}
+                    onTeamCreated={() => fetchProjects()}
+                />
+                <AddTagModal
+                    isOpen={isTagModalOpen}
+                    onClose={() => setIsTagModalOpen(false)}
+                    onTagCreated={() => fetchProjects()}
+                />
             </DialogContent>
         </Dialog >
     )
