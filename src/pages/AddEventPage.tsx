@@ -42,8 +42,10 @@ export const AddEventPage = () => {
     startTime: "",
     endDate: "",
     endTime: "",
+    capacity: "",
     markAsImportant: false,
     sendEmail: false,
+    approvalRequired: false,
     shareWith: "all",
     rsvpEnabled: true,
     selectedIndividuals: [],
@@ -140,20 +142,22 @@ export const AddEventPage = () => {
       formDataToSend.append("event[to_time]", end_datetime);
       formDataToSend.append("event[description]", formData.description);
       formDataToSend.append("event[rsvp_action]", formData.rsvpEnabled ? "1" : "0");
-      formDataToSend.append("event[shared]", formData.shareWith === "all" ? "0" : "1");
+      // formDataToSend.append("event[shared]", formData.shareWith === "all" ? "0" : "1");
       formDataToSend.append("event[is_important]", formData.markAsImportant);
       formDataToSend.append("event[email_trigger_enabled]", formData.sendEmail);
+      formDataToSend.append("event[approval_required]", formData.approvalRequired);
+      formDataToSend.append("event[capacity]", formData.capacity);
       formDataToSend.append('event[of_phase]', 'pms');
       formDataToSend.append('event[of_atype]', 'Pms::Site');
       formDataToSend.append('event[of_atype_id]', localStorage.getItem("selectedSiteId"));
 
-      if (formData.shareWith === 'individuals') {
-        formDataToSend.append("event[swusers]", formData.selectedIndividuals);
-      }
+      // if (formData.shareWith === 'individuals') {
+      //   formDataToSend.append("event[swusers]", formData.selectedIndividuals);
+      // }
 
-      if (formData.shareWith === 'groups') {
-        formDataToSend.append("event[group_id]", formData.selectedGroups);
-      }
+      // if (formData.shareWith === 'groups') {
+      //   formDataToSend.append("event[group_id]", formData.selectedGroups);
+      // }
 
       attachemnts.forEach((file) => {
         formDataToSend.append("noticeboard[files_attached][]", file);
@@ -510,7 +514,7 @@ export const AddEventPage = () => {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 4,
+                gap: 2,
               }}
             >
               <FormLabel component="legend" sx={{ minWidth: "80px" }}>
@@ -529,6 +533,28 @@ export const AddEventPage = () => {
             </Box>
 
             <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <TextField
+                label={<span>Capacity<span className="text-red-500">*</span></span>}
+                placeholder="Enter Capacity"
+                type="number"
+                fullWidth
+                variant="outlined"
+                value={formData.capacity}
+                onChange={(e) => handleInputChange("capacity", e.target.value)}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={fieldStyles}
+              />
+            </Box>
+
+            {/* <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
@@ -555,7 +581,7 @@ export const AddEventPage = () => {
                   label="Groups"
                 />
               </RadioGroup>
-            </Box>
+            </Box> */}
 
             {formData.shareWith === "individuals" && (
               <Box>
@@ -634,9 +660,20 @@ export const AddEventPage = () => {
             <Box
               sx={{
                 display: "flex",
-                gap: 4,
+                gap: 2,
               }}
             >
+              <FormControlLabel
+                control={
+                  <MuiCheckbox
+                    checked={formData.approvalRequired}
+                    onChange={(e) =>
+                      handleInputChange("approvalRequired", e.target.checked)
+                    }
+                  />
+                }
+                label="Approval Required"
+              />
               <FormControlLabel
                 control={
                   <MuiCheckbox
