@@ -64,7 +64,18 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
     };
 
     const handleSubmit = async () => {
-        setIsSubmitting(true)
+        // Manual validation for required fields
+        if (
+            !String(formData.name).trim() ||
+            !String(formData.quantity).trim() ||
+            !String(formData.maxStockLevel).trim() ||
+            !String(formData.costPerUnit).trim()
+        ) {
+            toast.error("Please fill all mandatory fields.");
+            return;
+        }
+
+        setIsSubmitting(true);
         const payload = {
             pms_inventory: {
                 name: formData.name,
@@ -73,13 +84,9 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                 max_stock_level: formData.maxStockLevel,
                 cost: formData.costPerUnit
             }
-        }
+        };
 
-
-         console.log('Accessories API Request:', 
-               
-                payload,
-            );
+        console.log('Accessories API Request:', payload);
         try {
             if (editingAccessory) {
                 // Update existing accessory
@@ -87,25 +94,41 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                     headers: {
                         Authorization: `Bearer ${token}`,
                     }
-                })
-                toast.success("Accessories updated successfully")
+                });
+                toast.success("Accessories updated successfully");
             } else {
                 // Create new accessory
                 await axios.post(`https://${baseUrl}/pms/inventories.json`, payload, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     }
-                })
-                toast.success("Accessories added successfully")
+                });
+                toast.success("Accessories added successfully");
             }
-            onOpenChange(false)
-
-           
+            onOpenChange(false);
         } catch (error) {
-            console.log(error)
-            toast.error(editingAccessory ? "Failed to update accessories" : "Failed to add accessories")
+            console.log(error);
+            if (error.response && error.response.status === 422 && error.response.data) {
+                const errData = error.response.data;
+                // If error data is an object, show all messages in toast
+                if (typeof errData === 'object' && errData !== null) {
+                    Object.entries(errData).forEach(([field, messages]) => {
+                        if (field === 'quantity' && Array.isArray(messages)) {
+                            messages.forEach(() => toast.error('Quantity cannot be greater than maximum stock level.'));
+                        } else if (Array.isArray(messages)) {
+                            messages.forEach(msg => toast.error(msg));
+                        } else {
+                            toast.error(String(messages));
+                        }
+                    });
+                } else {
+                    toast.error(String(errData));
+                }
+            } else {
+                toast.error(editingAccessory ? "Failed to update accessories" : "Failed to add accessories");
+            }
         } finally {
-            setIsSubmitting(false)
+            setIsSubmitting(false);
         }
     };
 
@@ -127,7 +150,7 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                 <TextField
                     fullWidth
                     margin="normal"
-                    label="Name"
+                    label="Accessory Name"
                     type="text"
                     name="name"
                     value={formData.name}
@@ -181,9 +204,21 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                         type="number"
                         name="maxStockLevel"
                         value={formData.maxStockLevel}
-                        onChange={handleChange}
-                        required
-                    />
+                            onChange={handleChange}
+                            onKeyDown={(e) => {
+                                // Block minus, plus, exponent, and non-numeric inputs
+                                const blockedKeys = ['-', '+', 'e', 'E'];
+                                if (blockedKeys.includes(e.key)) {
+                                    e.preventDefault();
+                                }
+                            }}
+                            inputProps={{
+                                inputMode: 'numeric',
+                                pattern: '[0-9]*',
+                                min: 0
+                            }}
+                            required
+                        />
 
                     <TextField
                         fullWidth
@@ -192,9 +227,21 @@ const AddAccessoriesModal = ({ open, onOpenChange, editingAccessory = null }) =>
                         type="number"
                         name="costPerUnit"
                         value={formData.costPerUnit}
-                        onChange={handleChange}
-                        required
-                    />
+                            onChange={handleChange}
+                            onKeyDown={(e) => {
+                                // Block minus, plus, exponent, and non-numeric inputs
+                                const blockedKeys = ['-', '+', 'e', 'E'];
+                                if (blockedKeys.includes(e.key)) {
+                                    e.preventDefault();
+                                }
+                            }}
+                            inputProps={{
+                                inputMode: 'numeric',
+                                pattern: '[0-9]*',
+                                min: 0
+                            }}
+                            required
+                        />
                 </div>
 
                 <div className="mt-4 flex justify-end gap-3">

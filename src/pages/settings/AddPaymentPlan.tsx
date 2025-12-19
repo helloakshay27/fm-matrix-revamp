@@ -8,7 +8,7 @@ import { TextField, MenuItem } from '@mui/material';
 
 interface PaymentSchedule {
   month_number: number;
-  percentage: number;
+  percentage: string;
 }
 
 const FREQUENCY_OPTIONS = [
@@ -59,7 +59,7 @@ export const AddPaymentPlan = () => {
         setSchedules(
           plan.payment_plan_schedules.map((s: any) => ({
             month_number: s.month_number,
-            percentage: parseFloat(s.percentage),
+            percentage: s.percentage?.toString() ?? '',
           }))
         );
       }
@@ -86,7 +86,7 @@ export const AddPaymentPlan = () => {
       for (let i = 1; i <= monthsCount; i++) {
         newSchedules.push({
           month_number: i,
-          percentage: 0,
+          percentage: '',
         });
       }
 
@@ -95,14 +95,21 @@ export const AddPaymentPlan = () => {
   };
 
   const handlePercentageChange = (index: number, value: string) => {
-    const numValue = parseFloat(value) || 0;
+    // Prevent values above 100
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue > 100) {
+      return;
+    }
     const updatedSchedules = [...schedules];
-    updatedSchedules[index].percentage = numValue;
+    updatedSchedules[index].percentage = value;
     setSchedules(updatedSchedules);
   };
 
   const calculateTotalPercentage = () => {
-    return schedules.reduce((sum, schedule) => sum + schedule.percentage, 0);
+    return schedules.reduce((sum, schedule) => {
+      const num = parseFloat(schedule.percentage);
+      return sum + (isNaN(num) ? 0 : num);
+    }, 0);
   };
 
   const handleSubmit = async () => {
@@ -136,7 +143,7 @@ export const AddPaymentPlan = () => {
           duration_in_months: durationInMonths,
           payment_plan_schedules_attributes: schedules.map((schedule) => ({
             month_number: schedule.month_number,
-            percentage: schedule.percentage,
+            percentage: parseFloat(schedule.percentage) || 0,
           })),
         },
       };
@@ -317,7 +324,7 @@ export const AddPaymentPlan = () => {
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3 justify-end pt-4">
+        <div className="flex gap-3 justify-center pt-4">
           <Button
             variant="outline"
             onClick={() => navigate('/settings/payment-plan/setup')}

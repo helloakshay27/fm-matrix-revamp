@@ -930,18 +930,22 @@ export const AddBookingSetupPage = () => {
                           size="small"
                           variant="outlined"
                           value={formData.chargeSetup.member.child}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              chargeSetup: {
-                                ...formData.chargeSetup,
-                                member: {
-                                  ...formData.chargeSetup.member,
-                                  child: e.target.value,
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Allow only positive numbers with max 2 decimal places
+                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                              setFormData({
+                                ...formData,
+                                chargeSetup: {
+                                  ...formData.chargeSetup,
+                                  member: {
+                                    ...formData.chargeSetup.member,
+                                    child: value,
+                                  },
                                 },
-                              },
-                            })
-                          }
+                              });
+                            }
+                          }}
                           className="w-full max-w-[200px]"
                         />
                       </div>
@@ -1032,18 +1036,22 @@ export const AddBookingSetupPage = () => {
                           size="small"
                           variant="outlined"
                           value={formData.chargeSetup.guest.child}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              chargeSetup: {
-                                ...formData.chargeSetup,
-                                guest: {
-                                  ...formData.chargeSetup.guest,
-                                  child: e.target.value,
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Allow only positive numbers with max 2 decimal places
+                            if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                              setFormData({
+                                ...formData,
+                                chargeSetup: {
+                                  ...formData.chargeSetup,
+                                  guest: {
+                                    ...formData.chargeSetup.guest,
+                                    child: value,
+                                  },
                                 },
-                              },
-                            })
-                          }
+                              });
+                            }
+                          }}
                           className="w-full max-w-[200px]"
                         />
                       </div>
@@ -1699,25 +1707,35 @@ export const AddBookingSetupPage = () => {
                 <TextField
                   label="SGST(%)"
                   value={formData.sgstPercentage}
-                  onChange={(e) =>
-                    setFormData({ ...formData, sgstPercentage: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only non-negative numbers with max 2 decimal places
+                    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                      setFormData({ ...formData, sgstPercentage: value });
+                    }
+                  }}
                   variant="outlined"
                 />
                 <TextField
                   label="GST(%)"
                   value={formData.gstPercentage}
-                  onChange={(e) =>
-                    setFormData({ ...formData, gstPercentage: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                      setFormData({ ...formData, gstPercentage: value });
+                    }
+                  }}
                   variant="outlined"
                 />
                 <TextField
                   label="IGST(%)"
                   value={formData.igstPercentage}
-                  onChange={(e) =>
-                    setFormData({ ...formData, igstPercentage: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                      setFormData({ ...formData, igstPercentage: value });
+                    }
+                  }}
                   variant="outlined"
                 />
               </div>
@@ -2095,9 +2113,16 @@ export const AddBookingSetupPage = () => {
                     variant="outlined"
                     value={rule.deduction}
                     onChange={(e) => {
-                      const newRules = [...cancellationRules];
-                      newRules[index].deduction = e.target.value;
-                      setCancellationRules(newRules);
+                      const value = e.target.value;
+                      // Allow only non-negative numbers with max 2 decimal places and not more than 100
+                      if (
+                        value === '' ||
+                        (/^\d*\.?\d{0,2}$/.test(value) && Number(value) <= 100)
+                      ) {
+                        const newRules = [...cancellationRules];
+                        newRules[index].deduction = value;
+                        setCancellationRules(newRules);
+                      }
                     }}
                   />
                 </div>
@@ -2312,8 +2337,9 @@ export const AddBookingSetupPage = () => {
             </Button>
             <Button
               onClick={handleSave}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-purple-600 hover:bg-purple-700 text-white w-full"
               disabled={isSubmitting}
+              style={{ maxWidth: '90px' }}
             >
               Save
             </Button>
