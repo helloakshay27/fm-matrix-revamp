@@ -1,3 +1,4 @@
+'use strict';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
@@ -379,8 +380,8 @@ export const EditSchedulePage = () => {
     minuteMode: 'specific',
     dayMode: 'weekdays',
     monthMode: 'all',
-    selectedHours: ['12'],
-    selectedMinutes: ['00'],
+    selectedHours: [],
+    selectedMinutes: [],
     selectedWeekdays: [],
     selectedDays: [],
     selectedMonths: [],
@@ -1027,8 +1028,22 @@ export const EditSchedulePage = () => {
       if (data.asset_task.cron_expression) {
         const cronParts = data.asset_task.cron_expression.split(' ');
         if (cronParts.length >= 5) {
-          const minutes = cronParts[0] !== '*' ? cronParts[0].split(',') : ['00'];
-          const hours = cronParts[1] !== '*' ? cronParts[1].split(',') : ['12'];
+          // Parse and format minutes with leading zeros to match UI checkboxes
+          const minutes = cronParts[0] !== '*' 
+            ? cronParts[0].split(',').map(m => {
+                const num = parseInt(m);
+                return !isNaN(num) && num >= 0 && num <= 59 ? num.toString().padStart(2, '0') : m;
+              })
+            : [];
+          
+          // Parse and format hours with leading zeros to match UI checkboxes
+          const hours = cronParts[1] !== '*' 
+            ? cronParts[1].split(',').map(h => {
+                const num = parseInt(h);
+                return !isNaN(num) && num >= 0 && num <= 23 ? num.toString().padStart(2, '0') : h;
+              })
+            : [];
+          
           const days = cronParts[2] !== '*' ? cronParts[2].split(',') : [];
           const monthString = cronParts[3] !== '*' ? cronParts[3] : '';
           const weekdays = cronParts[4] !== '*' ? cronParts[4].split(',').map(d => {
@@ -1070,10 +1085,12 @@ export const EditSchedulePage = () => {
           // Determine day mode based on data
           const dayMode = days.length > 0 ? 'specific' : (weekdays.length > 0 ? 'weekdays' : 'weekdays');
 
+          // When loading from API, keep mode as 'specific' to ensure validation works
+          // Empty arrays will force user to make selections when editTiming is enabled
           setTimeSetupData(prev => ({
             ...prev,
-            hourMode: hours.length > 0 ? 'specific' : 'all',
-            minuteMode: minutes.length > 0 ? 'specific' : 'all',
+            hourMode: hours.length > 0 ? 'specific' : 'specific',
+            minuteMode: minutes.length > 0 ? 'specific' : 'specific',
             dayMode: dayMode,
             monthMode: monthMode,
             selectedMinutes: minutes,
@@ -1260,7 +1277,12 @@ export const EditSchedulePage = () => {
     const basicErrors = await validateBasicConfiguration();
     const scheduleErrors = validateScheduleSetup();
     const questionErrors = validateQuestionSetup();
-    const timeValid = validateTimeSetup();
+    
+    // Only validate time setup if editTiming is enabled
+    let timeValid = true;
+    if (editTiming) {
+      timeValid = validateTimeSetup();
+    }
 
     const allErrors = [...basicErrors, ...scheduleErrors, ...questionErrors];
     if (!timeValid) {
@@ -1475,16 +1497,20 @@ export const EditSchedulePage = () => {
   };
 
   const validateTimeSetup = (): boolean => {
-    // Validate hour settings
-    if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours.length === 0) {
-      toast.error('Please select at least one hour');
-      return false;
+    // Validate hour settings - check both 'specific' mode with empty selection and 'all' mode (which requires at least user acknowledgment)
+    if (timeSetupData.hourMode === 'specific') {
+      if (timeSetupData.selectedHours.length === 0) {
+        toast.error('Please select at least one hour or change the hour mode');
+        return false;
+      }
     }
 
     // Validate minute settings
-    if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes.length === 0) {
-      toast.error('Please select at least one minute');
-      return false;
+    if (timeSetupData.minuteMode === 'specific') {
+      if (timeSetupData.selectedMinutes.length === 0) {
+        toast.error('Please select at least one minute or change the minute mode');
+        return false;
+      }
     }
 
     if (timeSetupData.minuteMode === 'between') {
@@ -1497,20 +1523,26 @@ export const EditSchedulePage = () => {
     }
 
     // Validate day settings
-    if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length === 0) {
-      toast.error('Please select at least one weekday');
-      return false;
+    if (timeSetupData.dayMode === 'weekdays') {
+      if (timeSetupData.selectedWeekdays.length === 0) {
+        toast.error('Please select at least one weekday or change the day mode');
+        return false;
+      }
     }
 
-    if (timeSetupData.dayMode === 'specific' && timeSetupData.selectedDays.length === 0) {
-      toast.error('Please select at least one day');
-      return false;
+    if (timeSetupData.dayMode === 'specific') {
+      if (timeSetupData.selectedDays.length === 0) {
+        toast.error('Please select at least one day or change the day mode');
+        return false;
+      }
     }
 
     // Validate month settings
-    if (timeSetupData.monthMode === 'specific' && timeSetupData.selectedMonths.length === 0) {
-      toast.error('Please select at least one month');
-      return false;
+    if (timeSetupData.monthMode === 'specific') {
+      if (timeSetupData.selectedMonths.length === 0) {
+        toast.error('Please select at least one month or change the month mode');
+        return false;
+      }
     }
 
     if (timeSetupData.monthMode === 'between') {
@@ -3078,7 +3110,7 @@ export const EditSchedulePage = () => {
           {/* Submission Time */}
           <Box>
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-              <InputLabel shrink>Submission Time</InputLabel>
+              <InputLabel shrink>Submission Time <span style={{ color: 'red' }}>*</span></InputLabel>
               <Select
                 label="Submission Time"
                 notched
