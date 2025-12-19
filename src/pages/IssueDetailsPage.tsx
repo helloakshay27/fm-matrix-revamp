@@ -1,36 +1,579 @@
 import { useEffect, useState, useRef } from "react";
+import { useLayout } from "@/contexts/LayoutContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchIssueById, deleteIssue } from "@/store/slices/issueSlice";
-import { Button } from "@/components/ui/button";
-import { Trash2, ChevronDown, ChevronDownCircle } from "lucide-react";
+import { ChevronDown, ChevronDownCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import AddIssueModal from "@/components/AddIssueModal";
 import axios from "axios";
+import { Mention, MentionsInput } from "react-mentions";
 
 interface Issue {
     id?: string;
     title?: string;
     description?: string;
-    issue_type?: string;
+    issue_type_name?: string;
     priority?: string;
     status?: string;
-    assigned_to?: string;
-    assigned_to_id?: string;
-    created_by?: string;
+    responsible_person?: { name: string };
+    responsible_person_id?: string;
+    created_by?: { name: string };
     created_at?: string;
     updated_at?: string;
     start_date?: string;
-    due_date?: string;
-    project_id?: string;
-    milestone_id?: string;
-    task_id?: string;
+    end_date?: string;
+    project_management_name?: string;
+    milstone_name?: string;
+    task_management_name?: string;
     tags?: string[];
     attachments?: any[];
     comments?: any[];
 }
 
+function formatToDDMMYYYY_AMPM(dateString: string | undefined) {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const hoursStr = String(hours).padStart(2, "0");
+    return `${day} /${month}/${year} ${hoursStr}:${minutes} ${ampm}`;
+}
+
+const STATUS_COLORS: Record<string, string> = {
+    open: "bg-[#E4636A] text-white",
+    in_progress: "bg-[#08AEEA] text-white",
+    on_hold: "bg-[#7BD2B5] text-black",
+    overdue: "bg-[#FF2733] text-white",
+    completed: "bg-[#83D17A] text-white",
+    reopen: "bg-yellow-500 text-white",
+    closed: "bg-green-700 text-white",
+};
+
+const mapStatusToDisplay = (rawStatus: string | undefined) => {
+    const statusMap: Record<string, string> = {
+        open: "Open",
+        in_progress: "In Progress",
+        on_hold: "On Hold",
+        completed: "Completed",
+        reopen: "Reopen",
+        closed: "Closed",
+    };
+    return statusMap[rawStatus?.toLowerCase() || ""] || "Open";
+};
+
+const mapDisplayToApiStatus = (displayStatus: string) => {
+    const reverseStatusMap: Record<string, string> = {
+        Open: "open",
+        "In Progress": "in_progress",
+        "On Hold": "on_hold",
+        Completed: "completed",
+        Reopen: "reopen",
+        Closed: "closed",
+    };
+    return reverseStatusMap[displayStatus] || "open";
+};
+
+const Attachments = ({ attachments, id, baseUrl, token }: any) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [files, setFiles] = useState(attachments);
+
+    useEffect(() => {
+        setFiles(attachments);
+    }, [attachments]);
+
+    const handleAttachFile = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = Array.from(event.target.files || []);
+        if (!selectedFiles.length) return;
+
+        const formData = new FormData();
+        selectedFiles.forEach((file) => {
+            formData.append("issue[attachments][]", file);
+        });
+
+        try {
+            await axios.put(`https://${baseUrl}/issues/${id}.json`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            toast.success("Files uploaded successfully.");
+            window.location.reload();
+        } catch (error) {
+            console.error("File upload failed:", error);
+            toast.error("Failed to upload file.");
+        }
+    };
+
+    const handleRemoveFile = async (fileId: string) => {
+        try {
+            await axios.delete(`https://${baseUrl}/issues/${id}/attachments/${fileId}.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            toast.success("File removed successfully.");
+            setFiles(files.filter((f: any) => f.id !== fileId));
+        } catch (error) {
+            console.error("File deletion failed:", error);
+            toast.error("Failed to delete file.");
+        }
+    };
+
+    return (
+        <div className="flex flex-col gap-3 p-5">
+            {files && files.length > 0 ? (
+                <>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 mt-4">
+                        {files.map((file: any, index: number) => {
+                            const fileName = file.document_file_name || file.filename || `file-${index}`;
+                            const fileUrl = file.document_url || file.url || "#";
+                            const fileExt = fileName.split(".").pop()?.toLowerCase() || "";
+
+                            const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(fileExt);
+                            const isPdf = fileExt === "pdf";
+                            const isWord = ["doc", "docx"].includes(fileExt);
+                            const isExcel = ["xls", "xlsx"].includes(fileExt);
+
+                            return (
+                                <div
+                                    key={index}
+                                    className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white relative"
+                                >
+                                    <Trash2
+                                        size={20}
+                                        color="#C72030"
+                                        className="absolute top-2 right-2 cursor-pointer hover:opacity-75"
+                                        onClick={() => handleRemoveFile(file.id)}
+                                    />
+                                    <div className="w-[100px] h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
+                                        {isImage ? (
+                                            <img
+                                                src={fileUrl}
+                                                alt={fileName}
+                                                className="object-contain h-full"
+                                            />
+                                        ) : isPdf ? (
+                                            <span className="text-red-600 font-bold">PDF</span>
+                                        ) : isWord ? (
+                                            <span className="text-blue-600 font-bold">DOC</span>
+                                        ) : isExcel ? (
+                                            <span className="text-green-600 font-bold">XLS</span>
+                                        ) : (
+                                            <span className="text-gray-500 font-bold">FILE</span>
+                                        )}
+                                    </div>
+                                    <a
+                                        href={fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        download={fileName}
+                                        className="text-xs text-blue-700 hover:underline truncate w-full"
+                                        title={fileName}
+                                    >
+                                        {fileName}
+                                    </a>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <button
+                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        onClick={handleAttachFile}
+                    >
+                        Attach Files
+                    </button>
+                </>
+            ) : (
+                <div className="text-[14px] mt-2">
+                    <span>No Documents Attached</span>
+                    <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
+                    <button
+                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        onClick={handleAttachFile}
+                    >
+                        Attach Files
+                    </button>
+                </div>
+            )}
+            <input
+                type="file"
+                multiple
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleFileChange}
+            />
+        </div>
+    );
+};
+
+const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const { id: issueId } = useParams();
+    const [comment, setComment] = useState("");
+    const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+    const [editedCommentText, setEditedCommentText] = useState("");
+    const textareaRef = useRef<any>(null);
+
+    // Mock data for mentions - replace with actual API calls if needed
+    const [mentionUsers, setMentionUsers] = useState<any[]>([]);
+    const [mentionTags, setMentionTags] = useState<any[]>([]);
+
+    const fetchMentionUsers = async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            setMentionUsers(response.data.users || []);
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const fetchMentionTags = async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/company_tags.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+
+            setMentionTags(response.data || []);
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    useEffect(() => {
+        fetchMentionUsers();
+        fetchMentionTags();
+    }, [])
+
+    const mentionData = mentionUsers.length > 0
+        ? mentionUsers.map((user: any) => ({
+            id: user.id?.toString() || user.user_id?.toString(),
+            display: user.full_name || user.name || "Unknown User",
+        }))
+        : [];
+
+    const tagData = mentionTags.length > 0
+        ? mentionTags.map((tag: any) => ({
+            id: tag.id?.toString(),
+            display: tag.name,
+        }))
+        : [];
+
+    const handleAddComment = async (e: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!comment?.trim()) {
+            toast.error("Comment cannot be empty", { duration: 1000 });
+            return;
+        }
+
+        try {
+            const payload = {
+                comment: {
+                    body: comment,
+                    commentable_id: issueId || id,
+                    commentable_type: "Issue",
+                    commentor_id: currentUser?.id,
+                    active: true,
+                },
+            };
+
+            await axios.post(`https://${baseUrl}/comments.json`, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            toast.success("Comment added successfully");
+            setComment("");
+            getIssue();
+        } catch (error) {
+            console.error("Error adding comment:", error);
+            toast.error("Failed to add comment");
+        }
+    };
+
+    const handleEdit = (cmt: any) => {
+        setEditingCommentId(cmt.id);
+        setEditedCommentText(cmt.body);
+    };
+
+    const handleEditSave = async () => {
+        if (!editedCommentText.trim()) {
+            toast.error("Comment cannot be empty");
+            return;
+        }
+
+        try {
+            const payload = {
+                comment: {
+                    body: editedCommentText,
+                },
+            };
+
+            await axios.put(`https://${baseUrl}/comments/${editingCommentId}.json`, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            toast.success("Comment updated successfully");
+            setEditingCommentId(null);
+            setEditedCommentText("");
+            getIssue();
+        } catch (error) {
+            console.error("Error updating comment:", error);
+            toast.error("Failed to update comment");
+        }
+    };
+
+    const handleDelete = async (commentId: string) => {
+        try {
+            await axios.delete(`https://${baseUrl}/comments/${commentId}.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            toast.success("Comment deleted successfully");
+            getIssue();
+        } catch (error) {
+            console.error("Error deleting comment:", error);
+            toast.error("Failed to delete comment");
+        }
+    };
+
+    const handleCancel = () => {
+        setEditingCommentId(null);
+        setComment("");
+        setEditedCommentText("");
+    };
+
+    const mentionStyles = {
+        control: {
+            fontSize: 14,
+            backgroundColor: "transparent",
+            border: "none",
+            outline: "none",
+            padding: 0,
+            margin: 0,
+        },
+        highlighter: { overflow: "hidden" },
+        input: {
+            font: "inherit",
+            backgroundColor: "transparent",
+            border: "none",
+            padding: 0,
+            margin: 0,
+            outline: "none",
+        },
+        suggestions: {
+            list: {
+                backgroundColor: "white",
+                border: "1px solid #ccc",
+                fontSize: 14,
+                zIndex: 100,
+                maxHeight: "150px",
+                overflowY: "auto" as const,
+                borderRadius: "4px",
+            },
+            item: {
+                padding: "5px 10px",
+                borderBottom: "1px solid #eee",
+                cursor: "pointer",
+            },
+            itemFocused: {
+                backgroundColor: "#01569E",
+                color: "white",
+                fontWeight: "bold",
+            },
+        },
+    };
+
+    return (
+        <div className="text-[14px] flex flex-col gap-2">
+            <div className="flex justify-start m-2 gap-5">
+                <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
+                    <span>
+                        {`${currentUser?.firstname?.charAt(0) || ""}${currentUser?.lastname?.charAt(0) || ""}`}
+                    </span>
+                </div>
+                <MentionsInput
+                    inputRef={textareaRef}
+                    value={comment}
+                    onChange={(e, newValue) => setComment(newValue)}
+                    className="mentions w-[95%] h-[70px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] focus:outline-none"
+                    placeholder="Add comment here. Type @ to mention users. Type # to mention tags"
+                    style={{
+                        control: {
+                            backgroundColor: "#F2F4F4",
+                            fontSize: 14,
+                            fontWeight: "normal",
+                        },
+                        highlighter: {
+                            overflow: "hidden",
+                        },
+                        input: {
+                            margin: 0,
+                            padding: "8px",
+                            outline: "none",
+                        },
+                        suggestions: {
+                            list: {
+                                backgroundColor: "white",
+                                border: "1px solid #ccc",
+                                fontSize: 14,
+                                zIndex: 100,
+                                position: "absolute",
+                                bottom: "100%",
+                                left: 0,
+                                width: "200px",
+                                maxHeight: "150px",
+                                overflowY: "auto",
+                                borderRadius: "4px",
+                                marginBottom: "4px",
+                            },
+                            item: {
+                                padding: "5px 10px",
+                                borderBottom: "1px solid #eee",
+                                cursor: "pointer",
+                            },
+                            itemFocused: {
+                                backgroundColor: "#f5f5f5",
+                            },
+                        },
+                    }}
+                >
+                    <Mention
+                        trigger="@"
+                        data={mentionData}
+                        markup="@[__display__](__id__)"
+                        displayTransform={(id, display) => `@${display} `}
+                        appendSpaceOnAdd
+                    />
+                    <Mention
+                        trigger="#"
+                        data={tagData}
+                        markup="#[__display__](__id__)"
+                        displayTransform={(id, display) => `#${display} `}
+                        appendSpaceOnAdd
+                    />
+                </MentionsInput>
+            </div>
+
+            <div className="flex justify-end">
+                <button
+                    type="submit"
+                    className="bg-[#C72030] text-white h-[30px] px-3 cursor-pointer p-1 mr-2"
+                    onClick={handleAddComment}
+                >
+                    Add Comment
+                </button>
+                <button
+                    className="border-2 border-[#C72030] h-[30px] cursor-pointer p-1 px-3"
+                    onClick={handleCancel}
+                >
+                    Cancel
+                </button>
+            </div>
+
+            {comments?.map((cmt: any) => {
+                const isEditing = editingCommentId === cmt.id;
+                return (
+                    <div key={cmt.id} className="relative flex justify-start m-2 gap-5">
+                        <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
+                            <span>
+                                {cmt?.commentor_full_name
+                                    ?.split(" ")
+                                    .map((n: string) => n.charAt(0))
+                                    .join("")}
+                            </span>
+                        </div>
+                        <div className="flex flex-col gap-2 w-full border-b-[2px] pb-3 border-[rgba(190, 190, 190, 1)]">
+                            <h1 className="font-bold">{cmt.commentor_full_name}</h1>
+
+                            {isEditing ? (
+                                <MentionsInput
+                                    value={editedCommentText}
+                                    inputRef={(el: any) => {
+                                        if (el) {
+                                            const val = el.value;
+                                            el.focus();
+                                            el.setSelectionRange(val.length, val.length);
+                                        }
+                                    }}
+                                    onChange={(e, newValue) => setEditedCommentText(newValue)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            setTimeout(() => {
+                                                handleEditSave();
+                                            }, 100);
+                                        }
+                                    }}
+                                    onBlur={handleEditSave}
+                                    className="mentions w-full bg-transparent p-0 m-0 border-none outline-none"
+                                    style={mentionStyles}
+                                >
+                                    <Mention
+                                        trigger="@"
+                                        data={mentionData}
+                                        markup="@[__display__](__id__)"
+                                        displayTransform={(id, display) => `@${display} `}
+                                        appendSpaceOnAdd
+                                    />
+                                    <Mention
+                                        trigger="#"
+                                        data={tagData}
+                                        markup="#[__display__](__id__)"
+                                        displayTransform={(id, display) => `#${display} `}
+                                        appendSpaceOnAdd
+                                    />
+                                </MentionsInput>
+                            ) : (
+                                <div>
+                                    {cmt.body
+                                        .replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
+                                        .replace(/#\[(.*?)\]\(\d+\)/g, "#$1")}
+                                </div>
+                            )}
+
+                            <div className="flex gap-2 text-[10px]">
+                                <span>{formatToDDMMYYYY_AMPM(cmt.created_at)}</span>
+                                <span className="cursor-pointer" onClick={() => handleEdit(cmt)}>
+                                    Edit
+                                </span>
+                                <span className="cursor-pointer" onClick={() => handleDelete(cmt.id)}>
+                                    Delete
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
 const IssueDetailsPage = () => {
+    const { setCurrentSection } = useLayout();
+
+    useEffect(() => {
+        setCurrentSection("Project Task");
+    }, [setCurrentSection]);
+
     const navigate = useNavigate();
     const { id: issueId } = useParams<{ id: string }>();
     const dispatch = useAppDispatch();
@@ -39,16 +582,13 @@ const IssueDetailsPage = () => {
 
     const [issueData, setIssueData] = useState<Issue | null>(null);
     const [loading, setLoading] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isDescriptionCollapsed, setIsDescriptionCollapsed] = useState(false);
-    const [isDetailsCollapsed, setIsDetailsCollapsed] = useState(true);
+    const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
+    const [isSecondCollapsed, setIsSecondCollapsed] = useState(true);
     const [activeTab, setActiveTab] = useState("Comments");
     const [openStatusDropdown, setOpenStatusDropdown] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState("Open");
 
-    const descriptionRef = useRef(null);
-    const detailsRef = useRef(null);
-    const statusDropdownRef = useRef(null);
+    const statusDropdownRef = useRef<HTMLDivElement>(null);
 
     // Fetch issue details
     useEffect(() => {
@@ -71,19 +611,19 @@ const IssueDetailsPage = () => {
                         id: issueDetail.id?.toString() || "",
                         title: issueDetail.title || "",
                         description: issueDetail.description || "",
-                        issue_type: issueDetail.issue_type || issueDetail.type_name || "",
+                        issue_type_name: issueDetail.issue_type_name || "",
                         priority: issueDetail.priority || "",
-                        status: issueDetail.status || "Open",
-                        assigned_to: issueDetail.responsible_person?.full_name || issueDetail.assigned_to || "Unassigned",
-                        assigned_to_id: issueDetail.responsible_person_id || issueDetail.assigned_to_id || "",
-                        created_by: issueDetail.created_by?.full_name || issueDetail.created_by_name || "",
+                        status: issueDetail.status || "open",
+                        responsible_person: issueDetail.responsible_person || { name: "Unassigned" },
+                        responsible_person_id: issueDetail.responsible_person_id || issueDetail.assigned_to_id || "",
+                        created_by: issueDetail.created_by || { name: "Unknown" },
                         created_at: issueDetail.created_at || "",
                         updated_at: issueDetail.updated_at || "",
                         start_date: issueDetail.start_date || "",
-                        due_date: issueDetail.end_date || issueDetail.target_date || issueDetail.due_date || "",
-                        project_id: issueDetail.project_management_id || issueDetail.project_id || "",
-                        milestone_id: issueDetail.milestone_id || "",
-                        task_id: issueDetail.task_management_id || issueDetail.task_id || "",
+                        end_date: issueDetail.end_date || issueDetail.target_date || issueDetail.due_date || "",
+                        project_management_name: issueDetail.project_management_name || "",
+                        milstone_name: issueDetail.milstone_name || "",
+                        task_management_name: issueDetail.task_management_name || "",
                         tags: issueDetail.tags || [],
                         attachments: issueDetail.attachments || [],
                         comments: issueDetail.comments || [],
@@ -107,33 +647,18 @@ const IssueDetailsPage = () => {
 
     useEffect(() => {
         if (issueData?.status) {
-            setSelectedStatus(issueData.status);
+            setSelectedStatus(mapStatusToDisplay(issueData.status));
         }
     }, [issueData?.status]);
-
-    const toggleDescriptionCollapse = () => {
-        setIsDescriptionCollapsed(!isDescriptionCollapsed);
-        if (descriptionRef.current) {
-            descriptionRef.current.style.maxHeight = isDescriptionCollapsed ? "0px" : "1000px";
-            descriptionRef.current.style.opacity = isDescriptionCollapsed ? "0" : "1";
-        }
-    };
-
-    const toggleDetailsCollapse = () => {
-        setIsDetailsCollapsed(!isDetailsCollapsed);
-        if (detailsRef.current) {
-            detailsRef.current.style.maxHeight = isDetailsCollapsed ? "0px" : "1000px";
-            detailsRef.current.style.opacity = isDetailsCollapsed ? "0" : "1";
-        }
-    };
 
     const handleStatusChange = async (newStatus: string) => {
         setSelectedStatus(newStatus);
         setOpenStatusDropdown(false);
         try {
-            const response = await axios.put(
+            const apiStatus = mapDisplayToApiStatus(newStatus);
+            await axios.put(
                 `https://${baseUrl}/issues/${issueId}.json`,
-                { issue: { status: newStatus.toLowerCase().replace(" ", "_") } },
+                { issue: { status: apiStatus } },
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -141,9 +666,60 @@ const IssueDetailsPage = () => {
                 }
             );
             toast.success("Status updated successfully");
+            getIssue();
         } catch (error) {
             console.error("Error updating status:", error);
             toast.error("Failed to update status");
+        }
+    };
+
+    const toggleFirstCollapse = () => {
+        setIsFirstCollapsed(!isFirstCollapsed);
+    };
+
+    const toggleSecondCollapse = () => {
+        setIsSecondCollapsed(!isSecondCollapsed);
+    };
+
+    const getIssue = async () => {
+        if (issueId && baseUrl && token) {
+            try {
+                const response = await axios.get(
+                    `https://${baseUrl}/issues/${issueId}.json`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                const issueDetail = response.data.issue || response.data;
+
+                const mappedIssue: Issue = {
+                    id: issueDetail.id?.toString() || "",
+                    title: issueDetail.title || "",
+                    description: issueDetail.description || "",
+                    issue_type_name: issueDetail.issue_type_name || "",
+                    priority: issueDetail.priority || "",
+                    status: issueDetail.status || "open",
+                    responsible_person: issueDetail.responsible_person || { name: "Unassigned" },
+                    responsible_person_id: issueDetail.responsible_person_id || "",
+                    created_by: issueDetail.created_by || { name: "Unknown" },
+                    created_at: issueDetail.created_at || "",
+                    updated_at: issueDetail.updated_at || "",
+                    start_date: issueDetail.start_date || "",
+                    end_date: issueDetail.end_date || "",
+                    project_management_name: issueDetail.project_management_name || "",
+                    milstone_name: issueDetail.milstone_name || "",
+                    task_management_name: issueDetail.task_management_name || "",
+                    tags: issueDetail.tags || [],
+                    attachments: issueDetail.attachments || [],
+                    comments: issueDetail.comments || [],
+                };
+
+                setIssueData(mappedIssue);
+            } catch (error) {
+                console.error("Error fetching issue:", error);
+            }
         }
     };
 
@@ -156,68 +732,6 @@ const IssueDetailsPage = () => {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
-
-    const handleDeleteIssue = async () => {
-        if (!window.confirm("Are you sure you want to delete this issue?")) return;
-
-        try {
-            await dispatch(deleteIssue({ baseUrl, token, id: issueId! })).unwrap();
-            toast.success("Issue deleted successfully");
-            navigate(-1);
-        } catch (error) {
-            toast.error(
-                error instanceof Error ? error.message : "Failed to delete issue"
-            );
-        }
-    };
-
-    const getPriorityColor = (priority: string) => {
-        switch (priority?.toLowerCase()) {
-            case "urgent":
-                return "bg-red-100 text-red-800";
-            case "high":
-                return "bg-orange-100 text-orange-800";
-            case "medium":
-                return "bg-yellow-100 text-yellow-800";
-            case "low":
-                return "bg-green-100 text-green-800";
-            default:
-                return "bg-gray-100 text-gray-800";
-        }
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status?.toLowerCase()) {
-            case "open":
-                return "bg-blue-100 text-blue-800";
-            case "in_progress":
-            case "in progress":
-                return "bg-purple-100 text-purple-800";
-            case "on_hold":
-            case "on hold":
-                return "bg-yellow-100 text-yellow-800";
-            case "completed":
-                return "bg-green-100 text-green-800";
-            case "closed":
-                return "bg-gray-100 text-gray-800";
-            default:
-                return "bg-gray-100 text-gray-800";
-        }
-    };
-
-    const formatDate = (dateString: string | undefined) => {
-        if (!dateString) return "N/A";
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-            });
-        } catch {
-            return dateString;
-        }
-    };
 
     if (loading) {
         return (
@@ -238,242 +752,261 @@ const IssueDetailsPage = () => {
     return (
         <div className="m-4">
             <div className="px-4 pt-1">
-                {/* Header with Issue ID and Title */}
-                <h2 className="text-[15px] p-3 px-0 font-medium">
+                <h2 className="text-[15px] p-3 px-0">
                     <span className="mr-3">Issue-{issueData?.id}</span>
-                    <span>{issueData?.title || "Untitled Issue"}</span>
+                    <span>{issueData?.title}</span>
                 </h2>
 
-                <div className="border-b-[3px] border-gray-300 mb-4"></div>
-
-                {/* Meta Information */}
+                <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
                 <div className="flex items-center justify-between my-3 text-[12px]">
-                    <div className="flex items-center gap-3 text-gray-700">
-                        <span>Created By: {issueData?.created_by || "Unknown"}</span>
+                    <div className="flex items-center gap-3 text-[#323232]">
+                        <span>Created By : {issueData?.created_by?.name}</span>
+
                         <span className="h-6 w-[1px] border border-gray-300"></span>
-                        <span>Created On: {formatDate(issueData?.created_at)}</span>
+
+                        <span className="flex items-center gap-3">
+                            Created On : {formatToDDMMYYYY_AMPM(issueData?.created_at)}
+                        </span>
+
                         <span className="h-6 w-[1px] border border-gray-300"></span>
 
                         {/* Status Dropdown */}
-                        <div className="relative" ref={statusDropdownRef}>
-                            <button
-                                onClick={() => setOpenStatusDropdown(!openStatusDropdown)}
-                                className="flex items-center gap-2 px-3 py-1 rounded-md bg-blue-100 text-blue-800 hover:bg-blue-200 transition"
-                            >
-                                <span className="text-[13px] font-medium">{selectedStatus}</span>
-                                <ChevronDown
-                                    size={15}
-                                    className={`transition-transform ${openStatusDropdown ? "rotate-180" : ""}`}
-                                />
-                            </button>
-                            {openStatusDropdown && (
-                                <ul className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-[150px] max-h-[300px] overflow-y-auto">
-                                    {["Open", "In Progress", "On Hold", "Completed", "Closed"].map((status) => (
-                                        <li key={status}>
-                                            <button
-                                                onClick={() => handleStatusChange(status)}
-                                                className={`w-full text-left px-4 py-2 text-[13px] hover:bg-gray-100 ${
-                                                    selectedStatus === status ? "bg-gray-100 font-semibold" : ""
-                                                }`}
-                                            >
-                                                {status}
-                                            </button>
-                                        </li>
-                                    ))}
+                        <span
+                            className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedStatus).toLowerCase()] ||
+                                "bg-gray-400 text-white"
+                                }`}
+                        >
+                            <div className="relative" ref={statusDropdownRef}>
+                                <div
+                                    className="flex items-center gap-1 cursor-pointer px-2 py-1"
+                                    onClick={() => setOpenStatusDropdown(!openStatusDropdown)}
+                                    role="button"
+                                    aria-haspopup="true"
+                                    aria-expanded={openStatusDropdown}
+                                    tabIndex={0}
+                                    onKeyDown={(e) =>
+                                        e.key === "Enter" && setOpenStatusDropdown(!openStatusDropdown)
+                                    }
+                                >
+                                    <span className="text-[13px]">{selectedStatus}</span>
+                                    <ChevronDown
+                                        size={15}
+                                        className={`${openStatusDropdown ? "rotate-180" : ""
+                                            } transition-transform`}
+                                    />
+                                </div>
+                                <ul
+                                    className={`absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openStatusDropdown ? "block" : "hidden"
+                                        }`}
+                                    role="menu"
+                                    style={{
+                                        minWidth: "150px",
+                                        maxHeight: "400px",
+                                        overflowY: "auto",
+                                        zIndex: 1000,
+                                    }}
+                                >
+                                    {["Open", "In Progress", "On Hold", "Completed", "Reopen", "Closed"].map(
+                                        (option, idx) => (
+                                            <li key={idx} role="menuitem">
+                                                <button
+                                                    className={`w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedStatus === option
+                                                        ? "bg-gray-100 font-semibold"
+                                                        : ""
+                                                        }`}
+                                                    onClick={() => handleStatusChange(option)}
+                                                >
+                                                    {option}
+                                                </button>
+                                            </li>
+                                        )
+                                    )}
                                 </ul>
-                            )}
-                        </div>
+                            </div>
+                        </span>
+
+                        <span className="h-6 w-[1px] border border-gray-300"></span>
                     </div>
                 </div>
+                <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)] my-3"></div>
 
-                <div className="border-b-[3px] border-gray-300 my-3"></div>
-
-                {/* Description Section */}
-                <div className="border rounded-md shadow-sm p-5 mb-4 text-[14px] bg-white">
-                    <div className="font-semibold text-[16px] flex items-center gap-4">
+                <div className="border rounded-md shadow-custom p-5 mb-4 text-[14px]">
+                    <div className="font-[600] text-[16px] flex items-center gap-4">
                         <ChevronDownCircle
                             color="#E95420"
-                            size={28}
-                            className={`${isDescriptionCollapsed ? "rotate-180" : ""} transition-transform cursor-pointer`}
-                            onClick={toggleDescriptionCollapse}
+                            size={30}
+                            className={`${isFirstCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
+                            onClick={toggleFirstCollapse}
                         />
                         Description
                     </div>
-                    <div className="mt-3 overflow-hidden" ref={descriptionRef} style={{
-                        maxHeight: isDescriptionCollapsed ? "0px" : "1000px",
-                        opacity: isDescriptionCollapsed ? 0 : 1,
-                        transition: "all 0.5s ease"
-                    }}>
-                        <p className="text-gray-700 whitespace-pre-wrap">
-                            {issueData?.description || "No description provided"}
-                        </p>
+                    <div
+                        className="mt-3 overflow-hidden transition-all duration-500"
+                        style={{
+                            maxHeight: isFirstCollapsed ? "0px" : "1000px",
+                            opacity: isFirstCollapsed ? 0 : 1,
+                        }}
+                    >
+                        <p className="whitespace-pre-wrap">{issueData?.description}</p>
                     </div>
                 </div>
 
-                {/* Details Section */}
-                <div className="border rounded-md shadow-sm p-5 mb-4 bg-white">
-                    <div className="font-semibold text-[16px] flex items-center gap-10 justify-between">
+                <div className="border rounded-md shadow-custom p-5 mb-4">
+                    <div className="font-[600] text-[16px] flex items-center gap-10">
                         <div className="flex items-center gap-4">
                             <ChevronDownCircle
                                 color="#E95420"
-                                size={28}
-                                className={`${isDetailsCollapsed ? "rotate-180" : ""} transition-transform cursor-pointer`}
-                                onClick={toggleDetailsCollapse}
+                                size={30}
+                                className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
+                                onClick={toggleSecondCollapse}
                             />
                             Details
                         </div>
-                        {isDetailsCollapsed && (
-                            <div className="flex items-center gap-6 text-[12px]">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium">Responsible Person:</span>
-                                    <span>{issueData?.assigned_to || "Unassigned"}</span>
+                        {isSecondCollapsed && (
+                            <div className="flex items-center gap-6">
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">
+                                        Responsible Person:
+                                    </div>
+                                    <div className="text-left text-[12px]">
+                                        {issueData?.responsible_person?.name}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium">Priority:</span>
-                                    <span>{issueData?.priority || "N/A"}</span>
+
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">Priority:</div>
+                                    <div className="text-left text-[12px]">
+                                        {issueData?.priority?.charAt(0).toUpperCase() +
+                                            issueData?.priority?.slice(1).toLowerCase() || ""}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium">Due Date:</span>
-                                    <span>{formatDate(issueData?.due_date)}</span>
+
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">End Date:</div>
+                                    <div className="text-left text-[12px]">
+                                        {issueData?.end_date?.split("T")[0]}
+                                    </div>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    <div className={`mt-3 overflow-hidden`} ref={detailsRef} style={{
-                        maxHeight: isDetailsCollapsed ? "0px" : "1000px",
-                        opacity: isDetailsCollapsed ? 0 : 1,
-                        transition: "all 0.5s ease"
-                    }}>
-                        <div className="flex flex-col space-y-4 ml-8">
-                            <div className="flex gap-8">
-                                <div className="w-1/2 flex items-center gap-3">
-                                    <span className="font-medium text-[12px]">Responsible Person:</span>
-                                    <span className="text-[12px]">{issueData?.assigned_to || "Unassigned"}</span>
+                    <div className={`mt-3 overflow-hidden transition-all duration-500`}
+                        style={{
+                            maxHeight: isSecondCollapsed ? "0px" : "1000px",
+                            opacity: isSecondCollapsed ? 0 : 1,
+                        }}
+                    >
+                        <div className="flex flex-col">
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">
+                                        Responsible Person :
+                                    </div>
+                                    <div className="text-left text-[12px]">
+                                        {issueData?.responsible_person?.name}
+                                    </div>
                                 </div>
-                                <div className="w-1/2 flex items-center gap-3">
-                                    <span className="font-medium text-[12px]">Priority:</span>
-                                    <span className="text-[12px]">{issueData?.priority || "N/A"}</span>
-                                </div>
-                            </div>
-                            <hr className="border-gray-300" />
-
-                            <div className="flex gap-8">
-                                <div className="w-1/2 flex items-center gap-3">
-                                    <span className="font-medium text-[12px]">Issue Type:</span>
-                                    <span className="text-[12px]">{issueData?.issue_type || "N/A"}</span>
-                                </div>
-                                <div className="w-1/2 flex items-center gap-3">
-                                    <span className="font-medium text-[12px]">Milestone:</span>
-                                    <span className="text-[12px]">{issueData?.milestone_id || "N/A"}</span>
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">Priority :</div>
+                                    <div className="text-left text-[12px]">
+                                        {issueData?.priority?.charAt(0).toUpperCase() +
+                                            issueData?.priority?.slice(1).toLowerCase() || ""}
+                                    </div>
                                 </div>
                             </div>
-                            <hr className="border-gray-300" />
 
-                            <div className="flex gap-8">
-                                <div className="w-1/2 flex items-center gap-3">
-                                    <span className="font-medium text-[12px]">Start Date:</span>
-                                    <span className="text-[12px]">{formatDate(issueData?.start_date)}</span>
+                            <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">Issue Type:</div>
+                                    <div className="text-left text-[12px]">{issueData?.issue_type_name}</div>
                                 </div>
-                                <div className="w-1/2 flex items-center gap-3">
-                                    <span className="font-medium text-[12px]">Task:</span>
-                                    <span className="text-[12px]">{issueData?.task_id || "N/A"}</span>
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">MileStone :</div>
+                                    <div className="text-left text-[12px]">
+                                        {issueData?.milstone_name || ""}
+                                    </div>
                                 </div>
                             </div>
-                            <hr className="border-gray-300" />
 
-                            <div className="flex gap-8">
-                                <div className="w-1/2 flex items-center gap-3">
-                                    <span className="font-medium text-[12px]">End Date:</span>
-                                    <span className="text-[12px]">{formatDate(issueData?.due_date)}</span>
+                            <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">Start Date :</div>
+                                    <div className="text-left text-[12px]">
+                                        {issueData?.start_date?.split("T")[0]}
+                                    </div>
                                 </div>
-                                <div className="w-1/2 flex items-center gap-3">
-                                    <span className="font-medium text-[12px]">Project:</span>
-                                    <span className="text-[12px]">{issueData?.project_id || "N/A"}</span>
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-semibold]">Task :</div>
+                                    <div className="text-left text-[12px]">
+                                        {issueData?.task_management_name || ""}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">End Date :</div>
+                                    <div className="text-left text-[12px]">
+                                        {issueData?.end_date?.split("T")[0]}
+                                    </div>
+                                </div>
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">Project :</div>
+                                    <div className="text-left text-[12px]">
+                                        {issueData?.project_management_name || ""}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                {/* Tabs Section */}
                 <div>
-                    <div className="flex items-center gap-10 my-3">
-                        {["Comments", "Attachments"].map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`text-[14px] font-medium pb-2 border-b-2 transition ${
-                                    activeTab === tab
-                                        ? "border-orange-600 text-orange-600"
-                                        : "border-transparent text-gray-600 hover:text-gray-900"
-                                }`}
-                            >
-                                {tab}
-                            </button>
-                        ))}
+                    <div className="flex items-center justify-between my-3">
+                        <div className="flex items-center gap-10">
+                            {["Comments", "Documents"].map((item) => (
+                                <div
+                                    key={item}
+                                    className={`text-[14px] font-[400] ${activeTab === item
+                                        ? "border-b-2 border-[#E95420] text-[#E95420]"
+                                        : "cursor-pointer"
+                                        }`}
+                                    onClick={() => setActiveTab(item)}
+                                >
+                                    {item}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    <div className="border-b-[3px] border-gray-300 mb-4"></div>
+                    <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
 
-                    {/* Tab Content */}
                     <div>
-                        {activeTab === "Attachments" && issueData?.attachments && Array.isArray(issueData.attachments) && (
-                            <div className="flex flex-col gap-3 p-5">
-                                {issueData.attachments.length > 0 ? (
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                        {issueData.attachments.map((attachment, index) => (
-                                            <div key={index} className="border rounded p-3 flex flex-col items-center justify-center text-center shadow-sm bg-white relative">
-                                                <div className="w-[100px] h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2">
-                                                    <span className="text-gray-500 text-sm">📄</span>
-                                                </div>
-                                                <a
-                                                    href="#"
-                                                    className="text-xs text-blue-700 hover:underline truncate w-full"
-                                                    title={attachment?.name}
-                                                >
-                                                    {attachment?.name || `Attachment ${index + 1}`}
-                                                </a>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-[14px] text-gray-500">
-                                        <p>No Documents Attached</p>
-                                        <p className="text-[#C2C2C2]">Drop or attach relevant documents here</p>
-                                    </div>
-                                )}
-                            </div>
+                        {activeTab === "Documents" && (
+                            <Attachments
+                                attachments={issueData?.attachments}
+                                id={issueData?.id}
+                                baseUrl={baseUrl}
+                                token={token}
+                            />
                         )}
-
-                        {activeTab === "Comments" && issueData?.comments && Array.isArray(issueData.comments) && (
-                            <div className="text-[14px] flex flex-col gap-2">
-                                {issueData.comments.length > 0 ? (
-                                    issueData.comments.map((comment, index) => (
-                                        <div key={index} className="flex justify-start gap-5 mb-4 pb-4 border-b border-gray-300">
-                                            <div className="bg-blue-700 h-[36px] w-[36px] rounded-full text-white flex items-center justify-center text-sm font-semibold">
-                                                {comment?.author?.charAt(0) || "U"}
-                                            </div>
-                                            <div className="flex flex-col gap-2 w-full">
-                                                <h3 className="font-bold text-[13px]">{comment?.author || "Anonymous"}</h3>
-                                                <p className="text-[12px] text-gray-500">{formatDate(comment?.created_at)}</p>
-                                                <p className="text-[13px] text-gray-700">{comment?.body || ""}</p>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-gray-500">No comments yet</p>
-                                )}
-                            </div>
+                        {activeTab === "Comments" && (
+                            <Comments
+                                comments={issueData?.comments}
+                                getIssue={getIssue}
+                                baseUrl={baseUrl}
+                                token={token}
+                                id={issueId}
+                            />
                         )}
                     </div>
                 </div>
             </div>
-
-            {/* Edit Modal */}
-            <AddIssueModal
-                openDialog={isEditModalOpen}
-                handleCloseDialog={() => setIsEditModalOpen(false)}
-            />
         </div>
     );
 };

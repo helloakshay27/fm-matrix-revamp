@@ -9,6 +9,7 @@ import { getFullUrl } from '@/config/apiConfig';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AddOpportunityModal from '@/components/AddOpportunityModal';
+import { useLayout } from '@/contexts/LayoutContext';
 
 // Types
 interface Opportunity {
@@ -42,6 +43,12 @@ const columns: ColumnConfig[] = [
 
 
 const OpportunityDashboard = () => {
+    const { setCurrentSection } = useLayout();
+
+    useEffect(() => {
+        setCurrentSection("Project Task");
+    }, [setCurrentSection]);
+
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
 

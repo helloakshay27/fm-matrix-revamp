@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchIssues, deleteIssue, updateIssue } from "@/store/slices/issueSlice";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Eye, Edit, ChevronDown, List, ChartNoAxesColumn } from "lucide-react";
+import { Plus, Eye, Edit, ChevronDown, List, ChartNoAxesColumn } from "lucide-react";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -11,6 +11,7 @@ import AddIssueModal from "@/components/AddIssueModal";
 import { FormControl, MenuItem, Select } from "@mui/material";
 import axios from "axios";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import { useLayout } from "@/contexts/LayoutContext";
 
 interface Issue {
     id?: string;
@@ -135,6 +136,13 @@ const ISSUSE_STATUS = [
 ];
 
 const IssuesListPage = () => {
+    const { setCurrentSection } = useLayout();
+
+    useEffect(() => {
+        setCurrentSection("Project Task");
+    }, [setCurrentSection]);
+
+
     const navigate = useNavigate();
     const { id: projectId } = useParams<{ id: string }>();
     const dispatch = useAppDispatch();

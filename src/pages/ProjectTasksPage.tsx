@@ -222,7 +222,7 @@ const ProjectTasksPage = () => {
         setCurrentSection("Project Task");
     }, [setCurrentSection]);
 
-    const { id, mid } = useParams();
+    const { id: projectId, mid } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useAppDispatch();
@@ -350,7 +350,6 @@ const ProjectTasksPage = () => {
 
     const handleCloseModal = () => {
         setOpenTaskModal(false);
-        fetchData();
     };
 
     const handlePageChange = async (page: number) => {
@@ -543,7 +542,7 @@ const ProjectTasksPage = () => {
                 priority: data.priority || "Medium",
                 active: true,
                 responsible_person_id: data.responsible || data.responsible_person_id,
-                ...(id && { project_management_id: id }),
+                ...(projectId && { project_management_id: projectId }),
                 ...(mid && { milestone_id: mid }),
                 task_allocation_times_attributes: allocation,
                 estimated_hour: 8 * allocation.length,
@@ -567,7 +566,7 @@ const ProjectTasksPage = () => {
         if (location.pathname.startsWith("/vas/tasks")) {
             navigate(`/vas/tasks/${id}`);
         } else {
-            navigate(`/vas/projects/${id}/milestones/${mid}/tasks/${id}`)
+            navigate(`/vas/projects/${projectId}/milestones/${mid}/tasks/${id}`)
         }
     }
 

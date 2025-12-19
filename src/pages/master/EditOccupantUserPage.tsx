@@ -8,10 +8,38 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchAllowedSites } from '@/store/slices/siteSlice';
 import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
-import { fetchRoles } from '@/store/slices/fmUserSlice';
+import { fetchRoles, fetchSuppliers, fetchUnits, getUserDetails, fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { RootState } from '@/store/store';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, FileText, Upload } from 'lucide-react';
+
+const uploadSections = [
+  {
+    id: 'onBoardingFile',
+    label: 'On Boarding',
+    description: 'Upload onboarding documentation',
+  },
+  {
+    id: 'employeeHandbookFile',
+    label: 'Employee Handbook',
+    description: 'Company policies and guidelines',
+  },
+  {
+    id: 'employeeCompensationFile',
+    label: 'Employee Compensation',
+    description: 'Salary and benefits information',
+  },
+  {
+    id: 'exitProcessFile',
+    label: 'Exit Process',
+    description: 'Offboarding procedures',
+  },
+  {
+    id: 'managementFile',
+    label: 'Employee Management & Record Keeping',
+    description: 'HR records and documentation',
+  },
+];
 
 export const EditOccupantUserPage: React.FC = () => {
   const navigate = useNavigate();
@@ -36,6 +64,14 @@ export const EditOccupantUserPage: React.FC = () => {
     designation: '',
     selectUserCategory: '',
     selectRole: '',
+    shift: '',
+    reportsTo: '',
+    workType: '',
+    onBoardingFile: null,
+    employeeHandbookFile: null,
+    employeeCompensationFile: null,
+    exitProcessFile: null,
+    managementFile: null,
   });
   const [showAdditional, setShowAdditional] = useState(true);
   const dispatch = useAppDispatch();
@@ -54,6 +90,8 @@ export const EditOccupantUserPage: React.FC = () => {
   const [departmentsError, setDepartmentsError] = useState<string | null>(null);
   const [userCategories, setUserCategories] = useState([])
   const [lockId, setLockId] = useState<number | undefined>();
+  const [shifts, setShifts] = useState([])
+  const [users, setUsers] = useState([])
 
   const fetchUserCategories = async () => {
     try {
@@ -69,6 +107,28 @@ export const EditOccupantUserPage: React.FC = () => {
     }
   }
 
+  const fetchShifts = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/admin/user_shifts.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setShifts(response.data.user_shifts);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const getUsers = async () => {
+    try {
+      const response = await dispatch(fetchFMUsers()).unwrap();
+      setUsers(response.users);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   useEffect(() => {
     dispatch(fetchEntities());
     try {
@@ -79,6 +139,8 @@ export const EditOccupantUserPage: React.FC = () => {
     dispatch(fetchAllowedCompanies());
     dispatch(fetchRoles({ baseUrl, token }));
     fetchUserCategories();
+    fetchShifts();
+    getUsers();
   }, [dispatch]);
 
   // Fetch departments using selectedCompanyId from localStorage
@@ -149,6 +211,9 @@ export const EditOccupantUserPage: React.FC = () => {
           designation: lup.designation || '',
           selectUserCategory: u.user_category_id || '',
           selectRole: lup.lock_role_id ? String(lup.lock_role_id) : '',
+          workType: lup.work_type || '',
+          reportsTo: u.report_to_id ? String(u.report_to_id) : '',
+          shift: lup.user_shift_id ? String(lup.user_shift_id) : '',
         }));
       } catch (e) {
         console.error('Error fetching user for edit', e);
@@ -173,6 +238,16 @@ export const EditOccupantUserPage: React.FC = () => {
 
   const handleInputChange = (field: string, value: string | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileChange = (e, fieldName) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        [fieldName]: file,
+      }));
+    }
   };
 
   const handleCancel = () => navigate(`/master/user/occupant-users/view/${id}`);
@@ -219,10 +294,17 @@ export const EditOccupantUserPage: React.FC = () => {
               employee_id: formData.employeeId,
               designation: formData.designation,
               department_id: formData.department || undefined,
+              user_shift_id: formData.shift,
+              work_type: formData.workType,
               user_type: formData.userType,
               access_level: formData.accessLevel,
               access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
               lock_role_id: formData.selectRole || undefined,
+              on_boarding_attachments_attributes: formData.onBoardingFile ? [{ document: formData.onBoardingFile }] : [],
+              handbook_attachments_attributes: formData.employeeHandbookFile ? [{ document: formData.employeeHandbookFile }] : [],
+              compensation_attachments_attributes: formData.employeeCompensationFile ? [{ document: formData.employeeCompensationFile }] : [],
+              exit_process_attachments_attributes: formData.exitProcessFile ? [{ document: formData.exitProcessFile }] : [],
+              management_record_attachments_attributes: formData.managementFile ? [{ document: formData.managementFile }] : [],
             },
           ],
           firstname: formData.firstName,
@@ -235,6 +317,7 @@ export const EditOccupantUserPage: React.FC = () => {
           birth_date: formData.birthDate,
           entity_id: formData.selectEntity,
           user_category_id: formData.selectUserCategory,
+          report_to_id: formData.reportsTo,
         },
       };
 
@@ -244,7 +327,7 @@ export const EditOccupantUserPage: React.FC = () => {
       await axios.put(url, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
       });
       toast.success('Occupant user updated successfully');
@@ -551,69 +634,180 @@ export const EditOccupantUserPage: React.FC = () => {
             </div>
 
             {showAdditional && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <TextField
-                  label="Birth Date"
-                  type="date"
-                  value={formData.birthDate}
-                  onChange={(e) => handleInputChange('birthDate', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ sx: fieldStyles }}
-                />
-                <TextField
-                  label="Address"
-                  placeholder="Enter Address"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ sx: fieldStyles }}
-                />
-                <TextField
-                  label="Alternate Mobile Number"
-                  placeholder="Enter Alternate Mobile Number"
-                  value={formData.altMobileNumber}
-                  onChange={(e) => handleInputChange('altMobileNumber', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ sx: fieldStyles }}
-                />
-                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Select Department</InputLabel>
-                  <MuiSelect
-                    value={formData.department}
-                    onChange={(e) => handleInputChange('department', e.target.value as string)}
-                    label="Select Department"
-                    displayEmpty
-                    notched
-                  >
-                    <MenuItem value="">Select Department</MenuItem>
-                    {departmentsLoading && (
-                      <MenuItem value="" disabled>Loading...</MenuItem>
-                    )}
-                    {departmentsError && (
-                      <MenuItem value="" disabled>{departmentsError}</MenuItem>
-                    )}
-                    {departments?.map((d: any) => (
-                      <MenuItem key={d.id} value={String(d.id)}>{d.department_name}</MenuItem>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <TextField
+                    label="Birth Date"
+                    type="date"
+                    value={formData.birthDate}
+                    onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+                  <TextField
+                    label="Address"
+                    placeholder="Enter Address"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+                  <TextField
+                    label="Alternate Mobile Number"
+                    placeholder="Enter Alternate Mobile Number"
+                    value={formData.altMobileNumber}
+                    onChange={(e) => handleInputChange('altMobileNumber', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Select Department</InputLabel>
+                    <MuiSelect
+                      value={formData.department}
+                      onChange={(e) => handleInputChange('department', e.target.value as string)}
+                      label="Select Department"
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">Select Department</MenuItem>
+                      {departmentsLoading && (
+                        <MenuItem value="" disabled>Loading...</MenuItem>
+                      )}
+                      {departmentsError && (
+                        <MenuItem value="" disabled>{departmentsError}</MenuItem>
+                      )}
+                      {departments?.map((d: any) => (
+                        <MenuItem key={d.id} value={String(d.id)}>{d.department_name}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  <TextField
+                    label="Designation"
+                    placeholder="Enter Designation"
+                    value={formData.designation}
+                    onChange={(e) => handleInputChange('designation', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Select Shift</InputLabel>
+                    <MuiSelect
+                      value={formData.shift}
+                      onChange={(e) => handleInputChange('shift', e.target.value as string)}
+                      label="Select Shift"
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">Select Shift</MenuItem>
+                      {shifts?.map((s: any) => (
+                        <MenuItem key={s.id} value={String(s.id)}>{s.timings}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Reports To</InputLabel>
+                    <MuiSelect
+                      value={formData.reportsTo}
+                      onChange={(e) => handleInputChange('reportsTo', e.target.value as string)}
+                      label="Reports To"
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">Select Reports To</MenuItem>
+                      {users?.map((d: any) => (
+                        <MenuItem key={d.id} value={String(d.id)}>{d.full_name}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Work Type</InputLabel>
+                    <MuiSelect
+                      value={formData.workType}
+                      onChange={(e) => handleInputChange('workType', e.target.value as string)}
+                      label="Work Type"
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">Select Work Type</MenuItem>
+                      {[
+                        { label: 'Work from Office', value: 'Work from Office' },
+                        { label: 'Work from Home/Office', value: 'Work from Home/Office' },
+                      ]?.map((d) => (
+                        <MenuItem key={d.value} value={String(d.value)}>{d.label}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+
+                <div className="mb-8 mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {uploadSections.map((section) => (
+                      <div
+                        key={section.id}
+                        className="group relative border-2 border-gray-200 rounded-[10px] p-6 hover:shadow-md transition-all duration-200 bg-white"
+                      >
+                        <label className="block text-base font-semibold text-gray-800 mb-1">
+                          {section.label}
+                        </label>
+                        <p className="text-xs text-gray-500 mb-4">{section.description}</p>
+
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {formData[section.id] ? (
+                              <>
+                                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                <span className="text-sm text-gray-700 truncate font-medium">
+                                  {formData[section.id].name}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                                <span className="text-sm text-gray-500 italic">No file chosen</span>
+                              </>
+                            )}
+                          </div>
+
+                          <label className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md cursor-pointer transition-colors duration-200 flex-shrink-0">
+                            <Upload className="w-4 h-4" />
+                            Choose
+                            <input
+                              type="file"
+                              onChange={(e) => handleFileChange(e, section.id)}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+
+                        {formData[section.id] && (
+                          <div className="mt-3 pt-3 border-t border-gray-100">
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>Size: {(formData[section.id].size / 1024).toFixed(1)} KB</span>
+                              <button
+                                onClick={() => setFormData((prev) => ({ ...prev, [section.id]: null }))}
+                                className="text-red-600 hover:text-red-700 font-medium"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ))}
-                  </MuiSelect>
-                </FormControl>
-                <TextField
-                  label="Designation"
-                  placeholder="Enter Designation"
-                  value={formData.designation}
-                  onChange={(e) => handleInputChange('designation', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  InputProps={{ sx: fieldStyles }}
-                />
-              </div>
+                  </div>
+                </div>
+              </>
             )}
           </Box>
         </CardContent>

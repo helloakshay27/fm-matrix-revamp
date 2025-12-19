@@ -1,6 +1,6 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
-import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { changeProjectStatus, createProject, fetchProjects, filterProjects } from "@/store/slices/projectManagementSlice";
 import { FormControl, MenuItem, Select, TextField } from "@mui/material";
@@ -24,6 +24,7 @@ import AddProjectModal from "@/components/AddProjectModal";
 import ProjectCreateModal from "@/components/ProjectCreateModal";
 import ProjectManagementKanban from "@/components/ProjectManagementKanban";
 import { ProjectFilterModal } from "@/components/ProjectFilterModal";
+import { useLayout } from "@/contexts/LayoutContext";
 
 const columns: ColumnConfig[] = [
   {
@@ -174,10 +175,19 @@ const statusOptions = [
 
 
 export const ProjectsDashboard = () => {
+  const { setCurrentSection } = useLayout();
+
+  useEffect(() => {
+    setCurrentSection("Project Task");
+  }, [setCurrentSection]);
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+
+  const { teams } = useAppSelector(state => state.projectTeams)
+  const { projectTags: tags } = useAppSelector(state => state.projectTags)
 
   const [selectedFilterOption, setSelectedFilterOption] = useState("all")
   const [projects, setProjects] = useState([]);
@@ -189,8 +199,8 @@ export const ProjectsDashboard = () => {
   const [selectedView, setSelectedView] = useState("List");
   const [projectTypes, setProjectTypes] = useState([]);
   const [owners, setOwners] = useState([])
-  const [teams, setTeams] = useState([])
-  const [tags, setTags] = useState([])
+  // const [teams, setTeams] = useState([])
+  // const [tags, setTags] = useState([])
   const [loading, setLoading] = useState(false)
 
   const fetchData = async () => {
@@ -200,6 +210,7 @@ export const ProjectsDashboard = () => {
       if (selectedFilterOption !== "all") {
         filters["q[status_eq]"] = selectedFilterOption;
       }
+      filters["q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]"] = JSON.parse(localStorage.getItem('user')).id;
       const response = await dispatch(
         filterProjects({ token, baseUrl, filters })
       ).unwrap();
@@ -228,8 +239,7 @@ export const ProjectsDashboard = () => {
 
   const getTeams = async () => {
     try {
-      const response = await dispatch(fetchProjectTeams()).unwrap();
-      setTeams(response);
+      await dispatch(fetchProjectTeams()).unwrap();
     } catch (error) {
       console.log(error)
       toast.error(error)
@@ -248,8 +258,7 @@ export const ProjectsDashboard = () => {
 
   const getTags = async () => {
     try {
-      const response = await dispatch(fetchProjectsTags()).unwrap();
-      setTags(response);
+      await dispatch(fetchProjectsTags()).unwrap();
     } catch (error) {
       console.log(error)
       toast.error(error)
