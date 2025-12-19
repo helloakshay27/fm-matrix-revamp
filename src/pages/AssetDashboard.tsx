@@ -380,7 +380,7 @@ export const AssetDashboard = () => {
   const transformedSearchedAssets: TableAsset[] = searchedAssets.map((asset, index) => ({
     id: asset.id?.toString() || '',
     name: asset.name || '',
-    serialNumber: asset.serial_number || '-',
+    serialNumber: asset.serialNumber || '-',
     assetNumber: asset.assetNumber || '',
     status: asset.status as 'in_use' | 'in_storage' | 'breakdown' | 'disposed',
     siteName: asset.siteName || '',
