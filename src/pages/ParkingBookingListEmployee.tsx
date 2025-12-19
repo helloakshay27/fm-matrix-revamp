@@ -15,7 +15,8 @@ import {
   Bike,
   CheckCircle,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  Plus
 } from 'lucide-react';
 import { getFullUrl, getAuthenticatedFetchOptions, API_CONFIG } from '@/config/apiConfig';
 import { useLayout } from '@/contexts/LayoutContext';
@@ -851,9 +852,15 @@ const ParkingBookingListEmployee = () => {
           {/* Controls Section */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             {/* Left Side Controls */}
-            <div className="flex gap-2">
-              {/* Placeholder for future actions */}
-            </div>
+            {/* <div className="flex gap-2">
+              <Button
+                onClick={() => navigate('/parking-booking-employee/add')}
+                className="h-10 bg-[#C72030] hover:bg-[#A01020] text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Booking
+              </Button>
+            </div> */}
 
             {/* Right Side Controls */}
             <div className="flex items-center gap-2">

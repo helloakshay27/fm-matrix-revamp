@@ -455,32 +455,44 @@ const ParkingBookingListSiteWise = () => {
     'floor_wise_occupancy'
   ]);
 
-  // Analytics date range state - default to last year to today
+  // Analytics date range state - default to current year for Range A and last year for Range B
   const getDefaultAnalyticsDateRange = () => {
     const today = new Date();
-    const lastYear = new Date();
-    lastYear.setFullYear(today.getFullYear() - 1);
+    const currentYear = today.getFullYear();
+    
+    // Range A: Current year (2025-01-01 to 2025-12-31)
+    const rangeAStart = new Date(currentYear, 0, 1); // Jan 1, current year
+    const rangeAEnd = new Date(currentYear, 11, 31); // Dec 31, current year
+    
+    // Range B: Last year (2024-01-01 to 2024-12-31)
+    const rangeBStart = new Date(currentYear - 1, 0, 1); // Jan 1, last year
+    const rangeBEnd = new Date(currentYear - 1, 11, 31); // Dec 31, last year
 
     const formatDate = (date: Date) => {
       const day = date.getDate().toString().padStart(2, '0');
       const month = (date.getMonth() + 1).toString().padStart(2, '0');
       const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
+      return `${year}-${month}-${day}`;
     };
 
     return {
-      startDate: formatDate(lastYear),
-      endDate: formatDate(today)
+      rangeA: {
+        startDate: formatDate(rangeAStart),
+        endDate: formatDate(rangeAEnd),
+        label: 'This Year'
+      },
+      rangeB: {
+        startDate: formatDate(rangeBStart),
+        endDate: formatDate(rangeBEnd),
+        label: 'Last Year'
+      }
     };
   };
 
-  const [analyticsDateRange, setAnalyticsDateRange] = useState<{ startDate: string; endDate: string }>(getDefaultAnalyticsDateRange());
-
-  // Convert DD/MM/YYYY to YYYY-MM-DD for API
-  const convertToApiDate = (ddmmyyyy: string): string => {
-    const [day, month, year] = ddmmyyyy.split('/');
-    return `${year}-${month}-${day}`;
-  };
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<{
+    rangeA: { startDate: string; endDate: string; label: string };
+    rangeB: { startDate: string; endDate: string; label: string };
+  }>(getDefaultAnalyticsDateRange());
 
   // Debounce search term to avoid excessive API calls
   useEffect(() => {
@@ -1675,7 +1687,10 @@ const ParkingBookingListSiteWise = () => {
   };
 
   // Handle analytics filter apply
-  const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
+  const handleAnalyticsFilterApply = (filters: {
+    rangeA: { startDate: string; endDate: string; label: string };
+    rangeB: { startDate: string; endDate: string; label: string };
+  }) => {
     setAnalyticsDateRange(filters);
     // You can add additional logic here to fetch analytics data with the new date range
     console.log('Analytics date range updated:', filters);
@@ -2645,8 +2660,8 @@ const ParkingBookingListSiteWise = () => {
                 title="Peak Hour Trends"
                 data={{}}
                 type="peakHourTrends"
-                startDate={convertToApiDate(analyticsDateRange.startDate)}
-                endDate={convertToApiDate(analyticsDateRange.endDate)}
+                startDate={analyticsDateRange.rangeA.startDate}
+                endDate={analyticsDateRange.rangeA.endDate}
               />
             )}
             {selectedAnalytics.includes('booking_patterns') && (
@@ -2690,8 +2705,8 @@ const ParkingBookingListSiteWise = () => {
                   { floor: '1', twoWheeler: 6, fourWheeler: 10, percentage: 14.3 },
                   { floor: '2', twoWheeler: 4, fourWheeler: 9, percentage: 7.7 },
                 ]}
-                startDate={convertToApiDate(analyticsDateRange.startDate)}
-                endDate={convertToApiDate(analyticsDateRange.endDate)}
+                startDate={analyticsDateRange.rangeA.startDate}
+                endDate={analyticsDateRange.rangeA.endDate}
                 onDownload={async () => {
                   console.log('Downloading floor-wise occupancy data...');
                   // Implement download logic here
@@ -2737,53 +2752,147 @@ const ParkingBookingListSiteWise = () => {
 
       {/* Analytics Filter Dialog */}
       <Dialog open={isAnalyticsFilterOpen} onOpenChange={setIsAnalyticsFilterOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Filter Parking Analytics</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Start Date</label>
-              <Input
-                type="date"
-                value={analyticsDateRange.startDate ? (() => {
-                  const [day, month, year] = analyticsDateRange.startDate.split('/');
-                  return `${year}-${month}-${day}`;
-                })() : ''}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    const [year, month, day] = e.target.value.split('-');
-                    setAnalyticsDateRange(prev => ({ ...prev, startDate: `${day}/${month}/${year}` }));
-                  }
-                }}
-                className="h-10"
-              />
+          <div className="grid gap-6 py-4">
+            {/* Range A (This Year) */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-gray-700">Range A</label>
+                <Input
+                  type="text"
+                  value={analyticsDateRange.rangeA.label}
+                  onChange={(e) => {
+                    setAnalyticsDateRange(prev => ({
+                      ...prev,
+                      rangeA: { ...prev.rangeA, label: e.target.value }
+                    }));
+                  }}
+                  className="h-8 w-32 text-xs"
+                  placeholder="Label"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-600">Start Date</label>
+                  <Input
+                    type="date"
+                    value={analyticsDateRange.rangeA.startDate}
+                    onChange={(e) => {
+                      setAnalyticsDateRange(prev => ({
+                        ...prev,
+                        rangeA: { ...prev.rangeA, startDate: e.target.value }
+                      }));
+                    }}
+                    className="h-10"
+                  />
+                  <p className="text-xs text-gray-500">
+                    {analyticsDateRange.rangeA.startDate && new Date(analyticsDateRange.rangeA.startDate).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-600">End Date</label>
+                  <Input
+                    type="date"
+                    value={analyticsDateRange.rangeA.endDate}
+                    onChange={(e) => {
+                      setAnalyticsDateRange(prev => ({
+                        ...prev,
+                        rangeA: { ...prev.rangeA, endDate: e.target.value }
+                      }));
+                    }}
+                    className="h-10"
+                  />
+                  <p className="text-xs text-gray-500">
+                    {analyticsDateRange.rangeA.endDate && new Date(analyticsDateRange.rangeA.endDate).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">End Date</label>
-              <Input
-                type="date"
-                value={analyticsDateRange.endDate ? (() => {
-                  const [day, month, year] = analyticsDateRange.endDate.split('/');
-                  return `${year}-${month}-${day}`;
-                })() : ''}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    const [year, month, day] = e.target.value.split('-');
-                    setAnalyticsDateRange(prev => ({ ...prev, endDate: `${day}/${month}/${year}` }));
-                  }
-                }}
-                className="h-10"
-              />
+
+            {/* Divider */}
+            <div className="border-t border-gray-200"></div>
+
+            {/* Range B (Last Year) */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-gray-700">Range B</label>
+                <Input
+                  type="text"
+                  value={analyticsDateRange.rangeB.label}
+                  onChange={(e) => {
+                    setAnalyticsDateRange(prev => ({
+                      ...prev,
+                      rangeB: { ...prev.rangeB, label: e.target.value }
+                    }));
+                  }}
+                  className="h-8 w-32 text-xs"
+                  placeholder="Label"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-600">Start Date</label>
+                  <Input
+                    type="date"
+                    value={analyticsDateRange.rangeB.startDate}
+                    onChange={(e) => {
+                      setAnalyticsDateRange(prev => ({
+                        ...prev,
+                        rangeB: { ...prev.rangeB, startDate: e.target.value }
+                      }));
+                    }}
+                    className="h-10"
+                  />
+                  <p className="text-xs text-gray-500">
+                    {analyticsDateRange.rangeB.startDate && new Date(analyticsDateRange.rangeB.startDate).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-600">End Date</label>
+                  <Input
+                    type="date"
+                    value={analyticsDateRange.rangeB.endDate}
+                    onChange={(e) => {
+                      setAnalyticsDateRange(prev => ({
+                        ...prev,
+                        rangeB: { ...prev.rangeB, endDate: e.target.value }
+                      }));
+                    }}
+                    className="h-10"
+                  />
+                  <p className="text-xs text-gray-500">
+                    {analyticsDateRange.rangeB.endDate && new Date(analyticsDateRange.rangeB.endDate).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 pt-6">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
             <Button 
               onClick={() => {
                 handleAnalyticsFilterApply(analyticsDateRange);
                 setIsAnalyticsFilterOpen(false);
               }}
-              className="flex-1 h-11"
+              className="flex-1 h-11 bg-[#C72030] hover:bg-[#A01020]"
             >
               Apply Filters
             </Button>
