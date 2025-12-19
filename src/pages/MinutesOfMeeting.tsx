@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchMoMs } from "@/store/slices/momSlice";
+import { useLayout } from "@/contexts/LayoutContext";
 
 // Function to generate smooth, light random colors for participant badges
 const generateLightColor = (seed: number): string => {
@@ -95,6 +96,12 @@ const columns: ColumnConfig[] = [
 ]
 
 const MinutesOfMeeting = () => {
+    const { setCurrentSection } = useLayout();
+
+    useEffect(() => {
+        setCurrentSection("Project Task");
+    }, [setCurrentSection]);
+
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const { data: momsData, loading } = useSelector((state: RootState) => state.fetchMoMs);
@@ -190,7 +197,7 @@ const MinutesOfMeeting = () => {
                 onClick={openAddDialog}
             >
                 <Plus className="w-4 h-4 mr-2" />
-                Add 
+                Add
             </Button>
         </>
     );

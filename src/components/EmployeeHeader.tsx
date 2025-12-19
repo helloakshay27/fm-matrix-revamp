@@ -442,11 +442,10 @@ export const EmployeeHeader: React.FC = () => {
                         onDrop={(e) => handleModuleDrop(e, module.name)}
                         onDragOver={handleModuleDragOver}
                         onClick={() => handleModuleClick(module.name)}
-                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${
-                          isActive
+                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${isActive
                             ? "bg-white text-[#C72030] shadow-sm"
                             : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                        }`}
+                          }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
                         <span className="hidden lg:inline text-[10px] sm:text-xs">
@@ -507,11 +506,10 @@ export const EmployeeHeader: React.FC = () => {
                                 handleModuleDragStart(e, module.name)
                               }
                               onClick={() => handleModuleClick(module.name)}
-                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${
-                                isActive
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${isActive
                                   ? "bg-[#DBC2A9] text-[#1a1a1a]"
                                   : "hover:bg-[#f6f4ee] text-gray-700"
-                              }`}
+                                }`}
                             >
                               <Icon className="w-5 h-5 flex-shrink-0" />
                               <span className="text-sm font-medium">
@@ -681,13 +679,13 @@ export const EmployeeHeader: React.FC = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem
+                {/* <DropdownMenuItem
                   onClick={handleSettingsClick}
                   className="mx-2 my-1 rounded-md"
                 >
                   <Settings className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">Settings</span>
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
               </div>
 
               <DropdownMenuSeparator className="my-1" />
