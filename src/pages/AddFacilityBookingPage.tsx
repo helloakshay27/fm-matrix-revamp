@@ -1127,30 +1127,52 @@ export const AddFacilityBookingPage = () => {
                 const adultMemberCharge = facilityDetails.facility_charge?.adult_member_charge || 0;
                 const adultGuestCharge = facilityDetails.facility_charge?.adult_guest_charge || 0;
                 const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge || 0;
-                
+
                 // Use booking rule rate for members if available, otherwise use facility charge
                 const memberRate = bookingRuleData?.rate || adultMemberCharge;
-                
-                // Determine user charge based on user type
-                // Staff and Guest users get guest charge, only occupants get member charge
-                const userCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-                const userChargeLabel = userType === 'occupant' ? 'Member Charge' : 'Guest Charge';
-                
+
                 // Number of slots selected
                 const slotsCount = selectedSlots.length;
                 const hasSlots = slotsCount > 0;
-                
-                // Multiply member/guest charge by number of slots only if slots are selected
-                const totalUserCharge = hasSlots ? (userCharge * slotsCount) : userCharge;
-                
+
+                // Restore userCharge for use in JSX
+                const userCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
+                // Prepare slot premium details for display
+                let slotPremiumDetails = [];
+                let totalUserCharge = 0;
+                let totalGuestCharge = 0;
+                if (hasSlots) {
+                  selectedSlots.forEach((slotId) => {
+                    const slot = slots.find((s) => s.id === slotId);
+                    let memberPremium = 0;
+                    let guestPremium = 0;
+                    let slotPremiumPercent = 0;
+                    if (slot && slot.is_premium && slot.premium_percentage) {
+                        slotPremiumPercent = slot.premium_percentage;
+                        memberPremium = (memberRate * slot.premium_percentage) / 100;
+                        guestPremium = (adultGuestCharge * slot.premium_percentage) / 100;
+                    }
+                    slotPremiumDetails.push({
+                      slotLabel: slot ? slot.ampm : '',
+                      slotPremiumPercent,
+                      memberPremium,
+                      guestPremium
+                    });
+                    // Add for each slot
+                    totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
+                    totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
+                  });
+                } else {
+                  // No slots selected, use base charge
+                  totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
+                  totalGuestCharge = numberOfGuests * adultGuestCharge;
+                }
+
                 const slotTotal = selectedSlots.length * perSlotCharge;
-                const guestChargePerSlot = numberOfGuests * adultGuestCharge;
-                const totalGuestCharge = hasSlots ? (guestChargePerSlot * slotsCount) : guestChargePerSlot;
-                
                 const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
                 const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
                 const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
-                
+
                 const gstPercentage = facilityDetails.gst || 0;
                 const sgstPercentage = facilityDetails.sgst || 0;
                 const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
@@ -1160,23 +1182,54 @@ export const AddFacilityBookingPage = () => {
 
                 return (
                   <>
-                {/* Slots Count - Only show when slots are selected */}
-                {hasSlots && (
-                  <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-blue-50">
-                    <span className="text-gray-700 font-medium">Number of Slots Selected</span>
-                    <span className="font-semibold text-blue-600">{slotsCount}</span>
-                  </div>
-                )}
+                    {/* Slots Count - Only show when slots are selected */}
+                    {hasSlots && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200 bg-blue-50">
+                        <span className="text-gray-700 font-medium">Number of Slots Selected</span>
+                        <span className="font-semibold text-blue-600">{slotsCount}</span>
+                      </div>
+                    )}
 
                     {/* Member Charge - Only for occupant users */}
                     {userType === 'occupant' && userCharge > 0 && (
                       <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">Member Charge</span>
-                          {hasSlots ? (
-                            <span className="text-sm text-gray-500">(1 x ₹{userCharge.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''})</span>
-                          ) : (
-                            <span className="text-sm text-gray-500">(1 x ₹{userCharge.toFixed(2)})</span>
+                        <div className="flex flex-col gap-1 w-full">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">Member Charge</span>
+                            {hasSlots ? (
+                              <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''})</span>
+                            ) : (
+                              <span className="text-sm text-gray-500">(1 x ₹{memberRate.toFixed(2)})</span>
+                            )}
+                          </div>
+                          {/* Show member premium calculation per slot as a table */}
+                          {hasSlots && (
+                            <div className="flex justify-start">
+                              <table className="text-xs mt-1 mb-1 border border-gray-200" style={{ maxWidth: 450, minWidth: 320 }}>
+                                <thead>
+                                  <tr className="bg-gray-50">
+                                    <th className="border px-2 py-1 text-left">Slot</th>
+                                    <th className="border px-2 py-1 text-left">Premium %</th>
+                                    <th className="border px-2 py-1 text-left">Premium Amount</th>
+                                    <th className="border px-2 py-1 text-left">Total Charge</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {slotPremiumDetails.map((slot, idx) => {
+                                    const base = memberRate;
+                                    const total = base + slot.memberPremium;
+                                    return (
+                                      <tr key={idx}>
+                                        <td className="border px-2 py-1">{slot.slotLabel}</td>
+                                        <td className="border px-2 py-1">+{slot.slotPremiumPercent || 0}%</td>
+                                        <td className="border px-2 py-1 text-purple-700">₹{slot.memberPremium.toFixed(2)}</td>
+                                        <td className="border px-2 py-1 font-semibold">₹{total.toFixed(2)}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
                           )}
                         </div>
                         <span className="font-medium">₹{totalUserCharge.toFixed(2)}</span>
@@ -1185,37 +1238,68 @@ export const AddFacilityBookingPage = () => {
 
                     {/* Guest Charge */}
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-700">Guest Charge</span>
-                        <div className="flex items-center gap-1">
-                          <TextField
-                            type="number"
-                            size="small"
-                            value={numberOfGuests}
-                            onChange={(e) => setNumberOfGuests(Math.max(1, parseInt(e.target.value) || 1))}
-                            variant="outlined"
-                            placeholder="No. of guests"
-                            sx={{
-                              width: '100px',
-                              '& .MuiOutlinedInput-root': {
-                                height: '36px',
-                                '& input': {
-                                  textAlign: 'right',
-                                  padding: '8px 12px'
+                      <div className="flex flex-col gap-1 w-full">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-700">Guest Charge</span>
+                          <div className="flex items-center gap-1">
+                            <TextField
+                              type="number"
+                              size="small"
+                              value={numberOfGuests}
+                              onChange={(e) => setNumberOfGuests(Math.max(0, parseInt(e.target.value) || 0))}
+                              variant="outlined"
+                              placeholder="No. of guests"
+                              sx={{
+                                width: '100px',
+                                '& .MuiOutlinedInput-root': {
+                                  height: '36px',
+                                  '& input': {
+                                    textAlign: 'right',
+                                    padding: '8px 12px'
+                                  }
                                 }
-                              }
-                            }}
-                            inputProps={{
-                              min: 1,
-                              step: 1
-                            }}
-                          />
-                          {hasSlots ? (
-                            <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''}</span>
-                          ) : (
-                            <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)}</span>
-                          )}
+                              }}
+                              inputProps={{
+                                min: 0,
+                                step: 1
+                              }}
+                            />
+                            {hasSlots ? (
+                              <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)} x {slotsCount} slot{slotsCount > 1 ? 's' : ''}</span>
+                            ) : (
+                              <span className="text-sm text-gray-500">x ₹{adultGuestCharge.toFixed(2)}</span>
+                            )}
+                          </div>
                         </div>
+                        {/* Show guest premium calculation per slot as a table */}
+                        {hasSlots && (
+                          <div className="flex justify-start">
+                            <table className="text-xs mt-1 mb-1 border border-gray-200" style={{ maxWidth: 450, minWidth: 320 }}>
+                              <thead>
+                                <tr className="bg-gray-50">
+                                  <th className="border px-2 py-1 text-left">Slot</th>
+                                  <th className="border px-2 py-1 text-left">Premium %</th>
+                                  <th className="border px-2 py-1 text-left">Premium Amount</th>
+                                  <th className="border px-2 py-1 text-left">Total Charge</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {slotPremiumDetails.map((slot, idx) => {
+                                  const base = adultGuestCharge;
+                                  const total = base + slot.guestPremium;
+                                  return (
+                                    <tr key={idx}>
+                                      <td className="border px-2 py-1">{slot.slotLabel}</td>
+                                      <td className="border px-2 py-1">+{slot.slotPremiumPercent || 0}%</td>
+                                      <td className="border px-2 py-1 text-blue-700">₹{slot.guestPremium.toFixed(2)}</td>
+                                      <td className="border px-2 py-1 font-semibold">₹{total.toFixed(2)}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                       </div>
                       <span className="font-medium">₹{totalGuestCharge.toFixed(2)}</span>
                     </div>
