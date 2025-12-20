@@ -114,12 +114,11 @@ export const EditMembershipPlanPage = () => {
     amenities: [] as any[],
     amenityDetails: {} as Record<string, {
       frequency: string;
-      limit: string;
-      allowExtraBooking: boolean;
-      extraBookingPrice: string;
+      slotLimit: string;
+      canBookAfterSlotLimit: boolean;
       price: string;
       allowMultipleSlots: boolean;
-      multipleSlotPrice: string;
+      multipleSlots: string;
     }>,
     active: true,
   });
@@ -175,12 +174,11 @@ export const EditMembershipPlanPage = () => {
       data.plan_amenities.forEach((amenity) => {
         amenityDetailsMap[amenity.facility_setup_id] = {
           frequency: amenity.frequency || "",
-          limit: amenity.slot_limit?.toString() || "",
-          allowExtraBooking: amenity.can_book_after_slot_limit || false,
-          extraBookingPrice: amenity.price?.toString() || "",
+          slotLimit: amenity.slot_limit?.toString() || "",
+          canBookAfterSlotLimit: amenity.can_book_after_slot_limit || false,
           price: amenity.price?.toString() || "",
           allowMultipleSlots: amenity.allow_multiple_slots || false,
-          multipleSlotPrice: amenity.multiple_slots?.toString() || "",
+          multipleSlots: amenity.multiple_slots?.toString() || "",
         };
       });
 
@@ -249,12 +247,11 @@ export const EditMembershipPlanPage = () => {
                 facility_setup_id: amenity.facility_setup_id,
                 access: "free",
                 frequency: details.frequency,
-                slot_limit: details.limit,
-                allow_extra_booking: details.allowExtraBooking,
-                extra_booking_price: details.extraBookingPrice,
-                price: details.price,
+                slot_limit: details.slotLimit ? parseInt(details.slotLimit) : 0,
+                can_book_after_slot_limit: details.canBookAfterSlotLimit,
+                price: details.price ? parseFloat(details.price) : 0,
                 allow_multiple_slots: details.allowMultipleSlots,
-                multiple_slot_price: details.multipleSlotPrice,
+                multiple_slots: details.multipleSlots ? parseInt(details.multipleSlots) : 0,
                 _destroy: false
               };
             }),
@@ -450,22 +447,21 @@ export const EditMembershipPlanPage = () => {
               columns={[
                 { key: "name", label: "Amenity Name", sortable: true },
                 { key: "frequency", label: "Frequency", sortable: false },
-                { key: "limit", label: "Slots Limit", sortable: false },
-                { key: "allowExtraBooking", label: "Allow Extra Booking", sortable: false },
-                { key: "extraBookingPrice", label: "Extra Booking Price", sortable: false },
-                { key: "allowMultipleSlots", label: "Multiple Slots Allowed", sortable: false },
-                { key: "multipleSlotPrice", label: "Multiple Slots", sortable: false },
+                { key: "slotLimit", label: "Slot Limit", sortable: false },
+                { key: "canBookAfterSlotLimit", label: "Can Book After Limit", sortable: false },
+                { key: "price", label: "Price", sortable: false },
+                { key: "allowMultipleSlots", label: "Allow Multiple Slots", sortable: false },
+                { key: "multipleSlots", label: "Multiple Slots Count", sortable: false },
               ] as ColumnConfig[]}
               renderCell={(item, columnKey) => {
                 const amenityId = item.value;
                 const details = formData.amenityDetails[amenityId] || {
                   frequency: "",
-                  limit: "",
-                  allowExtraBooking: false,
-                  extraBookingPrice: "",
+                  slotLimit: "",
+                  canBookAfterSlotLimit: false,
                   price: "",
                   allowMultipleSlots: false,
-                  multipleSlotPrice: "",
+                  multipleSlots: "",
                 };
 
                 if (columnKey === "name") return item.name;
@@ -515,12 +511,12 @@ export const EditMembershipPlanPage = () => {
                   );
                 }
 
-                if (columnKey === "limit") {
+                if (columnKey === "slotLimit") {
                   return (
                     <input
                       type="number"
                       min="0"
-                      value={details.limit}
+                      value={details.slotLimit}
                       onChange={(e) => {
                         setFormData((prev) => ({
                           ...prev,
@@ -528,7 +524,7 @@ export const EditMembershipPlanPage = () => {
                             ...prev.amenityDetails,
                             [amenityId]: {
                               ...details,
-                              limit: e.target.value,
+                              slotLimit: e.target.value,
                             },
                           },
                         }));
@@ -564,11 +560,11 @@ export const EditMembershipPlanPage = () => {
                   );
                 }
 
-                if (columnKey === "allowExtraBooking") {
+                if (columnKey === "canBookAfterSlotLimit") {
                   return (
                     <input
                       type="checkbox"
-                      checked={details.allowExtraBooking}
+                      checked={details.canBookAfterSlotLimit}
                       onChange={(e) => {
                         setFormData((prev) => ({
                           ...prev,
@@ -576,40 +572,12 @@ export const EditMembershipPlanPage = () => {
                             ...prev.amenityDetails,
                             [amenityId]: {
                               ...details,
-                              allowExtraBooking: e.target.checked,
-                              extraBookingPrice: e.target.checked ? details.extraBookingPrice : "",
+                              canBookAfterSlotLimit: e.target.checked,
                             },
                           },
                         }));
                       }}
                       className="cursor-pointer"
-                    />
-                  );
-                }
-
-                if (columnKey === "extraBookingPrice") {
-                  return (
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={details.extraBookingPrice}
-                      onChange={(e) => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          amenityDetails: {
-                            ...prev.amenityDetails,
-                            [amenityId]: {
-                              ...details,
-                              extraBookingPrice: e.target.value,
-                            },
-                          },
-                        }));
-                      }}
-                      disabled={!details.allowExtraBooking}
-                      className={`px-2 py-1 border border-gray-300 rounded text-sm w-24 ${!details.allowExtraBooking ? "bg-gray-100 cursor-not-allowed" : ""
-                        }`}
-                      placeholder="0.00"
                     />
                   );
                 }
@@ -627,7 +595,7 @@ export const EditMembershipPlanPage = () => {
                             [amenityId]: {
                               ...details,
                               allowMultipleSlots: e.target.checked,
-                              multipleSlotPrice: e.target.checked ? details.multipleSlotPrice : "",
+                              multipleSlots: e.target.checked ? details.multipleSlots : "",
                             },
                           },
                         }));
@@ -637,13 +605,12 @@ export const EditMembershipPlanPage = () => {
                   );
                 }
 
-                if (columnKey === "multipleSlotPrice") {
+                if (columnKey === "multipleSlots") {
                   return (
                     <input
                       type="number"
                       min="0"
-                      step="0.01"
-                      value={details.multipleSlotPrice}
+                      value={details.multipleSlots}
                       onChange={(e) => {
                         setFormData((prev) => ({
                           ...prev,
@@ -651,15 +618,14 @@ export const EditMembershipPlanPage = () => {
                             ...prev.amenityDetails,
                             [amenityId]: {
                               ...details,
-                              multipleSlotPrice: e.target.value,
+                              multipleSlots: e.target.value,
                             },
                           },
                         }));
                       }}
                       disabled={!details.allowMultipleSlots}
-                      className={`px-2 py-1 border border-gray-300 rounded text-sm w-24 ${!details.allowMultipleSlots ? "bg-gray-100 cursor-not-allowed" : ""
-                        }`}
-                      placeholder="0.00"
+                      className={`px-2 py-1 border border-gray-300 rounded text-sm w-24 ${!details.allowMultipleSlots ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                      placeholder="0"
                     />
                   );
                 }
