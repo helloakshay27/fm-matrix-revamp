@@ -222,7 +222,7 @@ function formatToDDMMYYYY_AMPM(dateString: string): string {
 const Comments = ({ comments, getOpportunity }: { comments: CommentData[]; getOpportunity: () => void }) => {
     const token = localStorage.getItem('token');
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const { opportunityId } = useParams();
+    const { id: opportunityId } = useParams();
     const [comment, setComment] = useState('');
     const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
     const [editedCommentText, setEditedCommentText] = useState('');
