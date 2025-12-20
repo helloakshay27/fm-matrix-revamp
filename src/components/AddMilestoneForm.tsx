@@ -23,7 +23,7 @@ const fieldStyles = {
     },
 };
 
-const AddMilestoneForm = ({ owners, handleClose }) => {
+const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-auto" }) => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -92,7 +92,7 @@ const AddMilestoneForm = ({ owners, handleClose }) => {
 
     return (
         <form className="h-full" onSubmit={handleSubmit}>
-            <div className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3">
+            <div className={`h-[calc(100%-4rem)] overflow-y-auto pr-3 ${className}`}>
                 <div className="mt-4 space-y-2">
                     <TextField
                         label="Milestone Title"

@@ -675,7 +675,7 @@ const TaskForm = ({
     );
 };
 
-const ProjectTaskCreateModal = ({ isEdit, onCloseModal }) => {
+const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%] mx-auto" }) => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
     const { id, mid, tid } = useParams();
@@ -722,7 +722,7 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal }) => {
 
     const getTags = async () => {
         try {
-            const response = await dispatch(fetchProjectsTags({ baseUrl, token })).unwrap();
+            const response = await dispatch(fetchProjectsTags()).unwrap();
             setTags(response);
         } catch (error) {
             console.log(error)
@@ -973,7 +973,7 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal }) => {
         >
             <div
                 id="addTask"
-                className="max-w-[95%] mx-auto pr-3"
+                className={`pr-3 ${className}`}
             >
                 {savedTasks.map((task) => (
                     <TaskForm
