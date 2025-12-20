@@ -86,15 +86,41 @@ export const AddFacilityBookingPage = () => {
     premium_percentage: number | null;
   }>>([]);
   const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
+  const [bookingRuleData, setBookingRuleData] = useState<{
+    can_book: boolean;
+    rate: number;
+  } | null>(null);
+
+  // Helper: Check if slot selection is allowed
+  const canSelectSlots = bookingRuleData ? bookingRuleData.can_book !== false : true;
+  // Helper: Max slots user can select
+  const maxSelectableSlots = bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1;
+  // Helper: Max concurrent slots
+  const maxConcurrentSlots = bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1;
+
+  // Helper: Check if a slot can be selected (enforce concurrent rule)
+  const isSlotSelectable = (slotId: number) => {
+    if (!canSelectSlots) return false;
+    if (selectedSlots.includes(slotId)) return true; // allow deselect
+    if (selectedSlots.length >= maxSelectableSlots) return false;
+    // Check concurrent rule: sort selected + candidate, check max consecutive
+    const all = [...selectedSlots, slotId].sort((a, b) => a - b);
+    let maxConsec = 1, curr = 1;
+    for (let i = 1; i < all.length; i++) {
+      if (all[i] === all[i - 1] + 1) {
+        curr++;
+        maxConsec = Math.max(maxConsec, curr);
+      } else {
+        curr = 1;
+      }
+    }
+    return maxConsec <= maxConcurrentSlots;
+  };
   const [openCancelPolicy, setOpenCancelPolicy] = useState(false);
   const [openTerms, setOpenTerms] = useState(false);
   const [complementaryReason, setComplementaryReason] = useState('');
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
   const [numberOfGuests, setNumberOfGuests] = useState<number>(1);
-  const [bookingRuleData, setBookingRuleData] = useState<{
-    can_book: boolean;
-    rate: number;
-  } | null>(null);
   const [peopleTable, setPeopleTable] = useState<Array<{
     srNo: number;
     role: string;
@@ -279,13 +305,10 @@ export const AddFacilityBookingPage = () => {
     console.log('========================');
      const token= localStorage.getItem('token') 
      console.log('Token for Amenity API:', token);
-    if (userType === 'occupant' && selectedUser ) {
+    if (selectedUser && selectedFacility) {
       const fetchAmenityBooking = async () => {
         try {
           const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
-          
-         
-
           // Fetch booking rule for user
           console.log('=== Calling Booking Rule API ===');
           const baseUrl = localStorage.getItem('baseUrl');
@@ -297,13 +320,11 @@ export const AddFacilityBookingPage = () => {
             }
           });
           console.log('Booking Rule for User Response:', bookingRuleResponse.data);
-          
           // Store booking rule data in state
           if (bookingRuleResponse.data) {
             setBookingRuleData(bookingRuleResponse.data);
             console.log('Booking rule rate:', bookingRuleResponse.data.rate);
           }
-          
           console.log('================================');
         } catch (amenityError: any) {
           console.error('Error fetching amenity booking by club plan:', amenityError);
@@ -311,7 +332,6 @@ export const AddFacilityBookingPage = () => {
             console.error('Error response status:', amenityError.response.status);
             console.error('Error response data:', amenityError.response.data);
             console.error('Error response headers:', amenityError.response.headers);
-            
             // If it's a 500 error, the API might have specific validation requirements
             if (amenityError.response.status === 500) {
               console.warn('Server error (500): The API encountered an internal error. Check if user_id and facility_setup_id are valid.');
@@ -319,7 +339,6 @@ export const AddFacilityBookingPage = () => {
           }
         }
       };
-      
       fetchAmenityBooking();
     } else {
       console.log('❌ Amenity API not called - condition not met');
@@ -361,6 +380,8 @@ export const AddFacilityBookingPage = () => {
       if (prev.includes(slotId)) {
         return prev.filter(id => id !== slotId);
       } else {
+        // Enforce selection rules
+        if (!isSlotSelectable(slotId)) return prev;
         return [...prev, slotId];
       }
     });
@@ -876,31 +897,35 @@ export const AddFacilityBookingPage = () => {
           <h2 className="text-lg font-semibold mb-4">Select Slot<span className="text-red-500"> *</span></h2>
           {slots.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {slots.map((slot) => (
-                <div key={slot.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
-                  <input
-                    type="checkbox"
-                    id={`slot-${slot.id}`}
-                    checked={selectedSlots.includes(slot.id)}
-                    onChange={() => handleSlotSelection(slot.id)}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <Label
-                    htmlFor={`slot-${slot.id}`}
-                    className="cursor-pointer text-sm font-medium flex items-center gap-2"
-                  >
-                    {slot.ampm}
-                    {slot.is_premium && slot.premium_percentage && (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                          <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
-                        </svg>
-                        +{slot.premium_percentage}%
-                      </span>
-                    )}
-                  </Label>
-                </div>
-              ))}
+              {slots.map((slot) => {
+                const disabled = !isSlotSelectable(slot.id);
+                return (
+                  <div key={slot.id} className={`flex items-center space-x-2 p-3 border rounded-lg ${disabled ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'}`}>
+                    <input
+                      type="checkbox"
+                      id={`slot-${slot.id}`}
+                      checked={selectedSlots.includes(slot.id)}
+                      onChange={() => handleSlotSelection(slot.id)}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      disabled={!canSelectSlots || disabled}
+                    />
+                    <Label
+                      htmlFor={`slot-${slot.id}`}
+                      className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${disabled ? 'text-gray-400' : ''}`}
+                    >
+                      {slot.ampm}
+                      {slot.is_premium && slot.premium_percentage && (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                            <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
+                          </svg>
+                          +{slot.premium_percentage}%
+                        </span>
+                      )}
+                    </Label>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <p className="text-gray-500">
@@ -909,6 +934,18 @@ export const AddFacilityBookingPage = () => {
                 : "Please select facility and date to see available slots"
               }
             </p>
+          )}
+          {/* Show booking rule info/warnings */}
+          {bookingRuleData && !canSelectSlots && (
+            <div className="mt-2 text-red-600 text-sm font-medium">You are not allowed to book slots for this user.</div>
+          )}
+          {bookingRuleData && canSelectSlots && (
+            <div className="mt-2 text-gray-600 text-xs">
+              {bookingRuleData.multiple_bookings
+                ? `You can select up to ${maxSelectableSlots} slots. `
+                : 'You can select only one slot. '}
+              {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
+            </div>
           )}
         </div>
 
@@ -1124,12 +1161,12 @@ export const AddFacilityBookingPage = () => {
             <div className="space-y-3">
               {/* Calculate costs based on initially selected user */}
               {(() => {
-                const adultMemberCharge = facilityDetails.facility_charge?.adult_member_charge || 0;
-                const adultGuestCharge = facilityDetails.facility_charge?.adult_guest_charge || 0;
-                const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge || 0;
+                const adultMemberCharge = facilityDetails.facility_charge?.adult_member_charge ?? 0;
+                const adultGuestCharge = facilityDetails.facility_charge?.adult_guest_charge ?? 0;
+                const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
 
-                // Use booking rule rate for members if available, otherwise use facility charge
-                const memberRate = bookingRuleData?.rate || adultMemberCharge;
+                // Use booking rule rate for members if available (even if 0), otherwise use facility charge
+                const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
 
                 // Number of slots selected
                 const slotsCount = selectedSlots.length;
@@ -1190,8 +1227,8 @@ export const AddFacilityBookingPage = () => {
                       </div>
                     )}
 
-                    {/* Member Charge - Only for occupant users */}
-                    {userType === 'occupant' && userCharge > 0 && (
+                    {/* Member Charge - Always show for occupant users, even if zero */}
+                    {userType === 'occupant' && (
                       <div className="flex justify-between items-center py-2 border-b border-gray-200">
                         <div className="flex flex-col gap-1 w-full">
                           <div className="flex items-center gap-2">
