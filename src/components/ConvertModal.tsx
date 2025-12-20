@@ -87,11 +87,8 @@ const ConvertModal = ({
     const fetchOwners = async () => {
         setIsLoadingOwners(true);
         try {
-            await dispatch(fetchFMUsers()).unwrap();
-            const owners = await axios.get(getFullUrl('/fm_users.json'), {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setOwners(owners.data || []);
+            const response = await dispatch(fetchFMUsers()).unwrap();
+            setOwners(response.users || []);
         } catch (error) {
             console.error('Error fetching owners:', error);
         } finally {
