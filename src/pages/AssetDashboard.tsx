@@ -804,7 +804,7 @@ export const AssetDashboard = () => {
                     </div>
                   )}
 
-                {!isRestrictedUser && selectedAssets.length > 0 && (
+                { selectedAssets.length > 0 && (
                   <AssetSelectionPanel
                     selectedCount={selectedAssets.length}
                     selectedAssets={selectedAssetObjects}
