@@ -22,6 +22,7 @@ import axios from 'axios';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { toast } from 'sonner';
+import { getUser } from '@/utils/auth';
 
 interface FormData {
     firstname: string;
@@ -95,6 +96,8 @@ export const ViewOccupantUserPage = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const dispatch = useDispatch<AppDispatch>();
+    const user = getUser();
+    const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
     const { data: entitiesData, loading: entitiesLoading } = useAppSelector((state) => state.entities);
     const { data: suppliers, loading: suppliersLoading } = useAppSelector((state) => state.fetchSuppliers);
     const { data: units, loading: unitsLoading } = useAppSelector((state) => state.fetchUnits);
@@ -163,10 +166,14 @@ export const ViewOccupantUserPage = () => {
     };
 
     useEffect(() => {
+        if (isRestrictedUser) {
+            navigate('/maintenance/asset');
+            return;
+        }
         if (id && baseUrl && token) {
             fetchAttendance(1);
         }
-    }, [id, baseUrl, token])
+    }, [id, baseUrl, token, isRestrictedUser, navigate]);
 
     useEffect(() => {
         dispatch(fetchEntities());
@@ -421,6 +428,8 @@ export const ViewOccupantUserPage = () => {
             </div>
         );
     }
+
+    if (isRestrictedUser) return null;
 
     return (
         <div className="w-full p-6 space-y-6 bg-gray-50 min-h-screen">

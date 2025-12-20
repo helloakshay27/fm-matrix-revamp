@@ -111,6 +111,7 @@ export const Header = () => {
     email: "",
   };
   const userId = user.id;
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
 
   const assetSuggestions = [
     "sdcdsc",
@@ -178,7 +179,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => {});
+        .catch(() => { });
     } catch {
       /* no-op */
     }
@@ -400,51 +401,53 @@ export const Header = () => {
           </div>
 
           {/* Dashboard Button */}
-          <div className="flex items-center gap-2">
-            {!isViSite && (
-              <button
-                onClick={() => (window.location.href = "/dashboard")}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-              >
-                <ChartArea className="w-4 h-4" />
-                Dashboard
-              </button>
-            )}
-            {!isViSite && (
-              <button
-                onClick={() => (window.location.href = "/dashboard-executive")}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-              >
-                <ChartAreaIcon className="w-4 h-4" />
-                Executive Dashboard
-              </button>
-            )}
+          {!isRestrictedUser && (
+            <div className="flex items-center gap-2">
+              {!isViSite && (
+                <button
+                  onClick={() => (window.location.href = "/dashboard")}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <ChartArea className="w-4 h-4" />
+                  Dashboard
+                </button>
+              )}
+              {!isViSite && (
+                <button
+                  onClick={() => (window.location.href = "/dashboard-executive")}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <ChartAreaIcon className="w-4 h-4" />
+                  Executive Dashboard
+                </button>
+              )}
 
-            {isViSite && selectedCompany?.id !== 294 && (
-              <button
-                onClick={() => navigate("/msafedashboard")}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-              >
-                <Home className="w-4 h-4" />
-                MSafe Dashboard
-              </button>
-            )}
+              {isViSite && selectedCompany?.id !== 294 && (
+                <button
+                  onClick={() => navigate("/msafedashboard")}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Home className="w-4 h-4" />
+                  MSafe Dashboard
+                </button>
+              )}
 
-            {isWebSite && !isViSite && selectedCompany?.id !== 294 && (
-              <button
-                onClick={() =>
-                  window.open(
-                    "https://web.gophygital.work/msafedashboard",
-                    "_blank"
-                  )
-                }
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-              >
-                <Home className="w-4 h-4" />
-                MSafe Dashboard
-              </button>
-            )}
-          </div>
+              {isWebSite && !isViSite && selectedCompany?.id !== 294 && (
+                <button
+                  onClick={() =>
+                    window.open(
+                      "https://web.gophygital.work/msafedashboard",
+                      "_blank"
+                    )
+                  }
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Home className="w-4 h-4" />
+                  MSafe Dashboard
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Project Dropdown */}
         </div>
@@ -600,7 +603,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                      "User"
+                    "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-0.5">
