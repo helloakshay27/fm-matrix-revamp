@@ -83,6 +83,7 @@ export const DashboardHeader = () => {
     email: "",
   };
   const userId = user.id;
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
 
   const assetSuggestions = [
     "sdcdsc",
@@ -146,6 +147,10 @@ export const DashboardHeader = () => {
       console.error("Failed to change site:", error);
     }
   };
+
+  if (isRestrictedUser) {
+    return null;
+  }
 
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] w-full shadow-sm">
@@ -258,9 +263,9 @@ export const DashboardHeader = () => {
           )}
 
           <div className="flex items-center gap-2">
-            {userId !== 189005 && (
+            {!isRestrictedUser && userId !== 189005 && (
               <button
-                onClick={() =>  (window.location.href = "/")}
+                onClick={() => (window.location.href = "/")}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
               >
                 <Home className="w-4 h-4" />
@@ -269,24 +274,26 @@ export const DashboardHeader = () => {
             )}
 
             {/* Dashboard/Executive Buttons */}
-            {location.pathname === "/dashboard-executive" ? (
-              <button
-                onClick={() => (window.location.href = "/dashboard")}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-              >
-                <ChartAreaIcon className="w-4 h-4" />
-                Dashboard
-              </button>
-            ) : (
-              <>
+            {!isRestrictedUser && (
+              location.pathname === "/dashboard-executive" ? (
                 <button
-                  onClick={() => (window.location.href = "/dashboard-executive")}
+                  onClick={() => (window.location.href = "/dashboard")}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <ChartAreaIcon className="w-4 h-4" />
-                  Dashboard Executive
+                  Dashboard
                 </button>
-              </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => (window.location.href = "/dashboard-executive")}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  >
+                    <ChartAreaIcon className="w-4 h-4" />
+                    Dashboard Executive
+                  </button>
+                </>
+              )
             )}
 
             {/* Project Dropdown */}

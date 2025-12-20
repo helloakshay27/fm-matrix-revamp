@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { getUser } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -165,6 +166,8 @@ export const EditFMUserPage = () => {
   const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id as
     | number
     | undefined;
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
 
   // Type Redux state selectors
   const {
@@ -261,6 +264,10 @@ export const EditFMUserPage = () => {
   };
 
   useEffect(() => {
+    if (isRestrictedUser) {
+      navigate("/maintenance/asset");
+      return;
+    }
     dispatch(fetchEntities());
     dispatch(fetchSuppliers({ baseUrl, token }));
     dispatch(fetchUnits({ baseUrl, token }));
@@ -271,7 +278,7 @@ export const EditFMUserPage = () => {
       dispatch(fetchAllowedSites(userId));
     }
     dispatch(fetchAllowedCompanies());
-  }, [dispatch, baseUrl, token, userId]);
+  }, [dispatch, baseUrl, token, userId, isRestrictedUser, navigate]);
 
   useEffect(() => {
     const loadUserAccount = async () => {
@@ -448,6 +455,8 @@ export const EditFMUserPage = () => {
   const handleCancel = () => {
     navigate("/master/user/fm-users");
   };
+
+  if (isRestrictedUser) return null;
 
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">

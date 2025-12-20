@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { getUser } from '@/utils/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Select } from '@mui/material';
@@ -43,6 +44,8 @@ const uploadSections = [
 
 export const AddOccupantUserPage: React.FC = () => {
   const navigate = useNavigate();
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -133,6 +136,10 @@ export const AddOccupantUserPage: React.FC = () => {
   }
 
   useEffect(() => {
+    if (isRestrictedUser) {
+      navigate('/maintenance/asset');
+      return;
+    }
     dispatch(fetchEntities());
     try {
       const userStr = localStorage.getItem('user');
@@ -142,7 +149,7 @@ export const AddOccupantUserPage: React.FC = () => {
     dispatch(fetchAllowedCompanies());
     dispatch(fetchRoles({ baseUrl, token }));
     fetchUserCategories();
-  }, [dispatch]);
+  }, [dispatch, isRestrictedUser, navigate]);
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -327,6 +334,8 @@ export const AddOccupantUserPage: React.FC = () => {
       padding: { xs: '8px', sm: '10px', md: '12px' },
     },
   } as const;
+
+  if (isRestrictedUser) return null;
 
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">

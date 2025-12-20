@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { getUser } from '@/utils/auth';
 
 // Define column configuration for EnhancedTable
 const columns: ColumnConfig[] = [
@@ -35,6 +36,8 @@ const CRMOccupantUsersDashboard = () => {
   const navigate = useNavigate()
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
 
   const { users: occupantUsersData, loading } = useAppSelector((state: RootState) => state.occupantUsers);
 
@@ -63,8 +66,12 @@ const CRMOccupantUsersDashboard = () => {
   console.log(occupantUsers)
 
   useEffect(() => {
+    if (isRestrictedUser) {
+      navigate('/maintenance/asset');
+      return;
+    }
     dispatch(fetchOccupantUsers({ page: pagination.current_page, perPage: 10 }));
-  }, [dispatch]);
+  }, [dispatch, isRestrictedUser, navigate]);
 
   const handleExport = async () => {
     try {
@@ -261,6 +268,8 @@ const CRMOccupantUsersDashboard = () => {
   );
 
   console.log(occupantUsers)
+
+  if (isRestrictedUser) return null;
 
   return (
     <div className="p-6 space-y-6">

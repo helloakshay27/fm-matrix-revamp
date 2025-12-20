@@ -78,6 +78,7 @@ import {
     Circle,
 } from "lucide-react";
 import { template } from "lodash";
+import { getUser } from "../utils/auth";
 
 const navigationStructure = {
     Settings: {
@@ -1022,6 +1023,8 @@ export const ZycusSidebar = () => {
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
     const [selectedDepartment, setSelectedRole] = useState("");
     const [selectedRole, setSelectedDepartment] = useState("");
+    const user = getUser();
+    const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
 
     // Helper function to find the deepest navigable sub-item
     const findDeepestNavigableItem = (item: any): string | null => {
@@ -1096,7 +1099,15 @@ export const ZycusSidebar = () => {
         }
     }, [location.pathname, setCurrentSection]);
 
-    const currentModules = modulesByPackage[currentSection] || [];
+    let currentModules = modulesByPackage[currentSection] || [];
+
+    if (isRestrictedUser) {
+        if (currentSection === 'Maintenance') {
+            currentModules = currentModules.filter(module => module.name === 'Assets');
+        } else {
+            currentModules = [];
+        }
+    }
 
     const isActiveRoute = (href: string, mode: "exact" | "prefix" = "exact") => {
         const currentPath = location.pathname;
@@ -1119,11 +1130,19 @@ export const ZycusSidebar = () => {
         return isActive;
     };
 
-    // Auto-expand functionality for all sections
     React.useEffect(() => {
         // Determine which items to expand based on current route
         const path = location.pathname;
-        const currentSectionItems = modulesByPackage[currentSection];
+        let currentSectionItems = modulesByPackage[currentSection];
+
+        if (isRestrictedUser) {
+            if (currentSection === 'Maintenance') {
+                currentSectionItems = currentSectionItems?.filter(module => module.name === 'Assets');
+            } else {
+                currentSectionItems = [];
+            }
+        }
+
         const itemsToExpand = [];
 
         if (currentSectionItems) {
@@ -1162,7 +1181,7 @@ export const ZycusSidebar = () => {
             // Update expanded items state with only the active path
             setExpandedItems(itemsToExpand);
         }
-    }, [currentSection, location.pathname]);
+    }, [currentSection, location.pathname, isRestrictedUser]);
 
     const renderMenuItem = (item: any, level: number = 0) => {
         const hasSubItems = item.subItems && item.subItems.length > 0;

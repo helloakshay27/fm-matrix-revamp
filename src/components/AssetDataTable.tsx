@@ -8,6 +8,7 @@ import type { Asset } from "@/hooks/useAssets";
 import { SelectionPanel } from "./water-asset-details/PannelTab";
 import { toast } from "sonner";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { getUser } from "@/utils/auth";
 
 // Asset interface now imported from useAssets hook
 
@@ -46,6 +47,8 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
 }) => {
   // Initialize permission hook
   const { shouldShow } = useDynamicPermissions();
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
 
   console.log("AssetDataTable rendered with assets:", assets);
   console.log("Available custom fields:", availableCustomFields);
@@ -795,7 +798,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         isRowDisabled={isRowDisabled}
         key={`asset-table-${availableCustomFields.map(f => f.key).join('-')}`} // Force re-render when custom fields change
         leftActions={
-          shouldShow("assets", "add") ? (
+          shouldShow("assets", "add") && !isRestrictedUser ? (
             <Button size="sm" className="mr-2" onClick={handleActionClick}>
               <Plus className="w-4 h-4 mr-2" />
               Action

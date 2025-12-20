@@ -36,6 +36,7 @@ import {
 import { OccupantUsersFilterDialog } from "@/components/OccupantUsersFilterDialog";
 import { useAppSelector } from "@/store/hooks";
 import { debounce } from "lodash";
+import { getUser } from "@/utils/auth";
 
 const columns: ColumnConfig[] = [
   { key: "id", label: "ID", sortable: true, draggable: true },
@@ -61,6 +62,8 @@ const columns: ColumnConfig[] = [
 export const OccupantUserMasterDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
@@ -204,10 +207,14 @@ export const OccupantUserMasterDashboard = () => {
   };
 
   useEffect(() => {
+    if (isRestrictedUser) {
+      navigate("/maintenance/asset");
+      return;
+    }
     setCurrentSection("Master");
     fetchUsers();
     dispatch(fetchOccupantUserCounts());
-  }, [setCurrentSection, dispatch]);
+  }, [setCurrentSection, dispatch, isRestrictedUser, navigate]);
 
   const debouncedSearch = useCallback(
     debounce(async (searchQuery: string) => {
@@ -564,6 +571,8 @@ export const OccupantUserMasterDashboard = () => {
       </Button>
     </>
   );
+
+  if (isRestrictedUser) return null;
 
   return (
     <div className="w-full p-4 sm:p-6 space-y-6">

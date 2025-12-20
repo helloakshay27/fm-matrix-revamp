@@ -26,6 +26,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { toast } from "sonner";
 import debounce from "lodash/debounce";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { getUser } from "@/utils/auth";
 
 // Define interfaces for data structures
 interface TransformedFMUser {
@@ -160,6 +161,8 @@ export const FMUserMasterDashboard = () => {
   const { setCurrentSection } = useLayout() as LayoutContext;
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
   const {
     loading,
     error,
@@ -250,9 +253,13 @@ export const FMUserMasterDashboard = () => {
   );
 
   useEffect(() => {
+    if (isRestrictedUser) {
+      navigate("/maintenance/asset");
+      return;
+    }
     setCurrentSection("Master");
     dispatch(fetchUserCounts());
-  }, [setCurrentSection, dispatch]);
+  }, [setCurrentSection, dispatch, isRestrictedUser, navigate]);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -749,6 +756,8 @@ export const FMUserMasterDashboard = () => {
       </div>
     );
   }
+
+  if (isRestrictedUser) return null;
 
   return (
     <div className="w-full p-6 space-y-6">

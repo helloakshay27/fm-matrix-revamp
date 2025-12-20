@@ -1,6 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { useLayout } from '../contexts/LayoutContext';
+import { getUser } from '../utils/auth';
 
 const packages = [
     'Maintenance',
@@ -11,6 +12,12 @@ const packages = [
 
 export const ZycusDynamicHeader = () => {
     const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
+    const user = getUser();
+    const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
+
+    const visiblePackages = isRestrictedUser
+        ? packages.filter(pkg => pkg === 'Maintenance')
+        : packages;
 
     // Note: Section is now automatically detected by LayoutProvider based on route
     // No need to manually set it here
@@ -24,7 +31,7 @@ export const ZycusDynamicHeader = () => {
                 <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
                     {/* Mobile & Tablet: scroll + spacing; Desktop: full width and justify-between */}
                     <div className="flex w-max lg:w-full space-x-4 md:space-x-6 lg:space-x-0 md:justify-start lg:justify-between whitespace-nowrap">
-                        {packages.map((packageName) => (
+                        {visiblePackages.map((packageName) => (
                             <button
                                 key={packageName}
                                 onClick={() => setCurrentSection(packageName)}

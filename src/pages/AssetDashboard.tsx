@@ -64,6 +64,7 @@ import {
   ENDPOINTS,
 } from '@/config/apiConfig';
 import { toast } from 'sonner';
+import { getUser } from '@/utils/auth';
 import {
   DndContext,
   closestCenter,
@@ -143,6 +144,8 @@ export const AssetDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
 
   // Redux state
   const {
@@ -801,7 +804,7 @@ export const AssetDashboard = () => {
                     </div>
                   )}
 
-                {selectedAssets.length > 0 && (
+                {!isRestrictedUser && selectedAssets.length > 0 && (
                   <AssetSelectionPanel
                     selectedCount={selectedAssets.length}
                     selectedAssets={selectedAssetObjects}
