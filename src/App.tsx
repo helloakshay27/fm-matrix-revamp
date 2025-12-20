@@ -148,6 +148,8 @@ import CloneSchedulePage from "./pages/CloneSchedulePage";
 import { CopySchedulePage } from "./pages/CopySchedulePage";
 import { ViewSchedulePage } from "./pages/ViewSchedulePage";
 
+import { EditEventPage } from "./pages/EditEventPage";
+
 // Import Visitors pages
 import { VisitorsDashboard } from "./pages/VisitorsDashboard";
 import { VisitorsHistoryDashboard } from "./pages/VisitorsHistoryDashboard";
@@ -3484,6 +3486,10 @@ function App() {
                   <Route
                     path="/pulse/events/details/:id"
                     element={<CRMEventDetailsPage />}
+                  />
+                  <Route
+                    path="/pulse/events/edit/:id"
+                    element={<EditEventPage />}
                   />
 
                   <Route path="/pulse/notices" element={<BroadcastDashboard />} />

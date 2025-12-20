@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Pencil } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { Badge } from '@/components/ui/badge';
 import { Eye } from 'lucide-react';
@@ -157,6 +157,10 @@ export const CRMEventsPage = () => {
     navigate(`/pulse/events/details/${id}`);
   }
 
+  const handleEdit = (id: number) => {
+    navigate(`/pulse/events/edit/${id}`);
+  }
+
   // Render cell content
   const renderCell = (item, columnKey) => {
     switch (columnKey) {
@@ -238,7 +242,6 @@ export const CRMEventsPage = () => {
           <PaginationLink
             onClick={() => handlePageChange(1)}
             isActive={currentPage === 1}
-            disabled={loading}
           >
             1
           </PaginationLink>
@@ -258,7 +261,6 @@ export const CRMEventsPage = () => {
               <PaginationLink
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
-                disabled={loading}
               >
                 {i}
               </PaginationLink>
@@ -274,7 +276,6 @@ export const CRMEventsPage = () => {
               <PaginationLink
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
-                disabled={loading}
               >
                 {i}
               </PaginationLink>
@@ -297,7 +298,6 @@ export const CRMEventsPage = () => {
                 <PaginationLink
                   onClick={() => handlePageChange(i)}
                   isActive={currentPage === i}
-                  disabled={loading}
                 >
                   {i}
                 </PaginationLink>
@@ -313,7 +313,6 @@ export const CRMEventsPage = () => {
             <PaginationLink
               onClick={() => handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
-              disabled={loading}
             >
               {totalPages}
             </PaginationLink>
@@ -327,7 +326,6 @@ export const CRMEventsPage = () => {
             <PaginationLink
               onClick={() => handlePageChange(i)}
               isActive={currentPage === i}
-              disabled={loading}
             >
               {i}
             </PaginationLink>
@@ -341,14 +339,24 @@ export const CRMEventsPage = () => {
 
   // Render actions
   const renderActions = (item) => (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-8 w-8 text-blue-600"
-      onClick={() => handleView(item.id)}
-    >
-      <Eye className="h-4 w-4" />
-    </Button>
+    <div className="flex">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-blue-600"
+        onClick={() => handleView(item.id)}
+      >
+        <Eye className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-green-600"
+        onClick={() => handleEdit(item.id)}
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
+    </div>
   );
 
   const getDateRangeLabel = () => {
@@ -426,7 +434,7 @@ export const CRMEventsPage = () => {
           <Button onClick={handleResetFilters} color="secondary">
             Reset
           </Button>
-          <Button onClick={() => handleApplyFilters(filters)} color="primary">
+          <Button onClick={() => handleApplyFilters()} color="primary">
             Apply
           </Button>
         </DialogActions>
