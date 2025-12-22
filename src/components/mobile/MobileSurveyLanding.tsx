@@ -168,7 +168,10 @@ export const MobileSurveyLanding: React.FC = () => {
         console.log("Survey active:", data.active);
 
         // Set default value for form_view if missing
-        if (data.snag_checklist && data.snag_checklist.form_view === undefined) {
+        if (
+          data.snag_checklist &&
+          data.snag_checklist.form_view === undefined
+        ) {
           data.snag_checklist.form_view = false;
           console.log("form_view was missing, set default to false");
         }
@@ -673,7 +676,8 @@ export const MobileSurveyLanding: React.FC = () => {
             getRatingLabel(currentQuestion, currentAnswer.rating);
           surveyResponseItem.ans_descr =
             ratingLabel ||
-            `${currentAnswer.rating} star${(currentAnswer.rating || 0) > 1 ? "s" : ""
+            `${currentAnswer.rating} star${
+              (currentAnswer.rating || 0) > 1 ? "s" : ""
             }`;
 
           // Add option_id mapping for rating questions from API response
@@ -884,7 +888,8 @@ export const MobileSurveyLanding: React.FC = () => {
             getRatingLabel(currentQuestion, answerData.rating);
           surveyResponseItem.ans_descr =
             ratingLabelNeg ||
-            `${answerData.rating} star${(answerData.rating || 0) > 1 ? "s" : ""
+            `${answerData.rating} star${
+              (answerData.rating || 0) > 1 ? "s" : ""
             }`;
 
           // Add option_id for rating questions
@@ -1048,7 +1053,8 @@ export const MobileSurveyLanding: React.FC = () => {
       setCurrentQuestionIndex(previousQuestionIndex);
 
       // Get the previous question
-      const previousQuestion = surveyData?.snag_checklist.snag_questions[previousQuestionIndex];
+      const previousQuestion =
+        surveyData?.snag_checklist.snag_questions[previousQuestionIndex];
 
       if (previousQuestion) {
         // Restore saved answer for the previous question
@@ -1062,12 +1068,18 @@ export const MobileSurveyLanding: React.FC = () => {
                 setSelectedOptions(savedAnswer.selectedOptions);
               }
               // If there are tags and comments, show generic tags view
-              if (savedAnswer.selectedTags && savedAnswer.selectedTags.length > 0) {
+              if (
+                savedAnswer.selectedTags &&
+                savedAnswer.selectedTags.length > 0
+              ) {
                 setSelectedTags(savedAnswer.selectedTags);
                 setShowGenericTags(true);
 
                 // Set pending negative data for restoration
-                if (savedAnswer.selectedOptions && savedAnswer.selectedOptions.length > 0) {
+                if (
+                  savedAnswer.selectedOptions &&
+                  savedAnswer.selectedOptions.length > 0
+                ) {
                   setPendingNegativeType("multiple");
                   setPendingNegativeAnswer(savedAnswer.selectedOptions);
                 }
@@ -1079,7 +1091,10 @@ export const MobileSurveyLanding: React.FC = () => {
                 setSelectedRating(savedAnswer.rating);
               }
               // If there are tags and comments, show generic tags view
-              if (savedAnswer.selectedTags && savedAnswer.selectedTags.length > 0) {
+              if (
+                savedAnswer.selectedTags &&
+                savedAnswer.selectedTags.length > 0
+              ) {
                 setSelectedTags(savedAnswer.selectedTags);
                 setShowGenericTags(true);
 
@@ -1087,7 +1102,9 @@ export const MobileSurveyLanding: React.FC = () => {
                 if (savedAnswer.rating !== undefined) {
                   // Find the corresponding option for the rating
                   const ratingToOptionIndex = Array.from(
-                    { length: previousQuestion.snag_quest_options?.length || 5 },
+                    {
+                      length: previousQuestion.snag_quest_options?.length || 5,
+                    },
                     (_, index) => ({
                       rating: index + 1,
                       optionIndex: index,
@@ -1098,7 +1115,9 @@ export const MobileSurveyLanding: React.FC = () => {
                   );
                   const selectedOption =
                     selectedOptionMapping &&
-                    previousQuestion.snag_quest_options?.[selectedOptionMapping.optionIndex];
+                    previousQuestion.snag_quest_options?.[
+                      selectedOptionMapping.optionIndex
+                    ];
 
                   if (selectedOption) {
                     setPendingNegativeType("rating");
@@ -1117,13 +1136,22 @@ export const MobileSurveyLanding: React.FC = () => {
                 setSelectedRating(savedAnswer.rating);
               }
               // If there are tags and comments, show generic tags view
-              if (savedAnswer.selectedTags && savedAnswer.selectedTags.length > 0) {
+              if (
+                savedAnswer.selectedTags &&
+                savedAnswer.selectedTags.length > 0
+              ) {
                 setSelectedTags(savedAnswer.selectedTags);
                 setShowGenericTags(true);
 
                 // Set pending negative data for restoration
-                if (savedAnswer.rating !== undefined && savedAnswer.emoji && savedAnswer.label) {
-                  setPendingNegativeType(previousQuestion.qtype as "emoji" | "smiley");
+                if (
+                  savedAnswer.rating !== undefined &&
+                  savedAnswer.emoji &&
+                  savedAnswer.label
+                ) {
+                  setPendingNegativeType(
+                    previousQuestion.qtype as "emoji" | "smiley"
+                  );
                   setPendingNegativeAnswer({
                     rating: savedAnswer.rating,
                     emoji: savedAnswer.emoji,
@@ -1808,11 +1836,12 @@ export const MobileSurveyLanding: React.FC = () => {
       <div className="bg-transparent py-3 px-4 relative z-10">
         <div className="flex justify-between items-center">
           <div className="flex justify-start items-center">
-            {!isFormView && ((currentQuestion &&
-              !isLastStep &&
-              currentQuestionIndex > 0 &&
-              !showGenericTags) ||
-              (isLastStep && isMultiQuestion)) && (
+            {!isFormView &&
+              ((currentQuestion &&
+                !isLastStep &&
+                currentQuestionIndex > 0 &&
+                !showGenericTags) ||
+                (isLastStep && isMultiQuestion)) && (
                 <button
                   type="button"
                   onClick={moveToPreviousQuestion}
@@ -1836,7 +1865,7 @@ export const MobileSurveyLanding: React.FC = () => {
               )}
           </div>
           <div className="flex justify-end">
-            <div className="w-16 h-16 flex items-center justify-center overflow-hidden">
+            <div className="w-28 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
               {window.location.origin === "https://oig.gophygital.work" ? (
                 <img
                   src="/Without bkg.svg"
@@ -1874,15 +1903,19 @@ export const MobileSurveyLanding: React.FC = () => {
       )}
 
       {/* Main Content */}
-      <div className={`flex-1 overflow-hidden relative z-10 ${isFormView ? 'overflow-y-auto' : ''}`}>
-        <div className={`h-full ${isFormView ? 'overflow-y-auto px-4 py-4' : 'flex flex-col px-4 pb-6'}`}>
+      {isFormView && (
+        <h1 className="text-2xl font-bold text-white/100 mb-4 text-center">
+          {surveyData.survey_title}
+        </h1>
+      )}
 
+      <div
+        className={`flex-1 overflow-hidden relative z-10 ${isFormView ? "overflow-y-auto" : ""}`}
+      >
+        <div
+          className={`h-full ${isFormView ? "overflow-y-scroll px-4 py-4" : "flex flex-col px-4 pb-6"}`}
+        >
           {/* Title - Only for Form View */}
-          {isFormView && (
-            <h1 className="text-2xl font-bold text-white/100 mb-4 text-center">
-              {surveyData.survey_title}
-            </h1>
-          )}
 
           {/* Form View: All Questions at Once */}
           {isFormView ? (
@@ -1908,10 +1941,12 @@ export const MobileSurveyLanding: React.FC = () => {
                   </h1>
                   {!showGenericTags && !isLastStep && (
                     <span className="text-sm text-white/80 font-medium">
-                      Question {Math.min(
+                      Question{" "}
+                      {Math.min(
                         currentQuestionIndex + 1,
                         surveyData.snag_checklist.questions_count
-                      )}/{surveyData.snag_checklist.questions_count}
+                      )}
+                      /{surveyData.snag_checklist.questions_count}
                     </span>
                   )}
                 </div>
@@ -1957,8 +1992,11 @@ export const MobileSurveyLanding: React.FC = () => {
 
                 {!(
                   isLastStep &&
-                  currentQuestionIndex === surveyData.snag_checklist.questions_count
-                ) && currentQuestion && !showGenericTags && (
+                  currentQuestionIndex ===
+                    surveyData.snag_checklist.questions_count
+                ) &&
+                  currentQuestion &&
+                  !showGenericTags && (
                     <div className="text-center mb-6">
                       <div className="bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-md border border-gray-200">
                         <p className="text-lg text-gray-900 font-semibold">
@@ -1973,44 +2011,50 @@ export const MobileSurveyLanding: React.FC = () => {
                   <div className="w-full space-y-3 max-w-sm mx-auto">
                     <div className="space-y-3">
                       {/* Multiple Choice Question */}
-                      {currentQuestion.qtype === "multiple" && !showGenericTags && (
-                        <div className="space-y-3">
-                          {currentQuestion.snag_quest_options.map((option) => (
-                            <button
-                              type="button"
-                              key={option.id}
-                              onClick={() => handleOptionSelect(option)}
-                              className={`w-full p-4 rounded-lg border-2 text-left transition-all shadow-md ${selectedOptions.some((opt) => opt.id === option.id)
-                                ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
-                                : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:border-blue-400"
-                                }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="font-semibold text-base">
-                                  {option.qname}
-                                </span>
-                                {selectedOptions.some(
-                                  (opt) => opt.id === option.id
-                                ) && (
-                                    <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-                                      <svg
-                                        className="w-4 h-4 text-blue-500"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                      >
-                                        <path
-                                          fillRule="evenodd"
-                                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                          clipRule="evenodd"
-                                        />
-                                      </svg>
-                                    </div>
-                                  )}
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      {currentQuestion.qtype === "multiple" &&
+                        !showGenericTags && (
+                          <div className="space-y-3">
+                            {currentQuestion.snag_quest_options.map(
+                              (option) => (
+                                <button
+                                  type="button"
+                                  key={option.id}
+                                  onClick={() => handleOptionSelect(option)}
+                                  className={`w-full p-4 rounded-lg border-2 text-left transition-all shadow-md ${
+                                    selectedOptions.some(
+                                      (opt) => opt.id === option.id
+                                    )
+                                      ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                                      : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:border-blue-400"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-semibold text-base">
+                                      {option.qname}
+                                    </span>
+                                    {selectedOptions.some(
+                                      (opt) => opt.id === option.id
+                                    ) && (
+                                      <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                                        <svg
+                                          className="w-4 h-4 text-blue-500"
+                                          fill="currentColor"
+                                          viewBox="0 0 20 20"
+                                        >
+                                          <path
+                                            fillRule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clipRule="evenodd"
+                                          />
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                </button>
+                              )
+                            )}
+                          </div>
+                        )}
 
                       {/* Input Question */}
                       {currentQuestion.qtype === "input" && (
@@ -2031,7 +2075,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                surveyData!.snag_checklist.questions_count === 1;
+                                surveyData!.snag_checklist.questions_count ===
+                                1;
 
                               // Save current answer first
                               const answerData = saveCurrentAnswer();
@@ -2071,7 +2116,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                surveyData!.snag_checklist.questions_count === 1;
+                                surveyData!.snag_checklist.questions_count ===
+                                1;
 
                               // Save current answer first
                               const answerData = saveCurrentAnswer();
@@ -2111,7 +2157,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                surveyData!.snag_checklist.questions_count === 1;
+                                surveyData!.snag_checklist.questions_count ===
+                                1;
 
                               // Save current answer first
                               const answerData = saveCurrentAnswer();
@@ -2152,7 +2199,8 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                surveyData!.snag_checklist.questions_count === 1;
+                                surveyData!.snag_checklist.questions_count ===
+                                1;
 
                               // Save current answer first
                               const answerData = saveCurrentAnswer();
@@ -2175,70 +2223,83 @@ export const MobileSurveyLanding: React.FC = () => {
                       )}
 
                       {/* Rating Question */}
-                      {currentQuestion.qtype === "rating" && !showGenericTags && (
-                        <>
-                          <div className="bg-white rounded-lg border-2 border-gray-200 shadow-md p-4">
-                            <div className="flex justify-center items-center space-x-2">
-                              {getRatingOptions(currentQuestion).map((rating) => (
-                                <button
-                                  type="button"
-                                  key={rating}
-                                  onClick={() => handleRatingSelect(rating)}
-                                  className={`w-12 h-12 rounded-full transition-all ${selectedRating !== null && rating <= selectedRating
-                                    ? "text-yellow-400"
-                                    : "text-gray-300 hover:text-yellow-300"
-                                    }`}
-                                >
-                                  <svg
-                                    className="w-full h-full"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                  </svg>
-                                </button>
-                              ))}
-                            </div>
-                            {selectedRating && (
-                              <div className="text-center mt-2">
-                                <span className="text-base sm:text-lg font-medium text-gray-700">
-                                  {selectedRating} star{selectedRating > 1 ? "s" : ""}
-                                </span>
+                      {currentQuestion.qtype === "rating" &&
+                        !showGenericTags && (
+                          <>
+                            <div className="bg-white rounded-lg border-2 border-gray-200 shadow-md p-4">
+                              <div className="flex justify-center items-center space-x-2">
+                                {getRatingOptions(currentQuestion).map(
+                                  (rating) => (
+                                    <button
+                                      type="button"
+                                      key={rating}
+                                      onClick={() => handleRatingSelect(rating)}
+                                      className={`w-12 h-12 rounded-full transition-all ${
+                                        selectedRating !== null &&
+                                        rating <= selectedRating
+                                          ? "text-yellow-400"
+                                          : "text-gray-300 hover:text-yellow-300"
+                                      }`}
+                                    >
+                                      <svg
+                                        className="w-full h-full"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                      >
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                      </svg>
+                                    </button>
+                                  )
+                                )}
                               </div>
-                            )}
-                          </div>
-                        </>
-                      )}
+                              {selectedRating && (
+                                <div className="text-center mt-2">
+                                  <span className="text-base sm:text-lg font-medium text-gray-700">
+                                    {selectedRating} star
+                                    {selectedRating > 1 ? "s" : ""}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
 
                       {/* Emoji/Smiley Question */}
                       {(currentQuestion.qtype === "emoji" ||
                         currentQuestion.qtype === "smiley") &&
                         !showGenericTags && (
                           <div className="w-full">
-                            <div className="flex justify-between items-center gap-3 sm:gap-4 bg-white rounded-lg border-2 border-gray-200 shadow-md p-3">                              {getEmojiOptions(currentQuestion).map((option) => (
-                              <button
-                                type="button"
-                                key={option.rating}
-                                onClick={() =>
-                                  handleEmojiSelect(
-                                    option.rating,
-                                    option.emoji,
-                                    option.label
-                                  )
-                                }
-                                className={`flex flex-col rounded-lg items-center justify-center p-3 sm:p-4 transition-all flex-1 min-w-0 ${selectedRating === option.rating
-                                  ? "bg-blue-600 border-2 border-blue-600 shadow-lg scale-105"
-                                  : "hover:bg-gray-100 border-2 border-transparent hover:scale-105"
-                                  }`}
-                              >
-                                <span className="text-3xl sm:text-4xl md:text-5xl mb-1 sm:mb-2">
-                                  {option.emoji}
-                                </span>
-                                <span className={`text-xs sm:text-sm font-semibold text-center leading-tight break-words ${selectedRating === option.rating ? 'text-white' : 'text-gray-900'}`}>
-                                  {option.label}
-                                </span>
-                              </button>
-                            ))}
+                            <div className="flex justify-between items-center gap-3 sm:gap-4 bg-white rounded-lg border-2 border-gray-200 shadow-md p-3">
+                              {" "}
+                              {getEmojiOptions(currentQuestion).map(
+                                (option) => (
+                                  <button
+                                    type="button"
+                                    key={option.rating}
+                                    onClick={() =>
+                                      handleEmojiSelect(
+                                        option.rating,
+                                        option.emoji,
+                                        option.label
+                                      )
+                                    }
+                                    className={`flex flex-col rounded-lg items-center justify-center p-3 sm:p-4 transition-all flex-1 min-w-0 ${
+                                      selectedRating === option.rating
+                                        ? "bg-blue-600 border-2 border-blue-600 shadow-lg scale-105"
+                                        : "hover:bg-gray-100 border-2 border-transparent hover:scale-105"
+                                    }`}
+                                  >
+                                    <span className="text-3xl sm:text-4xl md:text-5xl mb-1 sm:mb-2">
+                                      {option.emoji}
+                                    </span>
+                                    <span
+                                      className={`text-xs sm:text-sm font-semibold text-center leading-tight break-words ${selectedRating === option.rating ? "text-white" : "text-gray-900"}`}
+                                    >
+                                      {option.label}
+                                    </span>
+                                  </button>
+                                )
+                              )}
                             </div>
                           </div>
                         )}
@@ -2247,16 +2308,19 @@ export const MobileSurveyLanding: React.FC = () => {
                       {showGenericTags && (
                         <>
                           <div className="bg-white rounded-lg border border-gray-200 p-1.5 xs:p-2 sm:p-3 shadow-md relative">
-
-
                             {/* Grid Layout - 2x2 for first 4, then repeat */}
                             <div className="overflow-x-auto pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
                               {(() => {
-                                const tags = getCurrentQuestion()?.generic_tags || [];
+                                const tags =
+                                  getCurrentQuestion()?.generic_tags || [];
                                 const itemsPerPage = 4;
                                 // Split tags into pages of 4 items each
                                 const pages = Array.from(
-                                  { length: Math.ceil(tags.length / itemsPerPage) },
+                                  {
+                                    length: Math.ceil(
+                                      tags.length / itemsPerPage
+                                    ),
+                                  },
                                   (_, pageIdx) =>
                                     tags.slice(
                                       pageIdx * itemsPerPage,
@@ -2281,20 +2345,23 @@ export const MobileSurveyLanding: React.FC = () => {
                                                 onClick={() =>
                                                   handleGenericTagClick(tag)
                                                 }
-                                                className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${selectedTags.some(
-                                                  (selectedTag) =>
-                                                    selectedTag.id === tag.id
-                                                )
-                                                  ? "border-blue-500 bg-gray-300"
-                                                  : "border-white/5"
-                                                  }`}
+                                                className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${
+                                                  selectedTags.some(
+                                                    (selectedTag) =>
+                                                      selectedTag.id === tag.id
+                                                  )
+                                                    ? "border-blue-500 bg-gray-300"
+                                                    : "border-white/5"
+                                                }`}
                                               >
                                                 <div
                                                   className="w-[80%] xs:w-[85%] sm:w-full mb-0.5 xs:mb-0.5 sm:mb-1"
-                                                  style={{ aspectRatio: "16/9" }}
+                                                  style={{
+                                                    aspectRatio: "16/9",
+                                                  }}
                                                 >
                                                   {tag.icons &&
-                                                    tag.icons.length > 0 ? (
+                                                  tag.icons.length > 0 ? (
                                                     <img
                                                       src={tag.icons[0].url}
                                                       alt={tag.category_name}
@@ -2331,20 +2398,23 @@ export const MobileSurveyLanding: React.FC = () => {
                                                 onClick={() =>
                                                   handleGenericTagClick(tag)
                                                 }
-                                                className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${selectedTags.some(
-                                                  (selectedTag) =>
-                                                    selectedTag.id === tag.id
-                                                )
-                                                  ? "border-blue-500 bg-gray-300"
-                                                  : "border-white/5"
-                                                  }`}
+                                                className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${
+                                                  selectedTags.some(
+                                                    (selectedTag) =>
+                                                      selectedTag.id === tag.id
+                                                  )
+                                                    ? "border-blue-500 bg-gray-300"
+                                                    : "border-white/5"
+                                                }`}
                                               >
                                                 <div
                                                   className="w-[80%] xs:w-[85%] sm:w-full mb-0.5 xs:mb-0.5 sm:mb-1"
-                                                  style={{ aspectRatio: "16/9" }}
+                                                  style={{
+                                                    aspectRatio: "16/9",
+                                                  }}
                                                 >
                                                   {tag.icons &&
-                                                    tag.icons.length > 0 ? (
+                                                  tag.icons.length > 0 ? (
                                                     <img
                                                       src={tag.icons[0].url}
                                                       alt={tag.category_name}
@@ -2398,11 +2468,13 @@ export const MobileSurveyLanding: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               const isSingleQuestion =
-                                surveyData!.snag_checklist.questions_count === 1;
+                                surveyData!.snag_checklist.questions_count ===
+                                1;
 
                               // Save answer with tags and description, then proceed
                               let answerData: SurveyAnswers[number] | undefined;
-                              const currentComments = getCurrentNegativeComments();
+                              const currentComments =
+                                getCurrentNegativeComments();
 
                               if (
                                 (pendingNegativeType === "emoji" ||
@@ -2481,9 +2553,12 @@ export const MobileSurveyLanding: React.FC = () => {
                             {isSubmitting ? (
                               <div className="flex items-center justify-center">
                                 <div className="animate-spin rounded-full h-3.5 xs:h-4 w-3.5 xs:w-4 border-b-2 border-white mr-2"></div>
-                                <span className="text-xs xs:text-sm">Submitting...</span>
+                                <span className="text-xs xs:text-sm">
+                                  Submitting...
+                                </span>
                               </div>
-                            ) : surveyData!.snag_checklist.questions_count === 1 ? (
+                            ) : surveyData!.snag_checklist.questions_count ===
+                              1 ? (
                               "Submit Survey"
                             ) : currentQuestionIndex <
                               surveyData.snag_checklist.questions_count - 1 ? (
