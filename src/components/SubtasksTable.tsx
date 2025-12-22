@@ -1,7 +1,15 @@
 import { EnhancedTable } from "./enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Subtask } from "@/pages/ProjectTaskDetails";
+import { useAppDispatch } from "@/store/hooks";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
+import { Eye } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { updateTaskStatus } from "@/store/slices/projectTasksSlice";
+import { toast } from "sonner";
 
 const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
     if (!start || !end) return { text: "N/A", isOverdue: false };
@@ -139,28 +147,72 @@ const subtaskColumns: ColumnConfig[] = [
     },
 ];
 
+const statusOptions = [
+    { value: "open", label: "Open" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "on_hold", label: "On Hold" },
+    { value: "completed", label: "Completed" },
+    { value: "overdue", label: "Overdue" },
+]
+
 const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData: () => Promise<void> }) => {
+    const { id: projectId, mid } = useParams()
+    const dispatch = useAppDispatch();
+    const token = localStorage.getItem("token") || "";
+    const baseUrl = localStorage.getItem("baseUrl") || "";
+    const navigate = useNavigate();
+    const [users, setUsers] = useState([])
+
+    const getUsers = async () => {
+        try {
+            const response = await dispatch(fetchFMUsers()).unwrap();
+            setUsers(response.users);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        getUsers()
+    }, [])
+
+    const handleStatusChange = async (id: number, status: string) => {
+        try {
+            await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status } })).unwrap();
+            fetchData();
+            toast.success("Task status changed successfully");
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     const renderSubtaskCell = (item: any, columnKey: string) => {
         if (columnKey === "status") {
-            return (
-                <span
-                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        item.status || ""
-                    )}`}
+            return <FormControl
+                variant="standard"
+                sx={{ width: 128 }} // same as w-32
+            >
+                <Select
+                    value={item.status}
+                    onChange={(e) =>
+                        handleStatusChange(item.id, e.target.value as string)
+                    }
+                    disableUnderline
+                    sx={{
+                        fontSize: "0.875rem",
+                        cursor: "pointer",
+                        "& .MuiSelect-select": {
+                            padding: "4px 0",
+                        },
+                    }}
                 >
-                    <span
-                        className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status?.toLowerCase() === "open"
-                            ? "bg-red-500"
-                            : item.status?.toLowerCase() === "in_progress"
-                                ? "bg-blue-500"
-                                : item.status?.toLowerCase() === "completed"
-                                    ? "bg-green-500"
-                                    : "bg-gray-400"
-                            }`}
-                    ></span>
-                    {item.status}
-                </span>
-            );
+                    {statusOptions.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
         }
         if (columnKey === "duration") {
             return <CountdownTimer startDate={item.expected_start_date} targetDate={item.target_date} />;
@@ -170,6 +222,103 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
         }
         return item[columnKey as keyof Subtask] || "-";
     };
+
+    const handleView = (id) => {
+        if (location.pathname.startsWith("/vas/tasks")) {
+            navigate(`/vas/tasks/${id}`);
+        } else {
+            navigate(`/vas/projects/${projectId}/milestones/${mid}/tasks/${id}`)
+        }
+    }
+
+    const renderActions = (item: any) => (
+        <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() => handleView(item.id)}
+            title="View Task Details"
+        >
+            <Eye className="w-4 h-4" />
+        </Button>
+    )
+
+    const renderEditableCell = (columnKey: string, value: any, onChange: (val: any) => void) => {
+        if (columnKey === "responsible_person") {
+            return (
+                <Select
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    displayEmpty
+                    size="small"
+                    sx={{ minWidth: 150 }}
+                >
+                    <MenuItem value="">
+                        <em>Select Responsible Person</em>
+                    </MenuItem>
+                    {
+                        users.map((user: any) => (
+                            <MenuItem key={user.id} value={user.id}>
+                                {user.full_name || user.name}
+                            </MenuItem>
+                        ))
+                    }
+                </Select>
+            );
+        }
+        if (columnKey === "expected_start_date") {
+            return (
+                <TextField
+                    type="date"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    size="small"
+                    sx={{ minWidth: 130 }}
+                    InputLabelProps={{ shrink: true }}
+                />
+            );
+        }
+        if (columnKey === "target_date") {
+            return (
+                <TextField
+                    type="date"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    size="small"
+                    sx={{ minWidth: 130 }}
+                    InputLabelProps={{ shrink: true }}
+                />
+            );
+        }
+        if (columnKey === "priority") {
+            return (
+                <Select
+                    value={value || "Medium"}
+                    onChange={(e) => onChange(e.target.value)}
+                    displayEmpty
+                    size="small"
+                    sx={{ minWidth: 110 }}
+                >
+                    <MenuItem value="High">High</MenuItem>
+                    <MenuItem value="Medium">Medium</MenuItem>
+                    <MenuItem value="Low">Low</MenuItem>
+                </Select>
+            );
+        }
+        if (columnKey === "title") {
+            return (
+                <TextField
+                    type="text"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="Enter task title"
+                    size="small"
+                    sx={{ minWidth: 200 }}
+                />
+            );
+        }
+        return null;
+    }
 
     return (
         <div>
@@ -186,7 +335,10 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
                 emptyMessage="No Subtask"
                 className="min-w-[1200px] h-max"
                 renderCell={renderSubtaskCell}
+                renderActions={renderActions}
                 canAddRow={true}
+                readonlyColumns={["id", "status", "duration"]}
+                renderEditableCell={renderEditableCell}
             />
         </div>
     )

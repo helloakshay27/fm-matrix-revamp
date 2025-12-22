@@ -1,9 +1,9 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
-import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { changeProjectStatus, createProject, fetchProjects, filterProjects } from "@/store/slices/projectManagementSlice";
-import { MenuItem, Select, TextField } from "@mui/material";
+import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import {
   ChartNoAxesColumn,
   ChevronDown,
@@ -24,6 +24,8 @@ import AddProjectModal from "@/components/AddProjectModal";
 import ProjectCreateModal from "@/components/ProjectCreateModal";
 import ProjectManagementKanban from "@/components/ProjectManagementKanban";
 import { ProjectFilterModal } from "@/components/ProjectFilterModal";
+import { useLayout } from "@/contexts/LayoutContext";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const columns: ColumnConfig[] = [
   {
@@ -174,10 +176,19 @@ const statusOptions = [
 
 
 export const ProjectsDashboard = () => {
+  const { setCurrentSection } = useLayout();
+
+  useEffect(() => {
+    setCurrentSection("Project Task");
+  }, [setCurrentSection]);
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+
+  const { teams } = useAppSelector(state => state.projectTeams)
+  const { projectTags: tags } = useAppSelector(state => state.projectTags)
 
   const [selectedFilterOption, setSelectedFilterOption] = useState("all")
   const [projects, setProjects] = useState([]);
@@ -189,21 +200,33 @@ export const ProjectsDashboard = () => {
   const [selectedView, setSelectedView] = useState("List");
   const [projectTypes, setProjectTypes] = useState([]);
   const [owners, setOwners] = useState([])
-  const [teams, setTeams] = useState([])
-  const [tags, setTags] = useState([])
+  // const [teams, setTeams] = useState([])
+  // const [tags, setTags] = useState([])
   const [loading, setLoading] = useState(false)
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
 
-  const fetchData = async () => {
+  const fetchData = async (page = 1) => {
     try {
       setLoading(true)
       let filters = {};
       if (selectedFilterOption !== "all") {
         filters["q[status_eq]"] = selectedFilterOption;
       }
+      filters["q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]"] = JSON.parse(localStorage.getItem('user')).id;
+      filters["page"] = page;
       const response = await dispatch(
         filterProjects({ token, baseUrl, filters })
       ).unwrap();
       setProjects(transformedProjects(response.project_managements));
+      setPagination({
+        current_page: response.current_page || page,
+        total_count: response.total_count || 0,
+        total_pages: response.total_pages || 1,
+      });
     } catch (error) {
       console.log(error);
     } finally {
@@ -213,7 +236,8 @@ export const ProjectsDashboard = () => {
 
 
   useEffect(() => {
-    fetchData();
+    setPagination((prev) => ({ ...prev, current_page: 1 }));
+    fetchData(1);
   }, [dispatch, token, baseUrl, selectedFilterOption]);
 
   const getOwners = async () => {
@@ -228,8 +252,7 @@ export const ProjectsDashboard = () => {
 
   const getTeams = async () => {
     try {
-      const response = await dispatch(fetchProjectTeams()).unwrap();
-      setTeams(response);
+      await dispatch(fetchProjectTeams()).unwrap();
     } catch (error) {
       console.log(error)
       toast.error(error)
@@ -248,8 +271,7 @@ export const ProjectsDashboard = () => {
 
   const getTags = async () => {
     try {
-      const response = await dispatch(fetchProjectsTags()).unwrap();
-      setTags(response);
+      await dispatch(fetchProjectsTags()).unwrap();
     } catch (error) {
       console.log(error)
       toast.error(error)
@@ -287,7 +309,7 @@ export const ProjectsDashboard = () => {
       }
       await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
       toast.success("Project created successfully");
-      fetchData();
+      fetchData(1);
     } catch (error) {
       console.log(error)
       toast.error(error)
@@ -318,12 +340,148 @@ export const ProjectsDashboard = () => {
   const handleStatusChange = async (id: number, status: string) => {
     try {
       await dispatch(changeProjectStatus({ token, baseUrl, id: String(id), payload: { project_management: { status } } })).unwrap();
-      fetchData();
+      fetchData(pagination.current_page);
       toast.success("Project status changed successfully");
     } catch (error) {
       console.log(error)
     }
   }
+
+  const handlePageChange = async (page: number) => {
+    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
+      return;
+    }
+
+    try {
+      setPagination((prev) => ({ ...prev, current_page: page }));
+      await fetchData(page);
+    } catch (error) {
+      console.error("Error changing page:", error);
+      toast.error("Failed to load page data. Please try again.");
+    }
+  }
+
+  const renderPaginationItems = () => {
+    if (!pagination.total_pages || pagination.total_pages <= 0) {
+      return null;
+    }
+    const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPage = pagination.current_page;
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      items.push(
+        <PaginationItem key={1} className="cursor-pointer">
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+            aria-disabled={loading}
+            className={loading ? "pointer-events-none opacity-50" : ""}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                aria-disabled={loading}
+                className={loading ? "pointer-events-none opacity-50" : ""}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                aria-disabled={loading}
+                className={loading ? "pointer-events-none opacity-50" : ""}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find((item) => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i} className="cursor-pointer">
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                  aria-disabled={loading}
+                  className={loading ? "pointer-events-none opacity-50" : ""}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages} className="cursor-pointer">
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+              aria-disabled={loading}
+              className={loading ? "pointer-events-none opacity-50" : ""}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i} className="cursor-pointer">
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+              aria-disabled={loading}
+              className={loading ? "pointer-events-none opacity-50" : ""}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
 
   const renderCell = (item: any, columnKey: string) => {
     const renderProgressBar = (completed: number, total: number, color: string) => {
@@ -376,19 +534,31 @@ export const ProjectsDashboard = () => {
         return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString('en-GB') : "-";
       case "status":
         return (
-          <select
-            value={item.status}
-            onChange={(e) =>
-              handleStatusChange(item.id, e.target.value)
-            }
-            className="bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-sm cursor-pointer w-32"
+          <FormControl
+            variant="standard"
+            sx={{ width: 128 }} // same as w-32
           >
-            {statusOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            <Select
+              value={item.status}
+              onChange={(e) =>
+                handleStatusChange(item.id, e.target.value as string)
+              }
+              disableUnderline
+              sx={{
+                fontSize: "0.875rem",
+                cursor: "pointer",
+                "& .MuiSelect-select": {
+                  padding: "4px 0",
+                },
+              }}
+            >
+              {statusOptions.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         )
       default:
         return item[columnKey] || "-";
@@ -740,6 +910,26 @@ export const ProjectsDashboard = () => {
         newRowPlaceholder="Click to add new project"
         loading={loading}
       />
+
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            {renderPaginationItems()}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
 
       <AddProjectModal
         openDialog={openDialog}

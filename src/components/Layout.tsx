@@ -23,6 +23,8 @@ import { EmployeeSidebar } from "./EmployeeSidebar";
 import { EmployeeDynamicHeader } from "./EmployeeDynamicHeader";
 import { EmployeeHeader } from "./EmployeeHeader";
 import { ViewSelectionModal } from "./ViewSelectionModal";
+import { ZycusSidebar } from "./ZycusSidebar";
+import { ZycusDynamicHeader } from "./ZycusDynamicHeader";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -94,7 +96,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const isLocalhost =
     hostname.includes("localhost") ||
-    hostname.includes("lockated.gophygital.work");
+    hostname.includes("lockated.gophygital.work") ||
+    hostname.includes("fm-matrix.lockated.com");
 
   // Layout behavior:
   // - Company ID 189 (Lockated HO): Default layout (Sidebar + DynamicHeader)
@@ -138,6 +141,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Company-specific logic (Admin layout)
     if (selectedCompany?.id === 189) {
       return <ZxSidebar />;
+    }
+
+    if (selectedCompany?.id === 294) {
+      return <ZycusSidebar />;
     }
 
     if (selectedCompany?.id === 304) {
@@ -188,9 +195,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (selectedCompany?.id === 189) {
       return <ZxDynamicHeader />;
     }
+
+    if (selectedCompany?.id === 294) {
+      return <ZycusDynamicHeader />;
+    }
+
     if (selectedCompany?.id === 304) {
       return <PrimeSupportDynamicHeader />;
     }
+
     if (
       selectedCompany?.id === 300 ||
       selectedCompany?.id === 295 ||
@@ -303,7 +316,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             : isSidebarCollapsed
               ? "ml-16"
               : "ml-64"
-          } ${isEmployeeUser ? "pt-16" : "pt-28"} transition-all duration-300`}
+        } ${isEmployeeUser && isLocalhost ? "pt-16" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>

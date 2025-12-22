@@ -1,9 +1,10 @@
-import { useEffect, useState, forwardRef, useRef } from "react";
+import { useEffect, useState, forwardRef, useRef, Fragment } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronDown, PencilIcon, Plus, ScrollText, Trash2, X, ChevronDownCircle, CircleCheckBig } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
+import { Mention, MentionsInput } from "react-mentions";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
@@ -19,14 +20,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, Slide } from "@mui/material";
+import { Dialog, DialogContent, FormControl, MenuItem, Slide, Select as MuiSelect } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { useAppDispatch } from "@/store/hooks";
-import { updateTaskStatus, fetchProjectTasksById } from "@/store/slices/projectTasksSlice";
+import { updateTaskStatus, fetchProjectTasksById, editProjectTask } from "@/store/slices/projectTasksSlice";
 import ProjectTaskEditModal from "@/components/ProjectTaskEditModal";
 import SubtasksTable from "@/components/SubtasksTable";
 import AddSubtaskModal from "@/components/AddSubtaskModal";
 import DependencyKanban from "@/components/DependencyKanban";
+import { fetchProjectStatuses } from "@/store/slices/projectStatusSlice";
+import { useLayout } from "@/contexts/LayoutContext";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -150,242 +153,369 @@ const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetD
 };
 
 // Comments Component
-const Comments = ({ comments, taskId }: { comments?: any[]; taskId?: string }) => {
-  const dispatch = useAppDispatch();
+const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: string; getTask?: () => void }) => {
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const dispatch = useAppDispatch();
 
   const [comment, setComment] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editedCommentText, setEditedCommentText] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [localComments, setLocalComments] = useState<any[]>(comments || []);
+  const textareaRef = useRef<any>(null);
+
+  // Mock data for mentions - replace with actual API calls if needed
+  const [mentionUsers, setMentionUsers] = useState<any[]>([]);
+  const [mentionTags, setMentionTags] = useState<any[]>([]);
+
+  const fetchMentionUsers = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      setMentionUsers(response.data.users || []);
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const fetchMentionTags = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/company_tags.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      setMentionTags(response.data || []);
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   useEffect(() => {
-    setLocalComments(comments || []);
-  }, [comments]);
+    fetchMentionUsers();
+    fetchMentionTags();
+  }, [])
+
+  const mentionData = mentionUsers.length > 0
+    ? mentionUsers.map((user: any) => ({
+      id: user.id?.toString() || user.user_id?.toString(),
+      display: user.full_name || user.name || "Unknown User",
+    }))
+    : [];
+
+  const tagData = mentionTags.length > 0
+    ? mentionTags.map((tag: any) => ({
+      id: tag.id?.toString(),
+      display: tag.name,
+    }))
+    : [];
 
   const handleAddComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!comment.trim()) {
-      toast.error("Comment cannot be empty");
+    if (e) e.preventDefault();
+    if (!comment?.trim()) {
+      toast.error("Comment cannot be empty", { duration: 1000 });
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append("comment[body]", comment.trim());
-      formData.append("comment[commentable_id]", taskId || "");
-      formData.append("comment[commentable_type]", "TaskManagement");
-      formData.append("comment[commentor_id]", currentUser?.id || "");
-      formData.append("comment[active]", "true");
+      const payload = {
+        comment: {
+          body: comment,
+          commentable_id: taskId,
+          commentable_type: "TaskManagement",
+          commentor_id: currentUser?.id,
+          active: true,
+        },
+      };
 
-      const response = await axios.post(
-        `https://${baseUrl}/comments.json`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.post(`https://${baseUrl}/comments.json`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      if (response.status === 201) {
-        setComment("");
-        toast.success("Comment added successfully");
-        if (taskId) {
-          // Fetch the complete task details to get all comments from server
-          const taskResponse = await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
-          // Update local comments with the fresh data from server
-          setLocalComments(taskResponse?.comments || []);
-        }
+      toast.success("Comment added successfully");
+      setComment("");
+      if (getTask) {
+        getTask();
+      } else if (taskId) {
+        await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error adding comment:", error);
       toast.error("Failed to add comment");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const handleEditComment = (cmt: any) => {
+  const handleEdit = (cmt: any) => {
     setEditingCommentId(cmt.id);
     setEditedCommentText(cmt.body);
   };
 
-  const handleSaveEdit = async () => {
+  const handleEditSave = async () => {
     if (!editedCommentText.trim()) {
       toast.error("Comment cannot be empty");
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append("comment[body]", editedCommentText.trim());
+      const payload = {
+        comment: {
+          body: editedCommentText,
+        },
+      };
 
-      const response = await axios.put(
-        `https://${baseUrl}/comments/${editingCommentId}.json`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.put(`https://${baseUrl}/comments/${editingCommentId}.json`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      if (response.status === 200) {
-        setLocalComments(
-          localComments.map((c) =>
-            c.id === editingCommentId ? { ...c, body: editedCommentText } : c
-          )
-        );
-        setEditingCommentId(null);
-        setEditedCommentText("");
-        toast.success("Comment updated successfully");
-        if (taskId) {
-          dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId }));
-        }
+      toast.success("Comment updated successfully");
+      setEditingCommentId(null);
+      setEditedCommentText("");
+      if (getTask) {
+        getTask();
+      } else if (taskId) {
+        await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
       }
-    } catch (error: any) {
-      console.error("Error editing comment:", error);
+    } catch (error) {
+      console.error("Error updating comment:", error);
       toast.error("Failed to update comment");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const handleDeleteComment = async (commentId: string) => {
-    if (!window.confirm("Are you sure you want to delete this comment?")) return;
-
-    setIsSubmitting(true);
+  const handleDelete = async (commentId: string) => {
     try {
-      const response = await axios.delete(
-        `https://${baseUrl}/comments/${commentId}.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.delete(`https://${baseUrl}/comments/${commentId}.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      if (response.status === 200) {
-        setLocalComments(localComments.filter((c) => c.id !== commentId));
-        toast.success("Comment deleted successfully");
-        if (taskId) {
-          dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId }));
-        }
+      toast.success("Comment deleted successfully");
+      if (getTask) {
+        getTask();
+      } else if (taskId) {
+        await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting comment:", error);
       toast.error("Failed to delete comment");
-    } finally {
-      setIsSubmitting(false);
     }
+  };
+
+  const handleCancel = () => {
+    setEditingCommentId(null);
+    setComment("");
+    setEditedCommentText("");
+  };
+
+  const mentionStyles = {
+    control: {
+      fontSize: 14,
+      backgroundColor: "transparent",
+      border: "none",
+      outline: "none",
+      padding: 0,
+      margin: 0,
+    },
+    highlighter: { overflow: "hidden" },
+    input: {
+      font: "inherit",
+      backgroundColor: "transparent",
+      border: "none",
+      padding: 0,
+      margin: 0,
+      outline: "none",
+    },
+    suggestions: {
+      list: {
+        backgroundColor: "white",
+        border: "1px solid #ccc",
+        fontSize: 14,
+        zIndex: 100,
+        maxHeight: "150px",
+        overflowY: "auto" as const,
+        borderRadius: "4px",
+      },
+      item: {
+        padding: "5px 10px",
+        borderBottom: "1px solid #eee",
+        cursor: "pointer",
+      },
+      itemFocused: {
+        backgroundColor: "#01569E",
+        color: "white",
+        fontWeight: "bold",
+      },
+    },
   };
 
   return (
-    <div className="text-[14px] flex flex-col gap-4 mt-4">
-      <div className="flex justify-start gap-5">
+    <div className="text-[14px] flex flex-col gap-2">
+      <div className="flex justify-start m-2 gap-5">
         <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
-          <span>{getInitials(currentUser?.firstname || "U")}</span>
+          <span>
+            {`${currentUser?.firstname?.charAt(0) || ""}${currentUser?.lastname?.charAt(0) || ""}`}
+          </span>
         </div>
-        <div className="w-full">
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Add comment here..."
-            className="w-full h-[70px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] rounded focus:outline-none resize-none"
-            disabled={isSubmitting}
+        <MentionsInput
+          inputRef={textareaRef}
+          value={comment}
+          onChange={(e, newValue) => setComment(newValue)}
+          className="mentions w-[95%] h-[70px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] focus:outline-none"
+          placeholder="Add comment here. Type @ to mention users. Type # to mention tags"
+          style={{
+            control: {
+              backgroundColor: "#F2F4F4",
+              fontSize: 14,
+              fontWeight: "normal",
+            },
+            highlighter: {
+              overflow: "hidden",
+            },
+            input: {
+              margin: 0,
+              padding: "8px",
+              outline: "none",
+            },
+            suggestions: {
+              list: {
+                backgroundColor: "white",
+                border: "1px solid #ccc",
+                fontSize: 14,
+                zIndex: 100,
+                position: "absolute",
+                bottom: "100%",
+                left: 0,
+                width: "200px",
+                maxHeight: "150px",
+                overflowY: "auto",
+                borderRadius: "4px",
+                marginBottom: "4px",
+              },
+              item: {
+                padding: "5px 10px",
+                borderBottom: "1px solid #eee",
+                cursor: "pointer",
+              },
+              itemFocused: {
+                backgroundColor: "#f5f5f5",
+              },
+            },
+          }}
+        >
+          <Mention
+            trigger="@"
+            data={mentionData}
+            markup="@[__display__](__id__)"
+            displayTransform={(id, display) => `@${display} `}
+            appendSpaceOnAdd
           />
-        </div>
+          <Mention
+            trigger="#"
+            data={tagData}
+            markup="#[__display__](__id__)"
+            displayTransform={(id, display) => `#${display} `}
+            appendSpaceOnAdd
+          />
+        </MentionsInput>
       </div>
 
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end">
         <button
+          type="submit"
+          className="bg-[#C72030] text-white h-[30px] px-3 cursor-pointer p-1 mr-2"
           onClick={handleAddComment}
-          className="bg-[#C72030] text-white px-4 py-2 rounded hover:bg-[#A01B29] transition disabled:opacity-50"
-          disabled={isSubmitting}
         >
-          {isSubmitting ? "Adding..." : "Add Comment"}
+          Add Comment
         </button>
         <button
-          onClick={() => setComment("")}
-          className="border-2 border-[#C72030] text-[#C72030] px-4 py-2 rounded hover:bg-[#C72030] hover:text-white transition"
-          disabled={isSubmitting}
+          className="border-2 border-[#C72030] h-[30px] cursor-pointer p-1 px-3"
+          onClick={handleCancel}
         >
           Cancel
         </button>
       </div>
 
-      {localComments && localComments.length > 0 ? (
-        <div className="space-y-4">
-          {localComments.map((cmt: any) => (
-            <div key={cmt?.id} className="flex justify-start gap-5 border-b pb-4">
-              <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5 flex-shrink-0">
-                <span>{getInitials(cmt?.commentor_full_name || "U")}</span>
-              </div>
-              <div className="flex-1">
-                <h4 className="font-bold text-sm">{cmt?.commentor_full_name || "Unknown"}</h4>
-                {editingCommentId === cmt?.id ? (
-                  <div className="flex flex-col gap-2 mt-2">
-                    <textarea
-                      value={editedCommentText}
-                      onChange={(e) => setEditedCommentText(e.target.value)}
-                      className="w-full h-[60px] bg-[#F2F4F4] p-2 border-2 border-[#DFDFDF] rounded focus:outline-none resize-none"
-                      disabled={isSubmitting}
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSaveEdit}
-                        className="bg-[#C72030] text-white px-3 py-1 rounded text-xs hover:bg-[#A01B29] transition disabled:opacity-50"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? "Saving..." : "Save"}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingCommentId(null);
-                          setEditedCommentText("");
-                        }}
-                        className="border-2 border-[#C72030] text-[#C72030] px-3 py-1 rounded text-xs hover:bg-[#C72030] hover:text-white transition"
-                        disabled={isSubmitting}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-700 mt-1">{cmt?.body || ""}</p>
-                )}
-                <div className="flex gap-2 text-xs text-gray-500 mt-2">
-                  <span>{formatToDDMMYYYY_AMPM(cmt?.created_at || "")}</span>
-                  {currentUser?.id === cmt?.commentor_id && !editingCommentId && (
-                    <>
-                      <span
-                        className="cursor-pointer text-blue-600 hover:underline"
-                        onClick={() => handleEditComment(cmt)}
-                      >
-                        Edit
-                      </span>
-                      <span
-                        className="cursor-pointer text-red-600 hover:underline"
-                        onClick={() => handleDeleteComment(cmt?.id)}
-                      >
-                        Delete
-                      </span>
-                    </>
-                  )}
+      {comments?.map((cmt: any) => {
+        const isEditing = editingCommentId === cmt.id;
+        return (
+          <div key={cmt.id} className="relative flex justify-start m-2 gap-5">
+            <div className="bg-[#01569E] h-[36px] w-[36px] rounded-full text-white text-center p-1.5">
+              <span>
+                {cmt?.commentor_full_name
+                  ?.split(" ")
+                  .map((n: string) => n.charAt(0))
+                  .join("")}
+              </span>
+            </div>
+            <div className="flex flex-col gap-2 w-full border-b-[2px] pb-3 border-[rgba(190, 190, 190, 1)]">
+              <h1 className="font-bold">{cmt.commentor_full_name}</h1>
+
+              {isEditing ? (
+                <MentionsInput
+                  value={editedCommentText}
+                  inputRef={(el: any) => {
+                    if (el) {
+                      const val = el.value;
+                      el.focus();
+                      el.setSelectionRange(val.length, val.length);
+                    }
+                  }}
+                  onChange={(e, newValue) => setEditedCommentText(newValue)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      setTimeout(() => {
+                        handleEditSave();
+                      }, 100);
+                    }
+                  }}
+                  onBlur={handleEditSave}
+                  className="mentions w-full bg-transparent p-0 m-0 border-none outline-none"
+                  style={mentionStyles}
+                >
+                  <Mention
+                    trigger="@"
+                    data={mentionData}
+                    markup="@[__display__](__id__)"
+                    displayTransform={(id, display) => `@${display} `}
+                    appendSpaceOnAdd
+                  />
+                  <Mention
+                    trigger="#"
+                    data={tagData}
+                    markup="#[__display__](__id__)"
+                    displayTransform={(id, display) => `#${display} `}
+                    appendSpaceOnAdd
+                  />
+                </MentionsInput>
+              ) : (
+                <div>
+                  {cmt.body
+                    .replace(/@\[(.*?)\]\(\d+\)/g, "@$1")
+                    .replace(/#\[(.*?)\]\(\d+\)/g, "#$1")}
                 </div>
+              )}
+
+              <div className="flex gap-2 text-[10px]">
+                <span>{formatToDDMMYYYY_AMPM(cmt.created_at)}</span>
+                <span className="cursor-pointer" onClick={() => handleEdit(cmt)}>
+                  Edit
+                </span>
+                <span className="cursor-pointer" onClick={() => handleDelete(cmt.id)}>
+                  Delete
+                </span>
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8 text-gray-500">No comments available</div>
-      )}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -393,13 +523,11 @@ const Comments = ({ comments, taskId }: { comments?: any[]; taskId?: string }) =
 // Attachments Component
 const Attachments = ({ attachments, taskId }: { attachments?: any[]; taskId?: string }) => {
   const dispatch = useAppDispatch();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
-
   const [files, setFiles] = useState<any[]>(attachments || []);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pendingFiles, setPendingFiles] = useState<any[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setFiles(attachments || []);
@@ -413,24 +541,12 @@ const Attachments = ({ attachments, taskId }: { attachments?: any[]; taskId?: st
     const selectedFiles = Array.from(event.target.files || []);
     if (!selectedFiles.length) return;
 
-    // Check file sizes (max 10MB per file)
     const oversizedFiles = selectedFiles.filter((file) => file.size > 10 * 1024 * 1024);
     if (oversizedFiles.length > 0) {
-      const fileNames = oversizedFiles.map((f) => f.name).join(", ");
+      const fileNames = oversizedFiles.map((file) => file.name).join(", ");
       toast.error(`File(s) too large: ${fileNames}. Max allowed size is 10MB.`);
       return;
     }
-
-    // Show pending files instantly on UI
-    const newPendingFiles = selectedFiles.map((file, idx) => ({
-      id: `pending-${Date.now()}-${idx}`,
-      file_name: file.name,
-      document_file_name: file.name,
-      created_at: new Date().toISOString(),
-      isPending: true,
-      size: file.size,
-    }));
-    setPendingFiles([...pendingFiles, ...newPendingFiles]);
 
     setIsSubmitting(true);
     try {
@@ -439,255 +555,135 @@ const Attachments = ({ attachments, taskId }: { attachments?: any[]; taskId?: st
         formData.append("task_management[attachments][]", file);
       });
 
-      const response = await axios.put(
-        `https://${baseUrl}/task_managements/${taskId}.json`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.put(`https://${baseUrl}/task_managements/${taskId}.json`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      if (response.status === 201) {
-        toast.success("File(s) uploaded successfully");
-        // Clear pending files after successful upload
-        setPendingFiles([]);
-        if (taskId) {
-          const taskResponse = await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
-          setFiles(taskResponse?.attachments || []);
-        }
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
+      toast.success("File(s) uploaded successfully");
+      if (taskId) {
+        const taskResponse = await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
+        setFiles(taskResponse?.attachments || []);
+      }
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
     } catch (error: any) {
-      console.error("Error uploading file:", error);
-      toast.error(error.response?.data?.message || "Failed to upload file");
-      // Clear pending files on error
-      setPendingFiles([]);
+      console.error("File upload failed:", error);
+      toast.error("Failed to upload file.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleRemoveFile = async (fileId: string, fileName: string) => {
-    if (!window.confirm(`Are you sure you want to delete ${fileName}?`)) return;
-
+  const handleDeleteFile = async (fileId: string) => {
     setIsSubmitting(true);
     try {
-      const response = await axios.delete(
-        `https://${baseUrl}/task_managements/${taskId}/remove_attachemnts/${fileId}.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.delete(`https://${baseUrl}/task_managements/${taskId}/remove_attachemnts/${fileId}.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      if (response.status === 200) {
-        setFiles(files.filter((f) => f.id !== fileId));
-        toast.success("File removed successfully");
-        if (taskId) {
-          dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId }));
-        }
+      toast.success("File removed successfully.");
+      setFiles(files.filter((f) => f.id !== fileId));
+      if (taskId) {
+        const taskResponse = await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
+        setFiles(taskResponse?.attachments || []);
       }
     } catch (error: any) {
-      console.error("Error deleting file:", error);
-      toast.error("Failed to delete file");
+      console.error("File deletion failed:", error);
+      toast.error("Failed to delete file.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const getFileIcon = (fileName: string) => {
-    const ext = fileName.split(".").pop()?.toLowerCase();
-    if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext || "")) return "🖼️";
-    if (ext === "pdf") return "📄";
-    if (["doc", "docx"].includes(ext || "")) return "📝";
-    if (["xls", "xlsx"].includes(ext || "")) return "📊";
-    return "📎";
-  };
-
-  const getFilePreview = (file: any) => {
-    const fileName = file.file_name || file.document_file_name || "";
-    const ext = fileName.split(".").pop()?.toLowerCase();
-    const imageExts = ["jpg", "jpeg", "png", "gif", "bmp", "webp"];
-
-    if (imageExts.includes(ext || "")) {
-      return {
-        type: "image",
-        icon: "🖼️",
-      };
-    } else if (ext === "pdf") {
-      return {
-        type: "pdf",
-        icon: "📄",
-      };
-    } else if (["doc", "docx"].includes(ext || "")) {
-      return {
-        type: "document",
-        icon: "📝",
-      };
-    } else if (["xls", "xlsx"].includes(ext || "")) {
-      return {
-        type: "spreadsheet",
-        icon: "📊",
-      };
-    }
-    return {
-      type: "file",
-      icon: "📎",
-    };
-  };
-
-  const displayFiles = [...files, ...pendingFiles];
-
   return (
-    <div className="text-[14px] flex flex-col gap-4 mt-4">
-      <button
-        onClick={handleAttachFile}
-        className="bg-[#C72030] text-white px-4 py-2 rounded hover:bg-[#A01B29] transition w-fit disabled:opacity-50"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? "Uploading..." : "Attach File"} <span className="text-xs">(Max 10 MB)</span>
-      </button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        onChange={handleFileChange}
-        className="hidden"
-        disabled={isSubmitting}
-      />
+    <div className="flex flex-col gap-3 p-5">
+      {files.length > 0 ? (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 mt-4">
+            {files.map((file, index) => {
+              const fileName = file.document_file_name || file.file_name;
+              const fileUrl = file.document_url || file.file_url;
+              const fileExt = fileName?.split(".").pop()?.toLowerCase();
+              const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(fileExt || "");
+              const isPdf = fileExt === "pdf";
+              const isWord = ["doc", "docx"].includes(fileExt || "");
+              const isExcel = ["xls", "xlsx"].includes(fileExt || "");
 
-      {displayFiles && displayFiles.length > 0 ? (
-        <div className="space-y-3">
-          {/* Image Preview Section */}
-          {displayFiles.some((f) => getFilePreview(f).type === "image") && (
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">Image Attachments</h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {displayFiles
-                  .filter((f) => getFilePreview(f).type === "image")
-                  .map((file: any) => (
-                    <div
-                      key={file.id}
-                      className={`relative group rounded-lg overflow-hidden border-2 border-gray-200 ${file.isPending ? "opacity-60" : ""
-                        }`}
-                    >
-                      <img
-                        src={file.document_url || file.file_url || ""}
-                        alt={file.file_name || file.document_file_name || ""}
-                        className="w-full h-24 object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f0f0f0' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%23999' font-size='14'%3ENo Preview%3C/text%3E%3C/svg%3E";
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                        <a
-                          href={file.document_url || file.file_url || ""}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs transition"
-                          title="View"
-                        >
-                          👁️
-                        </a>
-                        {!file.isPending && (
-                          <button
-                            onClick={() =>
-                              handleRemoveFile(
-                                file.id,
-                                file.file_name || file.document_file_name || ""
-                              )
-                            }
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs transition disabled:opacity-50"
-                            disabled={isSubmitting}
-                            title="Delete"
-                          >
-                            🗑️
-                          </button>
-                        )}
-                        {file.isPending && (
-                          <span className="text-white text-xs font-semibold">Uploading...</span>
-                        )}
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white text-xs p-1 truncate">
-                        {file.file_name || file.document_file_name || ""}
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
+              return (
+                <div
+                  key={index}
+                  className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white relative"
+                >
+                  <Trash2
+                    size={20}
+                    color="#C72030"
+                    className="absolute top-2 right-2 cursor-pointer hover:opacity-70 transition"
+                    onClick={() => handleDeleteFile(file.id)}
+                  />
+                  <div className="w-full h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
+                    {isImage ? (
+                      <img src={fileUrl} alt={fileName} className="object-contain h-full" />
+                    ) : isPdf ? (
+                      <span className="text-red-600 font-bold">PDF</span>
+                    ) : isWord ? (
+                      <span className="text-blue-600 font-bold">DOC</span>
+                    ) : isExcel ? (
+                      <span className="text-green-600 font-bold">XLS</span>
+                    ) : (
+                      <span className="text-gray-500 font-bold">FILE</span>
+                    )}
+                  </div>
 
-          {/* Other Files Section */}
-          {displayFiles.some((f) => getFilePreview(f).type !== "image") && (
-            <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                {displayFiles.some((f) => getFilePreview(f).type === "image") ? "Other Attachments" : "Attachments"}
-              </h4>
-              <div className="space-y-2">
-                {displayFiles
-                  .filter((f) => getFilePreview(f).type !== "image")
-                  .map((file: any) => {
-                    const preview = getFilePreview(file);
-                    return (
-                      <div
-                        key={file.id}
-                        className={`flex items-center justify-between bg-gray-50 p-3 rounded border border-gray-200 ${file.isPending ? "opacity-60" : ""
-                          }`}
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <span className="text-2xl flex-shrink-0">{preview.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <a
-                              href={file.document_url || file.file_url || ""}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-medium text-sm text-blue-600 hover:underline truncate block"
-                              title={file.file_name || file.document_file_name || ""}
-                            >
-                              {file.file_name || file.document_file_name || "Unknown File"}
-                            </a>
-                            <p className="text-xs text-gray-500">
-                              {file.created_at
-                                ? formatToDDMMYYYY_AMPM(file.created_at)
-                                : "Just now"}
-                              {file.isPending && " • Uploading..."}
-                            </p>
-                          </div>
-                        </div>
-                        {!file.isPending && (
-                          <button
-                            onClick={() =>
-                              handleRemoveFile(
-                                file.id,
-                                file.file_name || file.document_file_name || ""
-                              )
-                            }
-                            className="text-red-600 hover:text-red-800 transition flex-shrink-0 ml-2 disabled:opacity-50"
-                            disabled={isSubmitting}
-                            title="Delete file"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          )}
-        </div>
+                  <a
+                    href={fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={fileName}
+                    className="text-xs text-blue-700 hover:underline truncate w-full"
+                    title={fileName}
+                  >
+                    {fileName}
+                  </a>
+                </div>
+              );
+            })}
+          </div>
+
+          <button
+            className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50"
+            onClick={handleAttachFile}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Uploading..." : "Attach Files"} <span className="text-[10px]">( Max 10 MB )</span>
+          </button>
+        </>
       ) : (
-        <div className="text-center py-8 text-gray-500">
-          <p className="mb-2">No attachments available</p>
-          <p className="text-xs">Drop or attach relevant documents here</p>
+        <div className="text-[14px] mt-2">
+          <span>No Documents Attached</span>
+          <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
+          <button
+            className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50"
+            onClick={handleAttachFile}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Uploading..." : "Attach Files"} <span className="text-[10px]">( Max 10 MB )</span>
+          </button>
         </div>
       )}
+
+      <input
+        type="file"
+        multiple
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+        disabled={isSubmitting}
+      />
     </div>
   );
 };
@@ -695,7 +691,6 @@ const Attachments = ({ attachments, taskId }: { attachments?: any[]; taskId?: st
 // Activity Log Component
 const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
   const formatTimestamp = (dateString: string) => {
-    if (!dateString) return "";
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
     const month = date.toLocaleString("default", { month: "short" });
@@ -704,33 +699,85 @@ const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
     const minutes = String(date.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12 || 12;
-    return `${day} ${month} ${year} ${String(hours).padStart(2, "0")}:${minutes} ${ampm}`;
+    const hoursStr = String(hours).padStart(2, "0");
+    return `${day} ${month} ${year} ${hoursStr}:${minutes} ${ampm}`;
   };
 
   const getActionFromStatus = (status: string) => {
-    if (!status) return "updated the task";
-    return `marked as ${status}`;
+    switch (status) {
+      case "open":
+        return "opened";
+      case "on_hold":
+        return "put on hold";
+      case "in_progress":
+        return "started progress on";
+      case "completed":
+        return "completed";
+      default:
+        return "updated to " + status.replace(/_/g, " ");
+    }
   };
+
+  const calculateDuration = (start: string, end: string) => {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diffMs = Math.abs(endDate.getTime() - startDate.getTime());
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+    return `${hours} hr ${minutes} mins ${seconds} sec`;
+  };
+
+  if (!taskStatusLogs || taskStatusLogs.length === 0) {
+    return (
+      <div className="text-center py-8 w-full text-gray-500">
+        No activity logs available
+      </div>
+    );
+  }
+
+  const activities = taskStatusLogs.map((log: any) => ({
+    id: log.id,
+    person: log.created_by_name,
+    action: getActionFromStatus(log.status),
+    item: "task",
+    timestamp: formatTimestamp(log.created_at),
+    rawTimestamp: log.created_at,
+  }));
+
+  const sortedActivities = [...activities].sort(
+    (a, b) => new Date(a.rawTimestamp).getTime() - new Date(b.rawTimestamp).getTime()
+  );
 
   return (
     <div className="overflow-x-auto w-full bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg mt-3 px-4">
       <div className="flex items-center p-2 gap-5 text-[12px] my-3 overflow-x-auto">
-        {taskStatusLogs && taskStatusLogs.length > 0 ? (
-          taskStatusLogs.map((log: any, index: number) => (
-            <div key={index} className="flex flex-col gap-2 min-w-[150px]">
+        {sortedActivities.map((activity: any, index: number) => (
+          <Fragment key={activity.id}>
+            <div className="flex flex-col gap-2 min-w-[150px]">
               <span>
                 <i>
-                  {log.created_by_name || "Unknown"} <span className="text-[#C72030]">{getActionFromStatus(log.status)}</span> task
+                  {activity.person} <span className="text-[#C72030]">{activity.action}</span>{" "}
+                  {activity.item}
                 </i>
               </span>
               <span>
-                <i>{formatTimestamp(log.created_at)}</i>
+                <i>{activity.timestamp}</i>
               </span>
             </div>
-          ))
-        ) : (
-          <div className="text-center py-8 w-full text-gray-500">No activity logs available</div>
-        )}
+            {index < sortedActivities.length - 1 && (
+              <div className="flex flex-col items-center min-w-[100px]">
+                <h1 className="text-[12px] text-center">
+                  {calculateDuration(
+                    activity.rawTimestamp,
+                    sortedActivities[index + 1].rawTimestamp
+                  )}
+                </h1>
+                <img src="/arrow.png" alt="arrow" className="mt-1" />
+              </div>
+            )}
+          </Fragment>
+        ))}
       </div>
     </div>
   );
@@ -739,7 +786,6 @@ const ActivityLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
 // Workflow Status Component
 const WorkflowStatusLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
   const formatTimestamp = (dateString: string) => {
-    if (!dateString) return "";
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
     const month = date.toLocaleString("default", { month: "short" });
@@ -748,26 +794,76 @@ const WorkflowStatusLog = ({ taskStatusLogs }: { taskStatusLogs?: any[] }) => {
     const minutes = String(date.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12 || 12;
-    return `${day} ${month} ${year} ${String(hours).padStart(2, "0")}:${minutes} ${ampm}`;
+    const hoursStr = String(hours).padStart(2, "0");
+    return `${day} ${month} ${year} ${hoursStr}:${minutes} ${ampm}`;
   };
 
+  const getActionFromStatus = (status: string) => {
+    if (!status) return "updated the task";
+    return `marked as ${status}`;
+  };
+
+  const calculateDuration = (start: string, end: string) => {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diffMs = Math.abs(endDate.getTime() - startDate.getTime());
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+    return `${hours} hr ${minutes} mins ${seconds} sec`;
+  };
+
+  if (!taskStatusLogs || taskStatusLogs.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        No workflow status logs available
+      </div>
+    );
+  }
+
+  const activities = taskStatusLogs.map((log: any) => ({
+    id: log.id,
+    person: log.created_by_name,
+    action: getActionFromStatus(log.status),
+    item: "task",
+    timestamp: formatTimestamp(log.created_at),
+    rawTimestamp: log.created_at,
+  }));
+
+  const sortedActivities = [...activities].sort(
+    (a, b) => new Date(a.rawTimestamp).getTime() - new Date(b.rawTimestamp).getTime()
+  );
+
   return (
-    <div className="flex flex-col gap-4">
-      {taskStatusLogs && taskStatusLogs.length > 0 ? (
-        <div className="space-y-3">
-          {taskStatusLogs.map((log: any, idx: number) => (
-            <div key={idx} className="flex items-start gap-4 p-3 bg-gray-50 rounded border border-gray-200">
-              <div className="flex-1">
-                <p className="font-medium text-sm">{log.workflow_status || "Unknown Status"}</p>
-                <p className="text-xs text-gray-600 mt-1">Changed by: {log.created_by_name || "Unknown"}</p>
-                <p className="text-xs text-gray-500 mt-1">{formatTimestamp(log.created_at)}</p>
-              </div>
+    <div className="overflow-x-auto w-full bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg mt-3 px-4">
+      <div className="flex items-center p-2 gap-5 text-[12px] my-3 overflow-x-auto">
+        {sortedActivities.map((activity: any, index: number) => (
+          <Fragment key={activity.id}>
+            <div className="flex flex-col gap-2 min-w-[150px]">
+              <span>
+                <i>
+                  {activity.person} <span className="text-[#C72030]">{activity.action}</span>{" "}
+                  {activity.item}
+                </i>
+              </span>
+              <span>
+                <i>{activity.timestamp}</i>
+              </span>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8 text-gray-500">No workflow status logs available</div>
-      )}
+            {index < sortedActivities.length - 1 && (
+              <div className="flex flex-col items-center min-w-[100px]">
+                <h1 className="text-[12px] text-center">
+                  {calculateDuration(
+                    activity.rawTimestamp,
+                    sortedActivities[index + 1].rawTimestamp
+                  )}
+                </h1>
+                <img src="/arrow.png" alt="arrow" className="mt-1" />
+              </div>
+            )}
+          </Fragment>
+        ))}
+      </div>
     </div>
   );
 };
@@ -779,9 +875,13 @@ interface TaskDetails {
   created_by?: string;
   created_at?: string;
   status?: string;
-  responsible_person_name?: string;
+  parent_task_title?: string;
+  responsible_person?: {
+    name?: string;
+  };
   priority?: string;
   expected_start_date?: string;
+  parent_id?: number;
   target_date?: string;
   allocation_date?: string;
   estimated_hour?: number;
@@ -794,6 +894,7 @@ interface TaskDetails {
   workflow_status?: string;
   predecessor_task_ids?: number[];
   successor_task_ids?: number[];
+  project_status_id?: string;
 }
 
 export interface Subtask {
@@ -855,6 +956,12 @@ const mapDisplayToApiStatus = (displayStatus) => {
 };
 
 export const ProjectTaskDetails = () => {
+  const { setCurrentSection } = useLayout();
+
+  useEffect(() => {
+    setCurrentSection("Project Task");
+  }, [setCurrentSection]);
+
   const navigate = useNavigate();
   const { id, mid, taskId } = useParams<{ id: string; mid: string; taskId: string }>();
   const dispatch = useAppDispatch();
@@ -874,9 +981,43 @@ export const ProjectTaskDetails = () => {
   const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
   const [dependentTasks, setDependentTasks] = useState<any[]>([]);
   const [addingTodo, setAddingTodo] = useState(false);
+  const [statuses, setStatuses] = useState([])
+
+  console.log(statuses)
+
+  console.log(taskDetails)
 
   const firstContentRef = useRef<HTMLDivElement>(null);
   const secondContentRef = useRef<HTMLDivElement>(null);
+
+  const getStatuses = async () => {
+    try {
+      const response = await dispatch(fetchProjectStatuses()).unwrap();
+      setStatuses(response)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    getStatuses()
+  }, [])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(false);
+      }
+    };
+
+    if (openDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [openDropdown]);
 
   const fetchDependentTasks = async (taskData: TaskDetails) => {
     try {
@@ -990,9 +1131,20 @@ export const ProjectTaskDetails = () => {
         },
       })
     ).unwrap();
+    fetchData();
     toast.dismiss();
     toast.success("Status updated successfully");
   };
+
+  const handleWorkflowChange = async (newStatusId: string) => {
+    try {
+      await dispatch(editProjectTask({ token, baseUrl, id: String(taskId), data: { project_status_id: newStatusId } })).unwrap();
+      fetchData();
+      toast.success("Task status changed successfully");
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const handleOpenEditModal = () => {
     setOpenEditModal(true);
@@ -1031,6 +1183,12 @@ export const ProjectTaskDetails = () => {
       }
     }
   };
+
+  useEffect(() => {
+    if (activeTab === 'subtasks' && taskDetails?.parent_id) {
+      setActiveTab('dependency');
+    }
+  }, [activeTab, taskDetails?.parent_id]);
 
   return (
     <div className="my-4 m-8">
@@ -1124,16 +1282,21 @@ export const ProjectTaskDetails = () => {
               onClick={() => setOpenEditModal(true)}
             >
               <PencilIcon size={15} />
-              <span>Edit Task</span>
+              {taskDetails.parent_id ? 'Edit Subtask' : 'Edit Task'}
             </span>
-            <span className="h-6 w-[1px] border border-gray-300"></span>
-            <span
-              className="flex items-center gap-1 cursor-pointer"
-              onClick={() => setOpenSubTaskModal(true)}
-            >
-              <Plus size={15} />
-              <span>Add Subtask</span>
-            </span>
+            {!taskDetails.parent_id && (
+              <>
+                <span className="h-6 w-[1px] border border-gray-300"></span>
+                <span
+                  className="flex items-center gap-1 cursor-pointer"
+                  onClick={() => setOpenSubTaskModal(true)}
+                >
+                  <Plus size={15} />
+                  <span>Add Subtask</span>
+                </span>
+              </>
+            )}
+
           </div>
         </div>
         <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
@@ -1173,7 +1336,7 @@ export const ProjectTaskDetails = () => {
           <div className="flex items-center gap-6 mt-4 flex-wrap text-[12px]">
             <div className="flex items-center justify-start gap-3">
               <div className="text-right font-[500]">Responsible Person:</div>
-              <div className="text-left">{taskDetails.responsible_person_name || "-"}</div>
+              <div className="text-left">{taskDetails.responsible_person.name || "-"}</div>
             </div>
             <div className="flex items-center justify-start gap-3">
               <div className="text-right font-[500]">Priority:</div>
@@ -1202,7 +1365,7 @@ export const ProjectTaskDetails = () => {
                   <p className="text-sm font-medium text-gray-600">Responsible Person:</p>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-gray-900">{taskDetails.responsible_person_name || "-"}</p>
+                  <p className="text-sm text-gray-900">{taskDetails?.responsible_person?.name || "-"}</p>
                 </div>
               </div>
 
@@ -1225,11 +1388,19 @@ export const ProjectTaskDetails = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="min-w-[200px]">
+                {/* <div className="min-w-[200px]">
                   <p className="text-sm font-medium text-gray-600">Milestone:</p>
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-900">{taskDetails?.milestone?.title || "-"}</p>
+                </div> */}
+
+
+                <div className="min-w-[200px]">
+                  <p className="text-sm font-medium text-gray-600">{taskDetails.parent_id ? 'Task' : 'MileStones'}:</p>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-900">{taskDetails.parent_id ? taskDetails.parent_task_title : taskDetails.milestone?.title}</p>
                 </div>
               </div>
 
@@ -1319,15 +1490,23 @@ export const ProjectTaskDetails = () => {
                   <p className="text-sm font-medium text-gray-600">Workflow Status:</p>
                 </div>
                 <div className="flex-1">
-                  <Select defaultValue={taskDetails.workflow_status?.toLowerCase()}>
+                  <Select
+                    value={String(taskDetails.project_status_id) || "1"}
+                    onValueChange={(value) =>
+                      handleWorkflowChange(value)
+                    }
+                  >
                     <SelectTrigger className="w-[180px] h-9 bg-[#C72030] text-white border-none">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="on_hold">On Hold</SelectItem>
+                      {
+                        statuses.map((status: any) => (
+                          <SelectItem key={status.id} value={String(status.id)}>
+                            {status.status}
+                          </SelectItem>
+                        ))
+                      }
                     </SelectContent>
                   </Select>
                 </div>
@@ -1343,31 +1522,33 @@ export const ProjectTaskDetails = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
         <div className="border-b border-gray-200">
           <div className="flex overflow-x-auto">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === tab.id
-                  ? "border-[#C72030] text-[#C72030]"
-                  : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-                  }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+            {tabs
+              .filter((tabName) => !(tabName.label === 'Subtasks' && taskDetails?.parent_id))
+              .map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-6 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === tab.id
+                    ? "border-[#C72030] text-[#C72030]"
+                    : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+                    }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
           </div>
         </div>
 
         <div className="px-6 pb-6">
           {/* Subtasks Tab */}
-          {activeTab === "subtasks" && (
+          {activeTab === "subtasks" && !taskDetails?.parent_id && (
             <SubtasksTable subtasks={subtasks} fetchData={fetchData} />
           )}
 
           {/* Dependency Tab */}
           {activeTab === "dependency" && (
             <DependencyKanban
-              taskId={taskId}
+              currentTask={taskDetails}
               dependencies={dependentTasks}
               onDependenciesChange={fetchData}
             />

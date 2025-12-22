@@ -8,32 +8,21 @@ import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, X } from 'lucide-react';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 interface CircleOption { id: string; name: string; }
 interface UserOption { id: string; name: string; circle_id?: string | number | null; email?: string | null; }
 
 // Helper: fetch JSON using ONLY the token from URL (no localStorage fallback)
-async function authedGet(url: string, token: string) {
-    if (!token) throw new Error('Missing token');
-    const res = await fetch(url, { cache: 'no-store', headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) throw new Error(`Request failed (${res.status})`);
-    return res.json();
+async function authedGet(url: string) {
+    const response = await axios.get(url);
+    return response.data;
 }
 
 // Helper: POST JSON using ONLY the token from URL (no localStorage fallback)
-async function authedPost(url: string, body: any, token: string) {
-    if (!token) throw new Error('Missing token');
-    const res = await fetch(url, {
-        method: 'POST',
-        cache: 'no-store',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error(`Request failed (${res.status})`);
-    return res.json();
+async function authedPost(url: string, body: any) {
+    const response = await axios.post(url, body);
+    return response.data;
 }
 
 const MobileLMCPage: React.FC = () => {
@@ -96,7 +85,7 @@ const MobileLMCPage: React.FC = () => {
 
     // Static company id for circles API
     const STATIC_COMPANY_ID = '145';
-
+console.log("tokennnn:",authToken)
     // Load circles using static company id
     const loadCircles = useCallback(async () => {
         const companyId = STATIC_COMPANY_ID;
@@ -107,7 +96,8 @@ const MobileLMCPage: React.FC = () => {
                 return;
             }
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
-            const data = await authedGet(`https://${host}/pms/users/get_circles.json?company_id=${encodeURIComponent(companyId)}`, authToken);
+            console.log("host:", host);
+            const data = await authedGet(`https://${host}/pms/users/get_circles.json?token=${authToken}&company_id=${encodeURIComponent(companyId)}`);
             let list: CircleOption[] = [];
             if (Array.isArray(data)) list = data.map((c: any) => ({ id: String(c.id || c.circle_id || c.name), name: c.circle_name || c.name || c.circle || `Circle ${c.id}` }));
             else if (Array.isArray(data?.circles)) list = data.circles.map((c: any) => ({ id: String(c.id || c.circle_id || c.name), name: c.circle_name || c.name || c.circle || `Circle ${c.id}` }));
@@ -125,8 +115,8 @@ const MobileLMCPage: React.FC = () => {
         try {
             setMappingLoading(true);
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
-            const url = `https://${host}/pms/users/get_lmc_manager.json?user_id=${encodeURIComponent(userId)}`;
-            const resp = await authedGet(url, authToken);
+            const url = `https://${host}/pms/users/get_lmc_manager.json?token=${authToken}&user_id=${encodeURIComponent(userId)}`;
+            const resp = await authedGet(url);
             const data = resp?.data;
             if (resp?.success && data && (data.lmc_manager_id !== undefined && data.lmc_manager_id !== null)) {
                 const lmId = String(data.lmc_manager_id);
@@ -165,10 +155,10 @@ const MobileLMCPage: React.FC = () => {
         const params: string[] = [`q[id_eq]=${encodeURIComponent(id)}`, 'q[employee_type_cont]=internal'];
         if (restrictByCircle && selectedCircle) params.push(`q[lock_user_permissions_circle_id_eq]=${encodeURIComponent(selectedCircle)}`);
         if (companyId) params.push(`company_id=${encodeURIComponent(companyId)}`);
-        const url = `https://${host}/pms/users/company_wise_users.json?${params.join('&')}`;
+        const url = `https://${host}/pms/users/company_wise_users.json?token=${authToken}&${params.join('&')}`;
         let match: any = null;
         try {
-            const data = await authedGet(url, authToken);
+            const data = await authedGet(url);
             const raw = Array.isArray(data?.users) ? data.users : (Array.isArray(data) ? data : []);
             match = raw.find((u: any) => String(u.id) === String(id));
         } catch { /* noop */ }
@@ -205,8 +195,8 @@ const MobileLMCPage: React.FC = () => {
             mappedCircleIdRef.current = String(id);
             const companyId = STATIC_COMPANY_ID;
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
-            const url = `https://${host}/pms/users/get_circles.json?company_id=${encodeURIComponent(companyId)}`;
-            const data = await authedGet(url, authToken);
+            const url = `https://${host}/pms/users/get_circles.json?token=${authToken}&company_id=${encodeURIComponent(companyId)}`;
+            const data = await authedGet(url);
             const list = Array.isArray(data?.circles) ? data.circles : (Array.isArray(data) ? data : []);
             const found = list.find((c: any) => String(c.id || c.circle_id || c.name) === String(id));
             if (found) {
@@ -235,13 +225,13 @@ const MobileLMCPage: React.FC = () => {
             if (append) setUsersAppendLoading(true);
             else setUsersLoading(true);
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
-            const base = `https://${host}/pms/users/company_wise_users.json?q[employee_type_cont]=internal`;
+            const base = `https://${host}/pms/users/company_wise_users.json?token=${authToken}&q[employee_type_cont]=internal`;
             const params: string[] = [];
             if (restrictByCircle && circleId) params.push(`q[lock_user_permissions_circle_id_eq]=${encodeURIComponent(circleId)}`);
             if (page && page > 1) params.push(`page=${page}`);
             if (search && search.trim()) params.push(`q[email_or_mobile_cont]=${encodeURIComponent(search.trim())}`);
             const url = params.length ? `${base}&${params.join('&')}` : base;
-            const data = await authedGet(url, authToken).catch((e) => {
+            const data = await authedGet(url).catch((e) => {
                 if (controller.signal.aborted) return null;
                 throw e;
             });
@@ -522,9 +512,9 @@ const MobileLMCPage: React.FC = () => {
             if (!urlUserId) { toast.error('Missing user_id in URL'); return; }
             setSubmitLoading(true);
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
-            const url = `https://${host}/pms/users/create_lmc_manager.json`;
+            const url = `https://${host}/pms/users/create_lmc_manager.json?token=${authToken}`;
             const payload = { user_id: Number(urlUserId), lmc_manager_id: Number(selectedUser) };
-            const resp = await authedPost(url, payload, authToken);
+            const resp = await authedPost(url, payload);
             // Determine if this was an update or create based on previous state
             const wasUpdate = hasExistingMapping;
             if (resp?.success) {

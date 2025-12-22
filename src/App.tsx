@@ -4,10 +4,11 @@ import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { Toaster as SonnerToaster, toast } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
 import { PermissionsProvider } from "./contexts/PermissionsContext";
 import { EnhancedSelectProvider } from "./providers/EnhancedSelectProvider";
@@ -330,6 +331,8 @@ import { CreateRosterTemplateDashboard } from "./pages/setup/CreateRosterTemplat
 
 // Import Employee pages
 import { EmployeesDashboard } from "./pages/setup/EmployeesDashboard";
+import { EmployeeDashboard } from "./pages/EmployeeDashboard";
+import { EmployeeCalendarPage } from "./pages/EmployeeCalendarPage";
 import { AddEmployeeDashboard } from "./pages/setup/AddEmployeeDashboard";
 import { EditEmployeePage } from "./pages/setup/EditEmployeePage";
 
@@ -830,9 +833,17 @@ import EmployeeBookingList from "./pages/EmployeeBookingList";
 import { EmployeeAddBookingPage } from "./pages/EmployeeAddBookingPage";
 import { EmployeeFnb } from "./pages/EmployeeFnb";
 import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
-import { VisitorFormPageEmployee } from "./pages/VisitorFormPageEmployee";
 import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
 import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
+import ParkingBookingListEmployee from "./pages/ParkingBookingListEmployee";
+import ParkingBookingAddEmployee from "./pages/ParkingBookingAddEmployee";
+import ProfileDetailsPage from "./pages/ProfileDetailsPage";
+import PlaceFnbOrder from "./pages/PlaceFnbOrder";
+import { SpaceManagementBookingsDashboardEmployee } from "./pages/SpaceManagementBookingsDashboardEmployee";
+import { SpaceManagementBookingDetailsPage } from "./pages/SpaceManagementBookingDetailsPage";
+import SpaceManagementBookingAddEmployee from "./pages/SpaceManagementBookingAddEmployee";
+import EmployeeWallet from "./pages/EmployeeWallet";
+import { useWebSocket } from "./hooks/useWebSocket";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -845,6 +856,13 @@ function App() {
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
   useRouteLogger();
+
+  const navigate = useNavigate()
+
+  const { manager: webSocketManager, connect } = useWebSocket();
+  const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
+  const currentUser = JSON.parse(localStorage.getItem('user'));
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Initialize global MUI Select search enhancer
   useEffect(() => {
@@ -896,6 +914,69 @@ function App() {
 
     fetchCurrency();
   }, [baseUrl, token, selectedSite?.id, dispatch]);
+
+  // useEffect(() => {
+  //   console.log('🔌 WebSocket connection effect running');
+
+  //   if (token) {
+  //     console.log('✅ Token available, connecting...');
+  //     connect(token, socketUrl);
+  //   } else {
+  //     console.error('❌ No token available for WebSocket connection');
+  //   }
+
+  //   // return () => {
+  //   //   console.log('🧹 Cleaning up WebSocket subscriptions');
+  //   // };
+  // }, [token, connect]);
+
+  // useEffect(() => {
+  //   const subscriptionTimer = setTimeout(() => {
+  //     const sub = webSocketManager.subscribeToUserNotifications({
+  //       onConnected: () => {
+  //         console.log('🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!');
+  //         setIsSubscribed(true);
+  //         toast.success('Real-time connection established!', { duration: 2000 });
+  //       },
+  //       onMessageNotification: (message) => {
+  //         if (message.user_id === currentUser.id) {
+  //           return;
+  //         }
+
+  //         if (!('Notification' in window)) {
+  //           toast.error('Not supported');
+  //           return;
+  //         }
+
+  //         const sender = message?.user?.firstname + ' ' + message?.user?.lastname;
+
+  //         Notification.requestPermission().then((permission) => {
+  //           if (permission === 'granted') {
+  //             const notification = new Notification(sender, {
+  //               body: message.body,
+  //             });
+
+  //             notification.onclick = () => {
+  //               window.focus();
+  //               navigate(`/channels/messages/${message.conversation_id}`);
+  //             };
+  //           }
+  //         });
+  //       },
+  //       onDisconnected: () => {
+  //         console.log('❌ Chat subscription disconnected');
+  //         setIsSubscribed(false);
+  //         toast.error('Real-time chat disconnected');
+  //       },
+  //     });
+  //     console.log('📋 Subscription object:', sub);
+  //   }, 2000); // Wait 2 seconds for connection to establish
+
+  //   return () => {
+  //     console.log('⏰ Clearing subscription timer');
+  //     clearTimeout(subscriptionTimer);
+  //   };
+  // }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
 
   return (
     <>
@@ -952,7 +1033,6 @@ function App() {
                     path="settings/account/lock-module"
                     element={<LockModuleList />}
                   />
-
 
                   {/* <Route
                       path="settings/account/lock-module/view/:id"
@@ -1138,7 +1218,6 @@ function App() {
                   }
                 />
 
-
                 <Route
                   path="/bookings"
                   element={
@@ -1214,10 +1293,63 @@ function App() {
                   />
 
                   <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <ProfileDetailsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/employee-wallet"
+                    element={
+                      <ProtectedRoute>
+                        <EmployeeWallet />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/parking"
+                    element={
+                      <ProtectedRoute>
+                        <ParkingBookingListEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/parking-booking-employee"
+                    element={
+                      <ProtectedRoute>
+                        <ParkingBookingListEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/parking-booking-employee/add"
+                    element={
+                      <ProtectedRoute>
+                        <ParkingBookingAddEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
                     path="/employee/fnb"
                     element={
                       <ProtectedRoute>
                         <EmployeeFnb needPadding={true} />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/employee/fnb/add"
+                    element={
+                      <ProtectedRoute>
+                        <PlaceFnbOrder />
                       </ProtectedRoute>
                     }
                   />
@@ -1227,7 +1359,7 @@ function App() {
                       index
                       element={
                         <div
-                          className={`flex justify-center items-center h-[calc(100vh-112px)] w-[calc(100vw-32rem)]`}
+                          className={`flex justify-center items-center ${localStorage.getItem('selectedView') === 'employee' ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
                         >
                           Select a Chat/Group to view messages
                         </div>
@@ -1644,6 +1776,15 @@ function App() {
                     path="/maintenance/ticket/employee"
                     element={<TicketDashboardEmployee />}
                   />
+
+                  <Route
+                    path="/employee/dashboard"
+                    element={<EmployeeDashboard />}
+                  />
+                  <Route
+                    path="/employee/calendar"
+                    element={<EmployeeCalendarPage />}
+                  />
                   <Route
                     path="/maintenance/ticket"
                     element={<TicketDashboard />}
@@ -1801,10 +1942,7 @@ function App() {
                     path="/safety/permit/safety-check-form"
                     element={<PermitSafetyCheckForm />}
                   />
-                  <Route
-                    path="/safety/permit/vendor-form/:id?"
-                    element={<VendorPermitForm />}
-                  />
+                  <Route path="/safety/permit/vendor-form/:id?" />
                   <Route
                     path="/safety/permit/fill-form/:id?"
                     element={<FillForm />}
@@ -1880,9 +2018,6 @@ function App() {
                     path="/security/visitor/employee"
                     element={<VisitorsDashboardEmployee />}
                   />
-
-
-
 
                   {/* Incident Routes */}
                   <Route
@@ -2422,10 +2557,7 @@ function App() {
                     path="/maintenance/vendor/view/:id"
                     element={<DetailsVendorPage />}
                   />
-                  <Route
-                    path="/vas/projects"
-                    element={<ProjectsDashboard />}
-                  />
+                  <Route path="/vas/projects" element={<ProjectsDashboard />} />
                   <Route
                     path="/vas/projects/details/:id"
                     element={<ProjectDetailsPage />}
@@ -2438,22 +2570,16 @@ function App() {
                     path="/vas/projects/:id/milestones/:mid/tasks"
                     element={<ProjectTasksPage />}
                   />
+                  <Route path="/vas/tasks" element={<ProjectTasksPage />} />
                   <Route
-                    path="/vas/tasks"
-                    element={<ProjectTasksPage />}
-                  />
-                  <Route
-                    //   path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
-                    //   element={<ProjectTaskDetailsPage />}
-                    // />
-                    //   <Route
                     path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetails />}
                   />
                   <Route
-                    path="/vas/sprint"
-                    element={<SprintDashboard />}
+                    path="/vas/tasks/:taskId"
+                    element={<ProjectTaskDetails />}
                   />
+                  <Route path="/vas/sprint" element={<SprintDashboard />} />
                   <Route
                     path="/vas/sprint/details/:id"
                     element={<SprintDetailsPage />}
@@ -2465,10 +2591,7 @@ function App() {
                   />
 
                   {/* Issues Routes */}
-                  <Route
-                    path="/vas/issues"
-                    element={<IssuesListPage />}
-                  />
+                  <Route path="/vas/issues" element={<IssuesListPage />} />
                   <Route
                     path="/vas/issues/:id"
                     element={<IssueDetailsPage />}
@@ -2492,25 +2615,13 @@ function App() {
                     element={<OpportunityDetailsPage />}
                   />
 
-                  <Route
-                    path="/vas/todo"
-                    element={<Todo />}
-                  />
+                  <Route path="/vas/todo" element={<Todo />} />
 
-                  <Route
-                    path="/vas/documents"
-                    element={<ProjectDocuments />}
-                  />
+                  <Route path="/vas/documents" element={<ProjectDocuments />} />
 
-                  <Route
-                    path="/vas/mom"
-                    element={<MinutesOfMeeting />}
-                  />
+                  <Route path="/vas/mom" element={<MinutesOfMeeting />} />
 
-                  <Route
-                    path="/vas/add-mom"
-                    element={<AddMoMPage />}
-                  />
+                  <Route path="/vas/add-mom" element={<AddMoMPage />} />
 
                   <Route
                     path="/settings/project-task-setup/roles"
@@ -2707,7 +2818,7 @@ function App() {
                     path="/security/visitor/add"
                     element={<VisitorFormPage />}
                   />
-                   <Route
+                  <Route
                     path="/security/visitor/employee/add"
                     element={<VisitorFormPageEmployeeNew />}
                   />
@@ -2719,7 +2830,7 @@ function App() {
                     path="/security/visitor/details/:id"
                     element={<VisitorDetailsPage />}
                   />
-                   <Route
+                  <Route
                     path="/security/visitor/employee/details/:id"
                     element={<VisitorDetailsPageEmployee />}
                   />
@@ -2797,10 +2908,10 @@ function App() {
                     path="/security/patrolling/create"
                     element={<PatrollingCreatePage />}
                   />
-                  <Route
+                  {/* <Route
                     path="/security/patrolling/edit/:id"
                     element={<PatrollingCreatePage />}
-                  />
+                  /> */}
                   <Route
                     path="/security/patrolling/details/:id"
                     element={<PatrollingDetailPage />}
@@ -2856,12 +2967,7 @@ function App() {
 
                   <Route
                     path="/mail-inbounds-create"
-                    element={
-
-
-                      <NewInboundPage />
-
-                    }
+                    element={<NewInboundPage />}
                   />
                   <Route
                     path="/vas/fnb"
@@ -3025,6 +3131,30 @@ function App() {
                   <Route
                     path="/vas/space-management/bookings"
                     element={<SpaceManagementBookingsDashboard />}
+                  />
+                  <Route
+                    path="/employee/space-management/bookings"
+                    element={
+                      <ProtectedRoute>
+                        <SpaceManagementBookingsDashboardEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/vas/space-management/bookings/employee/add"
+                    element={
+                      <ProtectedRoute>
+                        <SpaceManagementBookingAddEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/vas/space-management/bookings/details/:id"
+                    element={
+                      <ProtectedRoute>
+                        <SpaceManagementBookingDetailsPage />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/vas/space-management/seat-requests"

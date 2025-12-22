@@ -61,7 +61,8 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
 
     const isLocalhost =
       hostname.includes("localhost") ||
-      hostname.includes("lockated.gophygital.work");
+      hostname.includes("lockated.gophygital.work") ||
+      hostname.includes("fm-matrix.lockated.com");
     // For employee users, don't auto-detect section changes
     // They manually select modules via EmployeeHeader
     if (isEmployeeUser && isLocalhost) {

@@ -1,78 +1,3 @@
-// import { generateId } from '@/components/DocumentUploadButton';
-// import Folder from '@/components/Folder';
-// import { useState } from 'react';
-
-// const ProjectDocuments = () => {
-//     const [treeData, setTreeData] = useState([
-//         {
-//             id: 'root',
-//             name: 'PROJECTS',
-//             type: 'folder',
-//             children: [],
-//         },
-//     ]);
-
-//     const addFolder = (parentId, newFolder) => {
-//         const add = (nodes) =>
-//             nodes.map((node) => {
-//                 if (node.id === parentId && node.type === 'folder') {
-//                     return { ...node, children: [...node.children, newFolder] };
-//                 }
-//                 if (node.children) {
-//                     return { ...node, children: add(node.children) };
-//                 }
-//                 return node;
-//             });
-//         setTreeData((prev) => add(prev));
-//     };
-
-//     const uploadFile = (folderId, fileName) => {
-//         const add = (nodes) =>
-//             nodes.map((node) => {
-//                 if (node.id === folderId && node.type === 'folder') {
-//                     return {
-//                         ...node,
-//                         children: [...node.children, { id: generateId(), name: fileName, type: 'file' }],
-//                     };
-//                 }
-//                 if (node.children) {
-//                     return { ...node, children: add(node.children) };
-//                 }
-//                 return node;
-//             });
-//         setTreeData((prev) => add(prev));
-//     };
-
-//     return (
-//         <div className="p-4">
-//             <button
-//                 onClick={() =>
-//                     addFolder('root', {
-//                         id: generateId(),
-//                         name: 'New Folder',
-//                         type: 'folder',
-//                         children: [],
-//                     })
-//                 }
-//                 className="bg-[#c72030] text-white px-3 py-1 text-sm rounded mb-3"
-//             >
-//                 + Add
-//             </button>
-
-//             {treeData.map((folder) => (
-//                 <Folder key={folder.id} data={folder} onAddFolder={addFolder} onUploadFile={uploadFile} />
-//             ))}
-//         </div>
-//     );
-// };
-
-// export default ProjectDocuments;
-
-
-
-
-
-
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Sidebar } from "@/components/DocumentSidebar";
@@ -97,7 +22,7 @@ const mockFiles: FileItem[] = [
 
 const Index = () => {
     const [activeSection, setActiveSection] = useState("all");
-    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+    const [viewMode, setViewMode] = useState<"grid" | "list" | "tree">("grid");
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -120,7 +45,7 @@ const Index = () => {
     };
 
     return (
-        <div className="flex h-full w-full bg-background overflow-hidden">
+        <div className="flex h-[calc(100vh-65px)] w-full bg-background overflow-hidden">
             {/* Sidebar */}
             <div className={cn(
                 "transition-all duration-300 ease-in-out",

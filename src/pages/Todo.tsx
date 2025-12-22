@@ -1,17 +1,24 @@
 import { useEffect, useState } from 'react';
-import { Trash2, Plus, Check } from 'lucide-react';
+import { Plus, Check } from 'lucide-react';
 import axios from 'axios';
 import AddToDoModal from '@/components/AddToDoModal';
 import { Button } from '@/components/ui/button';
+import { useLayout } from '@/contexts/LayoutContext';
 
 export default function Todo() {
+    const { setCurrentSection } = useLayout();
+
+    useEffect(() => {
+        setCurrentSection("Project Task");
+    }, [setCurrentSection]);
+
     const baseUrl = localStorage.getItem('baseUrl');
     const [isAddTodoModalOpen, setIsAddTodoModalOpen] = useState(false);
     const [todos, setTodos] = useState([]);
 
     const getTodos = async () => {
         try {
-            const response = await axios.get(`https://${baseUrl}/todos.json`, {
+            const response = await axios.get(`https://${baseUrl}/todos.json?q[user_id_eq]=${JSON.parse(localStorage.getItem('user')).id}`, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },

@@ -74,7 +74,7 @@ import { projectTypeReducer } from './slices/projectTypeSlice'
 import { projectTagReducer } from './slices/projectTagSlice'
 import { projectStatusReducer } from './slices/projectStatusSlice'
 import { projectRoleReducer } from './slices/projectRoleSlice'
-import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer, filterTasksReducer, updateTaskStatusReducer } from './slices/projectTasksSlice'
+import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer, filterTasksReducer, updateTaskStatusReducer, createTaskDependencyReducer, updateTaskDependencyReducer, deleteTaskDependencyReducer } from './slices/projectTasksSlice'
 import { fetchIssuesReducer, fetchIssueByIdReducer, createIssueReducer, updateIssueReducer, deleteIssueReducer, filterIssuesReducer } from './slices/issueSlice'
 import { createProjectGroupReducer, deleteProjectGroupReducer, fetchProjectGroupsReducer, updateProjectGroupReducer } from './slices/projectGroupSlice'
 
@@ -365,6 +365,9 @@ export const store = configureStore({
     editProjectTask: editProjectTaskReducer,
     filterTasks: filterTasksReducer,
     updateTaskStatus: updateTaskStatusReducer,
+    createTaskDependency: createTaskDependencyReducer,
+    updateTaskDependency: updateTaskDependencyReducer,
+    deleteTaskDependency: deleteTaskDependencyReducer,
 
     // Project Team
     projectTeams: projectTeamsReducer,

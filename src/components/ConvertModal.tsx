@@ -87,11 +87,8 @@ const ConvertModal = ({
     const fetchOwners = async () => {
         setIsLoadingOwners(true);
         try {
-            await dispatch(fetchFMUsers()).unwrap();
-            const owners = await axios.get(getFullUrl('/fm_users.json'), {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setOwners(owners.data || []);
+            const response = await dispatch(fetchFMUsers()).unwrap();
+            setOwners(response.users || []);
         } catch (error) {
             console.error('Error fetching owners:', error);
         } finally {
@@ -279,7 +276,7 @@ const ConvertModal = ({
 
             <DialogContent sx={{ p: 3, overflowY: 'auto', maxHeight: 'calc(100% - 100px)' }}>
                 {/* Radio Buttons */}
-                <div className="mb-6">
+                <div className="my-6">
                     <div className="flex items-center gap-5">
                         <label className="flex items-center gap-3 cursor-pointer">
                             <input
@@ -545,6 +542,7 @@ const ConvertModal = ({
                             <AddMilestoneForm
                                 owners={owners}
                                 handleClose={closeModal}
+                                className='mx-0 w-full'
                             />
                         </div>
                     )}
@@ -553,6 +551,7 @@ const ConvertModal = ({
                         <ProjectTaskCreateModal
                             isEdit={false}
                             onCloseModal={handleTaskSuccess}
+                            className='mx-0 w-full'
                         />
                     )}
                 </div>

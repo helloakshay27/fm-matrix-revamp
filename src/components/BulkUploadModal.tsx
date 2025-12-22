@@ -11,6 +11,7 @@ interface BulkUploadModalProps {
   title?: string;
   description?: string;
   onImport?: (file: File) => Promise<void>;
+  onDownloadSample?: () => void;
 }
 
 export const BulkUploadModal = ({ 
@@ -18,7 +19,8 @@ export const BulkUploadModal = ({
   onClose, 
   title = "Bulk Upload",
   description = "Upload a file to import data",
-  onImport 
+  onImport,
+  onDownloadSample
 }: BulkUploadModalProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -148,6 +150,7 @@ export const BulkUploadModal = ({
               style={{ backgroundColor: '#C72030' }}
               className="hover:bg-[#C72030]/90 text-white px-6"
               disabled={isImporting}
+              onClick={onDownloadSample}
             >
               Download Sample Format
             </Button>

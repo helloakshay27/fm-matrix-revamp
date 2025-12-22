@@ -382,6 +382,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
         // Configure compact row height
         gantt.config.row_height = 36;
         gantt.config.task_height = 16;
+        gantt.config.show_errors = false;
 
         // Columns
         // Build columns array based on visible columns

@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
 import { SurveyMappingFilterDialog, SurveyMappingFilters } from '@/components/SurveyMappingFilterDialog';
-import { Plus, Filter, Edit, Copy, Eye, Share2, ChevronDown, Loader2, Download } from 'lucide-react';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { BulkUploadModal } from '@/components/BulkUploadModal';
+import { Plus, Filter, Edit, Copy, Eye, Share2, ChevronDown, Loader2, Download, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
@@ -131,6 +133,8 @@ export const SurveyMappingDashboard = () => {
   // Filter state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<SurveyMappingFilters>({});
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Column visibility state - using the same structure as parking page
   const [columns, setColumns] = useState([
@@ -469,6 +473,53 @@ export const SurveyMappingDashboard = () => {
     }
   };
 
+  // Handle survey mapping bulk upload
+  const handleSurveyMappingImport = async (file: File) => {
+    try {
+      sonnerToast.info('Importing survey mappings...');
+      
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Call the bulk upload API
+      const response = await apiClient.post(
+        '/survey_mappings/bulk_upload_survey_mappings',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          params: {
+            token: 'b06b9c80acb8e5b06cea63d4cc74a2297897a923cd2753cc'
+          }
+        }
+      );
+      
+      console.log('✅ Survey mappings imported successfully:', response.data);
+      sonnerToast.success('Survey mappings imported successfully!');
+      
+      // Refresh the data after successful import
+      await fetchSurveyMappingsData(1, undefined, appliedFilters);
+      
+    } catch (error: unknown) {
+      console.error('Error importing survey mappings:', error);
+      sonnerToast.error('Failed to import survey mappings');
+      throw error;
+    }
+  };
+
+  // Handle sample file download
+  const handleDownloadSample = () => {
+    const link = document.createElement('a');
+    link.href = '/assets/survey_mapping_sample.xlsx';
+    link.download = 'survey_mapping_sample.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    sonnerToast.success('Sample file downloaded successfully');
+  };
+
   // Handle filter application
   const handleApplyFilters = (filters: SurveyMappingFilters) => {
     setAppliedFilters(filters);
@@ -711,6 +762,15 @@ export const SurveyMappingDashboard = () => {
         </div>
       </div>
       
+      {showActionPanel && (
+        <SelectionPanel
+          actions={[]}
+          onAdd={handleAddMapping}
+          onImport={() => setShowImportModal(true)}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
+      
       <div className="overflow-x-auto animate-fade-in">
         {searchLoading && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
@@ -743,11 +803,11 @@ export const SurveyMappingDashboard = () => {
                   <div className="flex flex-wrap items-center gap-2 md:gap-4">
                     {shouldShow("survey_mapping", "add") && (
                       <Button 
-                        onClick={handleAddMapping}
+                        onClick={() => setShowActionPanel(!showActionPanel)}
                         className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
                       >
                         <Plus className="w-4 h-4" />
-                        Add
+                        Action
                       </Button>
                     )}
                   </div>
@@ -886,6 +946,16 @@ export const SurveyMappingDashboard = () => {
                 </div>
               )}
           </div>
+
+      {/* Bulk Upload Modal */}
+      <BulkUploadModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        title="Bulk Upload Survey Mappings"
+        description="Upload a file to import survey mapping data"
+        onImport={handleSurveyMappingImport}
+        onDownloadSample={handleDownloadSample}
+      />
 
       {/* Filter Dialog */}
       <SurveyMappingFilterDialog

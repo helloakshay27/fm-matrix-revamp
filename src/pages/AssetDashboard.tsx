@@ -64,6 +64,7 @@ import {
   ENDPOINTS,
 } from '@/config/apiConfig';
 import { toast } from 'sonner';
+import { getUser } from '@/utils/auth';
 import {
   DndContext,
   closestCenter,
@@ -143,6 +144,8 @@ export const AssetDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
 
   // Redux state
   const {
@@ -155,6 +158,7 @@ export const AssetDashboard = () => {
     filters,
     totalValue,
     available_custom_fields: reduxCustomFields,
+    asset_ids: allAssetIds,
   } = useSelector((state: RootState) => state.assets);
 
   // Local state
@@ -212,6 +216,8 @@ export const AssetDashboard = () => {
     group: true,
     subGroup: true,
     assetType: true,
+    allocationType: true,
+    allocatedTo: true,
   });
   const [chartOrder, setChartOrder] = useState<string[]>([
     'statusDistribution',
@@ -309,7 +315,7 @@ export const AssetDashboard = () => {
   const transformedAssets: TableAsset[] = assets.map((asset, index) => ({
     id: asset.id?.toString() || '',
     name: asset.name || '',
-    serialNumber: (currentPage - 1) * 15 + index + 1,
+    serialNumber: asset.serial_number || '-',
     assetNumber: asset.asset_number || '',
     status: asset.status as 'in_use' | 'in_storage' | 'breakdown' | 'disposed',
     siteName: asset.site_name || '',
@@ -335,6 +341,7 @@ export const AssetDashboard = () => {
     supplier_name: asset.supplier_name || '',
     purchase_cost: asset.purchase_cost || 0,
     allocation_type: asset.allocation_type || '',
+    allocated_to: asset.allocated_to || '',
     useful_life: asset.useful_life || 0,
     depreciation_method: asset.depreciation_method || '',
     accumulated_depreciation: asset.accumulated_depreciation || 0,
@@ -353,20 +360,21 @@ export const AssetDashboard = () => {
         'building', 'wing', 'floor', 'area', 'pms_room',
         'asset_group', 'sub_group', 'asset_type', 'asset_type_category',
         'purchase_cost', 'current_book_value', 'purchased_on', 'supplier_name',
-        'allocation_type', 'useful_life', 'depreciation_method',
+        'allocation_type', 'allocated_to', 'useful_life', 'depreciation_method',
         'accumulated_depreciation', 'current_book_value', 'disposal_date',
         'model_number', 'manufacturer', 'critical', 'commisioning_date',
         'warranty', 'amc'
       ]);
       if (coreKeysToSkip.has(field.key)) return acc;
+      const sanitizedKey = field.key.replace(/\s+/g, '_');
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
-        acc[field.key] =
+        acc[`custom_${sanitizedKey}`] =
           customFieldObj.field_value !== null && customFieldObj.field_value !== undefined
             ? customFieldObj.field_value
             : '';
       } else {
-        acc[field.key] = asset[field.key] || '';
+        acc[`custom_${sanitizedKey}`] = asset[field.key] || '';
       }
       return acc;
     }, {} as Record<string, any>),
@@ -375,7 +383,7 @@ export const AssetDashboard = () => {
   const transformedSearchedAssets: TableAsset[] = searchedAssets.map((asset, index) => ({
     id: asset.id?.toString() || '',
     name: asset.name || '',
-    serialNumber: (currentPage - 1) * 15 + index + 1,
+    serialNumber: asset.serialNumber || '-',
     assetNumber: asset.assetNumber || '',
     status: asset.status as 'in_use' | 'in_storage' | 'breakdown' | 'disposed',
     siteName: asset.siteName || '',
@@ -399,6 +407,7 @@ export const AssetDashboard = () => {
     supplier_name: asset.supplier_name || '',
     purchase_cost: asset.purchase_cost || 0,
     allocation_type: asset.allocation_type || '',
+    allocated_to: asset.allocated_to || '',
     useful_life: asset.useful_life || 0,
     depreciation_method: asset.depreciation_method || '',
     accumulated_depreciation: asset.accumulated_depreciation || 0,
@@ -417,20 +426,21 @@ export const AssetDashboard = () => {
         'building', 'wing', 'floor', 'area', 'pms_room', 'pms_floor', 'pms_area',
         'asset_group', 'sub_group', 'asset_type', 'asset_type_category', 'pms_asset_group',
         'purchase_cost', 'current_book_value', 'purchased_on', 'supplier_name',
-        'allocation_type', 'useful_life', 'depreciation_method',
+        'allocation_type', 'allocated_to', 'useful_life', 'depreciation_method',
         'accumulated_depreciation', 'current_book_value', 'disposal_date',
         'model_number', 'manufacturer', 'critical', 'commisioning_date',
         'warranty', 'amc'
       ]);
       if (coreKeysToSkip.has(field.key)) return acc;
+      const sanitizedKey = field.key.replace(/\s+/g, '_');
       if (asset.custom_fields && asset.custom_fields[field.key]) {
         const customFieldObj = asset.custom_fields[field.key];
-        acc[field.key] =
+        acc[`custom_${sanitizedKey}`] =
           customFieldObj.field_value !== null && customFieldObj.field_value !== undefined
             ? customFieldObj.field_value
             : '';
       } else {
-        acc[field.key] = asset[field.key] || '';
+        acc[`custom_${sanitizedKey}`] = asset[field.key] || '';
       }
       return acc;
     }, {} as Record<string, any>),
@@ -566,6 +576,17 @@ export const AssetDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
+      // If we have allAssetIds from API, use those
+      if (allAssetIds && allAssetIds.length > 0) {
+        setSelectedAssets(
+          allAssetIds
+            .filter((id) => id !== null && id !== undefined)
+            .map((id) => id.toString())
+        );
+        return;
+      }
+
+      // Fallback to visible assets if for some reason API didn't return IDs
       const enabledAssetIds = displayAssets
         .filter((asset) => !asset.disabled)
         .map((asset) => asset.id);
@@ -783,10 +804,11 @@ export const AssetDashboard = () => {
                     </div>
                   )}
 
-                {selectedAssets.length > 0 && (
+                { selectedAssets.length > 0 && (
                   <AssetSelectionPanel
                     selectedCount={selectedAssets.length}
                     selectedAssets={selectedAssetObjects}
+                    selectedAssetIds={selectedAssets}
                     onMoveAsset={handleMoveAsset}
                     onDisposeAsset={handleDisposeAsset}
                     onPrintQRCode={handlePrintQRCode}

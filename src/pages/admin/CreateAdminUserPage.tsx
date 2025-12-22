@@ -108,6 +108,7 @@ export const CreateAdminUserPage = () => {
     if (formData.organization_id) {
       const filtered = companies.filter(
         (company) =>
+          company.organization_id !== null &&
           company.organization_id.toString() === formData.organization_id
       );
       setFilteredCompanies(filtered);

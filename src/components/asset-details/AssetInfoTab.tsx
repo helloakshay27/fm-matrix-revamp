@@ -409,7 +409,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                       ].includes(asset.asset_type_category) && ( */}
                       <div className="flex items-start">
                         <span className="w-28 text-gray-500 text-sm">
-                          Series No
+                          Serial No
                         </span>
                         <span className="mx-2 text-gray-500">:</span>
                         <span className="font-semibold text-black">

@@ -125,7 +125,7 @@ class WebSocketManager {
                             case 'new_conversation':
                                 callbacks.onNewConversation?.(data.conversation);
                                 break;
-                            case 'new_message':
+                            case 'notification':
                                 callbacks.onMessageNotification?.(data.message, data.context);
                                 break;
                             default:

@@ -5,7 +5,7 @@ import { useLayout } from '../contexts/LayoutContext';
 const packages = [
   'Maintenance',
 
- 
+  'Security',
   'Value Added Services',
   'Master',
   'Settings'
@@ -31,8 +31,8 @@ export const ZxDynamicHeader = () => {
                 key={packageName}
                 onClick={() => setCurrentSection(packageName)}
                 className={`pb-3 text-sm transition-colors whitespace-nowrap flex-shrink-0 ${currentSection === packageName
-                    ? 'text-[#C72030] border-b-2 border-[#C72030] font-medium'
-                    : 'text-[#1a1a1a] opacity-70 hover:opacity-100'
+                  ? 'text-[#C72030] border-b-2 border-[#C72030] font-medium'
+                  : 'text-[#1a1a1a] opacity-70 hover:opacity-100'
                   }`}
               >
                 {packageName}

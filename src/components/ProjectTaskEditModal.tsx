@@ -15,6 +15,48 @@ import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import MuiMultiSelect from "./MuiMultiSelect";
 import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
 
+const calculateDuration = (startDate, endDate) => {
+    if (!startDate || !endDate) return '';
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+    if (startDay.getTime() === today.getTime()) {
+        if (endDay.getTime() === today.getTime()) {
+            const endOfToday = new Date(today);
+            endOfToday.setHours(23, 59, 59, 999);
+
+            const msToEnd = endOfToday.getTime() - now.getTime();
+            const totalMins = Math.floor(msToEnd / (1000 * 60));
+            const hrs = Math.floor(totalMins / 60);
+            const mins = totalMins % 60;
+            return `0d : ${hrs}h : ${mins}m`;
+        } else {
+            if (endDay.getTime() < startDay.getTime()) return 'Invalid: End date before start date';
+
+            const daysDiff = Math.floor((endDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            const endOfToday = new Date(today);
+            endOfToday.setHours(23, 59, 59, 999);
+
+            const msToday = endOfToday.getTime() - now.getTime();
+            const totalMinutes = Math.floor(msToday / (1000 * 60));
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+
+            return `${daysDiff}d : ${hours}h : ${minutes}m`;
+        }
+    } else {
+        if (endDay.getTime() < startDay.getTime()) return 'Invalid: End date before start date';
+        const days = Math.floor((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        return `${days}d : 0h : 0m`;
+    }
+};
+
 const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     "& .MuiInputBase-input, & .MuiSelect-select": {
@@ -80,7 +122,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
     const getTags = useCallback(async () => {
         try {
-            const response = await dispatch(fetchProjectsTags({ baseUrl, token })).unwrap();
+            const response = await dispatch(fetchProjectsTags()).unwrap();
             setTags(response);
         } catch (error) {
             console.error(error);
@@ -175,6 +217,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                 estimated_hour?: number;
                 task_tags?: Array<{ company_tag?: { id: string }; id: string }>;
                 observers?: Array<{ user_id: string; user_name: string; id: string }>;
+                task_allocation_times?: Array<any>;
             };
 
             // Fetch project and milestone details
@@ -334,18 +377,28 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         setFormData((prev) => ({ ...prev, [name]: selectedOptions }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
+    const validateForm = () => {
         if (
             !formData.taskTitle ||
             !formData.responsiblePerson ||
             !formData.priority ||
             !formData.observer.length ||
-            !formData.tags.length
+            !formData.tags.length ||
+            !startDate ||
+            !endDate ||
+            !totalWorkingHours
         ) {
             toast.dismiss();
             toast.error("Please fill all required fields.");
+            return false;
+        }
+        return true;
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!validateForm()) {
             return;
         }
 
@@ -379,7 +432,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         } catch (error) {
             console.error("Error updating task:", error);
             toast.dismiss();
-            toast.error("Error updating task.");
+            toast.error(error?.response?.data?.message || "Error updating task.");
         } finally {
             setIsSubmitting(false);
         }
@@ -524,34 +577,6 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                     {/* Start Date and Target Date */}
                     <div className="grid grid-cols-2 gap-3 mb-3">
                         <div>
-                            <label className="block text-xs text-gray-700 mb-1">Start Date</label>
-                            <button
-                                type="button"
-                                className="w-full border outline-none border-gray-300 px-3 py-2 text-[13px] flex items-center gap-2 text-gray-400 rounded"
-                                onClick={() => {
-                                    if (showDatePicker) setShowDatePicker(false);
-                                    setShowStartDatePicker(!showStartDatePicker);
-                                }}
-                                ref={startDateRef}
-                            >
-                                {startDate ? (
-                                    <div className="text-black flex items-center justify-between w-full">
-                                        <CalendarIcon className="w-4 h-4" />
-                                        <div>
-                                            {startDate?.date?.toString().padStart(2, "0")}{" "}
-                                            {monthNames[startDate.month]}
-                                        </div>
-                                        <X className="w-4 h-4" onClick={(e) => { e.preventDefault(); setStartDate(null); }} />
-                                    </div>
-                                ) : (
-                                    <>
-                                        <CalendarIcon className="w-4 h-4" /> Select Start Date
-                                    </>
-                                )}
-                            </button>
-                        </div>
-
-                        <div>
                             <label className="block text-xs text-gray-700 mb-1">Target Date *</label>
                             <button
                                 type="button"
@@ -566,7 +591,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                                     <div className="text-black flex items-center justify-between w-full">
                                         <CalendarIcon className="w-4 h-4" />
                                         <div>
-                                            {endDate.date.toString().padStart(2, "0")}{" "}
+                                            Target : {endDate.date.toString().padStart(2, "0")}{" "}
                                             {monthNames[endDate.month]}
                                         </div>
                                         <X className="w-4 h-4" onClick={(e) => { e.preventDefault(); setEndDate(null); }} />
@@ -574,6 +599,34 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                                 ) : (
                                     <>
                                         <CalendarIcon className="w-4 h-4" /> Select Target Date
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs text-gray-700 mb-1">Start Date</label>
+                            <button
+                                type="button"
+                                className="w-full border outline-none border-gray-300 px-3 py-2 text-[13px] flex items-center gap-2 text-gray-400 rounded"
+                                onClick={() => {
+                                    if (showDatePicker) setShowDatePicker(false);
+                                    setShowStartDatePicker(!showStartDatePicker);
+                                }}
+                                ref={startDateRef}
+                            >
+                                {startDate ? (
+                                    <div className="text-black flex items-center justify-between w-full">
+                                        <CalendarIcon className="w-4 h-4" />
+                                        <div>
+                                            Start Date : {startDate?.date?.toString().padStart(2, "0")}{" "}
+                                            {monthNames[startDate.month]}
+                                        </div>
+                                        <X className="w-4 h-4" onClick={(e) => { e.preventDefault(); setStartDate(null); }} />
+                                    </div>
+                                ) : (
+                                    <>
+                                        <CalendarIcon className="w-4 h-4" /> Select Start Date
                                     </>
                                 )}
                             </button>

@@ -92,6 +92,9 @@ const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: 
   }
 };
 
+  const userId = localStorage.getItem("userId") || "87989";
+
+
 const getVisitorHistory = async (siteId: number, page: number = 1, perPage: number = 20, searchTerm?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.VISITOR_HISTORY);
@@ -102,6 +105,7 @@ const getVisitorHistory = async (siteId: number, page: number = 1, perPage: numb
     urlWithParams.searchParams.append('site_id', siteId.toString());
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
+    urlWithParams.searchParams.append('id', userId);
 
     // Add dynamic search filter if provided
     if (searchTerm && searchTerm.trim() !== '') {
@@ -1860,11 +1864,14 @@ export const VisitorsDashboardEmployee = () => {
               leftActions={
                 <div className="flex gap-3">
                   <Button
-                    onClick={() => setIsActionPanelOpen(true)}
+                    onClick={() => {
+                      setIsNewVisitorDialogOpen(true);
+                      setIsActionPanelOpen(false);
+                    }}
                     className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Action
+                    Add 
                   </Button>
                 </div>
               }

@@ -850,7 +850,14 @@ export const ViewSchedulePage = () => {
                         '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', 
                         '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday' 
                       };
-                      dayColumnValue = weekdays.map(wd => weekdayMap[wd] || wd).filter(day => day.trim() !== '').join(', ');
+                      // Sort weekdays numerically so Sunday (0) comes first
+                      const sortedWeekdays = weekdays
+                        .filter(wd => wd && wd.trim() !== '')
+                        .sort((a, b) => parseInt(a) - parseInt(b));
+                      dayColumnValue = sortedWeekdays
+                        .map(wd => weekdayMap[wd] || wd)
+                        .filter(day => day && day.trim() !== '')
+                        .join(', ');
                     }
                   }
                   

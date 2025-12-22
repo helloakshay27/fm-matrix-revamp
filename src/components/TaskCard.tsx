@@ -16,7 +16,13 @@ export const getInitials = (name = "") => {
     return (parts[0][0] + parts[parts.length - 1][0])?.toUpperCase();
 };
 
-const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232", count }) => {
+const TaskCard = ({
+    task,
+    toggleSubCard = () => { },
+    handleLink = () => { },
+    iconColor = "#323232",
+    count = 0,
+}) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const dispatch = useAppDispatch();
@@ -86,7 +92,6 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232", coun
         <div
             ref={setNodeRef}
             {...attributes}
-            {...listeners}
             style={{
                 opacity: isDragging ? 0.4 : 1,
                 cursor: isDragging ? "grabbing" : "grab",
@@ -94,7 +99,11 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232", coun
             }}
             className="w-full h-max bg-white p-2 shadow-xl text-xs flex flex-col space-y-2 mb-2"
         >
-            <p className="mb-2 truncate cursor-pointer text-start" onClick={() => navigate(`${task.id}`)}>
+            <p
+                className="mb-2 truncate cursor-pointer text-start"
+                onClick={() => navigate(`${task.id}`)}
+                {...listeners}
+            >
                 <span className="text-blue-500">T-{task.id}</span> {task.title}
             </p>
             <div className="flex items-center gap-1">
@@ -167,7 +176,13 @@ const TaskCard = ({ task, toggleSubCard, handleLink, iconColor = "#323232", coun
 
                     <span
                         className="flex items-center cursor-pointer"
-                        onClick={toggleSubCard}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            if (typeof toggleSubCard === "function") {
+                                toggleSubCard();
+                            }
+                        }}
                     >
                         <svg
                             width="14"

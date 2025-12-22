@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { getUser } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,6 +70,7 @@ interface Role {
 
 interface LockUserPermission {
   id?: number;
+  user_type?: string;
   employee_id?: string;
   designation?: string;
   access_level?: string;
@@ -164,6 +166,8 @@ export const EditFMUserPage = () => {
   const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id as
     | number
     | undefined;
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
 
   // Type Redux state selectors
   const {
@@ -212,7 +216,7 @@ export const EditFMUserPage = () => {
     (state: RootState) => state.project
   );
 
-  const [userCategories, setUserCategories] = useState([])
+  const [userCategories, setUserCategories] = useState([]);
   const [userAccount, setUserAccount] = useState<UserAccount>({});
   const [lockId, setLockId] = useState<number | undefined>();
   const [loadingSubmitting, setLoadingSubmitting] = useState<boolean>(false);
@@ -244,19 +248,26 @@ export const EditFMUserPage = () => {
 
   const fetchUserCategories = async () => {
     try {
-      const categories = await axios.get(`https://${baseUrl}/pms/admin/user_categories.json`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const categories = await axios.get(
+        `https://${baseUrl}/pms/admin/user_categories.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
       setUserCategories(categories.data);
     } catch (error) {
-      console.error('Error loading user categories:', error);
-      toast.error('Failed to load user categories');
+      console.error("Error loading user categories:", error);
+      toast.error("Failed to load user categories");
     }
-  }
+  };
 
   useEffect(() => {
+    if (isRestrictedUser) {
+      navigate("/maintenance/asset");
+      return;
+    }
     dispatch(fetchEntities());
     dispatch(fetchSuppliers({ baseUrl, token }));
     dispatch(fetchUnits({ baseUrl, token }));
@@ -267,7 +278,7 @@ export const EditFMUserPage = () => {
       dispatch(fetchAllowedSites(userId));
     }
     dispatch(fetchAllowedCompanies());
-  }, [dispatch, baseUrl, token, userId]);
+  }, [dispatch, baseUrl, token, userId, isRestrictedUser, navigate]);
 
   useEffect(() => {
     const loadUserAccount = async () => {
@@ -320,7 +331,7 @@ export const EditFMUserPage = () => {
         selectBaseUnit: userData.unit_id || "",
         selectDepartment: userData.department_id || "",
         designation: userData.lock_user_permission?.designation || "",
-        selectUserType: userData.user_type || "",
+        selectUserType: userData.lock_user_permission?.user_type || "",
         selectRole: userData.lock_user_permission?.lock_role_id || "",
         selectAccessLevel: userData.lock_user_permission?.access_level || "",
         selectEmailPreference: userData.urgency_email_enabled?.toString() || "",
@@ -445,6 +456,8 @@ export const EditFMUserPage = () => {
     navigate("/master/user/fm-users");
   };
 
+  if (isRestrictedUser) return null;
+
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
@@ -483,7 +496,7 @@ export const EditFMUserPage = () => {
                       classes: {
                         asterisk: "text-red-500", // Tailwind class for red color
                       },
-                      shrink: true
+                      shrink: true,
                     }}
                   />
                 </div>
@@ -501,7 +514,7 @@ export const EditFMUserPage = () => {
                       classes: {
                         asterisk: "text-red-500", // Tailwind class for red color
                       },
-                      shrink: true
+                      shrink: true,
                     }}
                   />
                 </div>
@@ -519,7 +532,7 @@ export const EditFMUserPage = () => {
                       classes: {
                         asterisk: "text-red-500", // Tailwind class for red color
                       },
-                      shrink: true
+                      shrink: true,
                     }}
                   />
                 </div>
@@ -540,7 +553,7 @@ export const EditFMUserPage = () => {
                       classes: {
                         asterisk: "text-red-500", // Tailwind class for red color
                       },
-                      shrink: true
+                      shrink: true,
                     }}
                   />
                 </div>
@@ -567,7 +580,10 @@ export const EditFMUserPage = () => {
                     <Select
                       value={formData.employeeType}
                       onChange={(e) =>
-                        handleInputChange("employeeType", e.target.value as string)
+                        handleInputChange(
+                          "employeeType",
+                          e.target.value as string
+                        )
                       }
                       label="Gender"
                       displayEmpty
@@ -758,7 +774,9 @@ export const EditFMUserPage = () => {
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select User Type<span className="text-red-500">*</span></InputLabel>
+                    <InputLabel shrink>
+                      Select User Type<span className="text-red-500">*</span>
+                    </InputLabel>
                     <Select
                       value={formData.selectUserType}
                       onChange={(e) =>
@@ -788,12 +806,17 @@ export const EditFMUserPage = () => {
                       <MenuItem value="pms_security_supervisor">
                         Security Supervisor
                       </MenuItem>
+                      <MenuItem value="pms_occupant">
+                        User (Customer User)
+                      </MenuItem>
                     </Select>
                   </FormControl>
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Role<span className="text-red-500">*</span></InputLabel>
+                    <InputLabel shrink>
+                      Select Role<span className="text-red-500">*</span>
+                    </InputLabel>
                     <Select
                       value={formData.selectRole}
                       onChange={(e) =>
@@ -823,7 +846,9 @@ export const EditFMUserPage = () => {
                 {/* Row 6 */}
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Access Level<span className="text-red-500">*</span></InputLabel>
+                    <InputLabel shrink>
+                      Select Access Level<span className="text-red-500">*</span>
+                    </InputLabel>
                     <Select
                       value={formData.selectAccessLevel}
                       onChange={(e) => {
@@ -855,14 +880,25 @@ export const EditFMUserPage = () => {
                       <Select
                         multiple
                         value={formData.selectedSites}
-                        onChange={(e) => handleInputChange("selectedSites", e.target.value as string[])}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "selectedSites",
+                            e.target.value as string[]
+                          )
+                        }
                         label="Select Sites"
                         renderValue={(selected) => (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          <Box
+                            sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
+                          >
                             {selected.map((value) => (
                               <Chip
                                 key={value}
-                                label={sites?.find((site: Site) => site.id.toString() === value)?.name || value}
+                                label={
+                                  sites?.find(
+                                    (site: Site) => site.id.toString() === value
+                                  )?.name || value
+                                }
                                 size="small"
                               />
                             ))}
@@ -889,14 +925,25 @@ export const EditFMUserPage = () => {
                       <Select
                         multiple
                         value={formData.selectedCompanies}
-                        onChange={(e) => handleInputChange("selectedCompanies", e.target.value as string[])}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "selectedCompanies",
+                            e.target.value as string[]
+                          )
+                        }
                         label="Select Companies"
                         renderValue={(selected) => (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          <Box
+                            sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
+                          >
                             {selected.map((value) => (
                               <Chip
                                 key={value}
-                                label={selectedCompany?.id.toString() === value ? selectedCompany.name : value}
+                                label={
+                                  selectedCompany?.id.toString() === value
+                                    ? selectedCompany.name
+                                    : value
+                                }
                                 size="small"
                               />
                             ))}
@@ -904,7 +951,10 @@ export const EditFMUserPage = () => {
                         )}
                       >
                         {selectedCompany && (
-                          <MenuItem key={selectedCompany.id} value={selectedCompany.id.toString()}>
+                          <MenuItem
+                            key={selectedCompany.id}
+                            value={selectedCompany.id.toString()}
+                          >
                             {selectedCompany.name}
                           </MenuItem>
                         )}
@@ -927,7 +977,7 @@ export const EditFMUserPage = () => {
                       classes: {
                         asterisk: "text-red-500", // Tailwind class for red color
                       },
-                      shrink: true
+                      shrink: true,
                     }}
                   />
                 </div>
@@ -937,19 +987,25 @@ export const EditFMUserPage = () => {
                     <InputLabel shrink>Select User Category</InputLabel>
                     <Select
                       value={formData.selectUserCategory}
-                      onChange={(e) => handleInputChange('selectUserCategory', e.target.value.toString())}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "selectUserCategory",
+                          e.target.value.toString()
+                        )
+                      }
                       label="Select User Category"
                       displayEmpty
                       required
                     >
                       <MenuItem value="">Select User Category</MenuItem>
-                      {
-                        userCategories?.map((category) => (
-                          <MenuItem key={category.id} value={category.id.toString()}>
-                            {category.name}
-                          </MenuItem>
-                        ))
-                      }
+                      {userCategories?.map((category) => (
+                        <MenuItem
+                          key={category.id}
+                          value={category.id.toString()}
+                        >
+                          {category.name}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 </div>
