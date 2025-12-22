@@ -1904,7 +1904,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
       {/* Main Content */}
       {isFormView && (
-        <h1 className="text-2xl font-bold text-white/100 mb-4 text-center">
+        <h1 className="text-2xl font-bold text-black/100 mb-4 text-center">
           {surveyData.survey_title}
         </h1>
       )}
@@ -1936,7 +1936,7 @@ export const MobileSurveyLanding: React.FC = () => {
               <div className="flex-1 flex flex-col justify-center">
                 {/* Survey Title for Normal View */}
                 <div className="text-center mb-6">
-                  <h1 className="text-xl font-bold text-white/100 mb-2">
+                  <h1 className="text-xl font-bold text-black/100 mb-2">
                     {surveyData.survey_title}
                   </h1>
                   {!showGenericTags && !isLastStep && (
