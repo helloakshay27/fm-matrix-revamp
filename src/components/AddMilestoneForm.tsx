@@ -1,13 +1,9 @@
 import {
-    Dialog,
-    DialogContent,
     FormControl,
     InputLabel,
     MenuItem,
     Select,
-    Slide,
     TextField,
-    Typography,
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useEffect, useState } from "react";
@@ -16,11 +12,68 @@ import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { createMilestone, fetchMilestones } from "@/store/slices/projectMilestoneSlice";
 
+interface Project {
+    id: string | number;
+    start_date?: string;
+    end_date?: string;
+    [key: string]: any;
+}
+
 const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     "& .MuiInputBase-input, & .MuiSelect-select": {
         padding: { xs: "8px", sm: "10px", md: "12px" },
     },
+};
+
+const calculateDuration = (startDate: string, endDate: string): string => {
+    if (!startDate || !endDate) return '';
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+    // If start date is today
+    if (startDay.getTime() === today.getTime()) {
+        // If end date is also today
+        if (endDay.getTime() === today.getTime()) {
+            // Calculate from now to end of today (11:59:59 PM)
+            const endOfToday = new Date(today);
+            endOfToday.setHours(23, 59, 59, 999);
+
+            const msToEnd = endOfToday.getTime() - now.getTime();
+            const totalMins = Math.floor(msToEnd / (1000 * 60));
+            const hrs = Math.floor(totalMins / 60);
+            const mins = totalMins % 60;
+            return `0d : ${hrs}h : ${mins}m`;
+        } else {
+            // End date is in the future
+            if (endDay.getTime() < startDay.getTime()) return 'Invalid: End date before start date';
+
+            const daysDiff = Math.floor((endDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+            // Calculate remaining hours and minutes from now to end of today (midnight)
+            const endOfToday = new Date(today);
+            endOfToday.setHours(23, 59, 59, 999);
+
+            const msToday = endOfToday.getTime() - now.getTime();
+            const totalMinutes = Math.floor(msToday / (1000 * 60));
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+
+            return `${daysDiff}d : ${hours}h : ${minutes}m`;
+        }
+    } else {
+        // For future dates, calculate days only
+        if (endDay.getTime() < startDay.getTime()) return 'Invalid: End date before start date';
+
+        const days = Math.floor((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        return `${days}d : 0h : 0m`;
+    }
 };
 
 const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-auto" }) => {
@@ -29,11 +82,15 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
     const baseUrl = localStorage.getItem("baseUrl");
 
     const location = useLocation();
-    const { id } = useParams();
+    const { id } = useParams<{ id: string }>();
 
-    const { data: project } = useAppSelector(state => state.createProject)
+    const { data: project } = useAppSelector(state => state.createProject) as { data: Project | null }
 
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const [milestones, setMilestones] = useState([])
+    const [projectStartDate, setProjectStartDate] = useState("");
+    const [projectEndDate, setProjectEndDate] = useState("");
+    const [projectData, setProjectData] = useState<Project | null>(null);
     const [formData, setFormData] = useState({
         milestoneTitle: "",
         owner: "",
@@ -46,15 +103,49 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
     useEffect(() => {
         const getMilestones = async () => {
             try {
-                const response = await dispatch(fetchMilestones({ token, baseUrl, id: project?.id ? project.id : id })).unwrap();
+                const projectId = project?.id ? String(project.id) : (id || "");
+                const response = await dispatch(fetchMilestones({ token, baseUrl, id: projectId })).unwrap();
                 setMilestones(response)
             } catch (error) {
                 console.log(error)
             }
         }
 
-        getMilestones()
-    }, [])
+        const fetchProjectData = async () => {
+            if (project?.start_date && project?.end_date) {
+                const startDate = new Date(project.start_date).toISOString().split('T')[0];
+                const endDate = new Date(project.end_date).toISOString().split('T')[0];
+                setProjectStartDate(startDate);
+                setProjectEndDate(endDate);
+                setProjectData(project);
+            } else if (id) {
+                try {
+                    const response = await fetch(`https://${baseUrl}/project_managements/${id}.json`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    if (response.ok) {
+                        const fetchedProject: Project = await response.json();
+                        setProjectData(fetchedProject);
+
+                        if (fetchedProject?.start_date && fetchedProject?.end_date) {
+                            const startDate = new Date(fetchedProject.start_date).toISOString().split('T')[0];
+                            const endDate = new Date(fetchedProject.end_date).toISOString().split('T')[0];
+                            setProjectStartDate(startDate);
+                            setProjectEndDate(endDate);
+                        }
+                    }
+                } catch (error) {
+                    console.log('Error fetching project:', error);
+                }
+            }
+        }
+
+        fetchProjectData();
+        getMilestones();
+    }, [project?.id, project?.start_date, project?.end_date, id, token, baseUrl])
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -64,8 +155,57 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
         }));
     };
 
+    const validateDates = () => {
+        if (!formData.startDate || !formData.endDate) return true;
+
+        const startDate = new Date(formData.startDate);
+        const endDate = new Date(formData.endDate);
+        const projStart = new Date(projectStartDate);
+        const projEnd = new Date(projectEndDate);
+
+        if (startDate < projStart) {
+            toast.error("Start date must be within project duration.");
+            return false;
+        }
+        if (endDate > projEnd) {
+            toast.error("End date must be within project duration.");
+            return false;
+        }
+        if (endDate < startDate) {
+            toast.error("End date must be after start date.");
+            return false;
+        }
+        return true;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validate required fields
+        if (!formData.milestoneTitle) {
+            toast.error("Milestone title is required.");
+            return;
+        }
+        if (!formData.owner) {
+            toast.error("Milestone owner is required.");
+            return;
+        }
+        if (!formData.startDate) {
+            toast.error("Start date is required.");
+            return;
+        }
+        if (!formData.endDate) {
+            toast.error("End date is required.");
+            return;
+        }
+
+        // Validate dates are within project duration
+        if (!validateDates()) {
+            return;
+        }
+
+        setIsSubmitting(true);
+
         try {
             const payload = {
                 milestone: {
@@ -77,7 +217,7 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
                     status: "open",
                     project_management_id: location.pathname.includes("/milestones")
                         ? id
-                        : project?.id,
+                        : (project?.id as string | number) || (projectData?.id as string | number),
                 },
             }
 
@@ -86,7 +226,9 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
             handleClose();
         } catch (error) {
             console.log(error)
-            toast.error(error)
+            toast.error((error as any)?.message || "Error creating milestone")
+        } finally {
+            setIsSubmitting(false)
         }
     };
 
@@ -144,6 +286,10 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
                                 sx={{ mt: 1 }}
                                 value={formData[field]}
                                 onChange={handleChange}
+                                inputProps={{
+                                    min: projectStartDate,
+                                    max: projectEndDate,
+                                }}
                             />
                         </div>
                     ))}
@@ -158,7 +304,7 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
                             InputLabelProps={{ shrink: true }}
                             InputProps={{ sx: fieldStyles }}
                             sx={{ mt: 1 }}
-                            value={formData.duration}
+                            value={calculateDuration(formData.startDate, formData.endDate)}
                         />
                     </div>
                 </div>
@@ -190,6 +336,7 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
                         type="submit"
                         size="lg"
                         className="bg-[#C72030] hover:bg-[#C72030] text-white"
+                        disabled={isSubmitting}
                     >
                         Submit
                     </Button>

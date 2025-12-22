@@ -958,9 +958,12 @@ const mapDisplayToApiStatus = (displayStatus) => {
 export const ProjectTaskDetails = () => {
   const { setCurrentSection } = useLayout();
 
+  const view = localStorage.getItem("selectedView");
+
   useEffect(() => {
-    setCurrentSection("Project Task");
+    setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
   }, [setCurrentSection]);
+
 
   const navigate = useNavigate();
   const { id, mid, taskId } = useParams<{ id: string; mid: string; taskId: string }>();
@@ -982,10 +985,6 @@ export const ProjectTaskDetails = () => {
   const [dependentTasks, setDependentTasks] = useState<any[]>([]);
   const [addingTodo, setAddingTodo] = useState(false);
   const [statuses, setStatuses] = useState([])
-
-  console.log(statuses)
-
-  console.log(taskDetails)
 
   const firstContentRef = useRef<HTMLDivElement>(null);
   const secondContentRef = useRef<HTMLDivElement>(null);
@@ -1556,7 +1555,7 @@ export const ProjectTaskDetails = () => {
 
           {/* Comments Tab */}
           {activeTab === "comments" && (
-            <Comments comments={(taskDetails as any)?.comments} taskId={taskId} />
+            <Comments comments={(taskDetails as any)?.comments} taskId={taskId} getTask={fetchData} />
           )}
 
           {/* Attachments Tab */}

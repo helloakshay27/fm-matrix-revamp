@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, Slide } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import { X, ChevronDown } from "lucide-react";
@@ -34,7 +34,11 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
     const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
     const [showLeadDropdown, setShowLeadDropdown] = useState(false);
     const [showMembersDropdown, setShowMembersDropdown] = useState(false);
+    const [leadSearch, setLeadSearch] = useState('');
+    const [memberSearch, setMemberSearch] = useState('');
     const [loading, setLoading] = useState(false);
+    const leadContainerRef = useRef<HTMLDivElement | null>(null);
+    const membersContainerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -48,6 +52,8 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
         setSelectedMembers([]);
         setShowLeadDropdown(false);
         setShowMembersDropdown(false);
+        setLeadSearch('');
+        setMemberSearch('');
         onClose();
     };
 
@@ -98,6 +104,26 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
         );
     };
 
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (showLeadDropdown && leadContainerRef.current && !leadContainerRef.current.contains(e.target as Node)) {
+                setShowLeadDropdown(false);
+            }
+            if (showMembersDropdown && membersContainerRef.current && !membersContainerRef.current.contains(e.target as Node)) {
+                setShowMembersDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [showLeadDropdown, showMembersDropdown]);
+
+    const filteredLeadUsers = (fmUsers || []).filter((u: any) =>
+        u.full_name?.toLowerCase().includes(leadSearch.toLowerCase())
+    );
+    const filteredMemberUsers = (fmUsers || []).filter((u: any) =>
+        u.full_name?.toLowerCase().includes(memberSearch.toLowerCase())
+    );
+
     return (
         <Dialog open={isOpen} onClose={closeDialog} TransitionComponent={Transition}>
             <DialogContent
@@ -135,12 +161,11 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
                             />
                         </div>
 
-                        {/* Team Lead Dropdown */}
                         <div className="mt-4 space-y-2">
                             <label className="block text-sm font-medium">
                                 Team Lead<span className="text-red-500">*</span>
                             </label>
-                            <div className="relative">
+                            <div className="relative" ref={leadContainerRef}>
                                 <button
                                     onClick={() => setShowLeadDropdown(!showLeadDropdown)}
                                     className="w-full px-4 py-2 border-2 border-gray-300 rounded text-left flex items-center justify-between hover:border-gray-400 focus:outline-none focus:border-blue-500"
@@ -154,7 +179,16 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
                                 </button>
                                 {showLeadDropdown && (
                                     <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded shadow-lg z-10 max-h-60 overflow-y-auto">
-                                        {fmUsers && fmUsers.map((user: any) => (
+                                        <div className="p-2 border-b">
+                                            <input
+                                                type="text"
+                                                value={leadSearch}
+                                                onChange={(e) => setLeadSearch(e.target.value)}
+                                                placeholder="Search..."
+                                                className="w-full px-3 py-2 border rounded text-sm"
+                                            />
+                                        </div>
+                                        {filteredLeadUsers && filteredLeadUsers.map((user: any) => (
                                             <button
                                                 key={user.id}
                                                 onClick={() => {
@@ -171,12 +205,11 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
                             </div>
                         </div>
 
-                        {/* Team Members Dropdown */}
                         <div className="mt-4 space-y-2">
                             <label className="block text-sm font-medium">
                                 Team Members<span className="text-red-500">*</span>
                             </label>
-                            <div className="relative">
+                            <div className="relative" ref={membersContainerRef}>
                                 <button
                                     onClick={() => setShowMembersDropdown(!showMembersDropdown)}
                                     className="w-full px-4 py-2 border-2 border-gray-300 rounded text-left flex items-center justify-between hover:border-gray-400 focus:outline-none focus:border-blue-500"
@@ -190,7 +223,16 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
                                 </button>
                                 {showMembersDropdown && (
                                     <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded shadow-lg z-10 max-h-64 overflow-y-auto">
-                                        {fmUsers && fmUsers.map((user: any) => (
+                                        <div className="p-2 border-b">
+                                            <input
+                                                type="text"
+                                                value={memberSearch}
+                                                onChange={(e) => setMemberSearch(e.target.value)}
+                                                placeholder="Search..."
+                                                className="w-full px-3 py-2 border rounded text-sm"
+                                            />
+                                        </div>
+                                        {filteredMemberUsers && filteredMemberUsers.map((user: any) => (
                                             <label
                                                 key={user.id}
                                                 className="flex items-center px-4 py-3 hover:bg-gray-100 border-b last:border-b-0 cursor-pointer"

@@ -6,8 +6,12 @@ export const fetchIssues = createAsyncThunk(
     "fetchIssues",
     async ({ token, baseUrl, id }: { token: string; baseUrl: string; id: string }, { rejectWithValue }) => {
         try {
+            let url = `https://${baseUrl}/issues.json`;
+            if (id) {
+                url += `?q[project_management_id_eq]=${id}`;
+            }
             const response = await axios.get(
-                `https://${baseUrl}/issues.json?q[project_id_eq]=${id}`,
+                url,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

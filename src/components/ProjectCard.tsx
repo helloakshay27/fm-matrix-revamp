@@ -22,11 +22,9 @@ const formatCountdown = (ms) => {
 };
 
 const ProjectCard = ({ project }) => {
-    const token = localStorage.getItem("token");
-    const dispatch = useDispatch();
-
     const navigate = useNavigate();
 
+    const [isOverdue, setIsOverdue] = useState(false)
     const [countdown, setCountdown] = useState("");
 
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -38,36 +36,47 @@ const ProjectCard = ({ project }) => {
         },
     });
 
-    // useEffect(() => {
-    //     if (!project?.end_date || project.status === "completed") {
-    //         setCountdown("Completed");
-    //         return;
-    //     }
+    useEffect(() => {
+        if (!project?.end_date) {
+            setCountdown("—");
+            return;
+        }
 
-    //     const interval = setInterval(() => {
-    //         const now = new Date();
-    //         const end = new Date(project.end_date);
-    //         const endMidnight = new Date(end.getFullYear(), end.getMonth(), end.getDate() + 1);
+        const interval = setInterval(() => {
+            const now = new Date();
+            const end = new Date(project.end_date);
 
-    //         const diff = endMidnight - now;
+            // End of the end_date day
+            const endOfDay = new Date(
+                end.getFullYear(),
+                end.getMonth(),
+                end.getDate(),
+                23,
+                59,
+                59,
+                999
+            );
 
-    //         if (diff <= 0 && project.status !== "completed") {
-    //             setCountdown("Overdue");
-    //             dispatch(changeTaskStatus({ token, id: task.id, payload: { status: "overdue" } }));
-    //             clearInterval(interval);
-    //         } else {
-    //             const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999);
-    //             const displayDiff = endOfDay - now;
-    //             setCountdown(formatCountdown(displayDiff));
-    //         }
-    //     }, 1000);
+            const diff = endOfDay.getTime() - now.getTime();
 
-    //     return () => clearInterval(interval);
-    // }, [project.end_date, project.status, project.id, token, dispatch]);
+            if (diff >= 0) {
+                // ⏳ Countdown mode
+                setCountdown(formatCountdown(diff));
+                setIsOverdue(false);
+            } else {
+                // 🔴 Overdue mode (forward timer)
+                setCountdown(formatCountdown(Math.abs(diff)));
+                setIsOverdue(true);
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [project.end_date]);
+
 
     const memberColors = useMemo(() => {
         const colors = {};
-        project.project_members.forEach((member) => {
+        project?.project_members?.forEach((member) => {
             if (member.user) {
                 const id = member.user.id || member.user.firstname; // Use unique ID if available
                 colors[id] = getRandomColor();
@@ -96,7 +105,7 @@ const ProjectCard = ({ project }) => {
             <div className="flex flex-col gap-1">
                 <div className="flex items-start gap-2">
                     <Timer className="text-[#029464] flex-shrink-0" size={14} />
-                    <span className="text-[10px] text-[#029464] truncate">
+                    <span className={`text-[10px] ${isOverdue ? "text-red-500" : "text-[#029464]"} truncate`}>
                         {countdown}
                     </span>
                 </div>
@@ -202,7 +211,7 @@ const ProjectCard = ({ project }) => {
             <div className="flex items-center justify-between">
                 <div className="text-gray-600 text-xs">Members</div>
                 <div className="flex items-center">
-                    {project.project_members.map((member, index) => {
+                    {project?.project_members?.map((member, index) => {
                         if (!member.user) return null;
                         const id = member.user.id || member.user.firstname;
                         return (

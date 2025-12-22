@@ -841,6 +841,7 @@ import ProfileDetailsPage from "./pages/ProfileDetailsPage";
 import PlaceFnbOrder from "./pages/PlaceFnbOrder";
 import { SpaceManagementBookingsDashboardEmployee } from "./pages/SpaceManagementBookingsDashboardEmployee";
 import { SpaceManagementBookingDetailsPage } from "./pages/SpaceManagementBookingDetailsPage";
+import SpaceManagementBookingAddEmployee from "./pages/SpaceManagementBookingAddEmployee";
 import EmployeeWallet from "./pages/EmployeeWallet";
 import { useWebSocket } from "./hooks/useWebSocket";
 // import RouteLogger from "./components/RouteLogger";
@@ -3136,6 +3137,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <SpaceManagementBookingsDashboardEmployee />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/vas/space-management/bookings/employee/add"
+                    element={
+                      <ProtectedRoute>
+                        <SpaceManagementBookingAddEmployee />
                       </ProtectedRoute>
                     }
                   />

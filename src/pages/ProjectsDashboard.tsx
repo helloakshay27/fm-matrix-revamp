@@ -2,7 +2,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { changeProjectStatus, createProject, fetchProjects, filterProjects } from "@/store/slices/projectManagementSlice";
+import { changeProjectStatus, createProject, filterProjects } from "@/store/slices/projectManagementSlice";
 import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import {
   ChartNoAxesColumn,
@@ -11,7 +11,6 @@ import {
   List,
   LogOut,
   Plus,
-  Filter,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -23,9 +22,10 @@ import { toast } from "sonner";
 import AddProjectModal from "@/components/AddProjectModal";
 import ProjectCreateModal from "@/components/ProjectCreateModal";
 import ProjectManagementKanban from "@/components/ProjectManagementKanban";
-import { ProjectFilterModal } from "@/components/ProjectFilterModal";
+import ProjectFilterModal from "@/components/ProjectFilterModal";
 import { useLayout } from "@/contexts/LayoutContext";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import axios from "axios";
 
 const columns: ColumnConfig[] = [
   {
@@ -178,8 +178,10 @@ const statusOptions = [
 export const ProjectsDashboard = () => {
   const { setCurrentSection } = useLayout();
 
+  const view = localStorage.getItem("selectedView");
+
   useEffect(() => {
-    setCurrentSection("Project Task");
+    setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
   }, [setCurrentSection]);
 
   const navigate = useNavigate();
@@ -194,30 +196,34 @@ export const ProjectsDashboard = () => {
   const [projects, setProjects] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [openFormDialog, setOpenFormDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState({});
   const [isOpen, setIsOpen] = useState(false);
   const [openStatusOptions, setOpenStatusOptions] = useState(false)
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedView, setSelectedView] = useState("List");
   const [projectTypes, setProjectTypes] = useState([]);
   const [owners, setOwners] = useState([])
-  // const [teams, setTeams] = useState([])
-  // const [tags, setTags] = useState([])
   const [loading, setLoading] = useState(false)
+  const [appliedFilters, setAppliedFilters] = useState("")
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
     total_pages: 0,
   });
 
-  const fetchData = async (page = 1) => {
+  const fetchData = async (page = 1, filterString = "") => {
     try {
       setLoading(true)
-      let filters = {};
-      if (selectedFilterOption !== "all") {
-        filters["q[status_eq]"] = selectedFilterOption;
+      let filters = filterString !== "" ? filterString : appliedFilters;
+
+      if (!filters) {
+        if (selectedFilterOption !== "all") {
+          filters = `q[status_eq]=${selectedFilterOption}&`;
+        }
       }
-      filters["q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]"] = JSON.parse(localStorage.getItem('user')).id;
-      filters["page"] = page;
+
+      filters += (filters ? "&" : "") + `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${JSON.parse(localStorage.getItem('user')).id}&page=${page}`;
+
       const response = await dispatch(
         filterProjects({ token, baseUrl, filters })
       ).unwrap();
@@ -237,13 +243,18 @@ export const ProjectsDashboard = () => {
 
   useEffect(() => {
     setPagination((prev) => ({ ...prev, current_page: 1 }));
-    fetchData(1);
+    fetchData(1, "");
+    setAppliedFilters("");
   }, [dispatch, token, baseUrl, selectedFilterOption]);
 
   const getOwners = async () => {
     try {
-      const response = await dispatch(fetchFMUsers()).unwrap();
-      setOwners(response.users);
+      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+      setOwners(response.data.users);
     } catch (error) {
       console.log(error)
       toast.error(error)
@@ -484,10 +495,10 @@ export const ProjectsDashboard = () => {
   };
 
   const renderCell = (item: any, columnKey: string) => {
-    const renderProgressBar = (completed: number, total: number, color: string) => {
+    const renderProgressBar = (completed: number, total: number, color: string, type?: string) => {
       const progress = total > 0 ? (completed / total) * 100 : 0;
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => type === "issues" && navigate(`/vas/issues?project_id=${item.id}`)}>
           <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
             <div
               className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
@@ -518,7 +529,7 @@ export const ProjectsDashboard = () => {
       case "issues": {
         const completed = item.resolvedIssues || 0;
         const total = item.issues || 0;
-        return renderProgressBar(completed, total, "bg-[#ff9a9e]");
+        return renderProgressBar(completed, total, "bg-[#ff9a9e]", "issues");
       }
       case "id":
         return (
@@ -526,7 +537,7 @@ export const ProjectsDashboard = () => {
             onClick={() => navigate(`/vas/projects/details/${item.id}`)}
             className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
           >
-            {item.id}
+            P-{item.id}
           </button>
         );
       case "start_date":
@@ -866,6 +877,7 @@ export const ProjectsDashboard = () => {
           openDialog={openDialog}
           handleCloseDialog={handleCloseDialog}
           setOpenFormDialog={setOpenFormDialog}
+          onTemplateSelect={setSelectedTemplate}
         />
 
         <ProjectCreateModal
@@ -873,18 +885,23 @@ export const ProjectsDashboard = () => {
           handleCloseDialog={() => {
             setOpenFormDialog(false);
             setOpenDialog(false);
+            setSelectedTemplate({});
           }}
           owners={owners}
           projectTypes={projectTypes}
           tags={tags}
           teams={teams}
           fetchProjects={fetchData}
+          templateDetails={selectedTemplate}
         />
 
         <ProjectFilterModal
           isModalOpen={isFilterModalOpen}
           setIsModalOpen={setIsFilterModalOpen}
-          onApplyFilters={fetchData}
+          onApplyFilters={(filterString) => {
+            setAppliedFilters(filterString);
+            fetchData(1, filterString);
+          }}
         />
       </div>
     )
@@ -935,6 +952,7 @@ export const ProjectsDashboard = () => {
         openDialog={openDialog}
         handleCloseDialog={handleCloseDialog}
         setOpenFormDialog={setOpenFormDialog}
+        onTemplateSelect={setSelectedTemplate}
       />
 
       <ProjectCreateModal
@@ -942,18 +960,23 @@ export const ProjectsDashboard = () => {
         handleCloseDialog={() => {
           setOpenFormDialog(false);
           setOpenDialog(false);
+          setSelectedTemplate({});
         }}
         owners={owners}
         projectTypes={projectTypes}
         tags={tags}
         teams={teams}
         fetchProjects={fetchData}
+        templateDetails={selectedTemplate}
       />
 
       <ProjectFilterModal
         isModalOpen={isFilterModalOpen}
         setIsModalOpen={setIsFilterModalOpen}
-        onApplyFilters={fetchData}
+        onApplyFilters={(filterString) => {
+          setAppliedFilters(filterString);
+          fetchData(1, filterString);
+        }}
       />
     </div>
   );

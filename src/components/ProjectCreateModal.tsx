@@ -35,11 +35,62 @@ const fieldStyles = {
     },
 };
 
-const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, projectTypes, tags, fetchProjects }) => {
+const calculateDuration = (startDate: string, endDate: string): string => {
+    if (!startDate || !endDate) return '';
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+    // If start date is today
+    if (startDay.getTime() === today.getTime()) {
+        // If end date is also today
+        if (endDay.getTime() === today.getTime()) {
+            // Calculate from now to end of today (11:59:59 PM)
+            const endOfToday = new Date(today);
+            endOfToday.setHours(23, 59, 59, 999);
+
+            const msToEnd = endOfToday.getTime() - now.getTime();
+            const totalMins = Math.floor(msToEnd / (1000 * 60));
+            const hrs = Math.floor(totalMins / 60);
+            const mins = totalMins % 60;
+            return `0d : ${hrs}h : ${mins}m`;
+        } else {
+            // End date is in the future
+            if (endDay.getTime() < startDay.getTime()) return 'Invalid: End date before start date';
+
+            const daysDiff = Math.floor((endDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+            // Calculate remaining hours and minutes from now to end of today (midnight)
+            const endOfToday = new Date(today);
+            endOfToday.setHours(23, 59, 59, 999);
+
+            const msToday = endOfToday.getTime() - now.getTime();
+            const totalMinutes = Math.floor(msToday / (1000 * 60));
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+
+            return `${daysDiff}d : ${hours}h : ${minutes}m`;
+        }
+    } else {
+        // For future dates, calculate days only
+        if (endDay.getTime() < startDay.getTime()) return 'Invalid: End date before start date';
+
+        const days = Math.floor((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        return `${days}d : 0h : 0m`;
+    }
+};
+
+const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, projectTypes, tags, fetchProjects, templateDetails }) => {
     const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
 
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const [selectedTab, setSelectedTab] = useState("details")
     const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
     const [isTagModalOpen, setIsTagModalOpen] = useState(false);
@@ -57,6 +108,47 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
         priority: "",
         tags: []
     });
+
+    // Populate form when template is selected
+    useEffect(() => {
+        if (templateDetails && templateDetails.id) {
+            const mappedTags = templateDetails.project_tags?.map((tag: any) => ({
+                value: tag?.company_tag?.id,
+                label: tag?.company_tag?.name,
+            })) || [];
+
+            setFormData({
+                title: templateDetails?.title?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1').replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
+                isChannel: templateDetails.create_channel || false,
+                isTemplate: templateDetails.is_template || false,
+                description: templateDetails?.description?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1').replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
+                owner: templateDetails.owner_id || '',
+                startDate: templateDetails.start_date || '',
+                endDate: templateDetails.end_date || '',
+                duration: '',
+                team: templateDetails.project_team_id || '',
+                type: templateDetails.project_type_id || '',
+                priority: templateDetails.priority || '',
+                tags: mappedTags,
+            });
+        } else {
+            // Reset form if no template
+            setFormData({
+                title: "",
+                isChannel: false,
+                isTemplate: false,
+                description: "",
+                owner: "",
+                startDate: "",
+                endDate: "",
+                duration: "",
+                team: "",
+                type: "",
+                priority: "",
+                tags: []
+            });
+        }
+    }, [templateDetails, openDialog]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -80,6 +172,16 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
             toast.error("Please select owner");
             return false;
         }
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+        if (formData.startDate && formData.startDate < todayStr) {
+            toast.error("Start date cannot be before today");
+            return false;
+        }
+        if (formData.endDate && formData.startDate && formData.endDate < formData.startDate) {
+            toast.error("End date cannot be before start date");
+            return false;
+        }
         if (!formData.team) {
             toast.error("Please select team");
             return false;
@@ -101,6 +203,7 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
         if (!validateForm()) {
             return;
         }
+        setIsSubmitting(true);
         const payload = {
             project_management: {
                 title: formData.title,
@@ -126,13 +229,15 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
         } catch (error) {
             console.error("Error creating project:", error);
             toast.error(error.message || "Failed to create project");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return (
         <Dialog open={openDialog} onClose={handleCloseDialog} TransitionComponent={Transition}>
             <DialogContent
-                className="w-[35rem] fixed right-0 top-0 rounded-none bg-[#fff] text-sm"
+                className="w-[40rem] fixed right-0 top-0 rounded-none bg-[#fff] text-sm"
                 style={{ margin: 0 }}
                 sx={{
                     padding: "0 !important"
@@ -249,28 +354,40 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                                     </div>
 
                                     <div className="flex gap-2 mt-4 text-[12px]">
-                                        {["startDate", "endDate"].map((field) => (
-                                            <div key={field} className="w-full space-y-2">
-                                                <TextField
-                                                    label={field === "startDate" ? "Start Date" : "End Date"}
-                                                    type="date"
-                                                    name={field}
-                                                    value={formData[field]}
-                                                    onChange={handleChange}
-                                                    fullWidth
-                                                    variant="outlined"
-                                                    InputLabelProps={{ shrink: true }}
-                                                    InputProps={{ sx: fieldStyles }}
-                                                    sx={{ mt: 1 }}
-                                                />
-                                            </div>
-                                        ))}
+                                        {["startDate", "endDate"].map((field) => {
+                                            const today = new Date().toISOString().split("T")[0];
 
-                                        <div className="w-[300px] space-y-2">
+                                            const minDate =
+                                                field === "startDate"
+                                                    ? today
+                                                    : formData.startDate || today;
+
+                                            return (
+                                                <div key={field} className="w-full space-y-2">
+                                                    <TextField
+                                                        label={field === "startDate" ? "Start Date" : "End Date"}
+                                                        type="date"
+                                                        name={field}
+                                                        value={formData[field]}
+                                                        onChange={handleChange}
+                                                        fullWidth
+                                                        variant="outlined"
+                                                        InputLabelProps={{ shrink: true }}
+                                                        InputProps={{ sx: fieldStyles }}
+                                                        sx={{ mt: 1 }}
+                                                        inputProps={{
+                                                            min: minDate,
+                                                        }}
+                                                    />
+                                                </div>
+                                            )
+                                        })}
+
+                                        <div className="w-[350px] space-y-2">
                                             <TextField
                                                 label="Duration"
                                                 name="duration"
-                                                value={formData.duration}
+                                                value={calculateDuration(formData.startDate, formData.endDate)}
                                                 fullWidth
                                                 disabled
                                                 variant="outlined"
@@ -399,7 +516,8 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                                                 Cancel
                                             </Button>
                                             <Button
-                                                onClick={handleSubmit}
+                                                type="submit"
+                                                disabled={isSubmitting}
                                             >
                                                 Submit
                                             </Button>

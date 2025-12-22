@@ -2,7 +2,7 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import KanbanBoard from "./KanbanBoard";
 import ProjectCard from "./ProjectCard";
 import { DndContext, DragEndEvent, closestCorners, DragStartEvent, DragOverlay } from "@dnd-kit/core";
-import { changeProjectStatus } from "@/store/slices/projectManagementSlice";
+import { changeProjectStatus, fetchKanbanProjects } from "@/store/slices/projectManagementSlice";
 import { useCallback, useEffect, useState } from "react";
 import { useLayout } from "@/contexts/LayoutContext";
 
@@ -46,7 +46,7 @@ const ProjectManagementKanban = () => {
         setCurrentSection("Project Task");
     }, [setCurrentSection]);
 
-    const { data } = useAppSelector((state) => state.filterProjects);
+    const { data } = useAppSelector((state) => state.fetchKanbanProjects);
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -54,6 +54,18 @@ const ProjectManagementKanban = () => {
     // Track dragging and project updates
     const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
     const [droppedProjects, setDroppedProjects] = useState<{ [key: string]: string }>({});
+
+    useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+                await dispatch(fetchKanbanProjects({ token, baseUrl }));
+            } catch (error) {
+                console.log(error)
+            }
+        }
+
+        fetchProjects();
+    }, [])
 
     const handleDragStart = useCallback((event: DragStartEvent) => {
         const activeData = event.active.data.current;
@@ -126,8 +138,8 @@ const ProjectManagementKanban = () => {
                         const cardStatus = card.title.toLowerCase().replace(" ", "_");
 
                         const filteredProjects =
-                            Array.isArray(data) &&
-                            data.filter((project) => {
+                            Array.isArray(data.project_managements) &&
+                            data.project_managements.filter((project) => {
                                 // Check if this project was dropped with a new status
                                 const droppedStatus = droppedProjects[project.id];
                                 const projectStatus = droppedStatus || project.status;
@@ -217,10 +229,10 @@ const ProjectManagementKanban = () => {
                 </div>
                 <DragOverlay>
                     {draggedProjectId ? (
-                        Array.isArray(data) &&
-                            data.find(project => project.id.toString() === draggedProjectId) ? (
+                        Array.isArray(data.project_managements) &&
+                            data.project_managements.find(project => project.id.toString() === draggedProjectId) ? (
                             <div className="w-60 opacity-100">
-                                <ProjectCard project={data.find(project => project.id.toString() === draggedProjectId)} />
+                                <ProjectCard project={data.project_managements.find(project => project.id.toString() === draggedProjectId)} />
                             </div>
                         ) : null
                     ) : null}
