@@ -499,7 +499,7 @@ export const GalleryImageUpload: React.FC<GalleryImageUploadProps> = ({
                                         </div>
                                         <div className="image-details">
                                             <span className="image-ratio">{image.ratio}</span>
-                                            <span className="image-size">{image.size.toFixed(2)} MB</span>
+                                            <span className="image-size">{typeof image.size === 'number' && !isNaN(image.size) ? image.size.toFixed(2) : 'N/A'} MB</span>
                                             {!image.isValidRatio && (
                                                 <span className="invalid-badge">Invalid Ratio</span>
                                             )}

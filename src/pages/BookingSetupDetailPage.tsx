@@ -745,28 +745,28 @@ export const BookingSetupDetailPage = () => {
                       <span className="text-gray-500 min-w-[140px]">Start Time</span>
                       <span className="text-gray-500 mx-2">:</span>
                       <span className="text-gray-900 font-medium">
-                        {slot.startTime.hour}:{slot.startTime.minute}
+                        {String(slot.startTime.hour).padStart(2, '0')}:{String(slot.startTime.minute).padStart(2, '0')}
                       </span>
                     </div>
                     <div className="flex items-start">
                       <span className="text-gray-500 min-w-[140px]">End Time</span>
                       <span className="text-gray-500 mx-2">:</span>
                       <span className="text-gray-900 font-medium">
-                        {slot.endTime.hour}:{slot.endTime.minute}
+                        {String(slot.endTime.hour).padStart(2, '0')}:{String(slot.endTime.minute).padStart(2, '0')}
                       </span>
                     </div>
                     <div className="flex items-start">
                       <span className="text-gray-500 min-w-[140px]">Break Time Start</span>
                       <span className="text-gray-500 mx-2">:</span>
                       <span className="text-gray-900 font-medium">
-                        {slot.breakTimeStart.hour}:{slot.breakTimeStart.minute}
+                        {String(slot.breakTimeStart.hour).padStart(2, '0')}:{String(slot.breakTimeStart.minute).padStart(2, '0')}
                       </span>
                     </div>
                     <div className="flex items-start">
                       <span className="text-gray-500 min-w-[140px]">Break Time End</span>
                       <span className="text-gray-500 mx-2">:</span>
                       <span className="text-gray-900 font-medium">
-                        {slot.breakTimeEnd.hour}:{slot.breakTimeEnd.minute}
+                        {String(slot.breakTimeEnd.hour).padStart(2, '0')}:{String(slot.breakTimeEnd.minute).padStart(2, '0')}
                       </span>
                     </div>
                     <div className="flex items-start">
@@ -872,7 +872,16 @@ export const BookingSetupDetailPage = () => {
                         <input
                           type="checkbox"
                           checked={isPremiumSlots[slotKey] || false}
-                          onChange={() => handleSlotCheckboxChange(slotKey)}
+                          onChange={() => {
+                            handleSlotCheckboxChange(slotKey);
+                            if (isPremiumSlots[slotKey]) {
+                              // Unchecking: close modal
+                              setPopoverOpen(prev => ({ ...prev, [slotKey]: false }));
+                            } else {
+                              // Checking: open modal
+                              setPopoverOpen(prev => ({ ...prev, [slotKey]: true }));
+                            }
+                          }}
                           className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                         />
                         <Label
@@ -905,9 +914,11 @@ export const BookingSetupDetailPage = () => {
                             placeholder="Enter percentage"
                             value={premiumPercentage[slotKey] || ""}
                             onChange={(e) => {
+                              let val = e.target.value;
+                              if (parseFloat(val) > 100) val = "100";
                               setPremiumPercentage(prev => ({
                                 ...prev,
-                                [slotKey]: e.target.value
+                                [slotKey]: val
                               }));
                             }}
                             variant="outlined"
