@@ -124,7 +124,7 @@ export const AssetDetailsPage = () => {
       const urlParams = new URLSearchParams();
       urlParams.append("asset_ids[]", assetData.id);
 
-      const url = `${API_CONFIG.BASE_URL}/pms/assets/print_qr_codes?${urlParams.toString()}`;
+      const url = `${API_CONFIG.BASE_URL}/pms/assets/download_qr_single?${urlParams.toString()}`;
 
       const response = await fetch(url, {
         method: "POST",
