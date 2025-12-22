@@ -729,7 +729,7 @@ export const MobileSurveyLanding: React.FC = () => {
         case "input_box":
           // New type: input_box
           if (currentAnswer.value && currentAnswer.value.toString().trim()) {
-            surveyResponseItem.response_text = currentAnswer.value
+            surveyResponseItem.ans_descr = currentAnswer.value
               .toString()
               .trim();
           }
@@ -915,9 +915,7 @@ export const MobileSurveyLanding: React.FC = () => {
         case "input_box":
           // New type: input_box
           if (answerData.value && answerData.value.toString().trim()) {
-            surveyResponseItem.response_text = answerData.value
-              .toString()
-              .trim();
+            surveyResponseItem.ans_descr = answerData.value.toString().trim();
           }
           surveyResponseItem.answer_type = "input_box";
           surveyResponseItem.answer_mode = "text_input";
@@ -1367,7 +1365,7 @@ export const MobileSurveyLanding: React.FC = () => {
           case "input_box":
             // New type: input_box
             if (answer.value && answer.value.toString().trim()) {
-              surveyResponseItem.response_text = answer.value.toString().trim();
+              surveyResponseItem.ans_descr = answer.value.toString().trim();
             }
             surveyResponseItem.answer_type = "input_box";
             surveyResponseItem.answer_mode = "text_input";
@@ -1764,7 +1762,7 @@ export const MobileSurveyLanding: React.FC = () => {
           case "input_box":
             // New type: input_box
             if (answer.value && answer.value.toString().trim()) {
-              surveyResponseItem.response_text = answer.value.toString().trim();
+              surveyResponseItem.ans_descr = answer.value.toString().trim();
             }
             surveyResponseItem.answer_type = "input_box";
             surveyResponseItem.answer_mode = "text_input";
