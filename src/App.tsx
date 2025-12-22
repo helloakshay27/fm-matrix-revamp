@@ -843,6 +843,9 @@ import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
 // import { VisitorFormPageEmployee } from "./pages/VisitorFormPageEmployee";
 import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
 import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
+import SOSDirectory from "./pages/SOSDirectory";
+import AddSosDirectory from "./pages/AddSosDirectory";
+import SosDirectoryDetailsPage from "./pages/SosDirectoryDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -3545,7 +3548,20 @@ function App() {
                     element={<AmenityDetailsPage />}
                   />
 
+                  <Route
+                    path="/pulse/sos-directory"
+                    element={<SOSDirectory />}
+                  />
 
+                  <Route
+                    path="/pulse/sos-directory/add"
+                    element={<AddSosDirectory />}
+                  />
+
+                  <Route
+                    path="/pulse/sos-directory/:id"
+                    element={<SosDirectoryDetailsPage />}
+                  />
 
                 </Route>
 
