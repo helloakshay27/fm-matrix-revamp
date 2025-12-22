@@ -7,6 +7,9 @@ import {
   getLogs,
 } from "@/store/slices/facilityBookingsSlice";
 import { ArrowLeft, Logs, Ticket, CreditCard, Download } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { CustomTabs } from "@/components/CustomTabs";
 import { LogsTimeline } from "@/components/LogTimeline";
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
@@ -29,6 +32,42 @@ export const BookingDetailsPage = () => {
       timestamp: "",
     }
   ]);
+
+  // Payment modal state
+  const [openPaymentModal, setOpenPaymentModal] = useState(false);
+  const [paymentMode, setPaymentMode] = useState('online');
+  const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  // Payment API handler
+  const handlePayment = async () => {
+    if (!id) return;
+    setPaymentLoading(true);
+    try {
+      const response = await axios.post(
+        `https://club-uat-api.lockated.com/pms/admin/facility_bookings/${id}/payment`,
+        {
+          lock_payment: {
+            payment_mode: paymentMode,
+            payment_method: paymentMethod
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      toast.success('Payment request sent successfully!');
+      setOpenPaymentModal(false);
+      fetchDetails();
+    } catch (error) {
+      toast.error('Failed to send payment request');
+      console.error('Payment error:', error);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -358,7 +397,7 @@ export const BookingDetailsPage = () => {
               {/* Subtotal */}
               <div className="flex justify-between items-center py-2 border-b border-gray-200">
                 <span className="text-gray-700 font-medium">Subtotal</span>
-                <span className="text-gray-900 font-medium">₹{bookings?.sub_total?.toFixed(2) || '0.00'}</span>
+                <span className="text-gray-900 font-medium">₹{(((bookings?.member_charges || 0) + (bookings?.guest_charges || 0)).toFixed(2))}</span>
               </div>
 
               {/* Discount */}
@@ -373,7 +412,7 @@ export const BookingDetailsPage = () => {
               {bookings?.discount != null && bookings.discount > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <span className="text-gray-700 font-medium">Subtotal After Discount</span>
-                  <span className="font-medium">₹{((bookings.sub_total || 0) - (bookings.discount || 0)).toFixed(2)}</span>
+                  <span className="font-medium">₹{((bookings.sub_total || 0) )}</span>
                 </div>
               )}
 
@@ -582,9 +621,64 @@ export const BookingDetailsPage = () => {
           </h1>
         </div>
 
+         {/* Payment Button for Pending Status */}
+        {bookings?.current_status === 'Pending' && (
+          <div className="flex justify-end mt-6 mb-4">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setOpenPaymentModal(true)}>
+              Payment
+            </Button>
+          </div>
+        )}
+
+
         <div className="bg-white rounded-lg border-2 border-gray-200">
           <CustomTabs tabs={tabs} defaultValue="details" onValueChange={setActiveTab} />
         </div>
+
+       
+        {/* Payment Modal */}
+        <Dialog open={openPaymentModal} onOpenChange={setOpenPaymentModal}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Make Payment</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="payment_mode">Payment Mode</Label>
+                <select
+                  id="payment_mode"
+                  className="w-full border rounded px-2 py-2 mt-1"
+                  value={paymentMode}
+                  onChange={e => setPaymentMode(e.target.value)}
+                  disabled={paymentLoading}
+                >
+                  <option value="online">Online</option>
+                  <option value="offline">Offline</option>
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="payment_method">Payment Method</Label>
+                <select
+                  id="payment_method"
+                  className="w-full border rounded px-2 py-2 mt-1"
+                  value={paymentMethod}
+                  onChange={e => setPaymentMethod(e.target.value)}
+                  disabled={paymentLoading}
+                >
+                  <option value="upi">UPI</option>
+                  <option value="card">Card</option>
+                  <option value="cash">Cash</option>
+                  <option value="netbanking">Net Banking</option>
+                </select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handlePayment} disabled={paymentLoading} className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+                {paymentLoading ? 'Processing...' : 'Submit Payment'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>
     </div>
   );

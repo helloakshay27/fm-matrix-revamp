@@ -1216,7 +1216,7 @@ export const AddGroupMembershipPage = () => {
             console.log(`Club membership ${isEditMode ? 'updated' : 'created'} successfully:`, data);
 
             toast.success(`Club membership ${isEditMode ? 'updated' : 'added'} successfully`);
-            navigate('/club-management/membership');
+            navigate('/club-management/membership/groups');
         } catch (error) {
             console.error('Error adding membership:', error);
             toast.error(error instanceof Error ? error.message : 'Failed to add membership');
@@ -1508,6 +1508,30 @@ export const AddGroupMembershipPage = () => {
             console.log('State updated - Referred By:', referredBy);
         }
     }, [members, selectedPlanId, startDate, endDate, emergencyContactName, referredBy, isEditMode]);
+
+    // Auto-set start and end date when membership plan is selected
+    useEffect(() => {
+        if (selectedPlanId && membershipPlans.length > 0) {
+            const plan = membershipPlans.find(p => p.id === selectedPlanId);
+            if (plan) {
+                const now = dayjs();
+                let end = now;
+                // Use plan.renewal_terms for duration
+                const term = plan.renewal_terms?.toLowerCase();
+                if (term === 'month' || term === 'monthly') {
+                    end = now.add(1, 'month');
+                } else if (term === 'quarter' || term === 'quaterly') {
+                    end = now.add(3, 'month');
+                } else if (term === 'half-year' || term === 'half year' || term === 'half yearly') {
+                    end = now.add(6, 'month');
+                } else if (term === 'year' || term === 'yearly') {
+                    end = now.add(1, 'year');
+                }
+                setStartDate(now);
+                setEndDate(end);
+            }
+        }
+    }, [selectedPlanId, membershipPlans]);
 
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>

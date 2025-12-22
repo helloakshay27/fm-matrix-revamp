@@ -121,6 +121,8 @@ export const AddFacilityBookingPage = () => {
   const [complementaryReason, setComplementaryReason] = useState('');
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
   const [numberOfGuests, setNumberOfGuests] = useState<number>(1);
+  // Helper: Get max people allowed from facility details
+  const maxPeople = facilityDetails?.max_people || 0;
   const [peopleTable, setPeopleTable] = useState<Array<{
     srNo: number;
     role: string;
@@ -484,40 +486,41 @@ export const AddFacilityBookingPage = () => {
 
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
       
-      // Calculate cost summary - matching the display logic
-      const adultMemberCharge = facilityDetails?.facility_charge?.adult_member_charge || 0;
-      const adultGuestCharge = facilityDetails?.facility_charge?.adult_guest_charge || 0;
-      const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge || 0;
-      
-      // Use booking rule rate for members if available, otherwise use facility charge
-      const memberRate = bookingRuleData?.rate || adultMemberCharge;
-      
-      // Determine user charge based on user type
-      const userCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
-      
-      // Number of slots selected
+      // --- UI-aligned cost calculation (slot-by-slot, with premiums, for all user types) ---
+      const adultMemberCharge = facilityDetails?.facility_charge?.adult_member_charge ?? 0;
+      const adultGuestCharge = facilityDetails?.facility_charge?.adult_guest_charge ?? 0;
+      const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
+      const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
       const slotsCount = selectedSlots.length;
       const hasSlots = slotsCount > 0;
-      
-      // Calculate member charges (only for occupant users)
-      const memberCharges = userType === 'occupant' ? (hasSlots ? (userCharge * slotsCount) : userCharge) : 0;
-      
-      // Calculate guest charges
-      const guestChargePerSlot = numberOfGuests * adultGuestCharge;
-      const guestCharges = hasSlots ? (guestChargePerSlot * slotsCount) : guestChargePerSlot;
-      
-      // Calculate slot charges
-      const slotCharges = selectedSlots.length * perSlotCharge;
-      
-      const subtotalBeforeDiscount = memberCharges + guestCharges + slotCharges;
+      let totalUserCharge = 0;
+      let totalGuestCharge = 0;
+      if (hasSlots) {
+        selectedSlots.forEach((slotId) => {
+          const slot = slots.find((s) => s.id === slotId);
+          let memberPremium = 0;
+          let guestPremium = 0;
+          if (slot && slot.is_premium && slot.premium_percentage) {
+            memberPremium = userType === 'occupant' ? Math.round((memberRate * slot.premium_percentage) / 100) : 0;
+            guestPremium = (userType === 'guest' || userType === 'fm') ? Math.round((adultGuestCharge * slot.premium_percentage) / 100) : 0;
+          }
+          // Add for each slot
+          totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
+          totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
+        });
+      } else {
+        // No slots selected, use base charge
+        totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
+        totalGuestCharge = numberOfGuests * adultGuestCharge;
+      }
+      const slotTotal = selectedSlots.length * perSlotCharge;
+      const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
       const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
       const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
-      
       const gstPercentage = facilityDetails?.gst || 0;
       const sgstPercentage = facilityDetails?.sgst || 0;
       const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
       const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
-      
       const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
       
       // Build booked_members_attributes array from people table
@@ -539,6 +542,86 @@ export const AddFacilityBookingPage = () => {
           };
         });
       
+      // Prepare guest premium details for payload (slot-wise breakdown)
+      let guestPremiumDetails: Array<{ slotLabel: string; slotPremiumPercent: number; guestPremium: number; total: number }> = [];
+      if (selectedSlots.length > 0) {
+        selectedSlots.forEach((slotId) => {
+          const slot = slots.find((s) => s.id === slotId);
+          let guestPremium = 0;
+          let slotPremiumPercent = 0;
+          if (slot && slot.is_premium && slot.premium_percentage) {
+            slotPremiumPercent = slot.premium_percentage;
+            guestPremium = (facilityDetails?.facility_charge?.adult_guest_charge ?? 0) * slot.premium_percentage / 100;
+          }
+          guestPremiumDetails.push({
+            slotLabel: slot ? slot.ampm : '',
+            slotPremiumPercent,
+            guestPremium,
+            total: (facilityDetails?.facility_charge?.adult_guest_charge ?? 0) + guestPremium
+          });
+        });
+      }
+
+      // Use cost summary calculation (from UI) for payload values
+      const costSummary = (() => {
+        const adultMemberCharge = facilityDetails?.facility_charge?.adult_member_charge ?? 0;
+        const adultGuestCharge = facilityDetails?.facility_charge?.adult_guest_charge ?? 0;
+        const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
+        const memberRate = (bookingRuleData && typeof bookingRuleData.rate === 'number') ? bookingRuleData.rate : adultMemberCharge;
+        const slotsCount = selectedSlots.length;
+        const hasSlots = slotsCount > 0;
+        let totalUserCharge = 0;
+        let totalGuestCharge = 0;
+        let slotPremiumDetails = [];
+        if (hasSlots) {
+          selectedSlots.forEach((slotId) => {
+            const slot = slots.find((s) => s.id === slotId);
+            let memberPremium = 0;
+            let guestPremium = 0;
+            let slotPremiumPercent = 0;
+            if (slot && slot.is_premium && slot.premium_percentage) {
+              slotPremiumPercent = slot.premium_percentage;
+              memberPremium = (memberRate * slot.premium_percentage) / 100;
+              guestPremium = (adultGuestCharge * slot.premium_percentage) / 100;
+            }
+            slotPremiumDetails.push({
+              slotLabel: slot ? slot.ampm : '',
+              slotPremiumPercent,
+              memberPremium,
+              guestPremium
+            });
+            totalUserCharge += (userType === 'occupant' ? memberRate : adultGuestCharge) + (userType === 'occupant' ? memberPremium : guestPremium);
+            totalGuestCharge += numberOfGuests * (adultGuestCharge + guestPremium);
+          });
+        } else {
+          totalUserCharge = userType === 'occupant' ? memberRate : adultGuestCharge;
+          totalGuestCharge = numberOfGuests * adultGuestCharge;
+        }
+        const slotTotal = slotsCount * perSlotCharge;
+        const subtotalBeforeDiscount = totalUserCharge + totalGuestCharge + slotTotal;
+        const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
+        const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
+        const gstPercentage = facilityDetails?.gst || 0;
+        const sgstPercentage = facilityDetails?.sgst || 0;
+        const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
+        const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
+        const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
+        return {
+          totalUserCharge,
+          totalGuestCharge,
+          slotPremiumDetails,
+          slotTotal,
+          subtotalBeforeDiscount,
+          discountAmount,
+          subtotalAfterDiscount,
+          gstPercentage,
+          sgstPercentage,
+          gstAmount,
+          sgstAmount,
+          amountFull
+        };
+      })();
+
       const payload = {
         facility_booking: {
           user_society_type: 'User',
@@ -552,15 +635,16 @@ export const AddFacilityBookingPage = () => {
           payment_method: paymentMethod,
           selected_slots: selectedSlots,
           entity_id: selectedCompany,
-          member_charges: memberCharges,
-          guest_charges: guestCharges,
-          discount: discountAmount,
-          cgst_amount: gstAmount,
-          sgst_amount: sgstAmount,
-          gst: gstPercentage,
-          sgst: sgstPercentage,
-          sub_total: subtotalAfterDiscount,
-          amount_full: amountFull,
+          member_charges: costSummary.totalUserCharge,
+          guest_charges: costSummary.totalGuestCharge,
+          guest_premium_details: guestPremiumDetails,
+          discount: costSummary.discountAmount,
+          cgst_amount: costSummary.gstAmount,
+          sgst_amount: costSummary.sgstAmount,
+          gst: costSummary.gstPercentage,
+          sgst: costSummary.sgstPercentage,
+          sub_total: costSummary.subtotalAfterDiscount,
+          amount_full: costSummary.amountFull,
           booked_members_attributes: bookedMembersAttributes,
           member_count: userType === 'occupant' ? 1 : 0,
           guest_count: numberOfGuests,
@@ -1283,7 +1367,10 @@ export const AddFacilityBookingPage = () => {
                               type="number"
                               size="small"
                               value={numberOfGuests}
-                              onChange={(e) => setNumberOfGuests(Math.max(0, parseInt(e.target.value) || 0))}
+                              onChange={(e) => {
+                                const val = Math.max(0, parseInt(e.target.value) || 0);
+                                setNumberOfGuests(val > maxPeople ? maxPeople : val);
+                              }}
                               variant="outlined"
                               placeholder="No. of guests"
                               sx={{
