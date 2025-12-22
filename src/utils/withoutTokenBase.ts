@@ -53,12 +53,11 @@ baseClient.interceptors.request.use(
         hostname.includes("vi-web.gophygital.work") ||
         hostname.includes("web.gophygital.work");
       const isFmSite =
-        hostname.includes("fm-uat.gophygital.work") ||
-        hostname.includes("fm.gophygital.work") ||
-        hostname.includes("fm-matrix.lockated.com");
+        hostname === "fm-uat.gophygital.work" ||
+        hostname === "fm.gophygital.work" ||
+        hostname === "fm-matrix.lockated.com";
 
-      const isDevSite =
-        hostname.includes("dev-fm-matrix.lockated.com");
+      const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
       // Build API URL based on site type and available parameters
       let apiUrl = "";
@@ -109,7 +108,7 @@ baseClient.interceptors.request.use(
         } else {
           throw new Error("Either org_id or email is required for Dev sites");
         }
-      }  else {
+      } else {
         // Default fallback: prefer org_id, fallback to email
         if (organizationId) {
           apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
