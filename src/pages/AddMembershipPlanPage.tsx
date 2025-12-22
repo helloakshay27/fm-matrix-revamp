@@ -362,11 +362,11 @@ export const AddMembershipPlanPage = () => {
               columns={[
                 { key: "name", label: "Amenity Name", sortable: true },
                 { key: "frequency", label: "Frequency", sortable: false },
-                { key: "slotLimit", label: "Slot Limit", sortable: false },
+                { key: "slotLimit", label: "Booking Limit", sortable: false },
                 { key: "canBookAfterSlotLimit", label: "Can Book After Limit", sortable: false },
-                { key: "price", label: "Price", sortable: false },
-                { key: "allowMultipleSlots", label: "Allow Multiple Slots", sortable: false },
-                { key: "multipleSlots", label: "Multiple Slots Count", sortable: false },
+                // { key: "price", label: "Price", sortable: false },
+                // { key: "allowMultipleSlots", label: "Allow Multiple Slots", sortable: false },
+                // { key: "multipleSlots", label: "Multiple Slots Count", sortable: false },
               ] as ColumnConfig[]}
               renderCell={(item, columnKey) => {
                 const amenityId = item.value;
@@ -400,36 +400,8 @@ export const AddMembershipPlanPage = () => {
                       className="px-2 py-1 border border-gray-300 rounded text-sm"
                     >
                       <option value="">Select Frequency</option>
-                      {formData.renewalTerms && (
-                        <>
-                          {formData.renewalTerms === "monthly" && (
-                            <>
-                              <option value="monthly">Monthly</option>
-                            </>
-                          )}
-                          {formData.renewalTerms === "quaterly" && (
-                            <>
-                              <option value="monthly">Monthly</option>
-                              <option value="quaterly">Quarterly</option>
-                            </>
-                          )}
-                          {formData.renewalTerms === "half_yearly" && (
-                            <>
-                              <option value="monthly">Monthly</option>
-                              <option value="quaterly">Quarterly</option>
-                              <option value="half_yearly">Half Yearly</option>
-                            </>
-                          )}
-                          {formData.renewalTerms === "yearly" && (
-                            <>
-                              <option value="monthly">Monthly</option>
-                              <option value="quaterly">Quarterly</option>
-                              <option value="half_yearly">Half Yearly</option>
-                              <option value="yearly">Yearly</option>
-                            </>
-                          )}
-                        </>
-                      )}
+                      <option value="per_month">Per Month</option>
+                      <option value="per_membership_period">Per Membership Period</option>
                     </select>
                   );
                 }

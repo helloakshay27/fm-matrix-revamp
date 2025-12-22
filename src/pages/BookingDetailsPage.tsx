@@ -301,7 +301,12 @@ export const BookingDetailsPage = () => {
                 <span className="text-gray-500 min-w-[140px]">Payment Method</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {bookings?.payment_method === "NA" ? "Complimentory" : bookings?.payment_method}
+                  {bookings?.payment_method === "NA"
+                    ? "Complimentory"
+                    : bookings?.payment_method
+                        ?.split('_')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ')}
                 </span>
               </div>
             </div>
@@ -311,21 +316,27 @@ export const BookingDetailsPage = () => {
                 <span className="text-gray-500 min-w-[140px]">Booked by</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {bookings?.created_by_name}
+                  {bookings?.booked_by_name}
                 </span>
               </div>
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">GST</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {bookings?.gst || "-"}
+                  {bookings?.gst || "-"}%
                 </span>
               </div>
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Scheduled Date</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {bookings?.startdate.split(" ")[0]}
+                  {bookings?.startdate
+                    ? (() => {
+                        const d = bookings.startdate.split(" ")[0];
+                        const [year, month, day] = d.split("-");
+                        return `${day}/${month}/${year.slice(-2)}`;
+                      })()
+                    : "-"}
                 </span>
               </div>
             </div>
@@ -343,14 +354,19 @@ export const BookingDetailsPage = () => {
                 <span className="text-gray-500 min-w-[140px]">SGST</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {bookings?.sgst || "-"}
+                  {bookings?.sgst || "-"}%
                 </span>
               </div>
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Booked On</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {bookings?.sgst || "-"}
+                  {bookings?.created_at
+                    ? new Date(bookings.created_at.replace(' +0530', '').replace(/-/g, '/')).toLocaleString('en-GB', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                      })
+                    : "-"}
                 </span>
               </div>
             </div>
@@ -368,7 +384,7 @@ export const BookingDetailsPage = () => {
               <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                 <CreditCard className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">PAYMENT DETAILS+</h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">PAYMENT DETAILS</h3>
             </div>
             <Button
               onClick={handleDownloadInvoice}

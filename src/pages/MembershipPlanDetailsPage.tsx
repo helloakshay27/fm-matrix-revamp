@@ -333,11 +333,11 @@ export const MembershipPlanDetailsPage = () => {
               columns={[
                 { key: "name", label: "Amenity Name", sortable: true },
                 { key: "frequency", label: "Frequency", sortable: false },
-                { key: "slotLimit", label: "Slot Limit", sortable: false },
+                { key: "slotLimit", label: "Booking Limit", sortable: false },
                 { key: "canBookAfterSlotLimit", label: "Can Book After Limit", sortable: false },
-                { key: "price", label: "Price", sortable: false },
-                { key: "allowMultipleSlots", label: "Allow Multiple Slots", sortable: false },
-                { key: "multipleSlots", label: "Multiple Slots Count", sortable: false },
+                // { key: "price", label: "Price", sortable: false },
+                // { key: "allowMultipleSlots", label: "Allow Multiple Slots", sortable: false },
+                // { key: "multipleSlots", label: "Multiple Slots Count", sortable: false },
               ] as ColumnConfig[]}
               renderCell={(item, columnKey) => {
                 const amenityId = item.value;
@@ -355,7 +355,12 @@ export const MembershipPlanDetailsPage = () => {
                 if (columnKey === "frequency") {
                   return (
                     <span className="text-sm text-gray-700">
-                      {details.frequency || "-"}
+                      {details.frequency
+                        ? details.frequency
+                            .split('_')
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                            .join(' ')
+                        : "-"}
                     </span>
                   );
                 }

@@ -73,7 +73,7 @@ const transformData = (data) => {
     price: item.price ? `₹${item.price}` : '',
     userLimit: item.user_limit,
     renewalTerms: item.renewal_terms ? item.renewal_terms.charAt(0).toUpperCase() + item.renewal_terms.slice(1) : '',
-    status: item.status ? 'Active' : 'Inactive',
+    status: item.active ? 'Active' : 'Inactive',
     createdOn: item.created_at ? new Date(item.created_at).toLocaleString('en-GB', {
       year: 'numeric',
       month: '2-digit',
