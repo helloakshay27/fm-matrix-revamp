@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ScrollText, ClipboardList, Pencil, Trash2, ChevronDown, ChevronDownCircle } from "lucide-react";
+import { ArrowLeft, ScrollText, ClipboardList, Pencil, Trash2, ChevronDown, ChevronDownCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -129,7 +129,7 @@ const calculateDuration = (start: string | undefined, end: string | undefined) =
   const remainingSeconds = seconds % 60;
 
   return `${days > 0 ? days + "d " : ""}${remainingHours > 0 ? remainingHours + "h " : ""}${remainingMinutes > 0 ? remainingMinutes + "m " : ""
-    }${remainingSeconds}s`;
+    }`;
 };
 
 const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetDate?: string }) => {
@@ -164,8 +164,10 @@ function formatToDDMMYYYY_AMPM(dateString: string | undefined) {
 export const MilestoneDetailsPage = () => {
   const { setCurrentSection } = useLayout();
 
+  const view = localStorage.getItem("selectedView");
+
   useEffect(() => {
-    setCurrentSection("Project Task");
+    setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
   }, [setCurrentSection]);
 
   const navigate = useNavigate();
@@ -217,8 +219,11 @@ export const MilestoneDetailsPage = () => {
 
   useEffect(() => {
     fetchData();
-    getOwners();
     getDependencies();
+  }, [mid]);
+
+  useEffect(() => {
+    getOwners();
   }, []);
 
   useEffect(() => {
@@ -383,12 +388,26 @@ export const MilestoneDetailsPage = () => {
         </span>
       );
     }
+    if (columnKey === "start_date" || columnKey === "end_date") {
+      return item[columnKey] ? format(new Date(item[columnKey]), "yyyy-MM-dd") : "-";
+    }
+    if (columnKey === "duration") {
+      return calculateDuration(item.start_date, item.end_date);
+    }
     return item[columnKey] || "-";
   };
 
   return (
     <>
       <div className="m-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="py-0"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
         <div className="px-4 pt-1">
           {/* Title */}
           <h2 className="text-[15px] p-3 px-0">
@@ -540,10 +559,23 @@ export const MilestoneDetailsPage = () => {
                 emptyMessage="No dependencies available"
                 className="min-w-[1200px]"
                 renderCell={renderDependencyCell}
+                renderActions={(item) => (
+                  <div className="flex items-center justify-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="p-1"
+                      onClick={() => navigate(`/vas/projects/${id}/milestones/${item.id}`)}
+                      title="View Task Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
                 canAddRow={true}
                 newRowPlaceholder="Add Milestone title"
                 onAddRow={handleAddDependency}
-                readonlyColumns={["status", "duration"]}
+                readonlyColumns={["duration"]}
                 renderEditableCell={(columnKey: string, value: any, onChange: (value: any) => void) => {
                   if (columnKey === "milestone_title") {
                     return (
@@ -556,6 +588,9 @@ export const MilestoneDetailsPage = () => {
                         sx={{ minWidth: 200 }}
                       />
                     );
+                  }
+                  if (columnKey === "status") {
+                    return <span className="text-gray-500">Open</span>;
                   }
                   if (columnKey === "owner_name") {
                     return (

@@ -302,6 +302,7 @@ const TaskForm = ({
                             InputProps={{ readOnly: true }}
                             variant="outlined"
                             size="small"
+                            disabled
                             sx={fieldStyles}
                         />
                     </div>
@@ -313,6 +314,7 @@ const TaskForm = ({
                             InputProps={{ readOnly: true }}
                             variant="outlined"
                             size="small"
+                            disabled
                             sx={fieldStyles}
                         />
                     </div>
@@ -477,37 +479,6 @@ const TaskForm = ({
 
             <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
-                    <label className="block text-xs text-gray-700 mb-1">Start Date</label>
-                    <button
-                        type="button"
-                        className="w-full border outline-none border-gray-300 px-3 py-2 text-[13px] flex items-center gap-2 text-gray-400 rounded"
-                        onClick={() => {
-                            if (showDatePicker) {
-                                setShowDatePicker(false);
-                            }
-                            setShowStartDatePicker(!showStartDatePicker);
-                        }}
-                        ref={startDateRef}
-                    >
-                        {startDate ? (
-                            <div className="text-black flex items-center justify-between w-full">
-                                <CalendarIcon className="w-4 h-4" />
-                                <div>
-                                    Start Date : {" "}
-                                    {startDate?.date?.toString().padStart(2, "0")}{" "}
-                                    {monthNames[startDate.month]}
-                                </div>
-                                <X className="w-4 h-4" onClick={(e) => { e.preventDefault(); setStartDate(null); }} />
-                            </div>
-                        ) : (
-                            <>
-                                <CalendarIcon className="w-4 h-4" /> Select Start Date
-                            </>
-                        )}
-                    </button>
-                </div>
-
-                <div>
                     <label className="block text-xs text-gray-700 mb-1">Target Date *</label>
                     <button
                         type="button"
@@ -537,11 +508,41 @@ const TaskForm = ({
                         )}
                     </button>
                 </div>
+                <div>
+                    <label className="block text-xs text-gray-700 mb-1">Start Date</label>
+                    <button
+                        type="button"
+                        className="w-full border outline-none border-gray-300 px-3 py-2 text-[13px] flex items-center gap-2 text-gray-400 rounded"
+                        onClick={() => {
+                            if (showDatePicker) {
+                                setShowDatePicker(false);
+                            }
+                            setShowStartDatePicker(!showStartDatePicker);
+                        }}
+                        ref={startDateRef}
+                    >
+                        {startDate ? (
+                            <div className="text-black flex items-center justify-between w-full">
+                                <CalendarIcon className="w-4 h-4" />
+                                <div>
+                                    Start Date : {" "}
+                                    {startDate?.date?.toString().padStart(2, "0")}{" "}
+                                    {monthNames[startDate.month]}
+                                </div>
+                                <X className="w-4 h-4" onClick={(e) => { e.preventDefault(); setStartDate(null); }} />
+                            </div>
+                        ) : (
+                            <>
+                                <CalendarIcon className="w-4 h-4" /> Select Start Date
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
 
             <div className="mb-4">
                 <label className="block text-xs text-gray-700 mb-2">
-                    Duration <span className="text-red-600">*</span>
+                    Efforts Duration <span className="text-red-600">*</span>
                 </label>
                 <DurationPicker
                     dateWiseHours={[]}

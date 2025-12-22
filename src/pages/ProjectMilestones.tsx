@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import MilestoneBody from '../components/MilestoneBody'
-import { ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, List, Plus } from 'lucide-react'
+import { ArrowLeft, ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, List, Plus } from 'lucide-react'
 import AddMilestoneModal from '@/components/AddMilestoneModal'
 import { useEffect, useState } from 'react'
 import { useAppDispatch } from '@/store/hooks'
@@ -9,15 +9,19 @@ import { toast } from 'sonner'
 import MilestoneList from '@/components/MilestoneList'
 import MilestoneKanban from '@/components/MilestoneKanban'
 import { useLayout } from '@/contexts/LayoutContext'
+import { useNavigate } from 'react-router-dom'
 
 const ProjectMilestones = () => {
     const { setCurrentSection } = useLayout();
 
+    const view = localStorage.getItem("selectedView");
+
     useEffect(() => {
-        setCurrentSection("Project Task");
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
     }, [setCurrentSection]);
 
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
 
     const [selectedView, setSelectedView] = useState<"Kanban" | "Gantt" | "List">("Gantt");
     const [isOpen, setIsOpen] = useState(false);
@@ -132,6 +136,13 @@ const ProjectMilestones = () => {
 
     return (
         <div className='py-2'>
+            <Button
+                variant="ghost"
+                onClick={() => navigate(-1)}
+            >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+            </Button>
             <div className='flex items-center justify-between p-4'>
                 <Button
                     className="bg-[#C72030] hover:bg-[#A01020] text-white"

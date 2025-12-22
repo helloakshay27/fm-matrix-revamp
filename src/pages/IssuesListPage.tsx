@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchIssues, deleteIssue, updateIssue } from "@/store/slices/issueSlice";
+import { fetchIssues, updateIssue } from "@/store/slices/issueSlice";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Edit, ChevronDown, List, ChartNoAxesColumn } from "lucide-react";
+import { Plus, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -35,10 +35,6 @@ interface Issue {
     milestone_id?: string;
     task_id?: string;
 }
-
-const PRIORITY_OPTIONS = ["Low", "Medium", "High", "Urgent"];
-const STATUS_OPTIONS = ["Open", "In Progress", "On Hold", "Completed", "Closed"];
-const ISSUE_TYPE_OPTIONS = ["Bug", "Feature", "Enhancement", "Documentation", "Support"];
 
 const columns: ColumnConfig[] = [
     {
@@ -150,8 +146,10 @@ const IssuesListPage = () => {
     const projectIdParam = searchParams.get("project_id");
     const taskIdParam = searchParams.get("task_id");
 
+    const view = localStorage.getItem("selectedView");
+
     useEffect(() => {
-        setCurrentSection("Project Task");
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
     }, [setCurrentSection]);
 
     const { data, loading } = useAppSelector(
@@ -192,8 +190,7 @@ const IssuesListPage = () => {
 
     // Fetch control refs
     const allIssuesFetchInitiatedRef = useRef(false);
-    const userFetchInitiatedRef = useRef(false);
-    const projectsFetchInitiatedRef = useRef(false);
+    const prevParamsRef = useRef({ projectId: null, projectIdParam: null, taskIdParam: null });
 
     // Map API response to table format
     const mapIssueData = (issue: any): Issue => {
@@ -247,9 +244,6 @@ const IssuesListPage = () => {
     const [users, setUsers] = useState([])
     const [issueTypeOptions, setIssueTypeOptions] = useState([]);
     const [openIssueModal, setOpenIssueModal] = useState(false);
-    const [selectedView, setSelectedView] = useState<"List" | "Kanban">("List");
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef(null);
 
     // Helper function to perform filtered fetch - defined early to be used in useEffects
     const performFilteredFetch = useCallback(async (filterOrString: any) => {
@@ -294,6 +288,21 @@ const IssuesListPage = () => {
     useEffect(() => {
         getUsers();
     }, [])
+
+    // Reset fetch initiated ref when projectId, projectIdParam, or taskIdParam changes
+    useEffect(() => {
+        const paramsChanged =
+            prevParamsRef.current.projectId !== projectId ||
+            prevParamsRef.current.projectIdParam !== projectIdParam ||
+            prevParamsRef.current.taskIdParam !== taskIdParam;
+
+        if (paramsChanged) {
+            allIssuesFetchInitiatedRef.current = false;
+            setFilterSuccess(false);
+            setFilteredIssues([]);
+            prevParamsRef.current = { projectId, projectIdParam, taskIdParam };
+        }
+    }, [projectId, projectIdParam, taskIdParam]);
 
     // Advanced filtering with search
     useEffect(() => {
@@ -341,7 +350,8 @@ const IssuesListPage = () => {
                 };
                 performFilteredFetch(filter);
             } else {
-                dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+                // Only fetch all issues if no specific filter is provided
+                dispatch(fetchIssues({ baseUrl, token, id: "" }));
             }
             allIssuesFetchInitiatedRef.current = true;
         }
@@ -357,6 +367,7 @@ const IssuesListPage = () => {
         projectIdParam,
         taskIdParam,
         searchQuery,
+        performFilteredFetch,
     ]);
 
     // Handle pagination for search results
@@ -405,45 +416,7 @@ const IssuesListPage = () => {
         }
     }, [baseUrl, token]);
 
-    useEffect(() => {
-        dispatch(fetchIssues({ baseUrl, token, id: projectId })).unwrap();
-    }, []);
-
     const handleOpenDialog = () => setOpenIssueModal(true);
-
-    const handleDeleteIssue = async (issueId: string) => {
-        if (!window.confirm("Are you sure you want to delete this issue?")) return;
-        try {
-            await dispatch(deleteIssue({ baseUrl, token, id: issueId })).unwrap();
-            toast.success("Issue deleted successfully");
-            // Refresh the issues list
-            if (searchQuery.trim()) {
-                const page = 1;
-                const filter = {
-                    'q[title_or_project_management_title_cont]': searchQuery,
-                    page,
-                    per_page: 10,
-                    ...(projectId && { 'q[project_management_id_eq]': projectId }),
-                    ...(projectIdParam && { 'q[project_management_id_eq]': projectIdParam }),
-                    ...(taskIdParam && { 'q[task_management_id_eq]': taskIdParam })
-                };
-                performFilteredFetch(filter);
-            } else if (projectId || projectIdParam || taskIdParam) {
-                const filter = {
-                    'q[project_management_id_eq]': projectId || projectIdParam || "",
-                    'q[task_management_id_eq]': taskIdParam || "",
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
-                };
-                performFilteredFetch(filter);
-            } else {
-                allIssuesFetchInitiatedRef.current = false;
-                dispatch(fetchIssues({ baseUrl, token, id: projectId }));
-            }
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Failed to delete issue");
-        }
-    };
 
     const renderActions = (item: any) => (
         <div className="flex items-center justify-center gap-2">
@@ -666,24 +639,6 @@ const IssuesListPage = () => {
             </Button>
         </>
     );
-
-    const handleReorderColumns = useCallback((draggedId: string, targetId: string) => {
-        setColumnOrder((prevOrder) => {
-            const draggedIndex = prevOrder.indexOf(draggedId);
-            const targetIndex = prevOrder.indexOf(targetId);
-
-            if (draggedIndex === -1 || targetIndex === -1) return prevOrder;
-
-            const newOrder = [...prevOrder];
-            newOrder.splice(draggedIndex, 1);
-            newOrder.splice(targetIndex, 0, draggedId);
-
-            // Save to local storage
-            localStorage.setItem("issuesTableColumnOrder", JSON.stringify(newOrder));
-
-            return newOrder;
-        });
-    }, []);
 
     const handleSearchChange = (value: string) => {
         setSearchQuery(value);

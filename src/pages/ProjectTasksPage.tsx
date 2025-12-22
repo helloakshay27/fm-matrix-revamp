@@ -78,7 +78,7 @@ const columns: ColumnConfig[] = [
     },
     {
         key: "duration",
-        label: "Duration",
+        label: "Time Left",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -86,6 +86,20 @@ const columns: ColumnConfig[] = [
     {
         key: "efforts_duration",
         label: "Efforts Duration",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "subtasks",
+        label: "Subtasks",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "issues",
+        label: "Issues",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -225,8 +239,10 @@ const statusOptions = [
 const ProjectTasksPage = () => {
     const { setCurrentSection } = useLayout();
 
+    const view = localStorage.getItem("selectedView");
+
     useEffect(() => {
-        setCurrentSection("Project Task");
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
     }, [setCurrentSection]);
 
     const { id: projectId, mid } = useParams();
@@ -864,8 +880,25 @@ const ProjectTasksPage = () => {
         }
     }
 
-    const renderCell = (item: any, columnKey: string) => {
+    const renderCell = (item: any, columnKey: string, isSubtask: boolean = false) => {
+        const renderProgressBar = (completed: number, total: number, color: string, type: string) => {
+            const progress = total > 0 ? (completed / total) * 100 : 0;
+            return (
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate(type === "issues" && `/vas/issues?task_id=${item.id}`)}>
+                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                        <div
+                            className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{completed}/{total}</span>
+                </div>
+            );
+        };
+
         switch (columnKey) {
+            case "id":
+                return <span className="w-[80px]">{isSubtask ? 'S-' : 'T-'}{item.id}</span>
             case "title":
                 return <span className="w-[200px] truncate">{item.title}</span>
             case "status": {
@@ -952,6 +985,16 @@ const ProjectTasksPage = () => {
                     </Select>
                 </FormControl>
             }
+            case "subtasks": {
+                const completed = item.completed_sub_tasks || 0;
+                const total = item.total_sub_tasks || 0;
+                return renderProgressBar(completed, total, "bg-[#b4e7ff]", "subtasks");
+            }
+            case "issues": {
+                const completed = item.completed_issues || 0;
+                const total = item.total_issues || 0;
+                return renderProgressBar(completed, total, "bg-[#ff9a9e]", "issues");
+            }
             case "duration": {
                 return <CountdownTimer startDate={item.expected_start_date} targetDate={item.target_date} />;
             }
@@ -962,10 +1005,10 @@ const ProjectTasksPage = () => {
                 return item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-";
             }
             case "predecessor": {
-                return item.predecessor_task?.length || "-";
+                return item.predecessor_task?.length || "0";
             }
             case "successor": {
-                return item.successor_task?.length || "-";
+                return item.successor_task?.length || "0";
             }
             default:
                 return item[columnKey] || "-";
@@ -1334,7 +1377,7 @@ const ProjectTasksPage = () => {
                         {/* Subtask data in same columns */}
                         {columns.map((column) => (
                             <td key={`${parentId}-subtask-${idx}-${column.key}`} className="p-4 text-left min-w-32">
-                                {renderCell(subtask, column.key)}
+                                {renderCell(subtask, column.key, true)}
                             </td>
                         ))}
                     </tr>
@@ -1385,7 +1428,7 @@ const ProjectTasksPage = () => {
                     }}
                 >
                     <div className="sticky top-0 bg-white z-10">
-                        <h3 className="text-[14px] font-medium text-center mt-8">Add Project Task</h3>
+                        <h3 className="text-[14px] font-medium text-center mt-8">Add Task</h3>
                         <X
                             className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
                             onClick={handleCloseModal}

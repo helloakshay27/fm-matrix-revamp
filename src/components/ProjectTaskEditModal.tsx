@@ -636,7 +636,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                     {/* Duration */}
                     <div className="mb-4">
                         <label className="block text-xs text-gray-700 mb-2">
-                            Duration <span className="text-red-600">*</span>
+                            Efforts Duration <span className="text-red-600">*</span>
                         </label>
                         <DurationPicker
                             // value={taskDuration}

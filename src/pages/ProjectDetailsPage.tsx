@@ -81,7 +81,7 @@ const Status = ({ project }) => {
 
                             {duration && (
                                 <>
-                                    <div className="flex flex-col items-center justify-start min-w-[100px]">
+                                    <div className="flex flex-col items-center justify-start min-w-[70px]">
                                         <h1 className="text-[9px] text-center">{duration}</h1>
                                         <img src="/arrow.png" alt="arrow" className="mt-1" />
                                     </div>
@@ -300,8 +300,10 @@ const Attachments = ({ attachments, id }) => {
 const ProjectDetailsPage = () => {
     const { setCurrentSection } = useLayout();
 
+    const view = localStorage.getItem("selectedView");
+
     useEffect(() => {
-        setCurrentSection("Project Task");
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
     }, [setCurrentSection]);
 
     const { id } = useParams();
@@ -314,7 +316,7 @@ const ProjectDetailsPage = () => {
     const dropdownRef = useRef(null);
     const secondContentRef = useRef(null);
 
-    const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
+    const [isSecondCollapsed, setIsSecondCollapsed] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [openDropdown, setOpenDropdown] = useState(false);
     const [projectMembers, setProjectMembers] = useState([]);
@@ -434,15 +436,6 @@ const ProjectDetailsPage = () => {
     };
 
     const toggleSecondCollapse = () => {
-        if (secondContentRef.current) {
-            if (isSecondCollapsed) {
-                secondContentRef.current.style.maxHeight = secondContentRef.current.scrollHeight + 'px';
-                secondContentRef.current.style.opacity = '1';
-            } else {
-                secondContentRef.current.style.maxHeight = '0';
-                secondContentRef.current.style.opacity = '0';
-            }
-        }
         setIsSecondCollapsed(!isSecondCollapsed);
     };
 
@@ -553,23 +546,49 @@ const ProjectDetailsPage = () => {
                 <div className="border-b-[3px] border-grey my-3"></div>
 
                 <div className="border rounded-[10px] shadow-md p-5 mb-4">
-                    <div
-                        className="font-[600] text-[13px] flex items-center gap-4 cursor-pointer"
-                        onClick={toggleSecondCollapse}
-                    >
-                        <ChevronDownCircle
-                            color="#c72030"
-                            size={30}
-                            className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} transition-transform`}
-                        />{" "}
-                        Details
+                    <div className="font-[600] text-[16px] flex items-center gap-10">
+                        <div className="flex items-center gap-4">
+                            <ChevronDownCircle
+                                color="#c72030"
+                                size={30}
+                                className={`${isSecondCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
+                                onClick={toggleSecondCollapse}
+                            />
+                            Details
+                        </div>
+                        {isSecondCollapsed && (
+                            <div className="flex items-center gap-6">
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">
+                                        Project Manager:
+                                    </div>
+                                    <div className="text-left text-[12px]">
+                                        {project.project_owner_name}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">Priority:</div>
+                                    <div className="text-left text-[12px]">
+                                        {project.priority?.charAt(0).toUpperCase() + project.priority?.slice(1).toLowerCase() || ''}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">End Date:</div>
+                                    <div className="text-left text-[12px]">
+                                        {project.end_date}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div
                         className="mt-3 overflow-hidden transition-all duration-500"
                         ref={secondContentRef}
                         style={{
-                            maxHeight: isSecondCollapsed ? '0' : 'auto',
+                            maxHeight: isSecondCollapsed ? '0px' : '1000px',
                             opacity: isSecondCollapsed ? 0 : 1,
                         }}
                     >
