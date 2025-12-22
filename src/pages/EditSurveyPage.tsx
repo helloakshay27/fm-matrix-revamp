@@ -62,6 +62,7 @@ interface Question {
   }>;
   // Add flag to track if question should be deleted
   markedForDeletion?: boolean;
+  showPreview?: boolean;
 }
 
 interface Category {
@@ -131,6 +132,7 @@ export const EditSurveyPage = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [checkType, setCheckType] = useState("");
+  const [formView, setFormView] = useState(false);
   const [createTicket, setCreateTicket] = useState(false);
   const [ticketCategory, setTicketCategory] = useState(""); // Store category name for display
   const [ticketCategoryId, setTicketCategoryId] = useState(""); // Store category ID for backend
@@ -272,9 +274,12 @@ export const EditSurveyPage = () => {
         surveyData.check_type === "survey"
           ? "survey"
           : surveyData.check_type === "patrolling"
-          ? "patrolling"
-          : surveyData.check_type || "";
+            ? "patrolling"
+            : surveyData.check_type || "";
       setCheckType(mappedCheckType);
+
+      // Set form view flag
+      setFormView(surveyData.form_view || false);
 
       // Check if ticket creation is enabled based on existing data
       const hasTicketConfig = surveyData.ticket_configs && surveyData.ticket_configs.active;
@@ -283,7 +288,7 @@ export const EditSurveyPage = () => {
       if (hasTicketConfig && surveyData.ticket_configs) {
         const ticketConfig = surveyData.ticket_configs;
         console.log("Processing ticket config:", ticketConfig);
-        
+
         // First, load all ticket categories for the dropdowns
         try {
           const categoriesResponse = await ticketManagementAPI.getCategories();
@@ -297,19 +302,19 @@ export const EditSurveyPage = () => {
         // Handle category and subcategory setup
         // Handle different naming conventions for subcategory ID
         const subcategoryId = ticketConfig.subcategory_id || ticketConfig.sub_category_id;
-        
+
         if (ticketConfig.category_id && subcategoryId) {
           // Case 1: Both category and subcategory IDs are available
           console.log("Case 1: Both category and subcategory available");
           console.log("Using subcategory_id:", subcategoryId, "from field:", ticketConfig.subcategory_id ? 'subcategory_id' : 'sub_category_id');
           setTicketCategoryId(ticketConfig.category_id.toString());
           setTicketCategory(ticketConfig.category || "");
-          
+
           // Load subcategories for this category
           try {
             const loadedSubcategories = await loadTicketSubCategories(ticketConfig.category_id);
             console.log("Subcategories loaded for category", ticketConfig.category_id, ":", loadedSubcategories);
-            
+
             // Set the subcategory after loading subcategories
             setTimeout(() => {
               setTicketSubCategory(subcategoryId.toString());
@@ -318,7 +323,7 @@ export const EditSurveyPage = () => {
           } catch (error) {
             console.error("Error loading subcategories:", error);
           }
-          
+
         } else if (subcategoryId && !ticketConfig.category_id) {
           // Case 2: Only subcategory ID is available, need to find parent category
           console.log("Case 2: Only subcategory ID available, finding parent category");
@@ -327,23 +332,23 @@ export const EditSurveyPage = () => {
             const allSubCategoriesResponse = await ticketManagementAPI.getSubCategories();
             const allSubCategories = allSubCategoriesResponse.sub_categories || allSubCategoriesResponse || [];
             console.log("All subcategories loaded:", allSubCategories);
-            
+
             const matchingSubCategory = allSubCategories.find(
               (subCat: SubCategoryResponse) => subCat.id === subcategoryId
             );
-            
+
             if (matchingSubCategory && matchingSubCategory.helpdesk_category_id) {
               console.log("Found parent category:", matchingSubCategory.helpdesk_category_id);
               setTicketCategoryId(matchingSubCategory.helpdesk_category_id.toString());
-              
+
               // Load subcategories for the parent category
               const loadedSubcats = await loadTicketSubCategories(matchingSubCategory.helpdesk_category_id);
-              
+
               // Set subcategory after loading
               setTimeout(() => {
                 setTicketSubCategory(subcategoryId.toString());
                 console.log("Set subcategory ID from reverse lookup:", subcategoryId);
-                
+
                 const foundSubcat = loadedSubcats?.find(s => s.id === subcategoryId);
                 console.log("Verified subcategory from reverse lookup:", foundSubcat);
               }, 100);
@@ -351,13 +356,13 @@ export const EditSurveyPage = () => {
           } catch (error) {
             console.error("Error loading subcategories to find parent category:", error);
           }
-          
+
         } else if (ticketConfig.category_id && !subcategoryId) {
           // Case 3: Only category ID is available
           console.log("Case 3: Only category ID available");
           setTicketCategoryId(ticketConfig.category_id.toString());
           setTicketCategory(ticketConfig.category || "");
-          
+
           // Load subcategories for this category
           try {
             await loadTicketSubCategories(ticketConfig.category_id);
@@ -365,7 +370,7 @@ export const EditSurveyPage = () => {
             console.error("Error loading subcategories:", error);
           }
         }
-        
+
         // Set assigned user if available (handle both naming conventions)
         const assignedToId = ticketConfig.assigned_to_id || ticketConfig.assignedtoid;
         if (assignedToId) {
@@ -396,16 +401,18 @@ export const EditSurveyPage = () => {
               q.qtype === "multiple"
                 ? "multiple-choice"
                 : q.qtype === "input"
-                ? "input-box"
-                : q.qtype === "rating"
-                ? "rating"
-                : q.qtype === "emoji"
-                ? "emojis"
-                : q.qtype === "text"
-                ? "input-box"
-                : q.qtype === "description"
-                ? "description"
-                : "description",
+                  ? "input-box"
+                  : q.qtype === "input_box"
+                    ? "input-box"
+                    : q.qtype === "rating"
+                      ? "rating"
+                      : q.qtype === "emoji"
+                        ? "emojis"
+                        : q.qtype === "text"
+                          ? "input-box"
+                          : q.qtype === "description"
+                            ? "description"
+                            : "description",
             mandatory: q.quest_mandatory,
             answerOptions:
               q.snag_quest_options?.map((option: any) => ({
@@ -472,7 +479,7 @@ export const EditSurveyPage = () => {
       return !isMarkedForDeletion && hasValidId && isNotNullData && (hasValidText || hasValidAnswerType || q.id.startsWith("new_"));
     });
     console.log("Active questions before removal:", activeQuestions.length);
-    
+
     // Only allow removal if there will be at least one active question remaining
     if (activeQuestions.length > 1) {
       setQuestions(prevQuestions => {
@@ -480,11 +487,11 @@ export const EditSurveyPage = () => {
         const updatedQuestions = prevQuestions.map((q) => {
           if (q.id === id) {
             console.log("Marking question for deletion:", q);
-            
+
             // Track destroy IDs for existing questions (not new ones)
             if (q.id && !q.id.startsWith("new_") && q.id !== "1") {
               setDestroyQuestionIds(prev => [...prev, q.id!]);
-              
+
               // Collect option IDs for destruction
               if (q.answerOptions) {
                 const optionIds = q.answerOptions
@@ -492,14 +499,14 @@ export const EditSurveyPage = () => {
                   .map(option => option.id!);
                 setDestroyOptionIds(prev => [...prev, ...optionIds]);
               }
-              
+
               // Collect additional field (tag) IDs for destruction
               if (q.additionalFields) {
                 const tagIds = q.additionalFields
                   .filter(field => field.id)
                   .map(field => field.id!);
                 setDestroyTagIds(prev => [...prev, ...tagIds]);
-                
+
                 // Collect icon IDs from existing files
                 const iconIds = q.additionalFields
                   .flatMap(field => field.existingFiles || [])
@@ -507,7 +514,7 @@ export const EditSurveyPage = () => {
                 setDestroyIconIds(prev => [...prev, ...iconIds]);
               }
             }
-            
+
             // Mark question for deletion
             return {
               ...q,
@@ -516,9 +523,9 @@ export const EditSurveyPage = () => {
           }
           return q;
         });
-        
+
         console.log("Updated questions after marking:", updatedQuestions);
-        
+
         // Check if all questions are now marked for deletion or have null content
         const remainingActiveQuestions = updatedQuestions.filter(q => {
           const isMarkedForDeletion = q.markedForDeletion === true;
@@ -529,7 +536,7 @@ export const EditSurveyPage = () => {
           return !isMarkedForDeletion && hasValidId && isNotNullData && (hasValidText || hasValidAnswerType || q.id.startsWith("new_"));
         });
         console.log("Remaining active questions:", remainingActiveQuestions.length);
-        
+
         // If no active questions remain, add a new blank question
         if (remainingActiveQuestions.length === 0) {
           console.log("No active questions remain, adding new blank question");
@@ -540,7 +547,7 @@ export const EditSurveyPage = () => {
             mandatory: false,
           });
         }
-        
+
         return updatedQuestions;
       });
     } else {
@@ -551,7 +558,7 @@ export const EditSurveyPage = () => {
   const handleQuestionChange = (
     id: string,
     field: keyof Question,
-    value: string | boolean | number | AnswerOption[] | Array<{title: string; files: File[]}>
+    value: string | boolean | number | AnswerOption[] | Array<{ title: string; files: File[] }>
   ) => {
     setQuestions(
       questions.map((q) => {
@@ -579,7 +586,7 @@ export const EditSurveyPage = () => {
           ) {
             updatedQuestion.additionalFields = [{ title: "", files: [] }];
           }
-          
+
           // Handle smart deletion when additionalFieldOnNegative is unchecked
           if (
             field === "additionalFieldOnNegative" &&
@@ -591,7 +598,7 @@ export const EditSurveyPage = () => {
               if (additionalField.id) {
                 setDestroyTagIds(prev => [...prev, additionalField.id!]);
               }
-              
+
               // Mark existing files (icons) for deletion
               if (additionalField.existingFiles) {
                 additionalField.existingFiles.forEach((file) => {
@@ -599,11 +606,11 @@ export const EditSurveyPage = () => {
                 });
               }
             });
-            
+
             // Clear the additional fields
             updatedQuestion.additionalFields = undefined;
           }
-          
+
           return updatedQuestion;
         }
         return q;
@@ -622,12 +629,12 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              answerOptions: [
-                ...(q.answerOptions || []),
-                { text: "", type: "P" },
-              ],
-            }
+            ...q,
+            answerOptions: [
+              ...(q.answerOptions || []),
+              { text: "", type: "P" },
+            ],
+          }
           : q
       )
     );
@@ -641,12 +648,12 @@ export const EditSurveyPage = () => {
       questions.map((q) => {
         if (q.id === questionId && q.answerOptions) {
           const optionToRemove = q.answerOptions[optionIndex];
-          
+
           // Track destroy ID for existing options
           if (optionToRemove?.id) {
             setDestroyOptionIds(prev => [...prev, optionToRemove.id!]);
           }
-          
+
           return {
             ...q,
             answerOptions: q.answerOptions.filter(
@@ -668,11 +675,11 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              answerOptions: q.answerOptions?.map((option, index) =>
-                index === optionIndex ? { ...option, text: value } : option
-              ),
-            }
+            ...q,
+            answerOptions: q.answerOptions?.map((option, index) =>
+              index === optionIndex ? { ...option, text: value } : option
+            ),
+          }
           : q
       )
     );
@@ -687,11 +694,11 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              answerOptions: q.answerOptions?.map((option, index) =>
-                index === optionIndex ? { ...option, type: value } : option
-              ),
-            }
+            ...q,
+            answerOptions: q.answerOptions?.map((option, index) =>
+              index === optionIndex ? { ...option, type: value } : option
+            ),
+          }
           : q
       )
     );
@@ -703,12 +710,12 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: [
-                ...(q.additionalFields || []),
-                { title: "", files: [], existingFiles: [] },
-              ],
-            }
+            ...q,
+            additionalFields: [
+              ...(q.additionalFields || []),
+              { title: "", files: [], existingFiles: [] },
+            ],
+          }
           : q
       )
     );
@@ -722,18 +729,18 @@ export const EditSurveyPage = () => {
       questions.map((q) => {
         if (q.id === questionId && q.additionalFields) {
           const fieldToRemove = q.additionalFields[fieldIndex];
-          
+
           // Track destroy ID for existing additional fields (tags)
           if (fieldToRemove?.id) {
             setDestroyTagIds(prev => [...prev, fieldToRemove.id!]);
           }
-          
+
           // Track destroy IDs for existing files (icons)
           if (fieldToRemove?.existingFiles) {
             const iconIds = fieldToRemove.existingFiles.map(file => file.id);
             setDestroyIconIds(prev => [...prev, ...iconIds]);
           }
-          
+
           return {
             ...q,
             additionalFields: q.additionalFields.filter(
@@ -755,11 +762,11 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: q.additionalFields?.map((field, index) =>
-                index === fieldIndex ? { ...field, title: value } : field
-              ),
-            }
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex ? { ...field, title: value } : field
+            ),
+          }
           : q
       )
     );
@@ -774,11 +781,11 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: q.additionalFields?.map((field, index) =>
-                index === fieldIndex ? { ...field, files } : field
-              ),
-            }
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex ? { ...field, files } : field
+            ),
+          }
           : q
       )
     );
@@ -793,16 +800,16 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: q.additionalFields?.map((field, index) =>
-                index === fieldIndex
-                  ? {
-                      ...field,
-                      files: field.files.filter((_, i) => i !== fileIndex),
-                    }
-                  : field
-              ),
-            }
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex
+                ? {
+                  ...field,
+                  files: field.files.filter((_, i) => i !== fileIndex),
+                }
+                : field
+            ),
+          }
           : q
       )
     );
@@ -815,21 +822,21 @@ export const EditSurveyPage = () => {
   ) => {
     // Track destroy ID for existing files (icons)
     setDestroyIconIds(prev => [...prev, fileId]);
-    
+
     setQuestions(
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: q.additionalFields?.map((field, index) =>
-                index === fieldIndex
-                  ? {
-                      ...field,
-                      existingFiles: field.existingFiles?.filter((file) => file.id !== fileId),
-                    }
-                  : field
-              ),
-            }
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex
+                ? {
+                  ...field,
+                  existingFiles: field.existingFiles?.filter((file) => file.id !== fileId),
+                }
+                : field
+            ),
+          }
           : q
       )
     );
@@ -872,9 +879,9 @@ export const EditSurveyPage = () => {
       const isNotNullData = q.text !== null && q.answerType !== null;
       return !isMarkedForDeletion && hasValidId && isNotNullData && (hasValidText || hasValidAnswerType || q.id.startsWith("new_"));
     });
-    
+
     console.log("Validation - Active questions:", activeQuestions);
-    
+
     if (activeQuestions.length === 0) {
       toast.error("Validation Error", {
         description: "Please add at least one question",
@@ -882,7 +889,7 @@ export const EditSurveyPage = () => {
       });
       return;
     }
-    
+
     for (let i = 0; i < activeQuestions.length; i++) {
       const question = activeQuestions[i];
       const displayIndex = i + 1; // Use sequential index for display
@@ -900,7 +907,7 @@ export const EditSurveyPage = () => {
         });
         return;
       }
-      
+
       // Check if multiple choice, rating, or emojis have at least one option with text
       if (["multiple-choice", "rating", "emojis"].includes(question.answerType)) {
         if (!question.answerOptions || question.answerOptions.length === 0) {
@@ -933,11 +940,11 @@ export const EditSurveyPage = () => {
             });
             return;
           }
-          
+
           // Check if file attachment is required
           const hasNewFiles = field.files && field.files.length > 0;
           const hasExistingFiles = field.existingFiles && field.existingFiles.length > 0;
-          
+
           if (!hasNewFiles && !hasExistingFiles) {
             toast.error("Validation Error", {
               description: `Please upload at least one file for additional field ${k + 1} in Question ${displayIndex}`,
@@ -959,6 +966,7 @@ export const EditSurveyPage = () => {
       // Add basic Question data as individual form fields
       formData.append("snag_checklist[name]", title);
       formData.append("snag_checklist[check_type]", checkType);
+      formData.append("snag_checklist[form_view]", formView.toString());
 
       // Add survey image if provided
       if (surveyImage) {
@@ -967,7 +975,7 @@ export const EditSurveyPage = () => {
 
       // Add ticket creation fields - send create_tickets flag and related data
       formData.append("create_ticket", createTicket ? "true" : "false");
-      
+
       if (createTicket) {
         formData.append("category_name", ticketCategoryId);
         if (ticketSubCategory) {
@@ -982,15 +990,15 @@ export const EditSurveyPage = () => {
       destroyQuestionIds.forEach(questionId => {
         formData.append("destroy_questions_ids[]", questionId);
       });
-      
+
       destroyTagIds.forEach(tagId => {
         formData.append("destroy_tags_ids[]", tagId.toString());
       });
-      
+
       destroyOptionIds.forEach(optionId => {
         formData.append("destroy_options_ids[]", optionId.toString());
       });
-      
+
       destroyIconIds.forEach(iconId => {
         formData.append("destroy_icons_ids[]", iconId.toString());
       });
@@ -1010,10 +1018,10 @@ export const EditSurveyPage = () => {
 
         // Add question ID only for existing questions (not new ones)
         // New questions have IDs that start with "new_" or are "1" (default)
-        const isNewQuestion = !question.id || 
-                             question.id === "1" || 
-                             question.id.startsWith("new_");
-        
+        const isNewQuestion = !question.id ||
+          question.id === "1" ||
+          question.id.startsWith("new_");
+
         // Only add ID for existing questions that came from the server
         if (!isNewQuestion && question.id) {
           formData.append(`question[][id]`, question.id);
@@ -1026,12 +1034,12 @@ export const EditSurveyPage = () => {
           question.answerType === "multiple-choice"
             ? "multiple"
             : question.answerType === "input-box"
-            ? "text"
-            : question.answerType === "rating"
-            ? "rating"
-            : question.answerType === "emojis"
-            ? "emoji"
-            : "description";
+              ? "input_box"
+              : question.answerType === "rating"
+                ? "rating"
+                : question.answerType === "emojis"
+                  ? "emoji"
+                  : "description";
 
         formData.append(`question[][qtype]`, qtype);
         formData.append(
@@ -1057,13 +1065,13 @@ export const EditSurveyPage = () => {
             if (field.id) {
               formData.append(`question[][generic_tags][][id]`, field.id.toString());
             }
-            
+
             // Add generic tag metadata
             formData.append(`question[][generic_tags][][category_name]`, field.title);
             formData.append(`question[][generic_tags][][category_type]`, 'questions');
             formData.append(`question[][generic_tags][][tag_type]`, 'not generic');
             formData.append(`question[][generic_tags][][active]`, 'true');
-            
+
             // Add new files as icons array
             if (field.files && field.files.length > 0) {
               field.files.forEach((file, fileIndex) => {
@@ -1095,10 +1103,35 @@ export const EditSurveyPage = () => {
         }
       });
 
-      console.log(
-        "Question updated with FormData:",
-        Array.from(formData.entries())
-      );
+      // Debug logging for FormData
+      console.log('\n=== EDIT SURVEY - FORMDATA DEBUG ===');
+      console.log('1. Basic Fields:');
+      console.log('   snag_checklist[name]:', title);
+      console.log('   snag_checklist[check_type]:', checkType);
+      console.log('   snag_checklist[form_view]:', formView.toString());
+      console.log('   create_ticket:', createTicket ? 'true' : 'false');
+
+      if (createTicket) {
+        console.log('2. Ticket Fields:');
+        console.log('   category_name:', ticketCategoryId);
+        console.log('   sub_category_id:', ticketSubCategory || 'none');
+        console.log('   category_type:', ticketSubCategory ? 'subcategory' : 'category');
+      }
+
+      console.log('\n3. All FormData Keys and Values:');
+      const allEntries = Array.from(formData.entries());
+      allEntries.forEach(([key, value]) => {
+        if (value instanceof File) {
+          console.log(`   ${key}: [File: ${value.name}]`);
+        } else {
+          console.log(`   ${key}: ${value}`);
+        }
+      });
+
+      console.log(`\n4. FormData Summary:`);
+      console.log(`   Total fields: ${allEntries.length}`);
+      console.log(`   Form View enabled: ${formView ? 'YES' : 'NO'}`);
+      console.log('=====================================\n');
 
       const response = await apiClient.put(
         `/pms/admin/snag_checklists/${id}.json`,
@@ -1131,9 +1164,8 @@ export const EditSurveyPage = () => {
       // Show detailed error message
       if (error.response) {
         toast.error("Update Failed", {
-          description: `Server error: ${error.response.status} - ${
-            error.response.data?.message || "Unknown error"
-          }`,
+          description: `Server error: ${error.response.status} - ${error.response.data?.message || "Unknown error"
+            }`,
           duration: 5000,
         });
       } else if (error.request) {
@@ -1201,7 +1233,7 @@ export const EditSurveyPage = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
-                  InputLabelProps={{ 
+                  InputLabelProps={{
                     shrink: true,
                     sx: { '& .MuiInputLabel-asterisk': { color: '#ef4444' } }
                   }}
@@ -1210,7 +1242,7 @@ export const EditSurveyPage = () => {
               </div>
 
               <div className="space-y-2">
-                <FormControl fullWidth required sx={{ 
+                <FormControl fullWidth required sx={{
                   ...fieldStyles,
                   "& .MuiInputLabel-asterisk": { color: "#ef4444" }
                 }}>
@@ -1229,6 +1261,32 @@ export const EditSurveyPage = () => {
                   </MuiSelect>
                 </FormControl>
               </div>
+            </div>
+
+            {/* Form View Toggle */}
+            <div className="space-y-4">
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formView}
+                    onChange={(e) => setFormView(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Enable Form View"
+                sx={{
+                  "& .MuiFormControlLabel-label": {
+                    fontSize: "16px",
+                    fontWeight: 500,
+                  },
+                  "& .MuiSwitch-switchBase.Mui-checked": {
+                    color: "#C72030",
+                  },
+                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                    backgroundColor: "#C72030",
+                  },
+                }}
+              />
             </div>
 
             {/* Ticket Creation Configuration */}
@@ -1307,8 +1365,8 @@ export const EditSurveyPage = () => {
                           {loadingTicketSubCategories
                             ? "Loading subcategories..."
                             : !ticketCategoryId
-                            ? "Select a category first"
-                            : "Select Ticket Sub Category"}
+                              ? "Select a category first"
+                              : "Select Ticket Sub Category"}
                         </MenuItem>
                         {ticketSubCategories.map((subcat) => (
                           <MenuItem key={subcat.id} value={subcat.id.toString()}>
@@ -1320,71 +1378,70 @@ export const EditSurveyPage = () => {
                   </div>
                 </div>
               )}
-                 <div className="space-y-2 mt-3">
-                              <label className="text-sm font-medium text-gray-700">
-                                Upload Image
-                              </label>
-                              <div className="flex items-center gap-4 grid grid-cols-3">
-                                <div className="flex-1">
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0] || null;
-                                      setSurveyImage(file);
-                                    }}
-                                    className="hidden"
-                                    id="survey-image"
-                                    disabled={isSubmitting}
-                                  />
-                                  <label
-                                    htmlFor="survey-image"
-                                    className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                                      isSubmitting
-                                        ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
-                                        : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
-                                    }`}
-                                  >
-                                    {surveyImage
-                                      ? `Selected: ${surveyImage.name}`
-                                      : "Click to upload survey image"}
-                                  </label>
-                                </div>
-                                {surveyImage && (
-                                  <Button
-                                    onClick={() => setSurveyImage(null)}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-gray-400 hover:text-red-500 p-2"
-                                    disabled={isSubmitting}
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </Button>
-                                )}
-                              </div>
-                              {surveyImage && (
-                                <div className="mt-2">
-                                  <img
-                                    src={URL.createObjectURL(surveyImage)}
-                                    alt="Survey preview"
-                                    className="max-w-full h-32 object-cover rounded-lg border"
-                                    onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
-                                  />
-                                </div>
-                              )}
-                              {existingSurveyImage && !surveyImage && (
-                                <div className="mt-2">
-                                  <img
-                                    src={existingSurveyImage.url}
-                                    alt="Existing survey image"
-                                    className="max-w-full h-32 object-cover rounded-lg border"
-                                  />
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Current image: {existingSurveyImage.file_name}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
+              <div className="space-y-2 mt-3">
+                <label className="text-sm font-medium text-gray-700">
+                  Upload Image
+                </label>
+                <div className="flex items-center gap-4 grid grid-cols-3">
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setSurveyImage(file);
+                      }}
+                      className="hidden"
+                      id="survey-image"
+                      disabled={isSubmitting}
+                    />
+                    <label
+                      htmlFor="survey-image"
+                      className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isSubmitting
+                        ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
+                        }`}
+                    >
+                      {surveyImage
+                        ? `Selected: ${surveyImage.name}`
+                        : "Click to upload survey image"}
+                    </label>
+                  </div>
+                  {surveyImage && (
+                    <Button
+                      onClick={() => setSurveyImage(null)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-400 hover:text-red-500 p-2"
+                      disabled={isSubmitting}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+                {surveyImage && (
+                  <div className="mt-2">
+                    <img
+                      src={URL.createObjectURL(surveyImage)}
+                      alt="Survey preview"
+                      className="max-w-full h-32 object-cover rounded-lg border"
+                      onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                    />
+                  </div>
+                )}
+                {existingSurveyImage && !surveyImage && (
+                  <div className="mt-2">
+                    <img
+                      src={existingSurveyImage.url}
+                      alt="Existing survey image"
+                      className="max-w-full h-32 object-cover rounded-lg border"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Current image: {existingSurveyImage.file_name}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -1442,7 +1499,7 @@ export const EditSurveyPage = () => {
                 {(() => {
                   // Debug: Log current questions state
                   console.log("All questions:", questions);
-                  
+
                   // Filter out questions marked for deletion and questions with null/empty essential content
                   const activeQuestions = questions.filter(question => {
                     const isMarkedForDeletion = question.markedForDeletion === true;
@@ -1450,12 +1507,12 @@ export const EditSurveyPage = () => {
                     const hasValidText = question.text && question.text.trim() !== "";
                     const hasValidAnswerType = question.answerType && question.answerType.trim() !== "";
                     const isNotNullData = question.text !== null && question.answerType !== null;
-                    
+
                     console.log(`Question ${question.id}: markedForDeletion=${isMarkedForDeletion}, hasValidId=${hasValidId}, hasValidText=${hasValidText}, hasValidAnswerType=${hasValidAnswerType}, isNotNullData=${isNotNullData}`);
-                    
+
                     return !isMarkedForDeletion && hasValidId && isNotNullData && (hasValidText || hasValidAnswerType || question.id.startsWith("new_"));
                   });
-                  
+
                   console.log("Active questions after filtering:", activeQuestions);
                   return activeQuestions;
                 })().map((question, index) => (
@@ -1516,17 +1573,19 @@ export const EditSurveyPage = () => {
                             </SelectItem>
                             <SelectItem value="rating">Rating</SelectItem>
                             <SelectItem value="emojis">Emojis</SelectItem>
+                            <SelectItem value="input-box">Input Box</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
+
 
                       {/* Multiple Choice, Rating, and Emoji Options */}
                       {["multiple-choice", "rating", "emojis"].includes(question.answerType) && (
                         <div className="space-y-3 pt-2">
                           <Label className="text-sm font-medium text-gray-700">
-                            {question.answerType === "rating" ? "Rating Options" : 
-                             question.answerType === "emojis" ? "Emoji Options" : 
-                             "Answer Options"}
+                            {question.answerType === "rating" ? "Rating Options" :
+                              question.answerType === "emojis" ? "Emoji Options" :
+                                "Answer Options"}
                           </Label>
                           {(question.answerOptions || []).map((option, optionIndex) => (
                             <div key={optionIndex} className="flex items-center gap-3">
@@ -1546,8 +1605,8 @@ export const EditSurveyPage = () => {
                               <TextField
                                 placeholder={
                                   question.answerType === "rating" ? `Enter rating description` :
-                                  question.answerType === "emojis" ? `Enter description for ${EMOJIS[optionIndex]}` :
-                                  `Option ${optionIndex + 1}`
+                                    question.answerType === "emojis" ? `Enter description for ${EMOJIS[optionIndex]}` :
+                                      `Option ${optionIndex + 1}`
                                 }
                                 value={option.text}
                                 onChange={(e) => {
@@ -1557,8 +1616,8 @@ export const EditSurveyPage = () => {
                                 fullWidth
                                 variant="outlined"
                                 InputProps={{
-                                  sx: { 
-                                    ...fieldStyles, 
+                                  sx: {
+                                    ...fieldStyles,
                                     height: "40px",
                                     backgroundColor: 'white'
                                   },
@@ -1662,11 +1721,10 @@ export const EditSurveyPage = () => {
                               return (
                                 <div
                                   key={fieldIndex}
-                                  className={`grid gap-3 items-end ${
-                                    isOnlyField
-                                      ? "grid-cols-1 md:grid-cols-2"
-                                      : "grid-cols-1 md:grid-cols-3"
-                                  }`}
+                                  className={`grid gap-3 items-end ${isOnlyField
+                                    ? "grid-cols-1 md:grid-cols-2"
+                                    : "grid-cols-1 md:grid-cols-3"
+                                    }`}
                                 >
                                   <TextField
                                     label="Title"
@@ -1682,7 +1740,7 @@ export const EditSurveyPage = () => {
                                     fullWidth
                                     variant="outlined"
                                     required
-                                    InputLabelProps={{ 
+                                    InputLabelProps={{
                                       shrink: true,
                                       sx: { '& .MuiInputLabel-asterisk': { color: '#ef4444' } }
                                     }}
@@ -1702,7 +1760,7 @@ export const EditSurveyPage = () => {
                                       fullWidth
                                       variant="outlined"
                                       required
-                                      InputLabelProps={{ 
+                                      InputLabelProps={{
                                         shrink: true,
                                         sx: { '& .MuiInputLabel-asterisk': { color: '#ef4444' } }
                                       }}
@@ -1772,7 +1830,7 @@ export const EditSurveyPage = () => {
                               <div className="space-y-2">
                                 <Label className="text-xs text-gray-600">Existing Files</Label>
                                 <div className="flex flex-wrap gap-3">
-                                  {question.additionalFields.map((field, fieldIndex) => 
+                                  {question.additionalFields.map((field, fieldIndex) =>
                                     field.existingFiles?.map((existingFile) => (
                                       <div
                                         key={`existing-${existingFile.id}`}
@@ -1805,7 +1863,7 @@ export const EditSurveyPage = () => {
                               <div className="space-y-2">
                                 <Label className="text-xs text-gray-600">New Files</Label>
                                 <div className="flex flex-wrap gap-3">
-                                  {question.additionalFields.map((field, fieldIndex) => 
+                                  {question.additionalFields.map((field, fieldIndex) =>
                                     field.files.map((file, fileIndex) => {
                                       const isImage = file.type.startsWith('image/');
                                       const isPdf = file.type === 'application/pdf';
@@ -1824,15 +1882,15 @@ export const EditSurveyPage = () => {
                                             />
                                           ) : isPdf ? (
                                             <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
-                                              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z"/><path d="M14 2v6h6"/></svg>
+                                              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z" /><path d="M14 2v6h6" /></svg>
                                             </div>
                                           ) : isExcel ? (
                                             <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
-                                              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="2"/><path d="M8 11h8M8 15h8"/></svg>
+                                              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="2" /><path d="M8 11h8M8 15h8" /></svg>
                                             </div>
                                           ) : (
                                             <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
-                                              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="2"/></svg>
+                                              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="2" /></svg>
                                             </div>
                                           )}
                                           <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>

@@ -109,31 +109,19 @@ baseClient.interceptors.request.use(
         } else {
           throw new Error("Either org_id or email is required for Dev sites");
         }
-      } else if (isDevSite) {
-        if (orgId) {
+      }  else {
+        // Default fallback: prefer org_id, fallback to email
+        if (organizationId) {
+          apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
+          console.log("🔍 Using org_id for Dev site:", orgId);
+        } else if (orgId) {
           apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
-          console.log("🔍 Using org_id for FM/Oman site:", orgId);
+          console.log("🔍 Using org_id for Dev site:", orgId);
         } else if (email) {
           apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
-          console.log("🔍 Using email for FM/Oman site:", email);
+          console.log("🔍 Using email for Dev site:", email);
         } else {
-          throw new Error(
-            "Either org_id or email is required for FM/Oman sites"
-          );
-        }
-      } else {
-        // Default fallback: prefer org_id, fallback to email
-        if (orgId) {
-          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
-          console.log("🔍 Using org_id for default fallback:", orgId);
-        } else if (organizationId) {
-          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
-          console.log("🔍 Using org_id for default fallback:", orgId);
-        } else if (email) {
-          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
-          console.log("🔍 Using email for default fallback:", email);
-        } else {
-          throw new Error("Either org_id or email is required");
+          throw new Error("Either org_id or email is required for Dev sites");
         }
       }
 
