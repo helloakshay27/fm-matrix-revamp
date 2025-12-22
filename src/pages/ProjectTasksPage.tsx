@@ -1,9 +1,15 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
 import { createProjectTask, editProjectTask, fetchProjectTasks, filterTasks, updateTaskStatus } from "@/store/slices/projectTasksSlice";
-import { ChartNoAxesColumn, ChevronDown, Edit, Eye, List, Plus, X, Search, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { ChartNoAxesColumn, ChevronDown, Edit, Eye, List, Plus, X, Search, ChevronRight, SlidersHorizontal, Play, Pause } from "lucide-react";
 import { useEffect, useState, useRef, forwardRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Dialog, DialogContent, MenuItem, Select, Slide, TextField, Switch, FormControl } from "@mui/material";
@@ -236,6 +242,63 @@ const statusOptions = [
     { value: "overdue", label: "Overdue" },
 ]
 
+// Pause Reason Modal Component
+const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
+    const [reason, setReason] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason('');
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error('Please enter a reason for pausing the task');
+            return;
+        }
+        onSubmit(reason, taskId);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Pause</h2>
+
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for pausing this task..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                    <button
+                        onClick={onClose}
+                        disabled={isLoading}
+                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                    >
+                        {isLoading ? 'Submitting...' : 'Pause Task'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const ProjectTasksPage = () => {
     const { setCurrentSection } = useLayout();
 
@@ -298,6 +361,11 @@ const ProjectTasksPage = () => {
         createdBy: '',
         project: '',
     });
+
+    // Pause Modal State
+    const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+    const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
+    const [isPauseLoading, setIsPauseLoading] = useState(false);
 
     const viewDropdownRef = useRef<HTMLDivElement>(null);
     const statusDropdownRef = useRef<HTMLDivElement>(null);
@@ -880,6 +948,57 @@ const ProjectTasksPage = () => {
         }
     }
 
+    const handlePauseTaskSubmit = async (reason: string, tid: number) => {
+        if (!tid) return;
+
+        setIsPauseLoading(true);
+        try {
+            // Update task status to "on_hold" (paused)
+            await dispatch(updateTaskStatus({ token, baseUrl, id: String(tid), data: { status: 'stopped' } })).unwrap();
+
+            const commentPayload = {
+                comment: {
+                    body: `Paused with reason: ${reason}`,
+                    commentable_id: tid,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            };
+
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            toast.success('Task paused successfully with reason');
+            setIsPauseModalOpen(false);
+            setPauseTaskId(null);
+
+            // Refresh task list
+            await fetchData();
+        } catch (error) {
+            console.error('Failed to pause task:', error);
+            toast.error(
+                `Failed to pause task: ${error?.response?.data?.error || error?.message || 'Server error'}`
+            );
+        } finally {
+            setIsPauseLoading(false);
+        }
+    };
+
+    const handlePlayTask = async (id: number) => {
+        try {
+            await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status: 'started' } })).unwrap();
+            fetchData();
+            toast.success("Task started successfully");
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to start task");
+        }
+    }
+
     const renderCell = (item: any, columnKey: string, isSubtask: boolean = false) => {
         const renderProgressBar = (completed: number, total: number, color: string, type: string) => {
             const progress = total > 0 ? (completed / total) * 100 : 0;
@@ -900,11 +1019,61 @@ const ProjectTasksPage = () => {
             case "id":
                 return <span className="w-[80px]">{isSubtask ? 'S-' : 'T-'}{item.id}</span>
             case "title":
-                return <span className="w-[200px] truncate">{item.title}</span>
+                const isCompleted = item.status === 'completed';
+                const isTaskStarted = item.is_started;
+                const hasSubtasks = item.total_sub_tasks > 0;
+
+                return (
+                    <div className="flex items-center gap-2 w-full">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="w-[200px] truncate">{item.title}</span>
+                                </TooltipTrigger>
+                                <TooltipContent className="rounded-[5px]">
+                                    <p>{item.title}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        {!hasSubtasks &&
+                            (isTaskStarted ? (
+                                <button
+                                    onClick={() => {
+                                        setPauseTaskId(item.id);
+                                        setIsPauseModalOpen(true);
+                                    }}
+                                    disabled={isCompleted}
+                                    className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                    title="Pause task"
+                                >
+                                    <Pause size={13} className="text-orange-500" />
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => handlePlayTask(item.id)}
+                                    disabled={isCompleted}
+                                    className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                    title="Play task"
+                                >
+                                    <Play size={13} className="text-green-500" />
+                                </button>
+                            ))}
+                    </div>
+                );
             case "status": {
+                const statusColorMap = {
+                    open: { dot: "bg-blue-500" },
+                    in_progress: { dot: "bg-amber-500" },
+                    on_hold: { dot: "bg-gray-500" },
+                    completed: { dot: "bg-teal-500" },
+                    overdue: { dot: "bg-red-500" },
+                };
+
+                const colors = statusColorMap[item.status as keyof typeof statusColorMap] || statusColorMap.open;
+
                 return <FormControl
                     variant="standard"
-                    sx={{ width: 128 }} // same as w-32
+                    sx={{ width: 148 }} // same as w-32
                 >
                     <Select
                         value={item.status}
@@ -912,19 +1081,32 @@ const ProjectTasksPage = () => {
                             handleStatusChange(item.id, e.target.value as string)
                         }
                         disableUnderline
+                        renderValue={(value) => (
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <span className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}></span>
+                                <span>{statusOptions.find(opt => opt.value === value)?.label || value}</span>
+                            </div>
+                        )}
                         sx={{
                             fontSize: "0.875rem",
                             cursor: "pointer",
                             "& .MuiSelect-select": {
                                 padding: "4px 0",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
                             },
                         }}
                     >
-                        {statusOptions.map((opt) => (
-                            <MenuItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                            </MenuItem>
-                        ))}
+                        {statusOptions.map((opt) => {
+                            const optColors = statusColorMap[opt.value as keyof typeof statusColorMap];
+                            return (
+                                <MenuItem key={opt.value} value={opt.value} sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <span className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}></span>
+                                    <span>{opt.label}</span>
+                                </MenuItem>
+                            );
+                        })}
                     </Select>
                 </FormControl>
             }
@@ -1724,6 +1906,18 @@ const ProjectTasksPage = () => {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Pause Reason Modal */}
+            <PauseReasonModal
+                isOpen={isPauseModalOpen}
+                onClose={() => {
+                    setIsPauseModalOpen(false);
+                    setPauseTaskId(null);
+                }}
+                onSubmit={handlePauseTaskSubmit}
+                isLoading={isPauseLoading}
+                taskId={pauseTaskId}
+            />
         </div>
     );
 }

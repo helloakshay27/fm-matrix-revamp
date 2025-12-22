@@ -407,6 +407,15 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         const formatedEndDate = `${endDate.year}-${endDate.month + 1}-${endDate.date}`;
         const formatedStartDate = `${startDate.year}-${startDate.month + 1}-${startDate.date}`;
 
+        let taskAllocationTimesAttributes = dateWiseHours;
+        if (Array.isArray(dateWiseHours)) {
+            taskAllocationTimesAttributes = dateWiseHours.map((allocation) => ({
+                ...allocation,
+                id: allocation.id || null,
+                _destroy: allocation._destroy || false,
+            }));
+        }
+
         const payload = {
             title: formData.taskTitle,
             description: formData.description,
@@ -419,7 +428,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
             allocation_date: formatedEndDate,
             active: true,
             estimated_hour: totalWorkingHours,
-            task_allocation_times_attributes: dateWiseHours,
+            task_allocation_times_attributes: taskAllocationTimesAttributes,
         };
 
         try {

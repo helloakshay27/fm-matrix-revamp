@@ -545,9 +545,20 @@ const IssuesListPage = () => {
             return item[columnKey]
         }
         if (columnKey === "status") {
+            const statusColorMap = {
+                open: { dot: "bg-blue-500" },
+                in_progress: { dot: "bg-amber-500" },
+                on_hold: { dot: "bg-gray-500" },
+                completed: { dot: "bg-teal-500" },
+                reopen: { dot: "bg-orange-500" },
+                closed: { dot: "bg-red-500" },
+            };
+
+            const colors = statusColorMap[item.status as keyof typeof statusColorMap] || statusColorMap.open;
+
             return <FormControl
                 variant="standard"
-                sx={{ width: 128 }} // same as w-32
+                sx={{ width: 148 }} // same as w-32
             >
                 <Select
                     value={item.status}
@@ -555,19 +566,32 @@ const IssuesListPage = () => {
                         handleIssueStatusChange(item.id, e.target.value as string)
                     }
                     disableUnderline
+                    renderValue={(value) => (
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}></span>
+                            <span>{ISSUSE_STATUS.find(opt => opt.value === value)?.label || value}</span>
+                        </div>
+                    )}
                     sx={{
                         fontSize: "0.875rem",
                         cursor: "pointer",
                         "& .MuiSelect-select": {
                             padding: "4px 0",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
                         },
                     }}
                 >
-                    {ISSUSE_STATUS.map((opt) => (
-                        <MenuItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                        </MenuItem>
-                    ))}
+                    {ISSUSE_STATUS.map((opt) => {
+                        const optColors = statusColorMap[opt.value as keyof typeof statusColorMap];
+                        return (
+                            <MenuItem key={opt.value} value={opt.value} sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <span className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}></span>
+                                <span>{opt.label}</span>
+                            </MenuItem>
+                        );
+                    })}
                 </Select>
             </FormControl>
         }
