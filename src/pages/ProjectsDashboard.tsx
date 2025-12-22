@@ -1,5 +1,11 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { changeProjectStatus, createProject, filterProjects } from "@/store/slices/projectManagementSlice";
@@ -543,11 +549,21 @@ export const ProjectsDashboard = () => {
       case "start_date":
       case "end_date":
         return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString('en-GB') : "-";
-      case "status":
+      case "status": {
+        const statusColorMap = {
+          active: { dot: "bg-emerald-500" },
+          in_progress: { dot: "bg-amber-500" },
+          on_hold: { dot: "bg-gray-500" },
+          completed: { dot: "bg-teal-500" },
+          overdue: { dot: "bg-red-500" },
+        };
+
+        const colors = statusColorMap[item.status as keyof typeof statusColorMap] || statusColorMap.active;
+
         return (
           <FormControl
             variant="standard"
-            sx={{ width: 128 }} // same as w-32
+            sx={{ width: 148 }} // same as w-32
           >
             <Select
               value={item.status}
@@ -555,22 +571,49 @@ export const ProjectsDashboard = () => {
                 handleStatusChange(item.id, e.target.value as string)
               }
               disableUnderline
+              renderValue={(value) => (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}></span>
+                  <span>{statusOptions.find(opt => opt.value === value)?.label || value}</span>
+                </div>
+              )}
               sx={{
                 fontSize: "0.875rem",
                 cursor: "pointer",
                 "& .MuiSelect-select": {
                   padding: "4px 0",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
                 },
               }}
             >
-              {statusOptions.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </MenuItem>
-              ))}
+              {statusOptions.map((opt) => {
+                const optColors = statusColorMap[opt.value as keyof typeof statusColorMap];
+                return (
+                  <MenuItem key={opt.value} value={opt.value} sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}></span>
+                    <span>{opt.label}</span>
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
-        )
+        );
+      }
+      case "title":
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="truncate cursor-pointer" onClick={() => navigate(`/vas/projects/${item.id}/milestones`)}>{item.title}</span>
+              </TooltipTrigger>
+              <TooltipContent className="rounded-[5px]">
+                <p>{item.title}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
       default:
         return item[columnKey] || "-";
     }
