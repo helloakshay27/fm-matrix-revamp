@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchIssues, deleteIssue, updateIssue } from "@/store/slices/issueSlice";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { FormControl, MenuItem, Select } from "@mui/material";
 import axios from "axios";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { useLayout } from "@/contexts/LayoutContext";
+import qs from "qs";
 
 interface Issue {
     id?: string;
@@ -137,22 +138,62 @@ const ISSUSE_STATUS = [
 
 const IssuesListPage = () => {
     const { setCurrentSection } = useLayout();
-
-    useEffect(() => {
-        setCurrentSection("Project Task");
-    }, [setCurrentSection]);
-
-
     const navigate = useNavigate();
+    const location = useLocation();
     const { id: projectId } = useParams<{ id: string }>();
     const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
 
+    // URL search params
+    const searchParams = new URLSearchParams(location.search);
+    const projectIdParam = searchParams.get("project_id");
+    const taskIdParam = searchParams.get("task_id");
+
+    useEffect(() => {
+        setCurrentSection("Project Task");
+    }, [setCurrentSection]);
+
     const { data, loading } = useAppSelector(
-        (state) => state.fetchIssues || { data: [], loading: false }
+        (state) => state.fetchIssues || { data: { issues: [] }, loading: false }
     );
-    const rawIssues = Array.isArray(data.issues) ? data.issues : [];
+    const rawIssues = Array.isArray((data as any)?.issues) ? (data as any).issues : [];
+
+    // Filter and search state - Declare early to avoid usage before declaration
+    const [filterSuccess, setFilterSuccess] = useState(false);
+    const [filteredIssues, setFilteredIssues] = useState<any[]>([]);
+    const [filteredLoading, setFilteredLoading] = useState(false);
+
+    // Pagination state
+    const [pagination, setPagination] = useState({
+        pageIndex: 0,
+        pageSize: 10,
+    });
+
+    // Search state
+    const [searchQuery, setSearchQuery] = useState("");
+    const [columnOrder, setColumnOrder] = useState<string[]>(() => {
+        const savedOrder = localStorage.getItem("issuesTableColumnOrder");
+        return savedOrder ? JSON.parse(savedOrder) : [
+            "id",
+            "project_name",
+            "milestone_name",
+            "task_name",
+            "sub_task_name",
+            "title",
+            "issue_type",
+            "priority",
+            "status",
+            "assigned_to",
+            "start_date",
+            "due_date",
+        ];
+    });
+
+    // Fetch control refs
+    const allIssuesFetchInitiatedRef = useRef(false);
+    const userFetchInitiatedRef = useRef(false);
+    const projectsFetchInitiatedRef = useRef(false);
 
     // Map API response to table format
     const mapIssueData = (issue: any): Issue => {
@@ -179,7 +220,29 @@ const IssuesListPage = () => {
         };
     };
 
-    const issues: Issue[] = rawIssues.map(mapIssueData);
+    // Determine which issues to display based on filters/search
+    const displayIssues = useMemo(() => {
+        let issuesToDisplay;
+
+        // If search is active, use filtered issues
+        if (searchQuery.trim()) {
+            issuesToDisplay = filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
+        }
+        // If projectId from prop or URL param is provided, use filtered issues
+        else if (projectId || projectIdParam || taskIdParam) {
+            issuesToDisplay = filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
+        }
+        // Check if localStorage filters are applied
+        else if (localStorage.getItem("IssueFilters") || localStorage.getItem("issueStatus")) {
+            issuesToDisplay = filterSuccess && Array.isArray(filteredIssues) ? filteredIssues : [];
+        } else {
+            issuesToDisplay = rawIssues;
+        }
+
+        return Array.isArray(issuesToDisplay) ? issuesToDisplay : [];
+    }, [rawIssues, filteredIssues, filterSuccess, searchQuery, projectId, projectIdParam, taskIdParam]);
+
+    const issues: Issue[] = displayIssues.map(mapIssueData);
 
     const [users, setUsers] = useState([])
     const [issueTypeOptions, setIssueTypeOptions] = useState([]);
@@ -187,6 +250,37 @@ const IssuesListPage = () => {
     const [selectedView, setSelectedView] = useState<"List" | "Kanban">("List");
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
+
+    // Helper function to perform filtered fetch - defined early to be used in useEffects
+    const performFilteredFetch = useCallback(async (filterOrString: any) => {
+        try {
+            setFilteredLoading(true);
+            let queryString: string;
+
+            if (typeof filterOrString === 'string') {
+                queryString = filterOrString;
+            } else {
+                queryString = qs.stringify(filterOrString);
+            }
+
+            const response = await axios.get(
+                `https://${baseUrl}/issues.json?${queryString}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            setFilteredIssues(response.data.issues || []);
+            setFilterSuccess(true);
+        } catch (error) {
+            console.error('Error fetching filtered issues:', error);
+            toast.error('Failed to fetch filtered issues');
+            setFilteredIssues([]);
+        } finally {
+            setFilteredLoading(false);
+        }
+    }, [baseUrl, token]);
 
     const getUsers = async () => {
         try {
@@ -200,6 +294,87 @@ const IssuesListPage = () => {
     useEffect(() => {
         getUsers();
     }, [])
+
+    // Advanced filtering with search
+    useEffect(() => {
+        if (searchQuery.trim()) {
+            // Reset to first page when search query changes
+            setPagination((prev) => ({
+                ...prev,
+                pageIndex: 0,
+            }));
+
+            const page = 1;
+            const filter = {
+                'q[title_or_project_management_title_cont]': searchQuery,
+                page,
+                per_page: 10,
+                ...(projectId && { 'q[project_management_id_eq]': projectId }),
+                ...(projectIdParam && { 'q[project_management_id_eq]': projectIdParam }),
+                ...(taskIdParam && { 'q[task_management_id_eq]': taskIdParam })
+            };
+
+            performFilteredFetch(filter);
+        } else {
+            // If search is cleared, reset to initial fetch
+            allIssuesFetchInitiatedRef.current = false;
+        }
+    }, [searchQuery, projectId, projectIdParam, taskIdParam]);
+
+    // Fetch issues - only for initial load if no search
+    useEffect(() => {
+        if (
+            !loading &&
+            (!rawIssues ||
+                !Array.isArray(rawIssues) ||
+                rawIssues.length === 0) &&
+            !allIssuesFetchInitiatedRef.current &&
+            !searchQuery.trim()
+        ) {
+            // If projectId from prop or URL param is provided, use filter to get issues for that project
+            if (projectId || projectIdParam || taskIdParam) {
+                const filter = {
+                    'q[project_management_id_eq]': projectId || projectIdParam || "",
+                    'q[task_management_id_eq]': taskIdParam || "",
+                    page: pagination.pageIndex + 1,
+                    per_page: pagination.pageSize,
+                };
+                performFilteredFetch(filter);
+            } else {
+                dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+            }
+            allIssuesFetchInitiatedRef.current = true;
+        }
+    }, [
+        dispatch,
+        rawIssues,
+        loading,
+        token,
+        baseUrl,
+        pagination.pageIndex,
+        pagination.pageSize,
+        projectId,
+        projectIdParam,
+        taskIdParam,
+        searchQuery,
+    ]);
+
+    // Handle pagination for search results
+    useEffect(() => {
+        if (searchQuery.trim() && pagination.pageIndex > 0) {
+            const page = pagination.pageIndex + 1;
+            const filter = {
+                'q[title_or_project_management_title_cont]': searchQuery,
+                page,
+                per_page: 10,
+                ...(projectId && { 'q[project_management_id_eq]': projectId }),
+                ...(projectIdParam && { 'q[project_management_id_eq]': projectIdParam }),
+                ...(taskIdParam && { 'q[task_management_id_eq]': taskIdParam })
+            };
+
+            performFilteredFetch(filter);
+        }
+    }, [pagination.pageIndex, searchQuery, projectId, projectIdParam, taskIdParam, performFilteredFetch]);
 
     const fetchData = async () => {
         try {
@@ -241,7 +416,28 @@ const IssuesListPage = () => {
         try {
             await dispatch(deleteIssue({ baseUrl, token, id: issueId })).unwrap();
             toast.success("Issue deleted successfully");
-            if (projectId && baseUrl && token) {
+            // Refresh the issues list
+            if (searchQuery.trim()) {
+                const page = 1;
+                const filter = {
+                    'q[title_or_project_management_title_cont]': searchQuery,
+                    page,
+                    per_page: 10,
+                    ...(projectId && { 'q[project_management_id_eq]': projectId }),
+                    ...(projectIdParam && { 'q[project_management_id_eq]': projectIdParam }),
+                    ...(taskIdParam && { 'q[task_management_id_eq]': taskIdParam })
+                };
+                performFilteredFetch(filter);
+            } else if (projectId || projectIdParam || taskIdParam) {
+                const filter = {
+                    'q[project_management_id_eq]': projectId || projectIdParam || "",
+                    'q[task_management_id_eq]': taskIdParam || "",
+                    page: pagination.pageIndex + 1,
+                    per_page: pagination.pageSize,
+                };
+                performFilteredFetch(filter);
+            } else {
+                allIssuesFetchInitiatedRef.current = false;
                 dispatch(fetchIssues({ baseUrl, token, id: projectId }));
             }
         } catch (error) {
@@ -267,7 +463,33 @@ const IssuesListPage = () => {
         try {
             await dispatch(updateIssue({ baseUrl, token, id: issueId, data: { issue_type: newType } })).unwrap();
             toast.success("Issue type updated successfully");
-            dispatch(fetchIssues({ baseUrl, token, id: projectId })).unwrap();
+
+            // Refresh with appropriate filter
+            if (localStorage.getItem("IssueFilters")) {
+                const item = JSON.parse(localStorage.getItem("IssueFilters")!);
+                const newFilter = {
+                    'q[status_in][]': item.selectedStatuses?.length > 0 ? item.selectedStatuses : [],
+                    'q[created_by_id_eq]': item.selectedCreators?.length > 0 ? item.selectedCreators : [],
+                    'q[start_date_eq]': item.dates?.['Start Date'],
+                    'q[end_date_eq]': item.dates?.['End Date'],
+                    'q[responsible_person_id_in][]': item.selectedResponsible?.length > 0 ? item.selectedResponsible : [],
+                    'q[issue_type_in][]': item.selectedTypes?.length > 0 ? item.selectedTypes : [],
+                    'q[project_management_id_in][]': item.selectedProjects?.length > 0 ? item.selectedProjects : [],
+                    'q[task_management_id_in][]': item.selectedTasks?.length > 0 ? item.selectedTasks : [],
+                    'q[subtask_management_id_in][]': item.selectedSubtasks?.length > 0 ? item.selectedSubtasks : [],
+                    page: pagination.pageIndex + 1,
+                    per_page: pagination.pageSize,
+                };
+                const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
+                performFilteredFetch(queryString);
+            } else if (localStorage.getItem("issueStatus")) {
+                const status = localStorage.getItem("issueStatus");
+                const filter = { 'q[status_eq]': status, page: pagination.pageIndex + 1, per_page: pagination.pageSize };
+                performFilteredFetch(filter);
+            } else {
+                allIssuesFetchInitiatedRef.current = false;
+                dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+            }
         } catch (error) {
             console.log(error)
         }
@@ -277,7 +499,33 @@ const IssuesListPage = () => {
         try {
             await dispatch(updateIssue({ baseUrl, token, id: issueId, data: { responsible_person_id: assignedToId } })).unwrap();
             toast.success("Issue updated successfully");
-            dispatch(fetchIssues({ baseUrl, token, id: projectId })).unwrap();
+
+            // Refresh with appropriate filter
+            if (localStorage.getItem("IssueFilters")) {
+                const item = JSON.parse(localStorage.getItem("IssueFilters")!);
+                const newFilter = {
+                    'q[status_in][]': item.selectedStatuses?.length > 0 ? item.selectedStatuses : [],
+                    'q[created_by_id_eq]': item.selectedCreators?.length > 0 ? item.selectedCreators : [],
+                    'q[start_date_eq]': item.dates?.['Start Date'],
+                    'q[end_date_eq]': item.dates?.['End Date'],
+                    'q[responsible_person_id_in][]': item.selectedResponsible?.length > 0 ? item.selectedResponsible : [],
+                    'q[issue_type_in][]': item.selectedTypes?.length > 0 ? item.selectedTypes : [],
+                    'q[project_management_id_in][]': item.selectedProjects?.length > 0 ? item.selectedProjects : [],
+                    'q[task_management_id_in][]': item.selectedTasks?.length > 0 ? item.selectedTasks : [],
+                    'q[subtask_management_id_in][]': item.selectedSubtasks?.length > 0 ? item.selectedSubtasks : [],
+                    page: pagination.pageIndex + 1,
+                    per_page: pagination.pageSize,
+                };
+                const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
+                performFilteredFetch(queryString);
+            } else if (localStorage.getItem("issueStatus")) {
+                const status = localStorage.getItem("issueStatus");
+                const filter = { 'q[status_eq]': status, page: pagination.pageIndex + 1, per_page: pagination.pageSize };
+                performFilteredFetch(filter);
+            } else {
+                allIssuesFetchInitiatedRef.current = false;
+                dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+            }
         } catch (error) {
             console.log(error)
         }
@@ -287,7 +535,33 @@ const IssuesListPage = () => {
         try {
             await dispatch(updateIssue({ baseUrl, token, id: issueId, data: { status: newStatus } })).unwrap();
             toast.success("Issue status updated successfully");
-            dispatch(fetchIssues({ baseUrl, token, id: projectId })).unwrap();
+
+            // Refresh with appropriate filter
+            if (localStorage.getItem("IssueFilters")) {
+                const item = JSON.parse(localStorage.getItem("IssueFilters")!);
+                const newFilter = {
+                    'q[status_in][]': item.selectedStatuses?.length > 0 ? item.selectedStatuses : [],
+                    'q[created_by_id_eq]': item.selectedCreators?.length > 0 ? item.selectedCreators : [],
+                    'q[start_date_eq]': item.dates?.['Start Date'],
+                    'q[end_date_eq]': item.dates?.['End Date'],
+                    'q[responsible_person_id_in][]': item.selectedResponsible?.length > 0 ? item.selectedResponsible : [],
+                    'q[issue_type_in][]': item.selectedTypes?.length > 0 ? item.selectedTypes : [],
+                    'q[project_management_id_in][]': item.selectedProjects?.length > 0 ? item.selectedProjects : [],
+                    'q[task_management_id_in][]': item.selectedTasks?.length > 0 ? item.selectedTasks : [],
+                    'q[subtask_management_id_in][]': item.selectedSubtasks?.length > 0 ? item.selectedSubtasks : [],
+                    page: pagination.pageIndex + 1,
+                    per_page: pagination.pageSize,
+                };
+                const queryString = qs.stringify(newFilter, { arrayFormat: "repeat" });
+                performFilteredFetch(queryString);
+            } else if (localStorage.getItem("issueStatus")) {
+                const status = localStorage.getItem("issueStatus");
+                const filter = { 'q[status_eq]': status, page: pagination.pageIndex + 1, per_page: pagination.pageSize };
+                performFilteredFetch(filter);
+            } else {
+                allIssuesFetchInitiatedRef.current = false;
+                dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+            }
         } catch (error) {
             console.log(error)
         }
@@ -393,16 +667,41 @@ const IssuesListPage = () => {
         </>
     );
 
+    const handleReorderColumns = useCallback((draggedId: string, targetId: string) => {
+        setColumnOrder((prevOrder) => {
+            const draggedIndex = prevOrder.indexOf(draggedId);
+            const targetIndex = prevOrder.indexOf(targetId);
+
+            if (draggedIndex === -1 || targetIndex === -1) return prevOrder;
+
+            const newOrder = [...prevOrder];
+            newOrder.splice(draggedIndex, 1);
+            newOrder.splice(targetIndex, 0, draggedId);
+
+            // Save to local storage
+            localStorage.setItem("issuesTableColumnOrder", JSON.stringify(newOrder));
+
+            return newOrder;
+        });
+    }, []);
+
+    const handleSearchChange = (value: string) => {
+        setSearchQuery(value);
+    };
+
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
+
             <EnhancedTable
                 data={issues}
                 columns={columns}
                 renderActions={renderActions}
+                searchTerm={searchQuery}
+                onSearchChange={() => handleSearchChange(searchQuery)}
                 renderCell={renderCell}
-                loading={loading}
+                loading={loading || filteredLoading}
                 leftActions={leftActions}
-                emptyMessage="No issues found. Create one to get started."
+                emptyMessage={filterSuccess && issues.length === 0 ? "Try adjusting the filters." : "No issues found. Create one to get started."}
             />
 
             {/* Add Issue Modal */}

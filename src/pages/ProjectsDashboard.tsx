@@ -26,6 +26,7 @@ import ProjectManagementKanban from "@/components/ProjectManagementKanban";
 import { ProjectFilterModal } from "@/components/ProjectFilterModal";
 import { useLayout } from "@/contexts/LayoutContext";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import axios from "axios";
 
 const columns: ColumnConfig[] = [
   {
@@ -242,8 +243,12 @@ export const ProjectsDashboard = () => {
 
   const getOwners = async () => {
     try {
-      const response = await dispatch(fetchFMUsers()).unwrap();
-      setOwners(response.users);
+      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+      setOwners(response.data.users);
     } catch (error) {
       console.log(error)
       toast.error(error)

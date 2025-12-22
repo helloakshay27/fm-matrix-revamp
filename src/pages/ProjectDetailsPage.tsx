@@ -6,6 +6,8 @@ import { ArrowLeft, ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "l
 import { useEffect, useRef, useState, Fragment } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
+import IssuesListPage from "./IssuesListPage";
+import ProjectEditModal from "@/components/ProjectEditModal";
 
 const Members = ({ allNames, projectOwner }) => {
     return (
@@ -680,10 +682,22 @@ const ProjectDetailsPage = () => {
                             <Attachments attachments={project.attachments || []} id={project.id} />
                         )}
                         {tab === "Status" && <Status project={project} />}
-                        {tab === "Issues" && <div>Issues Table Placeholder</div>}
+                        {tab === "Issues" && <IssuesListPage />}
                     </div>
                 </div>
             </div>
+            <ProjectEditModal
+                openDialog={isEditModalOpen}
+                handleCloseDialog={() => setIsEditModalOpen(false)}
+                project={project}
+                onUpdated={async () => {
+                    try {
+                        const response = await dispatch(fetchProjectById({ baseUrl, token, id })).unwrap();
+                        setProject(response);
+                    } catch (error) {
+                    }
+                }}
+            />
         </div>
     );
 };

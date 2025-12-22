@@ -80,6 +80,16 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
             toast.error("Please select owner");
             return false;
         }
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+        if (formData.startDate && formData.startDate < todayStr) {
+            toast.error("Start date cannot be before today");
+            return false;
+        }
+        if (formData.endDate && formData.startDate && formData.endDate < formData.startDate) {
+            toast.error("End date cannot be before start date");
+            return false;
+        }
         if (!formData.team) {
             toast.error("Please select team");
             return false;
@@ -249,22 +259,24 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                                     </div>
 
                                     <div className="flex gap-2 mt-4 text-[12px]">
-                                        {["startDate", "endDate"].map((field) => (
-                                            <div key={field} className="w-full space-y-2">
-                                                <TextField
-                                                    label={field === "startDate" ? "Start Date" : "End Date"}
-                                                    type="date"
-                                                    name={field}
-                                                    value={formData[field]}
-                                                    onChange={handleChange}
-                                                    fullWidth
-                                                    variant="outlined"
-                                                    InputLabelProps={{ shrink: true }}
-                                                    InputProps={{ sx: fieldStyles }}
-                                                    sx={{ mt: 1 }}
-                                                />
-                                            </div>
-                                        ))}
+                                        {["startDate", "endDate"].map((field) => {
+                                            return (
+                                                <div key={field} className="w-full space-y-2">
+                                                    <TextField
+                                                        label={field === "startDate" ? "Start Date" : "End Date"}
+                                                        type="date"
+                                                        name={field}
+                                                        value={formData[field]}
+                                                        onChange={handleChange}
+                                                        fullWidth
+                                                        variant="outlined"
+                                                        InputLabelProps={{ shrink: true }}
+                                                        InputProps={{ sx: fieldStyles }}
+                                                        sx={{ mt: 1 }}
+                                                    />
+                                                </div>
+                                            )
+                                        })}
 
                                         <div className="w-[300px] space-y-2">
                                             <TextField
