@@ -2263,6 +2263,13 @@ export const AddGroupMembershipPage = () => {
                                                     sx={fieldStyles}
                                                     fullWidth
                                                 />
+                                                <TextField
+                                                    label="Company Address"
+                                                    value={member.companyAddress || ''}
+                                                    onChange={(e) => updateMember(member.id, { companyAddress: e.target.value })}
+                                                    sx={fieldStyles}
+                                                    fullWidth
+                                                />
                                                 <div>
                                                     <FormLabel component="legend" className="text-sm font-medium mb-2">
                                                         Interested in corporate/group plans?

@@ -69,6 +69,37 @@ export const BookingDetailsPage = () => {
     }
   };
 
+  // Cancel Booking API handler
+  const handleCancelBooking = async () => {
+    if (!id || !bookings?.user_id) {
+      toast.error('User ID not found in booking details. Cannot cancel booking.');
+      return;
+    }
+    try {
+      await axios.patch(
+        `https://club-uat-api.lockated.com/pms/admin/facility_bookings/${id}`,
+        {
+          facility_booking: {
+            canceled_by: 'user',
+            canceler_id: bookings.user_id,
+            comment: 'User cancelled via API',
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      toast.success('Booking cancelled successfully!');
+      fetchDetails();
+    } catch (error) {
+      toast.error('Failed to cancel booking');
+      console.error('Cancel booking error:', error);
+    }
+  };
+
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
@@ -621,12 +652,20 @@ export const BookingDetailsPage = () => {
           </h1>
         </div>
 
-         {/* Payment Button for Pending Status */}
-        {bookings?.current_status === 'Pending' && (
-          <div className="flex justify-end mt-6 mb-4">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setOpenPaymentModal(true)}>
-              Payment
-            </Button>
+
+        {/* Payment & Cancel Button for Pending/Confirmed Status */}
+        {(bookings?.current_status === 'Pending' || bookings?.current_status === 'Confirmed') && (
+          <div className="flex justify-end mt-6 mb-4 gap-2">
+            {bookings?.current_status === 'Pending' && (
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setOpenPaymentModal(true)}>
+                Payment
+              </Button>
+            )}
+            {bookings?.current_status === 'Confirmed' && (
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleCancelBooking}>
+                Cancel Booking
+              </Button>
+            )}
           </div>
         )}
 
@@ -645,31 +684,37 @@ export const BookingDetailsPage = () => {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="payment_mode">Payment Mode</Label>
-                <select
-                  id="payment_mode"
-                  className="w-full border rounded px-2 py-2 mt-1"
+                <Select
                   value={paymentMode}
-                  onChange={e => setPaymentMode(e.target.value)}
+                  onValueChange={setPaymentMode}
                   disabled={paymentLoading}
                 >
-                  <option value="online">Online</option>
-                  <option value="offline">Offline</option>
-                </select>
+                  <SelectTrigger className="w-full mt-1" id="payment_mode">
+                    <SelectValue placeholder="Select Payment Mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="online">Online</SelectItem>
+                    <SelectItem value="offline">Offline</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="payment_method">Payment Method</Label>
-                <select
-                  id="payment_method"
-                  className="w-full border rounded px-2 py-2 mt-1"
+                <Select
                   value={paymentMethod}
-                  onChange={e => setPaymentMethod(e.target.value)}
+                  onValueChange={setPaymentMethod}
                   disabled={paymentLoading}
                 >
-                  <option value="upi">UPI</option>
-                  <option value="card">Card</option>
-                  <option value="cash">Cash</option>
-                  <option value="netbanking">Net Banking</option>
-                </select>
+                  <SelectTrigger className="w-full mt-1" id="payment_method">
+                    <SelectValue placeholder="Select Payment Method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="upi">UPI</SelectItem>
+                    <SelectItem value="card">Card</SelectItem>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="netbanking">Net Banking</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>

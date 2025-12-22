@@ -624,6 +624,7 @@ export const AddFacilityBookingPage = () => {
 
       const payload = {
         facility_booking: {
+          user_id: selectedUser,
           user_society_type: 'User',
           resource_type: 'Pms::Site',
           resource_id: selectedSiteId,
