@@ -243,7 +243,8 @@ export const EditBookingSetupPage = () => {
             );
             const responseData = response.data.facility_setup;
 
-            setFormData({
+            setFormData(prev => ({
+                ...prev,
                 facilityName: responseData.fac_name,
                 isBookable: responseData.fac_type === "bookable",
                 isRequest: responseData.fac_type === "request",
@@ -269,7 +270,7 @@ export const EditBookingSetupPage = () => {
                 cancellationText: responseData.cancellation_policy,
                 amenities: responseData.facility_setup_accessories?.reduce((acc, item) => {
                     const accessory = item.facility_setup_accessory;
-                    acc[accessory.pms_inventory_id] = true; // Mark this inventory ID as selected
+                    acc[accessory.pms_inventory_id] = true;
                     return acc;
                 }, {}) || {},
                 seaterInfo: responseData.seater_info,
@@ -300,8 +301,18 @@ export const EditBookingSetupPage = () => {
                     _destroy: false,
                 })) || [],
                 chargeSetup: {
-                    member: { selected: responseData.facility_charge?.adult_member_charge, adult: responseData.facility_charge?.adult_member_charge, child: responseData.facility_charge?.child_member_charge },
-                    guest: { selected: responseData.facility_charge?.adult_guest_charge, adult: responseData.facility_charge?.adult_guest_charge, child: responseData.facility_charge?.child_guest_charge },
+                    member: {
+                        ...prev.chargeSetup.member,
+                        selected: responseData.facility_charge?.member ?? false,
+                        adult: responseData.facility_charge?.adult_member_charge,
+                        child: responseData.facility_charge?.child_member_charge
+                    },
+                    guest: {
+                        ...prev.chargeSetup.guest,
+                        selected: responseData.facility_charge?.guest ?? false,
+                        adult: responseData.facility_charge?.adult_guest_charge,
+                        child: responseData.facility_charge?.child_guest_charge
+                    },
                     minimumPersonAllowed: responseData.min_people,
                     maximumPersonAllowed: responseData.max_people,
                 },
@@ -322,7 +333,7 @@ export const EditBookingSetupPage = () => {
                             selectedSlots: [],
                         },
                     ],
-            });
+            }));
             
             console.log('=== Block Days Loaded ===');
             console.log('Raw facility_blockings:', responseData?.facility_blockings);
@@ -585,7 +596,13 @@ export const EditBookingSetupPage = () => {
             // formData.perSlotChasrge
             // );
 
-            // Charge Setup - Member charges (pass if selected or if any value exists)
+
+            // Charge Setup - Member selected boolean
+            formDataToSend.append(
+                "facility_setup[facility_charge_attributes][member]",
+                formData.chargeSetup.member.selected ? "true" : "false"
+            );
+            // Member charges (pass if selected or if any value exists)
             if (formData.chargeSetup.member.selected || formData.chargeSetup.member.adult || formData.chargeSetup.member.child) {
                 formDataToSend.append(
                     "facility_setup[facility_charge_attributes][adult_member_charge]",
@@ -597,7 +614,12 @@ export const EditBookingSetupPage = () => {
                 );
             }
 
-            // Charge Setup - Guest charges (pass if selected or if any value exists)
+            // Charge Setup - Guest selected boolean
+            formDataToSend.append(
+                "facility_setup[facility_charge_attributes][guest]",
+                formData.chargeSetup.guest.selected ? "true" : "false"
+            );
+            // Guest charges (pass if selected or if any value exists)
             if (formData.chargeSetup.guest.selected || formData.chargeSetup.guest.adult || formData.chargeSetup.guest.child) {
                 formDataToSend.append(
                     "facility_setup[facility_charge_attributes][adult_guest_charge]",
@@ -1065,15 +1087,15 @@ export const EditBookingSetupPage = () => {
                                         <td className="border border-gray-300 px-4 py-3">
                                             <div className="flex items-center gap-2">
                                                 <Checkbox
-                                                    checked={formData.chargeSetup.member.selected}
-                                                    onChange={(e) =>
+                                                    checked={!!formData.chargeSetup.member.selected}
+                                                    onCheckedChange={(checked) =>
                                                         setFormData({
                                                             ...formData,
                                                             chargeSetup: {
                                                                 ...formData.chargeSetup,
                                                                 member: {
                                                                     ...formData.chargeSetup.member,
-                                                                    selected: e.target.checked,
+                                                                    selected: !!checked,
                                                                 },
                                                             },
                                                         })
@@ -1165,15 +1187,15 @@ export const EditBookingSetupPage = () => {
                                         <td className="border border-gray-300 px-4 py-3">
                                             <div className="flex items-center gap-2">
                                                 <Checkbox
-                                                    checked={formData.chargeSetup.guest.selected}
-                                                    onChange={(e) =>
+                                                    checked={!!formData.chargeSetup.guest.selected}
+                                                    onCheckedChange={(checked) =>
                                                         setFormData({
                                                             ...formData,
                                                             chargeSetup: {
                                                                 ...formData.chargeSetup,
                                                                 guest: {
                                                                     ...formData.chargeSetup.guest,
-                                                                    selected: e.target.checked,
+                                                                    selected: !!checked,
                                                                 },
                                                             },
                                                         })

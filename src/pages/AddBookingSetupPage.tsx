@@ -438,7 +438,12 @@ export const AddBookingSetupPage = () => {
       //   formData.perSlotCharge
       // );
 
-      // Charge Setup - Member charges
+
+      // Charge Setup - Member charges and boolean
+      formDataToSend.append(
+        "facility_setup[facility_charge_attributes][member]",
+        formData.chargeSetup.member.selected ? "true" : "false"
+      );
       if (formData.chargeSetup.member.selected) {
         formDataToSend.append(
           "facility_setup[facility_charge_attributes][adult_member_charge]",
@@ -450,7 +455,11 @@ export const AddBookingSetupPage = () => {
         );
       }
 
-      // Charge Setup - Guest charges
+      // Charge Setup - Guest charges and boolean
+      formDataToSend.append(
+        "facility_setup[facility_charge_attributes][guest]",
+        formData.chargeSetup.guest.selected ? "true" : "false"
+      );
       if (formData.chargeSetup.guest.selected) {
         formDataToSend.append(
           "facility_setup[facility_charge_attributes][adult_guest_charge]",
