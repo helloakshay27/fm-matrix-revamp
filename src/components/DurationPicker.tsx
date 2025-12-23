@@ -25,6 +25,7 @@ export const DurationPicker = ({
     setTotalWorkingHours,
     shift = {} as any,
 }) => {
+    console.log(dateWiseHours)
     const [isOpen, setIsOpen] = useState(false);
     const [taskType, setTaskType] = useState("standard");
     const [dailyHours, setDailyHours] = useState([]);
@@ -145,8 +146,11 @@ export const DurationPicker = ({
 
     /** ✅ Helper to get id from existing dateWiseHours by date match */
     const getIdFromExistingHours = (formattedDate) => {
+        console.log(formattedDate)
+        console.log(dateWiseHours)
         if (!Array.isArray(dateWiseHours)) return null;
         const existing = dateWiseHours.find((h) => h.date === formattedDate);
+        console.log(existing)
         return existing?.id || null;
     };
 
@@ -213,10 +217,16 @@ export const DurationPicker = ({
                     const perDayDecimal = parseHours(formatTotalHours(hoursPerDay));
                     const dateWise = workingDays.map((d) => {
                         const formattedDate = formatLocalDate(d.date);
+
+                        const hours = Math.floor(perDayDecimal);
+                        const minutes = Math.round((perDayDecimal - hours) * 60);
+
+                        console.log(dateWiseHours)
+
                         return {
-                            id: getIdFromExistingHours(formattedDate),
-                            hours: perDayDecimal,
-                            minutes: 0,
+                            id: dateWiseHours?.find(h => h.date === formattedDate)?.id || null,
+                            hours,
+                            minutes,
                             date: formattedDate,
                             _destroy: false,
                         };
@@ -240,7 +250,7 @@ export const DurationPicker = ({
                 setManualDuration("");
                 setTotalHoursInput("");
                 if (onChange) onChange(0);
-                if (onDateWiseHoursChange) onDateWiseHoursChange([]);
+                // if (onDateWiseHoursChange) onDateWiseHoursChange([]);
             }
         } else {
             // ✅ Flexible logic
