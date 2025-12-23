@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -207,6 +207,10 @@ export const BroadcastDashboard = () => {
     navigate(`/pulse/notices/details/${id}`);
   }
 
+  const handleEdit = (id: number) => {
+    navigate(`/pulse/notices/edit/${id}`);
+  }
+
   const handleApplyFilter = async (data) => {
     const params = {
       "q[publish_eq]": data.status,
@@ -350,14 +354,24 @@ export const BroadcastDashboard = () => {
   };
 
   const renderActions = (item: any) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => handleView(item.id)}
-      className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
-    >
-      <Eye className="w-4 h-4" />
-    </Button>
+    <div className="flex gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleEdit(item.id)}
+        className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleView(item.id)}
+        className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+    </div>
   );
 
   return (

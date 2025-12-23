@@ -534,6 +534,7 @@ import CRMGroupDetailsPage from "./pages/CRMGroupDetailsPage";
 // Import Broadcast page
 import { BroadcastDashboard } from "./pages/BroadcastDashboard";
 import { AddBroadcastPage } from "./pages/AddBroadcastPage";
+import { EditBroadcastPage } from "./pages/EditBroadcastPage";
 import { BroadcastDetailsPage } from "./pages/BroadcastDetailsPage";
 
 // Import Redemption Marketplace page
@@ -3497,6 +3498,7 @@ function App() {
 
                   <Route path="/pulse/notices" element={<BroadcastDashboard />} />
                   <Route path="/pulse/notices/add" element={<AddBroadcastPage />} />
+                  <Route path="/pulse/notices/edit/:id" element={<EditBroadcastPage />} />
                   <Route path="/pulse/notices/details/:id" element={<BroadcastDetailsPage />} />
 
                   <Route
