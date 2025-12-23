@@ -464,12 +464,14 @@ export const AddGroupMembershipPage = () => {
 
             // Set shared allocation details
             if (data.start_date) {
-                console.log('Setting start date:', data.start_date);
                 setStartDate(dayjs(data.start_date));
+            } else {
+                setStartDate(null);
             }
             if (data.end_date) {
-                console.log('Setting end date:', data.end_date);
                 setEndDate(dayjs(data.end_date));
+            } else {
+                setEndDate(null);
             }
             if (data.referred_by) {
                 console.log('Setting referred_by:', data.referred_by);
@@ -1511,7 +1513,7 @@ export const AddGroupMembershipPage = () => {
 
     // Auto-set start and end date when membership plan is selected
     useEffect(() => {
-        if (selectedPlanId && membershipPlans.length > 0) {
+        if (!isEditMode && selectedPlanId && membershipPlans.length > 0) {
             const plan = membershipPlans.find(p => p.id === selectedPlanId);
             if (plan) {
                 const now = dayjs();
@@ -1531,7 +1533,7 @@ export const AddGroupMembershipPage = () => {
                 setEndDate(end);
             }
         }
-    }, [selectedPlanId, membershipPlans]);
+    }, [isEditMode, selectedPlanId, membershipPlans]);
 
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
