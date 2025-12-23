@@ -670,15 +670,12 @@ export const MobileSurveyLanding: React.FC = () => {
           // New fields for rating
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "star_rating";
-          // Use dynamic label when available, fallback to star text
-          const ratingLabel =
-            currentAnswer.label ||
-            getRatingLabel(currentQuestion, currentAnswer.rating);
-          surveyResponseItem.ans_descr =
-            ratingLabel ||
-            `${currentAnswer.rating} star${
-              (currentAnswer.rating || 0) > 1 ? "s" : ""
-            }`;
+          // Use label from answer data or fetch dynamically from API options
+          const ratingLabel = currentAnswer.label || getRatingLabel(currentQuestion, currentAnswer.rating);
+          if (ratingLabel) {
+            surveyResponseItem.label = ratingLabel;
+            surveyResponseItem.ans_descr = ratingLabel; // dynamic label from API
+          }
 
           // Add option_id mapping for rating questions from API response
           if (currentAnswer.optionId) {
@@ -690,11 +687,11 @@ export const MobileSurveyLanding: React.FC = () => {
               (q) => q.id === currentQuestion.id
             );
             if (questionData?.snag_quest_options) {
-              // Map rating to option based on API structure (default order: first option = highest rating)
+              // Map rating to option based on API structure (ascending order: rating 1 = first option)
               const ratingToOptionMapping = Array.from(
                 { length: questionData.snag_quest_options.length },
                 (_, index) => ({
-                  rating: questionData.snag_quest_options.length - index, // Highest rating first
+                  rating: index + 1, // Rating matches option order: 1, 2, 3, 4, 5
                   optionIndex: index,
                 })
               );
@@ -882,15 +879,12 @@ export const MobileSurveyLanding: React.FC = () => {
           // New fields for rating
           surveyResponseItem.answer_type = currentQuestion.qtype;
           surveyResponseItem.answer_mode = "star_rating";
-          // Use dynamic label when available
-          const ratingLabelNeg =
-            answerData.label ||
-            getRatingLabel(currentQuestion, answerData.rating);
-          surveyResponseItem.ans_descr =
-            ratingLabelNeg ||
-            `${answerData.rating} star${
-              (answerData.rating || 0) > 1 ? "s" : ""
-            }`;
+          // Use label from answer data or fetch dynamically from API options
+          const ratingLabelNeg = answerData.label || getRatingLabel(currentQuestion, answerData.rating);
+          if (ratingLabelNeg) {
+            surveyResponseItem.label = ratingLabelNeg;
+            surveyResponseItem.ans_descr = ratingLabelNeg; // dynamic label from API
+          }
 
           // Add option_id for rating questions
           if (answerData.optionId) {
@@ -1114,7 +1108,7 @@ export const MobileSurveyLanding: React.FC = () => {
                   const selectedOption =
                     selectedOptionMapping &&
                     previousQuestion.snag_quest_options?.[
-                      selectedOptionMapping.optionIndex
+                    selectedOptionMapping.optionIndex
                     ];
 
                   if (selectedOption) {
@@ -1310,11 +1304,12 @@ export const MobileSurveyLanding: React.FC = () => {
             // New fields for rating
             surveyResponseItem.answer_type = question.qtype;
             surveyResponseItem.answer_mode = "star_rating";
-            const ratingLabelMulti =
-              answer.label || getRatingLabel(question, answer.rating);
-            surveyResponseItem.ans_descr =
-              ratingLabelMulti ||
-              `${answer.rating} star${(answer.rating || 0) > 1 ? "s" : ""}`;
+            // Use label from answer data or fetch dynamically from API options
+            const ratingLabelMulti = answer.label || getRatingLabel(question, answer.rating);
+            if (ratingLabelMulti) {
+              surveyResponseItem.label = ratingLabelMulti;
+              surveyResponseItem.ans_descr = ratingLabelMulti; // dynamic label from API
+            }
 
             // Add option_id mapping for rating questions from API response
             if (answer.optionId) {
@@ -1695,6 +1690,13 @@ export const MobileSurveyLanding: React.FC = () => {
             surveyResponseItem.answer_type = question.qtype;
             surveyResponseItem.answer_mode = "star_rating";
 
+            // Add label and ans_descr for rating
+            const formRatingLabel = answer.label || getRatingLabel(question, answer.rating);
+            if (formRatingLabel) {
+              surveyResponseItem.label = formRatingLabel;
+              surveyResponseItem.ans_descr = formRatingLabel;
+            }
+
             // Map rating to option_id
             if (question.snag_quest_options) {
               const ratingToOptionMapping = Array.from(
@@ -1991,7 +1993,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 {!(
                   isLastStep &&
                   currentQuestionIndex ===
-                    surveyData.snag_checklist.questions_count
+                  surveyData.snag_checklist.questions_count
                 ) &&
                   currentQuestion &&
                   !showGenericTags && (
@@ -2018,13 +2020,12 @@ export const MobileSurveyLanding: React.FC = () => {
                                   type="button"
                                   key={option.id}
                                   onClick={() => handleOptionSelect(option)}
-                                  className={`w-full p-4 rounded-lg border-2 text-left transition-all shadow-md ${
-                                    selectedOptions.some(
-                                      (opt) => opt.id === option.id
-                                    )
-                                      ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
-                                      : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:border-blue-400"
-                                  }`}
+                                  className={`w-full p-4 rounded-lg border-2 text-left transition-all shadow-md ${selectedOptions.some(
+                                    (opt) => opt.id === option.id
+                                  )
+                                    ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+                                    : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:border-blue-400"
+                                    }`}
                                 >
                                   <div className="flex items-center justify-between">
                                     <span className="font-semibold text-base">
@@ -2033,20 +2034,20 @@ export const MobileSurveyLanding: React.FC = () => {
                                     {selectedOptions.some(
                                       (opt) => opt.id === option.id
                                     ) && (
-                                      <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-                                        <svg
-                                          className="w-4 h-4 text-blue-500"
-                                          fill="currentColor"
-                                          viewBox="0 0 20 20"
-                                        >
-                                          <path
-                                            fillRule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clipRule="evenodd"
-                                          />
-                                        </svg>
-                                      </div>
-                                    )}
+                                        <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                                          <svg
+                                            className="w-4 h-4 text-blue-500"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                          >
+                                            <path
+                                              fillRule="evenodd"
+                                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                              clipRule="evenodd"
+                                            />
+                                          </svg>
+                                        </div>
+                                      )}
                                   </div>
                                 </button>
                               )
@@ -2232,12 +2233,11 @@ export const MobileSurveyLanding: React.FC = () => {
                                       type="button"
                                       key={rating}
                                       onClick={() => handleRatingSelect(rating)}
-                                      className={`w-12 h-12 rounded-full transition-all ${
-                                        selectedRating !== null &&
+                                      className={`w-12 h-12 rounded-full transition-all ${selectedRating !== null &&
                                         rating <= selectedRating
-                                          ? "text-yellow-400"
-                                          : "text-gray-300 hover:text-yellow-300"
-                                      }`}
+                                        ? "text-yellow-400"
+                                        : "text-gray-300 hover:text-yellow-300"
+                                        }`}
                                     >
                                       <svg
                                         className="w-full h-full"
@@ -2281,11 +2281,10 @@ export const MobileSurveyLanding: React.FC = () => {
                                         option.label
                                       )
                                     }
-                                    className={`flex flex-col rounded-lg items-center justify-center p-3 sm:p-4 transition-all flex-1 min-w-0 ${
-                                      selectedRating === option.rating
-                                        ? "bg-blue-600 border-2 border-blue-600 shadow-lg scale-105"
-                                        : "hover:bg-gray-100 border-2 border-transparent hover:scale-105"
-                                    }`}
+                                    className={`flex flex-col rounded-lg items-center justify-center p-3 sm:p-4 transition-all flex-1 min-w-0 ${selectedRating === option.rating
+                                      ? "bg-blue-600 border-2 border-blue-600 shadow-lg scale-105"
+                                      : "hover:bg-gray-100 border-2 border-transparent hover:scale-105"
+                                      }`}
                                   >
                                     <span className="text-3xl sm:text-4xl md:text-5xl mb-1 sm:mb-2">
                                       {option.emoji}
@@ -2343,14 +2342,13 @@ export const MobileSurveyLanding: React.FC = () => {
                                                 onClick={() =>
                                                   handleGenericTagClick(tag)
                                                 }
-                                                className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${
-                                                  selectedTags.some(
-                                                    (selectedTag) =>
-                                                      selectedTag.id === tag.id
-                                                  )
-                                                    ? "border-blue-500 bg-gray-300"
-                                                    : "border-white/5"
-                                                }`}
+                                                className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${selectedTags.some(
+                                                  (selectedTag) =>
+                                                    selectedTag.id === tag.id
+                                                )
+                                                  ? "border-blue-500 bg-gray-300"
+                                                  : "border-white/5"
+                                                  }`}
                                               >
                                                 <div
                                                   className="w-[80%] xs:w-[85%] sm:w-full mb-0.5 xs:mb-0.5 sm:mb-1"
@@ -2359,7 +2357,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                                   }}
                                                 >
                                                   {tag.icons &&
-                                                  tag.icons.length > 0 ? (
+                                                    tag.icons.length > 0 ? (
                                                     <img
                                                       src={tag.icons[0].url}
                                                       alt={tag.category_name}
@@ -2396,14 +2394,13 @@ export const MobileSurveyLanding: React.FC = () => {
                                                 onClick={() =>
                                                   handleGenericTagClick(tag)
                                                 }
-                                                className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${
-                                                  selectedTags.some(
-                                                    (selectedTag) =>
-                                                      selectedTag.id === tag.id
-                                                  )
-                                                    ? "border-blue-500 bg-gray-300"
-                                                    : "border-white/5"
-                                                }`}
+                                                className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${selectedTags.some(
+                                                  (selectedTag) =>
+                                                    selectedTag.id === tag.id
+                                                )
+                                                  ? "border-blue-500 bg-gray-300"
+                                                  : "border-white/5"
+                                                  }`}
                                               >
                                                 <div
                                                   className="w-[80%] xs:w-[85%] sm:w-full mb-0.5 xs:mb-0.5 sm:mb-1"
@@ -2412,7 +2409,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                                   }}
                                                 >
                                                   {tag.icons &&
-                                                  tag.icons.length > 0 ? (
+                                                    tag.icons.length > 0 ? (
                                                     <img
                                                       src={tag.icons[0].url}
                                                       alt={tag.category_name}
