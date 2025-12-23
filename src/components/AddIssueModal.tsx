@@ -602,7 +602,7 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
     return (
         <Dialog open={openDialog} onClose={handleCloseDialog} TransitionComponent={Transition}>
             <DialogContent
-                className="w-[35rem] fixed right-0 top-0 rounded-none bg-[#fff] text-sm"
+                className="w-[42rem] fixed right-0 top-0 rounded-none bg-[#fff] text-sm"
                 style={{ margin: 0 }}
                 sx={{
                     padding: "0 !important"

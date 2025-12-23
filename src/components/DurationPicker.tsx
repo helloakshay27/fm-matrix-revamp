@@ -224,7 +224,7 @@ export const DurationPicker = ({
                         console.log(dateWiseHours)
 
                         return {
-                            id: dateWiseHours?.find(h => h.date === formattedDate)?.id || null,
+                            id: (Array.isArray(dateWiseHours) && dateWiseHours.length > 0) ? dateWiseHours?.find(h => h.date === formattedDate)?.id : null,
                             hours,
                             minutes,
                             date: formattedDate,

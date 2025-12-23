@@ -880,7 +880,7 @@ export const ProjectsDashboard = () => {
                 </div>
               )}
             </div>
-            <div className="relative">
+            {/* <div className="relative">
               <button
                 onClick={() => setOpenStatusOptions(!openStatusOptions)}
                 className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
@@ -910,7 +910,7 @@ export const ProjectsDashboard = () => {
                   </div>
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
 

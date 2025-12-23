@@ -91,7 +91,9 @@ const ProjectEditModal = ({
             startDate: project?.start_date || "",
             endDate: project?.end_date || "",
             duration: "",
+            team: project?.project_team_id,
             priority: project?.priority || "",
+            tags: project?.project_tags?.map((tag: any) => tag.company_tag_id) || [],
             isChannel: Boolean(project?.create_channel),
             isTemplate: Boolean(project?.is_template),
         }));
