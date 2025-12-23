@@ -75,6 +75,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     const { loading: editLoading } = useAppSelector((state) => state.editProjectTask);
     const { data: userAvailabilityData } = useAppSelector((state) => state.fetchUserAvailability);
 
+    console.log(task)
+
     const userAvailability = useMemo(
         () => (Array.isArray(userAvailabilityData) ? userAvailabilityData : []),
         [userAvailabilityData]
@@ -219,6 +221,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                 observers?: Array<{ user_id: string; user_name: string; id: string }>;
                 task_allocation_times?: Array<any>;
             };
+
+            console.log(taskData)
 
             // Fetch project and milestone details
             if (taskData.project_management_id) {
@@ -404,16 +408,26 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
         setIsSubmitting(true);
 
-        const formatedEndDate = `${endDate.year}-${endDate.month + 1}-${endDate.date}`;
-        const formatedStartDate = `${startDate.year}-${startDate.month + 1}-${startDate.date}`;
-
+        const formatedEndDate = `${endDate.year}-${String(endDate.month + 1).padStart(2, "0")}-${String(endDate.date).padStart(2, "0")}`;
+        const formatedStartDate = `${startDate.year}-${String(startDate.month + 1).padStart(2, "0")}-${String(startDate.date).padStart(2, "0")}`;
         let taskAllocationTimesAttributes = dateWiseHours;
-        if (Array.isArray(dateWiseHours)) {
-            taskAllocationTimesAttributes = dateWiseHours.map((allocation) => ({
-                ...allocation,
-                id: allocation.id || null,
-                _destroy: allocation._destroy || false,
-            }));
+
+        console.log(taskAllocationTimesAttributes)
+
+        if (Array.isArray(taskAllocationTimesAttributes)) {
+            taskAllocationTimesAttributes = dateWiseHours.map((allocation) => {
+                const allocationDate = allocation.date; // YYYY-MM-DD
+
+                const shouldDestroy =
+                    allocationDate < formatedStartDate ||
+                    allocationDate > formatedEndDate;
+
+                return {
+                    ...allocation,
+                    id: allocation.id || null,
+                    _destroy: shouldDestroy,
+                };
+            });
         }
 
         const payload = {

@@ -943,25 +943,18 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%]
         const payload = createTaskPayload(formData);
 
         try {
-            const resultAction = isEdit
-                ? await dispatch(editProjectTask({ baseUrl, token, id: editId, data: payload }))
-                : await dispatch(createProjectTask({ baseUrl, token, data: payload }));
+            await dispatch(createProjectTask({ baseUrl, token, data: payload })).unwrap();
 
-            if (
-                (isEdit && editProjectTask.fulfilled.match(resultAction)) ||
-                (!isEdit && createProjectTask.fulfilled.match(resultAction))
-            ) {
-                toast.dismiss();
-                toast.success(
-                    isEdit ? "Task updated successfully." : "Task created successfully."
-                );
-                window.location.reload();
-            } else {
-                toast.error(isEdit ? "Task update failed." : "Task creation failed.");
-            }
+            toast.dismiss();
+            toast.success('Task created successfully');
+            window.location.reload();
         } catch (error) {
-            console.error(`Error ${isEdit ? "updating" : "creating"} task:`, error);
-            toast.error(`Error ${isEdit ? "updating" : "creating"} task.`);
+            console.log(error)
+            const errors = error.response.data;
+
+            Object.keys(errors).forEach((key) => {
+                toast.error(`${key} ${errors[key][0]}`);
+            });
         } finally {
             setIsSubmitting(false);
         }
