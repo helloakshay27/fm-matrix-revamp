@@ -23,7 +23,7 @@ const AddMilestoneModal = ({ openDialog, handleCloseDialog, owners }) => {
     return (
         <Dialog open={openDialog} onClose={handleClose} TransitionComponent={Transition}>
             <DialogContent
-                className="w-[30rem] fixed right-0 top-0 h-full rounded-none bg-[#fff]"
+                className="w-[40rem] fixed right-0 top-0 h-full rounded-none bg-[#fff]"
                 style={{ margin: 0 }}
                 sx={{
                     padding: "0 !important",

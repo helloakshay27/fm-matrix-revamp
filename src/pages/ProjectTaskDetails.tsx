@@ -1,12 +1,10 @@
 import { useEffect, useState, forwardRef, useRef, Fragment } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, PencilIcon, Plus, ScrollText, Trash2, X, ChevronDownCircle, CircleCheckBig } from "lucide-react";
+import { ArrowLeft, ChevronDown, PencilIcon, Plus, Trash2, X, ChevronDownCircle, CircleCheckBig } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { Mention, MentionsInput } from "react-mentions";
-import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
-import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
   Select,
   SelectContent,
@@ -86,7 +84,7 @@ const calculateDuration = (start: string | undefined, end: string | undefined): 
 };
 
 // Active Timer Component - shows when task is started
-const ActiveTimer = ({ activeTimeTillNow, isStarted }: { activeTimeTillNow?: any; isStarted?: boolean }) => {
+const ActiveTimer = ({ activeTimeTillNow, isStarted }) => {
   const [time, setTime] = useState({
     hours: 0,
     minutes: 0,
@@ -96,14 +94,15 @@ const ActiveTimer = ({ activeTimeTillNow, isStarted }: { activeTimeTillNow?: any
   useEffect(() => {
     if (activeTimeTillNow) {
       setTime({
-        hours: activeTimeTillNow.hours || 0,
-        minutes: activeTimeTillNow.minutes || 0,
-        seconds: activeTimeTillNow.seconds || 0,
+        hours: activeTimeTillNow.hours,
+        minutes: activeTimeTillNow.minutes,
+        seconds: activeTimeTillNow.seconds,
       });
     }
   }, [activeTimeTillNow]);
 
   useEffect(() => {
+    // Only run timer if task is started
     if (!isStarted) {
       return;
     }
@@ -130,9 +129,10 @@ const ActiveTimer = ({ activeTimeTillNow, isStarted }: { activeTimeTillNow?: any
   }, [isStarted]);
 
   return (
-    <span className="text-[#029464] text-[12px]">
-      {time.hours}h {time.minutes}m {time.seconds}s
-    </span>
+    <div className="text-left text-[12px] text-green-600 font-medium">
+      {String(time.hours).padStart(2, '0')}h {String(time.minutes).padStart(2, '0')}m{' '}
+      {String(time.seconds).padStart(2, '0')}s
+    </div>
   );
 };
 
@@ -958,9 +958,12 @@ const mapDisplayToApiStatus = (displayStatus) => {
 export const ProjectTaskDetails = () => {
   const { setCurrentSection } = useLayout();
 
+  const view = localStorage.getItem("selectedView");
+
   useEffect(() => {
-    setCurrentSection("Project Task");
+    setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
   }, [setCurrentSection]);
+
 
   const navigate = useNavigate();
   const { id, mid, taskId } = useParams<{ id: string; mid: string; taskId: string }>();
@@ -982,10 +985,6 @@ export const ProjectTaskDetails = () => {
   const [dependentTasks, setDependentTasks] = useState<any[]>([]);
   const [addingTodo, setAddingTodo] = useState(false);
   const [statuses, setStatuses] = useState([])
-
-  console.log(statuses)
-
-  console.log(taskDetails)
 
   const firstContentRef = useRef<HTMLDivElement>(null);
   const secondContentRef = useRef<HTMLDivElement>(null);
@@ -1491,7 +1490,7 @@ export const ProjectTaskDetails = () => {
                 </div>
                 <div className="flex-1">
                   <Select
-                    value={String(taskDetails.project_status_id) || "1"}
+                    value={taskDetails.project_status_id ? String(taskDetails.project_status_id) : "1"}
                     onValueChange={(value) =>
                       handleWorkflowChange(value)
                     }
@@ -1556,7 +1555,7 @@ export const ProjectTaskDetails = () => {
 
           {/* Comments Tab */}
           {activeTab === "comments" && (
-            <Comments comments={(taskDetails as any)?.comments} taskId={taskId} />
+            <Comments comments={(taskDetails as any)?.comments} taskId={taskId} getTask={fetchData} />
           )}
 
           {/* Attachments Tab */}

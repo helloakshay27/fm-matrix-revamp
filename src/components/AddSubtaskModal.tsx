@@ -10,10 +10,19 @@ import MuiMultiSelect from "./MuiMultiSelect";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import axios from "axios";
 import { removeTagFromProject } from "@/store/slices/projectManagementSlice";
-import { createProjectTask, fetchUserAvailability } from "@/store/slices/projectTasksSlice";
+import { createProjectTask, fetchProjectTasksById, fetchUserAvailability } from "@/store/slices/projectTasksSlice";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
+
+interface SubTask {
+    estimated_hour?: number;
+}
+
+interface ParentTask {
+    estimated_hour?: number;
+    sub_tasks_managements?: SubTask[];
+}
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -44,7 +53,7 @@ const monthNames = [
     "Dec",
 ];
 
-const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal, fetchData }) => {
+const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal, fetchData }: { openTaskModal: boolean, setOpenTaskModal: (value: boolean) => void, fetchData: () => void }) => {
     const { id: pid, mid, taskId } = useParams();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -57,6 +66,7 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal, fetchData }) => {
 
     const { data: userAvailabilityData } = useAppSelector((state) => state.fetchUserAvailability);
     const userAvailability = Array.isArray(userAvailabilityData) ? userAvailabilityData : [];
+    const { data: parentTask } = useAppSelector((state) => state.fetchProjectTasksById) as { data: ParentTask | undefined };
 
     const [shift, setShift] = useState([])
     const [users, setUsers] = useState([])
@@ -122,6 +132,20 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal, fetchData }) => {
         getUsers()
     }, [])
 
+    useEffect(() => {
+        const fetchParentTask = async () => {
+            try {
+                if (taskId) {
+                    await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        }
+
+        fetchParentTask();
+    }, []);
+
     const fetchShifts = async (id) => {
         try {
             const response = await axios.get(`https://${baseUrl}/pms/admin/user_shifts.json?user_id=${id}`, {
@@ -173,11 +197,44 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal, fetchData }) => {
         return true;
     }
 
+    const validateSubtaskDuration = () => {
+        if (!parentTask) {
+            return true; // If parent task data not loaded, skip validation
+        }
+
+        const parentEstimatedHours = parentTask.estimated_hour || 0;
+
+        // Calculate total estimated hours of existing subtasks
+        const existingSubtasksHours = (parentTask.sub_tasks_managements || []).reduce(
+            (sum, subtask) => sum + (subtask.estimated_hour || 0),
+            0
+        );
+
+        // New subtask hours
+        const newSubtaskHours = Number(totalWorkingHours) || 0;
+
+        // Total hours if new subtask is created
+        const totalSubtasksHours = existingSubtasksHours + newSubtaskHours;
+
+        // Check if total exceeds parent task duration
+        if (totalSubtasksHours > parentEstimatedHours) {
+            const remainingHours = parentEstimatedHours - existingSubtasksHours;
+            toast.error(
+                `Your subtask duration exceeds task duration limit. Parent task duration: ${parentEstimatedHours}h, Existing subtasks: ${existingSubtasksHours}h, Remaining: ${Math.max(0, remainingHours)}h`
+            );
+            return false;
+        }
+
+        return true;
+    };
+
     const handleSubmit = async (e, id) => {
         e.preventDefault();
         console.log(formData)
 
         if (!validateForm()) return
+
+        if (!validateSubtaskDuration()) return;
 
         setIsSubmitting(true)
         const formatedStartDate = `${startDate.year}-${startDate.month + 1}-${startDate.date

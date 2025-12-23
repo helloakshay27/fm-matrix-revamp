@@ -47,6 +47,13 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
+        key: "issues",
+        label: "Issues",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
         key: "start_date",
         label: "Start Date",
         sortable: true,
@@ -120,7 +127,24 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     };
 
     const renderCell = (item: any, columnKey: string) => {
+        const renderProgressBar = (completed: number, total: number, color: string) => {
+            const progress = total > 0 ? (completed / total) * 100 : 0;
+            return (
+                <div className="flex items-center gap-2">
+                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                        <div
+                            className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{completed}/{total}</span>
+                </div>
+            );
+        };
+
         switch (columnKey) {
+            case "id":
+                return `M-${item.id}`;
             case "status":
                 return (
                     <span>
@@ -135,22 +159,17 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                     </span>
                 )
             case "tasks": {
-                const completed = item.tasksCompleted || 0;
-                const total = item.tasksTotal || 0;
-                const progress = total > 0 ? (completed / total) * 100 : 0;
-
-                return (
-                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-3">
-                        <div
-                            className="absolute top-0 left-0 h-3 bg-[#e9e575] rounded-full transition-all duration-300"
-                            style={{ width: `${progress}%` }}
-                        ></div>
-                        <div className="absolute inset-0 flex !items-center !justify-center text-xs font-medium text-black">
-                            {progress.toFixed(2)}%
-                        </div>
-                    </div>
-                );
+                const completed = item.completed_tasks || 0;
+                const total = item.total_tasks || 0;
+                return renderProgressBar(completed, total, "bg-[#b4e7ff]");
             }
+            case "issues": {
+                const completed = item.completed_issues || 0;
+                const total = item.total_issues || 0;
+                return renderProgressBar(completed, total, "bg-[#b4e7ff]");
+            }
+            case "owner":
+                return item.owner_name ? item.owner_name : "-";
             case "start_date":
             case "end_date":
                 return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString() : "-";

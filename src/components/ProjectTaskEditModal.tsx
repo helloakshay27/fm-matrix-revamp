@@ -75,6 +75,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     const { loading: editLoading } = useAppSelector((state) => state.editProjectTask);
     const { data: userAvailabilityData } = useAppSelector((state) => state.fetchUserAvailability);
 
+    console.log(task)
+
     const userAvailability = useMemo(
         () => (Array.isArray(userAvailabilityData) ? userAvailabilityData : []),
         [userAvailabilityData]
@@ -219,6 +221,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                 observers?: Array<{ user_id: string; user_name: string; id: string }>;
                 task_allocation_times?: Array<any>;
             };
+
+            console.log(taskData)
 
             // Fetch project and milestone details
             if (taskData.project_management_id) {
@@ -404,8 +408,27 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
         setIsSubmitting(true);
 
-        const formatedEndDate = `${endDate.year}-${endDate.month + 1}-${endDate.date}`;
-        const formatedStartDate = `${startDate.year}-${startDate.month + 1}-${startDate.date}`;
+        const formatedEndDate = `${endDate.year}-${String(endDate.month + 1).padStart(2, "0")}-${String(endDate.date).padStart(2, "0")}`;
+        const formatedStartDate = `${startDate.year}-${String(startDate.month + 1).padStart(2, "0")}-${String(startDate.date).padStart(2, "0")}`;
+        let taskAllocationTimesAttributes = dateWiseHours;
+
+        console.log(taskAllocationTimesAttributes)
+
+        if (Array.isArray(taskAllocationTimesAttributes)) {
+            taskAllocationTimesAttributes = dateWiseHours.map((allocation) => {
+                const allocationDate = allocation.date; // YYYY-MM-DD
+
+                const shouldDestroy =
+                    allocationDate < formatedStartDate ||
+                    allocationDate > formatedEndDate;
+
+                return {
+                    ...allocation,
+                    id: allocation.id || null,
+                    _destroy: shouldDestroy,
+                };
+            });
+        }
 
         const payload = {
             title: formData.taskTitle,
@@ -419,7 +442,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
             allocation_date: formatedEndDate,
             active: true,
             estimated_hour: totalWorkingHours,
-            task_allocation_times_attributes: dateWiseHours,
+            task_allocation_times_attributes: taskAllocationTimesAttributes,
         };
 
         try {
@@ -636,7 +659,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                     {/* Duration */}
                     <div className="mb-4">
                         <label className="block text-xs text-gray-700 mb-2">
-                            Duration <span className="text-red-600">*</span>
+                            Efforts Duration <span className="text-red-600">*</span>
                         </label>
                         <DurationPicker
                             // value={taskDuration}

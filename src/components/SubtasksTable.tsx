@@ -64,23 +64,6 @@ const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetD
     return <div className={`text-left ${textColor} text-[12px]`}>{countdown.text}</div>;
 };
 
-const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-        case "open":
-            return "bg-red-100 text-red-800";
-        case "in_progress":
-            return "bg-blue-100 text-blue-800";
-        case "completed":
-            return "bg-green-100 text-green-800";
-        case "on_hold":
-            return "bg-yellow-100 text-yellow-800";
-        case "overdue":
-            return "bg-orange-100 text-orange-800";
-        default:
-            return "bg-gray-100 text-gray-800";
-    }
-};
-
 const subtaskColumns: ColumnConfig[] = [
     {
         key: "id",
@@ -106,6 +89,13 @@ const subtaskColumns: ColumnConfig[] = [
     {
         key: "responsible_person",
         label: "Responsible Person",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "issues",
+        label: "Issues",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -187,6 +177,21 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
     }
 
     const renderSubtaskCell = (item: any, columnKey: string) => {
+        const renderProgressBar = (completed: number, total: number, color: string) => {
+            const progress = total > 0 ? (completed / total) * 100 : 0;
+            return (
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate(`/vas/issues?task_id=${item.id}`)}>
+                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                        <div
+                            className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{completed}/{total}</span>
+                </div>
+            );
+        };
+
         if (columnKey === "status") {
             return <FormControl
                 variant="standard"
@@ -219,6 +224,11 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
         }
         if (columnKey === "responsible_person") {
             return item?.responsible_person?.name
+        }
+        if (columnKey === "issues") {
+            const completed = item.completed_issues || 0;
+            const total = item.total_issues || 0;
+            return renderProgressBar(completed, total, "bg-[#ff9a9e]");
         }
         return item[columnKey as keyof Subtask] || "-";
     };
