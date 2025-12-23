@@ -169,7 +169,7 @@ export const AddClubMembershipPage = () => {
   const isEditMode = !!id;
 
   // Form state
-  const [userSelectionMode, setUserSelectionMode] = useState<'select' | 'manual'>('select');
+  const [userSelectionMode, setUserSelectionMode] = useState<'select' | 'manual'>('manual');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);

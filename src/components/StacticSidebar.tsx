@@ -326,7 +326,7 @@ const modulesByPackage = {
         },
         {
           name: "Members",
-          href: "/club-management/users/occupant-users",
+          href: "/club-management/membership",
           color: "text-[#1a1a1a]",
         },
          {
