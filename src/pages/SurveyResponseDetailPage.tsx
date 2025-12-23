@@ -342,6 +342,7 @@ interface TicketData {
   ticket_number: string;
   heading: string;
   category: string;
+  assigned_to: string | number;
   assignee: string;
   status: string;
   updated_by: string;
@@ -1125,6 +1126,9 @@ export const SurveyResponseDetailPage = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportFromDate, setExportFromDate] = useState("");
   const [exportToDate, setExportToDate] = useState("");
+  const [selectedTabularColumns, setSelectedTabularColumns] = useState<string[]>(
+    []
+  );
 
   // Inline Tabular details state
   const [selectedTabularResponseId, setSelectedTabularResponseId] = useState<
@@ -1758,9 +1762,9 @@ export const SurveyResponseDetailPage = () => {
             totalResponses =
               question.options && question.options.length > 0
                 ? question.options.reduce(
-                    (sum, opt) => sum + (opt.response_count || 0),
-                    0
-                  )
+                  (sum, opt) => sum + (opt.response_count || 0),
+                  0
+                )
                 : 0;
           }
 
@@ -1835,9 +1839,9 @@ export const SurveyResponseDetailPage = () => {
           const totalResponses =
             question.options && question.options.length > 0
               ? question.options.reduce(
-                  (sum, opt) => sum + (opt.response_count || 0),
-                  0
-                )
+                (sum, opt) => sum + (opt.response_count || 0),
+                0
+              )
               : 0;
 
           const questionName = question.question;
@@ -2817,13 +2821,13 @@ export const SurveyResponseDetailPage = () => {
         response_id: responseId.toString(),
         date_time: response.responded_time
           ? new Date(response.responded_time).toLocaleString("en-GB", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })
           : "",
         building: response.location?.building_name || "",
         wing: response.location?.wing_name || "",
@@ -2870,7 +2874,7 @@ export const SurveyResponseDetailPage = () => {
                 questionType === "-"
                   ? "-"
                   : questionType.charAt(0).toUpperCase() +
-                    questionType.slice(1);
+                  questionType.slice(1);
 
               // Question Dynamic - use ans_descr for emoji/smiley/rating, option_name for multiple
               let answerValue = "-";
@@ -3011,9 +3015,8 @@ export const SurveyResponseDetailPage = () => {
                       hour12: false,
                     }
                   ),
-                  location: `${response.location?.building_name || ""}, ${
-                    response.location?.wing_name || ""
-                  }`,
+                  location: `${response.location?.building_name || ""}, ${response.location?.wing_name || ""
+                    }`,
                   sub_category_type: complaint.sub_category_type || "-",
                   icon_category: complaint.icon_category || "-",
                   priority: complaint.priority || "-",
@@ -3430,8 +3433,8 @@ export const SurveyResponseDetailPage = () => {
       setLocalFromDate(
         activeFormFilters.dateRange?.from
           ? new Date(activeFormFilters.dateRange.from)
-              .toISOString()
-              .split("T")[0]
+            .toISOString()
+            .split("T")[0]
           : ""
       );
       setLocalToDate(
@@ -3596,30 +3599,61 @@ export const SurveyResponseDetailPage = () => {
   console.log("surveyDetails", surveyDetailsData);
 
   // Export function for tabular data - opens modal
-  const handleTabularExport = useCallback(() => {
-    if (!surveyId) {
-      toast.error("Survey ID is required for export");
-      return;
-    }
+  const handleTabularExport = useCallback(
+    (visibilityMap?: Record<string, boolean>) => {
+      if (!surveyId) {
+        toast.error("Survey ID is required for export");
+        return;
+      }
 
-    // Initialize export dates with current tabular filters or empty
-    setExportFromDate(
-      tabularCurrentFilters.dateRange?.from
-        ? new Date(tabularCurrentFilters.dateRange.from)
+      // Get the current valid column keys for this specific survey
+      const currentTabularColumns = getTabularColumns();
+      const currentTabularKeys = new Set(currentTabularColumns.map(col => col.key));
+
+      // If visibility map is provided, update the selected columns
+      if (visibilityMap) {
+        const visibleColumns = Object.keys(visibilityMap).filter(
+          (key) => visibilityMap[key] && currentTabularKeys.has(key)
+        );
+        setSelectedTabularColumns(visibleColumns);
+      } else {
+        // Fallback to defaults or currently saved state if visibilityMap is not provided
+        const savedVisibility = localStorage.getItem(
+          "survey-response-tabular-v2-columns"
+        );
+        if (savedVisibility) {
+          try {
+            const parsed = JSON.parse(savedVisibility);
+            const visibleColumns = Object.keys(parsed).filter(
+              (key) => parsed[key] && currentTabularKeys.has(key)
+            );
+            setSelectedTabularColumns(visibleColumns);
+          } catch (e) {
+            console.error("Error parsing saved visibility:", e);
+          }
+        }
+      }
+
+      // Initialize export dates with current tabular filters or empty
+      setExportFromDate(
+        tabularCurrentFilters.dateRange?.from
+          ? new Date(tabularCurrentFilters.dateRange.from)
             .toISOString()
             .split("T")[0]
-        : ""
-    );
-    setExportToDate(
-      tabularCurrentFilters.dateRange?.to
-        ? new Date(tabularCurrentFilters.dateRange.to)
+          : ""
+      );
+      setExportToDate(
+        tabularCurrentFilters.dateRange?.to
+          ? new Date(tabularCurrentFilters.dateRange.to)
             .toISOString()
             .split("T")[0]
-        : ""
-    );
+          : ""
+      );
 
-    setShowExportModal(true);
-  }, [surveyId, tabularCurrentFilters]);
+      setShowExportModal(true);
+    },
+    [surveyId, tabularCurrentFilters, surveyData]
+  );
 
   // Actual export function after date selection
   const handleConfirmExport = useCallback(async () => {
@@ -3681,15 +3715,15 @@ export const SurveyResponseDetailPage = () => {
         exportFromDate ||
         (tabularCurrentFilters.dateRange?.from
           ? new Date(tabularCurrentFilters.dateRange.from)
-              .toISOString()
-              .split("T")[0]
+            .toISOString()
+            .split("T")[0]
           : null);
       const toDate =
         exportToDate ||
         (tabularCurrentFilters.dateRange?.to
           ? new Date(tabularCurrentFilters.dateRange.to)
-              .toISOString()
-              .split("T")[0]
+            .toISOString()
+            .split("T")[0]
           : null);
 
       if (fromDate) {
@@ -3698,6 +3732,53 @@ export const SurveyResponseDetailPage = () => {
 
       if (toDate) {
         exportUrl.searchParams.append("to_date", toDate);
+      }
+
+      // Add selected columns to the export URL - mapping dynamic question columns to generic keys
+      if (selectedTabularColumns && selectedTabularColumns.length > 0) {
+        const uniqueKeys = new Set<string>();
+        const questionNames = new Set<string>();
+
+        selectedTabularColumns.forEach((colKey) => {
+          if (colKey === "action") return;
+
+          // Map dynamic question columns (e.g., q1_answer, q1_type) to generic keys for the API
+          if (colKey.startsWith("q") && colKey.includes("_")) {
+            if (colKey.endsWith("_type")) {
+              uniqueKeys.add("question_type");
+            } else if (colKey.endsWith("_answer")) {
+              uniqueKeys.add("answer");
+              // Add the actual question text for each checked answer column
+              const qNumMatch = colKey.match(/^q(\d+)_/);
+              if (qNumMatch) {
+                const qIndex = parseInt(qNumMatch[1]) - 1;
+                const question = surveyData?.questions?.[qIndex];
+                if (question?.question) {
+                  questionNames.add(question.question);
+                }
+              }
+            } else if (colKey.endsWith("_icon")) {
+              uniqueKeys.add("issue_icon");
+            } else if (colKey.endsWith("_comment")) {
+              uniqueKeys.add("comment");
+            } else {
+              uniqueKeys.add(colKey);
+            }
+          } else {
+            // Base columns like response_id, date_time, building, wing, etc.
+            uniqueKeys.add(colKey);
+          }
+        });
+
+        // Append mapped unique generic keys to selected_columns[]
+        uniqueKeys.forEach((key) => {
+          exportUrl.searchParams.append("selected_columns[]", key);
+        });
+
+        // Append specific question names to question_names[] for answer columns
+        questionNames.forEach((name) => {
+          exportUrl.searchParams.append("question_names[]", name);
+        });
       }
 
       console.log("🚀 Exporting tabular data from:", exportUrl.toString());
@@ -3711,13 +3792,13 @@ export const SurveyResponseDetailPage = () => {
       if (exportFromDate || exportToDate) {
         const fromStr = exportFromDate
           ? new Date(exportFromDate)
-              .toLocaleDateString("en-GB")
-              .replace(/\//g, "-")
+            .toLocaleDateString("en-GB")
+            .replace(/\//g, "-")
           : "start";
         const toStr = exportToDate
           ? new Date(exportToDate)
-              .toLocaleDateString("en-GB")
-              .replace(/\//g, "-")
+            .toLocaleDateString("en-GB")
+            .replace(/\//g, "-")
           : "end";
         filename += `_${fromStr}_to_${toStr}`;
       } else {
@@ -3736,13 +3817,21 @@ export const SurveyResponseDetailPage = () => {
           : " (all data)";
       toast.success(`Export initiated successfully${dateRangeText}`);
 
-      // Close the modal
+      // Close the modal and clear selected columns after successful confirmation
       setShowExportModal(false);
+      // Not resetting selectedTabularColumns here as they might be used for next export
     } catch (error) {
       console.error("❌ Error exporting tabular data:", error);
       toast.error("Failed to export survey data");
     }
-  }, [surveyId, exportFromDate, exportToDate, tabularCurrentFilters]);
+  }, [
+    surveyId,
+    exportFromDate,
+    exportToDate,
+    tabularCurrentFilters,
+    selectedTabularColumns,
+    surveyData,
+  ]);
 
   const handleApplyFilters = useCallback(async () => {
     if (activeFilterTab === "summary") {
@@ -5121,8 +5210,8 @@ export const SurveyResponseDetailPage = () => {
                           const percentage =
                             totalResponses > 0
                               ? Math.round(
-                                  (option.response_count / totalResponses) * 100
-                                )
+                                (option.response_count / totalResponses) * 100
+                              )
                               : 0;
                           return {
                             emoji: emoji,
@@ -5282,8 +5371,8 @@ export const SurveyResponseDetailPage = () => {
                           const percentage =
                             totalResponses > 0
                               ? Math.round(
-                                  (option.response_count / totalResponses) * 100
-                                )
+                                (option.response_count / totalResponses) * 100
+                              )
                               : 0;
 
                           return {
@@ -5385,9 +5474,9 @@ export const SurveyResponseDetailPage = () => {
                             const percentage =
                               totalResponses > 0
                                 ? Math.round(
-                                    (option.response_count / totalResponses) *
-                                      100
-                                  )
+                                  (option.response_count / totalResponses) *
+                                  100
+                                )
                                 : 0;
 
                             return {
@@ -5395,7 +5484,7 @@ export const SurveyResponseDetailPage = () => {
                               value: option.response_count || 0,
                               color:
                                 multipleChoiceColors[
-                                  index % multipleChoiceColors.length
+                                index % multipleChoiceColors.length
                                 ],
                             };
                           })
@@ -5620,11 +5709,11 @@ export const SurveyResponseDetailPage = () => {
                             index > 0 ? buckets[index - 1] : null;
                           const changePct =
                             prevBucket &&
-                            prevBucket.csat !== null &&
-                            bucket.csat !== null
+                              prevBucket.csat !== null &&
+                              bucket.csat !== null
                               ? ((bucket.csat - prevBucket.csat) /
-                                  prevBucket.csat) *
-                                100
+                                prevBucket.csat) *
+                              100
                               : bucket.change_pct || 0;
 
                           // Use the percentage values directly from API
@@ -5684,7 +5773,7 @@ export const SurveyResponseDetailPage = () => {
                         const maxTotal = Math.max(
                           1,
                           summary.suggested_y_max ||
-                            Math.max(...rows.map((r) => r.total), 1)
+                          Math.max(...rows.map((r) => r.total), 1)
                         );
                         const BAR_AREA_HEIGHT = 240;
                         const colorPositive = "#C4AE9D";
@@ -6087,25 +6176,17 @@ export const SurveyResponseDetailPage = () => {
                     emptyMessage={
                       !responseListData
                         ? "Loading response data..."
-                        : `No response data available (${
-                            getTabularData().length
-                          } items processed)`
+                        : `No response data available (${getTabularData().length
+                        } items processed)`
                     }
                     pagination={true}
                     pageSize={10}
                     className="border border-gray-200 rounded-lg"
                     loading={isLoading}
                     onFilterClick={handleFilterClick}
-                    rightActions={
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleTabularExport}
-                        className="flex items-center gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    }
+                    rightActions={null}
+                    enableExport={true}
+                    handleExport={handleTabularExport}
                     getItemId={(item: TabularResponseData) => item.id}
                     renderCell={(
                       item: TabularResponseData,
