@@ -1491,7 +1491,7 @@ const ProjectTasksPage = () => {
                                 </div>
                             )}
                         </div>
-                        <div className="relative" ref={statusDropdownRef}>
+                        {/* <div className="relative" ref={statusDropdownRef}>
                             <button
                                 onClick={() => setOpenStatusOptions(!openStatusOptions)}
                                 className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
@@ -1520,11 +1520,46 @@ const ProjectTasksPage = () => {
                                     </div>
                                 </div>
                             )}
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 
                 <TaskManagementKanban />
+
+                <Dialog
+                    open={openTaskModal}
+                    onClose={handleCloseModal}
+                    TransitionComponent={Transition}
+                    maxWidth={false}
+                >
+                    <DialogContent
+                        className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                        style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+                        sx={{
+                            padding: "0 !important",
+                            "& .MuiDialogContent-root": {
+                                padding: "0 !important",
+                                overflow: "auto",
+                            }
+                        }}
+                    >
+                        <div className="sticky top-0 bg-white z-10">
+                            <h3 className="text-[14px] font-medium text-center mt-8">Add Task</h3>
+                            <X
+                                className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
+                                onClick={handleCloseModal}
+                            />
+                            <hr className="border border-[#E95420] mt-4" />
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto">
+                            <ProjectTaskCreateModal
+                                isEdit={false}
+                                onCloseModal={handleCloseModal}
+                            />
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         );
     }
