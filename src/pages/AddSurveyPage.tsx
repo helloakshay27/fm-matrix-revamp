@@ -23,6 +23,8 @@ import {
   InputLabel,
   Select as MuiSelect,
   MenuItem,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 
 // --- Interface Definitions ---
@@ -43,6 +45,7 @@ interface Question {
     files: File[];
   }>;
   questionImage?: File | null;
+  showPreview?: boolean;
 }
 
 interface Category {
@@ -100,6 +103,7 @@ export const AddSurveyPage = () => {
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
   const [checkType, setCheckType] = useState("");
+  const [formView, setFormView] = useState(false);
   const [createTicket, setCreateTicket] = useState(false);
   const [ticketCategory, setTicketCategory] = useState("");
   const [ticketSubCategory, setTicketSubCategory] = useState("");
@@ -277,12 +281,12 @@ export const AddSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: [
-                ...(q.additionalFields || []),
-                { title: "", files: [] },
-              ],
-            }
+            ...q,
+            additionalFields: [
+              ...(q.additionalFields || []),
+              { title: "", files: [] },
+            ],
+          }
           : q
       )
     );
@@ -296,11 +300,11 @@ export const AddSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: q.additionalFields?.filter(
-                (_, index) => index !== fieldIndex
-              ),
-            }
+            ...q,
+            additionalFields: q.additionalFields?.filter(
+              (_, index) => index !== fieldIndex
+            ),
+          }
           : q
       )
     );
@@ -315,11 +319,11 @@ export const AddSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: q.additionalFields?.map((field, index) =>
-                index === fieldIndex ? { ...field, title: value } : field
-              ),
-            }
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex ? { ...field, title: value } : field
+            ),
+          }
           : q
       )
     );
@@ -334,11 +338,11 @@ export const AddSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: q.additionalFields?.map((field, index) =>
-                index === fieldIndex ? { ...field, files } : field
-              ),
-            }
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex ? { ...field, files } : field
+            ),
+          }
           : q
       )
     );
@@ -353,16 +357,16 @@ export const AddSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: q.additionalFields?.map((field, index) =>
-                index === fieldIndex
-                  ? {
-                      ...field,
-                      files: field.files.filter((_, i) => i !== fileIndex),
-                    }
-                  : field
-              ),
-            }
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex
+                ? {
+                  ...field,
+                  files: field.files.filter((_, i) => i !== fileIndex),
+                }
+                : field
+            ),
+          }
           : q
       )
     );
@@ -397,12 +401,12 @@ export const AddSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              answerOptions: [
-                ...(q.answerOptions || []),
-                { text: newOptionText, type: "P" },
-              ],
-            }
+            ...q,
+            answerOptions: [
+              ...(q.answerOptions || []),
+              { text: newOptionText, type: "P" },
+            ],
+          }
           : q
       )
     );
@@ -416,11 +420,11 @@ export const AddSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              answerOptions: q.answerOptions?.filter(
-                (_, index) => index !== optionIndex
-              ),
-            }
+            ...q,
+            answerOptions: q.answerOptions?.filter(
+              (_, index) => index !== optionIndex
+            ),
+          }
           : q
       )
     );
@@ -435,11 +439,11 @@ export const AddSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              answerOptions: q.answerOptions?.map((option, index) =>
-                index === optionIndex ? { ...option, text: value } : option
-              ),
-            }
+            ...q,
+            answerOptions: q.answerOptions?.map((option, index) =>
+              index === optionIndex ? { ...option, text: value } : option
+            ),
+          }
           : q
       )
     );
@@ -454,11 +458,11 @@ export const AddSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              answerOptions: q.answerOptions?.map((option, index) =>
-                index === optionIndex ? { ...option, type: value } : option
-              ),
-            }
+            ...q,
+            answerOptions: q.answerOptions?.map((option, index) =>
+              index === optionIndex ? { ...option, type: value } : option
+            ),
+          }
           : q
       )
     );
@@ -574,6 +578,7 @@ export const AddSurveyPage = () => {
       // Add basic survey data as individual form fields
       formData.append('snag_checklist[name]', title);
       formData.append('snag_checklist[check_type]', checkType);
+      formData.append('snag_checklist[form_view]', formView.toString());
 
       // Add ticket creation fields
       formData.append('create_ticket', createTicket ? 'true' : 'false');
@@ -597,10 +602,12 @@ export const AddSurveyPage = () => {
         const qtype = question.answerType === "multiple-choice"
           ? "multiple"
           : question.answerType === "rating"
-          ? "rating"
-          : question.answerType === "emojis"
-          ? "emoji"
-          : "description";
+            ? "rating"
+            : question.answerType === "emojis"
+              ? "emoji"
+              : question.answerType === "input-box"
+                ? "input_box"
+                : "description";
 
         formData.append(`question[][qtype]`, qtype);
         formData.append(`question[][quest_mandatory]`, question.mandatory.toString());
@@ -648,6 +655,7 @@ export const AddSurveyPage = () => {
       console.log('1. Survey Basic Fields:');
       console.log('   snag_checklist[name]:', title);
       console.log('   snag_checklist[check_type]:', checkType);
+      console.log('   snag_checklist[form_view]:', formView.toString());
       console.log('   create_ticket:', createTicket ? 'true' : 'false');
       if (createTicket) {
         console.log('   category_name:', ticketCategory);
@@ -658,7 +666,7 @@ export const AddSurveyPage = () => {
       questions.forEach((question, qIndex) => {
         console.log(`   Question ${qIndex + 1}:`);
         console.log(`   question[][descr]: "${question.text}"`);
-        console.log(`   question[][qtype]: ${question.answerType === "multiple-choice" ? "multiple" : question.answerType === "rating" ? "rating" : question.answerType === "emojis" ? "emoji" : "description"}`);
+        console.log(`   question[][qtype]: ${question.answerType === "multiple-choice" ? "multiple" : question.answerType === "rating" ? "rating" : question.answerType === "emojis" ? "emoji" : question.answerType === "input-box" ? "input_box" : "description"}`);
         console.log(`   question[][quest_mandatory]: ${question.mandatory}`);
 
         if (question.questionImage) {
@@ -780,9 +788,8 @@ export const AddSurveyPage = () => {
         {[...Array(5)].map((_, index) => (
           <Star
             key={index}
-            className={`w-5 h-5 ${
-              index < num ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-            }`}
+            className={`w-5 h-5 ${index < num ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+              }`}
           />
         ))}
         <span className="ml-2 text-sm text-gray-600">{num} Star{num !== 1 ? 's' : ''}</span>
@@ -821,7 +828,7 @@ export const AddSurveyPage = () => {
                 fullWidth
                 variant="outlined"
                 required
-                InputLabelProps={{ 
+                InputLabelProps={{
                   shrink: true,
                   sx: { '& .MuiInputLabel-asterisk': { color: '#ef4444' } }
                 }}
@@ -832,7 +839,7 @@ export const AddSurveyPage = () => {
                 fullWidth
                 variant="outlined"
                 required
-                sx={{ 
+                sx={{
                   "& .MuiInputBase-root": fieldStyles,
                   "& .MuiInputLabel-asterisk": { color: "#ef4444" }
                 }}
@@ -854,8 +861,27 @@ export const AddSurveyPage = () => {
               </FormControl>
 
               {/* Survey Image Upload */}
-              
 
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="form-view"
+                  checked={formView}
+                  onCheckedChange={(checked) =>
+                    setFormView(checked as boolean)
+                  }
+                />
+                <label
+                  htmlFor="form-view"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Enable Form View
+                </label>
+              </div>
+            </div>
+
+            {/* Second row with Create Ticket checkbox */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="create-ticket"
@@ -880,7 +906,7 @@ export const AddSurveyPage = () => {
                   fullWidth
                   variant="outlined"
                   required
-                  sx={{ 
+                  sx={{
                     "& .MuiInputBase-root": fieldStyles,
                     "& .MuiInputLabel-asterisk": { color: "#ef4444" }
                   }}
@@ -910,7 +936,7 @@ export const AddSurveyPage = () => {
                 <FormControl
                   fullWidth
                   variant="outlined"
-                  sx={{ 
+                  sx={{
                     "& .MuiInputBase-root": fieldStyles,
                   }}
                 >
@@ -927,8 +953,8 @@ export const AddSurveyPage = () => {
                       {loadingTicketSubCategories
                         ? "Loading subcategories..."
                         : !ticketCategory
-                        ? "Select a category first"
-                        : "Select Ticket Sub Category"}
+                          ? "Select a category first"
+                          : "Select Ticket Sub Category"}
                     </MenuItem>
                     {ticketSubCategories.map((subcat) => (
                       <MenuItem key={subcat.id} value={subcat.id.toString()}>
@@ -940,63 +966,62 @@ export const AddSurveyPage = () => {
               </div>
             )}
             <div className="space-y-2 mt-3">
-                <label className="text-sm font-medium text-gray-700">
-                  Upload Image
-                </label>
-                <div className="flex items-center gap-4 grid grid-cols-3">
-                  <div className="flex-1">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        // For now, we'll add this to the first question or handle it differently
-                        if (file && questions.length > 0) {
-                          handleQuestionChange(questions[0].id, "questionImage", file);
-                        }
-                      }}
-                      className="hidden"
-                      id="survey-image"
-                      disabled={isSubmitting}
-                    />
-                    <label
-                      htmlFor="survey-image"
-                      className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                        isSubmitting
-                          ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
+              <label className="text-sm font-medium text-gray-700">
+                Upload Image
+              </label>
+              <div className="flex items-center gap-4 grid grid-cols-3">
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      // For now, we'll add this to the first question or handle it differently
+                      if (file && questions.length > 0) {
+                        handleQuestionChange(questions[0].id, "questionImage", file);
+                      }
+                    }}
+                    className="hidden"
+                    id="survey-image"
+                    disabled={isSubmitting}
+                  />
+                  <label
+                    htmlFor="survey-image"
+                    className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isSubmitting
+                      ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
+                      : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
                       }`}
-                    >
-                      {questions.length > 0 && questions[0].questionImage
-                        ? `Selected: ${questions[0].questionImage.name}`
-                        : "Click to upload question image"}
-                    </label>
-                  </div>
-                  {questions.length > 0 && questions[0].questionImage && (
-                    <Button
-                      onClick={() => handleQuestionChange(questions[0].id, "questionImage", null)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-400 hover:text-red-500 p-2"
-                      disabled={isSubmitting}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
+                  >
+                    {questions.length > 0 && questions[0].questionImage
+                      ? `Selected: ${questions[0].questionImage.name}`
+                      : "Click to upload question image"}
+                  </label>
                 </div>
                 {questions.length > 0 && questions[0].questionImage && (
-                  <div className="mt-2">
-                    <img
-                      src={URL.createObjectURL(questions[0].questionImage)}
-                      alt="Question preview"
-                      className="max-w-full h-32 object-cover rounded-lg border"
-                      onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
-                    />
-                  </div>
+                  <Button
+                    onClick={() => handleQuestionChange(questions[0].id, "questionImage", null)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-400 hover:text-red-500 p-2"
+                    disabled={isSubmitting}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 )}
               </div>
+              {questions.length > 0 && questions[0].questionImage && (
+                <div className="mt-2">
+                  <img
+                    src={URL.createObjectURL(questions[0].questionImage)}
+                    alt="Question preview"
+                    className="max-w-full h-32 object-cover rounded-lg border"
+                    onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-          
+
         </div>
 
         {/* Section 2: Questions */}
@@ -1020,11 +1045,10 @@ export const AddSurveyPage = () => {
           </div>
           <div className="p-6">
             <div
-              className={`grid gap-6 ${
-                questions.length === 1
-                  ? "grid-cols-1"
-                  : "grid-cols-1 md:grid-cols-2"
-              }`}
+              className={`grid gap-6 ${questions.length === 1
+                ? "grid-cols-1"
+                : "grid-cols-1 md:grid-cols-2"
+                }`}
             >
               {questions.map((question, index) => (
                 <div
@@ -1055,7 +1079,7 @@ export const AddSurveyPage = () => {
                     fullWidth
                     variant="outlined"
                     required
-                    InputLabelProps={{ 
+                    InputLabelProps={{
                       shrink: true,
                       sx: { '& .MuiInputLabel-asterisk': { color: '#ef4444' } }
                     }}
@@ -1066,7 +1090,7 @@ export const AddSurveyPage = () => {
                     fullWidth
                     variant="outlined"
                     required
-                    sx={{ 
+                    sx={{
                       "& .MuiInputBase-root": fieldStyles,
                       "& .MuiInputLabel-asterisk": { color: "#ef4444" }
                     }}
@@ -1091,15 +1115,18 @@ export const AddSurveyPage = () => {
                       </MenuItem>
                       <MenuItem value="rating">Rating</MenuItem>
                       <MenuItem value="emojis">Emojis</MenuItem>
+                      <MenuItem value="input-box">Input Box</MenuItem>
                     </MuiSelect>
                   </FormControl>
+
+
 
                   {["multiple-choice", "rating", "emojis"].includes(question.answerType) && (
                     <div className="space-y-3 pt-2">
                       <label className="text-sm font-medium text-gray-700">
-                        {question.answerType === "rating" ? "Rating Options" : 
-                         question.answerType === "emojis" ? "Emoji Options" : 
-                         "Answer Options"}
+                        {question.answerType === "rating" ? "Rating Options" :
+                          question.answerType === "emojis" ? "Emoji Options" :
+                            "Answer Options"}
                       </label>
                       {(question.answerOptions || []).map((option, index) => (
                         <div key={index} className="flex items-center gap-3">
@@ -1119,8 +1146,8 @@ export const AddSurveyPage = () => {
                           <TextField
                             placeholder={
                               question.answerType === "rating" ? `Enter rating description` :
-                              question.answerType === "emojis" ? `Enter description for ${EMOJIS[index]}` :
-                              `Option ${index + 1}`
+                                question.answerType === "emojis" ? `Enter description for ${EMOJIS[index]}` :
+                                  `Option ${index + 1}`
                             }
                             value={option.text}
                             onChange={(e) => {
@@ -1130,8 +1157,8 @@ export const AddSurveyPage = () => {
                             fullWidth
                             variant="outlined"
                             InputProps={{
-                              sx: { 
-                                ...fieldStyles, 
+                              sx: {
+                                ...fieldStyles,
                                 height: "40px",
                                 backgroundColor: 'white'
                               },
@@ -1235,11 +1262,10 @@ export const AddSurveyPage = () => {
                             return (
                               <div
                                 key={fieldIndex}
-                                className={`grid gap-3 items-end ${
-                                  isOnlyField
-                                    ? "grid-cols-1 md:grid-cols-2"
-                                    : "grid-cols-1 md:grid-cols-3"
-                                }`}
+                                className={`grid gap-3 items-end ${isOnlyField
+                                  ? "grid-cols-1 md:grid-cols-2"
+                                  : "grid-cols-1 md:grid-cols-3"
+                                  }`}
                               >
                                 <TextField
                                   label={
@@ -1355,7 +1381,7 @@ export const AddSurveyPage = () => {
                                         const isPdf = file.type === 'application/pdf';
                                         const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
                                         const fileURL = isImage ? URL.createObjectURL(file) : null;
-                                        
+
                                         return (
                                           <div
                                             key={`${file.name}-${file.lastModified}`}
@@ -1372,27 +1398,27 @@ export const AddSurveyPage = () => {
                                               ) : isPdf ? (
                                                 <div className="w-full h-full flex items-center justify-center border rounded text-red-600 bg-white">
                                                   <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                                    <path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z"/>
-                                                    <path d="M14 2v6h6"/>
+                                                    <path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z" />
+                                                    <path d="M14 2v6h6" />
                                                   </svg>
                                                 </div>
                                               ) : isExcel ? (
                                                 <div className="w-full h-full flex items-center justify-center border rounded text-green-600 bg-white">
                                                   <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                                    <rect width="20" height="20" x="2" y="2" rx="2"/>
-                                                    <path d="M8 11h8M8 15h8"/>
+                                                    <rect width="20" height="20" x="2" y="2" rx="2" />
+                                                    <path d="M8 11h8M8 15h8" />
                                                   </svg>
                                                 </div>
                                               ) : (
                                                 <div className="w-full h-full flex items-center justify-center border rounded text-gray-600 bg-white">
                                                   <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                                    <path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z"/>
-                                                    <path d="M14 2v6h6"/>
+                                                    <path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z" />
+                                                    <path d="M14 2v6h6" />
                                                   </svg>
                                                 </div>
                                               )}
                                             </div>
-                                            
+
                                             <div className="text-center">
                                               <p className="text-xs text-gray-700 truncate" title={file.name}>
                                                 {file.name}
@@ -1401,7 +1427,7 @@ export const AddSurveyPage = () => {
                                                 {(file.size / 1024 / 1024).toFixed(2)} MB
                                               </p>
                                             </div>
-                                            
+
                                             <button
                                               type="button"
                                               className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
