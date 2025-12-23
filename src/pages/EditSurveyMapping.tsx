@@ -10,16 +10,16 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem, 
-  Chip, 
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
   Box,
   OutlinedInput,
   SelectChangeEvent,
-  CircularProgress 
+  CircularProgress
 } from '@mui/material';
 import { toast } from "sonner";
 import { getFullUrl, getAuthHeader, API_CONFIG } from "@/config/apiConfig";
@@ -295,7 +295,7 @@ export const EditSurveyMapping = () => {
   // Survey data
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loadingSurveys, setLoadingSurveys] = useState(false);
-  
+
   // Selected survey questions
   const [selectedSurveyQuestions, setSelectedSurveyQuestions] = useState<Question[]>([]);
 
@@ -306,7 +306,7 @@ export const EditSurveyMapping = () => {
       await fetchSurveys();
       await fetchSurveyMappingData();
     };
-    
+
     initializeData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -316,7 +316,7 @@ export const EditSurveyMapping = () => {
 
     try {
       setPageLoading(true);
-      
+
       // Use the new mappings_list endpoint with survey_id
       const response = await fetch(
         getFullUrl(`/survey_mappings/mappings_list.json?q[id_eq]=${id}`),
@@ -337,7 +337,7 @@ export const EditSurveyMapping = () => {
 
       if (responseData?.survey_mappings && responseData.survey_mappings.length > 0) {
         const surveyData = responseData.survey_mappings[0]; // Get the first (and should be only) survey
-        
+
         // Set the survey ID from the first mapping's survey_id
         if (surveyData.mappings && surveyData.mappings.length > 0) {
           const surveyId = surveyData.mappings[0].survey_id;
@@ -513,20 +513,20 @@ export const EditSurveyMapping = () => {
           break;
         }
       }
-      
+
       const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.ok) throw new Error(`Failed to fetch ${field}`);
-      
+
       const data = await response.json();
       // Handle both array format and object with field property
       const items = Array.isArray(data) ? data : (data[field] || []);
-      
+
       setSurveyMappings(prev => prev.map((mapping, i) => {
         if (i !== configIndex) return mapping;
         return {
@@ -549,14 +549,14 @@ export const EditSurveyMapping = () => {
     value: string
   ) => {
     console.log(`Location change: ${field} = ${value} for mapping ${mappingIndex}`);
-    
+
     // First update state and clear dependent fields
     setSurveyMappings(prev => prev.map((mapping, i) => {
       if (i !== mappingIndex) return mapping;
 
       const newSelectedLocation = { ...mapping.selectedLocation };
       const newLocationData = { ...mapping.locationData };
-      
+
       // Reset dependent fields and clear their data when parent changes
       switch (field) {
         case 'site':
@@ -618,7 +618,7 @@ export const EditSurveyMapping = () => {
 
     // Then fetch new data for this specific configuration
     const mapping = surveyMappings[mappingIndex];
-    
+
     switch (field) {
       case 'site':
         if (value) {
@@ -717,7 +717,7 @@ export const EditSurveyMapping = () => {
     const value = event.target.value as number;
     setSelectedSurveyId(value);
     setUserChangedSurvey(true); // Mark that user has manually changed the survey
-    
+
     // Update survey questions based on selected survey
     updateSurveyQuestions(value);
   };
@@ -726,7 +726,7 @@ export const EditSurveyMapping = () => {
   const updateSurveyQuestions = useCallback((surveyId?: number) => {
     const targetSurveyId = surveyId || selectedSurveyId;
     console.log("updateSurveyQuestions called with surveyId:", surveyId, "targetSurveyId:", targetSurveyId);
-    
+
     if (!targetSurveyId) {
       console.log("No target survey ID, clearing questions");
       setSelectedSurveyQuestions([]);
@@ -787,7 +787,7 @@ export const EditSurveyMapping = () => {
         return mapping;
       })
     );
-    
+
     // Find the selected survey and map its questions
     const selectedSurvey = surveys.find(survey => survey.id === surveyId);
     if (selectedSurvey && selectedSurvey.snag_questions) {
@@ -840,7 +840,7 @@ export const EditSurveyMapping = () => {
     const invalidMappings = [];
     const validMappings = [];
     const mappingsToDelete = [];
-    
+
     if (!selectedSurveyId) {
       toast.error('Please select a survey first', {
         duration: 5000,
@@ -848,7 +848,7 @@ export const EditSurveyMapping = () => {
       setIsSubmitting(false);
       return;
     }
-    
+
     surveyMappings.forEach((mapping, index) => {
       // Check if mapping is marked for deletion
       if (mapping.markedForDeletion) {
@@ -856,13 +856,13 @@ export const EditSurveyMapping = () => {
         return;
       }
 
-      const hasLocation = mapping.selectedLocation.site || 
-                         mapping.selectedLocation.building || 
-                         mapping.selectedLocation.wing || 
-                         mapping.selectedLocation.area || 
-                         mapping.selectedLocation.floor || 
-                         mapping.selectedLocation.room;
-      
+      const hasLocation = mapping.selectedLocation.site ||
+        mapping.selectedLocation.building ||
+        mapping.selectedLocation.wing ||
+        mapping.selectedLocation.area ||
+        mapping.selectedLocation.floor ||
+        mapping.selectedLocation.room;
+
       if (!hasLocation) {
         invalidMappings.push(`Location Configuration ${index + 1}: Please select at least one location`);
       } else {
@@ -891,31 +891,31 @@ export const EditSurveyMapping = () => {
       const surveyMappingsPayload = validMappings.map((mapping) => {
         // Extract the actual mapping ID from the form mapping id (remove 'sm-' prefix)
         const mappingId = mapping.id.replace('sm-', '');
-        
+
         // Check if this is an existing mapping:
         // - Existing mappings have numeric IDs from the database (e.g., "sm-86" -> "86")
         // - New mappings have "new-" prefix with timestamp (e.g., "sm-new-1234567890123" -> "new-1234567890123")
         const isExistingMapping = !mappingId.startsWith('new-') && !isNaN(parseInt(mappingId));
-        
+
         console.log(`Processing mapping: ${mapping.id}, extracted ID: ${mappingId}, isExisting: ${isExistingMapping}`);
-        
+
         const mappingData: SurveyMappingPayload = {
           survey_id: selectedSurveyId,
-          site_id: parseInt(localStorage.getItem("site_id") || "2189"),
+          site_id: parseInt(localStorage.getItem("selectedSiteId") || "2189"),
           ...(mapping.selectedLocation.building && {
             building_id: parseInt(mapping.selectedLocation.building),
           }),
-          ...(mapping.selectedLocation.wing && { 
-            wing_id: parseInt(mapping.selectedLocation.wing) 
+          ...(mapping.selectedLocation.wing && {
+            wing_id: parseInt(mapping.selectedLocation.wing)
           }),
-          ...(mapping.selectedLocation.area && { 
-            area_id: parseInt(mapping.selectedLocation.area) 
+          ...(mapping.selectedLocation.area && {
+            area_id: parseInt(mapping.selectedLocation.area)
           }),
-          ...(mapping.selectedLocation.floor && { 
-            floor_id: parseInt(mapping.selectedLocation.floor) 
+          ...(mapping.selectedLocation.floor && {
+            floor_id: parseInt(mapping.selectedLocation.floor)
           }),
-          ...(mapping.selectedLocation.room && { 
-            room_id: parseInt(mapping.selectedLocation.room) 
+          ...(mapping.selectedLocation.room && {
+            room_id: parseInt(mapping.selectedLocation.room)
           }),
         };
 
@@ -934,7 +934,7 @@ export const EditSurveyMapping = () => {
       const deletionPayload = mappingsToDelete.map((mapping) => {
         const mappingId = mapping.id.replace('sm-', '');
         const isExistingMapping = !mappingId.startsWith('new-') && !isNaN(parseInt(mappingId));
-        
+
         if (isExistingMapping) {
           console.log(`Marking mapping ${mappingId} for deletion`);
           return {
@@ -943,17 +943,17 @@ export const EditSurveyMapping = () => {
             ...(mapping.selectedLocation.building && {
               building_id: parseInt(mapping.selectedLocation.building),
             }),
-            ...(mapping.selectedLocation.wing && { 
-              wing_id: parseInt(mapping.selectedLocation.wing) 
+            ...(mapping.selectedLocation.wing && {
+              wing_id: parseInt(mapping.selectedLocation.wing)
             }),
-            ...(mapping.selectedLocation.area && { 
-              area_id: parseInt(mapping.selectedLocation.area) 
+            ...(mapping.selectedLocation.area && {
+              area_id: parseInt(mapping.selectedLocation.area)
             }),
-            ...(mapping.selectedLocation.floor && { 
-              floor_id: parseInt(mapping.selectedLocation.floor) 
+            ...(mapping.selectedLocation.floor && {
+              floor_id: parseInt(mapping.selectedLocation.floor)
             }),
-            ...(mapping.selectedLocation.room && { 
-              room_id: parseInt(mapping.selectedLocation.room) 
+            ...(mapping.selectedLocation.room && {
+              room_id: parseInt(mapping.selectedLocation.room)
             }),
           };
         }
@@ -1079,13 +1079,13 @@ export const EditSurveyMapping = () => {
         <div className="space-y-6">
           <div className="rounded-md border border-dashed bg-muted/30 p-4">
             <p className="mb-3 text-sm font-medium text-muted-foreground">Select Survey for All Location Configurations</p>
-            
+
             <div className="space-y-4">
               {/* Single Survey Selection */}
               <div className="grid grid-cols-1 gap-6">
-                <FormControl 
-                  fullWidth 
-                  variant="outlined" 
+                <FormControl
+                  fullWidth
+                  variant="outlined"
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
                   <InputLabel shrink>Select Survey <span className='text-red-500'>*</span></InputLabel>
@@ -1120,7 +1120,7 @@ export const EditSurveyMapping = () => {
                   </Select>
                 </FormControl>
               </div>
-              
+
               {selectedSurveyId && (
                 <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-sm text-green-800">
@@ -1145,246 +1145,246 @@ export const EditSurveyMapping = () => {
             // Get the actual index in the original array for proper handling
             const actualIndex = surveyMappings.findIndex(m => m.id === mapping.id);
             return (
-            <div key={mapping.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
-              {surveyMappings.filter(m => !m.markedForDeletion).length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeSurveyMapping(actualIndex)}
-                  className="absolute -right-2 -top-2 rounded-full p-1 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed bg-white border border-gray-200 shadow-sm"
-                  aria-label="Remove location configuration"
-                  disabled={isSubmitting}
-                >
-                  <X className="w-4 h-4 text-red-500" />
-                </button>
-              )}
-              
-              <p className="mb-4 text-sm font-medium text-muted-foreground">
-                Location Configuration {mappingIdx + 1}
-                {selectedSurveyId && (
-                  <span className="ml-2 text-blue-600">
-                    ({surveys.find(s => s.id === selectedSurveyId)?.name || 'Survey'} will be applied)
-                  </span>
-                )}
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Site */}
-                <FormControl 
-                  fullWidth 
-                  variant="outlined" 
-                  sx={{ "& .MuiInputBase-root": fieldStyles }}
-                >
-                  <InputLabel shrink>Site <span className='text-red-500'>*</span></InputLabel>
-                  <Select
-                    value={mapping.selectedLocation.site}
-                    onChange={(e) => handleLocationChange(actualIndex, 'site', e.target.value as string)}
-                    input={<OutlinedInput label="Site" />}
-                    disabled={loading.sites}
-                    displayEmpty
-                    notched
+              <div key={mapping.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
+                {surveyMappings.filter(m => !m.markedForDeletion).length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeSurveyMapping(actualIndex)}
+                    className="absolute -right-2 -top-2 rounded-full p-1 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed bg-white border border-gray-200 shadow-sm"
+                    aria-label="Remove location configuration"
+                    disabled={isSubmitting}
                   >
-                    <MenuItem value="">
-                      <em>Select Site</em>
-                    </MenuItem>
-                    {loading.sites ? (
-                      <MenuItem disabled>
-                        <CircularProgress size={20} sx={{ mr: 1 }} />
-                        Loading sites...
+                    <X className="w-4 h-4 text-red-500" />
+                  </button>
+                )}
+
+                <p className="mb-4 text-sm font-medium text-muted-foreground">
+                  Location Configuration {mappingIdx + 1}
+                  {selectedSurveyId && (
+                    <span className="ml-2 text-blue-600">
+                      ({surveys.find(s => s.id === selectedSurveyId)?.name || 'Survey'} will be applied)
+                    </span>
+                  )}
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Site */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
+                  >
+                    <InputLabel shrink>Site <span className='text-red-500'>*</span></InputLabel>
+                    <Select
+                      value={mapping.selectedLocation.site}
+                      onChange={(e) => handleLocationChange(actualIndex, 'site', e.target.value as string)}
+                      input={<OutlinedInput label="Site" />}
+                      disabled={loading.sites}
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">
+                        <em>Select Site</em>
                       </MenuItem>
-                    ) : (
-                      sites
-                        .filter(site => site?.id && site?.name)
-                        .map((site) => (
-                          <MenuItem key={site.id} value={site.id.toString()}>
-                            {site.name}
+                      {loading.sites ? (
+                        <MenuItem disabled>
+                          <CircularProgress size={20} sx={{ mr: 1 }} />
+                          Loading sites...
+                        </MenuItem>
+                      ) : (
+                        sites
+                          .filter(site => site?.id && site?.name)
+                          .map((site) => (
+                            <MenuItem key={site.id} value={site.id.toString()}>
+                              {site.name}
+                            </MenuItem>
+                          ))
+                      )}
+                    </Select>
+                  </FormControl>
+
+                  {/* Building */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
+                  >
+                    <InputLabel shrink>Building <span className='text-red-500'>*</span></InputLabel>
+                    <Select
+                      value={mapping.selectedLocation.building}
+                      onChange={(e) => handleLocationChange(actualIndex, 'building', e.target.value as string)}
+                      input={<OutlinedInput label="Building" />}
+                      disabled={!mapping.selectedLocation.site}
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">
+                        <em>
+                          {!mapping.selectedLocation.site
+                            ? "Select Site first"
+                            : "Select Building"
+                          }
+                        </em>
+                      </MenuItem>
+                      {mapping.locationData.buildings
+                        .filter(building => building?.id && building?.name)
+                        .map((building) => (
+                          <MenuItem key={building.id} value={building.id.toString()}>
+                            {building.name}
                           </MenuItem>
                         ))
-                    )}
-                  </Select>
-                </FormControl>
+                      }
+                    </Select>
+                  </FormControl>
 
-                {/* Building */}
-                <FormControl 
-                  fullWidth 
-                  variant="outlined" 
-                  sx={{ "& .MuiInputBase-root": fieldStyles }}
-                >
-                  <InputLabel shrink>Building <span className='text-red-500'>*</span></InputLabel>
-                  <Select
-                    value={mapping.selectedLocation.building}
-                    onChange={(e) => handleLocationChange(actualIndex, 'building', e.target.value as string)}
-                    input={<OutlinedInput label="Building" />}
-                    disabled={!mapping.selectedLocation.site}
-                    displayEmpty
-                    notched
+                  {/* Wing */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
                   >
-                    <MenuItem value="">
-                      <em>
-                        {!mapping.selectedLocation.site 
-                          ? "Select Site first" 
-                          : "Select Building"
-                        }
-                      </em>
-                    </MenuItem>
-                    {mapping.locationData.buildings
-                      .filter(building => building?.id && building?.name)
-                      .map((building) => (
-                        <MenuItem key={building.id} value={building.id.toString()}>
-                          {building.name}
-                        </MenuItem>
-                      ))
-                    }
-                  </Select>
-                </FormControl>
+                    <InputLabel shrink>Wing</InputLabel>
+                    <Select
+                      value={mapping.selectedLocation.wing}
+                      onChange={(e) => handleLocationChange(actualIndex, 'wing', e.target.value as string)}
+                      input={<OutlinedInput label="Wing" />}
+                      disabled={!mapping.selectedLocation.building}
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">
+                        <em>
+                          {!mapping.selectedLocation.building
+                            ? "Select Building first"
+                            : "Select Wing"
+                          }
+                        </em>
+                      </MenuItem>
+                      {mapping.locationData.wings
+                        .filter(wing => wing?.id && wing?.name)
+                        .map((wing) => (
+                          <MenuItem key={wing.id} value={wing.id.toString()}>
+                            {wing.name}
+                          </MenuItem>
+                        ))
+                      }
+                    </Select>
+                  </FormControl>
 
-                {/* Wing */}
-                <FormControl 
-                  fullWidth 
-                  variant="outlined" 
-                  sx={{ "& .MuiInputBase-root": fieldStyles }}
-                >
-                  <InputLabel shrink>Wing</InputLabel>
-                  <Select
-                    value={mapping.selectedLocation.wing}
-                    onChange={(e) => handleLocationChange(actualIndex, 'wing', e.target.value as string)}
-                    input={<OutlinedInput label="Wing" />}
-                    disabled={!mapping.selectedLocation.building}
-                    displayEmpty
-                    notched
+                  {/* Area */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
                   >
-                    <MenuItem value="">
-                      <em>
-                        {!mapping.selectedLocation.building 
-                          ? "Select Building first" 
-                          : "Select Wing"
-                        }
-                      </em>
-                    </MenuItem>
-                    {mapping.locationData.wings
-                      .filter(wing => wing?.id && wing?.name)
-                      .map((wing) => (
-                        <MenuItem key={wing.id} value={wing.id.toString()}>
-                          {wing.name}
-                        </MenuItem>
-                      ))
-                    }
-                  </Select>
-                </FormControl>
+                    <InputLabel shrink>Area</InputLabel>
+                    <Select
+                      value={mapping.selectedLocation.area}
+                      onChange={(e) => handleLocationChange(actualIndex, 'area', e.target.value as string)}
+                      input={<OutlinedInput label="Area" />}
+                      disabled={!mapping.selectedLocation.building}
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">
+                        <em>
+                          {!mapping.selectedLocation.building
+                            ? "Select Building first"
+                            : "Select Area"
+                          }
+                        </em>
+                      </MenuItem>
+                      {mapping.locationData.areas
+                        .filter(area => area?.id && area?.name)
+                        .map((area) => (
+                          <MenuItem key={area.id} value={area.id.toString()}>
+                            {area.name}
+                          </MenuItem>
+                        ))
+                      }
+                    </Select>
+                  </FormControl>
 
-                {/* Area */}
-                <FormControl 
-                  fullWidth 
-                  variant="outlined" 
-                  sx={{ "& .MuiInputBase-root": fieldStyles }}
-                >
-                  <InputLabel shrink>Area</InputLabel>
-                  <Select
-                    value={mapping.selectedLocation.area}
-                    onChange={(e) => handleLocationChange(actualIndex, 'area', e.target.value as string)}
-                    input={<OutlinedInput label="Area" />}
-                    disabled={!mapping.selectedLocation.building}
-                    displayEmpty
-                    notched
+                  {/* Floor */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
                   >
-                    <MenuItem value="">
-                      <em>
-                        {!mapping.selectedLocation.building 
-                          ? "Select Building first" 
-                          : "Select Area"
-                        }
-                      </em>
-                    </MenuItem>
-                    {mapping.locationData.areas
-                      .filter(area => area?.id && area?.name)
-                      .map((area) => (
-                        <MenuItem key={area.id} value={area.id.toString()}>
-                          {area.name}
-                        </MenuItem>
-                      ))
-                    }
-                  </Select>
-                </FormControl>
+                    <InputLabel shrink>Floor</InputLabel>
+                    <Select
+                      value={mapping.selectedLocation.floor}
+                      onChange={(e) => handleLocationChange(actualIndex, 'floor', e.target.value as string)}
+                      input={<OutlinedInput label="Floor" />}
+                      disabled={!mapping.selectedLocation.building}
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">
+                        <em>
+                          {!mapping.selectedLocation.building
+                            ? "Select Building first"
+                            : "Select Floor"
+                          }
+                        </em>
+                      </MenuItem>
+                      {mapping.locationData.floors
+                        .filter(floor => floor?.id && floor?.name)
+                        .map((floor) => (
+                          <MenuItem key={floor.id} value={floor.id.toString()}>
+                            {floor.name}
+                          </MenuItem>
+                        ))
+                      }
+                    </Select>
+                  </FormControl>
 
-                {/* Floor */}
-                <FormControl 
-                  fullWidth 
-                  variant="outlined" 
-                  sx={{ "& .MuiInputBase-root": fieldStyles }}
-                >
-                  <InputLabel shrink>Floor</InputLabel>
-                  <Select
-                    value={mapping.selectedLocation.floor}
-                    onChange={(e) => handleLocationChange(actualIndex, 'floor', e.target.value as string)}
-                    input={<OutlinedInput label="Floor" />}
-                    disabled={!mapping.selectedLocation.building}
-                    displayEmpty
-                    notched
+                  {/* Room */}
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
                   >
-                    <MenuItem value="">
-                      <em>
-                        {!mapping.selectedLocation.building 
-                          ? "Select Building first" 
-                          : "Select Floor"
-                        }
-                      </em>
-                    </MenuItem>
-                    {mapping.locationData.floors
-                      .filter(floor => floor?.id && floor?.name)
-                      .map((floor) => (
-                        <MenuItem key={floor.id} value={floor.id.toString()}>
-                          {floor.name}
-                        </MenuItem>
-                      ))
-                    }
-                  </Select>
-                </FormControl>
-
-                {/* Room */}
-                <FormControl 
-                  fullWidth 
-                  variant="outlined" 
-                  sx={{ "& .MuiInputBase-root": fieldStyles }}
-                >
-                  <InputLabel shrink>Room</InputLabel>
-                  <Select
-                    value={mapping.selectedLocation.room}
-                    onChange={(e) => handleLocationChange(actualIndex, 'room', e.target.value as string)}
-                    input={<OutlinedInput label="Room" />}
-                    disabled={!mapping.selectedLocation.building}
-                    displayEmpty
-                    notched
-                  >
-                    <MenuItem value="">
-                      <em>
-                        {!mapping.selectedLocation.building 
-                          ? "Select Building first" 
-                          : "Select Room"
-                        }
-                      </em>
-                    </MenuItem>
-                    {mapping.locationData.rooms
-                      .filter(room => room?.id && room?.name)
-                      .map((room) => (
-                        <MenuItem key={room.id} value={room.id.toString()}>
-                          {room.name}
-                        </MenuItem>
-                      ))
-                    }
-                  </Select>
-                </FormControl>
+                    <InputLabel shrink>Room</InputLabel>
+                    <Select
+                      value={mapping.selectedLocation.room}
+                      onChange={(e) => handleLocationChange(actualIndex, 'room', e.target.value as string)}
+                      input={<OutlinedInput label="Room" />}
+                      disabled={!mapping.selectedLocation.building}
+                      displayEmpty
+                      notched
+                    >
+                      <MenuItem value="">
+                        <em>
+                          {!mapping.selectedLocation.building
+                            ? "Select Building first"
+                            : "Select Room"
+                          }
+                        </em>
+                      </MenuItem>
+                      {mapping.locationData.rooms
+                        .filter(room => room?.id && room?.name)
+                        .map((room) => (
+                          <MenuItem key={room.id} value={room.id.toString()}>
+                            {room.name}
+                          </MenuItem>
+                        ))
+                      }
+                    </Select>
+                  </FormControl>
+                </div>
               </div>
-            </div>
             );
           })}
-          
+
           <div className="flex justify-end">
-            <Button 
-              variant="outline" 
-              onClick={addSurveyMapping} 
+            <Button
+              variant="outline"
+              onClick={addSurveyMapping}
               disabled={isSubmitting}
               className="flex items-center gap-2"
             >
-              <Plus className="w-4 h-4" /> 
+              <Plus className="w-4 h-4" />
               Add Location Configuration
             </Button>
           </div>
@@ -1410,7 +1410,7 @@ export const EditSurveyMapping = () => {
                       className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 accent-[#C72030]"
                       disabled
                     />
-                    <label 
+                    <label
                       htmlFor={`mandatory-${idx}`}
                       className="text-sm font-medium text-gray-700 cursor-pointer select-none"
                     >
