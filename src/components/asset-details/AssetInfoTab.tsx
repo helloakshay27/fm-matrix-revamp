@@ -280,13 +280,21 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                                 {asset.asset_code || "-"}
                               </span>
                             </div>
+                            {(asset.asset_type_category === "Leasehold Improvement" || asset.asset_type_category === "Leasehold Land") && (
+                              <div className="text-sm text-gray-800">
+                                <span className="text-gray-500">Allocated To:</span>{" "}
+                                <span className="font-medium text-gray-800">
+                                  {asset.allocated_to?.join(", ") || "-"}
+                                </span>
+                              </div>
+                            )}
                           </>
                         )}
 
                         {fields.map((field, idx) => (
                           <div key={idx} className="text-sm text-gray-800">
                             <span className="text-gray-500">
-                              {field.field_name}:
+                              {field.field_name === "Amc Ppm Linked" ? "AMC/PPM Linked" : field.field_name}:
                             </span>{" "}
                             {field.field_value}
                           </div>
