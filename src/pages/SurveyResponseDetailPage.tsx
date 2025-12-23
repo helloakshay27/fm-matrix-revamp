@@ -3072,12 +3072,13 @@ export const SurveyResponseDetailPage = () => {
       { key: "room", label: "Room", defaultVisible: true, sortable: true },
     ];
 
-    // Add dynamic question columns with detailed structure
+    // Add dynamic question columns with grouped structure
     const questionColumns: Array<{
       key: string;
       label: string;
       defaultVisible: boolean;
       sortable: boolean;
+      group?: string; // Add group property to link related columns
     }> = [];
     if (surveyData?.questions && surveyData.questions.length > 0) {
       surveyData.questions.forEach(
@@ -3085,12 +3086,13 @@ export const SurveyResponseDetailPage = () => {
           // For each question, add 4 columns: Question Type, Question Dynamic, Issue Icon, Comment
           const questionNumber = index + 1;
 
-          // Question Type column
+          // Question Type column - grouped under "question_type"
           questionColumns.push({
             key: `q${questionNumber}_type`,
             label: `Question Type`,
             defaultVisible: true,
             sortable: true,
+            group: "question_type", // All question type columns belong to this group
           });
 
           // Question Dynamic column (shows the actual answer)
@@ -3104,23 +3106,22 @@ export const SurveyResponseDetailPage = () => {
             sortable: true,
           });
 
-          // Issue Icon column (complaints icon_category)
+          // Issue Icon column - grouped under "issue_icon"
           questionColumns.push({
             key: `q${questionNumber}_icon`,
-            // label: `Q${questionNumber} Issue Icon`,
             label: `Issue Icon`,
-
             defaultVisible: true,
             sortable: true,
+            group: "issue_icon", // All issue icon columns belong to this group
           });
 
-          // Comment column (answers.comments)
+          // Comment column - grouped under "comment"
           questionColumns.push({
             key: `q${questionNumber}_comment`,
-            // label: `Q${questionNumber} Comment`,
             label: `Comment`,
             defaultVisible: true,
             sortable: true,
+            group: "comment", // All comment columns belong to this group
           });
         }
       );
