@@ -575,6 +575,7 @@ export const EditAssetDetailsPage = () => {
       room_id: "",
     },
     amc_detail: {
+      id: "",
       supplier_id: "",
       amc_start_date: "",
       amc_end_date: "",
@@ -1706,6 +1707,7 @@ export const EditAssetDetailsPage = () => {
           ...prev,
           amc_detail: {
             ...prev.amc_detail,
+            id: amc.id ? String(amc.id) : "",
             amc_cost: amc.amc_cost ? String(amc.amc_cost) : "",
             supplier_id: amc.supplier_id ? String(amc.supplier_id) : "",
             amc_start_date: amc.amc_start_date
@@ -1719,7 +1721,9 @@ export const EditAssetDetailsPage = () => {
             no_of_visits: amc.no_of_visits ? String(amc.no_of_visits) : "",
             visit_frequency: amc.visit_frequency
               ? String(amc.visit_frequency)
-              : "",
+              : amc.amc_frequency
+                ? String(amc.amc_frequency)
+                : "",
             supplier_name: amc.supplier_name ? String(amc.supplier_name) : "",
           },
         }));
@@ -4454,6 +4458,14 @@ export const EditAssetDetailsPage = () => {
         // Nested objects
         asset_move_to: formData.asset_move_to,
         amc_detail: formData.amc_detail,
+        asset_amcs: formData.amc_detail.id || formData.amc_detail.supplier_id || formData.amc_detail.amc_cost || formData.amc_detail.amc_start_date
+          ? [
+            {
+              ...formData.amc_detail,
+              id: formData.amc_detail.id || undefined,
+            },
+          ]
+          : [],
 
         // IT Asset custom fields (as nested object)
         custom_fields: buildCustomFieldsPayload(),
@@ -4563,6 +4575,7 @@ export const EditAssetDetailsPage = () => {
             "consumption_pms_asset_measures_attributes",
             "non_consumption_pms_asset_measures_attributes",
             "amc_detail",
+            "asset_amcs",
             "asset_move_to",
           ].includes(key)
         ) {
@@ -4591,7 +4604,7 @@ export const EditAssetDetailsPage = () => {
       }
 
       // Handle nested objects specially for FormData - flatten them
-      // Handle amc_detail
+      // Handle amc_detail and asset_amcs
       if (
         payload.pms_asset.amc_detail &&
         typeof payload.pms_asset.amc_detail === "object"
@@ -4610,6 +4623,27 @@ export const EditAssetDetailsPage = () => {
             }
           }
         );
+      }
+
+      // Also handle asset_amcs as nested attributes for Rails compatibility
+      if (
+        payload.pms_asset.asset_amcs &&
+        Array.isArray(payload.pms_asset.asset_amcs)
+      ) {
+        payload.pms_asset.asset_amcs.forEach((amc, index) => {
+          Object.entries(amc).forEach(([fieldKey, fieldValue]) => {
+            if (
+              fieldValue !== null &&
+              fieldValue !== undefined &&
+              fieldValue !== ""
+            ) {
+              formDataObj.append(
+                `pms_asset[asset_amcs_attributes][${index}][${fieldKey}]`,
+                String(fieldValue)
+              );
+            }
+          });
+        });
       }
 
       // Handle asset_move_to
@@ -5072,6 +5106,14 @@ export const EditAssetDetailsPage = () => {
         // Nested objects
         asset_move_to: formData.asset_move_to,
         amc_detail: formData.amc_detail,
+        asset_amcs: formData.amc_detail.id || formData.amc_detail.supplier_id || formData.amc_detail.amc_cost || formData.amc_detail.amc_start_date
+          ? [
+            {
+              ...formData.amc_detail,
+              id: formData.amc_detail.id || undefined,
+            },
+          ]
+          : [],
 
         // Asset type
         asset_type: formData.asset_type,
@@ -5164,6 +5206,7 @@ export const EditAssetDetailsPage = () => {
             "consumption_pms_asset_measures_attributes",
             "non_consumption_pms_asset_measures_attributes",
             "amc_detail",
+            "asset_amcs",
             "asset_move_to",
           ].includes(key)
         ) {
@@ -5192,7 +5235,7 @@ export const EditAssetDetailsPage = () => {
       }
 
       // Handle nested objects specially for FormData - flatten them
-      // Handle amc_detail
+      // Handle amc_detail and asset_amcs
       if (
         payload.pms_asset.amc_detail &&
         typeof payload.pms_asset.amc_detail === "object"
@@ -5211,6 +5254,27 @@ export const EditAssetDetailsPage = () => {
             }
           }
         );
+      }
+
+      // Also handle asset_amcs as nested attributes for Rails compatibility
+      if (
+        payload.pms_asset.asset_amcs &&
+        Array.isArray(payload.pms_asset.asset_amcs)
+      ) {
+        payload.pms_asset.asset_amcs.forEach((amc, index) => {
+          Object.entries(amc).forEach(([fieldKey, fieldValue]) => {
+            if (
+              fieldValue !== null &&
+              fieldValue !== undefined &&
+              fieldValue !== ""
+            ) {
+              formDataObj.append(
+                `pms_asset[asset_amcs_attributes][${index}][${fieldKey}]`,
+                String(fieldValue)
+              );
+            }
+          });
+        });
       }
 
       // Handle asset_move_to
