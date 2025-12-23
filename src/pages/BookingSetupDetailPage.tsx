@@ -913,24 +913,36 @@ export const BookingSetupDetailPage = () => {
                             type="number"
                             placeholder="Enter percentage"
                             value={premiumPercentage[slotKey] || ""}
+                            onKeyDown={(e) => {
+                              if (e.key === "-" || e.key === "Subtract") {
+                                e.preventDefault();
+                              }
+                            }}
                             onChange={(e) => {
                               let val = e.target.value;
-                              // Remove dash and non-numeric except dot
+                              // Block any input that starts with a dash
+                              if (val.startsWith("-")) return;
+                              // Remove all dashes explicitly (for cases like --4555)
+                              val = val.replace(/-/g, "");
+                              // Only allow numbers and dot, no other chars
                               val = val.replace(/[^\d.]/g, "");
                               // Prevent multiple dots
                               val = val.replace(/(\..*)\./g, '$1');
-                              // Prevent negative and dash
-                              if (val.startsWith("-")) val = val.replace("-", "");
-                              // Restrict to 0-100
-                              if (val !== "" && !isNaN(Number(val))) {
-                                let num = parseFloat(val);
-                                if (num < 0) num = 0;
-                                if (num > 100) num = 100;
-                                val = num.toString();
+                              // If empty, set as is
+                              if (val === "") {
+                                setPremiumPercentage(prev => ({ ...prev, [slotKey]: "" }));
+                                return;
                               }
+                              // If not a valid number, do not update
+                              if (isNaN(Number(val))) return;
+                              // Restrict to 0-100 and clamp immediately
+                              let num = parseFloat(val);
+                              if (num < 0) num = 0;
+                              if (num > 100) num = 100;
+                              // Only allow up to 100 in the UI
                               setPremiumPercentage(prev => ({
                                 ...prev,
-                                [slotKey]: val
+                                [slotKey]: num.toString()
                               }));
                             }}
                             variant="outlined"
