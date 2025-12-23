@@ -915,7 +915,19 @@ export const BookingSetupDetailPage = () => {
                             value={premiumPercentage[slotKey] || ""}
                             onChange={(e) => {
                               let val = e.target.value;
-                              if (parseFloat(val) > 100) val = "100";
+                              // Remove dash and non-numeric except dot
+                              val = val.replace(/[^\d.]/g, "");
+                              // Prevent multiple dots
+                              val = val.replace(/(\..*)\./g, '$1');
+                              // Prevent negative and dash
+                              if (val.startsWith("-")) val = val.replace("-", "");
+                              // Restrict to 0-100
+                              if (val !== "" && !isNaN(Number(val))) {
+                                let num = parseFloat(val);
+                                if (num < 0) num = 0;
+                                if (num > 100) num = 100;
+                                val = num.toString();
+                              }
                               setPremiumPercentage(prev => ({
                                 ...prev,
                                 [slotKey]: val
