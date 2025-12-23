@@ -1158,44 +1158,53 @@ export const SurveyResponseDetailPage = () => {
   };
 
   // Helper functions for escalation data formatting
-  const formatEscalationData = (escalation: EscalationInfo | null | undefined) => {
+  const formatEscalationData = (
+    escalation: EscalationInfo | null | undefined
+  ) => {
     if (!escalation) return null;
-    
-    const { minutes, is_overdue, users, escalation_name, escalation_time } = escalation;
-    
+
+    const { minutes, is_overdue, users, escalation_name, escalation_time } =
+      escalation;
+
     return {
       minutes: minutes || 0,
       isOverdue: is_overdue || false,
       users: users || [],
-      escalationName: escalation_name || '--',
-      escalationTime: escalation_time || '--'
+      escalationName: escalation_name || "--",
+      escalationTime: escalation_time || "--",
     };
   };
 
   // Helper function to format escalation minutes
-  const formatEscalationMinutes = (escalation: EscalationInfo | null | undefined) => {
-    if (!escalation) return '--';
+  const formatEscalationMinutes = (
+    escalation: EscalationInfo | null | undefined
+  ) => {
+    if (!escalation) return "--";
     const formatted = formatEscalationData(escalation);
-    return formatted?.minutes.toString() || '--';
+    return formatted?.minutes.toString() || "--";
   };
 
   // Helper function to format escalation time in D:H:M format
-  const formatEscalationTime = (escalation: EscalationInfo | null | undefined) => {
-    if (!escalation || !escalation.minutes) return '--';
-    
+  const formatEscalationTime = (
+    escalation: EscalationInfo | null | undefined
+  ) => {
+    if (!escalation || !escalation.minutes) return "--";
+
     const totalMinutes = escalation.minutes;
     const days = Math.floor(totalMinutes / (24 * 60));
     const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
     const minutes = totalMinutes % 60;
-    
-    return `${days}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+    return `${days}:${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   };
 
   // Helper function to format escalation level
-  const formatEscalationLevel = (escalation: EscalationInfo | null | undefined) => {
-    if (!escalation) return '--';
+  const formatEscalationLevel = (
+    escalation: EscalationInfo | null | undefined
+  ) => {
+    if (!escalation) return "--";
     const formatted = formatEscalationData(escalation);
-    return formatted?.escalationName || '--';
+    return formatted?.escalationName || "--";
   };
 
   // Fetch response list data from new API with optional filters
@@ -1749,9 +1758,9 @@ export const SurveyResponseDetailPage = () => {
             totalResponses =
               question.options && question.options.length > 0
                 ? question.options.reduce(
-                  (sum, opt) => sum + (opt.response_count || 0),
-                  0
-                )
+                    (sum, opt) => sum + (opt.response_count || 0),
+                    0
+                  )
                 : 0;
           }
 
@@ -1826,9 +1835,9 @@ export const SurveyResponseDetailPage = () => {
           const totalResponses =
             question.options && question.options.length > 0
               ? question.options.reduce(
-                (sum, opt) => sum + (opt.response_count || 0),
-                0
-              )
+                  (sum, opt) => sum + (opt.response_count || 0),
+                  0
+                )
               : 0;
 
           const questionName = question.question;
@@ -2808,13 +2817,13 @@ export const SurveyResponseDetailPage = () => {
         response_id: responseId.toString(),
         date_time: response.responded_time
           ? new Date(response.responded_time).toLocaleString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          })
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            })
           : "",
         building: response.location?.building_name || "",
         wing: response.location?.wing_name || "",
@@ -2861,7 +2870,7 @@ export const SurveyResponseDetailPage = () => {
                 questionType === "-"
                   ? "-"
                   : questionType.charAt(0).toUpperCase() +
-                  questionType.slice(1);
+                    questionType.slice(1);
 
               // Question Dynamic - use ans_descr for emoji/smiley/rating, option_name for multiple
               let answerValue = "-";
@@ -2873,6 +2882,8 @@ export const SurveyResponseDetailPage = () => {
                 answerValue = answer.ans_descr || "-";
               } else if (answer.answer_type === "multiple") {
                 answerValue = answer.option_name || "-";
+              } else if (answer.answer_type === "input_box") {
+                answerValue = answer.ans_descr || "-";
               } else {
                 answerValue = answer.ans_descr || answer.option_name || "-";
               }
@@ -3000,8 +3011,9 @@ export const SurveyResponseDetailPage = () => {
                       hour12: false,
                     }
                   ),
-                  location: `${response.location?.building_name || ""}, ${response.location?.wing_name || ""
-                    }`,
+                  location: `${response.location?.building_name || ""}, ${
+                    response.location?.wing_name || ""
+                  }`,
                   sub_category_type: complaint.sub_category_type || "-",
                   icon_category: complaint.icon_category || "-",
                   priority: complaint.priority || "-",
@@ -3022,8 +3034,10 @@ export const SurveyResponseDetailPage = () => {
                   resolution_time: complaint.resolution_time || "-",
                   escalation_resolution_name:
                     complaint.escalation_resolution_name || "-",
-                  next_response_escalation: complaint.next_response_escalation || null,
-                  next_resolution_escalation: complaint.next_resolution_escalation || null,
+                  next_response_escalation:
+                    complaint.next_response_escalation || null,
+                  next_resolution_escalation:
+                    complaint.next_resolution_escalation || null,
                   status_detail: complaint.status_detail || {
                     name: complaint.status || "-",
                     color_code: "#60A8C0",
@@ -3416,8 +3430,8 @@ export const SurveyResponseDetailPage = () => {
       setLocalFromDate(
         activeFormFilters.dateRange?.from
           ? new Date(activeFormFilters.dateRange.from)
-            .toISOString()
-            .split("T")[0]
+              .toISOString()
+              .split("T")[0]
           : ""
       );
       setLocalToDate(
@@ -3592,15 +3606,15 @@ export const SurveyResponseDetailPage = () => {
     setExportFromDate(
       tabularCurrentFilters.dateRange?.from
         ? new Date(tabularCurrentFilters.dateRange.from)
-          .toISOString()
-          .split("T")[0]
+            .toISOString()
+            .split("T")[0]
         : ""
     );
     setExportToDate(
       tabularCurrentFilters.dateRange?.to
         ? new Date(tabularCurrentFilters.dateRange.to)
-          .toISOString()
-          .split("T")[0]
+            .toISOString()
+            .split("T")[0]
         : ""
     );
 
@@ -3667,15 +3681,15 @@ export const SurveyResponseDetailPage = () => {
         exportFromDate ||
         (tabularCurrentFilters.dateRange?.from
           ? new Date(tabularCurrentFilters.dateRange.from)
-            .toISOString()
-            .split("T")[0]
+              .toISOString()
+              .split("T")[0]
           : null);
       const toDate =
         exportToDate ||
         (tabularCurrentFilters.dateRange?.to
           ? new Date(tabularCurrentFilters.dateRange.to)
-            .toISOString()
-            .split("T")[0]
+              .toISOString()
+              .split("T")[0]
           : null);
 
       if (fromDate) {
@@ -3697,13 +3711,13 @@ export const SurveyResponseDetailPage = () => {
       if (exportFromDate || exportToDate) {
         const fromStr = exportFromDate
           ? new Date(exportFromDate)
-            .toLocaleDateString("en-GB")
-            .replace(/\//g, "-")
+              .toLocaleDateString("en-GB")
+              .replace(/\//g, "-")
           : "start";
         const toStr = exportToDate
           ? new Date(exportToDate)
-            .toLocaleDateString("en-GB")
-            .replace(/\//g, "-")
+              .toLocaleDateString("en-GB")
+              .replace(/\//g, "-")
           : "end";
         filename += `_${fromStr}_to_${toStr}`;
       } else {
@@ -3948,7 +3962,7 @@ export const SurveyResponseDetailPage = () => {
         ">${defaultLogo}</div>
       </div>
       <div style="text-align: center; padding: 0 0 15px 0;">
-        <h1 style="font-size: 24px; font-weight: 600; color: #1f2937; margin: 0;">${surveyData.survey_name || 'Survey Report'}</h1>
+        <h1 style="font-size: 24px; font-weight: 600; color: #1f2937; margin: 0;">${surveyData.survey_name || "Survey Report"}</h1>
       </div>
     `;
 
@@ -5004,7 +5018,9 @@ export const SurveyResponseDetailPage = () => {
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
-                        <span className="header-text">Overall Question Response Distribution</span>
+                        <span className="header-text">
+                          Overall Question Response Distribution
+                        </span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -5105,8 +5121,8 @@ export const SurveyResponseDetailPage = () => {
                           const percentage =
                             totalResponses > 0
                               ? Math.round(
-                                (option.response_count / totalResponses) * 100
-                              )
+                                  (option.response_count / totalResponses) * 100
+                                )
                               : 0;
                           return {
                             emoji: emoji,
@@ -5119,11 +5135,11 @@ export const SurveyResponseDetailPage = () => {
                       const positivePercent =
                         typeof question.positive_percent === "number"
                           ? question.positive_percent
-                          : question.positive_responses ?? null;
+                          : (question.positive_responses ?? null);
                       const negativePercent =
                         typeof question.negative_percent === "number"
                           ? question.negative_percent
-                          : question.negative_responses ?? null;
+                          : (question.negative_responses ?? null);
                       return (
                         <Card
                           key={question.question_id}
@@ -5135,10 +5151,11 @@ export const SurveyResponseDetailPage = () => {
                                 <HelpCircle className="h-4 w-4 text-[#C72030]" />
                               </div>
                               <span className="text-black font-semibold mr-2 header-text">
-                                Q{questionNumber}. 
+                                Q{questionNumber}.
                               </span>
-                              <span className="header-text">{question.question}</span>
-                              
+                              <span className="header-text">
+                                {question.question}
+                              </span>
                             </CardTitle>
                           </CardHeader>
                           {/* <div className="flex flex-row items-center justify-end gap-6 mb-4 mr-10">
@@ -5167,25 +5184,68 @@ export const SurveyResponseDetailPage = () => {
                             <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
                               <div className="relative text-center py-6">
                                 <div className="absolute top-6 right-8 flex flex-col gap-3">
-                                  <div className="flex items-center gap-3" style={{ minWidth: '150px' }}>
+                                  <div
+                                    className="flex items-center gap-3"
+                                    style={{ minWidth: "150px" }}
+                                  >
                                     <div className="flex items-center gap-2">
-                                      <span className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5]" style={{ flexShrink: 0 }}></span>
-                                      <span className="text-gray-600 text-sm" style={{ whiteSpace: 'nowrap' }}>Positive:</span>
+                                      <span
+                                        className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5]"
+                                        style={{ flexShrink: 0 }}
+                                      ></span>
+                                      <span
+                                        className="text-gray-600 text-sm"
+                                        style={{ whiteSpace: "nowrap" }}
+                                      >
+                                        Positive:
+                                      </span>
                                     </div>
-                                    <span className="text-gray-600 text-sm font-medium" style={{ marginLeft: 'auto' }}>{positivePercent != null ? positivePercent : 0}%</span>
+                                    <span
+                                      className="text-gray-600 text-sm font-medium"
+                                      style={{ marginLeft: "auto" }}
+                                    >
+                                      {positivePercent != null
+                                        ? positivePercent
+                                        : 0}
+                                      %
+                                    </span>
                                   </div>
-                                  <div className="flex items-center gap-3" style={{ minWidth: '150px' }}>
+                                  <div
+                                    className="flex items-center gap-3"
+                                    style={{ minWidth: "150px" }}
+                                  >
                                     <div className="flex items-center gap-2">
-                                      <span className="inline-block w-4 h-4 rounded-full bg-[#C4B99D]" style={{ flexShrink: 0 }}></span>
-                                      <span className="text-gray-600 text-sm" style={{ whiteSpace: 'nowrap' }}>Negative:</span>
+                                      <span
+                                        className="inline-block w-4 h-4 rounded-full bg-[#C4B99D]"
+                                        style={{ flexShrink: 0 }}
+                                      ></span>
+                                      <span
+                                        className="text-gray-600 text-sm"
+                                        style={{ whiteSpace: "nowrap" }}
+                                      >
+                                        Negative:
+                                      </span>
                                     </div>
-                                    <span className="text-gray-600 text-sm font-medium" style={{ marginLeft: 'auto' }}>{negativePercent != null ? negativePercent : 0}%</span>
+                                    <span
+                                      className="text-gray-600 text-sm font-medium"
+                                      style={{ marginLeft: "auto" }}
+                                    >
+                                      {negativePercent != null
+                                        ? negativePercent
+                                        : 0}
+                                      %
+                                    </span>
                                   </div>
                                 </div>
 
-
                                 {displayData.length > 0 ? (
-                                  <div className="flex justify-center items-center gap-8 mb-4" style={{ marginTop: '60px', paddingTop: '20px' }}>
+                                  <div
+                                    className="flex justify-center items-center gap-8 mb-4"
+                                    style={{
+                                      marginTop: "60px",
+                                      paddingTop: "20px",
+                                    }}
+                                  >
                                     {displayData.map((item, index) => (
                                       <div
                                         key={index}
@@ -5222,8 +5282,8 @@ export const SurveyResponseDetailPage = () => {
                           const percentage =
                             totalResponses > 0
                               ? Math.round(
-                                (option.response_count / totalResponses) * 100
-                              )
+                                  (option.response_count / totalResponses) * 100
+                                )
                               : 0;
 
                           return {
@@ -5237,11 +5297,11 @@ export const SurveyResponseDetailPage = () => {
                       const positivePercent =
                         typeof question.positive_percent === "number"
                           ? question.positive_percent
-                          : question.positive_responses ?? null;
+                          : (question.positive_responses ?? null);
                       const negativePercent =
                         typeof question.negative_percent === "number"
                           ? question.negative_percent
-                          : question.negative_responses ?? null;
+                          : (question.negative_responses ?? null);
 
                       return (
                         <Card
@@ -5257,7 +5317,7 @@ export const SurveyResponseDetailPage = () => {
                                 Q{questionNumber}.
                               </span>
                               <span className="header-text">
-                              {question.question}
+                                {question.question}
                               </span>
                             </CardTitle>
                           </CardHeader>
@@ -5295,13 +5355,14 @@ export const SurveyResponseDetailPage = () => {
                               positivePercent={positivePercent}
                               negativePercent={negativePercent}
                               dateRange={{
-                                startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                                startDate: new Date(
+                                  Date.now() - 30 * 24 * 60 * 60 * 1000
+                                ),
                                 endDate: new Date(),
                               }}
                               xAxisLabel="Response Type"
                               yAxisLabel="No. of Responses"
                             />
-
                           </CardContent>
                         </Card>
                       );
@@ -5324,9 +5385,9 @@ export const SurveyResponseDetailPage = () => {
                             const percentage =
                               totalResponses > 0
                                 ? Math.round(
-                                  (option.response_count / totalResponses) *
-                                  100
-                                )
+                                    (option.response_count / totalResponses) *
+                                      100
+                                  )
                                 : 0;
 
                             return {
@@ -5334,7 +5395,7 @@ export const SurveyResponseDetailPage = () => {
                               value: option.response_count || 0,
                               color:
                                 multipleChoiceColors[
-                                index % multipleChoiceColors.length
+                                  index % multipleChoiceColors.length
                                 ],
                             };
                           })
@@ -5353,7 +5414,9 @@ export const SurveyResponseDetailPage = () => {
                               <span className="text-black font-semibold mr-2 header-text">
                                 Q{questionNumber}.
                               </span>
-                              <span className="header-text">{question.question}</span>
+                              <span className="header-text">
+                                {question.question}
+                              </span>
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
@@ -5412,7 +5475,7 @@ export const SurveyResponseDetailPage = () => {
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
                         <span className="header-text">
-                        Response by Category
+                          Response by Category
                         </span>
                       </CardTitle>
                     </CardHeader>
@@ -5519,7 +5582,9 @@ export const SurveyResponseDetailPage = () => {
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
-                        <span className="header-text">Customer Satisfaction Score.</span>
+                        <span className="header-text">
+                          Customer Satisfaction Score.
+                        </span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -5555,11 +5620,11 @@ export const SurveyResponseDetailPage = () => {
                             index > 0 ? buckets[index - 1] : null;
                           const changePct =
                             prevBucket &&
-                              prevBucket.csat !== null &&
-                              bucket.csat !== null
+                            prevBucket.csat !== null &&
+                            bucket.csat !== null
                               ? ((bucket.csat - prevBucket.csat) /
-                                prevBucket.csat) *
-                              100
+                                  prevBucket.csat) *
+                                100
                               : bucket.change_pct || 0;
 
                           // Use the percentage values directly from API
@@ -5619,7 +5684,7 @@ export const SurveyResponseDetailPage = () => {
                         const maxTotal = Math.max(
                           1,
                           summary.suggested_y_max ||
-                          Math.max(...rows.map((r) => r.total), 1)
+                            Math.max(...rows.map((r) => r.total), 1)
                         );
                         const BAR_AREA_HEIGHT = 240;
                         const colorPositive = "#C4AE9D";
@@ -6022,8 +6087,9 @@ export const SurveyResponseDetailPage = () => {
                     emptyMessage={
                       !responseListData
                         ? "Loading response data..."
-                        : `No response data available (${getTabularData().length
-                        } items processed)`
+                        : `No response data available (${
+                            getTabularData().length
+                          } items processed)`
                     }
                     pagination={true}
                     pageSize={10}
@@ -6293,23 +6359,35 @@ export const SurveyResponseDetailPage = () => {
                       );
                     }
                     // Handle escalation columns using the helper functions
-                    if (columnKey === 'response_tat') {
-                      return formatEscalationMinutes(item.next_response_escalation);
+                    if (columnKey === "response_tat") {
+                      return formatEscalationMinutes(
+                        item.next_response_escalation
+                      );
                     }
-                    if (columnKey === 'response_time') {
-                      return formatEscalationTime(item.next_response_escalation);
+                    if (columnKey === "response_time") {
+                      return formatEscalationTime(
+                        item.next_response_escalation
+                      );
                     }
-                    if (columnKey === 'escalation_response_name') {
-                      return formatEscalationLevel(item.next_response_escalation);
+                    if (columnKey === "escalation_response_name") {
+                      return formatEscalationLevel(
+                        item.next_response_escalation
+                      );
                     }
-                    if (columnKey === 'resolution_tat') {
-                      return formatEscalationMinutes(item.next_resolution_escalation);
+                    if (columnKey === "resolution_tat") {
+                      return formatEscalationMinutes(
+                        item.next_resolution_escalation
+                      );
                     }
-                    if (columnKey === 'resolution_time') {
-                      return formatEscalationTime(item.next_resolution_escalation);
+                    if (columnKey === "resolution_time") {
+                      return formatEscalationTime(
+                        item.next_resolution_escalation
+                      );
                     }
-                    if (columnKey === 'escalation_resolution_name') {
-                      return formatEscalationLevel(item.next_resolution_escalation);
+                    if (columnKey === "escalation_resolution_name") {
+                      return formatEscalationLevel(
+                        item.next_resolution_escalation
+                      );
                     }
                     // Handle null/undefined values for new columns
                     const value = item[columnKey as keyof TicketData];
