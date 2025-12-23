@@ -248,7 +248,7 @@ export const EditPlusServicePage = () => {
       formDataToSend.append("plus_service[name]", formData.name);
       formDataToSend.append("plus_service[description]", formData.description);
       formDataToSend.append("plus_service[service_category_id]", formData.service_category_id);
-      formDataToSend.append("plus_service[active]", formData.active.toString());
+      formDataToSend.append("plus_service[active]", formData?.active?.toString());
 
       if (formData.order_no) {
         formDataToSend.append("plus_service[order_no]", formData.order_no);
