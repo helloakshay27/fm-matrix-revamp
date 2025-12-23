@@ -316,15 +316,18 @@ const ProjectDetailsPage = () => {
     const dropdownRef = useRef(null);
     const secondContentRef = useRef(null);
 
+    const [isDescriptionCollapsed, setIsDescriptionCollapsed] = useState(false);
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [openDropdown, setOpenDropdown] = useState(false);
     const [projectMembers, setProjectMembers] = useState([]);
     const [tab, setTab] = useState("Member");
+    const descriptionContentRef = useRef(null);
     const [project, setProject] = useState({
         id: "",
         title: "",
         status: "",
+        description: "",
         created_by_name: "",
         created_at: "",
         project_owner_name: "",
@@ -433,6 +436,10 @@ const ProjectDetailsPage = () => {
             Completed: "completed",
         };
         return reverseStatusMap[displayStatus] || "active";
+    };
+
+    const toggleDescriptionCollapse = () => {
+        setIsDescriptionCollapsed(!isDescriptionCollapsed);
     };
 
     const toggleSecondCollapse = () => {
@@ -544,6 +551,35 @@ const ProjectDetailsPage = () => {
                     </div>
                 </div>
                 <div className="border-b-[3px] border-grey my-3"></div>
+
+                <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                    <div className="font-[600] text-[16px] flex items-center gap-10">
+                        <div className="flex items-center gap-4">
+                            <ChevronDownCircle
+                                color="#c72030"
+                                size={30}
+                                className={`${isDescriptionCollapsed ? "rotate-180" : "rotate-0"} cursor-pointer transition-transform`}
+                                onClick={toggleDescriptionCollapse}
+                            />
+                            Description
+                        </div>
+                    </div>
+
+                    <div
+                        className="mt-3 overflow-hidden transition-all duration-500"
+                        ref={descriptionContentRef}
+                        style={{
+                            maxHeight: isDescriptionCollapsed ? '0px' : '1000px',
+                            opacity: isDescriptionCollapsed ? 0 : 1,
+                        }}
+                    >
+                        <div className="flex flex-col">
+                            <div className="text-[13px]">
+                                {project.description || 'No description available'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div className="border rounded-[10px] shadow-md p-5 mb-4">
                     <div className="font-[600] text-[16px] flex items-center gap-10">

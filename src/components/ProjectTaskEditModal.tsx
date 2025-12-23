@@ -98,6 +98,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     const [showCalender, setShowCalender] = useState(false);
     const [showStartCalender, setShowStartCalender] = useState(false);
     const [calendarTaskHours, setCalendarTaskHours] = useState([]);
+    const [originalDateWiseHrs, setOriginalDateWiseHrs] = useState([])
 
     const [formData, setFormData] = useState({
         taskTitle: "",
@@ -278,6 +279,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
             if (Array.isArray(taskData.task_allocation_times) && taskData.task_allocation_times.length > 0) {
                 setDateWiseHours(taskData.task_allocation_times);
+                setOriginalDateWiseHrs(taskData.task_allocation_times);
+
             }
 
             setPrevTags(mappedTags);
@@ -408,27 +411,77 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
         setIsSubmitting(true);
 
+        // const formatedEndDate = `${endDate.year}-${String(endDate.month + 1).padStart(2, "0")}-${String(endDate.date).padStart(2, "0")}`;
+        // const formatedStartDate = `${startDate.year}-${String(startDate.month + 1).padStart(2, "0")}-${String(startDate.date).padStart(2, "0")}`;
+        // let taskAllocationTimesAttributes = dateWiseHours;
+
+        // console.log(taskAllocationTimesAttributes)
+
+        // if (Array.isArray(taskAllocationTimesAttributes)) {
+        //     taskAllocationTimesAttributes = originalDateWiseHrs.map((allocation) => {
+        //         const allocationDate = allocation.date; // YYYY-MM-DD
+
+        //         const shouldDestroy =
+        //             allocationDate < formatedStartDate ||
+        //             allocationDate > formatedEndDate;
+
+        //         return {
+        //             ...allocation,
+        //             id: allocation.id || null,
+        //             _destroy: shouldDestroy,
+        //         };
+        //     });
+        // }
+
+        console.log(dateWiseHours)
+
         const formatedEndDate = `${endDate.year}-${String(endDate.month + 1).padStart(2, "0")}-${String(endDate.date).padStart(2, "0")}`;
         const formatedStartDate = `${startDate.year}-${String(startDate.month + 1).padStart(2, "0")}-${String(startDate.date).padStart(2, "0")}`;
-        let taskAllocationTimesAttributes = dateWiseHours;
 
-        console.log(taskAllocationTimesAttributes)
+        let taskAllocationTimesAttributes: any[] = [];
 
-        if (Array.isArray(taskAllocationTimesAttributes)) {
-            taskAllocationTimesAttributes = dateWiseHours.map((allocation) => {
-                const allocationDate = allocation.date; // YYYY-MM-DD
+        if (
+            Array.isArray(originalDateWiseHrs) &&
+            Array.isArray(dateWiseHours)
+        ) {
+            // Dates currently present in UI
+            const currentDatesSet = new Set(
+                dateWiseHours.map((d) => d.date)
+            );
 
-                const shouldDestroy =
-                    allocationDate < formatedStartDate ||
-                    allocationDate > formatedEndDate;
+            // 1️⃣ Handle ORIGINAL records (mark destroy if removed)
+            const originalPayload = originalDateWiseHrs.map((allocation) => {
+                const isRemoved = !currentDatesSet.has(allocation.date);
 
                 return {
                     ...allocation,
-                    id: allocation.id || null,
-                    _destroy: shouldDestroy,
+                    id: allocation.id, // existing id
+                    _destroy: isRemoved,
                 };
             });
+
+            // 2️⃣ Handle NEW records (id === null)
+            const newPayload = dateWiseHours
+                .filter(
+                    (d) =>
+                        !d.id && // new record
+                        !originalDateWiseHrs.some(
+                            (o) => o.date === d.date
+                        )
+                )
+                .map((d) => ({
+                    ...d,
+                    id: null,
+                    _destroy: false,
+                }));
+
+            // 3️⃣ Merge both
+            taskAllocationTimesAttributes = [
+                ...originalPayload,
+                ...newPayload,
+            ];
         }
+
 
         const payload = {
             title: formData.taskTitle,
