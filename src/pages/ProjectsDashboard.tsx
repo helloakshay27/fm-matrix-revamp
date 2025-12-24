@@ -914,7 +914,7 @@ export const ProjectsDashboard = () => {
           </div>
         </div>
 
-        <ProjectManagementKanban />
+        <ProjectManagementKanban fetchData={fetchData} />
 
         <AddProjectModal
           openDialog={openDialog}

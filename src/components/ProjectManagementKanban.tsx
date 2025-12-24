@@ -39,7 +39,7 @@ export const cardsTitle = [
     },
 ];
 
-const ProjectManagementKanban = () => {
+const ProjectManagementKanban = ({ fetchData }) => {
     const { setCurrentSection, setIsSidebarCollapsed } = useLayout();
 
     const view = localStorage.getItem("selectedView");
@@ -121,7 +121,9 @@ const ProjectManagementKanban = () => {
                     baseUrl,
                     id: projectId.toString(),
                     payload: { status: apiStatus }
-                }));
+                })).then(() => {
+                    fetchData()
+                })
             }
         }
     }, [dispatch, token, baseUrl]);
