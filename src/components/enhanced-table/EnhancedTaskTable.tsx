@@ -116,7 +116,7 @@ interface EnhancedTableProps<T> {
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
   onFilterClick?: () => void;
-  handleExport?: () => void;
+  handleExport?: (columnVisibility?: Record<string, boolean>) => void;
 }
 
 export function EnhancedTaskTable<T extends Record<string, any>>({
@@ -490,7 +490,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={exportFileName === 'schedules' ? handleSchedulesExport : (handleExport || (() => exportToExcel(filteredData, visibleColumns, exportFileName)))}
+              onClick={exportFileName === 'schedules' ? handleSchedulesExport : (() => (handleExport ? handleExport(columnVisibility) : exportToExcel(filteredData, visibleColumns, exportFileName)))}
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />

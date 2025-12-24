@@ -342,6 +342,7 @@ interface TicketData {
   ticket_number: string;
   heading: string;
   category: string;
+  assigned_to: string | number;
   assignee: string;
   status: string;
   updated_by: string;
@@ -1125,6 +1126,9 @@ export const SurveyResponseDetailPage = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportFromDate, setExportFromDate] = useState("");
   const [exportToDate, setExportToDate] = useState("");
+  const [selectedTabularColumns, setSelectedTabularColumns] = useState<string[]>(
+    []
+  );
 
   // Inline Tabular details state
   const [selectedTabularResponseId, setSelectedTabularResponseId] = useState<
@@ -1158,44 +1162,53 @@ export const SurveyResponseDetailPage = () => {
   };
 
   // Helper functions for escalation data formatting
-  const formatEscalationData = (escalation: EscalationInfo | null | undefined) => {
+  const formatEscalationData = (
+    escalation: EscalationInfo | null | undefined
+  ) => {
     if (!escalation) return null;
-    
-    const { minutes, is_overdue, users, escalation_name, escalation_time } = escalation;
-    
+
+    const { minutes, is_overdue, users, escalation_name, escalation_time } =
+      escalation;
+
     return {
       minutes: minutes || 0,
       isOverdue: is_overdue || false,
       users: users || [],
-      escalationName: escalation_name || '--',
-      escalationTime: escalation_time || '--'
+      escalationName: escalation_name || "--",
+      escalationTime: escalation_time || "--",
     };
   };
 
   // Helper function to format escalation minutes
-  const formatEscalationMinutes = (escalation: EscalationInfo | null | undefined) => {
-    if (!escalation) return '--';
+  const formatEscalationMinutes = (
+    escalation: EscalationInfo | null | undefined
+  ) => {
+    if (!escalation) return "--";
     const formatted = formatEscalationData(escalation);
-    return formatted?.minutes.toString() || '--';
+    return formatted?.minutes.toString() || "--";
   };
 
   // Helper function to format escalation time in D:H:M format
-  const formatEscalationTime = (escalation: EscalationInfo | null | undefined) => {
-    if (!escalation || !escalation.minutes) return '--';
-    
+  const formatEscalationTime = (
+    escalation: EscalationInfo | null | undefined
+  ) => {
+    if (!escalation || !escalation.minutes) return "--";
+
     const totalMinutes = escalation.minutes;
     const days = Math.floor(totalMinutes / (24 * 60));
     const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
     const minutes = totalMinutes % 60;
-    
-    return `${days}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+    return `${days}:${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   };
 
   // Helper function to format escalation level
-  const formatEscalationLevel = (escalation: EscalationInfo | null | undefined) => {
-    if (!escalation) return '--';
+  const formatEscalationLevel = (
+    escalation: EscalationInfo | null | undefined
+  ) => {
+    if (!escalation) return "--";
     const formatted = formatEscalationData(escalation);
-    return formatted?.escalationName || '--';
+    return formatted?.escalationName || "--";
   };
 
   // Fetch response list data from new API with optional filters
@@ -2873,6 +2886,8 @@ export const SurveyResponseDetailPage = () => {
                 answerValue = answer.ans_descr || "-";
               } else if (answer.answer_type === "multiple") {
                 answerValue = answer.option_name || "-";
+              } else if (answer.answer_type === "input_box") {
+                answerValue = answer.ans_descr || "-";
               } else {
                 answerValue = answer.ans_descr || answer.option_name || "-";
               }
@@ -3022,8 +3037,10 @@ export const SurveyResponseDetailPage = () => {
                   resolution_time: complaint.resolution_time || "-",
                   escalation_resolution_name:
                     complaint.escalation_resolution_name || "-",
-                  next_response_escalation: complaint.next_response_escalation || null,
-                  next_resolution_escalation: complaint.next_resolution_escalation || null,
+                  next_response_escalation:
+                    complaint.next_response_escalation || null,
+                  next_resolution_escalation:
+                    complaint.next_resolution_escalation || null,
                   status_detail: complaint.status_detail || {
                     name: complaint.status || "-",
                     color_code: "#60A8C0",
@@ -3072,12 +3089,13 @@ export const SurveyResponseDetailPage = () => {
       { key: "room", label: "Room", defaultVisible: true, sortable: true },
     ];
 
-    // Add dynamic question columns with detailed structure
+    // Add dynamic question columns with grouped structure
     const questionColumns: Array<{
       key: string;
       label: string;
       defaultVisible: boolean;
       sortable: boolean;
+      group?: string; // Add group property to link related columns
     }> = [];
     if (surveyData?.questions && surveyData.questions.length > 0) {
       surveyData.questions.forEach(
@@ -3085,12 +3103,13 @@ export const SurveyResponseDetailPage = () => {
           // For each question, add 4 columns: Question Type, Question Dynamic, Issue Icon, Comment
           const questionNumber = index + 1;
 
-          // Question Type column
+          // Question Type column - grouped under "question_type"
           questionColumns.push({
             key: `q${questionNumber}_type`,
             label: `Question Type`,
             defaultVisible: true,
             sortable: true,
+            group: "question_type", // All question type columns belong to this group
           });
 
           // Question Dynamic column (shows the actual answer)
@@ -3104,23 +3123,22 @@ export const SurveyResponseDetailPage = () => {
             sortable: true,
           });
 
-          // Issue Icon column (complaints icon_category)
+          // Issue Icon column - grouped under "issue_icon"
           questionColumns.push({
             key: `q${questionNumber}_icon`,
-            // label: `Q${questionNumber} Issue Icon`,
             label: `Issue Icon`,
-
             defaultVisible: true,
             sortable: true,
+            group: "issue_icon", // All issue icon columns belong to this group
           });
 
-          // Comment column (answers.comments)
+          // Comment column - grouped under "comment"
           questionColumns.push({
             key: `q${questionNumber}_comment`,
-            // label: `Q${questionNumber} Comment`,
             label: `Comment`,
             defaultVisible: true,
             sortable: true,
+            group: "comment", // All comment columns belong to this group
           });
         }
       );
@@ -3581,30 +3599,61 @@ export const SurveyResponseDetailPage = () => {
   console.log("surveyDetails", surveyDetailsData);
 
   // Export function for tabular data - opens modal
-  const handleTabularExport = useCallback(() => {
-    if (!surveyId) {
-      toast.error("Survey ID is required for export");
-      return;
-    }
+  const handleTabularExport = useCallback(
+    (visibilityMap?: Record<string, boolean>) => {
+      if (!surveyId) {
+        toast.error("Survey ID is required for export");
+        return;
+      }
 
-    // Initialize export dates with current tabular filters or empty
-    setExportFromDate(
-      tabularCurrentFilters.dateRange?.from
-        ? new Date(tabularCurrentFilters.dateRange.from)
-          .toISOString()
-          .split("T")[0]
-        : ""
-    );
-    setExportToDate(
-      tabularCurrentFilters.dateRange?.to
-        ? new Date(tabularCurrentFilters.dateRange.to)
-          .toISOString()
-          .split("T")[0]
-        : ""
-    );
+      // Get the current valid column keys for this specific survey
+      const currentTabularColumns = getTabularColumns();
+      const currentTabularKeys = new Set(currentTabularColumns.map(col => col.key));
 
-    setShowExportModal(true);
-  }, [surveyId, tabularCurrentFilters]);
+      // If visibility map is provided, update the selected columns
+      if (visibilityMap) {
+        const visibleColumns = Object.keys(visibilityMap).filter(
+          (key) => visibilityMap[key] && currentTabularKeys.has(key)
+        );
+        setSelectedTabularColumns(visibleColumns);
+      } else {
+        // Fallback to defaults or currently saved state if visibilityMap is not provided
+        const savedVisibility = localStorage.getItem(
+          "survey-response-tabular-v2-columns"
+        );
+        if (savedVisibility) {
+          try {
+            const parsed = JSON.parse(savedVisibility);
+            const visibleColumns = Object.keys(parsed).filter(
+              (key) => parsed[key] && currentTabularKeys.has(key)
+            );
+            setSelectedTabularColumns(visibleColumns);
+          } catch (e) {
+            console.error("Error parsing saved visibility:", e);
+          }
+        }
+      }
+
+      // Initialize export dates with current tabular filters or empty
+      setExportFromDate(
+        tabularCurrentFilters.dateRange?.from
+          ? new Date(tabularCurrentFilters.dateRange.from)
+            .toISOString()
+            .split("T")[0]
+          : ""
+      );
+      setExportToDate(
+        tabularCurrentFilters.dateRange?.to
+          ? new Date(tabularCurrentFilters.dateRange.to)
+            .toISOString()
+            .split("T")[0]
+          : ""
+      );
+
+      setShowExportModal(true);
+    },
+    [surveyId, tabularCurrentFilters, surveyData]
+  );
 
   // Actual export function after date selection
   const handleConfirmExport = useCallback(async () => {
@@ -3685,6 +3734,53 @@ export const SurveyResponseDetailPage = () => {
         exportUrl.searchParams.append("to_date", toDate);
       }
 
+      // Add selected columns to the export URL - mapping dynamic question columns to generic keys
+      if (selectedTabularColumns && selectedTabularColumns.length > 0) {
+        const uniqueKeys = new Set<string>();
+        const questionNames = new Set<string>();
+
+        selectedTabularColumns.forEach((colKey) => {
+          if (colKey === "action") return;
+
+          // Map dynamic question columns (e.g., q1_answer, q1_type) to generic keys for the API
+          if (colKey.startsWith("q") && colKey.includes("_")) {
+            if (colKey.endsWith("_type")) {
+              uniqueKeys.add("question_type");
+            } else if (colKey.endsWith("_answer")) {
+              uniqueKeys.add("answer");
+              // Add the actual question text for each checked answer column
+              const qNumMatch = colKey.match(/^q(\d+)_/);
+              if (qNumMatch) {
+                const qIndex = parseInt(qNumMatch[1]) - 1;
+                const question = surveyData?.questions?.[qIndex];
+                if (question?.question) {
+                  questionNames.add(question.question);
+                }
+              }
+            } else if (colKey.endsWith("_icon")) {
+              uniqueKeys.add("issue_icon");
+            } else if (colKey.endsWith("_comment")) {
+              uniqueKeys.add("comment");
+            } else {
+              uniqueKeys.add(colKey);
+            }
+          } else {
+            // Base columns like response_id, date_time, building, wing, etc.
+            uniqueKeys.add(colKey);
+          }
+        });
+
+        // Append mapped unique generic keys to selected_columns[]
+        uniqueKeys.forEach((key) => {
+          exportUrl.searchParams.append("selected_columns[]", key);
+        });
+
+        // Append specific question names to question_names[] for answer columns
+        questionNames.forEach((name) => {
+          exportUrl.searchParams.append("question_names[]", name);
+        });
+      }
+
       console.log("🚀 Exporting tabular data from:", exportUrl.toString());
 
       // Create a temporary link element and trigger download
@@ -3721,13 +3817,21 @@ export const SurveyResponseDetailPage = () => {
           : " (all data)";
       toast.success(`Export initiated successfully${dateRangeText}`);
 
-      // Close the modal
+      // Close the modal and clear selected columns after successful confirmation
       setShowExportModal(false);
+      // Not resetting selectedTabularColumns here as they might be used for next export
     } catch (error) {
       console.error("❌ Error exporting tabular data:", error);
       toast.error("Failed to export survey data");
     }
-  }, [surveyId, exportFromDate, exportToDate, tabularCurrentFilters]);
+  }, [
+    surveyId,
+    exportFromDate,
+    exportToDate,
+    tabularCurrentFilters,
+    selectedTabularColumns,
+    surveyData,
+  ]);
 
   const handleApplyFilters = useCallback(async () => {
     if (activeFilterTab === "summary") {
@@ -3947,7 +4051,7 @@ export const SurveyResponseDetailPage = () => {
         ">${defaultLogo}</div>
       </div>
       <div style="text-align: center; padding: 0 0 15px 0;">
-        <h1 style="font-size: 24px; font-weight: 600; color: #1f2937; margin: 0;">${surveyData.survey_name || 'Survey Report'}</h1>
+        <h1 style="font-size: 24px; font-weight: 600; color: #1f2937; margin: 0;">${surveyData.survey_name || "Survey Report"}</h1>
       </div>
     `;
 
@@ -5003,7 +5107,9 @@ export const SurveyResponseDetailPage = () => {
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
-                        <span className="header-text">Overall Question Response Distribution</span>
+                        <span className="header-text">
+                          Overall Question Response Distribution
+                        </span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -5118,11 +5224,11 @@ export const SurveyResponseDetailPage = () => {
                       const positivePercent =
                         typeof question.positive_percent === "number"
                           ? question.positive_percent
-                          : question.positive_responses ?? null;
+                          : (question.positive_responses ?? null);
                       const negativePercent =
                         typeof question.negative_percent === "number"
                           ? question.negative_percent
-                          : question.negative_responses ?? null;
+                          : (question.negative_responses ?? null);
                       return (
                         <Card
                           key={question.question_id}
@@ -5134,10 +5240,11 @@ export const SurveyResponseDetailPage = () => {
                                 <HelpCircle className="h-4 w-4 text-[#C72030]" />
                               </div>
                               <span className="text-black font-semibold mr-2 header-text">
-                                Q{questionNumber}. 
+                                Q{questionNumber}.
                               </span>
-                              <span className="header-text">{question.question}</span>
-                              
+                              <span className="header-text">
+                                {question.question}
+                              </span>
                             </CardTitle>
                           </CardHeader>
                           {/* <div className="flex flex-row items-center justify-end gap-6 mb-4 mr-10">
@@ -5166,25 +5273,68 @@ export const SurveyResponseDetailPage = () => {
                             <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
                               <div className="relative text-center py-6">
                                 <div className="absolute top-6 right-8 flex flex-col gap-3">
-                                  <div className="flex items-center gap-3" style={{ minWidth: '150px' }}>
+                                  <div
+                                    className="flex items-center gap-3"
+                                    style={{ minWidth: "150px" }}
+                                  >
                                     <div className="flex items-center gap-2">
-                                      <span className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5]" style={{ flexShrink: 0 }}></span>
-                                      <span className="text-gray-600 text-sm" style={{ whiteSpace: 'nowrap' }}>Positive:</span>
+                                      <span
+                                        className="inline-block w-4 h-4 rounded-full bg-[#A9B7C5]"
+                                        style={{ flexShrink: 0 }}
+                                      ></span>
+                                      <span
+                                        className="text-gray-600 text-sm"
+                                        style={{ whiteSpace: "nowrap" }}
+                                      >
+                                        Positive:
+                                      </span>
                                     </div>
-                                    <span className="text-gray-600 text-sm font-medium" style={{ marginLeft: 'auto' }}>{positivePercent != null ? positivePercent : 0}%</span>
+                                    <span
+                                      className="text-gray-600 text-sm font-medium"
+                                      style={{ marginLeft: "auto" }}
+                                    >
+                                      {positivePercent != null
+                                        ? positivePercent
+                                        : 0}
+                                      %
+                                    </span>
                                   </div>
-                                  <div className="flex items-center gap-3" style={{ minWidth: '150px' }}>
+                                  <div
+                                    className="flex items-center gap-3"
+                                    style={{ minWidth: "150px" }}
+                                  >
                                     <div className="flex items-center gap-2">
-                                      <span className="inline-block w-4 h-4 rounded-full bg-[#C4B99D]" style={{ flexShrink: 0 }}></span>
-                                      <span className="text-gray-600 text-sm" style={{ whiteSpace: 'nowrap' }}>Negative:</span>
+                                      <span
+                                        className="inline-block w-4 h-4 rounded-full bg-[#C4B99D]"
+                                        style={{ flexShrink: 0 }}
+                                      ></span>
+                                      <span
+                                        className="text-gray-600 text-sm"
+                                        style={{ whiteSpace: "nowrap" }}
+                                      >
+                                        Negative:
+                                      </span>
                                     </div>
-                                    <span className="text-gray-600 text-sm font-medium" style={{ marginLeft: 'auto' }}>{negativePercent != null ? negativePercent : 0}%</span>
+                                    <span
+                                      className="text-gray-600 text-sm font-medium"
+                                      style={{ marginLeft: "auto" }}
+                                    >
+                                      {negativePercent != null
+                                        ? negativePercent
+                                        : 0}
+                                      %
+                                    </span>
                                   </div>
                                 </div>
 
-
                                 {displayData.length > 0 ? (
-                                  <div className="flex justify-center items-center gap-8 mb-4" style={{ marginTop: '60px', paddingTop: '20px' }}>
+                                  <div
+                                    className="flex justify-center items-center gap-8 mb-4"
+                                    style={{
+                                      marginTop: "60px",
+                                      paddingTop: "20px",
+                                    }}
+                                  >
                                     {displayData.map((item, index) => (
                                       <div
                                         key={index}
@@ -5236,11 +5386,11 @@ export const SurveyResponseDetailPage = () => {
                       const positivePercent =
                         typeof question.positive_percent === "number"
                           ? question.positive_percent
-                          : question.positive_responses ?? null;
+                          : (question.positive_responses ?? null);
                       const negativePercent =
                         typeof question.negative_percent === "number"
                           ? question.negative_percent
-                          : question.negative_responses ?? null;
+                          : (question.negative_responses ?? null);
 
                       return (
                         <Card
@@ -5256,7 +5406,7 @@ export const SurveyResponseDetailPage = () => {
                                 Q{questionNumber}.
                               </span>
                               <span className="header-text">
-                              {question.question}
+                                {question.question}
                               </span>
                             </CardTitle>
                           </CardHeader>
@@ -5294,13 +5444,14 @@ export const SurveyResponseDetailPage = () => {
                               positivePercent={positivePercent}
                               negativePercent={negativePercent}
                               dateRange={{
-                                startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                                startDate: new Date(
+                                  Date.now() - 30 * 24 * 60 * 60 * 1000
+                                ),
                                 endDate: new Date(),
                               }}
                               xAxisLabel="Response Type"
                               yAxisLabel="No. of Responses"
                             />
-
                           </CardContent>
                         </Card>
                       );
@@ -5352,7 +5503,9 @@ export const SurveyResponseDetailPage = () => {
                               <span className="text-black font-semibold mr-2 header-text">
                                 Q{questionNumber}.
                               </span>
-                              <span className="header-text">{question.question}</span>
+                              <span className="header-text">
+                                {question.question}
+                              </span>
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
@@ -5411,7 +5564,7 @@ export const SurveyResponseDetailPage = () => {
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
                         <span className="header-text">
-                        Response by Category
+                          Response by Category
                         </span>
                       </CardTitle>
                     </CardHeader>
@@ -5518,7 +5671,9 @@ export const SurveyResponseDetailPage = () => {
                         <div className="w-9 h-9 bg-[#C7203014] text-white rounded-full flex items-center justify-center mr-3">
                           <HelpCircle className="h-4 w-4 text-[#C72030]" />
                         </div>
-                        <span className="header-text">Customer Satisfaction Score.</span>
+                        <span className="header-text">
+                          Customer Satisfaction Score.
+                        </span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -6029,16 +6184,9 @@ export const SurveyResponseDetailPage = () => {
                     className="border border-gray-200 rounded-lg"
                     loading={isLoading}
                     onFilterClick={handleFilterClick}
-                    rightActions={
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleTabularExport}
-                        className="flex items-center gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    }
+                    rightActions={null}
+                    enableExport={true}
+                    handleExport={handleTabularExport}
                     getItemId={(item: TabularResponseData) => item.id}
                     renderCell={(
                       item: TabularResponseData,
@@ -6292,23 +6440,35 @@ export const SurveyResponseDetailPage = () => {
                       );
                     }
                     // Handle escalation columns using the helper functions
-                    if (columnKey === 'response_tat') {
-                      return formatEscalationMinutes(item.next_response_escalation);
+                    if (columnKey === "response_tat") {
+                      return formatEscalationMinutes(
+                        item.next_response_escalation
+                      );
                     }
-                    if (columnKey === 'response_time') {
-                      return formatEscalationTime(item.next_response_escalation);
+                    if (columnKey === "response_time") {
+                      return formatEscalationTime(
+                        item.next_response_escalation
+                      );
                     }
-                    if (columnKey === 'escalation_response_name') {
-                      return formatEscalationLevel(item.next_response_escalation);
+                    if (columnKey === "escalation_response_name") {
+                      return formatEscalationLevel(
+                        item.next_response_escalation
+                      );
                     }
-                    if (columnKey === 'resolution_tat') {
-                      return formatEscalationMinutes(item.next_resolution_escalation);
+                    if (columnKey === "resolution_tat") {
+                      return formatEscalationMinutes(
+                        item.next_resolution_escalation
+                      );
                     }
-                    if (columnKey === 'resolution_time') {
-                      return formatEscalationTime(item.next_resolution_escalation);
+                    if (columnKey === "resolution_time") {
+                      return formatEscalationTime(
+                        item.next_resolution_escalation
+                      );
                     }
-                    if (columnKey === 'escalation_resolution_name') {
-                      return formatEscalationLevel(item.next_resolution_escalation);
+                    if (columnKey === "escalation_resolution_name") {
+                      return formatEscalationLevel(
+                        item.next_resolution_escalation
+                      );
                     }
                     // Handle null/undefined values for new columns
                     const value = item[columnKey as keyof TicketData];

@@ -40,12 +40,13 @@ export const cardsTitle = [
 ];
 
 const ProjectManagementKanban = () => {
-    const { setCurrentSection } = useLayout();
+    const { setCurrentSection, setIsSidebarCollapsed } = useLayout();
 
     const view = localStorage.getItem("selectedView");
 
     useEffect(() => {
         setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
+        setIsSidebarCollapsed(true);
     }, [setCurrentSection]);
 
     const { data } = useAppSelector((state) => state.fetchKanbanProjects);
