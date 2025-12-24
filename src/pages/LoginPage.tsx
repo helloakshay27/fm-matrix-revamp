@@ -361,13 +361,25 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           ? navigate("/safety/m-safe/internal")
           : navigate(from, { replace: true });
         // Special routing for user ID 189005
-        if (response.id === 189005) {
+
+        const userType = localStorage.getItem("userType");
+        const isLocalhost = hostname.includes('localhost') || hostname.includes('lockated.gophygital.work');
+
+        if (userType && isLocalhost) {
+          // Navigate based on userType
+          if (userType === "pms_organization_admin") {
+            navigate("/admin/dashboard", { replace: true });
+          } else if (userType === "pms_occupant") {
+            navigate("/vas/projects", { replace: true });
+          }
+        } else if (response.id === 189005) {
           navigate("/dashboard");
         } else if (isViSite) {
           navigate("/safety/m-safe/internal");
         } else {
           navigate(from, { replace: true });
         }
+
       }, 500);
     } catch (error: any) {
       console.error("Login error:", error);

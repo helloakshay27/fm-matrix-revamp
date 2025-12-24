@@ -4,7 +4,7 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import { CalendarIcon, X } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import axios from "axios";
-import { fetchProjectById, fetchProjects, removeTagFromProject, removeUserFromProject } from "@/store/slices/projectManagementSlice";
+import { fetchKanbanProjects, fetchProjectById, fetchProjects, removeTagFromProject, removeUserFromProject } from "@/store/slices/projectManagementSlice";
 import { fetchMilestoneById, fetchMilestones } from "@/store/slices/projectMilestoneSlice";
 import { createProjectTask, editProjectTask, fetchProjectTasks, fetchTargetDateTasks, fetchUserAvailability } from "@/store/slices/projectTasksSlice";
 import { FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
@@ -93,8 +93,8 @@ const TaskForm = ({
 
     const getProjects = async () => {
         try {
-            const response = await dispatch(fetchProjects({ baseUrl, token })).unwrap();
-            setProjects(response);
+            const response = await dispatch(fetchKanbanProjects({ baseUrl, token })).unwrap();
+            setProjects(response.project_managements);
         } catch (error) {
             console.log(error);
         }
@@ -102,7 +102,7 @@ const TaskForm = ({
 
     const fetchShifts = async (id) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/shifts/get_shifts.json?user_id=${id}`, {
+            const response = await axios.get(`https://${baseUrl}/pms/admin/user_shifts.json?user_id=${id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -302,6 +302,7 @@ const TaskForm = ({
                             InputProps={{ readOnly: true }}
                             variant="outlined"
                             size="small"
+                            disabled
                             sx={fieldStyles}
                         />
                     </div>
@@ -313,6 +314,7 @@ const TaskForm = ({
                             InputProps={{ readOnly: true }}
                             variant="outlined"
                             size="small"
+                            disabled
                             sx={fieldStyles}
                         />
                     </div>
@@ -334,11 +336,11 @@ const TaskForm = ({
                                     <em>Select Project</em>
                                 </MenuItem>
                                 {
-                                    projects.map((project) => (
+                                    (projects && projects.length > 0) ? projects?.map((project) => (
                                         <MenuItem key={project.id} value={project.id}>
                                             {project.title}
                                         </MenuItem>
-                                    ))
+                                    )) : <MenuItem disabled>No Projects Available</MenuItem>
                                 }
                             </Select>
                         </FormControl>
@@ -477,37 +479,6 @@ const TaskForm = ({
 
             <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
-                    <label className="block text-xs text-gray-700 mb-1">Start Date</label>
-                    <button
-                        type="button"
-                        className="w-full border outline-none border-gray-300 px-3 py-2 text-[13px] flex items-center gap-2 text-gray-400 rounded"
-                        onClick={() => {
-                            if (showDatePicker) {
-                                setShowDatePicker(false);
-                            }
-                            setShowStartDatePicker(!showStartDatePicker);
-                        }}
-                        ref={startDateRef}
-                    >
-                        {startDate ? (
-                            <div className="text-black flex items-center justify-between w-full">
-                                <CalendarIcon className="w-4 h-4" />
-                                <div>
-                                    Start Date : {" "}
-                                    {startDate?.date?.toString().padStart(2, "0")}{" "}
-                                    {monthNames[startDate.month]}
-                                </div>
-                                <X className="w-4 h-4" onClick={(e) => { e.preventDefault(); setStartDate(null); }} />
-                            </div>
-                        ) : (
-                            <>
-                                <CalendarIcon className="w-4 h-4" /> Select Start Date
-                            </>
-                        )}
-                    </button>
-                </div>
-
-                <div>
                     <label className="block text-xs text-gray-700 mb-1">Target Date *</label>
                     <button
                         type="button"
@@ -537,14 +508,44 @@ const TaskForm = ({
                         )}
                     </button>
                 </div>
+                <div>
+                    <label className="block text-xs text-gray-700 mb-1">Start Date</label>
+                    <button
+                        type="button"
+                        className="w-full border outline-none border-gray-300 px-3 py-2 text-[13px] flex items-center gap-2 text-gray-400 rounded"
+                        onClick={() => {
+                            if (showDatePicker) {
+                                setShowDatePicker(false);
+                            }
+                            setShowStartDatePicker(!showStartDatePicker);
+                        }}
+                        ref={startDateRef}
+                    >
+                        {startDate ? (
+                            <div className="text-black flex items-center justify-between w-full">
+                                <CalendarIcon className="w-4 h-4" />
+                                <div>
+                                    Start Date : {" "}
+                                    {startDate?.date?.toString().padStart(2, "0")}{" "}
+                                    {monthNames[startDate.month]}
+                                </div>
+                                <X className="w-4 h-4" onClick={(e) => { e.preventDefault(); setStartDate(null); }} />
+                            </div>
+                        ) : (
+                            <>
+                                <CalendarIcon className="w-4 h-4" /> Select Start Date
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
 
             <div className="mb-4">
                 <label className="block text-xs text-gray-700 mb-2">
-                    Duration <span className="text-red-600">*</span>
+                    Efforts Duration <span className="text-red-600">*</span>
                 </label>
                 <DurationPicker
-                    value={taskDuration}
+                    dateWiseHours={[]}
                     onChange={setTaskDuration}
                     onDateWiseHoursChange={setDateWiseHours}
                     startDate={startDate}
@@ -675,7 +676,7 @@ const TaskForm = ({
     );
 };
 
-const ProjectTaskCreateModal = ({ isEdit, onCloseModal }) => {
+const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%] mx-auto" }) => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
     const { id, mid, tid } = useParams();
@@ -722,7 +723,7 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal }) => {
 
     const getTags = async () => {
         try {
-            const response = await dispatch(fetchProjectsTags({ baseUrl, token })).unwrap();
+            const response = await dispatch(fetchProjectsTags()).unwrap();
             setTags(response);
         } catch (error) {
             console.log(error)
@@ -942,25 +943,18 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal }) => {
         const payload = createTaskPayload(formData);
 
         try {
-            const resultAction = isEdit
-                ? await dispatch(editProjectTask({ baseUrl, token, id: editId, data: payload }))
-                : await dispatch(createProjectTask({ baseUrl, token, data: payload }));
+            await dispatch(createProjectTask({ baseUrl, token, data: payload })).unwrap();
 
-            if (
-                (isEdit && editProjectTask.fulfilled.match(resultAction)) ||
-                (!isEdit && createProjectTask.fulfilled.match(resultAction))
-            ) {
-                toast.dismiss();
-                toast.success(
-                    isEdit ? "Task updated successfully." : "Task created successfully."
-                );
-                window.location.reload();
-            } else {
-                toast.error(isEdit ? "Task update failed." : "Task creation failed.");
-            }
+            toast.dismiss();
+            toast.success('Task created successfully');
+            window.location.reload();
         } catch (error) {
-            console.error(`Error ${isEdit ? "updating" : "creating"} task:`, error);
-            toast.error(`Error ${isEdit ? "updating" : "creating"} task.`);
+            console.log(error)
+            const errors = error.response.data;
+
+            Object.keys(errors).forEach((key) => {
+                toast.error(`${key} ${errors[key][0]}`);
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -973,7 +967,7 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal }) => {
         >
             <div
                 id="addTask"
-                className="max-w-[95%] mx-auto pr-3"
+                className={`pr-3 ${className}`}
             >
                 {savedTasks.map((task) => (
                     <TaskForm

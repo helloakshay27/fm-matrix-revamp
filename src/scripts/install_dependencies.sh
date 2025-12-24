@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /var/www/html/uat/fm-matrix-revamp
+cd /var/www/html/development/fm-matrix-revamp
 sudo git pull 
 
 echo "---- Installing Dependencies ----"

@@ -575,6 +575,7 @@ export const EditAssetDetailsPage = () => {
       room_id: "",
     },
     amc_detail: {
+      id: "",
       supplier_id: "",
       amc_start_date: "",
       amc_end_date: "",
@@ -1140,8 +1141,16 @@ export const EditAssetDetailsPage = () => {
   // Track existing attachment IDs that user marked for deletion
   const [attachmentsToDestroy, setAttachmentsToDestroy] = useState<{
     asset_image: number[];
+    asset_manuals: number[];
+    asset_other_uploads: number[];
+    asset_insurances: number[];
+    asset_purchases: number[];
   }>({
     asset_image: [],
+    asset_manuals: [],
+    asset_other_uploads: [],
+    asset_insurances: [],
+    asset_purchases: [],
   });
 
   const markExistingAttachmentForDeletion = (
@@ -1154,10 +1163,20 @@ export const EditAssetDetailsPage = () => {
     }));
 
     // Remove from visible existingAttachments so the UI updates immediately
-    setExistingAttachments((prev: any) => ({
-      ...prev,
-      [categoryKey === "asset_image" ? "asset_image" : categoryKey]: null,
-    }));
+    setExistingAttachments((prev: any) => {
+      if (categoryKey === "asset_image") {
+        return {
+          ...prev,
+          asset_image: null,
+        };
+      }
+      return {
+        ...prev,
+        [categoryKey]: (prev[categoryKey] || []).filter(
+          (attachment: any) => attachment.id !== id
+        ),
+      };
+    });
   };
 
   const [selectedAssetCategory, setSelectedAssetCategory] = useState("");
@@ -1220,13 +1239,19 @@ export const EditAssetDetailsPage = () => {
       const nextExtra: Record<string, ExtraFormField> = {};
       let categoryFromExtra = "";
 
+      const customFieldsUpdate: Record<string, any[]> = {};
+      const itAssetsCustomFieldsUpdate: Record<string, any[]> = {};
+
       attributes.forEach((attr: any) => {
         const key = attr?.field_name;
         if (!key) return;
 
         const value = attr?.field_value ?? "";
-        const groupKey = attr?.group_name || ""; // e.g. basicIdentification
+        const groupKey = attr?.group_name || ""; // e.g. basicIdentification, assetDetails
         const description = attr?.field_description || "";
+
+        // Format label from field_name if description is missing
+        const label = description || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
         nextExtra[key] = {
           value,
@@ -1234,6 +1259,40 @@ export const EditAssetDetailsPage = () => {
           groupType: groupKey,
           fieldDescription: description,
         };
+
+        // Map to customFields state for dynamic rendering
+        // We include specific keys that we know are used for dynamic sections
+        if (groupKey) {
+          // Check if it belongs to IT Assets special sections
+          if (groupKey === "system_details") {
+            if (!itAssetsCustomFieldsUpdate["System Details"]) itAssetsCustomFieldsUpdate["System Details"] = [];
+            itAssetsCustomFieldsUpdate["System Details"].push({
+              id: attr.id,
+              name: label,
+              value: value
+            });
+            // Also add to customFields for payload consistency if needed
+            if (!customFieldsUpdate["system_details"]) customFieldsUpdate["system_details"] = [];
+            customFieldsUpdate["system_details"].push({ id: attr.id, name: label, value: value });
+          } else if (groupKey === "hardware") {
+            if (!itAssetsCustomFieldsUpdate["Hardware Details"]) itAssetsCustomFieldsUpdate["Hardware Details"] = [];
+            itAssetsCustomFieldsUpdate["Hardware Details"].push({
+              id: attr.id,
+              name: label,
+              value: value
+            });
+            if (!customFieldsUpdate["hardware"]) customFieldsUpdate["hardware"] = [];
+            customFieldsUpdate["hardware"].push({ id: attr.id, name: label, value: value });
+          } else {
+            // Generic sections like assetDetails, buildingMiscellaneous, etc.
+            if (!customFieldsUpdate[groupKey]) customFieldsUpdate[groupKey] = [];
+            customFieldsUpdate[groupKey].push({
+              id: attr.id,
+              name: label,
+              value: value
+            });
+          }
+        }
 
         if (description === "Asset Category" && value) {
           categoryFromExtra = value;
@@ -1249,6 +1308,33 @@ export const EditAssetDetailsPage = () => {
           setFormData((prev) => ({ ...prev, warranty_period: value }));
         }
       });
+
+      // Update customFields state
+      if (Object.keys(customFieldsUpdate).length > 0) {
+        setCustomFields((prev) => {
+          const next = { ...prev };
+          Object.keys(customFieldsUpdate).forEach((section) => {
+            // We append to existing if we want, or replace. 
+            // Since this is prefill (edit mode), we should probably replace or ensure we don't duplicate.
+            // But since 'prev' might be empty initial state, replacing is safer for the prefilled data.
+            // However, we must be careful not to wipe out empty arrays if we only update some sections.
+            // Here we only update sections that have data.
+            next[section] = customFieldsUpdate[section];
+          });
+          return next;
+        });
+      }
+
+      // Update itAssetsCustomFields state
+      if (Object.keys(itAssetsCustomFieldsUpdate).length > 0) {
+        setItAssetsCustomFields((prev) => {
+          const next = { ...prev };
+          Object.keys(itAssetsCustomFieldsUpdate).forEach((section) => {
+            next[section] = itAssetsCustomFieldsUpdate[section];
+          });
+          return next;
+        });
+      }
 
       if (Object.keys(nextExtra).length > 0) {
         setExtraFormFields((prev) => ({ ...prev, ...nextExtra }));
@@ -1621,6 +1707,7 @@ export const EditAssetDetailsPage = () => {
           ...prev,
           amc_detail: {
             ...prev.amc_detail,
+            id: amc.id ? String(amc.id) : "",
             amc_cost: amc.amc_cost ? String(amc.amc_cost) : "",
             supplier_id: amc.supplier_id ? String(amc.supplier_id) : "",
             amc_start_date: amc.amc_start_date
@@ -1634,7 +1721,9 @@ export const EditAssetDetailsPage = () => {
             no_of_visits: amc.no_of_visits ? String(amc.no_of_visits) : "",
             visit_frequency: amc.visit_frequency
               ? String(amc.visit_frequency)
-              : "",
+              : amc.amc_frequency
+                ? String(amc.amc_frequency)
+                : "",
             supplier_name: amc.supplier_name ? String(amc.supplier_name) : "",
           },
         }));
@@ -2745,33 +2834,8 @@ export const EditAssetDetailsPage = () => {
       });
     });
 
-    // IT Assets custom fields - only include fields with non-empty values and changes only
-    Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
-      (itAssetsCustomFields[sectionKey] || []).forEach((field) => {
-        // Only add field if it has a non-empty value
-        if (!isEmpty(field.value)) {
-          console.log(
-            `Including IT assets field: ${field.name} = ${field.value}`
-          );
-          const original = findOriginal(field.name, sectionKey);
-          const originalValue = original?.value ?? undefined;
-          if (String(field.value ?? "") !== String(originalValue ?? "")) {
-            addOrReplace({
-              ...(original?.id && { id: original.id }),
-              field_name: field.name,
-              field_value: field.value,
-              group_name: sectionKey,
-              field_description: "custom_field",
-              _destroy: false,
-            });
-          }
-        } else {
-          console.log(
-            `Skipping empty IT assets field: ${field.name} (value: ${field.value})`
-          );
-        }
-      });
-    });
+    // IT Assets custom fields are already synchronized with customFields, 
+    // so we don't need to iterate over them separately to avoid duplicates.
 
     // Standard extra fields (dynamic) - with proper date formatting; include changes only
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
@@ -3090,7 +3154,7 @@ export const EditAssetDetailsPage = () => {
     setUsersLoading(true);
     try {
       const response = await apiClient.get(
-        "/pms/users/get_escalate_to_users.json"
+        "/pms/users/get_escalate_to_users.json?type=Asset"
       );
       setUsers(response.data?.users || []);
     } catch (error) {
@@ -3428,25 +3492,25 @@ export const EditAssetDetailsPage = () => {
       Land: {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: [],
+        // warrantyFields: [],
         categorySpecificFields: ["land_type", "location", "area"],
       },
       Building: {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: [],
+        // warrantyFields: [],
         categorySpecificFields: ["building_type", "location", "built_up_area"],
       },
       "Leasehold Improvement": {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: [],
+        // warrantyFields: [],
         categorySpecificFields: ["improvement_description", "location_site"],
       },
       Vehicle: {
         ...baseValidationRules,
         locationFields: [],
-        warrantyFields: ["warranty_expiry"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [
           "vehicle_type",
           "make_model",
@@ -3455,32 +3519,32 @@ export const EditAssetDetailsPage = () => {
       },
       "Furniture & Fixtures": {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        locationFields: ["site"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "IT Equipment": {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        locationFields: ["site"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "Machinery & Equipment": {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        locationFields: ["site"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "Tools & Instruments": {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        locationFields: ["site"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       Meter: {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
-        warrantyFields: ["warranty_expiry"],
+        locationFields: ["site"],
+        // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
     };
@@ -3605,16 +3669,15 @@ export const EditAssetDetailsPage = () => {
           "Registration Number",
           "Purchase Details",
           "Commissioning Date",
-          "Warranty Expiry",
         ],
       },
       "Furniture & Fixtures": {
         description:
-          "Furniture assets require basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) as they are fixed to specific locations.",
+          "Furniture assets require basic identification, group selection, purchase details, warranty, and location information (Site minimum) as they are fixed to specific locations.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -3622,11 +3685,11 @@ export const EditAssetDetailsPage = () => {
       },
       "IT Equipment": {
         description:
-          "IT Equipment requires basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for proper asset tracking.",
+          "IT Equipment requires basic identification, group selection, purchase details, warranty, and location information (Site minimum) for proper asset tracking.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -3634,11 +3697,11 @@ export const EditAssetDetailsPage = () => {
       },
       "Machinery & Equipment": {
         description:
-          "Machinery requires basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for maintenance and tracking.",
+          "Machinery requires basic identification, group selection, purchase details, warranty, and location information (Site minimum) for maintenance and tracking.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -3646,11 +3709,11 @@ export const EditAssetDetailsPage = () => {
       },
       "Tools & Instruments": {
         description:
-          "Tools require basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for inventory management.",
+          "Tools require basic identification, group selection, purchase details, warranty, and location information (Site minimum) for inventory management.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -3658,11 +3721,11 @@ export const EditAssetDetailsPage = () => {
       },
       Meter: {
         description:
-          "Meter assets require basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for utility monitoring and maintenance.",
+          "Meter assets require basic identification, group selection, purchase details, warranty, and location information (Site minimum) for utility monitoring and maintenance.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -3730,7 +3793,7 @@ export const EditAssetDetailsPage = () => {
       Land: {
         ...baseValidationRules,
         locationFields: [], // Land doesn't require location selection as it IS a location
-        warrantyFields: [], // Land typically doesn't have warranty
+        // warrantyFields: [], // Land typically doesn't have warranty
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Land
           // 'land_type', // From Basic Identification (required: true)
@@ -3741,7 +3804,7 @@ export const EditAssetDetailsPage = () => {
       Building: {
         ...baseValidationRules,
         locationFields: [], // Buildings are locations themselves
-        warrantyFields: [], // Buildings typically don't have warranty expiry
+        // warrantyFields: [], // Buildings typically don't have warranty expiry
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Building
           "building_type", // From Basic Identification (required: true)
@@ -3752,7 +3815,7 @@ export const EditAssetDetailsPage = () => {
       "Leasehold Improvement": {
         ...baseValidationRules,
         locationFields: [], // Improvements are tied to specific leased properties
-        warrantyFields: [], // Improvements typically don't have warranty expiry
+        // warrantyFields: [], // Improvements typically don't have warranty expiry
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Leasehold Improvement
           "improvement_description", // From Basic Identification (required: true)
@@ -3762,7 +3825,7 @@ export const EditAssetDetailsPage = () => {
       Vehicle: {
         ...baseValidationRules,
         locationFields: [], // Vehicles are mobile, don't require fixed location
-        warrantyFields: ["warranty_expiry"], // Vehicles typically have warranty
+        // warrantyFields: [], // Warranty is optional - only required if user selects "Under Warranty: Yes"
         categorySpecificFields: [
           // From assetFieldsConfig - required fields for Vehicle
           "vehicle_type", // From Basic Identification (required: true)
@@ -3772,32 +3835,32 @@ export const EditAssetDetailsPage = () => {
       },
       "Furniture & Fixtures": {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // Furniture needs location
-        warrantyFields: ["warranty_expiry"], // Furniture typically has warranty
+        locationFields: ["site"], // Furniture needs location
+        // warrantyFields: ["warranty_expiry"], // Furniture typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "IT Equipment": {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // IT Equipment needs location
-        warrantyFields: ["warranty_expiry"], // IT Equipment typically has warranty
+        locationFields: ["site"], // IT Equipment needs location
+        // warrantyFields: ["warranty_expiry"], // IT Equipment typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "Machinery & Equipment": {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // Machinery needs location
-        warrantyFields: ["warranty_expiry"], // Machinery typically has warranty
+        locationFields: ["site"], // Machinery needs location
+        // warrantyFields: ["warranty_expiry"], // Machinery typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "Tools & Instruments": {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // Tools need location
-        warrantyFields: ["warranty_expiry"], // Tools typically have warranty
+        locationFields: ["site"], // Tools need location
+        // warrantyFields: ["warranty_expiry"], // Tools typically have warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       Meter: {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // Meters need location
-        warrantyFields: ["warranty_expiry"], // Meters typically have warranty
+        locationFields: ["site"], // Meters need location
+        // warrantyFields: ["warranty_expiry"], // Meters typically have warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
     };
@@ -4050,35 +4113,9 @@ export const EditAssetDetailsPage = () => {
       parseFloat(formData.purchase_cost) > 0 &&
       categoriesWithUsefulLife.includes(selectedAssetCategory)
     ) {
-      if (!formData.useful_life) {
-        toast.error("Useful Life Required", {
-          description:
-            "Please enter the useful life for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Useful Life is required for Depreciation"];
-      }
-
-      if (!formData.salvage_value) {
-        toast.error("Salvage Value Required", {
-          description:
-            "Please enter the salvage value for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Salvage Value is required for Depreciation"];
-      }
-
-      if (!formData.depreciation_rate) {
-        toast.error("Depreciation Rate Required", {
-          description:
-            "Please enter the depreciation rate for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Depreciation Rate is required for Depreciation"];
-      }
-
-      // Validate Purchase Cost is not equal to Salvage Value
+      // Validate Purchase Cost is not equal to Salvage Value (Only if salvage_value is provided)
       if (
+        formData.salvage_value &&
         parseFloat(formData.purchase_cost) ===
         parseFloat(formData.salvage_value)
       ) {
@@ -4089,8 +4126,9 @@ export const EditAssetDetailsPage = () => {
         return ["Purchase Cost cannot be equal to Salvage Value"];
       }
 
-      // Validate Salvage Value is not greater than Purchase Cost
+      // Validate Salvage Value is not greater than Purchase Cost (Only if salvage_value is provided)
       if (
+        formData.salvage_value &&
         parseFloat(formData.salvage_value) > parseFloat(formData.purchase_cost)
       ) {
         toast.error("Invalid Salvage Value", {
@@ -4136,38 +4174,38 @@ export const EditAssetDetailsPage = () => {
     //   }
     // }
 
-    if (selectedAssetCategory === "IT Equipment") {
-      // System Details required fields
-      const systemFields = [
-        { key: "os", label: "OS" },
-        { key: "memory", label: "Total Memory" },
-        { key: "processor", label: "Processor" },
-      ];
-      for (const field of systemFields) {
-        if (!itAssetDetails.system_details[field.key]) {
-          toast.error(`${field.label} Required`, {
-            description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
-            duration: 4000,
-          });
-          return [`${field.label} is required in IT ASSETS DETAILS`];
-        }
-      }
-      // Hardware Details required fields
-      const hardwareFields = [
-        { key: "model", label: "Model" },
-        { key: "serial_no", label: "Serial No." },
-        { key: "capacity", label: "Capacity" },
-      ];
-      for (const field of hardwareFields) {
-        if (!itAssetDetails.hardware[field.key]) {
-          toast.error(`${field.label} Required`, {
-            description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
-            duration: 4000,
-          });
-          return [`${field.label} is required in IT ASSETS DETAILS`];
-        }
-      }
-    }
+    // if (selectedAssetCategory === "IT Equipment") {
+    //   // System Details required fields
+    //   const systemFields = [
+    //     { key: "os", label: "OS" },
+    //     { key: "memory", label: "Total Memory" },
+    //     { key: "processor", label: "Processor" },
+    //   ];
+    //   for (const field of systemFields) {
+    //     if (!itAssetDetails.system_details[field.key]) {
+    //       toast.error(`${field.label} Required`, {
+    //         description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
+    //         duration: 4000,
+    //       });
+    //       return [`${field.label} is required in IT ASSETS DETAILS`];
+    //     }
+    //   }
+    //   // Hardware Details required fields
+    //   const hardwareFields = [
+    //     { key: "model", label: "Model" },
+    //     { key: "serial_no", label: "Serial No." },
+    //     { key: "capacity", label: "Capacity" },
+    //   ];
+    //   for (const field of hardwareFields) {
+    //     if (!itAssetDetails.hardware[field.key]) {
+    //       toast.error(`${field.label} Required`, {
+    //         description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
+    //         duration: 4000,
+    //       });
+    //       return [`${field.label} is required in IT ASSETS DETAILS`];
+    //     }
+    //   }
+    // }
 
     if (
       meterDetailsToggle &&
@@ -4304,9 +4342,18 @@ export const EditAssetDetailsPage = () => {
       duration: 2000,
     });
 
+    const removedDocumentIds = [
+      ...(attachmentsToDestroy.asset_image || []),
+      ...(attachmentsToDestroy.asset_manuals || []),
+      ...(attachmentsToDestroy.asset_other_uploads || []),
+      ...(attachmentsToDestroy.asset_insurances || []),
+      ...(attachmentsToDestroy.asset_purchases || []),
+    ];
+
     // Build the complete payload
     const payload = {
       pms_asset: {
+        removed_document_ids: removedDocumentIds,
         // Basic asset fields
         name: formData.name,
         asset_number: formData.asset_number,
@@ -4411,6 +4458,14 @@ export const EditAssetDetailsPage = () => {
         // Nested objects
         asset_move_to: formData.asset_move_to,
         amc_detail: formData.amc_detail,
+        asset_amcs: formData.amc_detail.id || formData.amc_detail.supplier_id || formData.amc_detail.amc_cost || formData.amc_detail.amc_start_date
+          ? [
+            {
+              ...formData.amc_detail,
+              id: formData.amc_detail.id || undefined,
+            },
+          ]
+          : [],
 
         // IT Asset custom fields (as nested object)
         custom_fields: buildCustomFieldsPayload(),
@@ -4510,6 +4565,7 @@ export const EditAssetDetailsPage = () => {
       Object.entries(payload.pms_asset).forEach(([key, value]) => {
         if (
           ![
+            "removed_document_ids",
             "asset_manuals",
             "asset_insurances",
             "asset_purchases",
@@ -4519,6 +4575,7 @@ export const EditAssetDetailsPage = () => {
             "consumption_pms_asset_measures_attributes",
             "non_consumption_pms_asset_measures_attributes",
             "amc_detail",
+            "asset_amcs",
             "asset_move_to",
           ].includes(key)
         ) {
@@ -4540,8 +4597,14 @@ export const EditAssetDetailsPage = () => {
         }
       });
 
+      if (removedDocumentIds.length > 0) {
+        removedDocumentIds.forEach((id) => {
+          formDataObj.append("pms_asset[removed_document_ids][]", String(id));
+        });
+      }
+
       // Handle nested objects specially for FormData - flatten them
-      // Handle amc_detail
+      // Handle amc_detail and asset_amcs
       if (
         payload.pms_asset.amc_detail &&
         typeof payload.pms_asset.amc_detail === "object"
@@ -4560,6 +4623,27 @@ export const EditAssetDetailsPage = () => {
             }
           }
         );
+      }
+
+      // Also handle asset_amcs as nested attributes for Rails compatibility
+      if (
+        payload.pms_asset.asset_amcs &&
+        Array.isArray(payload.pms_asset.asset_amcs)
+      ) {
+        payload.pms_asset.asset_amcs.forEach((amc, index) => {
+          Object.entries(amc).forEach(([fieldKey, fieldValue]) => {
+            if (
+              fieldValue !== null &&
+              fieldValue !== undefined &&
+              fieldValue !== ""
+            ) {
+              formDataObj.append(
+                `pms_asset[asset_amcs_attributes][${index}][${fieldKey}]`,
+                String(fieldValue)
+              );
+            }
+          });
+        });
       }
 
       // Handle asset_move_to
@@ -4913,9 +4997,18 @@ export const EditAssetDetailsPage = () => {
       description: "All required fields are filled. Creating asset...",
       duration: 2000,
     });
+    const removedDocumentIds = [
+      ...(attachmentsToDestroy.asset_image || []),
+      ...(attachmentsToDestroy.asset_manuals || []),
+      ...(attachmentsToDestroy.asset_other_uploads || []),
+      ...(attachmentsToDestroy.asset_insurances || []),
+      ...(attachmentsToDestroy.asset_purchases || []),
+    ];
+
     // Build the complete payload
     const payload = {
       pms_asset: {
+        removed_document_ids: removedDocumentIds,
         // Basic asset fields
         name: formData.name,
         asset_number: formData.asset_number,
@@ -5013,6 +5106,14 @@ export const EditAssetDetailsPage = () => {
         // Nested objects
         asset_move_to: formData.asset_move_to,
         amc_detail: formData.amc_detail,
+        asset_amcs: formData.amc_detail.id || formData.amc_detail.supplier_id || formData.amc_detail.amc_cost || formData.amc_detail.amc_start_date
+          ? [
+            {
+              ...formData.amc_detail,
+              id: formData.amc_detail.id || undefined,
+            },
+          ]
+          : [],
 
         // Asset type
         asset_type: formData.asset_type,
@@ -5095,6 +5196,7 @@ export const EditAssetDetailsPage = () => {
       Object.entries(payload.pms_asset).forEach(([key, value]) => {
         if (
           ![
+            "removed_document_ids",
             "asset_manuals",
             "asset_insurances",
             "asset_purchases",
@@ -5104,6 +5206,7 @@ export const EditAssetDetailsPage = () => {
             "consumption_pms_asset_measures_attributes",
             "non_consumption_pms_asset_measures_attributes",
             "amc_detail",
+            "asset_amcs",
             "asset_move_to",
           ].includes(key)
         ) {
@@ -5125,8 +5228,14 @@ export const EditAssetDetailsPage = () => {
         }
       });
 
+      if (removedDocumentIds.length > 0) {
+        removedDocumentIds.forEach((id) => {
+          formDataObj.append("pms_asset[removed_document_ids][]", String(id));
+        });
+      }
+
       // Handle nested objects specially for FormData - flatten them
-      // Handle amc_detail
+      // Handle amc_detail and asset_amcs
       if (
         payload.pms_asset.amc_detail &&
         typeof payload.pms_asset.amc_detail === "object"
@@ -5145,6 +5254,27 @@ export const EditAssetDetailsPage = () => {
             }
           }
         );
+      }
+
+      // Also handle asset_amcs as nested attributes for Rails compatibility
+      if (
+        payload.pms_asset.asset_amcs &&
+        Array.isArray(payload.pms_asset.asset_amcs)
+      ) {
+        payload.pms_asset.asset_amcs.forEach((amc, index) => {
+          Object.entries(amc).forEach(([fieldKey, fieldValue]) => {
+            if (
+              fieldValue !== null &&
+              fieldValue !== undefined &&
+              fieldValue !== ""
+            ) {
+              formDataObj.append(
+                `pms_asset[asset_amcs_attributes][${index}][${fieldKey}]`,
+                String(fieldValue)
+              );
+            }
+          });
+        });
       }
 
       // Handle asset_move_to
@@ -10321,6 +10451,7 @@ export const EditAssetDetailsPage = () => {
                           placeholder="Enter other utility connection"
                           variant="outlined"
                           fullWidth
+                          value={extraFormFields.other_utility_connection?.value || ""}
                           sx={{
                             "& .MuiOutlinedInput-root": {
                               height: { xs: "36px", md: "45px" },
@@ -10922,7 +11053,7 @@ export const EditAssetDetailsPage = () => {
                                 id="status-inuse"
                                 name="status"
                                 value="false"
-                                defaultChecked
+                                checked={formData.status === "in_use"}
                                 className="w-4 h-4 text-[#C72030] border-gray-300"
                                 style={{
                                   accentColor: "#C72030",
@@ -10942,6 +11073,7 @@ export const EditAssetDetailsPage = () => {
                                 id="status-breakdown"
                                 name="status"
                                 value="true"
+                                checked={formData.status === "breakdown"}
                                 className="w-4 h-4 text-[#C72030] border-gray-300"
                                 style={{
                                   accentColor: "#C72030",
@@ -11165,7 +11297,7 @@ export const EditAssetDetailsPage = () => {
                         sx={{ minWidth: 120 }}
                       >
                         <InputLabel id="building-select-label" shrink>
-                          Building<span style={{ color: "#C72030" }}>*</span>
+                          Building
                         </InputLabel>
                         <MuiSelect
                           labelId="building-select-label"
@@ -12308,7 +12440,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Purchase Cost
-                            <span style={{ color: "#C72030" }}>*</span>
+                            {/* <span style={{ color: "#C72030" }}>*</span> */}
                           </span>
                         }
                         placeholder="Enter cost"
@@ -12331,7 +12463,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Purchase Date
-                            <span style={{ color: "#C72030" }}>*</span>
+                            {/* <span style={{ color: "#C72030" }}>*</span> */}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12357,7 +12489,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Commissioning Date
-                            <span style={{ color: "#C72030" }}>*</span>
+                            {/* <span style={{ color: "#C72030" }}>*</span> */}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12380,7 +12512,7 @@ export const EditAssetDetailsPage = () => {
                         label={
                           <span>
                             Warranty Expires On
-                            <span style={{ color: "#C72030" }}>*</span>
+                            {/* <span style={{ color: "#C72030" }}>*</span> */}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12429,9 +12561,9 @@ export const EditAssetDetailsPage = () => {
                               name="underWarranty"
                               value="yes"
                               className="w-4 h-4 text-[#C72030] border-gray-300"
-                              style={{
-                                accentColor: "#C72030",
-                              }}
+                              // style={{
+                              //   accentColor: "#C72030",
+                              // }}
                               checked={underWarranty === "yes"}
                               onChange={(e) => {
                                 setUnderWarranty(e.target.value);
@@ -12449,9 +12581,9 @@ export const EditAssetDetailsPage = () => {
                               name="underWarranty"
                               value="no"
                               className="w-4 h-4 text-[#C72030] border-gray-300"
-                              style={{
-                                accentColor: "#C72030",
-                              }}
+                              // style={{
+                              //   accentColor: "#C72030",
+                              // }}
                               onChange={(e) => {
                                 setUnderWarranty(e.target.value);
                                 handleFieldChange("warranty", "No");
@@ -14362,12 +14494,44 @@ export const EditAssetDetailsPage = () => {
                                           {file.document_name}
                                         </span>
                                       </div>
-                                      <button
-                                        onClick={() => downloadAttachment(file)}
-                                        className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
-                                      >
-                                        <Download className="w-3 h-3" />
-                                      </button>
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          onClick={() => downloadAttachment(file)}
+                                          className="text-[#C72030] hover:text-[#C72030]/80 p-1 rounded"
+                                        >
+                                          <Download className="w-3 h-3" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            let categoryKey = "";
+                                            if (field.label === "Manuals Upload")
+                                              categoryKey = "asset_manuals";
+                                            else if (
+                                              field.label === "Insurance Details"
+                                            )
+                                              categoryKey = "asset_insurances";
+                                            else if (
+                                              field.label === "Purchase Invoice"
+                                            )
+                                              categoryKey = "asset_purchases";
+                                            else if (
+                                              field.label === "Other Documents"
+                                            )
+                                              categoryKey = "asset_other_uploads";
+
+                                            if (categoryKey) {
+                                              markExistingAttachmentForDeletion(
+                                                categoryKey as any,
+                                                file.id
+                                              );
+                                            }
+                                          }}
+                                          className="text-red-500 hover:text-red-700 p-1 rounded"
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </button>
+                                      </div>
                                     </div>
                                   );
                                 })}

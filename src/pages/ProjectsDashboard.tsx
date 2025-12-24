@@ -1,9 +1,15 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
-import { useAppDispatch } from "@/hooks/useAppDispatch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { createProject, fetchProjects, filterProjects } from "@/store/slices/projectManagementSlice";
-import { MenuItem, Select, TextField } from "@mui/material";
+import { changeProjectStatus, createProject, filterProjects } from "@/store/slices/projectManagementSlice";
+import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import {
   ChartNoAxesColumn,
   ChevronDown,
@@ -22,6 +28,10 @@ import { toast } from "sonner";
 import AddProjectModal from "@/components/AddProjectModal";
 import ProjectCreateModal from "@/components/ProjectCreateModal";
 import ProjectManagementKanban from "@/components/ProjectManagementKanban";
+import ProjectFilterModal from "@/components/ProjectFilterModal";
+import { useLayout } from "@/contexts/LayoutContext";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import axios from "axios";
 
 const columns: ColumnConfig[] = [
   {
@@ -74,6 +84,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "subtasks",
+    label: "Subtasks",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "issues",
     label: "Issues",
     sortable: true,
@@ -108,18 +125,15 @@ const transformedProjects = (projects: any) => {
     return {
       id: project.id,
       title: project.title,
-      status: project.status
-        ? project.status
-          .split("_")
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ")
-        : "",
+      status: project.status,
       type: project.project_type_name,
       manager: project.project_owner_name,
       milestones: project.total_milestone_count,
       milestonesCompleted: project.completed_milestone_count,
       tasks: project.total_task_management_count,
       tasksCompleted: project.completed_task_management_count,
+      subtasks: project.total_sub_task_count || 0,
+      subtasksCompleted: project.completed_sub_task_count || 0,
       issues: project.total_issues_count,
       resolvedIssues: project.completed_issues_count,
       start_date: project.start_date,
@@ -158,36 +172,73 @@ const STATUS_OPTIONS = [
   }
 ]
 
+const statusOptions = [
+  { value: "active", label: "Active" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "on_hold", label: "On Hold" },
+  { value: "completed", label: "Completed" },
+  { value: "overdue", label: "Overdue" },
+]
+
+
 export const ProjectsDashboard = () => {
+  const { setCurrentSection } = useLayout();
+
+  const view = localStorage.getItem("selectedView");
+
+  useEffect(() => {
+    setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
+  }, [setCurrentSection]);
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
+  const { teams } = useAppSelector(state => state.projectTeams)
+  const { projectTags: tags } = useAppSelector(state => state.projectTags)
+
   const [selectedFilterOption, setSelectedFilterOption] = useState("all")
   const [projects, setProjects] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [openFormDialog, setOpenFormDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState({});
   const [isOpen, setIsOpen] = useState(false);
   const [openStatusOptions, setOpenStatusOptions] = useState(false)
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedView, setSelectedView] = useState("List");
   const [projectTypes, setProjectTypes] = useState([]);
   const [owners, setOwners] = useState([])
-  const [teams, setTeams] = useState([])
-  const [tags, setTags] = useState([])
   const [loading, setLoading] = useState(false)
+  const [appliedFilters, setAppliedFilters] = useState("")
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
 
-  const fetchData = async () => {
+  const fetchData = async (page = 1, filterString = "") => {
     try {
       setLoading(true)
-      let filters = {};
-      if (selectedFilterOption !== "all") {
-        filters["q[status_eq]"] = selectedFilterOption;
+      let filters = filterString !== "" ? filterString : appliedFilters;
+
+      if (!filters) {
+        if (selectedFilterOption !== "all") {
+          filters = `q[status_eq]=${selectedFilterOption}&`;
+        }
       }
+
+      filters += (filters ? "&" : "") + `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${JSON.parse(localStorage.getItem('user')).id}&page=${page}`;
+
       const response = await dispatch(
         filterProjects({ token, baseUrl, filters })
       ).unwrap();
-      setProjects(transformedProjects(response));
+      setProjects(transformedProjects(response.project_managements));
+      setPagination({
+        current_page: response.current_page || page,
+        total_count: response.total_count || 0,
+        total_pages: response.total_pages || 1,
+      });
     } catch (error) {
       console.log(error);
     } finally {
@@ -197,13 +248,19 @@ export const ProjectsDashboard = () => {
 
 
   useEffect(() => {
-    fetchData();
+    setPagination((prev) => ({ ...prev, current_page: 1 }));
+    fetchData(1, "");
+    setAppliedFilters("");
   }, [dispatch, token, baseUrl, selectedFilterOption]);
 
   const getOwners = async () => {
     try {
-      const response = await dispatch(fetchFMUsers()).unwrap();
-      setOwners(response.users);
+      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+      setOwners(response.data.users);
     } catch (error) {
       console.log(error)
       toast.error(error)
@@ -212,8 +269,7 @@ export const ProjectsDashboard = () => {
 
   const getTeams = async () => {
     try {
-      const response = await dispatch(fetchProjectTeams({ baseUrl, token })).unwrap();
-      setTeams(response);
+      await dispatch(fetchProjectTeams()).unwrap();
     } catch (error) {
       console.log(error)
       toast.error(error)
@@ -222,7 +278,7 @@ export const ProjectsDashboard = () => {
 
   const getProjectTypes = async () => {
     try {
-      const response = await dispatch(fetchProjectTypes({ baseUrl, token })).unwrap();
+      const response = await dispatch(fetchProjectTypes()).unwrap();
       setProjectTypes(response);
     } catch (error) {
       console.log(error)
@@ -232,8 +288,7 @@ export const ProjectsDashboard = () => {
 
   const getTags = async () => {
     try {
-      const response = await dispatch(fetchProjectsTags({ baseUrl, token })).unwrap();
-      setTags(response);
+      await dispatch(fetchProjectsTags()).unwrap();
     } catch (error) {
       console.log(error)
       toast.error(error)
@@ -271,7 +326,7 @@ export const ProjectsDashboard = () => {
       }
       await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
       toast.success("Project created successfully");
-      fetchData();
+      fetchData(1);
     } catch (error) {
       console.log(error)
       toast.error(error)
@@ -284,7 +339,7 @@ export const ProjectsDashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => navigate(`/maintenance/projects/details/${item.id}`)}
+        onClick={() => navigate(`/vas/projects/details/${item.id}`)}
       >
         <Eye className="w-4 h-4" />
       </Button>
@@ -292,49 +347,273 @@ export const ProjectsDashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => navigate(`/maintenance/projects/${item.id}/milestones`)}
+        onClick={() => navigate(`/vas/projects/${item.id}/milestones`)}
       >
         <LogOut className="w-4 h-4" />
       </Button>
     </div>
   );
 
+  const handleStatusChange = async (id: number, status: string) => {
+    try {
+      await dispatch(changeProjectStatus({ token, baseUrl, id: String(id), payload: { project_management: { status } } })).unwrap();
+      fetchData(pagination.current_page);
+      toast.success("Project status changed successfully");
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const handlePageChange = async (page: number) => {
+    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
+      return;
+    }
+
+    try {
+      setPagination((prev) => ({ ...prev, current_page: page }));
+      await fetchData(page);
+    } catch (error) {
+      console.error("Error changing page:", error);
+      toast.error("Failed to load page data. Please try again.");
+    }
+  }
+
+  const renderPaginationItems = () => {
+    if (!pagination.total_pages || pagination.total_pages <= 0) {
+      return null;
+    }
+    const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPage = pagination.current_page;
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      items.push(
+        <PaginationItem key={1} className="cursor-pointer">
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+            aria-disabled={loading}
+            className={loading ? "pointer-events-none opacity-50" : ""}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                aria-disabled={loading}
+                className={loading ? "pointer-events-none opacity-50" : ""}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                aria-disabled={loading}
+                className={loading ? "pointer-events-none opacity-50" : ""}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find((item) => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i} className="cursor-pointer">
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                  aria-disabled={loading}
+                  className={loading ? "pointer-events-none opacity-50" : ""}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages} className="cursor-pointer">
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+              aria-disabled={loading}
+              className={loading ? "pointer-events-none opacity-50" : ""}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i} className="cursor-pointer">
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+              aria-disabled={loading}
+              className={loading ? "pointer-events-none opacity-50" : ""}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
   const renderCell = (item: any, columnKey: string) => {
+    const renderProgressBar = (completed: number, total: number, color: string, type?: string) => {
+      const progress = total > 0 ? (completed / total) * 100 : 0;
+      return (
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => type === "issues" && navigate(`/vas/issues?project_id=${item.id}`)}>
+          <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
+            <div
+              className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{completed}/{total}</span>
+        </div>
+      );
+    };
+
     switch (columnKey) {
       case "milestones": {
         const completed = item.milestonesCompleted || 0;
-        const total = item.milestonesTotal || 0;
-        const progress = total > 0 ? (completed / total) * 100 : 0;
-
-        return (
-          <div className="relative w-[8rem] bg-gray-200 rounded-full h-3">
-            <div
-              className="absolute top-0 left-0 h-3 bg-[#84edba] rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            ></div>
-            <div className="absolute inset-0 flex !items-center !justify-center text-xs font-medium text-black">
-              {progress.toFixed(2)}%
-            </div>
-          </div>
-        );
+        const total = item.milestones || 0;
+        return renderProgressBar(completed, total, "bg-[#84edba]");
       }
       case "tasks": {
         const completed = item.tasksCompleted || 0;
-        const total = item.tasksTotal || 0;
-        const progress = total > 0 ? (completed / total) * 100 : 0;
+        const total = item.tasks || 0;
+        return renderProgressBar(completed, total, "bg-[#e9e575]");
+      }
+      case "subtasks": {
+        const completed = item.subtasksCompleted || 0;
+        const total = item.subtasks || 0;
+        return renderProgressBar(completed, total, "bg-[#b4e7ff]");
+      }
+      case "issues": {
+        const completed = item.resolvedIssues || 0;
+        const total = item.issues || 0;
+        return renderProgressBar(completed, total, "bg-[#ff9a9e]", "issues");
+      }
+      case "id":
+        return (
+          <button
+            onClick={() => navigate(`/vas/projects/details/${item.id}`)}
+            className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+          >
+            P-{item.id}
+          </button>
+        );
+      case "start_date":
+      case "end_date":
+        return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString('en-GB') : "-";
+      case "status": {
+        const statusColorMap = {
+          active: { dot: "bg-emerald-500" },
+          in_progress: { dot: "bg-amber-500" },
+          on_hold: { dot: "bg-gray-500" },
+          completed: { dot: "bg-teal-500" },
+          overdue: { dot: "bg-red-500" },
+        };
+
+        const colors = statusColorMap[item.status as keyof typeof statusColorMap] || statusColorMap.active;
 
         return (
-          <div className="relative w-[8rem] bg-gray-200 rounded-full h-3">
-            <div
-              className="absolute top-0 left-0 h-3 bg-[#e9e575] rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            ></div>
-            <div className="absolute inset-0 flex !items-center !justify-center text-xs font-medium text-black">
-              {progress.toFixed(2)}%
-            </div>
-          </div>
+          <FormControl
+            variant="standard"
+            sx={{ width: 148 }} // same as w-32
+          >
+            <Select
+              value={item.status}
+              onChange={(e) =>
+                handleStatusChange(item.id, e.target.value as string)
+              }
+              disableUnderline
+              renderValue={(value) => (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}></span>
+                  <span>{statusOptions.find(opt => opt.value === value)?.label || value}</span>
+                </div>
+              )}
+              sx={{
+                fontSize: "0.875rem",
+                cursor: "pointer",
+                "& .MuiSelect-select": {
+                  padding: "4px 0",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                },
+              }}
+            >
+              {statusOptions.map((opt) => {
+                const optColors = statusColorMap[opt.value as keyof typeof statusColorMap];
+                return (
+                  <MenuItem key={opt.value} value={opt.value} sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}></span>
+                    <span>{opt.label}</span>
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </FormControl>
         );
       }
+      case "title":
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="truncate cursor-pointer" onClick={() => navigate(`/vas/projects/${item.id}/milestones`)}>{item.title}</span>
+              </TooltipTrigger>
+              <TooltipContent className="rounded-[5px]">
+                <p>{item.title}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
       default:
         return item[columnKey] || "-";
     }
@@ -366,7 +645,6 @@ export const ProjectsDashboard = () => {
             <em>Select status</em>
           </MenuItem>
           <MenuItem value="active">Active</MenuItem>
-          <MenuItem value="inactive">Inactive</MenuItem>
         </Select>
       );
     }
@@ -458,7 +736,7 @@ export const ProjectsDashboard = () => {
   }
 
   const rightActions = (
-    <div className="flex items-center">
+    <div className="flex items-center gap-2">
       <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -602,7 +880,7 @@ export const ProjectsDashboard = () => {
                 </div>
               )}
             </div>
-            <div className="relative">
+            {/* <div className="relative">
               <button
                 onClick={() => setOpenStatusOptions(!openStatusOptions)}
                 className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
@@ -632,7 +910,7 @@ export const ProjectsDashboard = () => {
                   </div>
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -642,6 +920,7 @@ export const ProjectsDashboard = () => {
           openDialog={openDialog}
           handleCloseDialog={handleCloseDialog}
           setOpenFormDialog={setOpenFormDialog}
+          onTemplateSelect={setSelectedTemplate}
         />
 
         <ProjectCreateModal
@@ -649,12 +928,23 @@ export const ProjectsDashboard = () => {
           handleCloseDialog={() => {
             setOpenFormDialog(false);
             setOpenDialog(false);
+            setSelectedTemplate({});
           }}
           owners={owners}
           projectTypes={projectTypes}
           tags={tags}
           teams={teams}
           fetchProjects={fetchData}
+          templateDetails={selectedTemplate}
+        />
+
+        <ProjectFilterModal
+          isModalOpen={isFilterModalOpen}
+          setIsModalOpen={setIsFilterModalOpen}
+          onApplyFilters={(filterString) => {
+            setAppliedFilters(filterString);
+            fetchData(1, filterString);
+          }}
         />
       </div>
     )
@@ -670,9 +960,9 @@ export const ProjectsDashboard = () => {
         leftActions={leftActions}
         rightActions={rightActions}
         storageKey="projects-table"
-        onFilterClick={() => { }}
+        onFilterClick={() => setIsFilterModalOpen(true)}
         canAddRow={true}
-        readonlyColumns={["id", "milestones", "tasks", "issues"]}
+        readonlyColumns={["id", "milestones", "tasks", "subtasks", "issues"]}
         onAddRow={(newRowData) => {
           handleSubmit(newRowData)
         }}
@@ -681,10 +971,31 @@ export const ProjectsDashboard = () => {
         loading={loading}
       />
 
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            {renderPaginationItems()}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+
       <AddProjectModal
         openDialog={openDialog}
         handleCloseDialog={handleCloseDialog}
         setOpenFormDialog={setOpenFormDialog}
+        onTemplateSelect={setSelectedTemplate}
       />
 
       <ProjectCreateModal
@@ -692,12 +1003,23 @@ export const ProjectsDashboard = () => {
         handleCloseDialog={() => {
           setOpenFormDialog(false);
           setOpenDialog(false);
+          setSelectedTemplate({});
         }}
         owners={owners}
         projectTypes={projectTypes}
         tags={tags}
         teams={teams}
         fetchProjects={fetchData}
+        templateDetails={selectedTemplate}
+      />
+
+      <ProjectFilterModal
+        isModalOpen={isFilterModalOpen}
+        setIsModalOpen={setIsFilterModalOpen}
+        onApplyFilters={(filterString) => {
+          setAppliedFilters(filterString);
+          fetchData(1, filterString);
+        }}
       />
     </div>
   );

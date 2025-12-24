@@ -100,7 +100,7 @@ export const useAssetSearch = () => {
     try {
       const response = await apiClient.get<SearchResponse>(ENDPOINTS.ASSETS, {
         params: {
-          'q[name_or_asset_number_cont]': searchTerm,
+          'q[name_or_asset_number_or_serial_number_or_id_value_cont]': searchTerm,
           page: page,
           per_page: 15,
         }
@@ -108,10 +108,11 @@ export const useAssetSearch = () => {
 
       if (response.data && Array.isArray(response.data.assets)) {
         const mappedAssets = response.data.assets.map(mapAssetData);
+        console.log('Search API returned assets:', mappedAssets.length, mappedAssets);
         setAssets(mappedAssets);
         setPagination(response.data.pagination);
       } else {
-        console.log('⚠️ Invalid response structure - no data array found');
+        console.log('⚠️ Invalid response structure - no data array found', response.data);
         setAssets([]);
         setPagination({
           current_page: 1,

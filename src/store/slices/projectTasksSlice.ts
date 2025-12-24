@@ -30,8 +30,7 @@ export const createProjectTask = createAsyncThunk(
             })
             return response.data
         } catch (error) {
-            const message = error.response?.data?.error || error.error || 'Failed to create project task'
-            return rejectWithValue(message)
+            return rejectWithValue(error)
         }
     }
 )
@@ -87,11 +86,13 @@ export const fetchProjectTasksById = createAsyncThunk('fetchProjectTasksById', a
 export const filterTasks = createAsyncThunk(
     "filterTasks",
     async ({ token, baseUrl, params }: { token: string, baseUrl: string, params: any }, { rejectWithValue }) => {
+        console.log(params)
         try {
-            const response = await axios.get(`https://${baseUrl}/task_managements.json?${params}`, {
+            const response = await axios.get(`https://${baseUrl}/task_managements.json`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
-                }
+                },
+                params
             })
             return response.data
         } catch (error) {
@@ -130,6 +131,57 @@ export const fetchTargetDateTasks = createAsyncThunk('fetchTargetDateTasks', asy
     }
 })
 
+export const createTaskDependency = createAsyncThunk(
+    'createTaskDependency',
+    async ({ token, baseUrl, data }: { token: string, baseUrl: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(`https://${baseUrl}/task_dependencies.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to create dependency'
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const updateTaskDependency = createAsyncThunk(
+    'updateTaskDependency',
+    async ({ token, baseUrl, id, data }: { token: string, baseUrl: string, id: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/task_dependencies/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to update dependency'
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const deleteTaskDependency = createAsyncThunk(
+    'deleteTaskDependency',
+    async ({ token, baseUrl, id }: { token: string, baseUrl: string, id: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.delete(`https://${baseUrl}/task_dependencies/${id}.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to delete dependency'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const fetchProjectTasksSlice = createApiSlice("fetchProjectTasks", fetchProjectTasks)
 const createProjectTaskSlice = createApiSlice("createProjectTask", createProjectTask)
 const fetchProjectTasksByIdSlice = createApiSlice("fetchProjectTasksById", fetchProjectTasksById)
@@ -138,6 +190,9 @@ const fetchTargetDateTasksSlice = createApiSlice("fetchTargetDateTasks", fetchTa
 const editProjectTaskSlice = createApiSlice("editProjectTask", editProjectTask)
 const filterTasksSlice = createApiSlice("filterTasks", filterTasks)
 const updateTaskStatusSlice = createApiSlice("updateTaskStatus", updateTaskStatus)
+const createTaskDependencySlice = createApiSlice("createTaskDependency", createTaskDependency)
+const updateTaskDependencySlice = createApiSlice("updateTaskDependency", updateTaskDependency)
+const deleteTaskDependencySlice = createApiSlice("deleteTaskDependency", deleteTaskDependency)
 
 export const fetchProjectTasksReducer = fetchProjectTasksSlice.reducer
 export const createProjectTaskReducer = createProjectTaskSlice.reducer
@@ -147,3 +202,6 @@ export const fetchTargetDateTasksReducer = fetchTargetDateTasksSlice.reducer
 export const editProjectTaskReducer = editProjectTaskSlice.reducer
 export const filterTasksReducer = filterTasksSlice.reducer
 export const updateTaskStatusReducer = updateTaskStatusSlice.reducer
+export const createTaskDependencyReducer = createTaskDependencySlice.reducer
+export const updateTaskDependencyReducer = updateTaskDependencySlice.reducer
+export const deleteTaskDependencyReducer = deleteTaskDependencySlice.reducer

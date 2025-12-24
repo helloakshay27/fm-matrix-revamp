@@ -703,7 +703,7 @@ export const RestaurantOrderDetailPage = () => {
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
-            onClick={() => navigate("/vas/fnb")}
+            onClick={() => navigate(-1)}
             className="mb-4 pl-0"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

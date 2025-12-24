@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
 interface Department {
@@ -18,7 +18,7 @@ interface User {
   full_name: string;
 }
 
-export const useAllocationData = () => {
+export const useAllocationData = (type?: string, siteId?: number | null) => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState({
@@ -27,7 +27,7 @@ export const useAllocationData = () => {
   });
 
   // Fetch departments
-  const fetchDepartments = async () => {
+  const fetchDepartments = useCallback(async () => {
     setLoading(prev => ({ ...prev, departments: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/departments.json`, {
@@ -44,13 +44,23 @@ export const useAllocationData = () => {
     } finally {
       setLoading(prev => ({ ...prev, departments: false }));
     }
-  };
+  }, []);
 
   // Fetch users
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(prev => ({ ...prev, users: true }));
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/users/get_escalate_to_users.json`, {
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (type) params.append('type', type);
+      if (siteId) params.append('site_id', siteId.toString());
+
+      const queryString = params.toString();
+      const url = queryString
+        ? `${API_CONFIG.BASE_URL}/pms/users/get_escalate_to_users.json?${queryString}`
+        : `${API_CONFIG.BASE_URL}/pms/users/get_escalate_to_users.json`;
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
@@ -64,13 +74,16 @@ export const useAllocationData = () => {
     } finally {
       setLoading(prev => ({ ...prev, users: false }));
     }
-  };
+  }, [type, siteId]);
 
-  // Load data on mount
+  // Load data on mount and when type/siteId changes
   useEffect(() => {
     fetchDepartments();
+  }, [fetchDepartments]);
+
+  useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   return {
     departments,

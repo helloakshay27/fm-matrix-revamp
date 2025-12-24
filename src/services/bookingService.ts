@@ -80,13 +80,25 @@ const transformBookingData = (apiData: FacilityBookingResponse): BookingData => 
   };
 };
 
-export const fetchFacilityBookings = async ({ baseUrl, token, pageSize, currentPage }): Promise<FacilityBookingsResponse[]> => {
+export const fetchFacilityBookings = async ({ baseUrl, token, pageSize, currentPage, userId }): Promise<FacilityBookingsResponse[]> => {
   try {
-    const response = await axios.get(`https://${baseUrl}/pms/admin/facility_bookings.json?per_page=${pageSize}&page=${currentPage}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-    })
+    const params = new URLSearchParams({
+      per_page: String(pageSize),
+      page: String(currentPage),
+    });
+
+    if (userId) {
+      params.append("q[user_id_eq]", userId);
+    }
+
+    const response = await axios.get(
+      `https://${baseUrl}/pms/admin/facility_bookings.json?${params.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     console.log(response)
 

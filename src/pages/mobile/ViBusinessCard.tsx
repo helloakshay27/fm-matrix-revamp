@@ -60,12 +60,18 @@ export const ViBusinessCard: React.FC = () => {
           return;
         }
 
-        const response = await baseClient.get(
-          `/pms/users/user_info.json?token=${card}`
+        const response = await fetch(
+          `https://live-api.gophygital.work/pms/users/user_info.json?token=${card}`
         );
 
-        const data: ApiResponse = response.data;
+        if (!response.ok) {
+          throw new Error("Failed to fetch user data");
+        }
 
+        const data: ApiResponse = await response.json();
+
+        // const data: ApiResponse = response.data;
+console.log("Fetched user data:", data);
         // Map API response to UserCardData
         const mappedData: UserCardData = {
           id: data.id,
@@ -169,10 +175,10 @@ END:VCARD`;
           '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       }}
     >
-      <div className="w-full h-full">
+      <div className="w-full h-full pt-[130px]">
         {/* Business Card */}
         <div
-          className="relative bg-white overflow-hidden w-full h-full"
+          className="relative bg-white overflow-hidden w-full"
           style={{
             boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
             borderRadius: "0",

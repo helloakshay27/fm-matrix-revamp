@@ -10,6 +10,7 @@ import roleReducer from './slices/roleSlice'
 import roleWithModulesReducer from './slices/roleWithModulesSlice'
 import { functionReducer } from './slices/functionSlice'
 import fmUserReducer, { createFmUserReducer, editFMUserReducer, fetchRolesReducer, fetchSuppliersReducer, fetchUnitsReducer, getFMUsersReducer, getUserDetailsReducer } from './slices/fmUserSlice'
+import { createMoMReducer, fetchMoMsReducer } from './slices/momSlice'
 import userCountsReducer from './slices/userCountsSlice'
 import occupantUsersReducer, { exportOccupantUsersReducer } from './slices/occupantUsersSlice'
 import occupantUserCountsReducer from './slices/occupantUserCountsSlice'
@@ -66,12 +67,17 @@ import { createAmenityReducer, editAmenityReducer, fetchAmenityByIdReducer, fetc
 import { createCompanyPartnerReducers, editCompanyPartnerReducer, fetchCompanyPartnersReducer } from './slices/companyPartnerSlice'
 import { createChatTaskReducer, createConversationReducer, createGroupReducer, deleteChatTaskReducer, fetchChannelTaskDetailsReducer, fetchConversationMessagesReducer, fetchConversationReducer, fetchConversationsReducer, fetchGroupConversationReducer, fetchGroupsReducer, removeUserFromGroupReducer, sendMessageReducer, updateChatTaskReducer, updateMessageReducer } from './slices/channelSlice'
 import { createCircleReducer, fetchCircleListReducer, updateCircleReducer } from './slices/msafeCircleSlice'
-import { changeProjectStatusReducer, createProjectReducer, fetchProjectByIdReducer, fetchProjectsReducer, filterProjectsReducer } from './slices/projectManagementSlice'
+import { changeProjectStatusReducer, createProjectReducer, fetchProjectByIdReducer, fetchProjectsReducer, filterProjectsReducer, attachFilesReducer, removeAttachmentReducer, fetchKanbanProjectsReducer } from './slices/projectManagementSlice'
 import { createMilestoneReducer, fetchDependentMilestonesReducer, fetchMilestoneByIdReducer, fetchMilestonesReducer, updateMilestoneStatusReducer } from './slices/projectMilestoneSlice'
-import { createProjectTeamReducer, fetchProjectTeamByIdReducer, fetchProjectTeamsReducer, updateProjectTeamReducer } from './slices/projectTeamsSlice'
-import { createProjectTypesReducer, fetchProjectTypesReducer, updateProjectTypesReducer } from './slices/projectTypeSlice'
-import { createProjectsTagsReducer, fetchProjectsTagsReducer, updateProjectsTagsReducer } from './slices/projectTagSlice'
-import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer, filterTasksReducer, updateTaskStatusReducer } from './slices/projectTasksSlice'
+import { projectTeamsReducer } from './slices/projectTeamsSlice'
+import { projectTypeReducer } from './slices/projectTypeSlice'
+import { projectTagReducer } from './slices/projectTagSlice'
+import { projectStatusReducer } from './slices/projectStatusSlice'
+import { projectRoleReducer } from './slices/projectRoleSlice'
+import projectTemplateReducer from './slices/projectTemplateSlice'
+import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer, filterTasksReducer, updateTaskStatusReducer, createTaskDependencyReducer, updateTaskDependencyReducer, deleteTaskDependencyReducer } from './slices/projectTasksSlice'
+import { fetchIssuesReducer, fetchIssueByIdReducer, createIssueReducer, updateIssueReducer, deleteIssueReducer, filterIssuesReducer } from './slices/issueSlice'
+import { createProjectGroupReducer, deleteProjectGroupReducer, fetchProjectGroupsReducer, updateProjectGroupReducer } from './slices/projectGroupSlice'
 
 export const store = configureStore({
   reducer: {
@@ -340,6 +346,9 @@ export const store = configureStore({
     changeProjectStatus: changeProjectStatusReducer,
     fetchProjectById: fetchProjectByIdReducer,
     filterProjects: filterProjectsReducer,
+    attachFiles: attachFilesReducer,
+    removeAttachment: removeAttachmentReducer,
+    fetchKanbanProjects: fetchKanbanProjectsReducer,
 
     // Project Milestone
     createMilestone: createMilestoneReducer,
@@ -357,20 +366,36 @@ export const store = configureStore({
     editProjectTask: editProjectTaskReducer,
     filterTasks: filterTasksReducer,
     updateTaskStatus: updateTaskStatusReducer,
+    createTaskDependency: createTaskDependencyReducer,
+    updateTaskDependency: updateTaskDependencyReducer,
+    deleteTaskDependency: deleteTaskDependencyReducer,
 
     // Project Team
-    fetchProjectTeams: fetchProjectTeamsReducer,
-    fetchProjectTeamById: fetchProjectTeamByIdReducer,
-    createProjectTeam: createProjectTeamReducer,
-    updateProjectTeam: updateProjectTeamReducer,
+    projectTeams: projectTeamsReducer,
 
-    fetchProjectTypes: fetchProjectTypesReducer,
-    createProjectTypes: createProjectTypesReducer,
-    updateProjectTypes: updateProjectTypesReducer,
+    projectTypes: projectTypeReducer,
 
-    fetchProjectsTags: fetchProjectsTagsReducer,
-    createProjectsTags: createProjectsTagsReducer,
-    updateProjectsTags: updateProjectsTagsReducer,
+    projectTemplates: projectTemplateReducer,
+
+    projectTags: projectTagReducer,
+    projectStatus: projectStatusReducer,
+
+    // Issues
+    fetchIssues: fetchIssuesReducer,
+    fetchIssueById: fetchIssueByIdReducer,
+    createIssue: createIssueReducer,
+    updateIssue: updateIssueReducer,
+    deleteIssue: deleteIssueReducer,
+    filterIssues: filterIssuesReducer,
+    createMoM: createMoMReducer,
+    fetchMoMs: fetchMoMsReducer,
+    projectRole: projectRoleReducer,
+
+    // Project Groups
+    fetchProjectGroups: fetchProjectGroupsReducer,
+    createProjectGroup: createProjectGroupReducer,
+    updateProjectGroup: updateProjectGroupReducer,
+    deleteProjectGroup: deleteProjectGroupReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

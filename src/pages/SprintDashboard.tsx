@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import AddSprintModal from "@/components/AddSprintModal";
+import { useLayout } from "@/contexts/LayoutContext";
 
 const columns: ColumnConfig[] = [
   {
@@ -95,7 +96,7 @@ const transformedSprints = (sprints: any) => {
       const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diffTime % (1000 * 60)) / 1000);
-      
+
       duration = `${weeks}w:${days}d:${hours.toString().padStart(2, '0')}h:${minutes.toString().padStart(2, '0')}m:${seconds.toString().padStart(2, '0')}s`;
     }
 
@@ -118,6 +119,12 @@ const transformedSprints = (sprints: any) => {
 };
 
 export const SprintDashboard = () => {
+  const { setCurrentSection } = useLayout();
+
+  useEffect(() => {
+    setCurrentSection("Project Task");
+  }, [setCurrentSection]);
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem("baseUrl");
@@ -142,7 +149,7 @@ export const SprintDashboard = () => {
       // TODO: Replace with actual sprint API call when available
       // const response = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
       // setSprints(transformedSprints(response));
-      
+
       // Mock data for now
       setSprints([
         {
@@ -207,22 +214,20 @@ export const SprintDashboard = () => {
       case "status":
         return (
           <span
-            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-              item.status === "Active"
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.status === "Active"
                 ? "bg-green-100 text-green-800"
                 : item.status === "Completed"
-                ? "bg-blue-100 text-blue-800"
-                : "bg-gray-100 text-gray-800"
-            }`}
+                  ? "bg-blue-100 text-blue-800"
+                  : "bg-gray-100 text-gray-800"
+              }`}
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                item.status === "Active"
+              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status === "Active"
                   ? "bg-green-500"
                   : item.status === "Completed"
-                  ? "bg-blue-500"
-                  : "bg-gray-500"
-              }`}
+                    ? "bg-blue-500"
+                    : "bg-gray-500"
+                }`}
             ></span>
             {item.status}
           </span>
@@ -357,7 +362,7 @@ export const SprintDashboard = () => {
         leftActions={leftActions}
         rightActions={rightActions}
         storageKey="sprint-table"
-        onFilterClick={() => {}}
+        onFilterClick={() => { }}
         canAddRow={true}
         readonlyColumns={["id", "duration", "number_of_projects"]}
         onAddRow={(newRowData) => {

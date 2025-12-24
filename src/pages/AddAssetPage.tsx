@@ -1896,24 +1896,8 @@ const AddAssetPage = () => {
       });
     });
 
-    // IT Assets custom fields - only include fields with non-empty values
-    Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
-      (itAssetsCustomFields[sectionKey] || []).forEach((field) => {
-        // Only add field if it has a non-empty value
-        if (!isEmpty(field.value)) {
-          console.log(`Including IT assets field: ${field.name} = ${field.value}`);
-          extraFields.push({
-            field_name: field.name,
-            field_value: field.value,
-            group_name: sectionKey,
-            field_description: "custom_field",
-            _destroy: false,
-          });
-        } else {
-          console.log(`Skipping empty IT assets field: ${field.name} (value: ${field.value})`);
-        }
-      });
-    });
+    // IT Assets custom fields are already synchronized with customFields, 
+    // so we don't need to iterate over them separately to avoid duplicates.
 
     // Standard extra fields (dynamic) - with proper date formatting
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
@@ -2181,7 +2165,7 @@ const AddAssetPage = () => {
     setUsersLoading(true);
     try {
       const response = await apiClient.get(
-        "/pms/users/get_escalate_to_users.json"
+        "/pms/users/get_escalate_to_users.json?type=Asset"
       );
       setUsers(response.data?.users || []);
     } catch (error) {
@@ -2542,30 +2526,30 @@ const AddAssetPage = () => {
       },
       "Furniture & Fixtures": {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
+        locationFields: ["site"],
         categorySpecificFields: [],
       },
       "IT Equipment": {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
+        locationFields: ["site"],
         // warrantyFields: [],
         categorySpecificFields: [],
       },
       "Machinery & Equipment": {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
+        locationFields: ["site"],
         // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       "Tools & Instruments": {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
+        locationFields: ["site"],
         // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
       Meter: {
         ...baseValidationRules,
-        locationFields: ["site", "building"],
+        locationFields: ["site"],
         // warrantyFields: ["warranty_expiry"],
         categorySpecificFields: [],
       },
@@ -2696,11 +2680,11 @@ const AddAssetPage = () => {
       },
       "Furniture & Fixtures": {
         description:
-          "Furniture assets require basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) as they are fixed to specific locations.",
+          "Furniture assets require basic identification, group selection, purchase details, warranty, and location information (Site minimum) as they are fixed to specific locations.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -2708,11 +2692,11 @@ const AddAssetPage = () => {
       },
       "IT Equipment": {
         description:
-          "IT Equipment requires basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for proper asset tracking.",
+          "IT Equipment requires basic identification, group selection, purchase details, warranty, and location information (Site minimum) for proper asset tracking.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -2720,11 +2704,11 @@ const AddAssetPage = () => {
       },
       "Machinery & Equipment": {
         description:
-          "Machinery requires basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for maintenance and tracking.",
+          "Machinery requires basic identification, group selection, purchase details, warranty, and location information (Site minimum) for maintenance and tracking.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -2732,11 +2716,11 @@ const AddAssetPage = () => {
       },
       "Tools & Instruments": {
         description:
-          "Tools require basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for inventory management.",
+          "Tools require basic identification, group selection, purchase details, warranty, and location information (Site minimum) for inventory management.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -2744,11 +2728,11 @@ const AddAssetPage = () => {
       },
       Meter: {
         description:
-          "Meter assets require basic identification, group selection, purchase details, warranty, and location information (Site & Building minimum) for utility monitoring and maintenance.",
+          "Meter assets require basic identification, group selection, purchase details, warranty, and location information (Site minimum) for utility monitoring and maintenance.",
         requiredSections: [
           "Asset Name",
           "Group & Subgroup",
-          "Location (Site & Building)",
+          "Location (Site)",
           "Purchase Details",
           "Commissioning Date",
           "Warranty Expiry",
@@ -2844,30 +2828,30 @@ const AddAssetPage = () => {
       },
       "Furniture & Fixtures": {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // Furniture needs location
+        locationFields: ["site"], // Furniture needs location
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "IT Equipment": {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // IT Equipment needs location
+        locationFields: ["site"], // IT Equipment needs location
         // warrantyFields: ["warranty_expiry"], // IT Equipment typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "Machinery & Equipment": {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // Machinery needs location
+        locationFields: ["site"], // Machinery needs location
         // warrantyFields: ["warranty_expiry"], // Machinery typically has warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       "Tools & Instruments": {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // Tools need location
+        locationFields: ["site"], // Tools need location
         // warrantyFields: ["warranty_expiry"], // Tools typically have warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
       Meter: {
         ...baseValidationRules,
-        locationFields: ["site", "building"], // Meters need location
+        locationFields: ["site"], // Meters need location
         // warrantyFields: ["warranty_expiry"], // Meters typically have warranty
         categorySpecificFields: [], // No specific required fields beyond base ones
       },
@@ -3094,35 +3078,35 @@ const AddAssetPage = () => {
 
     if (formData.purchase_cost && parseFloat(formData.purchase_cost) > 0 &&
       categoriesWithUsefulLife.includes(selectedAssetCategory)) {
-      if (!formData.useful_life) {
-        toast.error("Useful Life Required", {
-          description:
-            "Please enter the useful life for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Useful Life is required for Depreciation"];
-      }
+      // if (!formData.useful_life) {
+      //   toast.error("Useful Life Required", {
+      //     description:
+      //       "Please enter the useful life for depreciation calculation when purchase cost is provided.",
+      //     duration: 4000,
+      //   });
+      //   return ["Useful Life is required for Depreciation"];
+      // }
 
-      if (!formData.salvage_value) {
-        toast.error("Salvage Value Required", {
-          description:
-            "Please enter the salvage value for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Salvage Value is required for Depreciation"];
-      }
+      // if (!formData.salvage_value) {
+      //   toast.error("Salvage Value Required", {
+      //     description:
+      //       "Please enter the salvage value for depreciation calculation when purchase cost is provided.",
+      //     duration: 4000,
+      //   });
+      //   return ["Salvage Value is required for Depreciation"];
+      // }
 
-      if (!formData.depreciation_rate) {
-        toast.error("Depreciation Rate Required", {
-          description:
-            "Please enter the depreciation rate for depreciation calculation when purchase cost is provided.",
-          duration: 4000,
-        });
-        return ["Depreciation Rate is required for Depreciation"];
-      }
+      // if (!formData.depreciation_rate) {
+      //   toast.error("Depreciation Rate Required", {
+      //     description:
+      //       "Please enter the depreciation rate for depreciation calculation when purchase cost is provided.",
+      //     duration: 4000,
+      //   });
+      //   return ["Depreciation Rate is required for Depreciation"];
+      // }
 
       // Validate Purchase Cost is not equal to Salvage Value
-      if (parseFloat(formData.purchase_cost) === parseFloat(formData.salvage_value)) {
+      if (formData.salvage_value && parseFloat(formData.purchase_cost) === parseFloat(formData.salvage_value)) {
         toast.error("Invalid Salvage Value", {
           description: "Purchase Cost cannot be equal to Salvage Value.",
           duration: 4000,
@@ -3131,7 +3115,7 @@ const AddAssetPage = () => {
       }
 
       // Validate Salvage Value is not greater than Purchase Cost
-      if (parseFloat(formData.salvage_value) > parseFloat(formData.purchase_cost)) {
+      if (formData.salvage_value && parseFloat(formData.salvage_value) > parseFloat(formData.purchase_cost)) {
         toast.error("Invalid Salvage Value", {
           description: "Salvage Value cannot be greater than Purchase Cost.",
           duration: 4000,
@@ -3142,38 +3126,38 @@ const AddAssetPage = () => {
 
     // Meter Details validation (if applicable toggle is on)
     // IT Assets Details validation for IT Equipment
-    if (selectedAssetCategory === "IT Equipment") {
-      // System Details required fields
-      const systemFields = [
-        { key: "os", label: "OS" },
-        { key: "memory", label: "Total Memory" },
-        { key: "processor", label: "Processor" },
-      ];
-      for (const field of systemFields) {
-        if (!itAssetDetails.system_details[field.key]) {
-          toast.error(`${field.label} Required`, {
-            description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
-            duration: 4000,
-          });
-          return [`${field.label} is required in IT ASSETS DETAILS`];
-        }
-      }
-      // Hardware Details required fields
-      const hardwareFields = [
-        { key: "model", label: "Model" },
-        { key: "serial_no", label: "Serial No." },
-        { key: "capacity", label: "Capacity" },
-      ];
-      for (const field of hardwareFields) {
-        if (!itAssetDetails.hardware[field.key]) {
-          toast.error(`${field.label} Required`, {
-            description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
-            duration: 4000,
-          });
-          return [`${field.label} is required in IT ASSETS DETAILS`];
-        }
-      }
-    }
+    // if (selectedAssetCategory === "IT Equipment") {
+    //   // System Details required fields
+    //   const systemFields = [
+    //     { key: "os", label: "OS" },
+    //     { key: "memory", label: "Total Memory" },
+    //     { key: "processor", label: "Processor" },
+    //   ];
+    //   for (const field of systemFields) {
+    //     if (!itAssetDetails.system_details[field.key]) {
+    //       toast.error(`${field.label} Required`, {
+    //         description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
+    //         duration: 4000,
+    //       });
+    //       return [`${field.label} is required in IT ASSETS DETAILS`];
+    //     }
+    //   }
+    //   // Hardware Details required fields
+    //   const hardwareFields = [
+    //     { key: "model", label: "Model" },
+    //     { key: "serial_no", label: "Serial No." },
+    //     { key: "capacity", label: "Capacity" },
+    //   ];
+    //   for (const field of hardwareFields) {
+    //     if (!itAssetDetails.hardware[field.key]) {
+    //       toast.error(`${field.label} Required`, {
+    //         description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
+    //         duration: 4000,
+    //       });
+    //       return [`${field.label} is required in IT ASSETS DETAILS`];
+    //     }
+    //   }
+    // }
     if (
       meterType === "SubMeter" &&
       !selectedParentMeterId
@@ -5624,14 +5608,7 @@ const AddAssetPage = () => {
                       placeholder="Describe the improvement work"
                       variant="outlined"
                       fullWidth
-                      multiline
-                      rows={2}
-                      sx={{
-                        gridColumn: { md: "span 2" },
-                        "& .MuiOutlinedInput-root": {
-                          minHeight: { xs: "60px", md: "70px" },
-                        },
-                      }}
+
                       onChange={(e) => {
                         const value = (e.target as HTMLInputElement).value;
                         handleExtraFieldChange(
@@ -9987,7 +9964,7 @@ const AddAssetPage = () => {
                         sx={{ minWidth: 120 }}
                       >
                         <InputLabel id="building-select-label" shrink>
-                          Building<span style={{ color: '#C72030' }}>*</span>
+                          Building
                         </InputLabel>
                         <MuiSelect
                           labelId="building-select-label"

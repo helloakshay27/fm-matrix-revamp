@@ -187,6 +187,7 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
+      "dev@lockated.com"
     ];
     setCanEditSite(allowedEmails.includes(userEmail));
   };
@@ -527,11 +528,10 @@ export const SiteTab: React.FC<SiteTabProps> = ({
     ),
     status: (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          site?.active
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${site?.active
             ? "bg-green-100 text-green-800"
             : "bg-red-100 text-red-800"
-        }`}
+          }`}
       >
         {site?.active ? "Active" : "Inactive"}
       </span>

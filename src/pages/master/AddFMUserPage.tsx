@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getUser } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +34,8 @@ export const AddFMUserPage = () => {
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
 
   const {
     data: entitiesData,
@@ -92,6 +95,10 @@ export const AddFMUserPage = () => {
   };
 
   useEffect(() => {
+    if (isRestrictedUser) {
+      navigate("/maintenance/asset");
+      return;
+    }
     dispatch(fetchEntities());
     dispatch(fetchSuppliers({ baseUrl, token }));
     dispatch(fetchUnits({ baseUrl, token }));
@@ -100,7 +107,7 @@ export const AddFMUserPage = () => {
     dispatch(fetchAllowedSites(userId));
     dispatch(fetchAllowedCompanies());
     fetchUserCategories();
-  }, [dispatch, baseUrl, token, userId]);
+  }, [dispatch, baseUrl, token, userId, isRestrictedUser, navigate]);
 
   useEffect(() => {
     const loadUserAccount = async () => {
@@ -318,6 +325,8 @@ export const AddFMUserPage = () => {
   const handleCancel = () => {
     navigate("/master/user/fm-users");
   };
+
+  if (isRestrictedUser) return null;
 
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
@@ -641,6 +650,9 @@ export const AddFMUserPage = () => {
                       <MenuItem value="pms_security">Security</MenuItem>
                       <MenuItem value="pms_security_supervisor">
                         Security Supervisor
+                      </MenuItem>
+                      <MenuItem value="pms_occupant">
+                        User (Customer User)
                       </MenuItem>
                     </Select>
                   </FormControl>

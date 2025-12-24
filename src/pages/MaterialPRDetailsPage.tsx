@@ -79,6 +79,7 @@ interface Inventory {
 }
 
 interface PRInventory {
+  gl_account: string;
   id?: number;
   inventory?: Inventory;
   availability?: string;
@@ -103,6 +104,7 @@ interface Attachment {
 }
 
 interface MaterialPR {
+  pms_po_inventories: any;
   active?: boolean;
   id?: string;
   external_id?: string;
@@ -142,6 +144,8 @@ interface TableRow {
   approved_qty?: string;
   transfer_qty?: string;
   wbs_code?: string;
+  general_storage?: string;
+  gl_account?: string;
 }
 
 // Column configuration
@@ -151,6 +155,12 @@ const columns: ColumnConfig[] = [
   {
     key: "sacHsnCode",
     label: "SAC/HSN Code",
+    sortable: true,
+    defaultVisible: true,
+  },
+    {
+    key: "gl_account",
+    label: "GL Account",
     sortable: true,
     defaultVisible: true,
   },
@@ -204,7 +214,7 @@ export const MaterialPRDetailsPage = () => {
   const baseUrl = localStorage.getItem("baseUrl");
 
   const [isDeletionRequest, setIsDeletionRequest] = useState(false)
-  const [pr, setPR] = useState<MaterialPR>({});
+  const [pr, setPR] = useState<MaterialPR>({} as MaterialPR);
   const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
@@ -533,7 +543,7 @@ export const MaterialPRDetailsPage = () => {
   };
 
   const tableData: TableRow[] =
-    pr?.pms_pr_inventories?.map((item, index) => ({
+    pr?.pms_po_inventories?.map((item, index) => ({
       id: item.id || index,
       srNo: index + 1,
       item: item.inventory?.name ?? "-",
@@ -551,7 +561,9 @@ export const MaterialPRDetailsPage = () => {
       approved_qty: item.approved_qty?.toString() ?? "0",
       transfer_qty: item.transfer_qty?.toString() ?? "0",
       wbs_code: item.wbs_code ?? "-",
-      general_storage: item.general_storage ?? "GNST",
+      general_storage: item.general_storage ?? "-",
+      gl_account: item.gl_account ?? "-",
+
     })) ?? [];
 
   const renderCell = (item: any, columnKey: string) => {

@@ -1,22 +1,67 @@
 import { EnhancedTable } from "./enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Subtask } from "@/pages/ProjectTaskDetails";
+import { useAppDispatch } from "@/store/hooks";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import { FormControl, MenuItem, Select, TextField } from "@mui/material";
+import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
+import { Eye } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { updateTaskStatus } from "@/store/slices/projectTasksSlice";
+import { toast } from "sonner";
 
-const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-        case "open":
-            return "bg-red-100 text-red-800";
-        case "in_progress":
-            return "bg-blue-100 text-blue-800";
-        case "completed":
-            return "bg-green-100 text-green-800";
-        case "on_hold":
-            return "bg-yellow-100 text-yellow-800";
-        case "overdue":
-            return "bg-orange-100 text-orange-800";
-        default:
-            return "bg-gray-100 text-gray-800";
+const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
+    if (!start || !end) return { text: "N/A", isOverdue: false };
+
+    const now = new Date();
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    // Set end date to end of the day
+    endDate.setHours(23, 59, 59, 999);
+
+    // Check if task hasn't started yet
+    if (now < startDate) {
+        return { text: "Not started", isOverdue: false };
     }
+
+    // Calculate time differences (use absolute value to show overdue time)
+    const diffMs = endDate.getTime() - now.getTime();
+    const absDiffMs = Math.abs(diffMs);
+    const isOverdue = diffMs <= 0;
+
+    // Calculate time differences
+    const seconds = Math.floor(absDiffMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    const remainingHours = hours % 24;
+    const remainingMinutes = minutes % 60;
+    const remainingSeconds = seconds % 60;
+
+    const timeStr = `${days > 0 ? days + "d " : "0d "}${remainingHours > 0 ? remainingHours + "h " : "0h "}${remainingMinutes > 0 ? remainingMinutes + "m " : "0m"}`;
+    return {
+        text: isOverdue ? `${timeStr}` : timeStr,
+        isOverdue: isOverdue,
+    };
+};
+
+// Countdown timer component with real-time updates
+const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetDate?: string }) => {
+    const [countdown, setCountdown] = useState(calculateDuration(startDate, targetDate));
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCountdown(calculateDuration(startDate, targetDate));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [targetDate, startDate]);
+
+    const textColor = countdown.isOverdue ? "text-red-600" : "text-[#029464]";
+    return <div className={`text-left ${textColor} text-[12px]`}>{countdown.text}</div>;
 };
 
 const subtaskColumns: ColumnConfig[] = [
@@ -28,7 +73,7 @@ const subtaskColumns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "subtask_title",
+        key: "title",
         label: "Subtask Title",
         sortable: true,
         draggable: true,
@@ -49,14 +94,21 @@ const subtaskColumns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "start_date",
+        key: "issues",
+        label: "Issues",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "expected_start_date",
         label: "Start Date",
         sortable: true,
         draggable: true,
         defaultVisible: true,
     },
     {
-        key: "end_date",
+        key: "target_date",
         label: "End Date",
         sortable: true,
         draggable: true,
@@ -85,34 +137,198 @@ const subtaskColumns: ColumnConfig[] = [
     },
 ];
 
+const statusOptions = [
+    { value: "open", label: "Open" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "on_hold", label: "On Hold" },
+    { value: "completed", label: "Completed" },
+    { value: "overdue", label: "Overdue" },
+]
+
 const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData: () => Promise<void> }) => {
-    const renderSubtaskCell = (item: Subtask, columnKey: string) => {
-        if (columnKey === "status") {
+    const { id: projectId, mid } = useParams()
+    const dispatch = useAppDispatch();
+    const token = localStorage.getItem("token") || "";
+    const baseUrl = localStorage.getItem("baseUrl") || "";
+    const navigate = useNavigate();
+    const [users, setUsers] = useState([])
+
+    const getUsers = async () => {
+        try {
+            const response = await dispatch(fetchFMUsers()).unwrap();
+            setUsers(response.users);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        getUsers()
+    }, [])
+
+    const handleStatusChange = async (id: number, status: string) => {
+        try {
+            await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status } })).unwrap();
+            fetchData();
+            toast.success("Task status changed successfully");
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const renderSubtaskCell = (item: any, columnKey: string) => {
+        const renderProgressBar = (completed: number, total: number, color: string) => {
+            const progress = total > 0 ? (completed / total) * 100 : 0;
             return (
-                <span
-                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        item.status || ""
-                    )}`}
-                >
-                    <span
-                        className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status?.toLowerCase() === "open"
-                            ? "bg-red-500"
-                            : item.status?.toLowerCase() === "in_progress"
-                                ? "bg-blue-500"
-                                : item.status?.toLowerCase() === "completed"
-                                    ? "bg-green-500"
-                                    : "bg-gray-400"
-                            }`}
-                    ></span>
-                    {item.status}
-                </span>
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate(`/vas/issues?task_id=${item.id}`)}>
+                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                        <div
+                            className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{completed}/{total}</span>
+                </div>
             );
+        };
+
+        if (columnKey === "status") {
+            return <FormControl
+                variant="standard"
+                sx={{ width: 128 }} // same as w-32
+            >
+                <Select
+                    value={item.status}
+                    onChange={(e) =>
+                        handleStatusChange(item.id, e.target.value as string)
+                    }
+                    disableUnderline
+                    sx={{
+                        fontSize: "0.875rem",
+                        cursor: "pointer",
+                        "& .MuiSelect-select": {
+                            padding: "4px 0",
+                        },
+                    }}
+                >
+                    {statusOptions.map((opt) => (
+                        <MenuItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+        }
+        if (columnKey === "duration") {
+            return <CountdownTimer startDate={item.expected_start_date} targetDate={item.target_date} />;
         }
         if (columnKey === "responsible_person") {
             return item?.responsible_person?.name
         }
+        if (columnKey === "issues") {
+            const completed = item.completed_issues || 0;
+            const total = item.total_issues || 0;
+            return renderProgressBar(completed, total, "bg-[#ff9a9e]");
+        }
         return item[columnKey as keyof Subtask] || "-";
     };
+
+    const handleView = (id) => {
+        if (location.pathname.startsWith("/vas/tasks")) {
+            navigate(`/vas/tasks/${id}`);
+        } else {
+            navigate(`/vas/projects/${projectId}/milestones/${mid}/tasks/${id}`)
+        }
+    }
+
+    const renderActions = (item: any) => (
+        <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() => handleView(item.id)}
+            title="View Task Details"
+        >
+            <Eye className="w-4 h-4" />
+        </Button>
+    )
+
+    const renderEditableCell = (columnKey: string, value: any, onChange: (val: any) => void) => {
+        if (columnKey === "responsible_person") {
+            return (
+                <Select
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    displayEmpty
+                    size="small"
+                    sx={{ minWidth: 150 }}
+                >
+                    <MenuItem value="">
+                        <em>Select Responsible Person</em>
+                    </MenuItem>
+                    {
+                        users.map((user: any) => (
+                            <MenuItem key={user.id} value={user.id}>
+                                {user.full_name || user.name}
+                            </MenuItem>
+                        ))
+                    }
+                </Select>
+            );
+        }
+        if (columnKey === "expected_start_date") {
+            return (
+                <TextField
+                    type="date"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    size="small"
+                    sx={{ minWidth: 130 }}
+                    InputLabelProps={{ shrink: true }}
+                />
+            );
+        }
+        if (columnKey === "target_date") {
+            return (
+                <TextField
+                    type="date"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    size="small"
+                    sx={{ minWidth: 130 }}
+                    InputLabelProps={{ shrink: true }}
+                />
+            );
+        }
+        if (columnKey === "priority") {
+            return (
+                <Select
+                    value={value || "Medium"}
+                    onChange={(e) => onChange(e.target.value)}
+                    displayEmpty
+                    size="small"
+                    sx={{ minWidth: 110 }}
+                >
+                    <MenuItem value="High">High</MenuItem>
+                    <MenuItem value="Medium">Medium</MenuItem>
+                    <MenuItem value="Low">Low</MenuItem>
+                </Select>
+            );
+        }
+        if (columnKey === "title") {
+            return (
+                <TextField
+                    type="text"
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="Enter task title"
+                    size="small"
+                    sx={{ minWidth: 200 }}
+                />
+            );
+        }
+        return null;
+    }
 
     return (
         <div>
@@ -129,7 +345,10 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
                 emptyMessage="No Subtask"
                 className="min-w-[1200px] h-max"
                 renderCell={renderSubtaskCell}
+                renderActions={renderActions}
                 canAddRow={true}
+                readonlyColumns={["id", "status", "duration"]}
+                renderEditableCell={renderEditableCell}
             />
         </div>
     )

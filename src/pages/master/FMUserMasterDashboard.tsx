@@ -26,6 +26,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { toast } from "sonner";
 import debounce from "lodash/debounce";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { getUser } from "@/utils/auth";
 
 // Define interfaces for data structures
 interface TransformedFMUser {
@@ -47,6 +48,7 @@ interface TransformedFMUser {
   appDownloaded: boolean;
   active: boolean;
   lockUserId: string | null;
+  department: string;
 }
 
 interface PaginationState {
@@ -88,8 +90,8 @@ const transformFMUserData = (apiUser: FMUser): TransformedFMUser => ({
   employeeId: apiUser.lock_user_permission?.employee_id ?? null,
   createdBy: apiUser.created_by_name,
   accessLevel: apiUser.lock_user_permission?.access_level ?? null,
-  type: apiUser.user_type
-    ? apiUser.user_type
+  type: apiUser.lock_user_permission?.user_type
+    ? apiUser.lock_user_permission.user_type
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ")
@@ -99,6 +101,7 @@ const transformFMUserData = (apiUser: FMUser): TransformedFMUser => ({
   appDownloaded: apiUser.app_downloaded === "Yes",
   active: apiUser.lock_user_permission?.active ?? false,
   lockUserId: apiUser.lock_user_permission?.id ?? null,
+  department: apiUser.department?.department_name ?? "",
 });
 
 const columns: ColumnConfig[] = [
@@ -120,6 +123,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     draggable: true,
   },
+  { key: "department", label: "Department", sortable: true, draggable: true },
   { key: "unit", label: "Unit", sortable: true, draggable: true },
   { key: "role", label: "Role", sortable: true, draggable: true },
   {
@@ -157,6 +161,8 @@ export const FMUserMasterDashboard = () => {
   const { setCurrentSection } = useLayout() as LayoutContext;
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const user = getUser();
+  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
   const {
     loading,
     error,
@@ -247,9 +253,13 @@ export const FMUserMasterDashboard = () => {
   );
 
   useEffect(() => {
+    if (isRestrictedUser) {
+      navigate("/maintenance/asset");
+      return;
+    }
     setCurrentSection("Master");
     dispatch(fetchUserCounts());
-  }, [setCurrentSection, dispatch]);
+  }, [setCurrentSection, dispatch, isRestrictedUser, navigate]);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -746,6 +756,8 @@ export const FMUserMasterDashboard = () => {
       </div>
     );
   }
+
+  if (isRestrictedUser) return null;
 
   return (
     <div className="w-full p-6 space-y-6">

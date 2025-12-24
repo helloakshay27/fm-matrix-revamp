@@ -53,12 +53,11 @@ baseClient.interceptors.request.use(
         hostname.includes("vi-web.gophygital.work") ||
         hostname.includes("web.gophygital.work");
       const isFmSite =
-        hostname.includes("fm-uat.gophygital.work") ||
-        hostname.includes("fm.gophygital.work") ||
-        hostname.includes("fm-matrix.lockated.com");
+        hostname === "fm-uat.gophygital.work" ||
+        hostname === "fm.gophygital.work" ||
+        hostname === "fm-matrix.lockated.com";
 
-      const isDevSite =
-        hostname.includes("uat-fm-matrix.lockated.com");
+      const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
       // Build API URL based on site type and available parameters
       let apiUrl = "";
@@ -111,17 +110,17 @@ baseClient.interceptors.request.use(
         }
       } else {
         // Default fallback: prefer org_id, fallback to email
-        if (orgId) {
-          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
-          console.log("🔍 Using org_id for default fallback:", orgId);
-        } else if (organizationId) {
-          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
-          console.log("🔍 Using org_id for default fallback:", orgId);
+        if (organizationId) {
+          apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
+          console.log("🔍 Using org_id for Dev site:", orgId);
+        } else if (orgId) {
+          apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
+          console.log("🔍 Using org_id for Dev site:", orgId);
         } else if (email) {
-          apiUrl = `https://fm-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
-          console.log("🔍 Using email for default fallback:", email);
+          apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+          console.log("🔍 Using email for Dev site:", email);
         } else {
-          throw new Error("Either org_id or email is required");
+          throw new Error("Either org_id or email is required for Dev sites");
         }
       }
 

@@ -27,6 +27,25 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+ const waitForAssetImportDone = async (importKey: string) => {
+  while (true) {
+    const res = await apiClient.get("/pms/assets/import_status", {
+      params: { import_key: importKey },
+    });
+
+    const data = res.data;
+
+    if (data.status === "completed") return data;
+    if (data.status === "failed") {
+      throw new Error(data.error_message || "Import failed");
+    }
+
+    // processing / unknown → wait
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+};
+
+
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -148,88 +167,81 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
     }
   };
 
-  const handleImport = async () => {
-    if (!selectedFile) {
-      toast.error('Please select a file to import', {
-        position: 'top-right',
-        duration: 4000,
-        style: {
-          background: '#f59e0b',
-          color: 'white',
-          border: 'none',
-        },
-      });
-      return;
-    }
+const handleImport = async () => {
+  if (!selectedFile) {
+    toast.error("Please select a file to import");
+    return;
+  }
 
-    setIsUploading(true);
-    console.log('Starting import process for:', selectedFile.name);
+  setIsUploading(true);
 
-    try {
-      // Determine the API endpoint and parameters based on context
-      let endpoint: string;
-      let formData: FormData;
+  try {
+    // ===============================
+    // 🔹 ASSETS → BACKGROUND IMPORT
+    // ===============================
+    if (context === "assets") {
+      const formData = new FormData();
+      formData.append("pms_asset_file", selectedFile);
 
-      if (context === "custom_forms") {
-        endpoint = ENDPOINTS.CUSTOM_FORMS_BULK_UPLOAD;
-        formData = new FormData();
-        formData.append('custom_form_file', selectedFile); // Use specific parameter name
-      } else if (context === "measurements") {
-        endpoint = ENDPOINTS.ASSET_MEASUREMENT_IMPORT;
-        formData = new FormData();
-        formData.append('measurement_file', selectedFile); // Use specific parameter name
-      } else {
-        // Default assets context
-        endpoint = uploadType === "upload"
-          ? "/pms/assets/asset_import"
-          : "/pms/assets/update_assets";
-        formData = new FormData();
-        formData.append('pms_asset_file', selectedFile);
+      // STEP 1: Start background import
+      const response = await apiClient.post(
+        "/pms/assets/asset_import",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      const { import_key } = response.data;
+
+      if (!import_key) {
+        throw new Error("Import key not returned from server");
       }
 
-      // Call the API with the selected file
-      const response = await apiClient.post(endpoint, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      toast.info("Import started", {
+        description: "Assets are being imported in background…",
       });
 
-      console.log('Import response:', response.data);
+      // STEP 2: Poll until finished
+      const result = await waitForAssetImportDone(import_key);
 
-      if (onImport) {
-        onImport(selectedFile);
-      }
+      toast.success("Import completed", {
+        description: `${result.success_count || 0} assets imported, ${result.error_count || 0} errors`,
+      });
 
-      // Reset state
       setSelectedFile(null);
       onOpenChange(false);
-
-      toast.success(`${uploadType === "upload" ? "Import" : "Update"} completed successfully`, {
-        position: 'top-right',
-        duration: 4000,
-        style: {
-          background: '#10b981',
-          color: 'white',
-          border: 'none',
-        },
-      });
-
-    } catch (error) {
-      console.error('Import failed:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Import failed. Please try again.';
-      toast.error(errorMessage, {
-        position: 'top-right',
-        duration: 5000,
-        style: {
-          background: '#ef4444',
-          color: 'white',
-          border: 'none',
-        },
-      });
-    } finally {
-      setIsUploading(false);
+      return; // ⛔ IMPORTANT: stop here
     }
-  };
+
+    // ==================================
+    // 🔹 CUSTOM FORMS / MEASUREMENTS
+    // (UNCHANGED – DIRECT UPLOAD)
+    // ==================================
+    let endpoint = "";
+    const formData = new FormData();
+
+    if (context === "custom_forms") {
+      endpoint = ENDPOINTS.CUSTOM_FORMS_BULK_UPLOAD;
+      formData.append("custom_form_file", selectedFile);
+    } else if (context === "measurements") {
+      endpoint = ENDPOINTS.ASSET_MEASUREMENT_IMPORT;
+      formData.append("measurement_file", selectedFile);
+    }
+
+    await apiClient.post(endpoint, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    toast.success("Import completed successfully");
+    setSelectedFile(null);
+    onOpenChange(false);
+
+  } catch (error: any) {
+    toast.error(error?.message || "Import failed");
+  } finally {
+    setIsUploading(false);
+  }
+};
+
 
   const handleClose = () => {
     if (!isUploading) {

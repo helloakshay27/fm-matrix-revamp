@@ -22,7 +22,8 @@ interface Asset {
 
 interface AssetSelectionPanelProps {
   selectedCount: number;
-  selectedAssets: Asset[];
+  selectedAssets: Asset[]; // For display purposes
+  selectedAssetIds: string[]; // For API operations
   onMoveAsset: () => void;
   onDisposeAsset: () => void;
   onPrintQRCode: () => void;
@@ -33,6 +34,7 @@ interface AssetSelectionPanelProps {
 export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   selectedCount,
   selectedAssets,
+  selectedAssetIds,
   onMoveAsset,
   onDisposeAsset,
   onPrintQRCode,
@@ -67,7 +69,7 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
     try {
       const params = {
         q: {
-          id_in: selectedAssets.map((asset) => asset.id),
+          id_in: selectedAssetIds,
         },
       };
 
@@ -125,71 +127,172 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
     }
   };
 
-  const handlePrintQRCode = async () => {
-    if (selectedAssets.length === 0) {
-      toast({
-        title: "No assets selected",
-        description: "Please select at least one asset to print QR codes.",
-        variant: "destructive",
-      });
-      return;
-    }
+  // const handlePrintQRCode = async () => {
+  //   if (selectedAssets.length === 0) {
+  //     toast({
+  //       title: "No assets selected",
+  //       description: "Please select at least one asset to print QR codes.",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
 
-    setIsPrintingQR(true);
+  //   setIsPrintingQR(true);
 
-    try {
-      const urlParams = new URLSearchParams();
-      selectedAssets.forEach((asset) => {
-        urlParams.append("asset_ids[]", asset.id);
-      });
+  //   try {
+  //     const url = `${BASE_URL}/pms/assets/print_qr_codes`;
 
-      const url = `${BASE_URL}/pms/assets/print_qr_codes?${urlParams.toString()}`;
+  //     const response = await fetch(url, {
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: getAuthHeader(),
+  //         "Content-Type": "application/json",
+  //         Accept: "application/pdf",
+  //       },
+  //       body: JSON.stringify({
+  //         asset_ids: selectedAssetIds,
+  //       }),
+  //     });
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: getAuthHeader(),
-          Accept: "application/pdf",
-        },
-      });
+  //     if (!response.ok) {
+  //       throw new Error(
+  //         `QR code generation failed: ${response.status} ${response.statusText}`
+  //       );
+  //     }
 
-      if (!response.ok) {
-        throw new Error(
-          `QR code generation failed: ${response.status} ${response.statusText}`
-        );
+  //     const blob = await response.blob();
+
+  //     // Create and trigger download
+  //     const downloadUrl = URL.createObjectURL(blob);
+  //     const link = document.createElement("a");
+  //     link.href = downloadUrl;
+  //     link.download = "qr_codes.pdf";
+  //     link.style.display = "none";
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //     URL.revokeObjectURL(downloadUrl);
+
+  //     toast({
+  //       title: "QR codes generated successfully",
+  //       description: `Successfully generated QR codes for ${selectedAssets.length} asset(s).`,
+  //     });
+  //   } catch (error) {
+  //     console.error("QR code generation error:", error);
+  //     toast({
+  //       title: "QR code generation failed",
+  //       description:
+  //         error instanceof Error
+  //           ? error.message
+  //           : "Failed to generate QR codes. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsPrintingQR(false);
+  //   }
+  // };
+
+const waitForPdfReady = async (fileName: string): Promise<Response> => {
+  while (true) {
+    const res = await fetch(
+      `${BASE_URL}/asset/download_qr_pdf?file_name=${encodeURIComponent(fileName)}`,
+      {
+        headers: { Authorization: getAuthHeader() },
       }
+    );
 
-      const blob = await response.blob();
+    // Backend sends PDF when ready
+    const contentType = res.headers.get("content-type");
 
-      // Create and trigger download
-      const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = "qr_codes.pdf";
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(downloadUrl);
-
-      toast({
-        title: "QR codes generated successfully",
-        description: `Successfully generated QR codes for ${selectedAssets.length} asset(s).`,
-      });
-    } catch (error) {
-      console.error("QR code generation error:", error);
-      toast({
-        title: "QR code generation failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to generate QR codes. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsPrintingQR(false);
+    if (contentType?.includes("application/pdf")) {
+      return res; // ✅ PDF is ready
     }
-  };
+
+    // Otherwise backend returns JSON status
+    const data = await res.json();
+
+    if (data.status === "failed") {
+      throw new Error("QR PDF generation failed");
+    }
+
+    // ⏳ still processing → wait silently
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+};
+
+
+
+const handlePrintQRCode = async () => {
+  if (selectedAssetIds.length === 0) {
+    toast({
+      title: "No assets selected",
+      description: "Please select at least one asset to print QR codes.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setIsPrintingQR(true);
+
+  try {
+    // STEP 1: Start PDF generation
+    const response = await fetch(`${BASE_URL}/pms/assets/print_qr_codes`, {
+      method: "POST",
+      headers: {
+        Authorization: getAuthHeader(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ asset_ids: selectedAssetIds }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to start QR generation");
+    }
+
+    const { file_name } = await response.json();
+    if (!file_name) {
+      throw new Error("File name not returned from server");
+    }
+
+    toast({
+      title: "Generating QR PDF",
+      description: "Please wait while the PDF is being prepared…",
+    });
+
+    // STEP 2: ⏳ Wait until PDF is READY
+    const pdfResponse = await waitForPdfReady(file_name);
+
+    // STEP 3: Download PDF (only once, guaranteed ready)
+    const blob = await pdfResponse.blob();
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = file_name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Download complete",
+      description: "QR codes downloaded successfully.",
+    });
+  } catch (error) {
+    console.error(error);
+    toast({
+      title: "QR code generation failed",
+      description:
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsPrintingQR(false);
+  }
+};
+
 
   const getDisplayText = () => {
     if (selectedAssets.length === 0) return "";
@@ -217,6 +320,14 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
     );
   };
 
+  // If we have selected IDs but no objects (e.g. bulk select across pages), show generic text
+  const safeGetDisplayText = () => {
+    if (selectedCount > 0 && selectedAssets.length === 0) {
+      return `${selectedCount} item(s) selected`;
+    }
+    return getDisplayText();
+  }
+
   return (
     <div
       className="fixed bg-white border border-gray-200 rounded-sm shadow-lg z-50"
@@ -232,7 +343,7 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
               Selection
             </span>
             <span className="text-[12px] font-medium text-[#6B7280] break-words leading-tight">
-              {getDisplayText()}
+              {safeGetDisplayText()}
             </span>
           </div>
         </div>

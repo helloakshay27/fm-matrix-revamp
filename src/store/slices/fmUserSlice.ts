@@ -30,11 +30,16 @@ export interface FMUser {
     status: string;
     active: boolean;
     id: string;
+    user_type?: string;
   };
   user_type?: string;
   lock_user_permission_status?: string;
   face_added?: boolean;
   app_downloaded?: string;
+  department?: {
+    id: number;
+    department_name: string;
+  };
 }
 
 export interface FMUserResponse {

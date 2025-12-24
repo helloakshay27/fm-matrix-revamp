@@ -63,10 +63,6 @@ export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialog
       toast.error('Please select a building');
       return;
     }
-    if (!selectedWing) {
-      toast.error('Please select a wing');
-      return;
-    }
     if (!areaName.trim()) {
       toast.error('Please enter area name');
       return;

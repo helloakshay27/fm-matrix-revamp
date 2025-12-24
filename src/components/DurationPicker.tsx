@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/table";
 
 export const DurationPicker = ({
-    value = 0,
     onChange,
     className = "",
     onDateWiseHoursChange,
@@ -22,13 +21,17 @@ export const DurationPicker = ({
     placeholder = "Select duration",
     resposiblePerson = "Unassigned",
     totalWorkingHours,
+    dateWiseHours,
     setTotalWorkingHours,
-    shift = {},
+    shift = {} as any,
 }) => {
+    console.log(dateWiseHours)
     const [isOpen, setIsOpen] = useState(false);
     const [taskType, setTaskType] = useState("standard");
     const [dailyHours, setDailyHours] = useState([]);
     const [daysList, setDaysList] = useState([]);
+    const [manualDuration, setManualDuration] = useState("");
+    const [totalHoursInput, setTotalHoursInput] = useState("");
     const pickerRef = useRef(null);
 
     const parseHours = (val) => {
@@ -42,6 +45,12 @@ export const DurationPicker = ({
         const num = parseFloat(val);
         return isNaN(num) ? 0 : num;
     };
+
+    useEffect(() => {
+        if (endDate) {
+            setIsOpen(true);
+        }
+    }, [endDate]);
 
     const formatTotalHours = (total) => {
         const totalMinutes = Math.round(total * 60);
@@ -135,6 +144,16 @@ export const DurationPicker = ({
         ).padStart(2, "0")}`;
     };
 
+    /** ✅ Helper to get id from existing dateWiseHours by date match */
+    const getIdFromExistingHours = (formattedDate) => {
+        console.log(formattedDate)
+        console.log(dateWiseHours)
+        if (!Array.isArray(dateWiseHours)) return null;
+        const existing = dateWiseHours.find((h) => h.date === formattedDate);
+        console.log(existing)
+        return existing?.id || null;
+    };
+
     let hoursPerDay = 8;
     if (!Array.isArray(shift) && shift?.shift) {
         const [startTime, endTime] = shift.shift.split(" to ");
@@ -188,36 +207,59 @@ export const DurationPicker = ({
                 const workingDays = allDays.filter((d) => d.isWorking);
                 const hrs = workingDays.length * hoursPerDay;
 
-                console.log(hrs)
+                console.log(totalWorkingHours);
 
-                setTotalWorkingHours(hrs);
+                setTotalWorkingHours(totalWorkingHours ? totalWorkingHours : hrs);
                 if (onChange) onChange(hrs);
 
                 // ✅ Send hoursPerDay per working day (as decimal hours)
                 if (onDateWiseHoursChange) {
                     const perDayDecimal = parseHours(formatTotalHours(hoursPerDay));
-                    const dateWise = workingDays.map((d) => ({
-                        hours: perDayDecimal,
-                        minutes: 0,
-                        date: formatLocalDate(d.date),
-                    }));
-                    onDateWiseHoursChange(dateWise);
+                    const dateWise = workingDays.map((d) => {
+                        const formattedDate = formatLocalDate(d.date);
+
+                        const hours = Math.floor(perDayDecimal);
+                        const minutes = Math.round((perDayDecimal - hours) * 60);
+
+                        console.log(dateWiseHours)
+
+                        return {
+                            id: (Array.isArray(dateWiseHours) && dateWiseHours.length > 0) ? dateWiseHours?.find(h => h.date === formattedDate)?.id : null,
+                            hours,
+                            minutes,
+                            date: formattedDate,
+                            _destroy: false,
+                        };
+                    });
+                    onDateWiseHoursChange(
+                        dateWiseHours && dateWiseHours.length > 0 ? dateWiseHours : dateWise
+                    );
                 }
 
                 setDaysList(allDays);
-            } else if (startDate || endDate) {
-                setTotalWorkingHours(hoursPerDay);
+                setManualDuration("");
+                setTotalHoursInput(formatTotalHours(hoursPerDay));
+            } else if (endDate && !startDate) {
+                // Only end date selected - allow manual entry
+                const allDays = getAllDays(endDate, endDate, shift);
+                setDaysList(allDays);
+                setManualDuration("");
+                setTotalHoursInput("");
             } else {
                 setDaysList([]);
+                setManualDuration("");
+                setTotalHoursInput("");
                 if (onChange) onChange(0);
-                if (onDateWiseHoursChange) onDateWiseHoursChange([]);
+                // if (onDateWiseHoursChange) onDateWiseHoursChange([]);
             }
         } else {
             // ✅ Flexible logic
             if (endDate) {
                 const allDays = getAllDays(startDate, endDate, shift);
                 setDaysList(allDays);
-                const defaultHours = allDays.map((d) => (d.isWorking ? formatTotalHours(hoursPerDay) : ""));
+                const defaultHours = allDays.map((d) =>
+                    d.isWorking ? formatTotalHours(hoursPerDay) : ""
+                );
                 setDailyHours(defaultHours);
 
                 const total = defaultHours.reduce((sum, h) => sum + parseHours(h), 0);
@@ -225,11 +267,15 @@ export const DurationPicker = ({
                 if (onChange) onChange(total);
 
                 if (onDateWiseHoursChange) {
-                    const dateWise = allDays.map((d, idx) => ({
-                        hours: parseHours(defaultHours[idx]),
-                        minutes: 0,
-                        date: formatLocalDate(d.date),
-                    }));
+                    const dateWise = allDays.map((d, idx) => {
+                        const formattedDate = formatLocalDate(d.date);
+                        return {
+                            id: getIdFromExistingHours(formattedDate),
+                            hours: parseHours(defaultHours[idx]),
+                            minutes: 0,
+                            date: formattedDate,
+                        };
+                    });
                     onDateWiseHoursChange(dateWise);
                 }
             } else {
@@ -242,6 +288,8 @@ export const DurationPicker = ({
         }
     }, [startDate, endDate, taskType, shift]);
 
+    console.log(dateWiseHours);
+
     /** ✅ Update total & date-wise data when flexible hours change */
     useEffect(() => {
         if (taskType === "flexible") {
@@ -250,12 +298,18 @@ export const DurationPicker = ({
             if (onChange) onChange(total);
 
             if (onDateWiseHoursChange && daysList.length > 0) {
-                const dateWise = daysList.map((d, idx) => ({
-                    hours: parseHours(dailyHours[idx]),
-                    minutes: 0,
-                    date: formatLocalDate(d.date),
-                }));
-                onDateWiseHoursChange(dateWise);
+                const dateWise = daysList.map((d, idx) => {
+                    const formattedDate = formatLocalDate(d.date);
+                    return {
+                        id: getIdFromExistingHours(formattedDate),
+                        hours: parseHours(dailyHours[idx]),
+                        minutes: 0,
+                        date: formattedDate,
+                    };
+                });
+                onDateWiseHoursChange(
+                    dateWiseHours && dateWiseHours.length > 0 ? dateWiseHours : dateWise
+                );
             }
         }
     }, [dailyHours, taskType]);
@@ -322,9 +376,10 @@ export const DurationPicker = ({
 
                     {/* === Flexible Table === */}
                     {taskType === "flexible" ? (
-                        !endDate ? (
+                        !endDate && !startDate ? (
                             <div className="text-sm text-gray-500 bg-red-100 px-3 py-2 flex items-center gap-2">
-                                <Info size={16} /> Please select at least an end date to enable flexible work hours.
+                                <Info size={16} /> Please select both start date and end date to
+                                enable flexible work hours.
                             </div>
                         ) : (
                             <div className="relative w-full overflow-x-auto">
@@ -351,7 +406,7 @@ export const DurationPicker = ({
                                         <TableRow>
                                             <TableCell className="sticky left-0 bg-white border-r font-medium flex items-center gap-2 !pl-2">
                                                 <div className="w-[35px] h-[55px] flex items-center justify-center text-sm font-bold">
-                                                    <div className="h-8 w-8 rounded-full bg-green-500 text-white flex items-center !justify-center">
+                                                    <div className="h-8 w-8 rounded-full bg-green-500 text-white !text-center flex items-center !justify-center">
                                                         {resposiblePerson.charAt(0).toUpperCase() || "U"}
                                                     </div>
                                                 </div>
@@ -402,16 +457,18 @@ export const DurationPicker = ({
                                             Owner
                                         </TableHead>
                                         <TableHead className="min-w-[150px] bg-white">Business Hours</TableHead>
-                                        <TableHead className="min-w-[150px] bg-white">Work Hours Per Day</TableHead>
-                                        <TableHead className="min-w-[40px] bg-white">Duration</TableHead>
+                                        <TableHead className="min-w-[100px] bg-white">Work Hours Per Day</TableHead>
+                                        <TableHead className="min-w-[100px] bg-white">
+                                            Efforts Duration (HH:mm)
+                                        </TableHead>
                                         <TableHead className="sticky right-0 z-20 bg-white border-l">
                                             Total Hours
                                         </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    <TableRow className="text-xs">
-                                        <TableCell className="sticky left-0 bg-white border-r font-medium flex items-center gap-2 !pl-0">
+                                    <TableRow>
+                                        <TableCell className="sticky left-0 bg-white border-r font-medium flex items-center gap-2">
                                             <div className="w-[35px] h-[55px] flex items-center justify-center text-sm font-bold">
                                                 <div className="h-8 w-8 rounded-full bg-green-500 text-white flex items-center !justify-center">
                                                     {resposiblePerson.charAt(0).toUpperCase() || "U"}
@@ -419,14 +476,37 @@ export const DurationPicker = ({
                                             </div>
                                             {resposiblePerson || "Unassigned"}
                                         </TableCell>
-                                        <TableCell className="bg-white px-2">Standard Business Hours</TableCell>
-                                        <TableCell className="!px-2 bg-white">{formatTotalHours(hoursPerDay)} hr/day (100% day)</TableCell>
-                                        <TableCell className="bg-white">
-                                            {daysList.length > 0
-                                                ? `${daysList.filter((d) => d.isWorking).length}d`
-                                                : "--"}
+                                        <TableCell className="bg-white">Standard Business Hours</TableCell>
+                                        <TableCell className="!px-2 bg-white">
+                                            {formatTotalHours(hoursPerDay)} hr/day <br />
+                                            (100% day)
                                         </TableCell>
-                                        <TableCell className="text-right sticky right-0 bg-white border-l z-10">
+                                        <TableCell className="bg-white">
+                                            {startDate && endDate ? (
+                                                <input
+                                                    type="text"
+                                                    value={totalHoursInput}
+                                                    onChange={(e) => setTotalHoursInput(e.target.value)}
+                                                    placeholder="8:30"
+                                                    className="w-20 px-2 py-1 border border-gray-300 rounded-md text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            ) : !startDate && endDate ? (
+                                                <input
+                                                    type="text"
+                                                    value={manualDuration}
+                                                    onChange={(e) => setManualDuration(e.target.value)}
+                                                    placeholder="8:30"
+                                                    className="w-20 px-2 py-1 border border-gray-300 rounded-md text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            ) : (
+                                                <span>
+                                                    {daysList.length > 0
+                                                        ? `${daysList.filter((d) => d.isWorking).length}d`
+                                                        : "--"}
+                                                </span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right sticky right-0 bg-white border-l">
                                             {totalWorkingHours > 0
                                                 ? `${formatTotalHours(totalWorkingHours)} hrs`
                                                 : "--"}
@@ -444,6 +524,7 @@ export const DurationPicker = ({
                                 setDailyHours([]);
                                 setDaysList([]);
                                 setTotalWorkingHours(0);
+                                setManualDuration("");
                                 if (onChange) onChange(0);
                                 if (onDateWiseHoursChange) onDateWiseHoursChange([]);
                             }}
@@ -455,19 +536,47 @@ export const DurationPicker = ({
                         <button
                             onClick={() => {
                                 if (taskType === "standard") {
-                                    setTotalWorkingHours(hoursPerDay);
-                                    if (onChange) onChange(hoursPerDay);
+                                    // Handle end-date-only with manual duration
+                                    if (!startDate && endDate) {
+                                        const parsedHours = manualDuration ? parseHours(manualDuration) : hoursPerDay;
+                                        setTotalWorkingHours(parsedHours);
+                                        if (onChange) onChange(parsedHours);
 
-                                    if (onDateWiseHoursChange && startDate && endDate) {
+                                        if (onDateWiseHoursChange && daysList.length > 0) {
+                                            const dateWise = daysList.map((d) => {
+                                                const formattedDate = formatLocalDate(d.date);
+                                                return {
+                                                    id: getIdFromExistingHours(formattedDate),
+                                                    hours: parsedHours,
+                                                    minutes: 0,
+                                                    date: formattedDate,
+                                                };
+                                            });
+                                            onDateWiseHoursChange(dateWise);
+                                        }
+                                    } else if (startDate && endDate) {
+                                        // Handle both start and end dates with editable hours per day
+                                        const parsedHoursPerDay = totalHoursInput
+                                            ? parseHours(totalHoursInput)
+                                            : hoursPerDay;
                                         const allDays = getAllDays(startDate, endDate, shift);
                                         const workingDays = allDays.filter((d) => d.isWorking);
-                                        const perDayDecimal = parseHours(formatTotalHours(hoursPerDay));
-                                        const dateWise = workingDays.map((d) => ({
-                                            hours: perDayDecimal,
-                                            minutes: 0,
-                                            date: formatLocalDate(d.date),
-                                        }));
-                                        onDateWiseHoursChange(dateWise);
+                                        const total = parsedHoursPerDay * workingDays.length;
+                                        setTotalWorkingHours(total);
+                                        if (onChange) onChange(total);
+
+                                        if (onDateWiseHoursChange) {
+                                            const dateWise = workingDays.map((d) => {
+                                                const formattedDate = formatLocalDate(d.date);
+                                                return {
+                                                    id: getIdFromExistingHours(formattedDate),
+                                                    hours: parsedHoursPerDay,
+                                                    minutes: 0,
+                                                    date: formattedDate,
+                                                };
+                                            });
+                                            onDateWiseHoursChange(dateWise);
+                                        }
                                     }
                                 }
                                 setIsOpen(false);

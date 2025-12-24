@@ -33,11 +33,11 @@ interface GroupsPageTemplateProps {
   downloadSampleUrl?: string;
 }
 
-export const GroupsPageTemplate = ({ 
-  title, 
-  breadcrumb, 
-  apiEndpoint, 
-  subGroupApiEndpoint, 
+export const GroupsPageTemplate = ({
+  title,
+  breadcrumb,
+  apiEndpoint,
+  subGroupApiEndpoint,
   groupType,
   importApiEndpoint,
   downloadSampleUrl,
@@ -45,24 +45,24 @@ export const GroupsPageTemplate = ({
   const [groups, setGroups] = useState<Group[]>([]);
   const [subGroups, setSubGroups] = useState<SubGroup[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Modal states
   const [addGroupOpen, setAddGroupOpen] = useState(false);
   const [addSubGroupOpen, setAddSubGroupOpen] = useState(false);
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
-  
+
   // Form states
   const [groupName, setGroupName] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [subGroupName, setSubGroupName] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
+
   // Loading states
   const [groupLoading, setGroupLoading] = useState(false);
   const [subGroupLoading, setSubGroupLoading] = useState(false);
   const [bulkUploadLoading, setBulkUploadLoading] = useState(false);
   const [showActionPanel, setShowActionPanel] = useState(false);
-  
+
   // MUI theme
   const theme = createTheme({
     palette: {
@@ -75,7 +75,7 @@ export const GroupsPageTemplate = ({
     try {
       setLoading(true);
       const response = await apiClient.get(`${apiEndpoint}?type=${groupType}`);
-      
+
       if (response.data && Array.isArray(response.data)) {
         // Transform groups data
         const transformedGroups = response.data.map((group, index) => ({
@@ -88,7 +88,7 @@ export const GroupsPageTemplate = ({
         // Transform subgroups data - flatten from all groups
         const transformedSubGroups: SubGroup[] = [];
         let subGroupSerialNo = 1;
-        
+
         response.data.forEach((group: any) => {
           if (group.sub_groups && Array.isArray(group.sub_groups)) {
             group.sub_groups.forEach((subGroup: any) => {
@@ -118,26 +118,65 @@ export const GroupsPageTemplate = ({
     fetchGroupsData();
   }, [apiEndpoint, groupType]);
 
-  const toggleGroupStatus = (id: number) => {
-    setGroups(prev => prev.map(group => {
-      if (group.id === id) {
-        const newStatus = !group.status;
-        toast.success(`Group ${newStatus ? 'activated' : 'deactivated'} successfully`);
-        return { ...group, status: newStatus };
-      }
-      return group;
-    }));
+  const toggleGroupStatus = async (id: number) => {
+    const group = groups.find(g => g.id === id);
+    if (!group) return;
+
+    const newStatus = !group.status;
+    const statusString = newStatus ? 'active' : 'inactive';
+
+    try {
+      const updateUrl = apiEndpoint.replace('.json', `/${id}.json`);
+      const payload = {
+        pms_asset_group: {
+          status: statusString
+        }
+      };
+
+      await apiClient.put(updateUrl, payload);
+
+      setGroups(prev => prev.map(group => {
+        if (group.id === id) {
+          return { ...group, status: newStatus };
+        }
+        return group;
+      }));
+      toast.success(`Group ${newStatus ? 'activated' : 'deactivated'} successfully`);
+    } catch (error) {
+      console.error('Error updating group status:', error);
+      toast.error('Failed to update group status');
+    }
   };
 
-  const toggleSubGroupStatus = (id: number) => {
-    setSubGroups(prev => prev.map(subGroup => {
-      if (subGroup.id === id) {
-        const newStatus = !subGroup.status;
-        toast.success(`Sub group ${newStatus ? 'activated' : 'deactivated'} successfully`);
-        return { ...subGroup, status: newStatus };
-      }
-      return subGroup;
-    }));
+  const toggleSubGroupStatus = async (id: number) => {
+    const subGroup = subGroups.find(sg => sg.id === id);
+    if (!subGroup) return;
+
+    const newStatus = !subGroup.status;
+    const statusString = newStatus ? 'active' : 'inactive';
+
+    try {
+      const updateUrl = subGroupApiEndpoint.replace('.json', `/${id}.json`);
+      // Using pms_asset_group key as requested for subgroup update as well
+      const payload = {
+        pms_asset_sub_group: {
+          status: statusString
+        }
+      };
+
+      await apiClient.put(updateUrl, payload);
+
+      setSubGroups(prev => prev.map(subGroup => {
+        if (subGroup.id === id) {
+          return { ...subGroup, status: newStatus };
+        }
+        return subGroup;
+      }));
+      toast.success(`Sub group ${newStatus ? 'activated' : 'deactivated'} successfully`);
+    } catch (error) {
+      console.error('Error updating subgroup status:', error);
+      toast.error('Failed to update subgroup status');
+    }
   };
 
   const handleAddGroup = async () => {
@@ -156,7 +195,7 @@ export const GroupsPageTemplate = ({
       };
 
       const response = await apiClient.post('/pms/asset_groups.json', payload);
-      
+
       if (response.data) {
         await fetchGroupsData();
         setGroupName('');
@@ -176,7 +215,7 @@ export const GroupsPageTemplate = ({
       toast.error('Please select a group');
       return;
     }
-    
+
     if (!subGroupName.trim()) {
       toast.error('Please enter a sub group name');
       return;
@@ -190,7 +229,7 @@ export const GroupsPageTemplate = ({
       });
 
       const response = await apiClient.post(`/pms/asset_sub_groups.json?${params.toString()}`);
-      
+
       if (response.data) {
         await fetchGroupsData();
         setSelectedGroupId('');
@@ -384,13 +423,13 @@ export const GroupsPageTemplate = ({
 
         {/* Add Group Modal */}
         <ThemeProvider theme={theme}>
-          <Dialog 
-            open={addGroupOpen} 
+          <Dialog
+            open={addGroupOpen}
             onClose={() => setAddGroupOpen(false)}
             maxWidth="sm"
             fullWidth
           >
-             <div className="flex items-center justify-between py-2 px-4 border-b">
+            <div className="flex items-center justify-between py-2 px-4 border-b">
               <DialogTitle className="text-xl font-bold p-0">ADD Group</DialogTitle>
               <IconButton onClick={() => setAddGroupOpen(false)}>
                 <X className="w-5 h-5" />
@@ -410,7 +449,7 @@ export const GroupsPageTemplate = ({
                   }}
                 />
                 <div className="flex justify-end pt-4">
-                  <Button 
+                  <Button
                     onClick={handleAddGroup}
                     disabled={groupLoading}
                     className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
@@ -423,13 +462,13 @@ export const GroupsPageTemplate = ({
           </Dialog>
 
           {/* Add Sub Group Modal */}
-          <Dialog 
-            open={addSubGroupOpen} 
+          <Dialog
+            open={addSubGroupOpen}
             onClose={() => setAddSubGroupOpen(false)}
             maxWidth="md"
             fullWidth
           >
-             <div className="flex items-center justify-between p-4 border-b">
+            <div className="flex items-center justify-between p-4 border-b">
               <DialogTitle className="text-xl font-bold p-0">ADD Sub Group</DialogTitle>
               <IconButton onClick={() => setAddSubGroupOpen(false)}>
                 <X className="w-5 h-5" />
@@ -463,7 +502,7 @@ export const GroupsPageTemplate = ({
                     ))}
                   </Select>
                 </FormControl>
-                
+
                 <TextField
                   label="Sub Group Name *"
                   placeholder="Enter Sub Group Name"
@@ -477,7 +516,7 @@ export const GroupsPageTemplate = ({
                 />
               </div>
               <div className="flex justify-end pt-6">
-                <Button 
+                <Button
                   onClick={handleAddSubGroup}
                   disabled={subGroupLoading}
                   className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2"
@@ -489,8 +528,8 @@ export const GroupsPageTemplate = ({
           </Dialog>
 
           {/* Bulk Upload Modal */}
-          <Dialog 
-            open={bulkUploadOpen} 
+          <Dialog
+            open={bulkUploadOpen}
             onClose={() => setBulkUploadOpen(false)}
             maxWidth="md"
             fullWidth
@@ -504,7 +543,7 @@ export const GroupsPageTemplate = ({
             <DialogContent className="p-6">
               <div className="space-y-6">
                 {/* Drag & Drop File Upload Area */}
-                <div 
+                <div
                   className="border-2 border-dashed border-red-400 rounded-lg p-8 text-center bg-gray-50 cursor-pointer"
                   onClick={() => document.getElementById('file-upload')?.click()}
                 >
@@ -516,10 +555,10 @@ export const GroupsPageTemplate = ({
                       {selectedFile ? selectedFile.name : 'No file chosen'}
                     </p>
                   </div>
-                  <input 
+                  <input
                     id="file-upload"
-                    type="file" 
-                    className="hidden" 
+                    type="file"
+                    className="hidden"
                     accept=".csv,.xlsx,.xls"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
@@ -552,9 +591,9 @@ export const GroupsPageTemplate = ({
                         <span className="text-gray-900">{new Date(selectedFile.lastModified).toLocaleDateString()}</span>
                       </div>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setSelectedFile(null)}
                       className="mt-3 text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
                     >
@@ -562,9 +601,9 @@ export const GroupsPageTemplate = ({
                     </Button>
                   </div>
                 )}
-                
+
                 <div className="flex justify-end pt-4">
-                  <Button 
+                  <Button
                     onClick={handleBulkUpload}
                     disabled={bulkUploadLoading || !selectedFile}
                     className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2"

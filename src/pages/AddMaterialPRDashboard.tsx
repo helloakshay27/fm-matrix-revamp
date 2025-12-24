@@ -66,6 +66,9 @@ export const AddMaterialPRDashboard = () => {
   const [wbsCodes, setWbsCodes] = useState([]);
   const [overallWbs, setOverallWbs] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [glAccountOptions, setGlAccountOptions] = useState([]);
+  const [taxCodeOptions, setTaxCodeOptions] = useState([]);
+  const [storageLocationOptions, setStorageLocationOptions] = useState([]);
   const [items, setItems] = useState([
     {
       id: 1,
@@ -104,6 +107,63 @@ export const AddMaterialPRDashboard = () => {
   const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [slid, setSlid] = useState(null);
+
+  // Fetch GL Account options
+  const fetchGlAccountOptions = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/get_additional_fields.json?q[fields_for_eq]=gl_account`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.additional_fields && Array.isArray(response.data.additional_fields)) {
+        setGlAccountOptions(response.data.additional_fields);
+      }
+    } catch (error) {
+      console.error("Error fetching GL Account options:", error);
+    }
+  };
+
+  // Fetch Tax Code options
+  const fetchTaxCodeOptions = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/get_additional_fields.json?q[fields_for_eq]=tax_code`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.additional_fields && Array.isArray(response.data.additional_fields)) {
+        setTaxCodeOptions(response.data.additional_fields);
+      }
+    } catch (error) {
+      console.error("Error fetching Tax Code options:", error);
+    }
+  };
+
+  // Fetch Storage Location options
+  const fetchStorageLocationOptions = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/get_additional_fields.json?q[fields_for_eq]=storage_location`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.additional_fields && Array.isArray(response.data.additional_fields)) {
+        setStorageLocationOptions(response.data.additional_fields);
+      }
+    } catch (error) {
+      console.error("Error fetching Storage Location options:", error);
+    }
+  };
 
   // Fetch saved PR details if saved_pr_id is present
   useEffect(() => {
@@ -363,6 +423,9 @@ export const AddMaterialPRDashboard = () => {
     fetchPlantDetails();
     fetchAddresses();
     fetchInventories();
+    fetchGlAccountOptions();
+    fetchTaxCodeOptions();
+    fetchStorageLocationOptions();
   }, []);
 
   const handleSupplierChange = (e) => {
@@ -475,9 +538,26 @@ export const AddMaterialPRDashboard = () => {
       toast.error("Supplier is required");
       return false;
     }
+    if (!supplierDetails.plantDetail) {
+      toast.error("Plant Detail is required");
+      return false;
+    }
+    if (!supplierDetails.type) {
+      toast.error("Type is required");
+      return false;
+    }
     if (!supplierDetails.prDate) {
       toast.error("PR Date is required");
       return false;
+    }
+    if (supplierDetails.prDate) {
+      const prDate = new Date(supplierDetails.prDate);
+      const today = new Date();
+      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      if (prDate > today || prDate < thirtyDaysAgo) {
+        toast.error("PR Date must be current date or within past 30 days");
+        return false;
+      }
     }
     if (!supplierDetails.billingAddress) {
       toast.error("Billing Address is required");
@@ -504,6 +584,18 @@ export const AddMaterialPRDashboard = () => {
         toast.error("Product Description is required for all items");
         return false;
       }
+      if (!item.glAccount) {
+        toast.error("GL Account is required for all items");
+        return false;
+      }
+      if (!item.taxCode) {
+        toast.error("Tax Code is required for all items");
+        return false;
+      }
+      if (!item.generalStorage) {
+        toast.error("Storage Location is required for all items");
+        return false;
+      }
       if (!item.quantity) {
         toast.error("Quantity is required for all items");
         return false;
@@ -517,6 +609,33 @@ export const AddMaterialPRDashboard = () => {
         return false;
       }
     }
+    
+    // WBS validation - mandatory only when radio option is visible
+    if (showRadio) {
+      if (!wbsSelection) {
+        toast.error("WBS Selection (Individual or All Items) is required");
+        return false;
+      }
+      if (wbsSelection === "overall" && !overallWbs) {
+        toast.error("WBS Code is required when 'All Items' is selected");
+        return false;
+      }
+      if (wbsSelection === "individual") {
+        for (const item of items) {
+          if (!item.wbsCode) {
+            toast.error("WBS Code is required for each item when 'Individual' is selected");
+            return false;
+          }
+        }
+      }
+    }
+    
+    // Attachment validation - mandatory
+    if (files.length === 0) {
+      toast.error("At least one attachment is required");
+      return false;
+    }
+    
     return true;
   };
 
@@ -620,9 +739,9 @@ export const AddMaterialPRDashboard = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Plant Detail</InputLabel>
+                <InputLabel shrink>Plant Detail*</InputLabel>
                 <MuiSelect
-                  label="Plant Detail"
+                  label="Plant Detail*"
                   name="plantDetail"
                   value={supplierDetails.plantDetail}
                   onChange={handlePlantDetailsChange}
@@ -641,9 +760,9 @@ export const AddMaterialPRDashboard = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Type</InputLabel>
+                <InputLabel shrink>Type*</InputLabel>
                 <MuiSelect
-                  label="Type"
+                  label="Type*"
                   name="type"
                   value={supplierDetails.type}
                   onChange={handleSupplierChange}
@@ -674,7 +793,8 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
                 inputProps={{
-                  min: new Date().toISOString().split("T")[0],
+                  min: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+                  max: new Date().toISOString().split("T")[0],
                 }}
               />
 
@@ -979,13 +1099,13 @@ export const AddMaterialPRDashboard = () => {
                   <TextField
                     label="SAC/HSN Code"
                     value={item.sacHsnCode}
-                    onChange={(e) => handleItemChange(item.id, "sacHsnCode", e.target.value)}
-                    placeholder="Enter Code"
+                    placeholder="Auto-populated from material master"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
                     sx={{ mt: 1 }}
+                    disabled
                   />
 
                   <TextField
@@ -1000,29 +1120,45 @@ export const AddMaterialPRDashboard = () => {
                     sx={{ mt: 1 }}
                   />
 
-                  <TextField
-                    label="GL Account"
-                    value={item.glAccount}
-                    onChange={(e) => handleItemChange(item.id, "glAccount", e.target.value)}
-                    placeholder="GL Account"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>GL Account*</InputLabel>
+                    <MuiSelect
+                      label="GL Account*"
+                      value={item.glAccount}
+                      onChange={(e) => handleItemChange(item.id, "glAccount", e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="">
+                        <em>Select GL Account</em>
+                      </MenuItem>
+                      {glAccountOptions.map((option) => (
+                        <MenuItem key={option.id} value={option.content.code}>
+                          {option.content.code} - {option.content.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
 
-                  <TextField
-                    label="Tax Code"
-                    value={item.taxCode}
-                    onChange={(e) => handleItemChange(item.id, "taxCode", e.target.value)}
-                    placeholder="Tax Code"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>Tax Code*</InputLabel>
+                    <MuiSelect
+                      label="Tax Code*"
+                      value={item.taxCode}
+                      onChange={(e) => handleItemChange(item.id, "taxCode", e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="">
+                        <em>Select Tax Code</em>
+                      </MenuItem>
+                      {taxCodeOptions.map((option) => (
+                        <MenuItem key={option.id} value={option.content.code}>
+                          {option.content.code} - {option.content.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
 
                   <TextField
                     label="Expected Date*"
@@ -1082,19 +1218,22 @@ export const AddMaterialPRDashboard = () => {
                   />
 
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel shrink>GNST General Storage</InputLabel>
+                    <InputLabel shrink>Storage Location*</InputLabel>
                     <MuiSelect
-                      label="GNST General Storage"
+                      label="Storage Location*"
                       value={item.generalStorage}
                       onChange={(e) => handleItemChange(item.id, "generalStorage", e.target.value)}
                       displayEmpty
                       sx={fieldStyles}
-                      disabled
                     >
                       <MenuItem value="">
-                        <em>Select GNST</em>
+                        <em>Select Storage Location</em>
                       </MenuItem>
-                      <MenuItem value="GNST">GNST</MenuItem>
+                      {storageLocationOptions.map((option) => (
+                        <MenuItem key={option.id} value={option.content.code}>
+                          {option.content.code} - {option.content.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
 

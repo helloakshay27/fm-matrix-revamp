@@ -1,13 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, User, QrCode, ClipboardList, Edit, ChevronUp, ChevronDown, LucideIcon, FileText, File, FileSpreadsheet, Eye, Download, CreditCard } from 'lucide-react';
-import { toast } from 'sonner';
-import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, ENDPOINTS } from '@/config/apiConfig';
-import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  ArrowLeft,
+  User,
+  QrCode,
+  ClipboardList,
+  Edit,
+  ChevronUp,
+  ChevronDown,
+  LucideIcon,
+  FileText,
+  File,
+  FileSpreadsheet,
+  Eye,
+  Download,
+  CreditCard,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  API_CONFIG,
+  getFullUrl,
+  getAuthenticatedFetchOptions,
+  ENDPOINTS,
+} from "@/config/apiConfig";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 // Types
 interface AdditionalVisitor {
@@ -88,7 +115,9 @@ export const VisitorDetailsPage = () => {
   const [visitorData, setVisitorData] = useState<VisitorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [disabledOTPButtons, setDisabledOTPButtons] = useState<Record<number, boolean>>({});
+  const [disabledOTPButtons, setDisabledOTPButtons] = useState<
+    Record<number, boolean>
+  >({});
 
   // State for document modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,7 +125,7 @@ export const VisitorDetailsPage = () => {
 
   // Helper function to check if value has data
   const hasData = (value: string | undefined | null): boolean => {
-    return value !== null && value !== undefined && value !== '';
+    return value !== null && value !== undefined && value !== "";
   };
 
   // State for expandable sections
@@ -110,9 +139,9 @@ export const VisitorDetailsPage = () => {
   });
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
@@ -125,24 +154,26 @@ export const VisitorDetailsPage = () => {
         const url = getFullUrl(`/pms/visitors/${id}.json`);
         const options = getAuthenticatedFetchOptions();
 
-        console.log('Fetching visitor details from:', url);
+        console.log("Fetching visitor details from:", url);
 
         const response = await fetch(url, options);
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch visitor details: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `Failed to fetch visitor details: ${response.status} ${response.statusText}`
+          );
         }
 
         const data = await response.json();
-        console.log('Visitor details received:', data);
+        console.log("Visitor details received:", data);
 
         // Handle the nested gatekeeper structure from the API
         const visitor = data.gatekeeper || data.visitor || data;
         setVisitorData(visitor);
       } catch (err) {
-        setError('Failed to fetch visitor details');
-        console.error('Error fetching visitor details:', err);
-        toast.error('Failed to load visitor details');
+        setError("Failed to fetch visitor details");
+        console.error("Error fetching visitor details:", err);
+        toast.error("Failed to load visitor details");
       } finally {
         setLoading(false);
       }
@@ -163,7 +194,7 @@ export const VisitorDetailsPage = () => {
     if (!visitorData || !id) return;
 
     try {
-      setDisabledOTPButtons(prev => ({ ...prev, [visitorData.id]: true }));
+      setDisabledOTPButtons((prev) => ({ ...prev, [visitorData.id]: true }));
 
       // Construct the API URL using the resend OTP endpoint
       const url = getFullUrl(ENDPOINTS.RESEND_OTP);
@@ -171,34 +202,35 @@ export const VisitorDetailsPage = () => {
 
       // Add query parameter for visitor ID
       const urlWithParams = new URL(url);
-      urlWithParams.searchParams.append('id', id.toString());
+      urlWithParams.searchParams.append("id", id.toString());
       if (API_CONFIG.TOKEN) {
-        urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+        urlWithParams.searchParams.append("access_token", API_CONFIG.TOKEN);
       }
 
       const response = await fetch(urlWithParams.toString(), options);
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to resend OTP: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to resend OTP: ${response.status} ${response.statusText}`
+        );
       }
 
       const data = await response.json();
 
       // Show success toast
-      toast.success('OTP sent successfully!');
+      toast.success("OTP sent successfully!");
 
       // Re-enable the button after 1 minute (60000ms)
       setTimeout(() => {
-        setDisabledOTPButtons(prev => ({ ...prev, [visitorData.id]: false }));
+        setDisabledOTPButtons((prev) => ({ ...prev, [visitorData.id]: false }));
       }, 60000);
-
     } catch (err) {
-      console.error('❌ Error sending OTP:', err);
-      toast.error('Failed to send OTP. Please try again.');
+      console.error("❌ Error sending OTP:", err);
+      toast.error("Failed to send OTP. Please try again.");
 
       // Re-enable the button on error
-      setDisabledOTPButtons(prev => ({ ...prev, [visitorData.id]: false }));
+      setDisabledOTPButtons((prev) => ({ ...prev, [visitorData.id]: false }));
     }
   };
 
@@ -206,10 +238,10 @@ export const VisitorDetailsPage = () => {
     if (!visitorData || !id) return;
 
     try {
-      console.log('Skipping approval for visitor:', id);
+      console.log("Skipping approval for visitor:", id);
 
       // Show loading toast
-      toast.info('Processing approval...');
+      toast.info("Processing approval...");
 
       // Construct the API URL
       const url = getFullUrl(`/pms/visitors/${id}.json`);
@@ -218,40 +250,41 @@ export const VisitorDetailsPage = () => {
       // Set the request method to PUT and add the request body
       const requestOptions = {
         ...options,
-        method: 'PUT',
+        method: "PUT",
         headers: {
           ...options.headers,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           approval: "true",
           gatekeeper: {
-            approve: "1"
-          }
-        })
+            approve: "1",
+          },
+        }),
       };
 
-      console.log('🚀 Calling skip approval API:', url);
-      console.log('📋 Request body:', requestOptions.body);
+      console.log("🚀 Calling skip approval API:", url);
+      console.log("📋 Request body:", requestOptions.body);
 
       const response = await fetch(url, requestOptions);
 
       if (!response.ok) {
-        throw new Error(`Failed to skip approval: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to skip approval: ${response.status} ${response.statusText}`
+        );
       }
 
       const data = await response.json();
-      console.log('✅ Approval skipped successfully:', data);
+      console.log("✅ Approval skipped successfully:", data);
 
       // Show success toast
-      toast.success('Host approval skipped successfully!');
+      toast.success("Host approval skipped successfully!");
 
       // Refresh visitor data
       window.location.reload();
-
     } catch (err) {
-      console.error('❌ Error skipping approval:', err);
-      toast.error('Failed to skip approval. Please try again.');
+      console.error("❌ Error skipping approval:", err);
+      toast.error("Failed to skip approval. Please try again.");
     }
   };
 
@@ -262,14 +295,13 @@ export const VisitorDetailsPage = () => {
     const iso = localTime.toISOString().slice(0, 19);
 
     const offset = -now.getTimezoneOffset();
-    const sign = offset >= 0 ? '+' : '-';
-    const pad = n => String(Math.floor(Math.abs(n))).padStart(2, '0');
+    const sign = offset >= 0 ? "+" : "-";
+    const pad = (n) => String(Math.floor(Math.abs(n))).padStart(2, "0");
     const hours = pad(offset / 60);
     const minutes = pad(offset % 60);
 
     return `${iso}${sign}${hours}:${minutes}`;
   }
-
 
   const handleCheckIn = async () => {
     if (!visitorData || !id) return;
@@ -282,38 +314,39 @@ export const VisitorDetailsPage = () => {
         gatekeeper: {
           guest_entry_time: getLocalISOString(),
           entry_gate_id: "",
-          status: "checked_in"
-        }
+          status: "checked_in",
+        },
       };
 
       const requestOptions = {
         ...options,
-        method: 'PUT',
+        method: "PUT",
         headers: {
           ...options.headers,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       };
 
       const response = await fetch(url, requestOptions);
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to check-in visitor: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to check-in visitor: ${response.status} ${response.statusText}`
+        );
       }
 
       const data = await response.json();
 
       // Show success toast
-      toast.success('Visitor checked in successfully!');
+      toast.success("Visitor checked in successfully!");
 
       // Refresh visitor data
       window.location.reload();
-
     } catch (err) {
-      console.error('❌ Error checking in visitor:', err);
-      toast.error('Failed to check-in visitor. Please try again.');
+      console.error("❌ Error checking in visitor:", err);
+      toast.error("Failed to check-in visitor. Please try again.");
     }
   };
 
@@ -330,40 +363,41 @@ export const VisitorDetailsPage = () => {
           guest_exit_time: new Date().toISOString().slice(0, 19) + "+05:30", // Format: 2025-08-22T19:07:37+05:30
           exit_gate_id: "",
           status: "checked_out",
-          gatekeeper_ids: id
-        }
+          gatekeeper_ids: id,
+        },
       };
 
       // Set the request method to PUT and add the request body
       const requestOptions = {
         ...options,
-        method: 'PUT',
+        method: "PUT",
         headers: {
           ...options.headers,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       };
 
       const response = await fetch(url, requestOptions);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`Failed to checkout visitor: ${response.status} ${response.statusText}`);
+        console.error("API Error Response:", errorText);
+        throw new Error(
+          `Failed to checkout visitor: ${response.status} ${response.statusText}`
+        );
       }
 
       const data = await response.json();
 
       // Show success toast
-      toast.success('Visitor checked out successfully!');
+      toast.success("Visitor checked out successfully!");
 
       // Refresh visitor data
       window.location.reload();
-
     } catch (err) {
-      console.error('❌ Error checking out visitor:', err);
-      toast.error('Failed to checkout visitor. Please try again.');
+      console.error("❌ Error checking out visitor:", err);
+      toast.error("Failed to checkout visitor. Please try again.");
     }
   };
 
@@ -381,7 +415,9 @@ export const VisitorDetailsPage = () => {
     return (
       <div className="p-6 bg-white min-h-screen">
         <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-red-600">{error || 'Visitor not found'}</div>
+          <div className="text-lg text-red-600">
+            {error || "Visitor not found"}
+          </div>
         </div>
       </div>
     );
@@ -394,7 +430,7 @@ export const VisitorDetailsPage = () => {
     isExpanded,
     onToggle,
     children,
-    hasData = true
+    hasData = true,
   }: {
     title: string;
     icon: LucideIcon;
@@ -412,22 +448,22 @@ export const VisitorDetailsPage = () => {
           <div className="figma-card-icon-wrapper">
             <Icon className="figma-card-icon" />
           </div>
-          <h3 className="figma-card-title uppercase">
-            {title}
-          </h3>
+          <h3 className="figma-card-title uppercase">{title}</h3>
         </div>
         <div className="flex items-center gap-2">
           {!hasData && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">No data</span>
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+              No data
+            </span>
           )}
-          {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-600" /> : <ChevronDown className="w-5 h-5 text-gray-600" />}
+          {isExpanded ? (
+            <ChevronUp className="w-5 h-5 text-gray-600" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-600" />
+          )}
         </div>
       </div>
-      {isExpanded && (
-        <div className="figma-card-content">
-          {children}
-        </div>
-      )}
+      {isExpanded && <div className="figma-card-content">{children}</div>}
     </div>
   );
 
@@ -436,9 +472,14 @@ export const VisitorDetailsPage = () => {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <button onClick={handleBackToList} className="flex items-center gap-1 hover:text-[#C72030] transition-colors">
+          <button
+            onClick={handleBackToList}
+            className="flex items-center gap-1 hover:text-[#C72030] transition-colors"
+          >
             <ArrowLeft className="w-4 h-4" />
-            <span className=" font-bold text-[#1a1a1a]">Back to Visitor List</span>
+            <span className=" font-bold text-[#1a1a1a]">
+              Back to Visitor List
+            </span>
           </button>
         </div>
 
@@ -446,60 +487,6 @@ export const VisitorDetailsPage = () => {
           <h1 className="text-2xl font-bold text-[#1a1a1a]">Visitor Details</h1>
           <div className="flex gap-3">
             {/* Dynamic Action Buttons */}
-            {visitorData && (
-              <>
-                {/* Resend OTP Button - Show for pending/unapproved visitors */}
-                {(visitorData.vstatus === 'Pending' || visitorData.approve === 0) && (
-                  <Button
-                    className={`px-3 py-2 text-sm rounded ${disabledOTPButtons[visitorData.id]
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-orange-500 hover:bg-orange-600'
-                      } text-white`}
-                    onClick={handleResendOTP}
-                    disabled={disabledOTPButtons[visitorData.id]}
-                  >
-                    {disabledOTPButtons[visitorData.id] ? 'Disabled for 1 min' : 'Resend OTP'}
-                  </Button>
-                )}
-
-                {/* Skip Host Approval Button - Show for pending/unapproved visitors */}
-                {(visitorData.vstatus === 'Pending' || visitorData.approve === 0) && (
-                  <Button
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 text-sm rounded"
-                    onClick={handleSkipApproval}
-                  >
-                    Skip Host Approval
-                  </Button>
-                )}
-
-                {/* Check In Button - Show for approved visitors who haven't checked in */}
-                {(visitorData.vstatus === 'Approved' && !visitorData.guest_entry_time) ? (
-                  <Button
-                    className="bg-green-500 hover:bg-green-600 !text-white px-3 py-2 text-sm rounded"
-                    onClick={handleCheckIn}
-                  >
-                    Check In
-                  </Button>
-                ) : visitorData.vstatus === 'Approved' && visitorData.guest_entry_time && !visitorData.master_exit_time ? (
-                  <Button
-                    className="bg-green-500 hover:bg-green-600 !text-white px-3 py-2 text-sm rounded"
-                    onClick={handleCheckOut}
-                  >
-                    Check Out
-                  </Button>
-                ) : <></>}
-
-                {/* Check Out Button - Show for checked-in visitors who haven't checked out */}
-                {(visitorData.vstatus === 'Approved' && visitorData.check_in && !visitorData.check_out) && (
-                  <Button
-                    className="bg-[#F97316] hover:bg-[#F97316]/90 !text-white px-3 py-2 text-sm rounded"
-                    onClick={handleCheckOut}
-                  >
-                    Check Out
-                  </Button>
-                )}
-              </>
-            )}
 
             {/* Edit Button */}
             {/* <Button onClick={handleUpdate} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
@@ -514,24 +501,32 @@ export const VisitorDetailsPage = () => {
         title="BASIC INFORMATION"
         icon={User}
         isExpanded={expandedSections.basicInformation}
-        onToggle={() => toggleSection('basicInformation')}
-        hasData={hasData(visitorData.guest_name) || hasData(visitorData.vstatus)}
+        onToggle={() => toggleSection("basicInformation")}
+        hasData={
+          hasData(visitorData.guest_name) || hasData(visitorData.vstatus)
+        }
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
           <div className="space-y-4">
             {/* Visitor Image */}
             {hasData(visitorData.image) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Image</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Visitor Image
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
                   <img
-                    src={visitorData.image?.startsWith('http') ? visitorData.image : '/placeholder.svg'}
-                    alt={visitorData.guest_name || 'Visitor'}
+                    src={
+                      visitorData.image?.startsWith("http")
+                        ? visitorData.image
+                        : "/placeholder.svg"
+                    }
+                    alt={visitorData.guest_name || "Visitor"}
                     className="w-24 h-24 object-cover rounded-md"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = '/placeholder.svg';
+                      target.src = "/placeholder.svg";
                     }}
                   />
                 </div>
@@ -540,42 +535,65 @@ export const VisitorDetailsPage = () => {
 
             {hasData(visitorData.guest_name) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Name</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Visitor Name
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.guest_name}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.guest_name}
+                </span>
               </div>
             )}
             {hasData(visitorData.visitor_host_name) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Host Name</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Visitor Host Name
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.visitor_host_name}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.visitor_host_name}
+                </span>
               </div>
             )}
             {hasData(visitorData.visitor_host_mobile) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Host Mobile</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Visitor Host Mobile
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.visitor_host_mobile}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.visitor_host_mobile}
+                </span>
               </div>
             )}
             {hasData(visitorData.visitor_host_email) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Host Email</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Visitor Host Email
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.visitor_host_email}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.visitor_host_email}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.vstatus) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Status</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Status
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
-                  <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${visitorData.vstatus === 'Approved' ? 'bg-green-100 text-green-700' :
-                    visitorData.vstatus === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
+                  <Badge
+                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      visitorData.vstatus === "Approved"
+                        ? "bg-green-100 text-green-700"
+                        : visitorData.vstatus === "Pending"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-red-100 text-red-700"
+                    }`}
+                  >
                     {visitorData.vstatus}
                   </Badge>
                 </div>
@@ -584,46 +602,72 @@ export const VisitorDetailsPage = () => {
 
             {hasData(visitorData.guest_number) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Mobile</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Mobile
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.guest_number}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.guest_number}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.visit_purpose) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visit Purpose</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Visit Purpose
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.visit_purpose}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.visit_purpose}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.notes) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Notes</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Notes
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.notes}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.notes}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.guest_type) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Guest Type</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Guest Type
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.guest_type}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.guest_type}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.visitor_type) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Type</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Visitor Type
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
-                  <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${visitorData.visitor_type === 'unexpected' ? 'bg-red-100 text-red-700' :
-                    visitorData.visitor_type === 'expected' ? 'bg-green-100 text-green-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                    {visitorData.visitor_type ? visitorData.visitor_type.charAt(0).toUpperCase() + visitorData.visitor_type.slice(1) : '--'}
+                  <Badge
+                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      visitorData.visitor_type === "unexpected"
+                        ? "bg-red-100 text-red-700"
+                        : visitorData.visitor_type === "expected"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {visitorData.visitor_type
+                      ? visitorData.visitor_type.charAt(0).toUpperCase() +
+                        visitorData.visitor_type.slice(1)
+                      : "--"}
                   </Badge>
                 </div>
               </div>
@@ -641,65 +685,97 @@ export const VisitorDetailsPage = () => {
           <div className="space-y-4">
             {hasData(visitorData.guest_from) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor From</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Visitor From
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.guest_from}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.guest_from}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.visit_to) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visit To</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Visit To
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.visit_to}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.visit_to}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.visit_to_number) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visit To Number</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Visit To Number
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.visit_to_number}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.visit_to_number}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.guest_vehicle_number) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Vehicle Number</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Vehicle Number
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.guest_vehicle_number}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.guest_vehicle_number}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.checkin_time) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Check-in Time</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Check-in Time
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.checkin_time}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.checkin_time}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.checkout_time) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Check-out Time</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Check-out Time
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.checkout_time}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.checkout_time}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.expected_at) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Expected At</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Expected At
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.expected_at}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.expected_at}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.location) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Location</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Location
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.location}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.location}
+                </span>
               </div>
             )}
           </div>
@@ -711,110 +787,181 @@ export const VisitorDetailsPage = () => {
         title="ADDITIONAL VISITOR DETAILS"
         icon={ClipboardList}
         isExpanded={expandedSections.additionalVisitors}
-        onToggle={() => toggleSection('additionalVisitors')}
-        hasData={visitorData.additional_visitors && visitorData.additional_visitors.length > 0}
+        onToggle={() => toggleSection("additionalVisitors")}
+        hasData={
+          visitorData.additional_visitors &&
+          visitorData.additional_visitors.length > 0
+        }
       >
-        {visitorData.additional_visitors && visitorData.additional_visitors.length > 0 ? (
+        {visitorData.additional_visitors &&
+        visitorData.additional_visitors.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
-            {visitorData.additional_visitors.map((visitor: AdditionalVisitor, index: number) => (
-              <div key={visitor.additional_visitor.id || index} className="space-y-2 border-b pb-4 mb-4 last:border-b-0 last:pb-0">
-                <h4 className="font-semibold text-gray-700">Additional Visitor {index + 1}</h4>
-                {hasData(visitor.additional_visitor.name) && (
-                  <div className="flex items-start">
-                    <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Name</span>
-                    <span className="text-gray-500 mx-3">:</span>
-                    <span className="text-gray-900 font-semibold flex-1">{visitor.additional_visitor.name}</span>
-                  </div>
-                )}
-                {hasData(visitor.additional_visitor.mobile) && (
-                  <div className="flex items-start">
-                    <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Mobile Number</span>
-                    <span className="text-gray-500 mx-3">:</span>
-                    <span className="text-gray-900 font-semibold flex-1">{visitor.additional_visitor.mobile}</span>
-                  </div>
-                )}
-                {hasData(visitor.additional_visitor.pass_number) && (
-                  <div className="flex items-start">
-                    <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Pass Number</span>
-                    <span className="text-gray-500 mx-3">:</span>
-                    <span className="text-gray-900 font-semibold flex-1">{visitor.additional_visitor.pass_number}</span>
-                  </div>
-                )}
-              </div>
-            ))}
+            {visitorData.additional_visitors.map(
+              (visitor: AdditionalVisitor, index: number) => (
+                <div
+                  key={visitor.additional_visitor.id || index}
+                  className="space-y-2 border-b pb-4 mb-4 last:border-b-0 last:pb-0"
+                >
+                  <h4 className="font-semibold text-gray-700">
+                    Additional Visitor {index + 1}
+                  </h4>
+                  {hasData(visitor.additional_visitor.name) && (
+                    <div className="flex items-start">
+                      <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                        Name
+                      </span>
+                      <span className="text-gray-500 mx-3">:</span>
+                      <span className="text-gray-900 font-semibold flex-1">
+                        {visitor.additional_visitor.name}
+                      </span>
+                    </div>
+                  )}
+                  {hasData(visitor.additional_visitor.mobile) && (
+                    <div className="flex items-start">
+                      <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                        Mobile Number
+                      </span>
+                      <span className="text-gray-500 mx-3">:</span>
+                      <span className="text-gray-900 font-semibold flex-1">
+                        {visitor.additional_visitor.mobile}
+                      </span>
+                    </div>
+                  )}
+                  {hasData(visitor.additional_visitor.pass_number) && (
+                    <div className="flex items-start">
+                      <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                        Pass Number
+                      </span>
+                      <span className="text-gray-500 mx-3">:</span>
+                      <span className="text-gray-900 font-semibold flex-1">
+                        {visitor.additional_visitor.pass_number}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-8">No additional visitor details found</p>
+          <p className="text-gray-500 text-center py-8">
+            No additional visitor details found
+          </p>
         )}
       </ExpandableSection>
 
       {/* Section 3: Goods Inward Info */}
+
       <ExpandableSection
         title="GOODS INWARD INFO"
         icon={ClipboardList}
         isExpanded={expandedSections.goodsInwardInfo}
-        onToggle={() => toggleSection('goodsInwardInfo')}
-        hasData={visitorData.item_movements && visitorData.item_movements.length > 0}
+        onToggle={() => toggleSection("goodsInwardInfo")}
+        hasData={
+          visitorData.item_movements && visitorData.item_movements.length > 0
+        }
       >
         {visitorData.item_movements && visitorData.item_movements.length > 0 ? (
           <div className="space-y-6">
-            {visitorData.item_movements.map((movement: ItemMovement, index: number) => (
-              <div key={movement.item_movement.id || index} className="border rounded-lg p-4 bg-white">
-                <div className="mb-4">
-                  <h4 className="font-semibold text-gray-700 text-lg">Item Movement {index + 1}</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                    <div className="flex items-start">
-                      <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Movement ID</span>
-                      <span className="text-gray-500 mx-3">:</span>
-                      <span className="text-gray-900 font-semibold flex-1">{movement.item_movement.id}</span>
-                    </div>
-                    {movement.item_movement.movement_type && (
+            {visitorData.item_movements.map(
+              (movement: ItemMovement, index: number) => (
+                <div
+                  key={movement.item_movement.id || index}
+                  className="border rounded-lg p-4 bg-white"
+                >
+                  <div className="mb-4">
+                    <h4 className="font-semibold text-gray-700 text-lg">
+                      Item Movement {index + 1}
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                       <div className="flex items-start">
-                        <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Movement Type</span>
+                        <span className="text-gray-500 w-32 flex-shrink-0 font-medium">
+                          Movement ID
+                        </span>
                         <span className="text-gray-500 mx-3">:</span>
-                        <span className="text-gray-900 font-semibold flex-1">{movement.item_movement.movement_type}</span>
+                        <span className="text-gray-900 font-semibold flex-1">
+                          {movement.item_movement.id}
+                        </span>
+                      </div>
+                      {movement.item_movement.movement_type && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 w-32 flex-shrink-0 font-medium">
+                            Movement Type
+                          </span>
+                          <span className="text-gray-500 mx-3">:</span>
+                          <span className="text-gray-900 font-semibold flex-1">
+                            {movement.item_movement.movement_type}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {movement.item_movement.item_details &&
+                    movement.item_movement.item_details.length > 0 && (
+                      <div>
+                        <h5 className="font-medium text-gray-600 mb-3">
+                          Item Details:
+                        </h5>
+                        <div className="space-y-3">
+                          {movement.item_movement.item_details.map(
+                            (item, itemIndex) => (
+                              <div
+                                key={item.item_detail.id || itemIndex}
+                                className="bg-gray-50 rounded-md p-3"
+                              >
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                  <div className="flex items-start">
+                                    <span className="text-gray-500 w-20 flex-shrink-0 font-medium">
+                                      Item ID
+                                    </span>
+                                    <span className="text-gray-500 mx-2">
+                                      :
+                                    </span>
+                                    <span className="text-gray-900 font-semibold flex-1">
+                                      {item.item_detail.id}
+                                    </span>
+                                  </div>
+                                  {item.item_detail.name && (
+                                    <div className="flex items-start">
+                                      <span className="text-gray-500 w-20 flex-shrink-0 font-medium">
+                                        Name
+                                      </span>
+                                      <span className="text-gray-500 mx-2">
+                                        :
+                                      </span>
+                                      <span className="text-gray-900 font-semibold flex-1">
+                                        {item.item_detail.name}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {item.item_detail.number && (
+                                    <div className="flex items-start">
+                                      <span className="text-gray-500 w-20 flex-shrink-0 font-medium">
+                                        Number
+                                      </span>
+                                      <span className="text-gray-500 mx-2">
+                                        :
+                                      </span>
+                                      <span className="text-gray-900 font-semibold flex-1">
+                                        {item.item_detail.number}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          )}
+                        </div>
                       </div>
                     )}
-                  </div>
                 </div>
-
-                {movement.item_movement.item_details && movement.item_movement.item_details.length > 0 && (
-                  <div>
-                    <h5 className="font-medium text-gray-600 mb-3">Item Details:</h5>
-                    <div className="space-y-3">
-                      {movement.item_movement.item_details.map((item, itemIndex) => (
-                        <div key={item.item_detail.id || itemIndex} className="bg-gray-50 rounded-md p-3">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                            <div className="flex items-start">
-                              <span className="text-gray-500 w-20 flex-shrink-0 font-medium">Item ID</span>
-                              <span className="text-gray-500 mx-2">:</span>
-                              <span className="text-gray-900 font-semibold flex-1">{item.item_detail.id}</span>
-                            </div>
-                            {item.item_detail.name && (
-                              <div className="flex items-start">
-                                <span className="text-gray-500 w-20 flex-shrink-0 font-medium">Name</span>
-                                <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-semibold flex-1">{item.item_detail.name}</span>
-                              </div>
-                            )}
-                            {item.item_detail.number && (
-                              <div className="flex items-start">
-                                <span className="text-gray-500 w-20 flex-shrink-0 font-medium">Number</span>
-                                <span className="text-gray-500 mx-2">:</span>
-                                <span className="text-gray-900 font-semibold flex-1">{item.item_detail.number}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            )}
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-8">No goods inward information found</p>
+          <p className="text-gray-500 text-center py-8">
+            No goods inward information found
+          </p>
         )}
       </ExpandableSection>
 
@@ -823,35 +970,54 @@ export const VisitorDetailsPage = () => {
         title="PASS INFORMATION"
         icon={ClipboardList}
         isExpanded={expandedSections.passInformation}
-        onToggle={() => toggleSection('passInformation')}
-        hasData={hasData(visitorData.pass_start_date) || hasData(visitorData.pass_end_date) || (visitorData.pass_days && visitorData.pass_days.length > 0)}
+        onToggle={() => toggleSection("passInformation")}
+        hasData={
+          hasData(visitorData.pass_start_date) ||
+          hasData(visitorData.pass_end_date) ||
+          (visitorData.pass_days && visitorData.pass_days.length > 0)
+        }
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
           <div className="space-y-4">
             {hasData(visitorData.pass_start_date) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Pass Start Date</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Pass Start Date
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.pass_start_date}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.pass_start_date}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.pass_end_date) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Pass End Date</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Pass End Date
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.pass_end_date}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.pass_end_date}
+                </span>
               </div>
             )}
 
             {visitorData.pass_valid !== undefined && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Pass Valid</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Pass Valid
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
-                  <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${visitorData.pass_valid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                    {visitorData.pass_valid ? 'Valid' : 'Invalid'}
+                  <Badge
+                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      visitorData.pass_valid
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {visitorData.pass_valid ? "Valid" : "Invalid"}
                   </Badge>
                 </div>
               </div>
@@ -861,14 +1027,27 @@ export const VisitorDetailsPage = () => {
           <div className="space-y-4">
             {visitorData.pass_days && visitorData.pass_days.length > 0 && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Pass Days</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Pass Days
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
                   <div className="flex flex-wrap gap-1">
                     {visitorData.pass_days.map((day, index) => {
-                      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                      const dayNames = [
+                        "Sunday",
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday",
+                        "Saturday",
+                      ];
                       return (
-                        <Badge key={index} className="bg-blue-100 text-blue-700 text-xs">
+                        <Badge
+                          key={index}
+                          className="bg-blue-100 text-blue-700 text-xs"
+                        >
                           {dayNames[parseInt(day)] || `Day ${day}`}
                         </Badge>
                       );
@@ -880,17 +1059,25 @@ export const VisitorDetailsPage = () => {
 
             {hasData(visitorData.time_since_in) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Time Since In</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Time Since In
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.time_since_in}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.time_since_in}
+                </span>
               </div>
             )}
 
             {hasData(visitorData.created_by) && (
               <div className="flex items-start">
-                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Created By</span>
+                <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
+                  Created By
+                </span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{visitorData.created_by}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {visitorData.created_by}
+                </span>
               </div>
             )}
           </div>
@@ -902,10 +1089,14 @@ export const VisitorDetailsPage = () => {
         title="GOVERNMENT ID"
         icon={CreditCard}
         isExpanded={expandedSections.governmentId}
-        onToggle={() => toggleSection('governmentId')}
-        hasData={Array.isArray(visitorData.visitor_documents) && visitorData.visitor_documents.length > 0}
+        onToggle={() => toggleSection("governmentId")}
+        hasData={
+          Array.isArray(visitorData.visitor_documents) &&
+          visitorData.visitor_documents.length > 0
+        }
       >
-        {Array.isArray(visitorData.visitor_documents) && visitorData.visitor_documents.length > 0 ? (
+        {Array.isArray(visitorData.visitor_documents) &&
+        visitorData.visitor_documents.length > 0 ? (
           <div className="flex items-center flex-wrap gap-4">
             {visitorData.visitor_documents.map((document: any) => {
               const url = document.document_url;
@@ -929,7 +1120,7 @@ export const VisitorDetailsPage = () => {
                           setSelectedDoc({
                             ...document,
                             url,
-                            type: 'image'
+                            type: "image",
                           });
                           setIsModalOpen(true);
                         }}
@@ -945,7 +1136,7 @@ export const VisitorDetailsPage = () => {
                           setSelectedDoc({
                             ...document,
                             url,
-                            type: 'image'
+                            type: "image",
                           });
                           setIsModalOpen(true);
                         }}
@@ -969,7 +1160,7 @@ export const VisitorDetailsPage = () => {
                     </div>
                   )}
                   <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                    {url.split('/').pop() || `Document_${document.id}`}
+                    {url.split("/").pop() || `Document_${document.id}`}
                   </span>
                   {isDownloadable && (
                     <Button
@@ -980,7 +1171,13 @@ export const VisitorDetailsPage = () => {
                         setSelectedDoc({
                           ...document,
                           url,
-                          type: isPdf ? 'pdf' : isExcel ? 'excel' : isWord ? 'word' : 'file'
+                          type: isPdf
+                            ? "pdf"
+                            : isExcel
+                              ? "excel"
+                              : isWord
+                                ? "word"
+                                : "file",
                         });
                         setIsModalOpen(true);
                       }}
@@ -993,7 +1190,9 @@ export const VisitorDetailsPage = () => {
             })}
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-8">No government ID documents found</p>
+          <p className="text-gray-500 text-center py-8">
+            No government ID documents found
+          </p>
         )}
       </ExpandableSection>
 
@@ -1002,12 +1201,16 @@ export const VisitorDetailsPage = () => {
         title="QR CODE"
         icon={QrCode}
         isExpanded={expandedSections.qrCode}
-        onToggle={() => toggleSection('qrCode')}
+        onToggle={() => toggleSection("qrCode")}
         hasData={hasData(visitorData.qr_code_url)}
       >
         {hasData(visitorData.qr_code_url) ? (
           <div className="flex justify-center items-center py-8">
-            <img src={visitorData.qr_code_url} alt="QR Code" className="w-48 h-48 border p-2 rounded-md" />
+            <img
+              src={visitorData.qr_code_url}
+              alt="QR Code"
+              className="w-48 h-48 border p-2 rounded-md"
+            />
           </div>
         ) : (
           <p className="text-gray-500 text-center py-8">No QR code available</p>

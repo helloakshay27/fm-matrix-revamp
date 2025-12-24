@@ -148,6 +148,7 @@ interface Attachment {
 }
 
 interface ServicePR {
+  amc_declaration: any;
   company?: Company;
   work_order?: WorkOrder;
   inventories?: ServiceItem[];
@@ -165,7 +166,10 @@ interface ServicePR {
 const serviceColumns: ColumnConfig[] = [
   { key: "sno", label: "S.No", sortable: true, draggable: true },
   { key: "boq_details", label: "BOQ Details", sortable: true, draggable: true },
+  { key: "gl_account", label: "GL Account", sortable: true, draggable: true },
+  { key: "tax_code", label: "Tax Code", sortable: true, draggable: true },
   { key: "general_storage", label: "General Storage", sortable: true, draggable: true },
+
   { key: "quantity", label: "Quantity", sortable: true, draggable: true },
   { key: "uom", label: "UOM", sortable: true, draggable: true },
   {
@@ -559,7 +563,10 @@ export const ServicePRDetailsPage = () => {
       tcs_amount: item.tcs_amount || 0,
       tax_amount: item.tax_amount || 0,
       total_amount: item.total_amount || 0,
-      general_storage: item.general_storage || "GNST"
+      general_storage: item.general_storage || "-",
+      gl_account: item.gl_account || "-",
+      tax_code: item.tax_code || "-"
+      
     })) || [];
 
   const renderCell = (item: ServiceItem, columnKey: string) => {
@@ -974,6 +981,17 @@ export const ServicePRDetailsPage = () => {
                 {servicePR.pr_type ? (
                   <span className="text-gray-900 font-medium px-3 text-sm rounded-[5px] w-max cursor-pointer bg-blue-200">
                     {servicePR.pr_type}
+                  </span>
+                ) : (
+                  <span className="text-gray-500">-</span>
+                )}
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Amc Declation</span>
+                <span className="text-gray-500 mx-2">:</span>
+                {servicePR.amc_declaration ? (
+                  <span className="text-gray-900 font-medium px-3 text-sm rounded-[5px] w-max cursor-pointer ">
+                    {servicePR.amc_declaration ? "Yes" : "No"}
                   </span>
                 ) : (
                   <span className="text-gray-500">-</span>

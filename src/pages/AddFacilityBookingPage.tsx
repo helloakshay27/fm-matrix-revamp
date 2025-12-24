@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,11 @@ import { toast } from 'sonner';
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
+
+  const urlFacilityId = searchParams.get('facility_id');
+  const urlDate = searchParams.get('date');
+  const urlSlotTime = searchParams.get('slot_time');
 
   const { data: fmUsersResponse, loading: fmUsersLoading, error: fmUsersError } = useAppSelector((state) => state.fmUsers);
   const fmUsers = fmUsersResponse?.users || [];
@@ -64,6 +69,27 @@ export const AddFacilityBookingPage = () => {
   const [openCancelPolicy, setOpenCancelPolicy] = useState(false);
   const [openTerms, setOpenTerms] = useState(false);
 
+  useEffect(() => {
+    if (urlFacilityId && facilities.length > 0) {
+      const facility = facilities.find(f => f.id.toString() === urlFacilityId);
+      if (facility) {
+        setSelectedFacility(facility);
+        fetchFacilityDetails(facility.id);
+      }
+    }
+  }, [urlFacilityId, facilities]);
+
+  useEffect(() => {
+    if (urlDate) {
+      // Convert from dd/mm/yyyy to yyyy-mm-dd format
+      const [day, month, year] = urlDate.split('/');
+      if (day && month && year) {
+        const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        setSelectedDate(formattedDate);
+      }
+    }
+  }, [urlDate]);
+
   // Fetch data on component mount
   useEffect(() => {
     if (userType === 'occupant') {
@@ -74,6 +100,17 @@ export const AddFacilityBookingPage = () => {
     }
     dispatch(fetchActiveFacilities({ baseUrl: localStorage.getItem('baseUrl'), token: localStorage.getItem('token') }));
   }, [dispatch, userType]);
+
+  useEffect(() => {
+
+    if (selectedFacility && selectedDate) {
+      const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
+      fetchSlots(facilityId, selectedDate, selectedUser || undefined);
+    } else {
+      setSlots([]);
+      setSelectedSlots([]);
+    }
+  }, [selectedFacility, selectedDate, selectedUser]);
 
   // Fetch facility details when facility is selected
   const fetchFacilityDetails = async (facilityId: string) => {

@@ -159,6 +159,7 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
+      "dev@lockated.com"
     ];
     setCanEditRegion(allowedEmails.includes(userEmail));
   };
@@ -446,11 +447,10 @@ export const RegionTab: React.FC<RegionTabProps> = ({
     ),
     status: (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          region?.active
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${region?.active
             ? "bg-green-100 text-green-800"
             : "bg-red-100 text-red-800"
-        }`}
+          }`}
       >
         {region?.active ? "Active" : "Inactive"}
       </span>

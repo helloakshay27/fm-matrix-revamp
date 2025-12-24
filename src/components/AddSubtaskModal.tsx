@@ -10,11 +10,19 @@ import MuiMultiSelect from "./MuiMultiSelect";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import axios from "axios";
 import { removeTagFromProject } from "@/store/slices/projectManagementSlice";
-import { createProjectTask, fetchUserAvailability } from "@/store/slices/projectTasksSlice";
+import { createProjectTask, fetchProjectTasksById, fetchUserAvailability } from "@/store/slices/projectTasksSlice";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
-import { fetchProjectsTags } from "@/store/slices/projectTagSlice";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
+
+interface SubTask {
+    estimated_hour?: number;
+}
+
+interface ParentTask {
+    estimated_hour?: number;
+    sub_tasks_managements?: SubTask[];
+}
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -45,7 +53,7 @@ const monthNames = [
     "Dec",
 ];
 
-const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal }) => {
+const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal, fetchData }: { openTaskModal: boolean, setOpenTaskModal: (value: boolean) => void, fetchData: () => void }) => {
     const { id: pid, mid, taskId } = useParams();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -56,9 +64,9 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal }) => {
     const startDateRef = useRef(null);
     const endDateRef = useRef(null);
 
-    const { data: tags = [] } = useAppSelector((state) => state.fetchProjectsTags);
     const { data: userAvailabilityData } = useAppSelector((state) => state.fetchUserAvailability);
     const userAvailability = Array.isArray(userAvailabilityData) ? userAvailabilityData : [];
+    const { data: parentTask } = useAppSelector((state) => state.fetchProjectTasksById) as { data: ParentTask | undefined };
 
     const [shift, setShift] = useState([])
     const [users, setUsers] = useState([])
@@ -113,7 +121,6 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal }) => {
     useEffect(() => {
         const getUsers = async () => {
             try {
-                await dispatch(fetchProjectsTags({ baseUrl, token })).unwrap();
                 const response = await dispatch(fetchFMUsers()).unwrap();
                 const validUsers = (response.users || []).filter((user: any) => user && user.id);
                 setUsers(validUsers);
@@ -125,9 +132,23 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal }) => {
         getUsers()
     }, [])
 
+    useEffect(() => {
+        const fetchParentTask = async () => {
+            try {
+                if (taskId) {
+                    await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        }
+
+        fetchParentTask();
+    }, []);
+
     const fetchShifts = async (id) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/shifts/get_shifts.json?user_id=${id}`, {
+            const response = await axios.get(`https://${baseUrl}/pms/admin/user_shifts.json?user_id=${id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -176,11 +197,44 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal }) => {
         return true;
     }
 
+    const validateSubtaskDuration = () => {
+        if (!parentTask) {
+            return true; // If parent task data not loaded, skip validation
+        }
+
+        const parentEstimatedHours = parentTask.estimated_hour || 0;
+
+        // Calculate total estimated hours of existing subtasks
+        const existingSubtasksHours = (parentTask.sub_tasks_managements || []).reduce(
+            (sum, subtask) => sum + (subtask.estimated_hour || 0),
+            0
+        );
+
+        // New subtask hours
+        const newSubtaskHours = Number(totalWorkingHours) || 0;
+
+        // Total hours if new subtask is created
+        const totalSubtasksHours = existingSubtasksHours + newSubtaskHours;
+
+        // Check if total exceeds parent task duration
+        if (totalSubtasksHours > parentEstimatedHours) {
+            const remainingHours = parentEstimatedHours - existingSubtasksHours;
+            toast.error(
+                `Your subtask duration exceeds task duration limit. Parent task duration: ${parentEstimatedHours}h, Existing subtasks: ${existingSubtasksHours}h, Remaining: ${Math.max(0, remainingHours)}h`
+            );
+            return false;
+        }
+
+        return true;
+    };
+
     const handleSubmit = async (e, id) => {
         e.preventDefault();
         console.log(formData)
 
         if (!validateForm()) return
+
+        if (!validateSubtaskDuration()) return;
 
         setIsSubmitting(true)
         const formatedStartDate = `${startDate.year}-${startDate.month + 1}-${startDate.date
@@ -206,6 +260,8 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal }) => {
         try {
             await dispatch(createProjectTask({ baseUrl, token, data: payload })).unwrap();
             toast.success("Subtask created successfully");
+            handleCloseModal();
+            fetchData();
         } catch (error) {
             console.log(error)
         } finally {
@@ -384,11 +440,11 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal }) => {
                                             Efforts Duration <span className="text-red-600">*</span>
                                         </label>
                                         <DurationPicker
-                                            value={taskDuration}
                                             onChange={setTaskDuration}
                                             onDateWiseHoursChange={setDateWiseHours}
                                             startDate={startDate}
                                             endDate={endDate}
+                                            dateWiseHours={dateWiseHours}
                                             resposiblePerson={formData.responsiblePersonName}
                                             totalWorkingHours={totalWorkingHours}
                                             setTotalWorkingHours={setTotalWorkingHours}
@@ -492,7 +548,7 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal }) => {
                                     <div className="flex flex-col justify-between w-full">
                                         <MuiMultiSelect
                                             label="Tags"
-                                            options={Array.isArray(tags) ? tags.map((tag) => ({ value: tag.id, label: tag.name, id: tag.id })) : []}
+                                            options={[]}
                                             value={formData.tags}
                                             onChange={(values) => handleMultiSelectChange("tags", values)}
                                             placeholder="Select Tags"

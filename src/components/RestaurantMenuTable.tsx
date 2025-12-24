@@ -89,6 +89,8 @@ export const RestaurantMenuTable = () => {
     menuItem.append('manage_restaurant_menu[sgst_amt]', menuItemData.sgstAmount);
     menuItem.append('manage_restaurant_menu[cgst_rate]', menuItemData.cgstRate);
     menuItem.append('manage_restaurant_menu[cgst_amt]', menuItemData.cgstAmount);
+    menuItem.append('manage_restaurant_menu[igst_rate]', menuItemData.igstRate);
+    menuItem.append('manage_restaurant_menu[igst_amt]', menuItemData.igstAmount);
     menuItem.append('manage_restaurant_menu[description]', menuItemData.description);
     if (selectedFile) {
       menuItem.append('images[]', selectedFile);

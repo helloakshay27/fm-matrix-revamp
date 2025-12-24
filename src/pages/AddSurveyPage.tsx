@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, X, Star, ClipboardList, HelpCircle, CheckCircle } from "lucide-react";
+import {
+  Plus,
+  X,
+  Star,
+  ClipboardList,
+  HelpCircle,
+  CheckCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -23,6 +30,8 @@ import {
   InputLabel,
   Select as MuiSelect,
   MenuItem,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 
 // --- Interface Definitions ---
@@ -43,6 +52,7 @@ interface Question {
     files: File[];
   }>;
   questionImage?: File | null;
+  showPreview?: boolean;
 }
 
 interface Category {
@@ -100,17 +110,29 @@ export const AddSurveyPage = () => {
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
   const [checkType, setCheckType] = useState("");
+  const [formView, setFormView] = useState(false);
   const [createTicket, setCreateTicket] = useState(false);
   const [ticketCategory, setTicketCategory] = useState("");
   const [ticketSubCategory, setTicketSubCategory] = useState("");
   const [assignTo, setAssignTo] = useState("");
-  const [ticketCategories, setTicketCategories] = useState<CategoryResponse[]>([]);
-  const [ticketSubCategories, setTicketSubCategories] = useState<SubCategoryResponse[]>([]);
+  const [ticketCategories, setTicketCategories] = useState<CategoryResponse[]>(
+    []
+  );
+  const [ticketSubCategories, setTicketSubCategories] = useState<
+    SubCategoryResponse[]
+  >([]);
   const [fmUsers, setFmUsers] = useState<
-    { full_name: string; id: number; firstname: string; lastname: string; email?: string }[]
+    {
+      full_name: string;
+      id: number;
+      firstname: string;
+      lastname: string;
+      email?: string;
+    }[]
   >([]);
   const [loadingTicketCategories, setLoadingTicketCategories] = useState(false);
-  const [loadingTicketSubCategories, setLoadingTicketSubCategories] = useState(false);
+  const [loadingTicketSubCategories, setLoadingTicketSubCategories] =
+    useState(false);
   const [loadingFmUsers, setLoadingFmUsers] = useState(false);
   const [additionalTitle, setAdditionalTitle] = useState("");
   const [additionalDescription, setAdditionalDescription] = useState("");
@@ -166,7 +188,8 @@ export const AddSurveyPage = () => {
   const loadTicketSubCategories = useCallback(async (categoryId: number) => {
     setLoadingTicketSubCategories(true);
     try {
-      const subcats = await ticketManagementAPI.getSubCategoriesByCategory(categoryId);
+      const subcats =
+        await ticketManagementAPI.getSubCategoriesByCategory(categoryId);
       setTicketSubCategories(subcats);
       console.log("Ticket subcategories loaded:", subcats);
     } catch (error) {
@@ -373,7 +396,7 @@ export const AddSurveyPage = () => {
   const RATING_STARS = ["1-star", "2-star", "3-star", "4-star", "5-star"];
 
   const handleAddAnswerOption = (questionId: string) => {
-    const question = questions.find(q => q.id === questionId);
+    const question = questions.find((q) => q.id === questionId);
     if (!question) return;
 
     const currentOptionsCount = question.answerOptions?.length || 0;
@@ -511,7 +534,9 @@ export const AddSurveyPage = () => {
       }
 
       // Check if multiple-choice, rating, or emojis have at least one option with text
-      if (["multiple-choice", "rating", "emojis"].includes(question.answerType)) {
+      if (
+        ["multiple-choice", "rating", "emojis"].includes(question.answerType)
+      ) {
         if (!question.answerOptions || question.answerOptions.length === 0) {
           toast.error("Validation Error", {
             description: `Please add at least one option for Question ${i + 1}`,
@@ -533,7 +558,10 @@ export const AddSurveyPage = () => {
 
       // Validate additional fields when "Additional Fields for Negative Selection" is checked
       if (question.additionalFieldOnNegative) {
-        if (!question.additionalFields || question.additionalFields.length === 0) {
+        if (
+          !question.additionalFields ||
+          question.additionalFields.length === 0
+        ) {
           toast.error("Validation Error", {
             description: `When "Additional Fields for Negative Selection" is enabled for Question ${i + 1}, at least one additional field is required`,
             duration: 3000,
@@ -572,19 +600,20 @@ export const AddSurveyPage = () => {
       const formData = new FormData();
 
       // Add basic survey data as individual form fields
-      formData.append('snag_checklist[name]', title);
-      formData.append('snag_checklist[check_type]', checkType);
+      formData.append("snag_checklist[name]", title);
+      formData.append("snag_checklist[check_type]", checkType);
+      formData.append("snag_checklist[form_view]", formView.toString());
 
       // Add ticket creation fields
-      formData.append('create_ticket', createTicket ? 'true' : 'false');
+      formData.append("create_ticket", createTicket ? "true" : "false");
       if (createTicket) {
-        formData.append('category_name', ticketCategory);
+        formData.append("category_name", ticketCategory);
         if (ticketSubCategory) {
-          formData.append('sub_category_id', ticketSubCategory);
+          formData.append("sub_category_id", ticketSubCategory);
         }
         // Pass 'subcategory' if both category and subcategory are selected, otherwise pass 'category'
-        const categoryType = ticketSubCategory ? 'subcategory' : 'category';
-        formData.append('category_type', categoryType);
+        const categoryType = ticketSubCategory ? "subcategory" : "category";
+        formData.append("category_type", categoryType);
       }
 
       // Process questions with proper FormData structure
@@ -594,40 +623,73 @@ export const AddSurveyPage = () => {
         // Add question basic fields
         formData.append(`question[][descr]`, question.text);
 
-        const qtype = question.answerType === "multiple-choice"
-          ? "multiple"
-          : question.answerType === "rating"
-          ? "rating"
-          : question.answerType === "emojis"
-          ? "emoji"
-          : "description";
+        const qtype =
+          question.answerType === "multiple-choice"
+            ? "multiple"
+            : question.answerType === "rating"
+              ? "rating"
+              : question.answerType === "emojis"
+                ? "emoji"
+                : question.answerType === "input-box"
+                  ? "input_box"
+                  : "description";
 
         formData.append(`question[][qtype]`, qtype);
-        formData.append(`question[][quest_mandatory]`, question.mandatory.toString());
-        formData.append(`question[][image_mandatory]`, 'false');
+        formData.append(
+          `question[][quest_mandatory]`,
+          question.mandatory.toString()
+        );
+        formData.append(`question[][image_mandatory]`, "false");
 
         // Handle question image upload
         if (question.questionImage) {
-          formData.append(`snag_checklist[survey_image]`, question.questionImage);
+          formData.append(
+            `snag_checklist[survey_image]`,
+            question.questionImage
+          );
           fileCounter++;
         }
 
         // Add options for multiple-choice, rating, and emojis
-        if (["multiple-choice", "rating", "emojis"].includes(question.answerType) && question.answerOptions) {
+        if (
+          ["multiple-choice", "rating", "emojis"].includes(
+            question.answerType
+          ) &&
+          question.answerOptions
+        ) {
           question.answerOptions.forEach((option, optionIndex) => {
-            formData.append(`question[][quest_options][][option_name]`, option.text);
-            formData.append(`question[][quest_options][][option_type]`, option.type.toLowerCase());
+            formData.append(
+              `question[][quest_options][][option_name]`,
+              option.text
+            );
+            formData.append(
+              `question[][quest_options][][option_type]`,
+              option.type.toLowerCase()
+            );
           });
         }
 
         // Handle additional fields with files (generic_tags)
-        if (question.additionalFieldOnNegative && question.additionalFields && question.additionalFields.length > 0) {
+        if (
+          question.additionalFieldOnNegative &&
+          question.additionalFields &&
+          question.additionalFields.length > 0
+        ) {
           question.additionalFields.forEach((field, fieldIndex) => {
             // Add generic tag metadata
-            formData.append(`question[][generic_tags][][category_name]`, field.title);
-            formData.append(`question[][generic_tags][][category_type]`, 'questions');
-            formData.append(`question[][generic_tags][][tag_type]`, 'not generic');
-            formData.append(`question[][generic_tags][][active]`, 'true');
+            formData.append(
+              `question[][generic_tags][][category_name]`,
+              field.title
+            );
+            formData.append(
+              `question[][generic_tags][][category_type]`,
+              "questions"
+            );
+            formData.append(
+              `question[][generic_tags][][tag_type]`,
+              "not generic"
+            );
+            formData.append(`question[][generic_tags][][active]`, "true");
 
             // Add files as icons array
             if (field.files && field.files.length > 0) {
@@ -641,56 +703,78 @@ export const AddSurveyPage = () => {
       });
 
       // Add file count for server reference
-      formData.append('total_files', fileCounter.toString());
+      formData.append("total_files", fileCounter.toString());
 
       // Debug logging
-      console.log('\n=== FORMDATA STRUCTURE DEBUG ===');
-      console.log('1. Survey Basic Fields:');
-      console.log('   snag_checklist[name]:', title);
-      console.log('   snag_checklist[check_type]:', checkType);
-      console.log('   create_ticket:', createTicket ? 'true' : 'false');
+      console.log("\n=== FORMDATA STRUCTURE DEBUG ===");
+      console.log("1. Survey Basic Fields:");
+      console.log("   snag_checklist[name]:", title);
+      console.log("   snag_checklist[check_type]:", checkType);
+      console.log("   snag_checklist[form_view]:", formView.toString());
+      console.log("   create_ticket:", createTicket ? "true" : "false");
       if (createTicket) {
-        console.log('   category_name:', ticketCategory);
-        console.log('   category_type:', assignTo);
+        console.log("   category_name:", ticketCategory);
+        console.log("   category_type:", assignTo);
       }
 
-      console.log('\n2. Questions Structure:');
+      console.log("\n2. Questions Structure:");
       questions.forEach((question, qIndex) => {
         console.log(`   Question ${qIndex + 1}:`);
         console.log(`   question[][descr]: "${question.text}"`);
-        console.log(`   question[][qtype]: ${question.answerType === "multiple-choice" ? "multiple" : question.answerType === "rating" ? "rating" : question.answerType === "emojis" ? "emoji" : "description"}`);
+        console.log(
+          `   question[][qtype]: ${question.answerType === "multiple-choice" ? "multiple" : question.answerType === "rating" ? "rating" : question.answerType === "emojis" ? "emoji" : question.answerType === "input-box" ? "input_box" : "description"}`
+        );
         console.log(`   question[][quest_mandatory]: ${question.mandatory}`);
 
         if (question.questionImage) {
-          console.log(`   survey_image: ${question.questionImage.name} (${(question.questionImage.size / 1024).toFixed(2)} KB)`);
+          console.log(
+            `   survey_image: ${question.questionImage.name} (${(question.questionImage.size / 1024).toFixed(2)} KB)`
+          );
         }
 
-        if (["multiple-choice", "rating", "emojis"].includes(question.answerType) && question.answerOptions) {
+        if (
+          ["multiple-choice", "rating", "emojis"].includes(
+            question.answerType
+          ) &&
+          question.answerOptions
+        ) {
           question.answerOptions.forEach((option, optIndex) => {
-            console.log(`   question[][quest_options][][option_name]: "${option.text}"`);
-            console.log(`   question[][quest_options][][option_type]: ${option.type.toLowerCase()}`);
+            console.log(
+              `   question[][quest_options][][option_name]: "${option.text}"`
+            );
+            console.log(
+              `   question[][quest_options][][option_type]: ${option.type.toLowerCase()}`
+            );
           });
         }
 
         if (question.additionalFieldOnNegative && question.additionalFields) {
           question.additionalFields.forEach((field, fIndex) => {
-            console.log(`   question[][generic_tags][][category_name]: "${field.title}"`);
-            console.log(`   question[][generic_tags][][category_type]: questions`);
+            console.log(
+              `   question[][generic_tags][][category_name]: "${field.title}"`
+            );
+            console.log(
+              `   question[][generic_tags][][category_type]: questions`
+            );
             console.log(`   question[][generic_tags][][tag_type]: not generic`);
             if (field.files && field.files.length > 0) {
-              console.log(`   question[][generic_tags][][icons][]: ${field.files.length} files`);
+              console.log(
+                `   question[][generic_tags][][icons][]: ${field.files.length} files`
+              );
               field.files.forEach((file, fileIndex) => {
-                console.log(`     - File ${fileIndex}: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+                console.log(
+                  `     - File ${fileIndex}: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`
+                );
               });
             }
           });
         }
       });
 
-      console.log('\n3. All FormData Keys:');
+      console.log("\n3. All FormData Keys:");
       const allKeys = Array.from(formData.keys()).sort();
-      allKeys.forEach(key => {
-        if (key.includes('[icons][]')) {
+      allKeys.forEach((key) => {
+        if (key.includes("[icons][]")) {
           console.log(`   ${key}: [File Object]`);
         } else {
           console.log(`   ${key}: ${formData.get(key)}`);
@@ -700,23 +784,24 @@ export const AddSurveyPage = () => {
       console.log(`\n4. Summary:`);
       console.log(`   Total FormData fields: ${allKeys.length}`);
       console.log(`   Total files: ${fileCounter}`);
-      console.log(`   File keys: ${allKeys.filter(key => key.includes('[icons][]') || key.includes('survey_image')).length}`);
-
       console.log(
-        "\n5. FormData Request Summary:",
-        {
-          total_fields: Array.from(formData.keys()).length,
-          total_files: fileCounter,
-          file_fields: Array.from(formData.keys()).filter(key => key.includes('[icons][]') || key.includes('survey_image')).length
-        }
+        `   File keys: ${allKeys.filter((key) => key.includes("[icons][]") || key.includes("survey_image")).length}`
       );
+
+      console.log("\n5. FormData Request Summary:", {
+        total_fields: Array.from(formData.keys()).length,
+        total_files: fileCounter,
+        file_fields: Array.from(formData.keys()).filter(
+          (key) => key.includes("[icons][]") || key.includes("survey_image")
+        ).length,
+      });
 
       const response = await apiClient.post(
         "/pms/admin/snag_checklists.json",
         formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -739,18 +824,23 @@ export const AddSurveyPage = () => {
 
         if (error.response.status === 422) {
           toast.error("Name Already Taken", {
-            description: "The survey name has already been taken. Please choose a different name.",
+            description:
+              "The survey name has already been taken. Please choose a different name.",
             duration: 5000,
           });
         } else {
           toast.error("Failed to Create Survey", {
-            description: error.response.data?.message || error.response.statusText || "Unknown error occurred",
+            description:
+              error.response.data?.message ||
+              error.response.statusText ||
+              "Unknown error occurred",
             duration: 5000,
           });
         }
       } else if (error.request) {
         toast.error("Network Error", {
-          description: "Unable to connect to server. Please check your connection.",
+          description:
+            "Unable to connect to server. Please check your connection.",
           duration: 5000,
         });
       } else {
@@ -785,7 +875,9 @@ export const AddSurveyPage = () => {
             }`}
           />
         ))}
-        <span className="ml-2 text-sm text-gray-600">{num} Star{num !== 1 ? 's' : ''}</span>
+        <span className="ml-2 text-sm text-gray-600">
+          {num} Star{num !== 1 ? "s" : ""}
+        </span>
       </div>
     );
   };
@@ -812,7 +904,7 @@ export const AddSurveyPage = () => {
             </h2>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <TextField
                 label="Title"
                 placeholder="Enter the title"
@@ -821,9 +913,9 @@ export const AddSurveyPage = () => {
                 fullWidth
                 variant="outlined"
                 required
-                InputLabelProps={{ 
+                InputLabelProps={{
                   shrink: true,
-                  sx: { '& .MuiInputLabel-asterisk': { color: '#ef4444' } }
+                  sx: { "& .MuiInputLabel-asterisk": { color: "#ef4444" } },
                 }}
                 InputProps={{ sx: fieldStyles }}
               />
@@ -832,9 +924,9 @@ export const AddSurveyPage = () => {
                 fullWidth
                 variant="outlined"
                 required
-                sx={{ 
+                sx={{
                   "& .MuiInputBase-root": fieldStyles,
-                  "& .MuiInputLabel-asterisk": { color: "#ef4444" }
+                  "& .MuiInputLabel-asterisk": { color: "#ef4444" },
                 }}
               >
                 <InputLabel shrink>Check Type</InputLabel>
@@ -854,8 +946,23 @@ export const AddSurveyPage = () => {
               </FormControl>
 
               {/* Survey Image Upload */}
-              
+            </div>
 
+            {/* Second row with Create Ticket checkbox */}
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-3 mt-6">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="form-view"
+                  checked={formView}
+                  onCheckedChange={(checked) => setFormView(checked as boolean)}
+                />
+                <label
+                  htmlFor="form-view"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Enable Form View
+                </label>
+              </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="create-ticket"
@@ -880,9 +987,9 @@ export const AddSurveyPage = () => {
                   fullWidth
                   variant="outlined"
                   required
-                  sx={{ 
+                  sx={{
                     "& .MuiInputBase-root": fieldStyles,
-                    "& .MuiInputLabel-asterisk": { color: "#ef4444" }
+                    "& .MuiInputLabel-asterisk": { color: "#ef4444" },
                   }}
                 >
                   <InputLabel shrink>Ticket Category</InputLabel>
@@ -910,7 +1017,7 @@ export const AddSurveyPage = () => {
                 <FormControl
                   fullWidth
                   variant="outlined"
-                  sx={{ 
+                  sx={{
                     "& .MuiInputBase-root": fieldStyles,
                   }}
                 >
@@ -927,8 +1034,8 @@ export const AddSurveyPage = () => {
                       {loadingTicketSubCategories
                         ? "Loading subcategories..."
                         : !ticketCategory
-                        ? "Select a category first"
-                        : "Select Ticket Sub Category"}
+                          ? "Select a category first"
+                          : "Select Ticket Sub Category"}
                     </MenuItem>
                     {ticketSubCategories.map((subcat) => (
                       <MenuItem key={subcat.id} value={subcat.id.toString()}>
@@ -940,63 +1047,74 @@ export const AddSurveyPage = () => {
               </div>
             )}
             <div className="space-y-2 mt-3">
-                <label className="text-sm font-medium text-gray-700">
-                  Upload Image
-                </label>
-                <div className="flex items-center gap-4 grid grid-cols-3">
-                  <div className="flex-1">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        // For now, we'll add this to the first question or handle it differently
-                        if (file && questions.length > 0) {
-                          handleQuestionChange(questions[0].id, "questionImage", file);
-                        }
-                      }}
-                      className="hidden"
-                      id="survey-image"
-                      disabled={isSubmitting}
-                    />
-                    <label
-                      htmlFor="survey-image"
-                      className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                        isSubmitting
-                          ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
-                      }`}
-                    >
-                      {questions.length > 0 && questions[0].questionImage
-                        ? `Selected: ${questions[0].questionImage.name}`
-                        : "Click to upload question image"}
-                    </label>
-                  </div>
-                  {questions.length > 0 && questions[0].questionImage && (
-                    <Button
-                      onClick={() => handleQuestionChange(questions[0].id, "questionImage", null)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-400 hover:text-red-500 p-2"
-                      disabled={isSubmitting}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
+              <label className="text-sm font-medium text-gray-700">
+                Upload Image
+              </label>
+              <div className="flex items-center gap-4 grid grid-cols-3">
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      // For now, we'll add this to the first question or handle it differently
+                      if (file && questions.length > 0) {
+                        handleQuestionChange(
+                          questions[0].id,
+                          "questionImage",
+                          file
+                        );
+                      }
+                    }}
+                    className="hidden"
+                    id="survey-image"
+                    disabled={isSubmitting}
+                  />
+                  <label
+                    htmlFor="survey-image"
+                    className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                      isSubmitting
+                        ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
+                    }`}
+                  >
+                    {questions.length > 0 && questions[0].questionImage
+                      ? `Selected: ${questions[0].questionImage.name}`
+                      : "Click to upload question image"}
+                  </label>
                 </div>
                 {questions.length > 0 && questions[0].questionImage && (
-                  <div className="mt-2">
-                    <img
-                      src={URL.createObjectURL(questions[0].questionImage)}
-                      alt="Question preview"
-                      className="max-w-full h-32 object-cover rounded-lg border"
-                      onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
-                    />
-                  </div>
+                  <Button
+                    onClick={() =>
+                      handleQuestionChange(
+                        questions[0].id,
+                        "questionImage",
+                        null
+                      )
+                    }
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-400 hover:text-red-500 p-2"
+                    disabled={isSubmitting}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 )}
               </div>
+              {questions.length > 0 && questions[0].questionImage && (
+                <div className="mt-2">
+                  <img
+                    src={URL.createObjectURL(questions[0].questionImage)}
+                    alt="Question preview"
+                    className="max-w-full h-32 object-cover rounded-lg border"
+                    onLoad={(e) =>
+                      URL.revokeObjectURL((e.target as HTMLImageElement).src)
+                    }
+                  />
+                </div>
+              )}
+            </div>
           </div>
-          
         </div>
 
         {/* Section 2: Questions */}
@@ -1032,7 +1150,9 @@ export const AddSurveyPage = () => {
                   className="border border-gray-200 rounded-lg p-4 space-y-4 bg-gray-50/50"
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-gray-800">Question {index + 1}</h3>
+                    <h3 className="font-medium text-gray-800">
+                      Question {index + 1}
+                    </h3>
                     {questions.length > 1 && (
                       <Button
                         onClick={() => handleRemoveQuestion(question.id)}
@@ -1055,9 +1175,9 @@ export const AddSurveyPage = () => {
                     fullWidth
                     variant="outlined"
                     required
-                    InputLabelProps={{ 
+                    InputLabelProps={{
                       shrink: true,
-                      sx: { '& .MuiInputLabel-asterisk': { color: '#ef4444' } }
+                      sx: { "& .MuiInputLabel-asterisk": { color: "#ef4444" } },
                     }}
                     InputProps={{ sx: textareaStyles }}
                   />
@@ -1066,9 +1186,9 @@ export const AddSurveyPage = () => {
                     fullWidth
                     variant="outlined"
                     required
-                    sx={{ 
+                    sx={{
                       "& .MuiInputBase-root": fieldStyles,
-                      "& .MuiInputLabel-asterisk": { color: "#ef4444" }
+                      "& .MuiInputLabel-asterisk": { color: "#ef4444" },
                     }}
                   >
                     <InputLabel shrink>Answer Type</InputLabel>
@@ -1091,15 +1211,20 @@ export const AddSurveyPage = () => {
                       </MenuItem>
                       <MenuItem value="rating">Rating</MenuItem>
                       <MenuItem value="emojis">Emojis</MenuItem>
+                      <MenuItem value="input-box">Input Box</MenuItem>
                     </MuiSelect>
                   </FormControl>
 
-                  {["multiple-choice", "rating", "emojis"].includes(question.answerType) && (
+                  {["multiple-choice", "rating", "emojis"].includes(
+                    question.answerType
+                  ) && (
                     <div className="space-y-3 pt-2">
                       <label className="text-sm font-medium text-gray-700">
-                        {question.answerType === "rating" ? "Rating Options" : 
-                         question.answerType === "emojis" ? "Emoji Options" : 
-                         "Answer Options"}
+                        {question.answerType === "rating"
+                          ? "Rating Options"
+                          : question.answerType === "emojis"
+                            ? "Emoji Options"
+                            : "Answer Options"}
                       </label>
                       {(question.answerOptions || []).map((option, index) => (
                         <div key={index} className="flex items-center gap-3">
@@ -1109,31 +1234,41 @@ export const AddSurveyPage = () => {
                             </div>
                           ) : question.answerType === "rating" ? (
                             <div className="flex items-center justify-center w-28 h-12">
-                              <span className="text-base">{RATING_STARS[index]}</span>
+                              <span className="text-base">
+                                {RATING_STARS[index]}
+                              </span>
                             </div>
                           ) : (
                             <div className="w-12 h-12 flex items-center justify-center text-gray-400">
-                              {question.answerType === "multiple-choice" ? index + 1 : "⭐"}
+                              {question.answerType === "multiple-choice"
+                                ? index + 1
+                                : "⭐"}
                             </div>
                           )}
                           <TextField
                             placeholder={
-                              question.answerType === "rating" ? `Enter rating description` :
-                              question.answerType === "emojis" ? `Enter description for ${EMOJIS[index]}` :
-                              `Option ${index + 1}`
+                              question.answerType === "rating"
+                                ? `Enter rating description`
+                                : question.answerType === "emojis"
+                                  ? `Enter description for ${EMOJIS[index]}`
+                                  : `Option ${index + 1}`
                             }
                             value={option.text}
                             onChange={(e) => {
                               const value = e.target.value;
-                              handleAnswerOptionChange(question.id, index, value);
+                              handleAnswerOptionChange(
+                                question.id,
+                                index,
+                                value
+                              );
                             }}
                             fullWidth
                             variant="outlined"
                             InputProps={{
-                              sx: { 
-                                ...fieldStyles, 
+                              sx: {
+                                ...fieldStyles,
                                 height: "40px",
-                                backgroundColor: 'white'
+                                backgroundColor: "white",
                               },
                             }}
                           />
@@ -1245,7 +1380,9 @@ export const AddSurveyPage = () => {
                                   label={
                                     <span>
                                       Title
-                                      <span className="text-red-500 ml-1">*</span>
+                                      <span className="text-red-500 ml-1">
+                                        *
+                                      </span>
                                     </span>
                                   }
                                   placeholder="Enter title"
@@ -1270,7 +1407,9 @@ export const AddSurveyPage = () => {
                                     label={
                                       <span>
                                         Upload File
-                                        <span className="text-red-500 ml-1">*</span>
+                                        <span className="text-red-500 ml-1">
+                                          *
+                                        </span>
                                       </span>
                                     }
                                     value={
@@ -1301,13 +1440,18 @@ export const AddSurveyPage = () => {
                                       readOnly: true,
                                     }}
                                     onClick={() =>
-                                      !isSubmitting && document
+                                      !isSubmitting &&
+                                      document
                                         .getElementById(
                                           `additional-file-${question.id}-${fieldIndex}`
                                         )
                                         ?.click()
                                     }
-                                    style={{ cursor: isSubmitting ? "not-allowed" : "pointer" }}
+                                    style={{
+                                      cursor: isSubmitting
+                                        ? "not-allowed"
+                                        : "pointer",
+                                    }}
                                   />
                                   <input
                                     type="file"
@@ -1351,11 +1495,18 @@ export const AddSurveyPage = () => {
                                   <div className="col-span-full space-y-2 mt-2">
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                                       {field.files.map((file, fileIndex) => {
-                                        const isImage = file.type.startsWith('image/');
-                                        const isPdf = file.type === 'application/pdf';
-                                        const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
-                                        const fileURL = isImage ? URL.createObjectURL(file) : null;
-                                        
+                                        const isImage =
+                                          file.type.startsWith("image/");
+                                        const isPdf =
+                                          file.type === "application/pdf";
+                                        const isExcel =
+                                          file.name.endsWith(".xlsx") ||
+                                          file.name.endsWith(".xls") ||
+                                          file.name.endsWith(".csv");
+                                        const fileURL = isImage
+                                          ? URL.createObjectURL(file)
+                                          : null;
+
                                         return (
                                           <div
                                             key={`${file.name}-${file.lastModified}`}
@@ -1367,45 +1518,85 @@ export const AddSurveyPage = () => {
                                                   src={fileURL}
                                                   alt={file.name}
                                                   className="w-full h-full object-cover rounded border"
-                                                  onLoad={() => URL.revokeObjectURL(fileURL)}
+                                                  onLoad={() =>
+                                                    URL.revokeObjectURL(fileURL)
+                                                  }
                                                 />
                                               ) : isPdf ? (
                                                 <div className="w-full h-full flex items-center justify-center border rounded text-red-600 bg-white">
-                                                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                                    <path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z"/>
-                                                    <path d="M14 2v6h6"/>
+                                                  <svg
+                                                    className="w-6 h-6"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    viewBox="0 0 24 24"
+                                                  >
+                                                    <path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z" />
+                                                    <path d="M14 2v6h6" />
                                                   </svg>
                                                 </div>
                                               ) : isExcel ? (
                                                 <div className="w-full h-full flex items-center justify-center border rounded text-green-600 bg-white">
-                                                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                                    <rect width="20" height="20" x="2" y="2" rx="2"/>
-                                                    <path d="M8 11h8M8 15h8"/>
+                                                  <svg
+                                                    className="w-6 h-6"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    viewBox="0 0 24 24"
+                                                  >
+                                                    <rect
+                                                      width="20"
+                                                      height="20"
+                                                      x="2"
+                                                      y="2"
+                                                      rx="2"
+                                                    />
+                                                    <path d="M8 11h8M8 15h8" />
                                                   </svg>
                                                 </div>
                                               ) : (
                                                 <div className="w-full h-full flex items-center justify-center border rounded text-gray-600 bg-white">
-                                                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                                    <path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z"/>
-                                                    <path d="M14 2v6h6"/>
+                                                  <svg
+                                                    className="w-6 h-6"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    viewBox="0 0 24 24"
+                                                  >
+                                                    <path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z" />
+                                                    <path d="M14 2v6h6" />
                                                   </svg>
                                                 </div>
                                               )}
                                             </div>
-                                            
+
                                             <div className="text-center">
-                                              <p className="text-xs text-gray-700 truncate" title={file.name}>
+                                              <p
+                                                className="text-xs text-gray-700 truncate"
+                                                title={file.name}
+                                              >
                                                 {file.name}
                                               </p>
                                               <p className="text-xs text-gray-500">
-                                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                                                {(
+                                                  file.size /
+                                                  1024 /
+                                                  1024
+                                                ).toFixed(2)}{" "}
+                                                MB
                                               </p>
                                             </div>
-                                            
+
                                             <button
                                               type="button"
                                               className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                                              onClick={() => removeAdditionalFieldFile(question.id, fieldIndex, fileIndex)}
+                                              onClick={() =>
+                                                removeAdditionalFieldFile(
+                                                  question.id,
+                                                  fieldIndex,
+                                                  fileIndex
+                                                )
+                                              }
                                               disabled={isSubmitting}
                                               title="Remove file"
                                             >
@@ -1456,7 +1647,7 @@ export const AddSurveyPage = () => {
             disabled={loading || isSubmitting}
             className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 h-auto disabled:opacity-50"
           >
-            {(loading || isSubmitting) ? "Creating..." : "Create"}
+            {loading || isSubmitting ? "Creating..." : "Create"}
           </Button>
           <Button
             type="button"
