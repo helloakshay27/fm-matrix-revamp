@@ -48,7 +48,7 @@ export const cardsTitle = [
     },
 ];
 
-const TaskManagementKanban = () => {
+const TaskManagementKanban = ({ fetchData }) => {
     const { setIsSidebarCollapsed } = useLayout();
 
     useEffect(() => {
@@ -123,24 +123,14 @@ const TaskManagementKanban = () => {
 
                 // Call API to update project status with optimistic rollback on error
                 if (token && baseUrl && taskId) {
-                    dispatch(
-                        editProjectTask({
-                            token,
-                            baseUrl,
-                            id: taskId.toString(),
-                            data: { status: apiStatus },
-                        })
-                    )
-                        .unwrap()
-                        .catch((error) => {
-                            // revert optimistic update
-                            setDroppedTasks((prev) => {
-                                const updated = { ...prev };
-                                delete updated[taskId];
-                                return updated;
-                            });
-                            toast.error(error?.response?.data?.error || "Failed to update task status");
-                        });
+                    dispatch(editProjectTask({
+                        token,
+                        baseUrl,
+                        id: taskId.toString(),
+                        data: { status: apiStatus },
+                    })).then(() => {
+                        fetchData();
+                    })
                 }
             }
         },

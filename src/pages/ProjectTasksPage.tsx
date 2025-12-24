@@ -1524,7 +1524,7 @@ const ProjectTasksPage = () => {
                     </div>
                 </div>
 
-                <TaskManagementKanban />
+                <TaskManagementKanban fetchData={fetchData} />
 
                 <Dialog
                     open={openTaskModal}
