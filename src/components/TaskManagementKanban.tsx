@@ -6,13 +6,14 @@ import {
     DragStartEvent,
     DragOverlay,
 } from "@dnd-kit/core";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import KanbanBoard from "./KanbanBoard";
 import { editProjectTask } from "@/store/slices/projectTasksSlice";
 import TaskCard from "./TaskCard";
 import SubtaskCard from "./SubtaskCard";
 import Xarrow from "react-xarrows";
 import { toast } from "sonner";
+import { useLayout } from "@/contexts/LayoutContext";
 
 export const cardsTitle = [
     {
@@ -48,6 +49,12 @@ export const cardsTitle = [
 ];
 
 const TaskManagementKanban = () => {
+    const { setIsSidebarCollapsed } = useLayout();
+
+    useEffect(() => {
+        setIsSidebarCollapsed(true);
+    }, []);
+
     const { data } = useAppSelector((state) => state.filterTasks);
     const taskList = Array.isArray((data as any)?.task_managements)
         ? (data as any).task_managements
