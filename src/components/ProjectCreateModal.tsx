@@ -197,7 +197,7 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
         return true;
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e, shouldNavigateToMilestone = false) => {
         e.preventDefault();
 
         if (!validateForm()) {
@@ -224,8 +224,15 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
         try {
             await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
             toast.success("Project created successfully");
-            setSelectedTab("milestone")
             fetchProjects();
+
+            if (shouldNavigateToMilestone) {
+                // Save and Next: Switch to milestone tab
+                setSelectedTab("milestone");
+            } else {
+                // Save: Close the modal
+                handleCloseDialog();
+            }
         } catch (error) {
             console.error("Error creating project:", error);
             toast.error(error.message || "Failed to create project");
@@ -509,17 +516,21 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
 
                                         <div className="flex justify-center gap-3 mb-4">
                                             <Button
+                                                type="button"
+                                                onClick={(e) => handleSubmit(e, false)}
+                                                disabled={isSubmitting}
                                                 variant="outline"
-                                                onClick={handleCloseDialog}
                                                 className="px-6"
                                             >
-                                                Cancel
+                                                {isSubmitting ? "Saving..." : "Save"}
                                             </Button>
                                             <Button
-                                                type="submit"
+                                                type="button"
+                                                onClick={(e) => handleSubmit(e, true)}
                                                 disabled={isSubmitting}
+                                                className="px-6"
                                             >
-                                                Submit
+                                                {isSubmitting ? "Saving..." : "Save & Next"}
                                             </Button>
                                         </div>
                                     </div>
