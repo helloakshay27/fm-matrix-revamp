@@ -115,7 +115,8 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
         u.full_name?.toLowerCase().includes(leadSearch.toLowerCase())
     );
     const filteredMemberUsers = (fmUsers || []).filter((u: any) =>
-        u.full_name?.toLowerCase().includes(memberSearch.toLowerCase())
+        u.full_name?.toLowerCase().includes(memberSearch.toLowerCase()) &&
+        u.id !== selectedLead // Exclude the selected lead from members list
     );
 
     return (
