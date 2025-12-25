@@ -461,6 +461,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
   const renderEmailStep = () => (
     <>
+      {/* Test */}
       {/* Email Input Label */}
       <div className="mb-4">
         <Label
