@@ -76,7 +76,7 @@ const calculateDuration = (startDate: string, endDate: string): string => {
     }
 };
 
-const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[90%] mx-auto", prefillData, isConversion = false }: any) => {
+const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[90%] mx-auto", prefillData, isConversion = false, opportunityId }: any) => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -261,6 +261,7 @@ const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[9
                         : (location.pathname.includes("/milestones")
                             ? id
                             : (project?.id as string | number) || (projectData?.id as string | number)),
+                    ...(isConversion && opportunityId && { opportunity_id: opportunityId }),
                 },
             }
 
