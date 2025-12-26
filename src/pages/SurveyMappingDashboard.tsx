@@ -29,6 +29,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { getFullUrl, API_CONFIG } from '@/config/apiConfig';
+import axios from 'axios';
 
 // Individual mapping item from the API
 interface SurveyMappingItem {
@@ -504,7 +505,7 @@ export const SurveyMappingDashboard = () => {
 
       // Call the bulk upload API
       const response = await apiClient.post(
-        '/survey_mappings/bulk_upload_survey_mappings',
+        '/survey_mappings/bulk_upload_survey_mappings.json',
         formData,
         {
           headers: {
@@ -530,21 +531,24 @@ export const SurveyMappingDashboard = () => {
   };
 
   // Handle sample file download
-  const handleDownloadSample = () => {
+  const handleDownloadSample = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
     try {
-      const baseUrl = getFullUrl('/assets/survey_mapping_sample.xlsx');
-      const downloadUrl = new URL(baseUrl);
+      const response = await axios.get(`https://${baseUrl}/assets/survey_mapping_sample.xlsx?token=${localStorage.getItem('token')}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        // responseType: 'blob',
+      })
 
-      if (API_CONFIG.TOKEN) {
-        downloadUrl.searchParams.append('token', API_CONFIG.TOKEN);
-      }
-
+      const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
-      link.href = downloadUrl.toString();
-      link.download = 'survey_mapping_sample.xlsx';
+      link.href = url;
+      link.setAttribute('download', 'survey_mapping_sample.xlsx');
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
+      window.URL.revokeObjectURL(url);
       sonnerToast.success('Sample file downloaded successfully');
     } catch (error) {
       console.error('Error downloading sample file:', error);
