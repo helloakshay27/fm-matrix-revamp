@@ -70,4 +70,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   assetsInclude: ["**/*.xlsx", "**/*.xls"],
+  base: "./", // Important for Electron to load assets correctly
+  build: {
+    outDir: "dist",
+    emptyOutDir: true,
+  },
 }));
