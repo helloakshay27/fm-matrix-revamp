@@ -258,6 +258,8 @@ export const AddOccupantUserPage: React.FC = () => {
     return true;
   };
 
+  console.log(formData.selectedCompanies)
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
@@ -267,48 +269,72 @@ export const AddOccupantUserPage: React.FC = () => {
       const baseUrl = localStorage.getItem('baseUrl');
       const accountId = (selectedCompany as any)?.id || localStorage.getItem('selectedCompanyId') || undefined;
 
-      const payload = {
-        user: {
-          site_id: siteId,
-          registration_source: 'Web',
-          lock_user_permissions_attributes: [
-            {
-              account_id: accountId,
-              user_shift_id: formData.shift,
-              work_type: formData.workType,
-              employee_id: formData.employeeId,
-              designation: formData.designation,
-              department_id: formData.department || undefined,
-              user_type: formData.userType,
-              access_level: formData.accessLevel,
-              access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
-              status: "pending",
-              lock_role_id: formData.selectRole || undefined,
-              on_boarding_attachments_attributes: [{ document: formData.onBoardingFile }],
-              handbook_attachments_attributes: [{ document: formData.employeeHandbookFile }],
-              compensation_attachments_attributes: [
-                { document: formData.employeeCompensationFile },
-              ],
-              exit_process_attachments_attributes: [{ document: formData.exitProcessFile }],
-              management_record_attachments_attributes: [{ document: formData.managementFile }],
-            },
-          ],
-          firstname: formData.firstName,
-          lastname: formData.lastName,
-          mobile: formData.mobileNumber,
-          email: formData.email,
-          gender: formData.gender,
-          alternate_address: formData.address,
-          alternate_mobile: formData.altMobileNumber,
-          birth_date: formData.birthDate,
-          entity_id: formData.selectEntity,
-          user_category_id: formData.selectUserCategory,
-          report_to_id: formData.reportsTo,
-        },
-      };
+      const accessToValue = formData.accessLevel === 'Company'
+        ? formData.selectedCompanies.map(c => Number(c))
+        : formData.selectedSites.map(s => Number(s));
+
+      console.log('access_to value:', accessToValue);
+      console.log('access_to format check:', JSON.stringify(accessToValue));
+
+      // Create FormData for multipart/form-data
+      const formDataPayload = new FormData();
+
+      // Add basic user fields
+      formDataPayload.append('user[site_id]', siteId || '');
+      formDataPayload.append('user[registration_source]', 'Web');
+      formDataPayload.append('user[firstname]', formData.firstName);
+      formDataPayload.append('user[lastname]', formData.lastName);
+      formDataPayload.append('user[mobile]', formData.mobileNumber);
+      formDataPayload.append('user[email]', formData.email);
+      formDataPayload.append('user[gender]', formData.gender);
+      formDataPayload.append('user[alternate_address]', formData.address);
+      formDataPayload.append('user[alternate_mobile]', formData.altMobileNumber);
+      formDataPayload.append('user[birth_date]', formData.birthDate);
+      formDataPayload.append('user[entity_id]', formData.selectEntity);
+      formDataPayload.append('user[user_category_id]', formData.selectUserCategory);
+      formDataPayload.append('user[report_to_id]', formData.reportsTo);
+
+      // Add lock_user_permissions_attributes
+      formDataPayload.append('user[lock_user_permissions_attributes][0][account_id]', accountId || '');
+      formDataPayload.append('user[lock_user_permissions_attributes][0][user_shift_id]', formData.shift);
+      formDataPayload.append('user[lock_user_permissions_attributes][0][work_type]', formData.workType);
+      formDataPayload.append('user[lock_user_permissions_attributes][0][employee_id]', formData.employeeId);
+      formDataPayload.append('user[lock_user_permissions_attributes][0][designation]', formData.designation);
+      if (formData.department) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][department_id]', formData.department);
+      }
+      formDataPayload.append('user[lock_user_permissions_attributes][0][user_type]', formData.userType);
+      formDataPayload.append('user[lock_user_permissions_attributes][0][access_level]', formData.accessLevel);
+
+      // Add access_to as array - Rails expects array notation with []
+      accessToValue.forEach((value) => {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][access_to][]', value.toString());
+      });
+
+      formDataPayload.append('user[lock_user_permissions_attributes][0][status]', 'pending');
+      if (formData.selectRole) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][lock_role_id]', formData.selectRole);
+      }
+
+      // Add file attachments
+      if (formData.onBoardingFile) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][on_boarding_attachments_attributes][0][document]', formData.onBoardingFile);
+      }
+      if (formData.employeeHandbookFile) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][handbook_attachments_attributes][0][document]', formData.employeeHandbookFile);
+      }
+      if (formData.employeeCompensationFile) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][compensation_attachments_attributes][0][document]', formData.employeeCompensationFile);
+      }
+      if (formData.exitProcessFile) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][exit_process_attachments_attributes][0][document]', formData.exitProcessFile);
+      }
+      if (formData.managementFile) {
+        formDataPayload.append('user[lock_user_permissions_attributes][0][management_record_attachments_attributes][0][document]', formData.managementFile);
+      }
 
       const url = `https://${baseUrl}/pms/users.json`;
-      const response = await axios.post(url, payload, {
+      const response = await axios.post(url, formDataPayload, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',

@@ -289,6 +289,16 @@ const IssuesListPage = () => {
         getUsers();
     }, [])
 
+    // Listen for global issue-created events to force refetch (ensures GET /issues.json runs)
+    useEffect(() => {
+        const handler = () => {
+            allIssuesFetchInitiatedRef.current = false;
+            dispatch(fetchIssues({ baseUrl, token, id: projectId }));
+        };
+        window.addEventListener('issues:created', handler as EventListener);
+        return () => window.removeEventListener('issues:created', handler as EventListener);
+    }, [dispatch, baseUrl, token, projectId]);
+
     // Reset fetch initiated ref when projectId, projectIdParam, or taskIdParam changes
     useEffect(() => {
         const paramsChanged =

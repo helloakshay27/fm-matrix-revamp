@@ -650,7 +650,7 @@ const TaskForm = ({
             <div className="mb-6">
                 <MuiMultiSelect
                     label="Observer"
-                    options={users?.filter(Boolean).map((user: any) => ({
+                    options={users?.filter(Boolean).filter((user: any) => user?.id !== formData.responsiblePerson).map((user: any) => ({
                         label: user?.full_name || "Unknown",
                         value: user?.id || user?.id,
                         id: user?.id || user?.id,
@@ -676,7 +676,7 @@ const TaskForm = ({
     );
 };
 
-const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%] mx-auto" }) => {
+const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%] mx-auto", prefillData, opportunityId }: any) => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
     const { id, mid, tid } = useParams();
@@ -708,8 +708,10 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%]
     const [formData, setFormData] = useState({
         project: "",
         milestone: "",
-        taskTitle: "",
-        description: "",
+        taskTitle: prefillData?.title?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+            .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
+        description: prefillData?.description?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+            .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
         responsiblePerson: "",
         responsiblePersonName: "",
         department: "",
@@ -835,6 +837,7 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%]
             active: true,
             estimated_hour: totalWorkingHours,
             task_allocation_times_attributes: dateWiseHours,
+            ...(opportunityId && { opportunity_id: opportunityId }),
         };
     };
 

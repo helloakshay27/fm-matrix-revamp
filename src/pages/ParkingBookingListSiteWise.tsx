@@ -455,18 +455,17 @@ const ParkingBookingListSiteWise = () => {
     'floor_wise_occupancy'
   ]);
 
-  // Analytics date range state - default to current year for Range A and last year for Range B
+  // Analytics date range state - default to current month for Range A and last month for Range B
   const getDefaultAnalyticsDateRange = () => {
     const today = new Date();
-    const currentYear = today.getFullYear();
     
-    // Range A: Current year (2025-01-01 to 2025-12-31)
-    const rangeAStart = new Date(currentYear, 0, 1); // Jan 1, current year
-    const rangeAEnd = new Date(currentYear, 11, 31); // Dec 31, current year
+    // Range A: Current month (first day to last day of current month)
+    const rangeAStart = new Date(today.getFullYear(), today.getMonth(), 1); // First day of current month
+    const rangeAEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of current month
     
-    // Range B: Last year (2024-01-01 to 2024-12-31)
-    const rangeBStart = new Date(currentYear - 1, 0, 1); // Jan 1, last year
-    const rangeBEnd = new Date(currentYear - 1, 11, 31); // Dec 31, last year
+    // Range B: Last month (first day to last day of previous month)
+    const rangeBStart = new Date(today.getFullYear(), today.getMonth() - 1, 1); // First day of last month
+    const rangeBEnd = new Date(today.getFullYear(), today.getMonth(), 0); // Last day of last month
 
     const formatDate = (date: Date) => {
       const day = date.getDate().toString().padStart(2, '0');
@@ -479,12 +478,12 @@ const ParkingBookingListSiteWise = () => {
       rangeA: {
         startDate: formatDate(rangeAStart),
         endDate: formatDate(rangeAEnd),
-        label: 'This Year'
+        label: 'This Month'
       },
       rangeB: {
         startDate: formatDate(rangeBStart),
         endDate: formatDate(rangeBEnd),
-        label: 'Last Year'
+        label: 'Last Month'
       }
     };
   };
@@ -2650,6 +2649,8 @@ const ParkingBookingListSiteWise = () => {
                   vacant: cards?.four_available || 0,
                 },
               }}
+              startDate={analyticsDateRange.rangeA.startDate}
+              endDate={analyticsDateRange.rangeA.endDate}
             />
           )}
 
@@ -2669,6 +2670,8 @@ const ParkingBookingListSiteWise = () => {
                 title="2-Year Parking Comparison"
                 data={{}}
                 type="bookingPatterns"
+                startDate={analyticsDateRange.rangeA.startDate}
+                endDate={analyticsDateRange.rangeA.endDate}
               />
             )}
             
@@ -2690,6 +2693,8 @@ const ParkingBookingListSiteWise = () => {
                     thisYearVacant: cards?.four_available || 0
                   }
                 ]}
+                startDate={analyticsDateRange.rangeA.startDate}
+                endDate={analyticsDateRange.rangeA.endDate}
                 onDownload={async () => {
                   console.log('Downloading occupancy data...');
                   // Implement download logic here
@@ -2715,18 +2720,20 @@ const ParkingBookingListSiteWise = () => {
             )}
             {selectedAnalytics.includes('occupancy_rate') && (
               <ParkingAnalyticsCard
-                title="Released vs Cancelled (Daily)"
+                title="Cancelled (Daily)"
                 data={{}}
                 type="occupancyRate"
+                startDate={analyticsDateRange.rangeA.startDate}
+                endDate={analyticsDateRange.rangeA.endDate}
               />
             )}
-            {selectedAnalytics.includes('average_duration') && (
+            {/* {selectedAnalytics.includes('average_duration') && (
               <ParkingAnalyticsCard
                 title="Auto-Releases by Department"
                 data={{}}
                 type="averageDuration"
               />
-            )}
+            )} */}
           </div>
 
           {/* Floor Layout */}

@@ -9,7 +9,10 @@ import { getFullUrl } from '@/config/apiConfig';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AddOpportunityModal from '@/components/AddOpportunityModal';
+import EditOpportunityModal from '@/components/EditOpportunityModal';
 import { useLayout } from '@/contexts/LayoutContext';
+import { FormControl, MenuItem, Select } from '@mui/material';
+import { useAppDispatch } from '@/store/hooks';
 
 // Types
 interface Opportunity {
@@ -40,7 +43,13 @@ const columns: ColumnConfig[] = [
     { key: 'action_taken', label: 'Action Taken', sortable: true, hideable: true, draggable: true, defaultVisible: true },
 ];
 
-
+const statusOptions = [
+    { value: "open", label: "Open" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "on_hold", label: "On Hold" },
+    { value: "completed", label: "Completed" },
+    { value: "overdue", label: "Overdue" },
+]
 
 const OpportunityDashboard = () => {
     const { setCurrentSection } = useLayout();
@@ -51,11 +60,15 @@ const OpportunityDashboard = () => {
 
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const baseUrl = localStorage.getItem('baseUrl');
 
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedOpportunityId, setSelectedOpportunityId] = useState<number | null>(null);
 
     // Abstract fetch function to reuse
     const fetchOpportunities = async () => {
@@ -79,6 +92,25 @@ const OpportunityDashboard = () => {
         fetchOpportunities();
     }, []);
 
+    const handleStatusChange = async (id: number, status: string) => {
+        const payload = {
+            opportunity: {
+                status,
+            },
+        };
+        try {
+            await axios.put(`https://${baseUrl}/opportunities/${id}.json`, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            fetchOpportunities();
+            toast.success("Project status changed successfully");
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     const renderCell = (item: Opportunity, columnKey: string) => {
         switch (columnKey) {
@@ -95,8 +127,58 @@ const OpportunityDashboard = () => {
                 return item.title
                     .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
                     .replace(/#\[(.*?)\]\(\d+\)/g, '#$1');
-            case 'status':
-                return item.status;
+            case "status": {
+                const statusColorMap = {
+                    active: { dot: "bg-emerald-500" },
+                    in_progress: { dot: "bg-amber-500" },
+                    on_hold: { dot: "bg-gray-500" },
+                    completed: { dot: "bg-teal-500" },
+                    overdue: { dot: "bg-red-500" },
+                };
+
+                const colors = statusColorMap[item.status as keyof typeof statusColorMap] || statusColorMap.active;
+
+                return (
+                    <FormControl
+                        variant="standard"
+                        sx={{ width: 148 }} // same as w-32
+                    >
+                        <Select
+                            value={item.status}
+                            onChange={(e) =>
+                                handleStatusChange(item.id, e.target.value as string)
+                            }
+                            disableUnderline
+                            renderValue={(value) => (
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <span className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}></span>
+                                    <span>{statusOptions.find(opt => opt.value === value)?.label || value}</span>
+                                </div>
+                            )}
+                            sx={{
+                                fontSize: "0.875rem",
+                                cursor: "pointer",
+                                "& .MuiSelect-select": {
+                                    padding: "4px 0",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                },
+                            }}
+                        >
+                            {statusOptions.map((opt) => {
+                                const optColors = statusColorMap[opt.value as keyof typeof statusColorMap];
+                                return (
+                                    <MenuItem key={opt.value} value={opt.value} sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <span className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}></span>
+                                        <span>{opt.label}</span>
+                                    </MenuItem>
+                                );
+                            })}
+                        </Select>
+                    </FormControl>
+                );
+            }
             case 'created_by':
                 return item.created_by?.name || '-';
             case 'created_at':
@@ -104,7 +186,7 @@ const OpportunityDashboard = () => {
             case 'action_taken':
                 return item.task_created && item.project_management_id
                     ? 'Converted to Project'
-                    : item.project_created && item.task_management_id
+                    : item.task_created && item.task_management_id
                         ? 'Converted to Task'
                         : item.task_created && item.milestone_id
                             ? 'Converted to Milestone'
@@ -115,7 +197,18 @@ const OpportunityDashboard = () => {
     };
 
     const renderActions = (item: Opportunity) => (
-        <div className="flex justify-between items-center gap-2">
+        <div className="flex justify-between items-center">
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                    setSelectedOpportunityId(item.id);
+                    setShowEditModal(true);
+                }}
+                className="text-blue-600 hover:text-blue-800"
+            >
+                <Edit className="w-4 h-4" />
+            </Button>
             <Button
                 variant="ghost"
                 size="sm"
@@ -168,6 +261,18 @@ const OpportunityDashboard = () => {
                 onClose={() => setShowAddModal(false)}
                 onSuccess={fetchOpportunities}
             />
+
+            {selectedOpportunityId && (
+                <EditOpportunityModal
+                    open={showEditModal}
+                    onClose={() => {
+                        setShowEditModal(false);
+                        setSelectedOpportunityId(null);
+                    }}
+                    onSuccess={fetchOpportunities}
+                    opportunityId={selectedOpportunityId}
+                />
+            )}
         </div>
     );
 };

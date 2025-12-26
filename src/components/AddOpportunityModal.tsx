@@ -18,6 +18,8 @@ import MuiSelectField from './MuiSelectField';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { getFullUrl } from '../config/apiConfig';
+import { Mention, MentionsInput } from 'react-mentions';
+import MuiMultiSelect from './MuiMultiSelect';
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -40,15 +42,57 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [responsiblePerson, setResponsiblePerson] = useState('');
+    const [tags, setTags] = useState([]);
     const [attachments, setAttachments] = useState<File[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [prevTags, setPrevTags] = useState([]);
+
+    console.log(responsiblePerson)
+
+    // Mention state
+    const [mentionUsers, setMentionUsers] = useState<any[]>([]);
+    const [mentionTags, setMentionTags] = useState<any[]>([]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Fetch users on mount
+    // Fetch mention users
+    const fetchMentionUsers = async () => {
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setMentionUsers(response.data.users || []);
+        } catch (error) {
+            console.log('Error fetching mention users:', error);
+        }
+    };
+
+    // Fetch mention tags
+    const fetchMentionTags = async () => {
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`https://${baseUrl}/company_tags.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setMentionTags(response.data || []);
+        } catch (error) {
+            console.log('Error fetching mention tags:', error);
+        }
+    };
+
+    // Fetch users and mentions on mount
     useEffect(() => {
         if (open) {
             dispatch(fetchFMUsers());
+            fetchMentionUsers();
+            fetchMentionTags();
         }
     }, [dispatch, open]);
 
@@ -70,6 +114,12 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
         setAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
+    const handleMultiSelectChange = (field: string, values: any) => {
+        if (field === "tags") {
+            setTags(values);
+        }
+    };
+
     const handleSubmit = async () => {
         if (!title) return toast.error('Title is required');
         if (!responsiblePerson) return toast.error('Responsible Person is required');
@@ -81,6 +131,11 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
             formData.append('opportunity[description]', description);
             formData.append('opportunity[responsible_person_id]', responsiblePerson);
             formData.append('opportunity[status]', 'open'); // Default status
+
+            // Append tags
+            tags.forEach((tagId: any) => {
+                formData.append('opportunity[tag_ids][]', tagId);
+            });
 
             // Append attachments
             attachments.forEach((file) => {
@@ -103,6 +158,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
             setTitle('');
             setDescription('');
             setResponsiblePerson('');
+            setTags([]);
             setAttachments([]);
 
         } catch (error: any) {
@@ -111,6 +167,103 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    // Prepare mention data
+    const mentionData = mentionUsers.length > 0
+        ? mentionUsers.map((user: any) => ({
+            id: user.id?.toString() || user.user_id?.toString(),
+            display: user.full_name || user.name || 'Unknown User',
+        }))
+        : [];
+
+    const tagData = mentionTags.length > 0
+        ? mentionTags.map((tag: any) => ({
+            id: tag.id?.toString(),
+            display: tag.name,
+        }))
+        : [];
+
+    // Mention styles
+    const mentionStyles = {
+        control: {
+            fontSize: 14,
+            backgroundColor: 'white',
+            minHeight: 40,
+        },
+        highlighter: {
+            overflow: 'hidden',
+        },
+        input: {
+            margin: 0,
+            padding: '8px 14px',
+            outline: 'none',
+            border: '1px solid rgba(0, 0, 0, 0.23)',
+            borderRadius: '4px',
+        },
+        suggestions: {
+            list: {
+                backgroundColor: 'white',
+                border: '1px solid #ccc',
+                fontSize: 14,
+                zIndex: 100,
+                maxHeight: '150px',
+                overflowY: 'auto' as const,
+                borderRadius: '4px',
+            },
+            item: {
+                padding: '5px 10px',
+                borderBottom: '1px solid #eee',
+                cursor: 'pointer',
+            },
+            itemFocused: {
+                backgroundColor: '#01569E',
+                color: 'white',
+                fontWeight: 'bold',
+            },
+        },
+    };
+
+    const descriptionMentionStyles = {
+        control: {
+            fontSize: 14,
+            backgroundColor: 'white',
+            minHeight: 100,
+        },
+        highlighter: {
+            overflow: 'hidden',
+            padding: '8px 14px',
+            border: '1px solid transparent',
+        },
+        input: {
+            margin: 0,
+            padding: '8px 14px',
+            outline: 'none',
+            border: '1px solid rgba(0, 0, 0, 0.23)',
+            borderRadius: '4px',
+            minHeight: 100,
+        },
+        suggestions: {
+            list: {
+                backgroundColor: 'white',
+                border: '1px solid #ccc',
+                fontSize: 14,
+                zIndex: 100,
+                maxHeight: '150px',
+                overflowY: 'auto' as const,
+                borderRadius: '4px',
+            },
+            item: {
+                padding: '5px 10px',
+                borderBottom: '1px solid #eee',
+                cursor: 'pointer',
+            },
+            itemFocused: {
+                backgroundColor: '#01569E',
+                color: 'white',
+                fontWeight: 'bold',
+            },
+        },
     };
 
     return (
@@ -153,14 +306,28 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
                         <Typography variant="subtitle2" className="mb-2 font-medium">
                             Title <span className="text-red-500">*</span>
                         </Typography>
-                        <TextField
-                            fullWidth
-                            size="small"
-                            placeholder="Type @ to mention users. Type # to mention tags"
+                        <MentionsInput
                             value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white' } }}
-                        />
+                            onChange={(e, newValue) => setTitle(newValue)}
+                            placeholder="Type @ to mention users. Type # to mention tags"
+                            style={mentionStyles}
+                            className="mentions-title"
+                        >
+                            <Mention
+                                trigger="@"
+                                data={mentionData}
+                                markup="@[__display__](__id__)"
+                                displayTransform={(id, display) => `@${display} `}
+                                appendSpaceOnAdd
+                            />
+                            <Mention
+                                trigger="#"
+                                data={tagData}
+                                markup="#[__display__](__id__)"
+                                displayTransform={(id, display) => `#${display} `}
+                                appendSpaceOnAdd
+                            />
+                        </MentionsInput>
                     </div>
 
                     {/* Description */}
@@ -168,32 +335,28 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
                         <Typography variant="subtitle2" className="font-medium">
                             Description
                         </Typography>
-                        <TextField
-                            fullWidth
-                            multiline
-                            rows={4}
-                            placeholder="Type @ to mention users. Type # to mention tags"
+                        <MentionsInput
                             value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            sx={{
-                                "& .MuiOutlinedInput-root": {
-                                    height: "auto !important",
-                                    padding: "2px !important",
-                                    display: "flex",
-                                },
-                                "& .MuiInputBase-input[aria-hidden='true']": {
-                                    flex: 0,
-                                    width: 0,
-                                    height: 0,
-                                    padding: "0 !important",
-                                    margin: 0,
-                                    display: "none",
-                                },
-                                "& .MuiInputBase-input": {
-                                    resize: "none !important",
-                                },
-                            }}
-                        />
+                            onChange={(e, newValue) => setDescription(newValue)}
+                            placeholder="Type @ to mention users. Type # to mention tags"
+                            style={descriptionMentionStyles}
+                            className="mentions-description"
+                        >
+                            <Mention
+                                trigger="@"
+                                data={mentionData}
+                                markup="@[__display__](__id__)"
+                                displayTransform={(id, display) => `@${display} `}
+                                appendSpaceOnAdd
+                            />
+                            <Mention
+                                trigger="#"
+                                data={tagData}
+                                markup="#[__display__](__id__)"
+                                displayTransform={(id, display) => `#${display} `}
+                                appendSpaceOnAdd
+                            />
+                        </MentionsInput>
                     </div>
 
                     {/* Responsible Person */}
@@ -206,6 +369,16 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
                             value={responsiblePerson}
                             onChange={(e) => setResponsiblePerson(e.target.value as string)}
                             fullWidth
+                        />
+                    </div>
+
+                    <div>
+                        <MuiMultiSelect
+                            label="Tags"
+                            options={mentionTags.map((tag) => ({ value: tag.id, label: tag.name, id: tag.id }))}
+                            value={tags}
+                            onChange={(values) => handleMultiSelectChange("tags", values)}
+                            placeholder="Select Tags"
                         />
                     </div>
 

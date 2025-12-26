@@ -16,10 +16,11 @@ import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { createProject } from "@/store/slices/projectManagementSlice";
+import { createProject, changeProjectStatus } from "@/store/slices/projectManagementSlice";
 import AddMilestoneForm from "./AddMilestoneForm";
 import { AddTeamModal } from "./AddTeamModal";
 import { AddTagModal } from "./AddTagModal";
+import MuiMultiSelect from "./MuiMultiSelect";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -91,6 +92,7 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
     const token = localStorage.getItem('token');
 
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [createdProjectId, setCreatedProjectId] = useState<string | null>(null)
     const [selectedTab, setSelectedTab] = useState("details")
     const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
     const [isTagModalOpen, setIsTagModalOpen] = useState(false);
@@ -111,6 +113,9 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
 
     // Populate form when template is selected
     useEffect(() => {
+        // Reset createdProjectId when modal opens or template changes
+        setCreatedProjectId(null);
+
         if (templateDetails && templateDetails.id) {
             const mappedTags = templateDetails.project_tags?.map((tag: any) => ({
                 value: tag?.company_tag?.id,
@@ -155,6 +160,13 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
         setFormData((prev) => ({
             ...prev,
             [name]: type === "checkbox" ? checked : value
+        }));
+    };
+
+    const handleMultiSelectChange = (field: string, values: any) => {
+        setFormData((prev) => ({
+            ...prev,
+            [field]: values
         }));
     };
 
@@ -219,11 +231,25 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                 project_team_id: formData.team,
                 project_type_id: formData.type,
             },
-            task_tag_ids: formData.tags
+            task_tag_ids: formData.tags.map((tag: any) => tag.value),
         };
         try {
-            await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
-            toast.success("Project created successfully");
+            if (createdProjectId) {
+                // Update existing project
+                await dispatch(changeProjectStatus({
+                    token,
+                    baseUrl,
+                    id: createdProjectId,
+                    payload
+                })).unwrap();
+                toast.success("Project updated successfully");
+            } else {
+                // Create new project
+                const result = await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
+                toast.success("Project created successfully");
+                // Store the created project ID
+                setCreatedProjectId(result.id);
+            }
             fetchProjects();
 
             if (shouldNavigateToMilestone) {
@@ -234,8 +260,8 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                 handleCloseDialog();
             }
         } catch (error) {
-            console.error("Error creating project:", error);
-            toast.error(error.message || "Failed to create project");
+            console.error("Error creating/updating project:", error);
+            toast.error(error.message || "Failed to save project");
         } finally {
             setIsSubmitting(false);
         }
@@ -489,29 +515,15 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                                             >
                                                 <i>Create new tag</i>
                                             </div>
-                                            <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
-                                                <InputLabel shrink>Tags*</InputLabel>
-                                                <Select
+                                            <div className="mt-2">
+                                                <MuiMultiSelect
                                                     label="Tags*"
-                                                    name="tags"
-                                                    multiple
+                                                    options={tags.map((tag) => ({ value: tag.id, label: tag.name, id: tag.id }))}
                                                     value={formData.tags}
-                                                    onChange={handleChange}
-                                                    displayEmpty
-                                                    sx={fieldStyles}
-                                                >
-                                                    <MenuItem value="">
-                                                        <em>Select Tags</em>
-                                                    </MenuItem>
-                                                    {
-                                                        tags.map((tag) => (
-                                                            <MenuItem key={tag.id} value={tag.id}>
-                                                                {tag.name}
-                                                            </MenuItem>
-                                                        ))
-                                                    }
-                                                </Select>
-                                            </FormControl>
+                                                    onChange={(values) => handleMultiSelectChange("tags", values)}
+                                                    placeholder="Select Tags"
+                                                />
+                                            </div>
                                         </div>
 
                                         <div className="flex justify-center gap-3 mb-4">

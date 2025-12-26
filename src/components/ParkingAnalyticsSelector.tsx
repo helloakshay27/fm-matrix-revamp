@@ -27,7 +27,7 @@ const parkingAnalyticsOptions = [
   },
   { 
     id: 'occupancy_rate', 
-    label: 'Released vs Cancelled (Daily)', 
+    label: 'Cancelled (Daily)', 
     checked: true, 
     endpoint: 'occupancy_rate.json',
     icon: Clock 

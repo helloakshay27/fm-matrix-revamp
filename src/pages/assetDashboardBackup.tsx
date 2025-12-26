@@ -406,6 +406,8 @@ export const AssetDashboard = () => {
       return status === "missing" || status === "lost";
     }).length;
 
+    const allocatedAssets = assetList.filter((asset) => asset.pmsRoom).length;
+
     // Get unique status values for debugging
     const uniqueStatuses = [...new Set(assetList.map((asset) => asset.status))];
     console.log("Unique status values found:", uniqueStatuses);
@@ -429,11 +431,11 @@ export const AssetDashboard = () => {
       breakdown: breakdownAssets,
       in_store: inStoreAssets,
       dispose: disposeAssets,
+      allocated_count: allocatedAssets,
     };
   };
 
   // Calculate stats from currently displayed assets (this updates with filters)
-  // const stats = calculateStats(displayAssets);
   const stats = {
     ...calculateStats(displayAssets),
     total_value:
@@ -475,8 +477,8 @@ export const AssetDashboard = () => {
       case "in_store":
         filters = { status_eq: "in_storage" };
         break;
-      case "dispose":
-        filters = { status_eq: "disposed" };
+      case "allocated":
+        filters = { allocated_to: "true" };
         break;
       default:
         filters = {};
@@ -816,14 +818,13 @@ export const AssetDashboard = () => {
                 {/* Selection Panel - positioned as overlay within table container */}
                 {selectedAssets.length > 0 && (
                   <AssetSelectionPanel
-                    selectedCount={selectedAssets.length}
-                    selectedAssets={selectedAssetObjects}
-                    onMoveAsset={handleMoveAsset}
-                    onDisposeAsset={handleDisposeAsset}
-                    onPrintQRCode={handlePrintQRCode}
-                    onCheckIn={handleCheckIn}
-                    onClearSelection={handleClearSelection}
-                  />
+                        selectedCount={selectedAssets.length}
+                        selectedAssets={selectedAssetObjects}
+                        onMoveAsset={handleMoveAsset}
+                        onDisposeAsset={handleDisposeAsset}
+                        onPrintQRCode={handlePrintQRCode}
+                        onCheckIn={handleCheckIn}
+                        onClearSelection={handleClearSelection} selectedAssetIds={[]}                  />
                 )}
               </div>
 

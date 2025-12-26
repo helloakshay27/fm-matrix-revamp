@@ -1,14 +1,20 @@
-import { forwardRef, useEffect, useRef, useState } from "react";
-import { Dialog, DialogContent } from "@mui/material";
-import { X, ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, TextField, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { X } from "lucide-react";
 import { Button } from "./ui/button";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchProjectTeams, createProjectTeam } from "@/store/slices/projectTeamsSlice";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { toast } from "sonner";
+import MuiMultiSelect from "./MuiMultiSelect";
 
-
+const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    "& .MuiInputBase-input, & .MuiSelect-select": {
+        padding: { xs: "8px", sm: "10px", md: "12px" },
+    },
+};
 
 interface AddTeamModalProps {
     isOpen: boolean;
@@ -25,14 +31,8 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
 
     const [teamName, setTeamName] = useState('');
     const [selectedLead, setSelectedLead] = useState<number | null>(null);
-    const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
-    const [showLeadDropdown, setShowLeadDropdown] = useState(false);
-    const [showMembersDropdown, setShowMembersDropdown] = useState(false);
-    const [leadSearch, setLeadSearch] = useState('');
-    const [memberSearch, setMemberSearch] = useState('');
+    const [selectedMembers, setSelectedMembers] = useState<{ value: number; label: string }[]>([]);
     const [loading, setLoading] = useState(false);
-    const leadContainerRef = useRef<HTMLDivElement | null>(null);
-    const membersContainerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -44,10 +44,6 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
         setTeamName('');
         setSelectedLead(null);
         setSelectedMembers([]);
-        setShowLeadDropdown(false);
-        setShowMembersDropdown(false);
-        setLeadSearch('');
-        setMemberSearch('');
         onClose();
     };
 
@@ -69,7 +65,7 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
             project_team: {
                 name: teamName,
                 team_lead_id: selectedLead,
-                user_ids: selectedMembers,
+                user_ids: selectedMembers.map(member => member.value),
             },
         };
 
@@ -90,34 +86,9 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
         }
     };
 
-    const toggleMemberSelection = (memberId: number) => {
-        setSelectedMembers(prev =>
-            prev.includes(memberId)
-                ? prev.filter(id => id !== memberId)
-                : [...prev, memberId]
-        );
+    const handleMultiSelectChange = (values: any) => {
+        setSelectedMembers(values);
     };
-
-    useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (showLeadDropdown && leadContainerRef.current && !leadContainerRef.current.contains(e.target as Node)) {
-                setShowLeadDropdown(false);
-            }
-            if (showMembersDropdown && membersContainerRef.current && !membersContainerRef.current.contains(e.target as Node)) {
-                setShowMembersDropdown(false);
-            }
-        };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, [showLeadDropdown, showMembersDropdown]);
-
-    const filteredLeadUsers = (fmUsers || []).filter((u: any) =>
-        u.full_name?.toLowerCase().includes(leadSearch.toLowerCase())
-    );
-    const filteredMemberUsers = (fmUsers || []).filter((u: any) =>
-        u.full_name?.toLowerCase().includes(memberSearch.toLowerCase()) &&
-        u.id !== selectedLead // Exclude the selected lead from members list
-    );
 
     return (
         <Dialog open={isOpen} onClose={closeDialog} maxWidth="sm" fullWidth>
@@ -136,108 +107,60 @@ export const AddTeamModal = ({ isOpen, onClose, onTeamCreated }: AddTeamModalPro
                 >
                     <X size={20} />
                 </button>
+
                 {/* Team Name */}
                 <div className="mt-6 space-y-2">
-                    <label className="block text-sm font-medium">
-                        Team Name<span className="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="text"
+                    <TextField
+                        label="Team Name*"
+                        name="teamName"
+                        placeholder="Enter Team Name"
+                        fullWidth
+                        variant="outlined"
                         value={teamName}
                         onChange={(e) => setTeamName(e.target.value)}
-                        placeholder="Enter Team Name"
-                        className="w-full px-4 py-1.5 border-2 border-gray-300 rounded focus:outline-none placeholder-gray-400 text-base"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
                     />
                 </div>
 
+                {/* Team Lead */}
                 <div className="mt-4 space-y-2">
-                    <label className="block text-sm font-medium">
-                        Team Lead<span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative" ref={leadContainerRef}>
-                        <button
-                            onClick={() => setShowLeadDropdown(!showLeadDropdown)}
-                            className="w-full px-4 py-2 border-2 border-gray-300 rounded text-left flex items-center justify-between hover:border-gray-400 focus:outline-none focus:border-blue-500"
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
+                        <InputLabel shrink>Team Lead*</InputLabel>
+                        <Select
+                            label="Team Lead*"
+                            name="teamLead"
+                            value={selectedLead || ''}
+                            onChange={(e) => setSelectedLead(e.target.value as number)}
+                            displayEmpty
+                            sx={fieldStyles}
                         >
-                            <span className={selectedLead ? 'text-base' : 'text-gray-400'}>
-                                {selectedLead
-                                    ? fmUsers.find((user: any) => user.id === selectedLead)?.full_name
-                                    : 'Select team Lead'}
-                            </span>
-                            <ChevronDown size={20} className="text-gray-400" />
-                        </button>
-                        {showLeadDropdown && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded shadow-lg z-10 max-h-60 overflow-y-auto">
-                                <div className="p-2 border-b">
-                                    <input
-                                        type="text"
-                                        value={leadSearch}
-                                        onChange={(e) => setLeadSearch(e.target.value)}
-                                        placeholder="Search..."
-                                        className="w-full px-3 py-2 border rounded text-sm"
-                                    />
-                                </div>
-                                {filteredLeadUsers && filteredLeadUsers.map((user: any) => (
-                                    <button
-                                        key={user.id}
-                                        onClick={() => {
-                                            setSelectedLead(user.id);
-                                            setShowLeadDropdown(false);
-                                        }}
-                                        className="w-full text-left px-4 py-3 hover:bg-gray-100 border-b last:border-b-0"
-                                    >
+                            <MenuItem value="">
+                                <em>Select Team Lead</em>
+                            </MenuItem>
+                            {
+                                fmUsers.map((user: any) => (
+                                    <MenuItem key={user.id} value={user.id}>
                                         {user.full_name}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                                    </MenuItem>
+                                ))
+                            }
+                        </Select>
+                    </FormControl>
                 </div>
 
+                {/* Team Members */}
                 <div className="mt-4 space-y-2">
-                    <label className="block text-sm font-medium">
-                        Team Members<span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative" ref={membersContainerRef}>
-                        <button
-                            onClick={() => setShowMembersDropdown(!showMembersDropdown)}
-                            className="w-full px-4 py-2 border-2 border-gray-300 rounded text-left flex items-center justify-between hover:border-gray-400 focus:outline-none focus:border-blue-500"
-                        >
-                            <span className={selectedMembers.length > 0 ? 'text-base' : 'text-gray-400'}>
-                                {selectedMembers.length > 0
-                                    ? `${selectedMembers.length} selected`
-                                    : 'Select Team Members'}
-                            </span>
-                            <ChevronDown size={20} className="text-gray-400" />
-                        </button>
-                        {showMembersDropdown && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded shadow-lg z-10 max-h-64 overflow-y-auto">
-                                <div className="p-2 border-b">
-                                    <input
-                                        type="text"
-                                        value={memberSearch}
-                                        onChange={(e) => setMemberSearch(e.target.value)}
-                                        placeholder="Search..."
-                                        className="w-full px-3 py-2 border rounded text-sm"
-                                    />
-                                </div>
-                                {filteredMemberUsers && filteredMemberUsers.map((user: any) => (
-                                    <label
-                                        key={user.id}
-                                        className="flex items-center px-4 py-3 hover:bg-gray-100 border-b last:border-b-0 cursor-pointer"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedMembers.includes(user.id)}
-                                            onChange={() => toggleMemberSelection(user.id)}
-                                            className="w-4 h-4 rounded border-gray-300 cursor-pointer mr-3"
-                                        />
-                                        <span>{user.full_name}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    <MuiMultiSelect
+                        label="Team Members*"
+                        options={fmUsers
+                            .filter((user: any) => user.id !== selectedLead)
+                            .map((user: any) => ({ value: user.id, label: user.full_name, id: user.id }))}
+                        value={selectedMembers}
+                        onChange={handleMultiSelectChange}
+                        placeholder="Select Team Members"
+                    />
                 </div>
 
                 {/* Action Buttons */}

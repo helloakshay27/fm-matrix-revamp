@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Check } from 'lucide-react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import AddToDoModal from '@/components/AddToDoModal';
 import { Button } from '@/components/ui/button';
 import { useLayout } from '@/contexts/LayoutContext';
@@ -201,32 +202,11 @@ export default function Todo() {
                                 </div>
                             ) : (
                                 completedTodos.map((todo) => (
-                                    <div
+                                    <CompletedTodoItem
                                         key={todo.id}
-                                        className="flex items-center gap-3 p-3 rounded-lg bg-accent/5 hover:bg-accent/10 transition-colors group"
-                                    >
-                                        <button
-                                            onClick={() => toggleTodo(todo.id)}
-                                            className="flex-shrink-0 w-5 h-5 bg-accent flex items-center justify-center hover:opacity-90 transition-all"
-                                        >
-                                            <Check size={16} className="text-accent-foreground" />
-                                        </button>
-                                        {/* <span className="flex-1 text-base text-muted-foreground line-through">{todo.title}</span> */}
-                                        <div className="flex flex-col flex-1">
-                                            <span className="text-base text-foreground">{todo.title}</span>
-                                            {todo.target_date && (
-                                                <span className="text-xs text-muted-foreground">
-                                                    Due: {todo.target_date}
-                                                </span>
-                                            )}
-                                        </div>
-                                        {/* <button
-                                            onClick={() => deleteTodo(todo.id)}
-                                            className="flex-shrink-0 p-1.5 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button> */}
-                                    </div>
+                                        todo={todo}
+                                        toggleTodo={toggleTodo}
+                                    />
                                 ))
                             )}
                         </div>
@@ -249,6 +229,15 @@ export default function Todo() {
 // Separate Todo Item Component (Cleaner UI)
 // ----------------------------------------------
 const TodoItem = ({ todo, toggleTodo, deleteTodo }) => {
+    const navigate = useNavigate();
+
+    const handleTaskClick = () => {
+        if (todo.task_management_id) {
+            // Navigate to task details page
+            navigate(`/vas/tasks/${todo.task_management_id}`);
+        }
+    };
+
     return (
         <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors group">
             <button
@@ -259,7 +248,17 @@ const TodoItem = ({ todo, toggleTodo, deleteTodo }) => {
             </button>
 
             <div className="flex flex-col flex-1">
-                <span className="text-base text-foreground">{todo.title}</span>
+                <div className="flex items-center gap-2">
+                    {todo.task_management_id && (
+                        <span
+                            onClick={handleTaskClick}
+                            className="text-sm font-semibold text-[#c72030] cursor-pointer hover:underline"
+                        >
+                            T-{todo.task_management_id}
+                        </span>
+                    )}
+                    <span className="text-base text-foreground">{todo.title}</span>
+                </div>
                 {todo.target_date && (
                     <span className="text-xs text-muted-foreground">Due: {todo.target_date}</span>
                 )}
@@ -271,6 +270,48 @@ const TodoItem = ({ todo, toggleTodo, deleteTodo }) => {
             >
                 <Trash2 size={18} />
             </button> */}
+        </div>
+    );
+};
+
+// ----------------------------------------------
+// Completed Todo Item Component
+// ----------------------------------------------
+const CompletedTodoItem = ({ todo, toggleTodo }) => {
+    const navigate = useNavigate();
+
+    const handleTaskClick = () => {
+        if (todo.task_management_id) {
+            navigate(`/project-management/task/${todo.task_management_id}`);
+        }
+    };
+
+    return (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/5 hover:bg-accent/10 transition-colors group">
+            <button
+                onClick={() => toggleTodo(todo.id)}
+                className="flex-shrink-0 w-5 h-5 bg-accent flex items-center justify-center hover:opacity-90 transition-all"
+            >
+                <Check size={16} className="text-accent-foreground" />
+            </button>
+            <div className="flex flex-col flex-1">
+                <div className="flex items-center gap-2">
+                    {todo.task_management_id && (
+                        <span
+                            onClick={handleTaskClick}
+                            className="text-sm font-semibold text-[#c72030] cursor-pointer hover:underline"
+                        >
+                            T-{todo.task_management_id}
+                        </span>
+                    )}
+                    <span className="text-base text-foreground">{todo.title}</span>
+                </div>
+                {todo.target_date && (
+                    <span className="text-xs text-muted-foreground">
+                        Due: {todo.target_date}
+                    </span>
+                )}
+            </div>
         </div>
     );
 };

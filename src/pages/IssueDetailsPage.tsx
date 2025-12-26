@@ -78,9 +78,21 @@ const mapDisplayToApiStatus = (displayStatus: string) => {
     return reverseStatusMap[displayStatus] || "open";
 };
 
-const Attachments = ({ attachments, id, baseUrl, token }: any) => {
+// Helper to sort comments newest-first by created_at
+const sortCommentsDesc = (arr: any[] | undefined) => {
+    if (!Array.isArray(arr)) return [];
+    const time = (c: any) => {
+        const t = c?.created_at || c?.createdAt || c?.created || null;
+        const parsed = t ? Date.parse(t) : NaN;
+        return Number.isNaN(parsed) ? 0 : parsed;
+    };
+    return [...arr].sort((a, b) => time(b) - time(a));
+};
+
+const Attachments = ({ attachments, id, baseUrl, token, getIssue }: any) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [files, setFiles] = useState(attachments);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         setFiles(attachments);
@@ -100,16 +112,52 @@ const Attachments = ({ attachments, id, baseUrl, token }: any) => {
         });
 
         try {
-            await axios.put(`https://${baseUrl}/issues/${id}.json`, formData, {
+            setUploading(true);
+
+            const resp = await axios.put(`https://${baseUrl}/issues/${id}.json`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
+
+            // Try to extract updated attachments from response, fallback to refetching issue
+            const updatedIssue = resp.data.issue || resp.data;
+            const updatedAttachments = updatedIssue?.attachments || updatedIssue?.attachments_attributes || null;
+
+
+            if (Array.isArray(updatedAttachments)) {
+                setFiles(updatedAttachments);
+            } else if (typeof getIssue === "function") {
+                // Ask parent to refresh full issue data which will flow down via props
+                try {
+                    await getIssue();
+                } catch (err) {
+                    console.error("Failed to refresh parent issue after upload:", err);
+                }
+            } else {
+                // If server didn't return attachments and no parent refresh, try to fetch fresh issue data locally
+                try {
+                    const fresh = await axios.get(`https://${baseUrl}/issues/${id}.json`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    const freshIssue = fresh.data.issue || fresh.data;
+                    setFiles(freshIssue.attachments || []);
+                } catch (err) {
+                    // last resort: leave existing files as-is
+                    console.error("Failed to refresh attachments after upload:", err);
+                }
+            }
+
             toast.success("Files uploaded successfully.");
+            // Reload the page so attachments are guaranteed to display (server may process attachments async)
             window.location.reload();
         } catch (error) {
             console.error("File upload failed:", error);
             toast.error("Failed to upload file.");
+        } finally {
+            setUploading(false);
+            // reset file input so same file can be selected again if needed
+            if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
 
@@ -186,10 +234,22 @@ const Attachments = ({ attachments, id, baseUrl, token }: any) => {
                         })}
                     </div>
                     <button
-                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        className={`bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 flex items-center justify-center ${uploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                         onClick={handleAttachFile}
+                        disabled={uploading}
+                        aria-disabled={uploading}
                     >
-                        Attach Files
+                        {uploading ? (
+                            <>
+                                <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                                Uploading...
+                            </>
+                        ) : (
+                            'Attach Files'
+                        )}
                     </button>
                 </>
             ) : (
@@ -197,10 +257,22 @@ const Attachments = ({ attachments, id, baseUrl, token }: any) => {
                     <span>No Documents Attached</span>
                     <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
                     <button
-                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        className={`bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 flex items-center justify-center ${uploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                         onClick={handleAttachFile}
+                        disabled={uploading}
+                        aria-disabled={uploading}
                     >
-                        Attach Files
+                        {uploading ? (
+                            <>
+                                <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                                Uploading...
+                            </>
+                        ) : (
+                            'Attach Files'
+                        )}
                     </button>
                 </div>
             )}
@@ -210,6 +282,7 @@ const Attachments = ({ attachments, id, baseUrl, token }: any) => {
                 ref={fileInputRef}
                 style={{ display: "none" }}
                 onChange={handleFileChange}
+                disabled={uploading}
             />
         </div>
     );
@@ -222,6 +295,8 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
     const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
     const [editedCommentText, setEditedCommentText] = useState("");
     const textareaRef = useRef<any>(null);
+    // Local comments state so we can optimistically prepend new comments
+    const [localComments, setLocalComments] = useState<any[]>(sortCommentsDesc(comments || []));
 
     // Mock data for mentions - replace with actual API calls if needed
     const [mentionUsers, setMentionUsers] = useState<any[]>([]);
@@ -259,6 +334,11 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
         fetchMentionTags();
     }, [])
 
+    // keep localComments in sync if parent comments prop changes
+    useEffect(() => {
+        setLocalComments(sortCommentsDesc(comments || []));
+    }, [comments]);
+
     const mentionData = mentionUsers.length > 0
         ? mentionUsers.map((user: any) => ({
             id: user.id?.toString() || user.user_id?.toString(),
@@ -291,15 +371,24 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
                 },
             };
 
-            await axios.post(`https://${baseUrl}/comments.json`, payload, {
+            const resp = await axios.post(`https://${baseUrl}/comments.json`, payload, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
 
+            // Prepend new comment from server response if available, otherwise use payload
+            const newComment = resp.data.comment || resp.data || {
+                id: Date.now().toString(),
+                body: comment,
+                commentor_full_name: `${currentUser?.firstname || ''} ${currentUser?.lastname || ''}`.trim(),
+                created_at: new Date().toISOString(),
+            };
+
+            setLocalComments((prev) => [newComment, ...prev]);
             toast.success("Comment added successfully");
             setComment("");
-            getIssue();
+            // keep fetching full issue if needed: getIssue();
         } catch (error) {
             console.error("Error adding comment:", error);
             toast.error("Failed to add comment");
@@ -308,7 +397,7 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
 
     const handleEdit = (cmt: any) => {
         setEditingCommentId(cmt.id);
-        setEditedCommentText(cmt.body);
+        setEditedCommentText(cmt.body || "");
     };
 
     const handleEditSave = async () => {
@@ -324,16 +413,18 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
                 },
             };
 
-            await axios.put(`https://${baseUrl}/comments/${editingCommentId}.json`, payload, {
+            const resp = await axios.put(`https://${baseUrl}/comments/${editingCommentId}.json`, payload, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
 
+            const updated = resp.data.comment || resp.data;
+            setLocalComments((prev) => prev.map((c) => (c.id === editingCommentId ? updated : c)));
+
             toast.success("Comment updated successfully");
             setEditingCommentId(null);
             setEditedCommentText("");
-            getIssue();
         } catch (error) {
             console.error("Error updating comment:", error);
             toast.error("Failed to update comment");
@@ -348,8 +439,10 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
                 },
             });
 
+            // remove locally
+            setLocalComments((prev) => prev.filter((c) => c.id !== commentId));
             toast.success("Comment deleted successfully");
-            getIssue();
+            // getIssue();
         } catch (error) {
             console.error("Error deleting comment:", error);
             toast.error("Failed to delete comment");
@@ -490,7 +583,7 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
                 </button>
             </div>
 
-            {comments?.map((cmt: any) => {
+            {localComments?.map((cmt: any) => {
                 const isEditing = editingCommentId === cmt.id;
                 return (
                     <div key={cmt.id} className="relative flex justify-start m-2 gap-5">
@@ -552,12 +645,12 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
 
                             <div className="flex gap-2 text-[10px]">
                                 <span>{formatToDDMMYYYY_AMPM(cmt.created_at)}</span>
-                                <span className="cursor-pointer" onClick={() => handleEdit(cmt)}>
+                                {/* <span className="cursor-pointer" onClick={() => handleEdit(cmt)}>
                                     Edit
                                 </span>
                                 <span className="cursor-pointer" onClick={() => handleDelete(cmt.id)}>
                                     Delete
-                                </span>
+                                </span> */}
                             </div>
                         </div>
                     </div>
@@ -626,7 +719,7 @@ const IssueDetailsPage = () => {
                         task_management_name: issueDetail.task_management_name || "",
                         tags: issueDetail.tags || [],
                         attachments: issueDetail.attachments || [],
-                        comments: issueDetail.comments || [],
+                        comments: sortCommentsDesc(issueDetail.comments || []),
                     };
 
                     setIssueData(mappedIssue);
@@ -713,7 +806,7 @@ const IssueDetailsPage = () => {
                     task_management_name: issueDetail.task_management_name || "",
                     tags: issueDetail.tags || [],
                     attachments: issueDetail.attachments || [],
-                    comments: issueDetail.comments || [],
+                    comments: sortCommentsDesc(issueDetail.comments || []),
                 };
 
                 setIssueData(mappedIssue);
