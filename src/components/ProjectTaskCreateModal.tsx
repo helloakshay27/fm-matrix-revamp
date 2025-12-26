@@ -823,21 +823,23 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%]
         const formatedStartDate = `${startDate.year}-${startDate.month + 1}-${startDate.date
             }`;
         return {
-            title: data.taskTitle,
-            description: data.description,
-            responsible_person_id: data.responsiblePerson,
-            priority: data.priority,
-            observer_ids: data.observer.map((observer) => observer.value),
-            task_tag_ids: data.tags.map((tag) => tag.value),
-            expected_start_date: formatedStartDate,
-            target_date: formatedEndDate,
-            allocation_date: formatedEndDate,
-            project_management_id: id || formData.project,
-            milestone_id: mid || formData.milestone,
-            active: true,
-            estimated_hour: totalWorkingHours,
-            task_allocation_times_attributes: dateWiseHours,
-            ...(opportunityId && { opportunity_id: opportunityId }),
+            task_management: {
+                title: data.taskTitle,
+                description: data.description,
+                responsible_person_id: data.responsiblePerson,
+                priority: data.priority,
+                observer_ids: data.observer.map((observer) => observer.value),
+                task_tag_ids: data.tags.map((tag) => tag.value),
+                expected_start_date: formatedStartDate,
+                target_date: formatedEndDate,
+                allocation_date: formatedEndDate,
+                project_management_id: id || formData.project,
+                milestone_id: mid || formData.milestone,
+                active: true,
+                estimated_hour: totalWorkingHours,
+                task_allocation_times_attributes: dateWiseHours,
+                ...(opportunityId && { opportunity_id: opportunityId }),
+            }
         };
     };
 

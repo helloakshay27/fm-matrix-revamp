@@ -476,7 +476,7 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
         </button>
       </div>
 
-  {localComments?.map((cmt: any) => {
+      {localComments?.map((cmt: any) => {
         const isEditing = editingCommentId === cmt.id;
         return (
           <div key={cmt.id} className="relative flex justify-start m-2 gap-5">
@@ -1144,6 +1144,10 @@ export const ProjectTaskDetails = () => {
       toast.success('To-Do added successfully.');
     } catch (error) {
       console.log(error);
+      const errorData = error.response.data;
+      Object.keys(errorData).forEach((key) => {
+        toast.error(`${key} ${errorData[key]} for todo`);
+      });
     } finally {
       setAddingTodo(false);
     }
