@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchProjectsTags, createProjectsTags, updateProjectsTags, deleteProjectsTags } from "@/store/slices/projectTagSlice";
+import { toast } from "sonner";
 
 const columns: ColumnConfig[] = [
     {
@@ -54,6 +55,7 @@ const ProjectTags = () => {
     const [selectedTagType, setSelectedTagType] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
     const [showTagTypeDropdown, setShowTagTypeDropdown] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         dispatch(fetchProjectsTags());
@@ -86,31 +88,42 @@ const ProjectTags = () => {
     const handleSubmit = async () => {
         const trimmedName = tagName.trim();
         if (!trimmedName) {
-            alert('Please enter tag name');
+            toast.error('Please enter tag name');
             return;
         }
         if (!selectedTagType) {
-            alert('Please select tag type');
+            toast.error('Please select tag type');
             return;
         }
 
-        const payload = {
-            company_tag: {
-                name: trimmedName,
-                tag_type: selectedTagType,
-                active: true,
-            }
-        };
+        setSubmitting(true);
 
-        if (isEditMode && editingId) {
-            await dispatch(updateProjectsTags({ id: editingId, data: payload })).unwrap();
-            dispatch(fetchProjectsTags());
-        } else {
-            await dispatch(createProjectsTags(payload)).unwrap();
-            dispatch(fetchProjectsTags());
+        try {
+            const payload = {
+                company_tag: {
+                    name: trimmedName,
+                    tag_type: selectedTagType,
+                    active: true,
+                }
+            };
+
+            if (isEditMode && editingId) {
+                await dispatch(updateProjectsTags({ id: editingId, data: payload })).unwrap();
+                dispatch(fetchProjectsTags());
+                toast.success('Tag updated successfully');
+            } else {
+                await dispatch(createProjectsTags(payload)).unwrap();
+                dispatch(fetchProjectsTags());
+                toast.success('Tag created successfully');
+            }
+
+            closeDialog();
+        } catch (error) {
+            toast.error('Failed to create tag');
+        } finally {
+            setSubmitting(false);
         }
 
-        closeDialog();
     };
 
     const handleDelete = async (id: number) => {
@@ -153,14 +166,14 @@ const ProjectTags = () => {
                 >
                     <Edit className="w-4 h-4" />
                 </Button>
-                <Button
+                {/* <Button
                     size="sm"
                     variant="ghost"
                     className="p-1 text-red-500 hover:text-red-700"
                     onClick={() => handleDelete(item.id)}
                 >
                     <Trash2 className="w-4 h-4" />
-                </Button>
+                </Button> */}
             </div>
         )
     };

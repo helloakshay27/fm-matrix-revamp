@@ -375,7 +375,7 @@ const TaskForm = ({
             <div className="mb-1">
                 <TextField
                     fullWidth
-                    label="Task Title *"
+                    label={<>Task Title<span className="text-red-500">*</span></>}
                     name="taskTitle"
                     placeholder="Enter Task Title"
                     value={formData.taskTitle}
@@ -390,7 +390,7 @@ const TaskForm = ({
             <div className="mb-1">
                 <TextField
                     fullWidth
-                    label="Description"
+                    label={<>Description<span className="text-red-500">*</span></>}
                     name="description"
                     placeholder="Enter Description"
                     multiline
@@ -425,7 +425,7 @@ const TaskForm = ({
             <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
                     <FormControl fullWidth variant="outlined">
-                        <InputLabel shrink>Responsible Person *</InputLabel>
+                        <InputLabel shrink>Responsible Person<span className="text-red-500">*</span></InputLabel>
                         <Select
                             label="Responsible Person *"
                             name="responsiblePerson"
@@ -479,7 +479,7 @@ const TaskForm = ({
 
             <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
-                    <label className="block text-xs text-gray-700 mb-1">Target Date *</label>
+                    <label className="block text-xs text-gray-700 mb-1">Target Date<span className="text-red-500">*</span></label>
                     <button
                         type="button"
                         className="w-full border outline-none border-gray-300 px-3 py-2 text-[13px] flex items-center gap-2 text-gray-400 rounded"
@@ -627,7 +627,7 @@ const TaskForm = ({
 
             <div className="mb-6 mt-2">
                 <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Priority</InputLabel>
+                    <InputLabel shrink>Priority<span className="text-red-500">*</span></InputLabel>
                     <Select
                         label="Priority *"
                         name="priority"
@@ -649,7 +649,7 @@ const TaskForm = ({
 
             <div className="mb-6">
                 <MuiMultiSelect
-                    label="Observer"
+                    label={<>Observer<span className="text-red-500">*</span></>}
                     options={users?.filter(Boolean).filter((user: any) => user?.id !== formData.responsiblePerson).map((user: any) => ({
                         label: user?.full_name || "Unknown",
                         value: user?.id || user?.id,
@@ -664,7 +664,7 @@ const TaskForm = ({
 
             <div className="mb-6">
                 <MuiMultiSelect
-                    label="Tags"
+                    label={<>Tags<span className="text-red-500">*</span></>}
                     options={tags.map((tag) => ({ value: tag.id, label: tag.name, id: tag.id }))}
                     value={formData.tags}
                     onChange={(values) => handleMultiSelectChange("tags", values)}
