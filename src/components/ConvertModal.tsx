@@ -7,7 +7,7 @@ import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import AddMilestoneForm from './AddMilestoneForm';
 import ProjectTaskCreateModal from './ProjectTaskCreateModal';
 import { FormControl, InputLabel, MenuItem, Select, TextField, Dialog, DialogTitle, DialogContent, Slide } from "@mui/material";
-import { createProject } from "@/store/slices/projectManagementSlice";
+import { createProject, fetchProjects } from "@/store/slices/projectManagementSlice";
 import { Button } from "./ui/button";
 
 const Transition = forwardRef(function Transition(props: any, ref: any) {
@@ -41,6 +41,7 @@ const ConvertModal = ({
     const [teams, setTeams] = useState<any[]>([]);
     const [projectTypes, setProjectTypes] = useState<any[]>([]);
     const [tags, setTags] = useState<any[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
     const [isLoadingOwners, setIsLoadingOwners] = useState(false);
 
     // For Project Form
@@ -68,11 +69,14 @@ const ConvertModal = ({
             fetchTeams();
             fetchProjectTypes();
             fetchTags();
+            fetchAllProjects();
             setProjectFormData({
-                title: prefillData?.title || "",
+                title: prefillData?.title?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+                    .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || "",
                 isChannel: false,
                 isTemplate: false,
-                description: prefillData?.description || "",
+                description: prefillData?.description?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+                    .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
                 owner: "",
                 startDate: "",
                 endDate: "",
@@ -126,6 +130,16 @@ const ConvertModal = ({
             setTags(response.data || []);
         } catch (error) {
             console.error('Error fetching tags:', error);
+        }
+    };
+
+    const fetchAllProjects = async () => {
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const response = await dispatch(fetchProjects({ token, baseUrl })).unwrap();
+            setProjects(response.project_managements || []);
+        } catch (error) {
+            console.error('Error fetching projects:', error);
         }
     };
 
@@ -541,8 +555,11 @@ const ConvertModal = ({
                         <div>
                             <AddMilestoneForm
                                 owners={owners}
+                                projects={projects}
                                 handleClose={closeModal}
                                 className='mx-0 w-full'
+                                prefillData={prefillData}
+                                isConversion={true}
                             />
                         </div>
                     )}
@@ -552,6 +569,7 @@ const ConvertModal = ({
                             isEdit={false}
                             onCloseModal={handleTaskSuccess}
                             className='mx-0 w-full'
+                            prefillData={prefillData}
                         />
                     )}
                 </div>

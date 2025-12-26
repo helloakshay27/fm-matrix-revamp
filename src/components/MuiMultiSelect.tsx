@@ -56,7 +56,17 @@ export const MuiMultiSelect = ({
     };
 
     return (
-        <FormControl fullWidth={fullWidth} error={error} variant="outlined">
+        <FormControl
+            fullWidth={fullWidth}
+            error={error}
+            variant="outlined"
+            sx={{
+                "& .MuiInputBase-root": {
+                    minHeight: "45px",
+                    height: "auto",
+                },
+            }}
+        >
             <InputLabel shrink>{label}</InputLabel>
             <Select
                 multiple
@@ -65,12 +75,20 @@ export const MuiMultiSelect = ({
                 label={label}
                 disabled={disabled}
                 displayEmpty
+                MenuProps={{
+                    PaperProps: {
+                        style: {
+                            maxHeight: 300,
+                        },
+                    },
+                }}
                 renderValue={(selected) => (
                     <div
                         style={{
                             display: "flex",
                             flexWrap: "wrap",
-                            gap: "8px",
+                            gap: "4px",
+                            padding: "4px 0",
                         }}
                     >
                         {value.length > 0 ? (
@@ -84,19 +102,37 @@ export const MuiMultiSelect = ({
                                     onMouseDown={(e) => {
                                         e.stopPropagation();
                                     }}
+                                    sx={{
+                                        height: "20px",
+                                        fontSize: "0.7rem",
+                                        "& .MuiChip-label": {
+                                            padding: "0 6px",
+                                        },
+                                        "& .MuiChip-deleteIcon": {
+                                            fontSize: "14px",
+                                            margin: "0 2px 0 -4px",
+                                        },
+                                    }}
                                 />
                             ))
                         ) : (
-                            <span style={{ color: "#999" }}>
+                            <span style={{ color: "#999", lineHeight: "normal" }}>
                                 {placeholder || "Select..."}
                             </span>
                         )}
                     </div>
                 )}
                 sx={{
-                    height: { xs: 28, sm: 36, md: 45 },
-                    "& .MuiInputBase-input, & .MuiSelect-select": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
+                    "& .MuiSelect-select": {
+                        padding: "6px 12px !important",
+                        minHeight: "auto !important",
+                        display: "flex !important",
+                        alignItems: "flex-start",
+                        paddingTop: "8px !important",
+                        paddingBottom: "8px !important",
+                    },
+                    "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgba(0, 0, 0, 0.23)",
                     },
                 }}
             >

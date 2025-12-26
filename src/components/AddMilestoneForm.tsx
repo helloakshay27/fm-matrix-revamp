@@ -76,7 +76,7 @@ const calculateDuration = (startDate: string, endDate: string): string => {
     }
 };
 
-const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-auto" }) => {
+const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[90%] mx-auto", prefillData, isConversion = false }: any) => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -92,12 +92,14 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
     const [projectEndDate, setProjectEndDate] = useState("");
     const [projectData, setProjectData] = useState<Project | null>(null);
     const [formData, setFormData] = useState({
-        milestoneTitle: "",
+        milestoneTitle: prefillData?.title?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+            .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
         owner: "",
         startDate: "",
         endDate: "",
         duration: "",
         dependsOn: "",
+        projectId: "",
     });
 
     useEffect(() => {
@@ -147,6 +149,41 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
         getMilestones();
     }, [project?.id, project?.start_date, project?.end_date, id, token, baseUrl])
 
+    // Fetch project dates when project is selected in conversion mode
+    useEffect(() => {
+        if (isConversion && formData.projectId) {
+            fetchProjectDataById(formData.projectId);
+        }
+    }, [formData.projectId, isConversion]);
+
+    const fetchProjectDataById = async (projectId: string) => {
+        try {
+            const response = await fetch(`https://${baseUrl}/project_managements/${projectId}.json`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.ok) {
+                const fetchedProject: Project = await response.json();
+                setProjectData(fetchedProject);
+
+                if (fetchedProject?.start_date && fetchedProject?.end_date) {
+                    const startDate = new Date(fetchedProject.start_date).toISOString().split('T')[0];
+                    const endDate = new Date(fetchedProject.end_date).toISOString().split('T')[0];
+                    setProjectStartDate(startDate);
+                    setProjectEndDate(endDate);
+                }
+
+                // Fetch milestones for the selected project
+                const milestonesResponse = await dispatch(fetchMilestones({ token, baseUrl, id: projectId })).unwrap();
+                setMilestones(milestonesResponse);
+            }
+        } catch (error) {
+            console.log('Error fetching project:', error);
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevData) => ({
@@ -182,6 +219,10 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
         e.preventDefault();
 
         // Validate required fields
+        if (isConversion && !formData.projectId) {
+            toast.error("Please select a project.");
+            return;
+        }
         if (!formData.milestoneTitle) {
             toast.error("Milestone title is required.");
             return;
@@ -215,9 +256,11 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
                     end_date: formData.endDate,
                     depends_on_id: formData.dependsOn,
                     status: "open",
-                    project_management_id: location.pathname.includes("/milestones")
-                        ? id
-                        : (project?.id as string | number) || (projectData?.id as string | number),
+                    project_management_id: isConversion
+                        ? formData.projectId
+                        : (location.pathname.includes("/milestones")
+                            ? id
+                            : (project?.id as string | number) || (projectData?.id as string | number)),
                 },
             }
 
@@ -235,6 +278,31 @@ const AddMilestoneForm = ({ owners, handleClose, className = "max-w-[90%] mx-aut
     return (
         <form className="h-full" onSubmit={handleSubmit}>
             <div className={`h-[calc(100%-4rem)] overflow-y-auto pr-3 ${className}`}>
+                {isConversion && (
+                    <div className="flex flex-col gap-4 my-4">
+                        <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                            <InputLabel shrink>Select Project*</InputLabel>
+                            <Select
+                                label="Select Project*"
+                                name="projectId"
+                                displayEmpty
+                                sx={fieldStyles}
+                                value={formData.projectId}
+                                onChange={handleChange}
+                            >
+                                <MenuItem value="">
+                                    <em>Select Project</em>
+                                </MenuItem>
+                                {projects?.map((project) => (
+                                    <MenuItem key={project.id} value={project.id}>
+                                        {project.title}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </div>
+                )}
+
                 <div className="mt-4 space-y-2">
                     <TextField
                         label="Milestone Title"
