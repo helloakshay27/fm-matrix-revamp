@@ -513,17 +513,31 @@ export const SurveyMappingDashboard = () => {
           },
           params: {
             token: 'b06b9c80acb8e5b06cea63d4cc74a2297897a923cd2753cc'
-          }
+          },
+          validateStatus: (status) => true // Accept all status codes
         }
       );
 
-      console.log('✅ Survey mappings imported successfully:', response.data);
-      sonnerToast.success('Survey mappings imported successfully!');
+      if (response.status === 422 && response.data && Array.isArray(response.data.errors)) {
+        // Show each error row and message
+        response.data.errors.forEach((err) => {
+          const row = err.row;
+          const errors = Array.isArray(err.errors) ? err.errors.join(', ') : String(err.errors);
+          sonnerToast.error(`Row ${row}: ${errors}`);
+        });
+        return;
+      }
 
-      // Refresh the data after successful import
-      await fetchSurveyMappingsData(1, undefined, appliedFilters);
+      if (response.status >= 200 && response.status < 300) {
+        console.log('✅ Survey mappings imported successfully:', response.data);
+        sonnerToast.success('Survey mappings imported successfully!');
+        // Refresh the data after successful import
+        await fetchSurveyMappingsData(1, undefined, appliedFilters);
+      } else {
+        sonnerToast.error('Failed to import survey mappings');
+      }
 
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error importing survey mappings:', error);
       sonnerToast.error('Failed to import survey mappings');
       throw error;
@@ -531,29 +545,12 @@ export const SurveyMappingDashboard = () => {
   };
 
   // Handle sample file download
-  const handleDownloadSample = async () => {
+  const handleDownloadSample = () => {
     const baseUrl = localStorage.getItem('baseUrl');
-    try {
-      const response = await axios.get(`https://${baseUrl}/assets/survey_mapping_sample.xlsx?token=${localStorage.getItem('token')}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        // responseType: 'blob',
-      })
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'survey_mapping_sample.xlsx');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      sonnerToast.success('Sample file downloaded successfully');
-    } catch (error) {
-      console.error('Error downloading sample file:', error);
-      sonnerToast.error('Failed to download sample file');
-    }
+    const token = localStorage.getItem('token');
+    const downloadUrl = `https://${baseUrl}/assets/survey_mapping_sample.xlsx?token=${token}`;
+    // Directly open the file link for download
+    window.open(downloadUrl, '_blank');
   };
 
   // Handle filter application
