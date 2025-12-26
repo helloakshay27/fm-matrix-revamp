@@ -46,6 +46,17 @@ const getInitials = (name: string): string => {
     .toUpperCase();
 };
 
+// Helper to sort comments newest-first by created_at
+const sortCommentsDesc = (arr: any[] | undefined) => {
+  if (!Array.isArray(arr)) return [];
+  const time = (c: any) => {
+    const t = c?.created_at || c?.createdAt || c?.created || null;
+    const parsed = t ? Date.parse(t) : NaN;
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
+  return [...arr].sort((a, b) => time(b) - time(a));
+};
+
 // Calculate duration with overdue detection
 const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
   if (!start || !end) return { text: "N/A", isOverdue: false };
@@ -164,9 +175,17 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
   const [editedCommentText, setEditedCommentText] = useState("");
   const textareaRef = useRef<any>(null);
 
+  // Local comments state so we can optimistically prepend new comments and show newest-first
+  const [localComments, setLocalComments] = useState<any[]>(sortCommentsDesc(comments || []));
+
   // Mock data for mentions - replace with actual API calls if needed
   const [mentionUsers, setMentionUsers] = useState<any[]>([]);
   const [mentionTags, setMentionTags] = useState<any[]>([]);
+
+  // keep localComments in sync if parent comments prop changes
+  useEffect(() => {
+    setLocalComments(sortCommentsDesc(comments || []));
+  }, [comments]);
 
   const fetchMentionUsers = async () => {
     try {
@@ -232,14 +251,23 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
         },
       };
 
-      await axios.post(`https://${baseUrl}/comments.json`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      // Create comment on server and use response (if any) to prepend locally
+      const resp = await axios.post(`https://${baseUrl}/comments.json`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
+      const newComment = resp?.data?.comment || resp?.data || {
+        id: Date.now().toString(),
+        body: comment,
+        commentor_full_name: `${currentUser?.firstname || ''} ${currentUser?.lastname || ''}`.trim(),
+        created_at: new Date().toISOString(),
+      };
+
+      setLocalComments((prev) => [newComment, ...prev]);
       toast.success("Comment added successfully");
       setComment("");
+
+      // Refresh parent if available
       if (getTask) {
         getTask();
       } else if (taskId) {
@@ -269,15 +297,18 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
         },
       };
 
-      await axios.put(`https://${baseUrl}/comments/${editingCommentId}.json`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      // Update comment on server and use response to update local list
+      const resp = await axios.put(`https://${baseUrl}/comments/${editingCommentId}.json`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
       });
+
+      const updated = resp?.data?.comment || resp?.data;
+      setLocalComments((prev) => prev.map((c) => (c.id === editingCommentId ? updated : c)));
 
       toast.success("Comment updated successfully");
       setEditingCommentId(null);
       setEditedCommentText("");
+
       if (getTask) {
         getTask();
       } else if (taskId) {
@@ -297,6 +328,8 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
         },
       });
 
+      // remove locally
+      setLocalComments((prev) => prev.filter((c) => c.id !== commentId));
       toast.success("Comment deleted successfully");
       if (getTask) {
         getTask();
@@ -443,7 +476,7 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
         </button>
       </div>
 
-      {comments?.map((cmt: any) => {
+  {localComments?.map((cmt: any) => {
         const isEditing = editingCommentId === cmt.id;
         return (
           <div key={cmt.id} className="relative flex justify-start m-2 gap-5">
