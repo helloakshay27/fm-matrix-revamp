@@ -33,6 +33,14 @@ baseClient.interceptors.request.use(
         console.warn("⚠️ Unable to read stored baseUrl:", storageError);
       }
 
+      // Check if user is already logged in (has baseUrl in localStorage)
+      const loggedInBaseUrl = localStorage.getItem("baseUrl");
+      if (loggedInBaseUrl) {
+        config.baseURL = loggedInBaseUrl;
+        console.log("✅ Base URL set from logged-in user:", loggedInBaseUrl);
+        return config;
+      }
+
       // Extract URL parameters
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("token");
