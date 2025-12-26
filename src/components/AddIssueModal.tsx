@@ -762,12 +762,12 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
                         </Box>
 
                         {/* Dates Section */}
-                        {/* <Box sx={{ display: 'flex', gap: 2, mb: 2, fontSize: '12px' }}>
-                            <Box sx={{ flex: 1 }}>
-                                <Button
-                                    fullWidth
-                                    variant="outlined"
-                                    size="small"
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div>
+                                <label className="block text-xs text-gray-700 mb-1">End Date *</label>
+                                <button
+                                    type="button"
+                                    className="w-full border outline-none border-gray-300 px-3 py-2 text-[13px] flex items-center gap-2 text-gray-400 rounded"
                                     onClick={() => {
                                         if (showStartDatePicker) {
                                             setShowStartDatePicker(false);
@@ -775,70 +775,24 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
                                         setShowDatePicker(!showDatePicker);
                                     }}
                                     ref={endDateRef}
-                                    sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
                                 >
                                     {endDate ? (
-                                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
+                                        <div className="text-black flex items-center justify-between w-full">
                                             <CalendarIcon className="w-4 h-4" />
-                                            <span>
-                                                End Date : {endDate.date.toString().padStart(2, '0')}{' '}
+                                            <div>
+                                                Target Date :{" "}
+                                                {endDate.date.toString().padStart(2, "0")}{" "}
                                                 {monthNames[endDate.month]}
-                                            </span>
-                                            <X
-                                                className="w-4 h-4 cursor-pointer"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEndDate(null);
-                                                }}
-                                            />
-                                        </Box>
+                                            </div>
+                                            <X className="w-4 h-4" onClick={(e) => { e.preventDefault(); setEndDate(null); }} />
+                                        </div>
                                     ) : (
-                                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                            <CalendarIcon className="w-4 h-4" /> Select End Date
-                                        </Box>
+                                        <>
+                                            <CalendarIcon className="w-4 h-4" /> Select Target Date
+                                        </>
                                     )}
-                                </Button>
-                            </Box>
-
-                            <Box sx={{ flex: 1 }}>
-                                <Button
-                                    fullWidth
-                                    variant="outlined"
-                                    size="small"
-                                    onClick={() => {
-                                        if (showDatePicker) {
-                                            setShowDatePicker(false);
-                                        }
-                                        setShowStartDatePicker(!showStartDatePicker);
-                                    }}
-                                    ref={startDateRef}
-                                    sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
-                                >
-                                    {startDate ? (
-                                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
-                                            <CalendarIcon className="w-4 h-4" />
-                                            <span>
-                                                Start Date : {startDate?.date?.toString().padStart(2, '0')}{' '}
-                                                {monthNames[startDate.month]}
-                                            </span>
-                                            <X
-                                                className="w-4 h-4 cursor-pointer"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setStartDate(null);
-                                                }}
-                                            />
-                                        </Box>
-                                    ) : (
-                                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                            <CalendarIcon className="w-4 h-4" /> Select Start Date
-                                        </Box>
-                                    )}
-                                </Button>
-                            </Box>
-                        </Box> */}
-
-                        <div className="grid grid-cols-2 gap-3 mb-3">
+                                </button>
+                            </div>
                             <div>
                                 <label className="block text-xs text-gray-700 mb-1">Start Date</label>
                                 <button
@@ -865,37 +819,6 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
                                     ) : (
                                         <>
                                             <CalendarIcon className="w-4 h-4" /> Select Start Date
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs text-gray-700 mb-1">Target Date *</label>
-                                <button
-                                    type="button"
-                                    className="w-full border outline-none border-gray-300 px-3 py-2 text-[13px] flex items-center gap-2 text-gray-400 rounded"
-                                    onClick={() => {
-                                        if (showStartDatePicker) {
-                                            setShowStartDatePicker(false);
-                                        }
-                                        setShowDatePicker(!showDatePicker);
-                                    }}
-                                    ref={endDateRef}
-                                >
-                                    {endDate ? (
-                                        <div className="text-black flex items-center justify-between w-full">
-                                            <CalendarIcon className="w-4 h-4" />
-                                            <div>
-                                                Target Date :{" "}
-                                                {endDate.date.toString().padStart(2, "0")}{" "}
-                                                {monthNames[endDate.month]}
-                                            </div>
-                                            <X className="w-4 h-4" onClick={(e) => { e.preventDefault(); setEndDate(null); }} />
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <CalendarIcon className="w-4 h-4" /> Select Target Date
                                         </>
                                     )}
                                 </button>
