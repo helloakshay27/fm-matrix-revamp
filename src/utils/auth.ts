@@ -151,7 +151,8 @@ const isViSite =
 
 const isFmSite =
   hostname.includes("fm-uat.gophygital.work") ||
-  hostname.includes("fm.gophygital.work");
+  hostname.includes("fm.gophygital.work") ||
+  hostname.includes("fm-matrix.lockated.com");
 
 const isDevSite = hostname.includes("dev-fm-matrix.lockated.com");
 
@@ -198,7 +199,7 @@ export const getOrganizationsByEmail = async (
 
   // Default fallback for other sites
   const response = await fetch(
-      `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+    `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
   );
 
   if (!response.ok) {
