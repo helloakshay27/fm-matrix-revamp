@@ -153,7 +153,7 @@ const isFmSite =
   hostname.includes("fm-uat.gophygital.work") ||
   hostname.includes("fm.gophygital.work");
 
-const isDevSite = hostname.includes("dev-fm-matrix.lockated.com");
+const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
 export const getOrganizationsByEmail = async (
   email: string
