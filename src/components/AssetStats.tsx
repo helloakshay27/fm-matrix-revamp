@@ -70,10 +70,10 @@ export const AssetStats: React.FC<AssetStatsProps> = ({ stats, onCardClick }) =>
       filterType: "in_store",
     },
     {
-      label: "Dispose Assets",
-      value: stats.dispose_assets,
+      label: "Allocated Assets",
+      value: stats.allocated_count,
       icon: <Trash2 className="w-6 h-6 text-[#C72030]" />,
-      filterType: "dispose",
+      filterType: "allocated",
     },
   ];
 
