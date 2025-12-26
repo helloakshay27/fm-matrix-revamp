@@ -250,7 +250,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       }
 
       // Check if number is verified first
-      if (response.number_verified === 0 && isViSite) {
+      if (response.number_verified === 0 && isViSite ) {
         // Store email temporarily for OTP verification
         localStorage.setItem("temp_email", email);
         localStorage.setItem("temp_token", response.access_token);
@@ -289,7 +289,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       if (
         response.company_id === 145 &&
         response.web_enabled === true &&
-        isViSite
+        isViSite && response.access_token
       ) {
         // Store email temporarily for OTP verification
         localStorage.setItem("temp_email", email);
