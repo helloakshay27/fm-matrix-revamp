@@ -105,16 +105,14 @@ baseClient.interceptors.request.use(
         // Dev sites: use email
 
         if (organizationId) {
-          apiUrl = `https://uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
+          apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${organizationId}`;
           console.log("🔍 Using org_id for Dev site:", orgId);
         } else if (orgId) {
-          apiUrl = `https://uat-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
+          apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?org_id=${orgId}`;
           console.log("🔍 Using org_id for Dev site:", orgId);
         } else if (email) {
-          apiUrl = `https://uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
+          apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
           console.log("🔍 Using email for Dev site:", email);
-        } else {
-          throw new Error("Either org_id or email is required for Dev sites");
         }
       } else {
         // Default fallback: prefer org_id, fallback to email
@@ -127,8 +125,6 @@ baseClient.interceptors.request.use(
         } else if (email) {
           apiUrl = `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
           console.log("🔍 Using email for Dev site:", email);
-        } else {
-          throw new Error("Either org_id or email is required for Dev sites");
         }
       }
 
