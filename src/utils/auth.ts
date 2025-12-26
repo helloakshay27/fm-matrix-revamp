@@ -185,7 +185,7 @@ export const getOrganizationsByEmail = async (
 
   if (isDevSite) {
     const response = await fetch(
-      `https://uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+      `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {
