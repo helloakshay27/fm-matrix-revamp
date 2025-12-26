@@ -134,7 +134,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
 
             // Append tags
             tags.forEach((tagId: any) => {
-                formData.append('opportunity[tag_ids][]', tagId);
+                formData.append('opportunity[tag_ids][]', tagId.value);
             });
 
             // Append attachments
