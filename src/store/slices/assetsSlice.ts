@@ -49,6 +49,7 @@ export interface AssetFilters {
   it_asset_eq?: boolean
   allocation_type_eq?: string
   allocation_ids_cont?: string
+  allocated_to?: boolean
 }
 
 interface AssetsState {
@@ -88,7 +89,7 @@ export const fetchAssetsData = createAsyncThunk(
 
     // Build query parameters for API
     const queryParams = new URLSearchParams({ page: page.toString() })
-
+    console.log("filters", filters);
     // Add filter parameters
     if (filters.assetName) queryParams.append('q[name_cont]', filters.assetName)
     if (filters.assetId) queryParams.append('q[id_eq]', filters.assetId)
@@ -110,6 +111,8 @@ export const fetchAssetsData = createAsyncThunk(
     if (filters.it_asset_eq !== undefined) queryParams.append('q[it_asset_eq]', filters.it_asset_eq.toString())
     if (filters.allocation_type_eq) queryParams.append('q[allocation_type_eq]', filters.allocation_type_eq)
     if (filters.allocation_ids_cont) queryParams.append('q[allocation_ids_cont]', filters.allocation_ids_cont)
+    if (filters.allocated) queryParams.append('allocated_to', "true")
+
 
     // Use the same endpoint that includes custom fields
     const response = await apiClient.get(`/pms/assets.json/?${queryParams}`)
