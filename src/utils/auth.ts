@@ -151,8 +151,7 @@ const isViSite =
 
 const isFmSite =
   hostname.includes("fm-uat.gophygital.work") ||
-  hostname.includes("fm.gophygital.work") ||
-  hostname.includes("fm-matrix.lockated.com");
+  hostname.includes("fm.gophygital.work");
 
 const isDevSite = hostname.includes("dev-fm-matrix.lockated.com");
 
