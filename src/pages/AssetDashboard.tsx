@@ -536,6 +536,9 @@ export const AssetDashboard = () => {
       case 'in_store':
         filters = { status_eq: 'in_storage' };
         break;
+      case 'allocated':
+        filters = { allocated: true };
+        break;
       case 'dispose':
         filters = { status_eq: 'disposed' };
         break;

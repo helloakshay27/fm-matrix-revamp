@@ -20,6 +20,7 @@ import { createProject } from "@/store/slices/projectManagementSlice";
 import AddMilestoneForm from "./AddMilestoneForm";
 import { AddTeamModal } from "./AddTeamModal";
 import { AddTagModal } from "./AddTagModal";
+import MuiMultiSelect from "./MuiMultiSelect";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -155,6 +156,13 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
         setFormData((prev) => ({
             ...prev,
             [name]: type === "checkbox" ? checked : value
+        }));
+    };
+
+    const handleMultiSelectChange = (field: string, values: any) => {
+        setFormData((prev) => ({
+            ...prev,
+            [field]: values
         }));
     };
 
@@ -489,29 +497,15 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                                             >
                                                 <i>Create new tag</i>
                                             </div>
-                                            <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
-                                                <InputLabel shrink>Tags*</InputLabel>
-                                                <Select
+                                            <div className="mt-2">
+                                                <MuiMultiSelect
                                                     label="Tags*"
-                                                    name="tags"
-                                                    multiple
+                                                    options={tags.map((tag) => ({ value: tag.id, label: tag.name, id: tag.id }))}
                                                     value={formData.tags}
-                                                    onChange={handleChange}
-                                                    displayEmpty
-                                                    sx={fieldStyles}
-                                                >
-                                                    <MenuItem value="">
-                                                        <em>Select Tags</em>
-                                                    </MenuItem>
-                                                    {
-                                                        tags.map((tag) => (
-                                                            <MenuItem key={tag.id} value={tag.id}>
-                                                                {tag.name}
-                                                            </MenuItem>
-                                                        ))
-                                                    }
-                                                </Select>
-                                            </FormControl>
+                                                    onChange={(values) => handleMultiSelectChange("tags", values)}
+                                                    placeholder="Select Tags"
+                                                />
+                                            </div>
                                         </div>
 
                                         <div className="flex justify-center gap-3 mb-4">
