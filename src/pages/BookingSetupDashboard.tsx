@@ -162,12 +162,12 @@ export const BookingSetupDashboard = () => {
       sortable: true,
       draggable: true,
     },
-    {
-      key: 'department',
-      label: 'Department',
-      sortable: true,
-      draggable: true,
-    },
+    // {
+    //   key: 'department',
+    //   label: 'Department',
+    //   sortable: true,
+    //   draggable: true,
+    // },
     {
       key: 'bookBefore',
       label: 'Book before',
@@ -216,8 +216,15 @@ export const BookingSetupDashboard = () => {
         return item.bookBefore || '';
       case 'advanceBooking':
         return item.advanceBooking || '';
-      case 'createdOn':
-        return item.createdOn || '';
+      case 'createdOn': {
+        if (!item.createdOn) return '';
+        // If format is YYYY-MM-DD, convert to DD/MM/YYYY directly
+        if (/^\d{4}-\d{2}-\d{2}$/.test(item.createdOn)) {
+          const [year, month, day] = item.createdOn.split('-');
+          return `${day}/${month}/${year}`;
+        }
+        return item.createdOn;
+      }
       case 'createdBy':
         return item.createdBy || '';
       case 'status':

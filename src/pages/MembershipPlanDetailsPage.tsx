@@ -173,7 +173,7 @@ export const MembershipPlanDetailsPage = () => {
         discountEligibility: data.discount_eligibility || "",
         amenities: data.plan_amenities.map((amenity) => amenity.facility_setup_id),
         amenityDetails: amenityDetailsMap,
-        active: data.status,
+        active: data.active,
         createdAt: data.created_at,
         createdBy: data.created_by,
       })
@@ -296,7 +296,19 @@ export const MembershipPlanDetailsPage = () => {
                 <span className="text-gray-500 min-w-[140px]">Created On</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {formData.createdAt ? new Date(formData.createdAt).toLocaleDateString() : "-"}
+                  {formData.createdAt ? (() => {
+                    const dateObj = new Date(formData.createdAt);
+                    if (!isNaN(dateObj.getTime())) {
+                      const d = String(dateObj.getDate()).padStart(2, '0');
+                      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+                      const y = dateObj.getFullYear();
+                      // const hours = String(dateObj.getHours()).padStart(2, '0');
+                      // const mins = String(dateObj.getMinutes()).padStart(2, '0');
+                      return `${d}/${m}/${y}`
+                      // , ${hours}:${mins}`;
+                    }
+                    return formData.createdAt;
+                  })() : "-"}
                 </span>
               </div>
               <div className="flex items-start">
@@ -310,7 +322,7 @@ export const MembershipPlanDetailsPage = () => {
                 <span className="text-gray-500 min-w-[140px]">Status</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {formData.active ? "Active" : "Inactive"}
+                  {formData?.active ? "Active" : "Inactive"}
                 </span>
               </div>
             </div>

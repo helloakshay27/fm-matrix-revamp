@@ -750,17 +750,11 @@ export const ClubGroupMembershipDashboard = () => {
           data={memberships || []}
           columns={columns}
           renderCell={renderCell}
-          selectable={true}
           pagination={false}
           enableExport={true}
           exportFileName="club-group-memberships"
           handleExport={handleExport}
           storageKey="club-group-memberships-table"
-          enableSelection={true}
-          selectedItems={selectedMembers.map(id => id.toString())}
-          onSelectItem={handleMemberSelection}
-          onSelectAll={handleSelectAll}
-          getItemId={(membership) => membership.id.toString()}
           leftActions={
             <div className="flex gap-3">
               {renderCustomActions()}
@@ -771,7 +765,7 @@ export const ClubGroupMembershipDashboard = () => {
           searchPlaceholder="Search Group Memberships"
           onSearchChange={handleSearch}
           hideTableExport={false}
-          hideColumnsButton={false}
+          hideColumnsButton={true}
           className="transition-all duration-500 ease-in-out"
           loading={loading}
           loadingMessage="Loading group memberships..."

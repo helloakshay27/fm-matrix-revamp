@@ -2636,7 +2636,7 @@ export const AddClubMembershipPage = () => {
                 </div>
 
                 {/* Submit/Update Buttons */}
-                <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                <div className="flex justify-center gap-3 pt-6 border-t border-gray-200">
                   <Button
                     variant="outline"
                     onClick={handleGoBack}
@@ -2645,7 +2645,7 @@ export const AddClubMembershipPage = () => {
                   </Button>
                   <Button
                     onClick={handleNext}
-                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[80px]"
                   >
                     Next
                   </Button>
@@ -2824,13 +2824,23 @@ export const AddClubMembershipPage = () => {
                               value={discountPercentage}
                               onChange={(e) => {
                                 const value = e.target.value;
-                                // Only allow non-negative numbers
-                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                // Only allow non-negative numbers up to 100
+                                if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
                                   setDiscountPercentage(value);
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === '-' || e.key === 'e') {
+                                  e.preventDefault();
                                 }
                               }}
                               type="number"
                               size="small"
+                              inputProps={{
+                                min: 0,
+                                max: 100,
+                                step: 0.01
+                              }}
                               sx={{
                                 ...fieldStyles,
                                 width: '100px',
@@ -2885,6 +2895,11 @@ export const AddClubMembershipPage = () => {
                                   setCgstPercentage(value);
                                 }
                               }}
+                              onKeyDown={(e) => {
+                                if (e.key === '-' || e.key === 'e') {
+                                  e.preventDefault();
+                                }
+                              }}
                               type="number"
                               size="small"
                               inputProps={{ 
@@ -2915,6 +2930,11 @@ export const AddClubMembershipPage = () => {
                                 // Only allow non-negative numbers between 0 and 100
                                 if (value === '' || (/^\d*\.?\d*$/.test(value) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
                                   setSgstPercentage(value);
+                                }
+                              }}
+                               onKeyDown={(e) => {
+                                if (e.key === '-' || e.key === 'e') {
+                                  e.preventDefault();
                                 }
                               }}
                               type="number"

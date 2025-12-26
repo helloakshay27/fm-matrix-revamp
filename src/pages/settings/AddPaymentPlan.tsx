@@ -233,7 +233,16 @@ export const AddPaymentPlan = () => {
               value={frequency}
               onChange={(e) => handleFrequencyChange(e.target.value)}
               disabled={loading}
+              displayEmpty
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (selected) =>
+                  selected ? FREQUENCY_OPTIONS.find(opt => opt.value === selected)?.label : <span style={{ color: '#888' }}>Select Frequency</span>
+              }}
             >
+              <MenuItem value="">
+                <span style={{ color: '#888' }}>Select Frequency</span>
+              </MenuItem>
               {FREQUENCY_OPTIONS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
                   {option.label}

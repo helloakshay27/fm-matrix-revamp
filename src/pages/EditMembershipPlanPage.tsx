@@ -705,7 +705,7 @@ export const EditMembershipPlanPage = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-4">
+          <div className="flex justify-center gap-4">
             <Button
               variant="outline"
               onClick={handleClose}

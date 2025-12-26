@@ -156,28 +156,32 @@ export const AddMembershipPlanPage = () => {
   }, [])
 
   const validateForm = () => {
-    if (!formData.name) {
-      toast.error("Please enter Plan Name");
-      return false;
-    }
-    if (!formData.price) {
-      toast.error("Please enter Price");
-      return false;
-    }
-    if (!formData.userLimit) {
-      toast.error("Please enter User Limit");
-      return false;
-    }
-    if (!formData.renewalTerms) {
-      toast.error("Please select Renewal Terms");
-      return false;
-    }
-    if (formData.amenities.length === 0) {
-      toast.error("Please select at least one amenity");
-      return false;
-    }
-    return true;
-  };
+      if (!formData.name) {
+        toast.error("Please enter Plan Name");
+        return false;
+      }
+      if (!formData.price) {
+        toast.error("Please enter Price");
+        return false;
+      }
+      if (!formData.userLimit) {
+        toast.error("Please enter User Limit");
+        return false;
+      }
+      if (!formData.renewalTerms) {
+        toast.error("Please select Membership Type");
+        return false;
+      }
+      if (!formData.payment_plan_id) {
+        toast.error("Please select Payment Plan");
+        return false;
+      }
+      if (formData.amenities.length === 0) {
+        toast.error("Please select at least one amenity");
+        return false;
+      }
+      return true;
+    };
 
   const handleSave = async () => {
     if (!validateForm()) return;
@@ -324,7 +328,7 @@ export const AddMembershipPlanPage = () => {
               </FormControl>
 
               <FormControl variant="outlined">
-                <InputLabel>Payment Plan</InputLabel>
+                <InputLabel>Payment Plan*</InputLabel>
                 <Select
                   value={formData.payment_plan_id}
                   onChange={(e) =>
@@ -606,7 +610,7 @@ export const AddMembershipPlanPage = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-4">
+          <div className="flex justify-center gap-4">
             <Button
               variant="outline"
               onClick={handleClose}
@@ -617,7 +621,7 @@ export const AddMembershipPlanPage = () => {
             <Button
               onClick={handleSave}
               disabled={isSubmitting}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white min-w-[80px]"
             >
               {isSubmitting ? "Saving..." : "Save"}
             </Button>

@@ -74,14 +74,41 @@ const transformData = (data) => {
     userLimit: item.user_limit,
     renewalTerms: item.renewal_terms ? item.renewal_terms.charAt(0).toUpperCase() + item.renewal_terms.slice(1) : '',
     status: item.active ? 'Active' : 'Inactive',
-    createdOn: item.created_at ? new Date(item.created_at).toLocaleString('en-GB', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    }).replace(/(\d{2})\/(\d{2})\/(\d{4}),/, '$3-$2-$1,') : '',
+    createdOn: item.created_at ? (() => {
+      // Handles ISO string, 'YYYY-MM-DD', 'YYYY-MM-DD, HH:mm', 'YYYY-MM-DD HH:mm'
+      let formattedDate = '';
+      let formattedTime = '';
+      // Try ISO or Date parsing
+      const dateObj = new Date(item.created_at);
+      if (!isNaN(dateObj.getTime())) {
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const y = dateObj.getFullYear();
+        formattedDate = `${d}/${m}/${y}`;
+        const hours = String(dateObj.getHours()).padStart(2, '0');
+        const mins = String(dateObj.getMinutes()).padStart(2, '0');
+        formattedTime = `${hours}:${mins}`;
+        return `${formattedDate}, ${formattedTime}`;
+      }
+      // fallback: try to split manually
+      let datePart = item.created_at;
+      let timePart = '';
+      if (item.created_at.includes(',')) {
+        [datePart, timePart] = item.created_at.split(',').map(s => s.trim());
+      } else if (item.created_at.includes(' ')) {
+        [datePart, timePart] = item.created_at.split(' ').map(s => s.trim());
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+        const [year, month, day] = datePart.split('-');
+        formattedDate = `${day}/${month}/${year}`;
+      } else {
+        formattedDate = item.created_at;
+      }
+      if (timePart) {
+        return `${formattedDate}, ${timePart}`;
+      }
+      return formattedDate;
+    })() : '',
   }));
 }
 
