@@ -13,12 +13,13 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "preview": "vite preview",
+    "generate-icons": "./generate-icons.sh",
     "electron": "electron .",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5174 && cross-env NODE_ENV=development electron .\"",
-    "electron:build": "npm run build && electron-builder",
-    "electron:build:mac": "npm run build && electron-builder --mac",
-    "electron:build:win": "npm run build && electron-builder --win",
-    "electron:build:all": "npm run build && electron-builder --mac --win"
+    "electron:build": "npm run generate-icons && npm run build && electron-builder",
+    "electron:build:mac": "npm run generate-icons && npm run build && electron-builder --mac",
+    "electron:build:win": "npm run generate-icons && npm run build && electron-builder --win",
+    "electron:build:all": "npm run generate-icons && npm run build && electron-builder --mac --win"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
