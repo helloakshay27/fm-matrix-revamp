@@ -47,6 +47,8 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [prevTags, setPrevTags] = useState([]);
 
+    console.log(responsiblePerson)
+
     // Mention state
     const [mentionUsers, setMentionUsers] = useState<any[]>([]);
     const [mentionTags, setMentionTags] = useState<any[]>([]);
