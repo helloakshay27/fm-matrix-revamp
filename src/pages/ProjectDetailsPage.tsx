@@ -735,7 +735,7 @@ const ProjectDetailsPage = () => {
                             <Attachments attachments={project.attachments || []} id={project.id} getProjectDetails={getProjectDetails} />
                         )}
                         {tab === "Status" && <Status project={project} />}
-                        {tab === "Issues" && <IssuesListPage />}
+                        {tab === "Issues" && <IssuesListPage preSelectedProjectId={project.id} />}
                     </div>
                 </div>
             </div>

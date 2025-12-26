@@ -80,7 +80,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
             // Pre-populate form fields
             setTitle(data.title || '');
             setDescription(data.description || '');
-            setResponsiblePerson(data.responsible_person_id?.toString() || '');
+            setResponsiblePerson(data.responsible_person?.id?.toString() || '');
             setTags(data.tag_ids || []);
             setExistingAttachments(data.attachments || []);
         } catch (error) {

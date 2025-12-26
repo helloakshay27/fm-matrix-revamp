@@ -34,6 +34,56 @@ interface EditMilestoneFormProps {
     onUpdate?: () => void;
 }
 
+const calculateDuration = (startDate: string, endDate: string): string => {
+    if (!startDate || !endDate) return '';
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+    // If start date is today
+    if (startDay.getTime() === today.getTime()) {
+        // If end date is also today
+        if (endDay.getTime() === today.getTime()) {
+            // Calculate from now to end of today (11:59:59 PM)
+            const endOfToday = new Date(today);
+            endOfToday.setHours(23, 59, 59, 999);
+
+            const msToEnd = endOfToday.getTime() - now.getTime();
+            const totalMins = Math.floor(msToEnd / (1000 * 60));
+            const hrs = Math.floor(totalMins / 60);
+            const mins = totalMins % 60;
+            return `0d : ${hrs}h : ${mins}m`;
+        } else {
+            // End date is in the future
+            if (endDay.getTime() < startDay.getTime()) return 'Invalid: End date before start date';
+
+            const daysDiff = Math.floor((endDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+            // Calculate remaining hours and minutes from now to end of today (midnight)
+            const endOfToday = new Date(today);
+            endOfToday.setHours(23, 59, 59, 999);
+
+            const msToday = endOfToday.getTime() - now.getTime();
+            const totalMinutes = Math.floor(msToday / (1000 * 60));
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+
+            return `${daysDiff}d : ${hours}h : ${minutes}m`;
+        }
+    } else {
+        // For future dates, calculate days only
+        if (endDay.getTime() < startDay.getTime()) return 'Invalid: End date before start date';
+
+        const days = Math.floor((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        return `${days}d : 0h : 0m`;
+    }
+};
+
 const EditMilestoneForm = ({ owners, handleClose, milestoneData, onUpdate }: EditMilestoneFormProps) => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
@@ -159,7 +209,7 @@ const EditMilestoneForm = ({ owners, handleClose, milestoneData, onUpdate }: Edi
                         </div>
                     ))}
 
-                    <div className="w-[300px] space-y-2">
+                    <div className="w-[500px] space-y-2">
                         <TextField
                             label="Duration"
                             name="duration"
@@ -169,7 +219,7 @@ const EditMilestoneForm = ({ owners, handleClose, milestoneData, onUpdate }: Edi
                             InputLabelProps={{ shrink: true }}
                             InputProps={{ sx: fieldStyles }}
                             sx={{ mt: 1 }}
-                            value={formData.duration}
+                            value={calculateDuration(formData.startDate, formData.endDate)}
                         />
                     </div>
                 </div>
