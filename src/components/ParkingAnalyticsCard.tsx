@@ -122,10 +122,27 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
       setLoading(true);
       setError(null);
       try {
+        const endDateStr = endDate || new Date().toISOString().split('T')[0];
+        const startDateStr = startDate || (() => {
+          const date = new Date();
+          date.setFullYear(date.getFullYear(), 0, 1); // Start of current year
+          return date.toISOString().split('T')[0];
+        })();
+
+        // Calculate previous year start date (one year before start date)
+        const previousStartDate = (() => {
+          const date = new Date(startDateStr);
+          date.setFullYear(date.getFullYear() - 1);
+          return date.toISOString().split('T')[0];
+        })();
+
         const url = getFullUrl('/parking_dashboard/yearly_comparison');
         const options = getAuthenticatedFetchOptions();
         
         const params = new URLSearchParams({
+          start_date: startDateStr,
+          end_date: endDateStr,
+          previous_start_date: previousStartDate,
           compare_yoy: 'true',
         });
 
@@ -150,7 +167,68 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
     };
 
     fetchBookingPatterns();
-  }, [type]);
+  }, [type, startDate, endDate]);
+
+  // Fetch cancelled bookings data from API
+  useEffect(() => {
+    if (type !== 'occupancyRate') return;
+
+    const fetchCancelledBookings = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const endDateStr = endDate || new Date().toISOString().split('T')[0];
+        const startDateStr = startDate || (() => {
+          const date = new Date();
+          date.setMonth(date.getMonth() - 1);
+          return date.toISOString().split('T')[0];
+        })();
+
+        // Calculate compare dates (previous year same period)
+        const compareEndDate = (() => {
+          const date = new Date(endDateStr);
+          date.setFullYear(date.getFullYear() - 1);
+          return date.toISOString().split('T')[0];
+        })();
+
+        const compareStartDate = (() => {
+          const date = new Date(startDateStr);
+          date.setFullYear(date.getFullYear() - 1);
+          return date.toISOString().split('T')[0];
+        })();
+
+        const url = getFullUrl('/parking_dashboard/cancelled_bookings');
+        const options = getAuthenticatedFetchOptions();
+        
+        const params = new URLSearchParams({
+          from_date: startDateStr,
+          to_date: endDateStr,
+          compare_from_date: compareStartDate,
+          compare_to_date: compareEndDate,
+        });
+
+        const fullUrl = `${url}?${params.toString()}`;
+        console.log('🔍 Fetching cancelled bookings:', fullUrl);
+        const response = await fetch(fullUrl, options);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch cancelled bookings: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('✅ Cancelled bookings data:', result);
+        setApiData(result);
+      } catch (err) {
+        console.error('Error fetching cancelled bookings:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch cancelled bookings');
+        toast.error('Failed to fetch cancelled bookings data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCancelledBookings();
+  }, [type, startDate, endDate]);
 
   const handleDownload = async () => {
     try {
@@ -360,11 +438,116 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
       }
 
       case 'occupancyRate': {
-        // Sample data for Released vs Cancelled (Daily)
-        const releasedCancelledData = [
-          { date: '2025-12-01', thisYearReleased: 6, thisYearCancelled: 2, lastYearReleased: 5, lastYearCancelled: 3 },
-          { date: '2025-12-02', thisYearReleased: 6, thisYearCancelled: 1, lastYearReleased: 5, lastYearCancelled: 2 },
-          { date: '2025-12-03', thisYearReleased: 7, thisYearCancelled: 3, lastYearReleased: 6, lastYearCancelled: 4 },
+        // Transform API data or use sample data
+        const releasedCancelledData = apiData ? (() => {
+          const currentData = apiData.current || {};
+          const compareData = apiData.compare || {};
+          
+          // Detect the format of the keys and transform accordingly
+          const dataMap = new Map();
+          
+          // Helper function to detect key format
+          const detectFormat = (key: string): 'daily' | 'weekly' | 'monthly' => {
+            // Daily format: YYYY-MM-DD (e.g., "2025-12-26")
+            if (/^\d{4}-\d{2}-\d{2}$/.test(key)) return 'daily';
+            // Weekly format: YYYYWW (e.g., "202549" - 6 digits)
+            if (/^\d{6}$/.test(key)) return 'weekly';
+            // Monthly format: YYYY-MM (e.g., "2025-09")
+            if (/^\d{4}-\d{2}$/.test(key)) return 'monthly';
+            return 'daily'; // default
+          };
+          
+          // Process current year data
+          const currentKeys = Object.keys(currentData);
+          const format = currentKeys.length > 0 ? detectFormat(currentKeys[0]) : 'daily';
+          
+          Object.entries(currentData).forEach(([key, count]) => {
+            let dateLabel: string;
+            let sortKey: string;
+            
+            if (format === 'daily') {
+              // Daily format: YYYY-MM-DD
+              const date = new Date(key);
+              const day = date.getDate();
+              const month = date.toLocaleString('default', { month: 'short' });
+              const year = date.getFullYear();
+              dateLabel = `${day} ${month}, ${year}`;
+              sortKey = key; // Use ISO date for sorting
+            } else if (format === 'weekly') {
+              // Weekly format: YYYYWW
+              const year = parseInt(key.substring(0, 4));
+              const week = parseInt(key.substring(4));
+              dateLabel = `Week ${week}, ${year}`;
+              sortKey = key; // Use week key for sorting
+            } else {
+              // Monthly format: YYYY-MM
+              const [year, month] = key.split('-');
+              const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'short' });
+              dateLabel = `${monthName} ${year}`;
+              sortKey = key; // Use month key for sorting
+            }
+            
+            if (!dataMap.has(dateLabel)) {
+              dataMap.set(dateLabel, { 
+                date: dateLabel, 
+                thisYearCancelled: 0, 
+                lastYearCancelled: 0,
+                sortKey 
+              });
+            }
+            
+            const entry = dataMap.get(dateLabel);
+            entry.thisYearCancelled = count as number;
+          });
+          
+          // Process compare year data
+          Object.entries(compareData).forEach(([key, count]) => {
+            let dateLabel: string;
+            let sortKey: string;
+            
+            if (format === 'daily') {
+              // Daily format: YYYY-MM-DD
+              const date = new Date(key);
+              const day = date.getDate();
+              const month = date.toLocaleString('default', { month: 'short' });
+              const year = date.getFullYear();
+              dateLabel = `${day} ${month}, ${year}`;
+              sortKey = key;
+            } else if (format === 'weekly') {
+              // Weekly format: YYYYWW
+              const year = parseInt(key.substring(0, 4));
+              const week = parseInt(key.substring(4));
+              dateLabel = `Week ${week}, ${year}`;
+              sortKey = key;
+            } else {
+              // Monthly format: YYYY-MM
+              const [year, month] = key.split('-');
+              const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'short' });
+              dateLabel = `${monthName} ${year}`;
+              sortKey = key;
+            }
+            
+            if (!dataMap.has(dateLabel)) {
+              dataMap.set(dateLabel, { 
+                date: dateLabel, 
+                thisYearCancelled: 0, 
+                lastYearCancelled: count as number,
+                sortKey 
+              });
+            } else {
+              const entry = dataMap.get(dateLabel);
+              entry.lastYearCancelled = count as number;
+            }
+          });
+          
+          // Convert map to array and sort by sortKey
+          return Array.from(dataMap.values()).sort((a, b) => {
+            return a.sortKey.localeCompare(b.sortKey);
+          });
+        })() : [
+          { date: '2025-12-01', thisYearCancelled: 2, lastYearCancelled: 3 },
+          { date: '2025-12-02', thisYearCancelled: 1, lastYearCancelled: 2 },
+          { date: '2025-12-03', thisYearCancelled: 3, lastYearCancelled: 4 },
         ];
 
         return (
@@ -413,20 +596,11 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     <>
                       <Line 
                         type="monotone" 
-                        dataKey="thisYearReleased" 
-                        name="Released" 
+                        dataKey="thisYearCancelled" 
+                        name="Cancelled Bookings" 
                         stroke="#c4b99d" 
                         strokeWidth={2}
                         dot={{ r: 5, fill: '#c4b99d', stroke: '#ffffff', strokeWidth: 2 }}
-                        activeDot={{ r: 7 }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="thisYearCancelled" 
-                        name="Cancelled" 
-                        stroke="#8b7355" 
-                        strokeWidth={2}
-                        dot={{ r: 5, fill: '#8b7355', stroke: '#ffffff', strokeWidth: 2 }}
                         activeDot={{ r: 7 }}
                       />
                     </>
@@ -434,40 +608,21 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                     <>
                       <Line 
                         type="monotone" 
-                        dataKey="lastYearReleased" 
-                        name="Last Year Released" 
-                        stroke="#c4b99d" 
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        dot={{ r: 4, fill: '#c4b99d' }}
-                        activeDot={{ r: 6 }}
-                      />
-                      <Line 
-                        type="monotone" 
                         dataKey="lastYearCancelled" 
                         name="Last Year Cancelled" 
-                        stroke="#8b7355" 
+                        stroke="#DAD6CA" 
                         strokeWidth={2}
                         strokeDasharray="5 5"
-                        dot={{ r: 4, fill: '#8b7355' }}
+                        dot={{ r: 4, fill: '#DAD6CA' }}
                         activeDot={{ r: 6 }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="thisYearReleased" 
-                        name="This Year Released" 
-                        stroke="#c4b99d" 
-                        strokeWidth={2}
-                        dot={{ r: 5, fill: '#c4b99d', stroke: '#ffffff', strokeWidth: 2 }}
-                        activeDot={{ r: 7 }}
                       />
                       <Line 
                         type="monotone" 
                         dataKey="thisYearCancelled" 
                         name="This Year Cancelled" 
-                        stroke="#8b7355" 
+                        stroke="#c4b99d" 
                         strokeWidth={2}
-                        dot={{ r: 5, fill: '#8b7355', stroke: '#ffffff', strokeWidth: 2 }}
+                        dot={{ r: 5, fill: '#c4b99d', stroke: '#ffffff', strokeWidth: 2 }}
                         activeDot={{ r: 7 }}
                       />
                     </>
@@ -626,10 +781,27 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                   setApiData(result);
                   toast.success('Peak hour trends refreshed');
                 } else if (type === 'bookingPatterns') {
+                  const endDateStr = endDate || new Date().toISOString().split('T')[0];
+                  const startDateStr = startDate || (() => {
+                    const date = new Date();
+                    date.setFullYear(date.getFullYear(), 0, 1); // Start of current year
+                    return date.toISOString().split('T')[0];
+                  })();
+
+                  // Calculate previous year start date (one year before start date)
+                  const previousStartDate = (() => {
+                    const date = new Date(startDateStr);
+                    date.setFullYear(date.getFullYear() - 1);
+                    return date.toISOString().split('T')[0];
+                  })();
+
                   const url = getFullUrl('/parking_dashboard/yearly_comparison');
                   const options = getAuthenticatedFetchOptions();
                   
                   const params = new URLSearchParams({
+                    start_date: startDateStr,
+                    end_date: endDateStr,
+                    previous_start_date: previousStartDate,
                     compare_yoy: 'true',
                   });
 
@@ -643,6 +815,46 @@ export const ParkingAnalyticsCard: React.FC<ParkingAnalyticsCardProps> = ({
                   const result = await response.json();
                   setApiData(result);
                   toast.success('Yearly comparison refreshed');
+                } else if (type === 'occupancyRate') {
+                  const endDateStr = endDate || new Date().toISOString().split('T')[0];
+                  const startDateStr = startDate || (() => {
+                    const date = new Date();
+                    date.setMonth(date.getMonth() - 1);
+                    return date.toISOString().split('T')[0];
+                  })();
+
+                  const compareEndDate = (() => {
+                    const date = new Date(endDateStr);
+                    date.setFullYear(date.getFullYear() - 1);
+                    return date.toISOString().split('T')[0];
+                  })();
+
+                  const compareStartDate = (() => {
+                    const date = new Date(startDateStr);
+                    date.setFullYear(date.getFullYear() - 1);
+                    return date.toISOString().split('T')[0];
+                  })();
+
+                  const url = getFullUrl('/parking_dashboard/cancelled_bookings');
+                  const options = getAuthenticatedFetchOptions();
+                  
+                  const params = new URLSearchParams({
+                    from_date: startDateStr,
+                    to_date: endDateStr,
+                    compare_from_date: compareStartDate,
+                    compare_to_date: compareEndDate,
+                  });
+
+                  const fullUrl = `${url}?${params.toString()}`;
+                  const response = await fetch(fullUrl, options);
+                  
+                  if (!response.ok) {
+                    throw new Error(`Failed to fetch cancelled bookings: ${response.statusText}`);
+                  }
+
+                  const result = await response.json();
+                  setApiData(result);
+                  toast.success('Cancelled bookings refreshed');
                 } else {
                   await new Promise(resolve => setTimeout(resolve, 1000));
                   toast.success('Data refreshed');

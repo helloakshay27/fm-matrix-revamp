@@ -9,6 +9,7 @@ import { getFullUrl } from '@/config/apiConfig';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AddOpportunityModal from '@/components/AddOpportunityModal';
+import EditOpportunityModal from '@/components/EditOpportunityModal';
 import { useLayout } from '@/contexts/LayoutContext';
 import { FormControl, MenuItem, Select } from '@mui/material';
 import { useAppDispatch } from '@/store/hooks';
@@ -66,6 +67,8 @@ const OpportunityDashboard = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedOpportunityId, setSelectedOpportunityId] = useState<number | null>(null);
 
     // Abstract fetch function to reuse
     const fetchOpportunities = async () => {
@@ -194,7 +197,18 @@ const OpportunityDashboard = () => {
     };
 
     const renderActions = (item: Opportunity) => (
-        <div className="flex justify-between items-center gap-2">
+        <div className="flex justify-between items-center">
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                    setSelectedOpportunityId(item.id);
+                    setShowEditModal(true);
+                }}
+                className="text-blue-600 hover:text-blue-800"
+            >
+                <Edit className="w-4 h-4" />
+            </Button>
             <Button
                 variant="ghost"
                 size="sm"
@@ -247,6 +261,18 @@ const OpportunityDashboard = () => {
                 onClose={() => setShowAddModal(false)}
                 onSuccess={fetchOpportunities}
             />
+
+            {selectedOpportunityId && (
+                <EditOpportunityModal
+                    open={showEditModal}
+                    onClose={() => {
+                        setShowEditModal(false);
+                        setSelectedOpportunityId(null);
+                    }}
+                    onSuccess={fetchOpportunities}
+                    opportunityId={selectedOpportunityId}
+                />
+            )}
         </div>
     );
 };

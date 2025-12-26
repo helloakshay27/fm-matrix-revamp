@@ -676,7 +676,7 @@ const TaskForm = ({
     );
 };
 
-const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%] mx-auto" }) => {
+const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%] mx-auto", prefillData }: any) => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
     const { id, mid, tid } = useParams();
@@ -708,8 +708,10 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%]
     const [formData, setFormData] = useState({
         project: "",
         milestone: "",
-        taskTitle: "",
-        description: "",
+        taskTitle: prefillData?.title?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+            .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
+        description: prefillData?.description?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
+            .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
         responsiblePerson: "",
         responsiblePersonName: "",
         department: "",
