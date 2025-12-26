@@ -250,7 +250,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       }
 
       // Check if number is verified first
-      if (response.number_verified === 0 && isViSite) {
+      if (response.number_verified === 0 && isViSite ) {
         // Store email temporarily for OTP verification
         localStorage.setItem("temp_email", email);
         localStorage.setItem("temp_token", response.access_token);
@@ -269,11 +269,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         });
 
         saveBaseUrl(baseUrl);
-        localStorage.setItem("userId", response.id.toString());
-        localStorage.setItem("userType", response.user_type.toString());
+        localStorage.setItem("userId", response.id?.toString() || "");
+        localStorage.setItem("userType", response.user_type?.toString() || "");
         // Session Storage
-        sessionStorage.setItem("userId", response.id.toString());
-        sessionStorage.setItem("userType", response.user_type.toString());
+        sessionStorage.setItem("userId", response.id?.toString() || "");
+        sessionStorage.setItem("userType", response.user_type?.toString() || "");
 
         toast.success(
           "OTP sent successfully! Please verify your phone number to continue."
@@ -289,7 +289,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       if (
         response.company_id === 145 &&
         response.web_enabled === true &&
-        isViSite
+        isViSite && response.access_token
       ) {
         // Store email temporarily for OTP verification
         localStorage.setItem("temp_email", email);
@@ -309,11 +309,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         });
 
         saveBaseUrl(baseUrl);
-        localStorage.setItem("userId", response.id.toString());
-        localStorage.setItem("userType", response.user_type.toString());
+        localStorage.setItem("userId", response.id?.toString() || "");
+        localStorage.setItem("userType", response.user_type?.toString() || "");
         // Session Storage
-        sessionStorage.setItem("userId", response.id.toString());
-        sessionStorage.setItem("userType", response.user_type.toString());
+        sessionStorage.setItem("userId", response.id?.toString() || "");
+        sessionStorage.setItem("userType", response.user_type?.toString() || "");
 
         toast.success(
           "OTP sent successfully! Please verify your phone number to continue."
@@ -342,11 +342,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       saveToken(response.access_token);
       setToken(response.access_token);
       saveBaseUrl(baseUrl);
-      localStorage.setItem("userId", response.id.toString());
-      localStorage.setItem("userType", response.user_type.toString());
+      localStorage.setItem("userId", response.id?.toString() || "");
+      localStorage.setItem("userType", response.user_type?.toString() || "");
       // Session storage
-      sessionStorage.setItem("userId", response.id.toString());
-      sessionStorage.setItem("userType", response.user_type.toString());
+      sessionStorage.setItem("userId", response.id?.toString() || "");
+      sessionStorage.setItem("userType", response.user_type?.toString() || "");
 
       const from =
         (location.state as { from?: Location })?.from?.pathname +

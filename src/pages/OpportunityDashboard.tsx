@@ -54,8 +54,10 @@ const statusOptions = [
 const OpportunityDashboard = () => {
     const { setCurrentSection } = useLayout();
 
+    const view = localStorage.getItem("selectedView");
+
     useEffect(() => {
-        setCurrentSection("Project Task");
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
     }, [setCurrentSection]);
 
     const token = localStorage.getItem('token');
