@@ -676,7 +676,7 @@ const TaskForm = ({
     );
 };
 
-const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%] mx-auto", prefillData, opportunityId }: any) => {
+const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%] mx-auto", prefillData, opportunityId, onSuccess }: any) => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
     const { id, mid, tid } = useParams();
@@ -948,8 +948,12 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%]
         const payload = createTaskPayload(formData);
 
         try {
-            await dispatch(createProjectTask({ baseUrl, token, data: payload })).unwrap();
+            const response = await dispatch(createProjectTask({ baseUrl, token, data: payload })).unwrap();
+            const taskId = response?.id;
 
+            if (onSuccess && taskId) {
+                onSuccess(taskId);
+            }
             toast.dismiss();
             toast.success('Task created successfully');
             window.location.reload();
