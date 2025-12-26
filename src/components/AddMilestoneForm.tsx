@@ -268,7 +268,7 @@ const AddMilestoneModal = ({
     );
 };
 
-const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[90%] mx-auto", prefillData, isConversion = false, opportunityId, onSuccess }) => {
+const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[90%] mx-auto", prefillData, isConversion = false, opportunityId, onSuccess }: any) => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
