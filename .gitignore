@@ -14,6 +14,14 @@ dist
 dist-ssr
 *.local
 
+# Desktop build outputs
+release
+*.dmg
+*.exe
+*.zip
+*.AppImage
+*.deb
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
