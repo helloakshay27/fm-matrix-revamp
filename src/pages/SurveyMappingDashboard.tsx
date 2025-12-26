@@ -28,6 +28,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { getFullUrl, API_CONFIG } from '@/config/apiConfig';
 
 // Individual mapping item from the API
 interface SurveyMappingItem {
@@ -530,13 +531,25 @@ export const SurveyMappingDashboard = () => {
 
   // Handle sample file download
   const handleDownloadSample = () => {
-    const link = document.createElement('a');
-    link.href = '/assets/survey_mapping_sample.xlsx';
-    link.download = 'survey_mapping_sample.xlsx';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    sonnerToast.success('Sample file downloaded successfully');
+    try {
+      const baseUrl = getFullUrl('/assets/survey_mapping_sample.xlsx');
+      const downloadUrl = new URL(baseUrl);
+
+      if (API_CONFIG.TOKEN) {
+        downloadUrl.searchParams.append('token', API_CONFIG.TOKEN);
+      }
+
+      const link = document.createElement('a');
+      link.href = downloadUrl.toString();
+      link.download = 'survey_mapping_sample.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      sonnerToast.success('Sample file downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading sample file:', error);
+      sonnerToast.error('Failed to download sample file');
+    }
   };
 
   // Handle filter application

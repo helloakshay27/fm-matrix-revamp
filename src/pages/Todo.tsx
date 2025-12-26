@@ -1,20 +1,28 @@
 import { useEffect, useState } from 'react';
-import { Plus, Check } from 'lucide-react';
+import { Plus, Check, Play, Pause } from 'lucide-react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import AddToDoModal from '@/components/AddToDoModal';
 import { Button } from '@/components/ui/button';
 import { useLayout } from '@/contexts/LayoutContext';
+import { toast } from 'sonner';
 
 export default function Todo() {
     const { setCurrentSection } = useLayout();
 
+    const view = localStorage.getItem("selectedView");
+
     useEffect(() => {
-        setCurrentSection("Project Task");
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
     }, [setCurrentSection]);
 
     const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
     const [isAddTodoModalOpen, setIsAddTodoModalOpen] = useState(false);
     const [todos, setTodos] = useState([]);
+    const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+    const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
+    const [isPauseLoading, setIsPauseLoading] = useState(false);
 
     const getTodos = async () => {
         try {
@@ -63,6 +71,78 @@ export default function Todo() {
 
     const deleteTodo = (id) => {
         setTodos(todos.filter((todo) => todo.id !== id));
+    };
+
+    const handlePlayTask = async (taskId: number) => {
+        try {
+            await axios.put(
+                `https://${baseUrl}/task_managements/${taskId}/update_status.json`,
+                {
+                    status: 'started'
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            toast.success("Task started successfully");
+            getTodos(); // Refresh todos to get updated task status
+        } catch (error) {
+            console.error('Failed to start task:', error);
+            toast.error("Failed to start task");
+        }
+    };
+
+    const handlePauseTaskSubmit = async (reason: string, taskId: number) => {
+        if (!taskId) return;
+
+        setIsPauseLoading(true);
+        try {
+            // Update task status to "stopped" (paused)
+            await axios.put(
+                `https://${baseUrl}/task_managements/${taskId}/update_status.json`,
+                {
+                    status: 'stopped'
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            // Add comment with pause reason
+            const commentPayload = {
+                comment: {
+                    body: `Paused with reason: ${reason}`,
+                    commentable_id: taskId,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            };
+
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            toast.success('Task paused successfully with reason');
+            setIsPauseModalOpen(false);
+            setPauseTaskId(null);
+
+            // Refresh todos to get updated task status
+            getTodos();
+        } catch (error) {
+            console.error('Failed to pause task:', error);
+            toast.error(
+                `Failed to pause task: ${error?.response?.data?.error || error?.message || 'Server error'}`
+            );
+        } finally {
+            setIsPauseLoading(false);
+        }
     };
 
     const pendingTodos = todos.filter((t) => t.status !== 'completed');
@@ -119,6 +199,9 @@ export default function Todo() {
                                             todo={todo}
                                             toggleTodo={toggleTodo}
                                             deleteTodo={deleteTodo}
+                                            handlePlayTask={handlePlayTask}
+                                            setPauseTaskId={setPauseTaskId}
+                                            setIsPauseModalOpen={setIsPauseModalOpen}
                                         />
                                     ))}
                                 </div>
@@ -134,6 +217,9 @@ export default function Todo() {
                                             todo={todo}
                                             toggleTodo={toggleTodo}
                                             deleteTodo={deleteTodo}
+                                            handlePlayTask={handlePlayTask}
+                                            setPauseTaskId={setPauseTaskId}
+                                            setIsPauseModalOpen={setIsPauseModalOpen}
                                         />
                                     ))}
                                 </div>
@@ -149,6 +235,9 @@ export default function Todo() {
                                             todo={todo}
                                             toggleTodo={toggleTodo}
                                             deleteTodo={deleteTodo}
+                                            handlePlayTask={handlePlayTask}
+                                            setPauseTaskId={setPauseTaskId}
+                                            setIsPauseModalOpen={setIsPauseModalOpen}
                                         />
                                     ))}
                                 </div>
@@ -164,6 +253,9 @@ export default function Todo() {
                                             todo={todo}
                                             toggleTodo={toggleTodo}
                                             deleteTodo={deleteTodo}
+                                            handlePlayTask={handlePlayTask}
+                                            setPauseTaskId={setPauseTaskId}
+                                            setIsPauseModalOpen={setIsPauseModalOpen}
                                         />
                                     ))}
                                 </div>
@@ -201,32 +293,11 @@ export default function Todo() {
                                 </div>
                             ) : (
                                 completedTodos.map((todo) => (
-                                    <div
+                                    <CompletedTodoItem
                                         key={todo.id}
-                                        className="flex items-center gap-3 p-3 rounded-lg bg-accent/5 hover:bg-accent/10 transition-colors group"
-                                    >
-                                        <button
-                                            onClick={() => toggleTodo(todo.id)}
-                                            className="flex-shrink-0 w-5 h-5 bg-accent flex items-center justify-center hover:opacity-90 transition-all"
-                                        >
-                                            <Check size={16} className="text-accent-foreground" />
-                                        </button>
-                                        {/* <span className="flex-1 text-base text-muted-foreground line-through">{todo.title}</span> */}
-                                        <div className="flex flex-col flex-1">
-                                            <span className="text-base text-foreground">{todo.title}</span>
-                                            {todo.target_date && (
-                                                <span className="text-xs text-muted-foreground">
-                                                    Due: {todo.target_date}
-                                                </span>
-                                            )}
-                                        </div>
-                                        {/* <button
-                                            onClick={() => deleteTodo(todo.id)}
-                                            className="flex-shrink-0 p-1.5 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button> */}
-                                    </div>
+                                        todo={todo}
+                                        toggleTodo={toggleTodo}
+                                    />
                                 ))
                             )}
                         </div>
@@ -241,14 +312,96 @@ export default function Todo() {
                     getTodos={getTodos}
                 />
             )}
+
+            {/* Pause Reason Modal */}
+            <PauseReasonModal
+                isOpen={isPauseModalOpen}
+                onClose={() => {
+                    setIsPauseModalOpen(false);
+                    setPauseTaskId(null);
+                }}
+                onSubmit={handlePauseTaskSubmit}
+                isLoading={isPauseLoading}
+                taskId={pauseTaskId}
+            />
         </div>
     );
 }
 
+// Pause Reason Modal Component
+const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
+    const [reason, setReason] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason('');
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error('Please enter a reason for pausing the task');
+            return;
+        }
+        onSubmit(reason, taskId);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Pause</h2>
+
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for pausing this task..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                    <button
+                        onClick={onClose}
+                        disabled={isLoading}
+                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                    >
+                        {isLoading ? 'Submitting...' : 'Pause Task'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // ----------------------------------------------
 // Separate Todo Item Component (Cleaner UI)
 // ----------------------------------------------
-const TodoItem = ({ todo, toggleTodo, deleteTodo }) => {
+const TodoItem = ({ todo, toggleTodo, deleteTodo, handlePlayTask, setPauseTaskId, setIsPauseModalOpen }) => {
+    const navigate = useNavigate();
+
+    const handleTaskClick = () => {
+        if (todo.task_management_id) {
+            // Navigate to task details page
+            navigate(`/vas/tasks/${todo.task_management_id}`);
+        }
+    };
+
+    // Check if task is started from the nested task_management object
+    const isTaskStarted = todo.task_management?.is_started || false;
+    const isCompleted = todo.status === 'completed';
+
     return (
         <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary transition-colors group">
             <button
@@ -259,11 +412,47 @@ const TodoItem = ({ todo, toggleTodo, deleteTodo }) => {
             </button>
 
             <div className="flex flex-col flex-1">
-                <span className="text-base text-foreground">{todo.title}</span>
+                <div className="flex items-center gap-2">
+                    {todo.task_management_id && (
+                        <span
+                            onClick={handleTaskClick}
+                            className="text-sm font-semibold text-[#c72030] cursor-pointer hover:underline"
+                        >
+                            T-{todo.task_management_id}
+                        </span>
+                    )}
+                    <span className="text-base text-foreground">{todo.title}</span>
+                </div>
                 {todo.target_date && (
                     <span className="text-xs text-muted-foreground">Due: {todo.target_date}</span>
                 )}
             </div>
+
+            {/* Play/Pause buttons for tasks converted from task management */}
+            {todo.task_management_id && (
+                isTaskStarted ? (
+                    <button
+                        onClick={() => {
+                            setPauseTaskId(todo.task_management_id);
+                            setIsPauseModalOpen(true);
+                        }}
+                        disabled={isCompleted}
+                        className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                        title="Pause task"
+                    >
+                        <Pause size={16} className="text-orange-500" />
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => handlePlayTask(todo.task_management_id)}
+                        disabled={isCompleted}
+                        className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                        title="Play task"
+                    >
+                        <Play size={16} className="text-green-500" />
+                    </button>
+                )
+            )}
 
             {/* <button
                 onClick={() => deleteTodo(todo.id)}
@@ -271,6 +460,48 @@ const TodoItem = ({ todo, toggleTodo, deleteTodo }) => {
             >
                 <Trash2 size={18} />
             </button> */}
+        </div>
+    );
+};
+
+// ----------------------------------------------
+// Completed Todo Item Component
+// ----------------------------------------------
+const CompletedTodoItem = ({ todo, toggleTodo }) => {
+    const navigate = useNavigate();
+
+    const handleTaskClick = () => {
+        if (todo.task_management_id) {
+            navigate(`/project-management/task/${todo.task_management_id}`);
+        }
+    };
+
+    return (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/5 hover:bg-accent/10 transition-colors group">
+            <button
+                onClick={() => toggleTodo(todo.id)}
+                className="flex-shrink-0 w-5 h-5 bg-accent flex items-center justify-center hover:opacity-90 transition-all"
+            >
+                <Check size={16} className="text-accent-foreground" />
+            </button>
+            <div className="flex flex-col flex-1">
+                <div className="flex items-center gap-2">
+                    {todo.task_management_id && (
+                        <span
+                            onClick={handleTaskClick}
+                            className="text-sm font-semibold text-[#c72030] cursor-pointer hover:underline"
+                        >
+                            T-{todo.task_management_id}
+                        </span>
+                    )}
+                    <span className="text-base text-foreground">{todo.title}</span>
+                </div>
+                {todo.target_date && (
+                    <span className="text-xs text-muted-foreground">
+                        Due: {todo.target_date}
+                    </span>
+                )}
+            </div>
         </div>
     );
 };

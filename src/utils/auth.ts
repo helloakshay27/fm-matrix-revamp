@@ -153,7 +153,7 @@ const isFmSite =
   hostname.includes("fm-uat.gophygital.work") ||
   hostname.includes("fm.gophygital.work");
 
-const isDevSite = hostname.includes("uat-fm-matrix.lockated.com");
+const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
 export const getOrganizationsByEmail = async (
   email: string
@@ -185,7 +185,7 @@ export const getOrganizationsByEmail = async (
 
   if (isDevSite) {
     const response = await fetch(
-      `https://uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+      `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {

@@ -4,6 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const getRandomColor = () => {
     const r = Math.floor(Math.random() * 76) + 180;
@@ -76,14 +82,16 @@ const ProjectCard = ({ project }) => {
 
     const memberColors = useMemo(() => {
         const colors = {};
-        project?.project_members?.forEach((member) => {
-            if (member.user) {
-                const id = member.user.id || member.user.firstname; // Use unique ID if available
+        // Get members from project_team structure
+        const members = project?.project_team?.project_team_members || [];
+        members.forEach((member) => {
+            if (member?.user) {
+                const id = member.user.id || member.user.name;
                 colors[id] = getRandomColor();
             }
         });
         return colors;
-    }, [project.project_members]);
+    }, [project?.project_team]);
 
     return (
         <div
@@ -221,22 +229,31 @@ const ProjectCard = ({ project }) => {
 
                 <div className="flex items-center justify-between">
                     <div className="text-gray-600 text-xs">Members</div>
-                    <div className="flex items-center">
-                        {project?.project_members?.map((member, index) => {
-                            if (!member.user) return null;
-                            const id = member.user.id || member.user.firstname;
-                            return (
-                                <div
-                                    key={index}
-                                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-gray-800 ${index !== 0 ? "-ml-2" : ""
-                                        }`}
-                                    style={{ backgroundColor: memberColors[id] }}
-                                >
-                                    {member.user.firstname ? member.user.firstname.charAt(0) : ""}
-                                </div>
-                            );
-                        })}
-                    </div>
+                    <TooltipProvider>
+                        <div className="flex items-center">
+                            {/* Display team members */}
+                            {project?.project_team?.project_team_members?.map((member, index) => {
+                                if (!member?.user) return null;
+                                const id = member.user.id || member.user.name;
+                                const userName = member.user.full_name || member.user.name || '';
+                                return (
+                                    <Tooltip key={index}>
+                                        <TooltipTrigger asChild>
+                                            <div
+                                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-gray-800 cursor-pointer ${index !== 0 ? '-ml-2' : ''}`}
+                                                style={{ backgroundColor: memberColors[id] }}
+                                            >
+                                                {userName.charAt(0).toUpperCase()}
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{userName}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                );
+                            })}
+                        </div>
+                    </TooltipProvider>
                 </div>
             </div>
         </div>

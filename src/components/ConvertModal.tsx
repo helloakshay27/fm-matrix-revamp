@@ -245,6 +245,7 @@ const ConvertModal = ({
                 create_channel: projectFormData.isChannel,
                 project_team_id: projectFormData.team,
                 project_type_id: projectFormData.type,
+                opportunity_id: opportunityId,
             },
             task_tag_ids: projectFormData.tags
         };
@@ -560,6 +561,7 @@ const ConvertModal = ({
                                 className='mx-0 w-full'
                                 prefillData={prefillData}
                                 isConversion={true}
+                                opportunityId={opportunityId}
                             />
                         </div>
                     )}
@@ -570,6 +572,7 @@ const ConvertModal = ({
                             onCloseModal={handleTaskSuccess}
                             className='mx-0 w-full'
                             prefillData={prefillData}
+                            opportunityId={opportunityId}
                         />
                     )}
                 </div>
