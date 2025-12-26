@@ -72,7 +72,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   assetsInclude: ["**/*.xlsx", "**/*.xls"],
-  base: "./", // Important for Electron to load assets correctly
+  base: mode === "production" ? "/" : "./", // Use absolute paths for web, relative for Electron
   build: {
     outDir: "dist",
     emptyOutDir: true,
