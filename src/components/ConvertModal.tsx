@@ -175,12 +175,25 @@ const ConvertModal = ({
         }
     };
 
-    const handleProjectSuccess = () => {
+    const handleProjectSuccess = (projectId: number) => {
+        updateOpportunityWithConversion({
+            project_management_id: projectId,
+        });
         setOpenProjectDialog(false);
         closeModal();
     };
 
-    const handleTaskSuccess = () => {
+    const handleTaskSuccess = (taskId: number) => {
+        updateOpportunityWithConversion({
+            task_management_id: taskId,
+        });
+        closeModal();
+    };
+
+    const handleMilestoneSuccess = (milestoneId: number) => {
+        updateOpportunityWithConversion({
+            milestone_id: milestoneId,
+        });
         closeModal();
     };
 
@@ -251,9 +264,15 @@ const ConvertModal = ({
         };
 
         try {
-            await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
-            toast.success("Project created successfully");
-            handleProjectSuccess();
+            const result = await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
+            const projectId = result?.id || result?.project_management?.id;
+
+            if (projectId) {
+                toast.success("Project created successfully");
+                handleProjectSuccess(projectId);
+            } else {
+                toast.error("Project created but ID not found");
+            }
         } catch (error: any) {
             console.error("Error creating project:", error);
             toast.error(error.message || "Failed to create project");
@@ -562,6 +581,7 @@ const ConvertModal = ({
                                 prefillData={prefillData}
                                 isConversion={true}
                                 opportunityId={opportunityId}
+                                onSuccess={handleMilestoneSuccess}
                             />
                         </div>
                     )}
@@ -569,10 +589,11 @@ const ConvertModal = ({
                     {selectedType === 'Task' && (
                         <ProjectTaskCreateModal
                             isEdit={false}
-                            onCloseModal={handleTaskSuccess}
+                            onCloseModal={closeModal}
                             className='mx-0 w-full'
                             prefillData={prefillData}
                             opportunityId={opportunityId}
+                            onSuccess={handleTaskSuccess}
                         />
                     )}
                 </div>
