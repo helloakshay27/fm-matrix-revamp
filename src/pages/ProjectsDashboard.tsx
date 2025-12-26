@@ -30,8 +30,8 @@ import ProjectCreateModal from "@/components/ProjectCreateModal";
 import ProjectManagementKanban from "@/components/ProjectManagementKanban";
 import ProjectFilterModal from "@/components/ProjectFilterModal";
 import { useLayout } from "@/contexts/LayoutContext";
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import axios from "axios";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const columns: ColumnConfig[] = [
   {
@@ -210,16 +210,24 @@ export const ProjectsDashboard = () => {
   const [projectTypes, setProjectTypes] = useState([]);
   const [owners, setOwners] = useState([])
   const [loading, setLoading] = useState(false)
+  const [scrollLoading, setScrollLoading] = useState(false)
   const [appliedFilters, setAppliedFilters] = useState("")
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    total_count: 0,
-    total_pages: 0,
-  });
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  const fetchData = async (page = 1, filterString = "") => {
+  const fetchData = async (page = 1, filterString = "", isLoadMore = false, searchQuery = "") => {
     try {
-      setLoading(true)
+      if (!hasMore && isLoadMore) return;
+
+      // Use scrollLoading for infinite scroll, regular loading for initial load
+      if (isLoadMore) {
+        setScrollLoading(true);
+      } else {
+        setLoading(true);
+      }
+
       let filters = filterString !== "" ? filterString : appliedFilters;
 
       if (!filters) {
@@ -228,30 +236,60 @@ export const ProjectsDashboard = () => {
         }
       }
 
+      // Add search query using Ransack's cont (contains) matcher
+      if (searchQuery && searchQuery.trim() !== "") {
+        const searchFilter = `q[title_or_project_type_name_or_project_owner_name_cont]=${encodeURIComponent(searchQuery.trim())}`;
+        filters += (filters ? "&" : "") + searchFilter + "&";
+      }
+
       filters += (filters ? "&" : "") + `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${JSON.parse(localStorage.getItem('user')).id}&page=${page}`;
 
       const response = await dispatch(
         filterProjects({ token, baseUrl, filters })
       ).unwrap();
-      setProjects(transformedProjects(response.project_managements));
-      setPagination({
-        current_page: response.current_page || page,
-        total_count: response.total_count || 0,
-        total_pages: response.total_pages || 1,
-      });
+
+      const transformedData = transformedProjects(response.project_managements);
+
+      if (isLoadMore) {
+        setProjects(prev => [...prev, ...transformedData]);
+      } else {
+        setProjects(transformedData);
+      }
+
+      setHasMore(page < (response.pagination?.total_pages || 1));
+      setCurrentPage(page);
     } catch (error) {
       console.log(error);
     } finally {
-      setLoading(false)
+      setLoading(false);
+      setScrollLoading(false);
     }
   };
 
 
   useEffect(() => {
-    setPagination((prev) => ({ ...prev, current_page: 1 }));
-    fetchData(1, "");
+    setCurrentPage(1);
+    setHasMore(true);
+    fetchData(1, "", false, debouncedSearchTerm);
     setAppliedFilters("");
-  }, [dispatch, token, baseUrl, selectedFilterOption]);
+  }, [dispatch, token, baseUrl, selectedFilterOption, debouncedSearchTerm]);
+
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight;
+
+      // Load more when user is 200px from bottom
+      if (scrollTop + clientHeight >= scrollHeight - 200 && !scrollLoading && !loading && hasMore) {
+        fetchData(currentPage + 1, "", true, debouncedSearchTerm);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [scrollLoading, loading, hasMore, currentPage, appliedFilters, debouncedSearchTerm]);
 
   const getOwners = async () => {
     try {
@@ -326,7 +364,7 @@ export const ProjectsDashboard = () => {
       }
       await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
       toast.success("Project created successfully");
-      fetchData(1);
+      fetchData(1, "", false, debouncedSearchTerm);
     } catch (error) {
       console.log(error)
       toast.error(error)
@@ -357,148 +395,16 @@ export const ProjectsDashboard = () => {
   const handleStatusChange = async (id: number, status: string) => {
     try {
       await dispatch(changeProjectStatus({ token, baseUrl, id: String(id), payload: { project_management: { status } } })).unwrap();
-      fetchData(pagination.current_page);
+      fetchData(1, "", false, debouncedSearchTerm);
+      setCurrentPage(1);
+      setHasMore(true);
       toast.success("Project status changed successfully");
     } catch (error) {
       console.log(error)
     }
   }
 
-  const handlePageChange = async (page: number) => {
-    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
-      return;
-    }
 
-    try {
-      setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchData(page);
-    } catch (error) {
-      console.error("Error changing page:", error);
-      toast.error("Failed to load page data. Please try again.");
-    }
-  }
-
-  const renderPaginationItems = () => {
-    if (!pagination.total_pages || pagination.total_pages <= 0) {
-      return null;
-    }
-    const items = [];
-    const totalPages = pagination.total_pages;
-    const currentPage = pagination.current_page;
-    const showEllipsis = totalPages > 7;
-
-    if (showEllipsis) {
-      items.push(
-        <PaginationItem key={1} className="cursor-pointer">
-          <PaginationLink
-            onClick={() => handlePageChange(1)}
-            isActive={currentPage === 1}
-            aria-disabled={loading}
-            className={loading ? "pointer-events-none opacity-50" : ""}
-          >
-            1
-          </PaginationLink>
-        </PaginationItem>
-      );
-
-      if (currentPage > 4) {
-        items.push(
-          <PaginationItem key="ellipsis1">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      } else {
-        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
-          items.push(
-            <PaginationItem key={i} className="cursor-pointer">
-              <PaginationLink
-                onClick={() => handlePageChange(i)}
-                isActive={currentPage === i}
-                aria-disabled={loading}
-                className={loading ? "pointer-events-none opacity-50" : ""}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      if (currentPage > 3 && currentPage < totalPages - 2) {
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          items.push(
-            <PaginationItem key={i} className="cursor-pointer">
-              <PaginationLink
-                onClick={() => handlePageChange(i)}
-                isActive={currentPage === i}
-                aria-disabled={loading}
-                className={loading ? "pointer-events-none opacity-50" : ""}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      if (currentPage < totalPages - 3) {
-        items.push(
-          <PaginationItem key="ellipsis2">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      } else {
-        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find((item) => item.key === i.toString())) {
-            items.push(
-              <PaginationItem key={i} className="cursor-pointer">
-                <PaginationLink
-                  onClick={() => handlePageChange(i)}
-                  isActive={currentPage === i}
-                  aria-disabled={loading}
-                  className={loading ? "pointer-events-none opacity-50" : ""}
-                >
-                  {i}
-                </PaginationLink>
-              </PaginationItem>
-            );
-          }
-        }
-      }
-
-      if (totalPages > 1) {
-        items.push(
-          <PaginationItem key={totalPages} className="cursor-pointer">
-            <PaginationLink
-              onClick={() => handlePageChange(totalPages)}
-              isActive={currentPage === totalPages}
-              aria-disabled={loading}
-              className={loading ? "pointer-events-none opacity-50" : ""}
-            >
-              {totalPages}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      }
-    } else {
-      for (let i = 1; i <= totalPages; i++) {
-        items.push(
-          <PaginationItem key={i} className="cursor-pointer">
-            <PaginationLink
-              onClick={() => handlePageChange(i)}
-              isActive={currentPage === i}
-              aria-disabled={loading}
-              className={loading ? "pointer-events-none opacity-50" : ""}
-            >
-              {i}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      }
-    }
-
-    return items;
-  };
 
   const renderCell = (item: any, columnKey: string) => {
     const renderProgressBar = (completed: number, total: number, color: string, type?: string) => {
@@ -943,7 +849,7 @@ export const ProjectsDashboard = () => {
           setIsModalOpen={setIsFilterModalOpen}
           onApplyFilters={(filterString) => {
             setAppliedFilters(filterString);
-            fetchData(1, filterString);
+            fetchData(1, filterString, false, debouncedSearchTerm);
           }}
         />
       </div>
@@ -969,27 +875,27 @@ export const ProjectsDashboard = () => {
         renderEditableCell={renderEditableCell}
         newRowPlaceholder="Click to add new project"
         loading={loading}
+        enableGlobalSearch={true}
+        onGlobalSearch={(searchQuery) => {
+          setSearchTerm(searchQuery);
+          setCurrentPage(1);
+          setHasMore(true);
+        }}
+        searchValue={searchTerm}
+        searchPlaceholder="Search by title, type, or manager..."
       />
 
-      <div className="flex justify-center mt-6">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-            {renderPaginationItems()}
-            <PaginationItem>
-              <PaginationNext
-                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      {scrollLoading && hasMore && (
+        <div className="flex justify-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+        </div>
+      )}
+
+      {!hasMore && projects.length > 0 && (
+        <div className="flex justify-center py-4 text-gray-500 text-sm">
+          No more projects to load
+        </div>
+      )}
 
       <AddProjectModal
         openDialog={openDialog}
@@ -1018,7 +924,7 @@ export const ProjectsDashboard = () => {
         setIsModalOpen={setIsFilterModalOpen}
         onApplyFilters={(filterString) => {
           setAppliedFilters(filterString);
-          fetchData(1, filterString);
+          fetchData(1, filterString, false, debouncedSearchTerm);
         }}
       />
     </div>
