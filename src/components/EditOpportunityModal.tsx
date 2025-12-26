@@ -175,7 +175,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
 
             // Append tags
             tags.forEach((tagId: any) => {
-                formData.append('opportunity[tag_ids][]', tagId);
+                formData.append('opportunity[tag_ids][]', tagId.value);
             });
 
             // Append new attachments

@@ -70,6 +70,7 @@ const Attachments = ({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const token = localStorage.getItem('token');
     const [files, setFiles] = useState(attachments);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         setFiles(attachments);
@@ -88,15 +89,24 @@ const Attachments = ({
             formData.append('opportunity[attachments][]', file);
         });
 
+        setIsUploading(true);
+        toast.loading('Uploading files...', { id: 'file-upload' });
+
         try {
             await axios.put(getFullUrl(`/opportunities/${id}.json`), formData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            toast.success('Files uploaded successfully.');
+            toast.success('Files uploaded successfully.', { id: 'file-upload' });
             getOpportunity();
         } catch (error) {
             console.error('File upload failed:', error);
-            toast.error('Failed to upload file.');
+            toast.error('Failed to upload file.', { id: 'file-upload' });
+        } finally {
+            setIsUploading(false);
+            // Reset the file input so the same file can be uploaded again if needed
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -170,10 +180,11 @@ const Attachments = ({
                     </div>
 
                     <button
-                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleAttachFile}
+                        disabled={isUploading}
                     >
-                        Attach Files
+                        {isUploading ? 'Uploading...' : 'Attach Files'}
                     </button>
                 </>
             ) : (
@@ -181,10 +192,11 @@ const Attachments = ({
                     <span>No Documents Attached</span>
                     <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
                     <button
-                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleAttachFile}
+                        disabled={isUploading}
                     >
-                        Attach Files
+                        {isUploading ? 'Uploading...' : 'Attach Files'}
                     </button>
                 </div>
             )}
@@ -417,8 +429,10 @@ const mapDisplayToApiStatus = (displayStatus: string): string => {
 const OpportunityDetailsPage = () => {
     const { setCurrentSection } = useLayout();
 
+    const view = localStorage.getItem("selectedView");
+
     useEffect(() => {
-        setCurrentSection("Project Task");
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
     }, [setCurrentSection]);
 
     const token = localStorage.getItem('token');

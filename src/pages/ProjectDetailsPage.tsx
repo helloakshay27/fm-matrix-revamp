@@ -95,7 +95,7 @@ const Status = ({ project }) => {
     );
 };
 
-const Attachments = ({ attachments, id }) => {
+const Attachments = ({ attachments, id, getProjectDetails }) => {
     const fileInputRef = useRef(null);
     const dispatch = useAppDispatch();
     const baseUrl = localStorage.getItem("baseUrl");
@@ -133,9 +133,7 @@ const Attachments = ({ attachments, id }) => {
             await dispatch(attachFiles({ token, baseUrl, id, payload: formData })).unwrap();
             toast.dismiss();
             toast.success('Files uploaded successfully');
-            // Refetch project details to get updated attachments
-            const response = await dispatch(fetchProjectById({ baseUrl, token, id })).unwrap();
-            setFiles(response.attachments || []);
+            getProjectDetails();
             // Reset file input
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
@@ -370,19 +368,19 @@ const ProjectDetailsPage = () => {
         }
     }, [project]);
 
-    useEffect(() => {
-        const getProjectDetails = async () => {
-            try {
-                const response = await dispatch(fetchProjectById({ baseUrl, token, id })).unwrap();
-                setProject(response)
-                if (response?.status) {
-                    setSelectedOption(mapStatusToDisplay(response.status));
-                }
-            } catch (error) {
-                console.log(error)
+    const getProjectDetails = async () => {
+        try {
+            const response = await dispatch(fetchProjectById({ baseUrl, token, id })).unwrap();
+            setProject(response)
+            if (response?.status) {
+                setSelectedOption(mapStatusToDisplay(response.status));
             }
+        } catch (error) {
+            console.log(error)
         }
+    }
 
+    useEffect(() => {
         getProjectDetails()
     }, [])
 
@@ -734,7 +732,7 @@ const ProjectDetailsPage = () => {
                             />
                         )}
                         {tab === "Documents" && (
-                            <Attachments attachments={project.attachments || []} id={project.id} />
+                            <Attachments attachments={project.attachments || []} id={project.id} getProjectDetails={getProjectDetails} />
                         )}
                         {tab === "Status" && <Status project={project} />}
                         {tab === "Issues" && <IssuesListPage />}
