@@ -134,8 +134,13 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
     const getUsers = useCallback(async () => {
         try {
-            const response = await dispatch(fetchFMUsers()).unwrap();
-            const validUsers = (response.users || []).filter((user: { id?: string | number }) => user && user.id);
+            const response = await axios.get(
+                `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
+            const validUsers = (response.data.users || []).filter((user: { id?: string | number }) => user && user.id);
             setUsers(validUsers);
         } catch (error) {
             console.error(error);
@@ -391,7 +396,6 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
             !formData.priority ||
             !formData.observer.length ||
             !formData.tags.length ||
-            !startDate ||
             !endDate ||
             !totalWorkingHours
         ) {
@@ -484,18 +488,20 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
 
         const payload = {
-            title: formData.taskTitle,
-            description: formData.description,
-            responsible_person_id: formData.responsiblePerson,
-            priority: formData.priority,
-            observer_ids: formData.observer.map((observer) => observer.value),
-            task_tag_ids: formData.tags.map((tag) => tag.value),
-            expected_start_date: formatedStartDate,
-            target_date: formatedEndDate,
-            allocation_date: formatedEndDate,
-            active: true,
-            estimated_hour: totalWorkingHours,
-            task_allocation_times_attributes: taskAllocationTimesAttributes,
+            task_management: {
+                title: formData.taskTitle,
+                description: formData.description,
+                responsible_person_id: formData.responsiblePerson,
+                priority: formData.priority,
+                observer_ids: formData.observer.map((observer) => observer.value),
+                task_tag_ids: formData.tags.map((tag) => tag.value),
+                expected_start_date: formatedStartDate,
+                target_date: formatedEndDate,
+                allocation_date: formatedEndDate,
+                active: true,
+                estimated_hour: totalWorkingHours,
+                task_allocation_times_attributes: taskAllocationTimesAttributes,
+            }
         };
 
         try {
