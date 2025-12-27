@@ -818,9 +818,9 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%]
     }, [isEdit, task, id, mid, getTagName]);
 
     const createTaskPayload = (data) => {
-        const formatedEndDate = `${endDate.year}-${endDate.month + 1}-${endDate.date
+        const formatedEndDate = `${endDate?.year}-${endDate?.month + 1}-${endDate?.date
             }`;
-        const formatedStartDate = `${startDate.year}-${startDate.month + 1}-${startDate.date
+        const formatedStartDate = `${startDate?.year}-${startDate?.month + 1}-${startDate?.date
             }`;
         return {
             task_management: {
