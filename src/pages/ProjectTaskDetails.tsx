@@ -1448,7 +1448,7 @@ export const ProjectTaskDetails = () => {
                   <p className="text-sm font-medium text-gray-600">Tags:</p>
                 </div>
                 <div className="flex-1">
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex gap-1 flex-wrap">
                     {taskDetails.task_tags && taskDetails.task_tags.length > 0 ? (
                       taskDetails.task_tags.map((tag, index) => (
                         <span
@@ -1481,7 +1481,7 @@ export const ProjectTaskDetails = () => {
                 <div className="flex-1">
                   {taskDetails.observers && taskDetails.observers.length > 0 ? (
                     <TooltipProvider>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
                         {taskDetails.observers.map((observer, idx) => (
                           <Tooltip key={idx}>
                             <TooltipTrigger asChild>
