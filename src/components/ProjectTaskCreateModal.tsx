@@ -705,6 +705,11 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%]
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
     const [members, setMembers] = useState([])
+    const selectedTags = (prefillData.tags || []).map((tag: any) => ({
+        value: tag.company_tag_id,
+        label: tag.company_tag.name || 'Unknown Tag',
+        id: tag.company_tag_id
+    }));
     const [formData, setFormData] = useState({
         project: "",
         milestone: "",
@@ -717,7 +722,7 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%]
         department: "",
         priority: "",
         observer: [],
-        tags: [],
+        tags: selectedTags || [],
     });
 
     const [prevTags, setPrevTags] = useState([]);

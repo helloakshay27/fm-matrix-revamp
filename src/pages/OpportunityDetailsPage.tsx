@@ -32,6 +32,12 @@ interface OpportunityDetailsData {
     responsible_person?: {
         id: string;
     };
+    task_tags?: Array<{
+        company_tag_id: number;
+        company_tag: {
+            name: string;
+        };
+    }>;
     attachments?: Array<{
         id: number;
         document_file_name?: string;
@@ -734,7 +740,8 @@ const OpportunityDetailsPage = () => {
                         description: opportunityDetails?.description,
                         responsible_person: {
                             id: opportunityDetails?.responsible_person?.id
-                        }
+                        },
+                        tags: opportunityDetails?.task_tags
                     }}
                     opportunityId={Number(id)}
                 />

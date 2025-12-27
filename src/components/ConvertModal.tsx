@@ -29,7 +29,13 @@ interface ConvertModalProps {
         description?: string;
         responsible_person: {
             id: string;
-        }
+        },
+        tags?: Array<{
+            company_tag_id: number;
+            company_tag: {
+                name: string;
+            };
+        }>;
     };
     opportunityId: number | string;
 }
@@ -78,6 +84,12 @@ const ConvertModal = ({
             fetchProjectTypes();
             fetchTags();
             fetchAllProjects();
+            const selectedTags = (prefillData.tags || []).map((tag: any) => ({
+                value: tag.company_tag_id,
+                label: tag.company_tag.name || 'Unknown Tag',
+                id: tag.company_tag_id
+            }));
+            setTags(selectedTags);
             setProjectFormData({
                 title: prefillData?.title?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
                     .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || "",
@@ -91,7 +103,7 @@ const ConvertModal = ({
                 team: "",
                 type: "",
                 priority: "",
-                tags: []
+                tags: selectedTags
             });
         }
     }, [isModalOpen]);
