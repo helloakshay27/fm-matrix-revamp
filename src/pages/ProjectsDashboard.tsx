@@ -18,7 +18,7 @@ import {
   LogOut,
   Plus,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { fetchProjectTeams } from "@/store/slices/projectTeamsSlice";
@@ -217,6 +217,10 @@ export const ProjectsDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
+  // Refs for click outside detection
+  const viewDropdownRef = useRef<HTMLDivElement>(null);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+
   const fetchData = async (page = 1, filterString = "", isLoadMore = false, searchQuery = "") => {
     try {
       if (!hasMore && isLoadMore) return;
@@ -290,6 +294,21 @@ export const ProjectsDashboard = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrollLoading, loading, hasMore, currentPage, appliedFilters, debouncedSearchTerm]);
+
+  // Click outside handler for dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (viewDropdownRef.current && !viewDropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+        setOpenStatusOptions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const getOwners = async () => {
     try {
@@ -643,7 +662,7 @@ export const ProjectsDashboard = () => {
 
   const rightActions = (
     <div className="flex items-center gap-2">
-      <div className="relative">
+      <div className="relative" ref={viewDropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
@@ -691,7 +710,7 @@ export const ProjectsDashboard = () => {
           </div>
         )}
       </div>
-      <div className="relative">
+      <div className="relative" ref={statusDropdownRef}>
         <button
           onClick={() => setOpenStatusOptions(!openStatusOptions)}
           className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
