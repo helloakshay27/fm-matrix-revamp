@@ -542,8 +542,13 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal, fetchData }: { openT
 
     const getUsers = async () => {
         try {
-            const response = await dispatch(fetchFMUsers()).unwrap();
-            const validUsers = (response.users || []).filter((user: any) => user && user.id);
+            const response = await axios.get(
+                `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
+            const validUsers = (response.data.users || []).filter((user: any) => user && user.id);
             setUsers(validUsers);
         } catch (error) {
             console.log(error)

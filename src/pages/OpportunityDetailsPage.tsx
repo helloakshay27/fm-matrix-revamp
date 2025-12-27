@@ -29,6 +29,15 @@ interface OpportunityDetailsData {
     milestone_id?: number;
     project_name?: string;
     task_name?: string;
+    responsible_person?: {
+        id: string;
+    };
+    task_tags?: Array<{
+        company_tag_id: number;
+        company_tag: {
+            name: string;
+        };
+    }>;
     attachments?: Array<{
         id: number;
         document_file_name?: string;
@@ -664,7 +673,7 @@ const OpportunityDetailsPage = () => {
                 </div>
                 <div className="border-b-[3px] border-grey my-3"></div>
 
-                <div className="border rounded-md shadow-custom p-5 mb-4 text-[14px]">
+                <div className="border rounded-[10px] shadow-md p-5 mb-4 text-[14px]">
                     <div className="font-[600] text-[16px] flex items-center gap-4">
                         <ChevronDownCircle
                             color="#E95420"
@@ -729,6 +738,10 @@ const OpportunityDetailsPage = () => {
                         task: opportunityDetails?.task_management_id,
                         taskName: opportunityDetails?.task_name,
                         description: opportunityDetails?.description,
+                        responsible_person: {
+                            id: opportunityDetails?.responsible_person?.id
+                        },
+                        tags: opportunityDetails?.task_tags
                     }}
                     opportunityId={Number(id)}
                 />

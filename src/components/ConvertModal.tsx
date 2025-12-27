@@ -27,6 +27,15 @@ interface ConvertModalProps {
         task?: number;
         taskName?: string;
         description?: string;
+        responsible_person: {
+            id: string;
+        },
+        tags?: Array<{
+            company_tag_id: number;
+            company_tag: {
+                name: string;
+            };
+        }>;
     };
     opportunityId: number | string;
 }
@@ -75,6 +84,12 @@ const ConvertModal = ({
             fetchProjectTypes();
             fetchTags();
             fetchAllProjects();
+            const selectedTags = (prefillData.tags || []).map((tag: any) => ({
+                value: tag.company_tag_id,
+                label: tag.company_tag.name || 'Unknown Tag',
+                id: tag.company_tag_id
+            }));
+            setTags(selectedTags);
             setProjectFormData({
                 title: prefillData?.title?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
                     .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || "",
@@ -82,26 +97,30 @@ const ConvertModal = ({
                 isTemplate: false,
                 description: prefillData?.description?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
                     .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
-                owner: "",
+                owner: prefillData?.responsible_person?.id,
                 startDate: "",
                 endDate: "",
                 team: "",
                 type: "",
                 priority: "",
-                tags: []
+                tags: selectedTags
             });
         }
     }, [isModalOpen]);
 
     const fetchOwners = async () => {
+        const baseUrl = localStorage.getItem('baseUrl');
         setIsLoadingOwners(true);
         try {
-            const response = await dispatch(fetchFMUsers()).unwrap();
-            setOwners(response.users || []);
+            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+            setOwners(response.data.users);
         } catch (error) {
-            console.error('Error fetching owners:', error);
-        } finally {
-            setIsLoadingOwners(false);
+            console.log(error)
+            toast.error(error)
         }
     };
 

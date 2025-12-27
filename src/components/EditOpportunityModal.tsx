@@ -20,6 +20,7 @@ import axios from 'axios';
 import { getFullUrl } from '../config/apiConfig';
 import { Mention, MentionsInput } from 'react-mentions';
 import MuiMultiSelect from './MuiMultiSelect';
+import { AddTagModal } from './AddTagModal';
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -57,6 +58,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
     const [removedAttachmentIds, setRemovedAttachmentIds] = useState<number[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isTagModalOpen, setIsTagModalOpen] = useState(false);
 
     // Mention state
     const [mentionUsers, setMentionUsers] = useState<any[]>([]);
@@ -81,7 +83,13 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
             setTitle(data.title || '');
             setDescription(data.description || '');
             setResponsiblePerson(data.responsible_person?.id || '');
-            setTags(data.tag_ids || []);
+            // Map tags to the format expected by MuiMultiSelect: {value, label}
+            const selectedTags = (data.task_tags || []).map((tag: any) => ({
+                value: tag.company_tag_id,
+                label: tag.company_tag.name || 'Unknown Tag',
+                id: tag.company_tag_id
+            }));
+            setTags(selectedTags);
             setExistingAttachments(data.attachments || []);
         } catch (error) {
             console.error('Error fetching opportunity details:', error);
@@ -174,8 +182,8 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
             formData.append('opportunity[responsible_person_id]', responsiblePerson);
 
             // Append tags
-            tags.forEach((tagId: any) => {
-                formData.append('opportunity[tag_ids][]', tagId.value);
+            tags.forEach((tag: any) => {
+                formData.append('opportunity[tag_ids][]', tag.value || tag.id);
             });
 
             // Append new attachments
@@ -426,6 +434,12 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
                         </div>
 
                         <div>
+                            <div
+                                className="text-[12px] text-[red] text-right cursor-pointer mb-2"
+                                onClick={() => setIsTagModalOpen(true)}
+                            >
+                                <i>Create new tag</i>
+                            </div>
                             <MuiMultiSelect
                                 label="Tags"
                                 options={mentionTags.map((tag) => ({ value: tag.id, label: tag.name, id: tag.id }))}
@@ -529,6 +543,11 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
                     </Button>
                 </div>
             </DialogContent>
+            <AddTagModal
+                isOpen={isTagModalOpen}
+                onClose={() => setIsTagModalOpen(false)}
+                onTagCreated={() => fetchMentionTags()}
+            />
         </Dialog>
     );
 };

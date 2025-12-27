@@ -290,7 +290,7 @@ const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[9
     const [formData, setFormData] = useState({
         milestoneTitle: prefillData?.title?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
             .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
-        owner: "",
+        owner: prefillData?.responsible_person?.id || "",
         startDate: "",
         endDate: "",
         duration: "",

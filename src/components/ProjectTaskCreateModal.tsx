@@ -705,6 +705,11 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%]
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
     const [members, setMembers] = useState([])
+    const selectedTags = (prefillData.tags || []).map((tag: any) => ({
+        value: tag.company_tag_id,
+        label: tag.company_tag.name || 'Unknown Tag',
+        id: tag.company_tag_id
+    }));
     const [formData, setFormData] = useState({
         project: "",
         milestone: "",
@@ -712,12 +717,12 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%]
             .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
         description: prefillData?.description?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
             .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
-        responsiblePerson: "",
+        responsiblePerson: prefillData?.responsible_person?.id || "",
         responsiblePersonName: "",
         department: "",
         priority: "",
         observer: [],
-        tags: [],
+        tags: selectedTags || [],
     });
 
     const [prevTags, setPrevTags] = useState([]);
@@ -734,9 +739,13 @@ const ProjectTaskCreateModal = ({ isEdit, onCloseModal, className = "max-w-[95%]
 
     const getUsers = async () => {
         try {
-            const response = await dispatch(fetchFMUsers()).unwrap();
+            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
             // Filter out any undefined/null users
-            const validUsers = (response.users || []).filter((user: any) => user && user.id);
+            const validUsers = (response.data.users || []).filter((user: any) => user && user.id);
             setUsers(validUsers);
         } catch (error) {
             console.log(error)
