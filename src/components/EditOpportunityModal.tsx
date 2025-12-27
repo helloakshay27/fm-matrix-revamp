@@ -20,6 +20,7 @@ import axios from 'axios';
 import { getFullUrl } from '../config/apiConfig';
 import { Mention, MentionsInput } from 'react-mentions';
 import MuiMultiSelect from './MuiMultiSelect';
+import { AddTagModal } from './AddTagModal';
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -57,6 +58,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
     const [removedAttachmentIds, setRemovedAttachmentIds] = useState<number[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isTagModalOpen, setIsTagModalOpen] = useState(false);
 
     // Mention state
     const [mentionUsers, setMentionUsers] = useState<any[]>([]);
@@ -426,6 +428,12 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
                         </div>
 
                         <div>
+                            <div
+                                className="text-[12px] text-[red] text-right cursor-pointer mb-2"
+                                onClick={() => setIsTagModalOpen(true)}
+                            >
+                                <i>Create new tag</i>
+                            </div>
                             <MuiMultiSelect
                                 label="Tags"
                                 options={mentionTags.map((tag) => ({ value: tag.id, label: tag.name, id: tag.id }))}
@@ -529,6 +537,11 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
                     </Button>
                 </div>
             </DialogContent>
+            <AddTagModal
+                isOpen={isTagModalOpen}
+                onClose={() => setIsTagModalOpen(false)}
+                onTagCreated={() => fetchMentionTags()}
+            />
         </Dialog>
     );
 };
