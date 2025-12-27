@@ -9,6 +9,9 @@ import ProjectTaskCreateModal from './ProjectTaskCreateModal';
 import { FormControl, InputLabel, MenuItem, Select, TextField, Dialog, DialogTitle, DialogContent, Slide } from "@mui/material";
 import { createProject, fetchProjects } from "@/store/slices/projectManagementSlice";
 import { Button } from "./ui/button";
+import { AddTeamModal } from "./AddTeamModal";
+import { AddTagModal } from "./AddTagModal";
+import MuiMultiSelect from "./MuiMultiSelect";
 
 const Transition = forwardRef(function Transition(props: any, ref: any) {
     return <Slide direction="left" ref={ref} {...props} />;
@@ -43,6 +46,8 @@ const ConvertModal = ({
     const [tags, setTags] = useState<any[]>([]);
     const [projects, setProjects] = useState<any[]>([]);
     const [isLoadingOwners, setIsLoadingOwners] = useState(false);
+    const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+    const [isTagModalOpen, setIsTagModalOpen] = useState(false);
 
     // For Project Form
     const [projectFormData, setProjectFormData] = useState({
@@ -202,6 +207,13 @@ const ConvertModal = ({
         setProjectFormData((prev) => ({
             ...prev,
             [name]: type === "checkbox" ? checked : value
+        }));
+    };
+
+    const handleMultiSelectChange = (field: string, values: any) => {
+        setProjectFormData((prev) => ({
+            ...prev,
+            [field]: values
         }));
     };
 
@@ -461,6 +473,14 @@ const ConvertModal = ({
 
                             <div className="flex flex-col gap-4 my-5">
                                 <div>
+                                    <div className="flex justify-end">
+                                        <label
+                                            className="text-[12px] text-[red] cursor-pointer"
+                                            onClick={() => setIsTeamModalOpen(true)}
+                                        >
+                                            <i>Create new team</i>
+                                        </label>
+                                    </div>
                                     <FormControl fullWidth variant="outlined" size="small" sx={{ mt: 1 }}>
                                         <InputLabel shrink>Select Team*</InputLabel>
                                         <Select
@@ -526,28 +546,21 @@ const ConvertModal = ({
                                 </div>
 
                                 <div>
-                                    <FormControl fullWidth variant="outlined" size="small">
-                                        <InputLabel shrink>Tags*</InputLabel>
-                                        <Select
-                                            label="Tags*"
-                                            name="tags"
-                                            multiple
+                                    <div
+                                        className="text-[12px] text-[red] text-right cursor-pointer mt-2"
+                                        onClick={() => setIsTagModalOpen(true)}
+                                    >
+                                        <i>Create new tag</i>
+                                    </div>
+                                    <div className="mt-2">
+                                        <MuiMultiSelect
+                                            label={<span>Tags <span className="text-[#c72030]">*</span></span>}
+                                            options={tags.map((tag) => ({ value: tag.id, label: tag.name, id: tag.id }))}
                                             value={projectFormData.tags}
-                                            onChange={handleProjectFormChange}
-                                            displayEmpty
-                                        >
-                                            <MenuItem value="">
-                                                <em>Select Tags</em>
-                                            </MenuItem>
-                                            {
-                                                tags.map((tag) => (
-                                                    <MenuItem key={tag.id} value={tag.id}>
-                                                        {tag.name}
-                                                    </MenuItem>
-                                                ))
-                                            }
-                                        </Select>
-                                    </FormControl>
+                                            onChange={(values) => handleMultiSelectChange("tags", values)}
+                                            placeholder="Select Tags"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="flex justify-end gap-3 mt-6">
@@ -598,6 +611,16 @@ const ConvertModal = ({
                     )}
                 </div>
             </DialogContent>
+            <AddTeamModal
+                isOpen={isTeamModalOpen}
+                onClose={() => setIsTeamModalOpen(false)}
+                onTeamCreated={() => fetchTeams()}
+            />
+            <AddTagModal
+                isOpen={isTagModalOpen}
+                onClose={() => setIsTagModalOpen(false)}
+                onTagCreated={() => fetchTags()}
+            />
         </Dialog>
     );
 };
