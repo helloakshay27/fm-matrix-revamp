@@ -625,9 +625,9 @@ const AddSubtaskModal = ({ openTaskModal, setOpenTaskModal, fetchData }: { openT
         if (!validateSubtaskDuration()) return;
 
         setIsSubmitting(true)
-        const formatedStartDate = `${startDate.year}-${startDate.month + 1}-${startDate.date
+        const formatedStartDate = `${startDate?.year}-${startDate?.month + 1}-${startDate?.date
             }`;
-        const formatedEndDate = `${endDate.year}-${endDate.month + 1}-${endDate.date
+        const formatedEndDate = `${endDate?.year}-${endDate?.month + 1}-${endDate?.date
             }`;
         const payload = {
             task_management: {

@@ -3,20 +3,11 @@ import { fetchTargetDateTasks, editProjectTask } from "@/store/slices/projectTas
 import {
     ChevronUp,
     ChevronDown,
-    Calendar,
     CalendarCheck2,
     Timer,
+    FlagTriangleRight,
 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
-import {
-    DndContext,
-    DragEndEvent,
-    DragOverlay,
-    PointerSensor,
-    useSensor,
-    useSensors,
-} from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
 
 const calculateDuration = (end: string) => {
@@ -55,6 +46,21 @@ const TaskCard = ({ task, selectedDate, isDragging, setDraggedTask }) => {
         "0"
     )}-${String(selectedDate.date).padStart(2, "0")}`;
 
+    // 🔥 Helper to format date consistently (YYYY-MM-DD)
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+
+        // If parsing fails (e.g., already YYYY-MM-DD), return original
+        if (isNaN(d)) return dateStr;
+
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+    };
+
     // Calculate today's total allocation
     const todayAllocation = (task.allocation_times || [])
         .filter(a => a.date === date)
@@ -70,6 +76,9 @@ const TaskCard = ({ task, selectedDate, isDragging, setDraggedTask }) => {
     const hours = String(todayAllocation?.hours ?? 0).padStart(2, "0");
     const minutes = String(todayAllocation?.minutes ?? 0).padStart(2, "0");
 
+    // 🔥 Choose correct date & format it
+    const displayDate = formatDate(task.type === 'issue' ? task.end_date : task.target_date);
+
     return (
         <div
             draggable
@@ -81,23 +90,41 @@ const TaskCard = ({ task, selectedDate, isDragging, setDraggedTask }) => {
             className={`p-3 mb-2 border-l-4 cursor-move ${task.priority === "High" ? "border-[#C72030]" : task.priority === "Medium" ? "border-[#ED9017]" : "border-[#1FCFB3]"} bg-[#D5DBDB] ${isDragging ? "opacity-50" : "hover:opacity-80"
                 } transition-opacity`}
         >
-            <div className="text-xs font-medium text-gray-800 mb-2 text-ellipsis whitespace-nowrap overflow-hidden">{task.title}</div>
+            <div className="mb-2">
+                <a
+                    className="text-xs font-medium text-gray-800 text-ellipsis whitespace-nowrap overflow-hidden cursor-pointer"
+                    href={task.type === 'issue' ? `/issues/${task.id}` : `/tasks/${task.id}`}
+                    target="_blank"
+                >
+                    {task.type === 'issue' ? 'I' : 'T'}
+                    {task.id} - {task.title} (
+                    {task.type ? task.type.charAt(0).toUpperCase() + task.type.slice(1) : 'Task'})
+                </a>
+            </div>
+
             <div className="flex items-center gap-4 text-xs text-gray-600">
+                {/* Date */}
                 <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>{task.target_date}</span>
+                    <FlagTriangleRight className="w-3.5 h-3.5" />
+                    <span>{displayDate}</span>
                 </div>
+
+                {/* Allocated Today */}
                 <div className="flex items-center gap-1">
                     <CalendarCheck2 className="w-4 h-4" />
                     <span>{`${hours}:${minutes} Hrs`}</span>
                 </div>
+
+                {/* Countdown */}
                 <div className="flex items-center gap-1">
                     <Timer className="w-4 h-4" />
-                    <CountdownTimer targetDate={task.target_date} />
+                    <CountdownTimer targetDate={displayDate} />
                 </div>
+
+                {/* Estimated Hours */}
                 <div className="flex items-center gap-1">
                     <Timer className="w-4 h-4" />
-                    <span>{`${task.estimated_hour} Hrs`}</span>
+                    <span>{`${task.type === 'issue' ? task.total_allocated_hours : task.estimated_hour} Hrs`}</span>
                 </div>
             </div>
         </div>
@@ -105,7 +132,7 @@ const TaskCard = ({ task, selectedDate, isDragging, setDraggedTask }) => {
 };
 
 // ===================== DroppableDay =====================
-const DroppableDay = ({ dateInfo, onDrop, assignedTasks, onDateClick, draggedTask }) => {
+const DroppableDay = ({ dateInfo, onDrop, assignedTasks, onDateClick, draggedTask, shift }) => {
     const handleDragOver = (e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
@@ -118,6 +145,38 @@ const DroppableDay = ({ dateInfo, onDrop, assignedTasks, onDateClick, draggedTas
         }
     };
 
+    // Helper function to check if a date is a working day
+    const isDateWorking = (dateString, shiftData) => {
+        if (!shiftData) {
+            // Default: Monday to Friday (1-5)
+            const date = new Date(dateString);
+            const jsDay = date.getDay();
+            return jsDay !== 0 && jsDay !== 6;
+        }
+
+        const date = new Date(dateString);
+        const jsDay = date.getDay();
+        const dayNumber = jsDay === 0 ? 7 : jsDay;
+
+        try {
+            const noOfDays = shiftData?.no_of_days;
+            if (!noOfDays) return true;
+
+            const arr = Array.isArray(noOfDays) ? noOfDays : [];
+            const working = arr.map((v) => Number(v)).filter(Boolean);
+
+            if (working.length === 0) {
+                return jsDay !== 0 && jsDay !== 6;
+            }
+
+            return working.includes(dayNumber);
+        } catch (error) {
+            return true;
+        }
+    };
+
+    const isWeekOff = !isDateWorking(dateInfo.fullDate, shift);
+
     const calculationHrs = (typeof dateInfo.allocated_hours_num !== 'undefined')
         ? dateInfo.allocated_hours_num
         : parseFloat(String(dateInfo.hours).split(" ")[0]) || 0;
@@ -125,11 +184,13 @@ const DroppableDay = ({ dateInfo, onDrop, assignedTasks, onDateClick, draggedTas
 
     const bgClass = dateInfo.isSelected
         ? "bg-blue-50"
-        : dateInfo.overloaded
-            ? "bg-red-100"
-            : assignedTasks[dateInfo.fullDate]
-                ? "bg-[#D5DBDB]"
-                : "hover:bg-gray-50";
+        : isWeekOff
+            ? "bg-red-50"
+            : dateInfo.overloaded
+                ? "bg-red-100"
+                : assignedTasks[dateInfo.fullDate]
+                    ? "bg-[#D5DBDB]"
+                    : "hover:bg-gray-50";
 
     const handleClick = () => {
         onDateClick(dateInfo.fullDate);
@@ -143,16 +204,20 @@ const DroppableDay = ({ dateInfo, onDrop, assignedTasks, onDateClick, draggedTas
             className={`relative grid grid-cols-3 border-t border-b border-r border-dashed border-gray-400 items-center px-3 py-[19px] ${bgClass} cursor-pointer transition-colors`}
         >
             <span
-                className={`absolute left-0 top-0 h-full w-[4px] ${durationPercentage <= 33
-                    ? "bg-[#1FCFB3]"
-                    : durationPercentage <= 66
-                        ? "bg-[#ED9017]"
-                        : "bg-[#C72030]"
+                className={`absolute left-0 top-0 h-full w-[4px] ${isWeekOff
+                    ? "bg-red-500"
+                    : durationPercentage <= 33
+                        ? "bg-[#1FCFB3]"
+                        : durationPercentage <= 66
+                            ? "bg-[#ED9017]"
+                            : "bg-[#C72030]"
                     }`}
             />
             <div className="font-medium text-xs text-left">{dateInfo.day}</div>
             <div className="text-xs text-gray-600 text-left">{dateInfo.date}</div>
-            <div className="font-semibold text-xs text-right">{dateInfo.hours}</div>
+            <div className="font-semibold text-xs text-right">
+                {isWeekOff ? 'Week Off' : dateInfo.hours}
+            </div>
             {dateInfo.isPending && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="bg-yellow-50 text-yellow-800 text-xs px-2 py-1 rounded">Processing...</div>
@@ -171,6 +236,7 @@ const CalendarWeekView = ({
     assignedTasks,
     onDateClick,
     draggedTask,
+    shift,
 }) => {
     return (
         <div className="bg-white border-gray-300 relative">
@@ -195,6 +261,7 @@ const CalendarWeekView = ({
                         assignedTasks={assignedTasks}
                         onDateClick={onDateClick}
                         draggedTask={draggedTask}
+                        shift={shift}
                     />
                 ))}
             </div>
@@ -214,7 +281,7 @@ const CalendarWeekView = ({
 };
 
 // ===================== TasksOfDate =====================
-const TasksOfDate = ({ selectedDate, onClose, tasks, userAvailability, selectedUser }) => {
+const TasksOfDate = ({ selectedDate, onClose, tasks, userAvailability, selectedUser, shift }) => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -324,24 +391,42 @@ const TasksOfDate = ({ selectedDate, onClose, tasks, userAvailability, selectedU
             // mark as pending so UI doesn't show assignment until success
             setPendingDrops((p) => ({ ...p, [fullDate]: true }));
 
-            await dispatch(
-                editProjectTask({
-                    token,
-                    baseUrl,
-                    id: task.id,
-                    data: {
-                        ...(task.target_date == formatedSelectedDate && {
-                            target_date: fullDate,
-                            allocation_date: fullDate,
-                        }),
-                        task_allocation_times_attributes: task.allocation_times.map((t) =>
-                            t.date == formatedSelectedDate
-                                ? { ...t, date: fullDate }
-                                : t
-                        ),
-                    },
-                })
-            ).unwrap();
+            const dateField = task.type === 'issue' ? 'end_date' : 'target_date';
+
+            const payload = {
+                ...(task[dateField] == formatedSelectedDate && {
+                    [dateField]: fullDate,
+                    allocation_date: fullDate,
+                }),
+                task_allocation_times_attributes: task.allocation_times.map((t) =>
+                    t.date == formatedSelectedDate ? { ...t, date: fullDate } : t
+                ),
+                ...(task.type === 'issue' && {
+                    task_management_id: task.task_management_id,
+                }),
+            };
+
+            // Use different API based on task type
+            if (task.type === 'issue') {
+                // TODO: Replace with actual issue update action when available
+                await dispatch(
+                    editProjectTask({
+                        token,
+                        baseUrl,
+                        id: task.id,
+                        data: payload,
+                    })
+                ).unwrap();
+            } else {
+                await dispatch(
+                    editProjectTask({
+                        token,
+                        baseUrl,
+                        id: task.id,
+                        data: payload,
+                    })
+                ).unwrap();
+            }
 
             // only after success update local UI state
             setAssignedTasks((prev) => ({ ...prev, [fullDate]: task }));
@@ -454,7 +539,7 @@ const TasksOfDate = ({ selectedDate, onClose, tasks, userAvailability, selectedU
                     </span>
                 </div>
                 <div className="font-semibold">
-                    Total Task Hours: {totalTaskHours}
+                    Total Allocated Task Hours: {totalTaskHours}
                 </div>
             </div>
 
@@ -525,6 +610,7 @@ const TasksOfDate = ({ selectedDate, onClose, tasks, userAvailability, selectedU
                         assignedTasks={assignedTasks}
                         onDateClick={handleDateClick}
                         draggedTask={draggedTask}
+                        shift={shift}
                     />
                 </div>
             </div>

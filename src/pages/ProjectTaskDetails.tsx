@@ -1333,7 +1333,7 @@ export const ProjectTaskDetails = () => {
       </div>
 
       {/* Description Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6 mt-4">
+      <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6 mt-4">
         <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
           <ChevronDownCircle
             color="#E95420"
@@ -1350,7 +1350,7 @@ export const ProjectTaskDetails = () => {
       </div>
 
       {/* Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
           <ChevronDownCircle
             color="#E95420"
