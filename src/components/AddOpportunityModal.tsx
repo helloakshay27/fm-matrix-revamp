@@ -98,7 +98,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
 
     // Derived User Options
     const usersList = (fmUsersData as any)?.users || (fmUsersData as any)?.fm_users || [];
-    const userOptions = usersList.map((user: any) => ({
+    const userOptions = mentionUsers.map((user: any) => ({
         label: `${user.full_name}`,
         value: user.id,
     }));
