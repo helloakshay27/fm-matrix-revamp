@@ -658,7 +658,7 @@ const ProjectDetailsPage = () => {
                                     </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
-                                    <Link to={`milestones`} className="text-right text-[13px] font-[500]">
+                                    <Link to={`/vas/projects/${project.id}/milestones`} className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer">
                                         Milestones :
                                     </Link>
                                     <div className="text-left text-[13px]">{`${project.completed_milestone_count}/${project.total_milestone_count}`}</div>
@@ -678,8 +678,8 @@ const ProjectDetailsPage = () => {
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
                                     <Link
-                                        to={`/tasks?project_id=${project.id}`}
-                                        className="text-right text-[13px] font-semibold"
+                                        to={`/vas/tasks?project_id=${project.id}`}
+                                        className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer"
                                     >
                                         Tasks :
                                     </Link>
