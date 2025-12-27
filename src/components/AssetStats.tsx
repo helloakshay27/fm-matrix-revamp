@@ -27,15 +27,12 @@ interface AssetStatsProps {
     dispose: number;
   };
   onCardClick?: (filterType: string) => void;
-  hasActiveFilter?: boolean;
-  onFilterBlocked?: () => void;
+
 }
 
 export const AssetStats: React.FC<AssetStatsProps> = ({
   stats,
   onCardClick,
-  hasActiveFilter = false,
-  onFilterBlocked,
 }) => {
   const statData = [
     {
@@ -96,11 +93,6 @@ export const AssetStats: React.FC<AssetStatsProps> = ({
   ];
 
   const handleCardClick = (filterType: string) => {
-    if (hasActiveFilter) {
-      onFilterBlocked?.();
-      return;
-    }
-
     onCardClick?.(filterType);
   };
 
@@ -111,11 +103,7 @@ export const AssetStats: React.FC<AssetStatsProps> = ({
           key={i}
           className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)]
           flex items-center gap-4
-          ${
-            hasActiveFilter
-              ? "opacity-60 cursor-not-allowed"
-              : "cursor-pointer hover:shadow-lg transition-shadow"
-          }`}
+cursor-pointer hover:shadow-lg transition-shadow`}
           onClick={() =>
             item.filterType !== "value" && handleCardClick(item.filterType)
           }
