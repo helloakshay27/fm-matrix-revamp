@@ -12,6 +12,7 @@ import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { format } from "date-fns";
 import { MenuItem, Select, TextField, FormControl } from "@mui/material";
 import { useLayout } from "@/contexts/LayoutContext";
+import axios from "axios";
 
 interface Dependency {
   title?: string;
@@ -209,8 +210,13 @@ export const MilestoneDetailsPage = () => {
 
   const getOwners = async () => {
     try {
-      const response = await dispatch(fetchFMUsers()).unwrap();
-      setOwners(response.users);
+      const response = await axios.get(
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setOwners(response.data.users);
     } catch (error) {
       console.log(error);
       toast.error(String(error) || "Failed to fetch users");

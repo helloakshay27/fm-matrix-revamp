@@ -27,6 +27,9 @@ interface ConvertModalProps {
         task?: number;
         taskName?: string;
         description?: string;
+        responsible_person: {
+            id: string;
+        }
     };
     opportunityId: number | string;
 }
@@ -82,7 +85,7 @@ const ConvertModal = ({
                 isTemplate: false,
                 description: prefillData?.description?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
                     .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
-                owner: "",
+                owner: prefillData?.responsible_person?.id,
                 startDate: "",
                 endDate: "",
                 team: "",
@@ -94,14 +97,18 @@ const ConvertModal = ({
     }, [isModalOpen]);
 
     const fetchOwners = async () => {
+        const baseUrl = localStorage.getItem('baseUrl');
         setIsLoadingOwners(true);
         try {
-            const response = await dispatch(fetchFMUsers()).unwrap();
-            setOwners(response.users || []);
+            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+            setOwners(response.data.users);
         } catch (error) {
-            console.error('Error fetching owners:', error);
-        } finally {
-            setIsLoadingOwners(false);
+            console.log(error)
+            toast.error(error)
         }
     };
 

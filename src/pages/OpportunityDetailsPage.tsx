@@ -29,6 +29,9 @@ interface OpportunityDetailsData {
     milestone_id?: number;
     project_name?: string;
     task_name?: string;
+    responsible_person?: {
+        id: string;
+    };
     attachments?: Array<{
         id: number;
         document_file_name?: string;
@@ -729,6 +732,9 @@ const OpportunityDetailsPage = () => {
                         task: opportunityDetails?.task_management_id,
                         taskName: opportunityDetails?.task_name,
                         description: opportunityDetails?.description,
+                        responsible_person: {
+                            id: opportunityDetails?.responsible_person?.id
+                        }
                     }}
                     opportunityId={Number(id)}
                 />

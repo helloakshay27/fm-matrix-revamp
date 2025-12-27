@@ -10,6 +10,7 @@ import MilestoneList from '@/components/MilestoneList'
 import MilestoneKanban from '@/components/MilestoneKanban'
 import { useLayout } from '@/contexts/LayoutContext'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
 const ProjectMilestones = () => {
     const { setCurrentSection } = useLayout();
@@ -30,11 +31,16 @@ const ProjectMilestones = () => {
 
     const getOwners = async () => {
         try {
-            const response = await dispatch(fetchFMUsers()).unwrap();
-            setOwners(response.users);
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setOwners(response.data.users || []);
         } catch (error) {
-            console.log(error)
-            toast.error(error)
+            console.log('Error fetching mention users:', error);
         }
     }
 
