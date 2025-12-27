@@ -83,7 +83,13 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
             setTitle(data.title || '');
             setDescription(data.description || '');
             setResponsiblePerson(data.responsible_person?.id || '');
-            setTags(data.tag_ids || []);
+            // Map tags to the format expected by MuiMultiSelect: {value, label}
+            const selectedTags = (data.task_tags || []).map((tag: any) => ({
+                value: tag.company_tag_id,
+                label: tag.company_tag.name || 'Unknown Tag',
+                id: tag.company_tag_id
+            }));
+            setTags(selectedTags);
             setExistingAttachments(data.attachments || []);
         } catch (error) {
             console.error('Error fetching opportunity details:', error);
@@ -176,8 +182,8 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
             formData.append('opportunity[responsible_person_id]', responsiblePerson);
 
             // Append tags
-            tags.forEach((tagId: any) => {
-                formData.append('opportunity[tag_ids][]', tagId.value);
+            tags.forEach((tag: any) => {
+                formData.append('opportunity[tag_ids][]', tag.value || tag.id);
             });
 
             // Append new attachments
