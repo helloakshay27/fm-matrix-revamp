@@ -682,6 +682,8 @@ export const AssetDashboard = () => {
       });
     }
   };
+const hasActiveFilter = Object.keys(filters || {}).length > 0 || !!searchTerm;
+
 
   // Analytics data (simplified)
   const statusData = [
@@ -775,7 +777,10 @@ export const AssetDashboard = () => {
           ) : (
             <>
               {/* @ts-ignore - API stats object uses snake_case fields */}
-              <AssetStats stats={data} onCardClick={handleStatCardClick} />
+              <AssetStats stats={data} onCardClick={handleStatCardClick}   hasActiveFilter={Object.keys(filters || {}).length > 0 || !!searchTerm}
+  onFilterBlocked={() =>
+    toast.warning("Please reset the filters before applying card filters")
+  } />
 
               <div className="relative">
                 <AssetDataTable

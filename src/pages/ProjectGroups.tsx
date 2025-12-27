@@ -1,5 +1,6 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { Edit, Plus, X, ChevronDown, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -7,7 +8,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchProjectGroups, createProjectGroup, updateProjectGroup, deleteProjectGroup } from "@/store/slices/projectGroupSlice";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
-import { toast } from "sonner"; // Assuming sonner is used, or alert
+import { toast } from "sonner";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const columns: ColumnConfig[] = [
     {
@@ -142,6 +149,26 @@ const ProjectGroups = () => {
         );
     };
 
+    const handleToggleActive = async (item: any) => {
+        const payload = {
+            project_group: {
+                name: item.name,
+                created_by_id: item.created_by_id || currentUser.id,
+                user_ids: item.user_ids || [],
+                active: !item.active,
+            }
+        };
+
+        try {
+            await dispatch(updateProjectGroup({ baseUrl, token, id: item.id, payload })).unwrap();
+            dispatch(fetchProjectGroups({ baseUrl, token }));
+            toast.success(`Project Group ${item.active ? 'deactivated' : 'activated'} successfully`);
+        } catch (error) {
+            console.error('Failed to update group status:', error);
+            toast.error('Failed to update status');
+        }
+    };
+
     const renderActions = (item: any) => {
         return (
             <div className="flex gap-2 items-center">
@@ -153,14 +180,14 @@ const ProjectGroups = () => {
                 >
                     <Edit className="w-4 h-4" />
                 </Button>
-                <Button
+                {/* <Button
                     size="sm"
                     variant="ghost"
                     className="p-1 text-red-500 hover:text-red-700"
                     onClick={() => handleDelete(item.id)}
                 >
                     <Trash2 className="w-4 h-4" />
-                </Button>
+                </Button> */}
             </div>
         )
     };
@@ -168,34 +195,42 @@ const ProjectGroups = () => {
     const renderCell = (item: any, columnKey: string) => {
         switch (columnKey) {
             case 'members':
-                const memberIds = item.user_ids || [];
+                const members = item.project_group_members || [];
                 return (
-                    <div className="flex">
-                        {memberIds.map((memberId: number, index: number) => {
-                            const user = usersOptions.find(u => u.id === memberId);
-                            // Generate a consistent color based on char code or id
-                            const color = user ? `hsl(${(user.id * 137) % 360}, 70%, 80%)` : '#ccc';
-                            return user ? (
-                                <div
-                                    key={memberId}
-                                    className="w-8 h-8 rounded-full flex items-center !justify-center text-slate-700 text-xs font-semibold border-2 border-white"
-                                    style={{
-                                        backgroundColor: color,
-                                        marginLeft: index > 0 ? '-12px' : '0'
-                                    }}
-                                    title={user.full_name}
-                                >
-                                    {user.full_name?.charAt(0).toUpperCase()}
-                                </div>
-                            ) : null;
-                        })}
-                    </div>
+                    <TooltipProvider>
+                        <div className="flex">
+                            {members.map((member: any, index: number) => {
+                                const userName = member.user_name || '';
+                                const userId = member.id;
+                                const color = `hsl(${(userId * 137) % 360}, 70%, 80%)`;
+                                return (
+                                    <Tooltip key={userId}>
+                                        <TooltipTrigger asChild>
+                                            <div
+                                                className="w-8 h-8 rounded-full flex items-center !justify-center text-slate-700 text-xs font-semibold border-2 border-white cursor-pointer"
+                                                style={{
+                                                    backgroundColor: color,
+                                                    marginLeft: index > 0 ? '-12px' : '0'
+                                                }}
+                                            >
+                                                {userName.charAt(0).toUpperCase()}
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{userName}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                );
+                            })}
+                        </div>
+                    </TooltipProvider>
                 );
             case 'status':
                 return (
-                    <span className={`px-2 py-1 rounded-full text-xs ${item.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {item.active ? 'Active' : 'Inactive'}
-                    </span>
+                    <Switch
+                        checked={item.active}
+                        onCheckedChange={() => handleToggleActive(item)}
+                    />
                 );
             default:
                 return item[columnKey] || "-";

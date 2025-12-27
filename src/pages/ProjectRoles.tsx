@@ -1,11 +1,13 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { Edit, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchProjectRoles, createProjectRole, updateProjectRole, deleteProjectRole } from "@/store/slices/projectRoleSlice";
+import { toast } from "sonner";
 
 const columns: ColumnConfig[] = [
     {
@@ -38,6 +40,7 @@ const ProjectRoles = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [roleName, setRoleName] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         dispatch(fetchProjectRoles());
@@ -67,28 +70,55 @@ const ProjectRoles = () => {
         if (!roleName.trim()) {
             return; // Add toast here properly in next steps
         }
+        setSubmitting(true);
+        try {
+            const payload = {
+                name: roleName,
+                display_name: roleName,
+                active: 1
+            };
 
-        const payload = {
-            name: roleName,
-            display_name: roleName,
-            active: 1
-        };
+            if (isEditMode && editingId) {
+                await dispatch(updateProjectRole({ id: editingId, data: payload })).unwrap();
+                dispatch(fetchProjectRoles()); // Refresh list
+                toast.success('Role updated successfully');
+            } else {
+                await dispatch(createProjectRole(payload)).unwrap();
+                dispatch(fetchProjectRoles()); // Refresh list
+                toast.success('Role created successfully');
+            }
 
-        if (isEditMode && editingId) {
-            await dispatch(updateProjectRole({ id: editingId, data: payload })).unwrap();
-            dispatch(fetchProjectRoles()); // Refresh list
-        } else {
-            await dispatch(createProjectRole(payload)).unwrap();
-            dispatch(fetchProjectRoles()); // Refresh list
+            closeDialog();
+        } catch (error) {
+            toast.error('Failed to save role');
+            console.log(error)
+        } finally {
+            setSubmitting(false)
         }
 
-        closeDialog();
+
     };
 
     const handleDelete = async (id: number) => {
         if (window.confirm('Are you sure you want to delete this role?')) {
             await dispatch(deleteProjectRole(id)).unwrap();
             dispatch(fetchProjectRoles()); // Refresh list
+        }
+    };
+
+    const handleToggleActive = async (item: any) => {
+        const payload = {
+            name: item.name,
+            display_name: item.name,
+            active: item.active ? 0 : 1
+        };
+
+        try {
+            await dispatch(updateProjectRole({ id: item.id, data: payload })).unwrap();
+            dispatch(fetchProjectRoles()); // Refresh list
+        } catch (error) {
+            console.error('Failed to update role status:', error);
+            // Add toast notification here if needed
         }
     };
 
@@ -120,7 +150,12 @@ const ProjectRoles = () => {
             case 'title':
                 return item.name;
             case 'active':
-                return item.active ? 'Yes' : 'No';
+                return (
+                    <Switch
+                        checked={item.active}
+                        onCheckedChange={() => handleToggleActive(item)}
+                    />
+                );
             case 'created_at':
                 return item.created_at ? new Date(item.created_at).toLocaleDateString() : '-';
             default:
@@ -199,6 +234,7 @@ const ProjectRoles = () => {
                                 <Button
                                     className="bg-[#C72030] hover:bg-[#A01020] text-white"
                                     onClick={handleSubmit}
+                                    disabled={submitting}
                                 >
                                     {isEditMode ? 'Update' : 'Save'}
                                 </Button>

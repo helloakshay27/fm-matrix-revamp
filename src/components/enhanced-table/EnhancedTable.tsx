@@ -862,12 +862,12 @@ export function EnhancedTable<T extends Record<string, any>>({
                           <div>{emptyMessage}</div>
                           <Button
                             onClick={handleAddRowClick}
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             className="flex items-center gap-2"
                           >
                             <Plus className="w-4 h-4" />
-                            Add First Record
+                            {newRowPlaceholder}
                           </Button>
                         </div>
                       ) : (

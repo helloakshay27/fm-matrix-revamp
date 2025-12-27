@@ -20,6 +20,7 @@ import { fetchFMUsers } from '../store/slices/fmUserSlice';
 import { fetchProjectsTags } from '../store/slices/projectTagSlice';
 import { createMoM } from '../store/slices/momSlice';
 import MuiSelectField from '../components/MuiSelectField';
+import MuiMultiSelect from '../components/MuiMultiSelect';
 import { API_CONFIG } from '../config/apiConfig';
 import { toast } from 'sonner';
 import { useLayout } from '@/contexts/LayoutContext';
@@ -43,7 +44,7 @@ interface DiscussionPoint {
     responsiblePerson: string | number; // userId
     endDate: string;
     isTask: boolean;
-    tag: string | number; // tagId
+    tags: any[]; // Array of tag objects with value and label
 }
 
 interface FormData {
@@ -91,10 +92,12 @@ const AddMoMPage = () => {
         responsiblePerson: '',
         endDate: '',
         isTask: false,
-        tag: ''
+        tags: []
     }]);
     const [attachments, setAttachments] = useState<File[]>([]);
     const attachmentRef = useRef<HTMLInputElement>(null);
+
+    console.log(internalAttendees)
 
     // Fetch Data on Mount
     useEffect(() => {
@@ -179,7 +182,7 @@ const AddMoMPage = () => {
             responsiblePerson: '',
             endDate: '',
             isTask: false,
-            tag: ''
+            tags: []
         }]);
     };
 
@@ -293,47 +296,27 @@ const AddMoMPage = () => {
         });
 
         points.forEach((point, index) => {
-            // Find responsible person object
             const respUser = findUser(point.responsiblePerson);
-            // Find raised by label (It could be user ID or external email)
-            // If it's a number, it's an internal user ID. If string, it's external email/name.
             let raisedByLabel = '';
             if (typeof point.raisedBy === 'number') {
                 const u = findUser(point.raisedBy);
                 raisedByLabel = u ? `${u.firstname} ${u.lastname}` : String(point.raisedBy);
             } else {
-                // Try to find if the string value matches an internal user ID (unlikely given logic but safe)
-                // or just use the label from options?
-                // The point.raisedBy value for internal is ID. For external it's email.
-                // The API expects 'raised_by' as a string (name?).
-                // Let's rely on getRaisedByOptions to find the label if possible? No, referencing state directly is better.
-
-                // Re-calculate the label logic essentially:
                 const internalMatch = internalAttendees.find(a => a.userId === point.raisedBy);
                 if (internalMatch && internalMatch.userId) {
                     const u = findUser(internalMatch.userId);
                     raisedByLabel = u ? `${u.firstname} ${u.lastname}` : '';
                 } else {
-                    // Must be external
                     const extMatch = externalAttendees.find(a => a.email === point.raisedBy);
                     raisedByLabel = extMatch ? extMatch.name || '' : String(point.raisedBy);
                 }
-
-                // Fallback if logic above is too complex or mapped differently:
-                // The Select component stores 'value'.
-                // We can try to look it up in 'raisedByOptions' but that is derived in render.
-                // Simpler: Just check if it's in usersList for internal name, else external name.
                 const u = findUser(point.raisedBy);
                 if (u) raisedByLabel = `${u.firstname} ${u.lastname}`;
                 else {
-                    // Check external attendees by email
                     const ext = externalAttendees.find(e => e.email === point.raisedBy);
                     raisedByLabel = ext ? ext.name || '' : String(point.raisedBy);
                 }
             }
-
-            // Tag object
-            const tagObj = tagsList.find((t: any) => t.id === point.tag);
 
             formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][description]`, point.description || '');
             formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][raised_by]`, raisedByLabel);
@@ -349,8 +332,10 @@ const AddMoMPage = () => {
             formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][status]`, 'open');
             formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][save_task]`, point.isTask ? 'true' : 'false');
 
-            if (tagObj) {
-                formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][company_tag_id]`, tagObj.id);
+            if (point.tags && point.tags.length > 0) {
+                point.tags.forEach((tag: any) => {
+                    formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][company_tag_ids][]`, tag.value);
+                });
             }
         });
 
@@ -440,6 +425,9 @@ const AddMoMPage = () => {
                                 value={formData.date}
                                 onChange={(e) => handleInputChange('date', e.target.value)}
                                 sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white' } }}
+                                inputProps={{
+                                    min: new Date().toISOString().split('T')[0],
+                                }}
                             />
                         </div>
                         <div className="flex-1">
@@ -602,9 +590,16 @@ const AddMoMPage = () => {
                                             sx={{
                                                 "& .MuiOutlinedInput-root": {
                                                     height: "auto !important",
-                                                    padding: "16px !important",
+                                                    padding: "2px !important",
                                                     display: "flex",
-                                                    bgcolor: 'white'
+                                                },
+                                                "& .MuiInputBase-input[aria-hidden='true']": {
+                                                    flex: 0,
+                                                    width: 0,
+                                                    height: 0,
+                                                    padding: "0 !important",
+                                                    margin: 0,
+                                                    display: "none",
                                                 },
                                                 "& .MuiInputBase-input": {
                                                     resize: "none !important",
@@ -667,7 +662,9 @@ const AddMoMPage = () => {
                                             size="small"
                                             value={point.endDate}
                                             onChange={(e) => handlePointChange(index, 'endDate', e.target.value)}
-                                            sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white' } }}
+                                            inputProps={{
+                                                min: new Date().toISOString().split('T')[0],
+                                            }}
                                         />
                                     </div>
 
@@ -675,12 +672,12 @@ const AddMoMPage = () => {
                                         <Typography variant="subtitle2" className="mb-1">
                                             Tags <span className="text-red-500">*</span>
                                         </Typography>
-                                        <MuiSelectField
-                                            // label="Select..."
+                                        <MuiMultiSelect
+                                            label=""
                                             options={tagOptions}
-                                            value={point.tag}
-                                            onChange={(e) => handlePointChange(index, 'tag', e.target.value as string)}
-                                            fullWidth
+                                            value={point.tags}
+                                            onChange={(values) => handlePointChange(index, 'tags', values)}
+                                            placeholder="Select Tags"
                                         />
                                     </div>
                                 </div>

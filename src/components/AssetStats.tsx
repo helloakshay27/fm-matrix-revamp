@@ -11,6 +11,12 @@ import {
 
 interface AssetStatsProps {
   stats: {
+    non_it_assets: any;
+    allocated_count: any;
+    breakdown_count: any;
+    in_use_count: any;
+    it_assets: any;
+    total_count: any;
     total: number;
     total_value: string;
     nonItAssets: number;
@@ -21,9 +27,16 @@ interface AssetStatsProps {
     dispose: number;
   };
   onCardClick?: (filterType: string) => void;
+  hasActiveFilter?: boolean;
+  onFilterBlocked?: () => void;
 }
 
-export const AssetStats: React.FC<AssetStatsProps> = ({ stats, onCardClick }) => {
+export const AssetStats: React.FC<AssetStatsProps> = ({
+  stats,
+  onCardClick,
+  hasActiveFilter = false,
+  onFilterBlocked,
+}) => {
   const statData = [
     {
       label: "Total Assets",
@@ -33,10 +46,15 @@ export const AssetStats: React.FC<AssetStatsProps> = ({ stats, onCardClick }) =>
     },
     {
       label: "Total Value",
-      value: typeof stats.total_value === 'number' ? stats.total_value.toLocaleString('en-IN') : stats.total_value,
-      // icon: <DollarSign className="w-6 h-6 text-[#C72030]" />,
-      // icon: <IndianRupee className="w-6 h-6 text-[#C72030]" />,
-      icon: <span className="font-bold text-[18px] !text-[#C72030]">{localStorage.getItem("currency")}</span>,
+      value:
+        typeof stats.total_value === "number"
+          ? stats.total_value.toLocaleString("en-IN")
+          : stats.total_value,
+      icon: (
+        <span className="font-bold text-[18px] !text-[#C72030]">
+          {localStorage.getItem("currency")}
+        </span>
+      ),
       filterType: "value",
     },
     {
@@ -77,20 +95,32 @@ export const AssetStats: React.FC<AssetStatsProps> = ({ stats, onCardClick }) =>
     },
   ];
 
+  const handleCardClick = (filterType: string) => {
+    if (hasActiveFilter) {
+      onFilterBlocked?.();
+      return;
+    }
+
+    onCardClick?.(filterType);
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
       {statData.map((item, i) => (
         <div
           key={i}
-          className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 ${onCardClick && item.filterType !== "value" ? "cursor-pointer hover:shadow-lg transition-shadow" : ""
-            }`}
-          onClick={() => {
-            if (onCardClick && item.filterType !== "value") {
-              onCardClick(item.filterType);
-            }
-          }}
+          className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)]
+          flex items-center gap-4
+          ${
+            hasActiveFilter
+              ? "opacity-60 cursor-not-allowed"
+              : "cursor-pointer hover:shadow-lg transition-shadow"
+          }`}
+          onClick={() =>
+            item.filterType !== "value" && handleCardClick(item.filterType)
+          }
         >
-          <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
+          <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
             {item.icon}
           </div>
           <div>
@@ -106,3 +136,4 @@ export const AssetStats: React.FC<AssetStatsProps> = ({ stats, onCardClick }) =>
     </div>
   );
 };
+

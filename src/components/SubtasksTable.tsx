@@ -346,7 +346,7 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
                 className="min-w-[1200px] h-max"
                 renderCell={renderSubtaskCell}
                 renderActions={renderActions}
-                canAddRow={true}
+                // canAddRow={true}
                 readonlyColumns={["id", "status", "duration"]}
                 renderEditableCell={renderEditableCell}
             />

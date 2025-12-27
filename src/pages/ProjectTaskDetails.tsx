@@ -554,7 +554,7 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
 };
 
 // Attachments Component
-const Attachments = ({ attachments, taskId }: { attachments?: any[]; taskId?: string }) => {
+const Attachments = ({ attachments, taskId, fetchData }: { attachments?: any[]; taskId?: string, fetchData: () => void }) => {
   const dispatch = useAppDispatch();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const baseUrl = localStorage.getItem("baseUrl");
@@ -595,13 +595,7 @@ const Attachments = ({ attachments, taskId }: { attachments?: any[]; taskId?: st
       });
 
       toast.success("File(s) uploaded successfully");
-      if (taskId) {
-        const taskResponse = await dispatch(fetchProjectTasksById({ baseUrl, token, id: taskId })).unwrap();
-        setFiles(taskResponse?.attachments || []);
-      }
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      fetchData();
     } catch (error: any) {
       console.error("File upload failed:", error);
       toast.error("Failed to upload file.");
@@ -1339,7 +1333,7 @@ export const ProjectTaskDetails = () => {
       </div>
 
       {/* Description Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6 mt-4">
+      <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6 mt-4">
         <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
           <ChevronDownCircle
             color="#E95420"
@@ -1356,7 +1350,7 @@ export const ProjectTaskDetails = () => {
       </div>
 
       {/* Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6">
         <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
           <ChevronDownCircle
             color="#E95420"
@@ -1597,7 +1591,7 @@ export const ProjectTaskDetails = () => {
 
           {/* Attachments Tab */}
           {activeTab === "attachments" && (
-            <Attachments attachments={(taskDetails as any)?.attachments} taskId={taskId} />
+            <Attachments attachments={(taskDetails as any)?.attachments} taskId={taskId} fetchData={fetchData} />
           )}
 
           {/* Project Drive Tab */}

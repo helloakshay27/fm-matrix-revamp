@@ -89,7 +89,7 @@ const sortCommentsDesc = (arr: any[] | undefined) => {
     return [...arr].sort((a, b) => time(b) - time(a));
 };
 
-const Attachments = ({ attachments, id, baseUrl, token, getIssue }: any) => {
+const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDetails }: any) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [files, setFiles] = useState(attachments);
     const [uploading, setUploading] = useState(false);
@@ -114,43 +114,13 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue }: any) => {
         try {
             setUploading(true);
 
-            const resp = await axios.put(`https://${baseUrl}/issues/${id}.json`, formData, {
+            await axios.put(`https://${baseUrl}/issues/${id}.json`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
-
-            // Try to extract updated attachments from response, fallback to refetching issue
-            const updatedIssue = resp.data.issue || resp.data;
-            const updatedAttachments = updatedIssue?.attachments || updatedIssue?.attachments_attributes || null;
-
-
-            if (Array.isArray(updatedAttachments)) {
-                setFiles(updatedAttachments);
-            } else if (typeof getIssue === "function") {
-                // Ask parent to refresh full issue data which will flow down via props
-                try {
-                    await getIssue();
-                } catch (err) {
-                    console.error("Failed to refresh parent issue after upload:", err);
-                }
-            } else {
-                // If server didn't return attachments and no parent refresh, try to fetch fresh issue data locally
-                try {
-                    const fresh = await axios.get(`https://${baseUrl}/issues/${id}.json`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
-                    const freshIssue = fresh.data.issue || fresh.data;
-                    setFiles(freshIssue.attachments || []);
-                } catch (err) {
-                    // last resort: leave existing files as-is
-                    console.error("Failed to refresh attachments after upload:", err);
-                }
-            }
-
+            fetchIssueDetails();
             toast.success("Files uploaded successfully.");
-            // Reload the page so attachments are guaranteed to display (server may process attachments async)
-            window.location.reload();
         } catch (error) {
             console.error("File upload failed:", error);
             toast.error("Failed to upload file.");
@@ -663,8 +633,10 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
 const IssueDetailsPage = () => {
     const { setCurrentSection } = useLayout();
 
+    const view = localStorage.getItem("selectedView");
+
     useEffect(() => {
-        setCurrentSection("Project Task");
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
     }, [setCurrentSection]);
 
     const navigate = useNavigate();
@@ -684,56 +656,56 @@ const IssueDetailsPage = () => {
     const statusDropdownRef = useRef<HTMLDivElement>(null);
 
     // Fetch issue details
-    useEffect(() => {
-        if (issueId && baseUrl && token) {
-            setLoading(true);
-            const fetchIssueDetails = async () => {
-                try {
-                    const response = await axios.get(
-                        `https://${baseUrl}/issues/${issueId}.json`,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                            },
-                        }
-                    );
-                    const issueDetail = response.data.issue || response.data;
-
-                    // Map API response to Issue interface
-                    const mappedIssue: Issue = {
-                        id: issueDetail.id?.toString() || "",
-                        title: issueDetail.title || "",
-                        description: issueDetail.description || "",
-                        issue_type_name: issueDetail.issue_type_name || "",
-                        priority: issueDetail.priority || "",
-                        status: issueDetail.status || "open",
-                        responsible_person: issueDetail.responsible_person || { name: "Unassigned" },
-                        responsible_person_id: issueDetail.responsible_person_id || issueDetail.assigned_to_id || "",
-                        created_by: issueDetail.created_by || { name: "Unknown" },
-                        created_at: issueDetail.created_at || "",
-                        updated_at: issueDetail.updated_at || "",
-                        start_date: issueDetail.start_date || "",
-                        end_date: issueDetail.end_date || issueDetail.target_date || issueDetail.due_date || "",
-                        project_management_name: issueDetail.project_management_name || "",
-                        milstone_name: issueDetail.milstone_name || "",
-                        task_management_name: issueDetail.task_management_name || "",
-                        tags: issueDetail.tags || [],
-                        attachments: issueDetail.attachments || [],
-                        comments: sortCommentsDesc(issueDetail.comments || []),
-                    };
-
-                    setIssueData(mappedIssue);
-                } catch (error) {
-                    console.error("Error fetching issue details:", error);
-                    toast.error(
-                        error instanceof Error ? error.message : "Failed to load issue"
-                    );
-                    navigate(-1);
-                } finally {
-                    setLoading(false);
+    const fetchIssueDetails = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/issues/${issueId}.json`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 }
+            );
+            const issueDetail = response.data.issue || response.data;
+
+            // Map API response to Issue interface
+            const mappedIssue: Issue = {
+                id: issueDetail.id?.toString() || "",
+                title: issueDetail.title || "",
+                description: issueDetail.description || "",
+                issue_type_name: issueDetail.issue_type_name || "",
+                priority: issueDetail.priority || "",
+                status: issueDetail.status || "open",
+                responsible_person: issueDetail.responsible_person || { name: "Unassigned" },
+                responsible_person_id: issueDetail.responsible_person_id || issueDetail.assigned_to_id || "",
+                created_by: issueDetail.created_by || { name: "Unknown" },
+                created_at: issueDetail.created_at || "",
+                updated_at: issueDetail.updated_at || "",
+                start_date: issueDetail.start_date || "",
+                end_date: issueDetail.end_date || issueDetail.target_date || issueDetail.due_date || "",
+                project_management_name: issueDetail.project_management_name || "",
+                milstone_name: issueDetail.milstone_name || "",
+                task_management_name: issueDetail.task_management_name || "",
+                tags: issueDetail.tags || [],
+                attachments: issueDetail.attachments || [],
+                comments: sortCommentsDesc(issueDetail.comments || []),
             };
 
+            setIssueData(mappedIssue);
+        } catch (error) {
+            console.error("Error fetching issue details:", error);
+            toast.error(
+                error instanceof Error ? error.message : "Failed to load issue"
+            );
+            navigate(-1);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (issueId && baseUrl && token) {
             fetchIssueDetails();
         }
     }, [issueId, baseUrl, token, navigate]);
@@ -923,7 +895,7 @@ const IssueDetailsPage = () => {
                 </div>
                 <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)] my-3"></div>
 
-                <div className="border rounded-md shadow-custom p-5 mb-4 text-[14px]">
+                <div className="border rounded-[10px] shadow-md p-5 mb-4 text-[14px]">
                     <div className="font-[600] text-[16px] flex items-center gap-4">
                         <ChevronDownCircle
                             color="#E95420"
@@ -944,7 +916,7 @@ const IssueDetailsPage = () => {
                     </div>
                 </div>
 
-                <div className="border rounded-md shadow-custom p-5 mb-4">
+                <div className="border rounded-[10px] shadow-md p-5 mb-4">
                     <div className="font-[600] text-[16px] flex items-center gap-10">
                         <div className="flex items-center gap-4">
                             <ChevronDownCircle
@@ -1086,6 +1058,7 @@ const IssueDetailsPage = () => {
                                 id={issueData?.id}
                                 baseUrl={baseUrl}
                                 token={token}
+                                fetchIssueDetails={fetchIssueDetails}
                             />
                         )}
                         {activeTab === "Comments" && (

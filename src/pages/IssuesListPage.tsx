@@ -13,6 +13,12 @@ import axios from "axios";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { useLayout } from "@/contexts/LayoutContext";
 import qs from "qs";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Issue {
     id?: string;
@@ -34,6 +40,7 @@ interface Issue {
     project_id?: string;
     milestone_id?: string;
     task_id?: string;
+    comment?: string;
 }
 
 const columns: ColumnConfig[] = [
@@ -102,7 +109,7 @@ const columns: ColumnConfig[] = [
     },
     {
         key: "assigned_to",
-        label: "Resible Person",
+        label: "Responsible Person",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -121,6 +128,13 @@ const columns: ColumnConfig[] = [
         draggable: true,
         defaultVisible: true,
     },
+    {
+        key: "comment",
+        label: "Comment",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
 ];
 
 const ISSUSE_STATUS = [
@@ -132,7 +146,7 @@ const ISSUSE_STATUS = [
     { value: "closed", label: "Closed" },
 ];
 
-const IssuesListPage = () => {
+const IssuesListPage = ({ preSelectedProjectId }: { preSelectedProjectId?: string } = {}) => {
     const { setCurrentSection } = useLayout();
     const navigate = useNavigate();
     const location = useLocation();
@@ -214,6 +228,7 @@ const IssuesListPage = () => {
             project_id: issue.project_management_id || issue.project_id || "",
             milestone_id: issue.milestone_id || "",
             task_id: issue.task_management_id || issue.task_id || "",
+            comment: issue.comments[issue.comments.length - 1].body || "",
         };
     };
 
@@ -481,6 +496,7 @@ const IssuesListPage = () => {
     const handleIssueUpdate = async (issueId: string, assignedToId: string) => {
         try {
             await dispatch(updateIssue({ baseUrl, token, id: issueId, data: { responsible_person_id: assignedToId } })).unwrap();
+            performFilteredFetch(projectId ? `q[project_management_id_eq]=${projectId}` : "");
             toast.success("Issue updated successfully");
 
             // Refresh with appropriate filter
@@ -517,6 +533,7 @@ const IssuesListPage = () => {
     const handleIssueStatusChange = async (issueId: string, newStatus: string) => {
         try {
             await dispatch(updateIssue({ baseUrl, token, id: issueId, data: { status: newStatus } })).unwrap();
+            performFilteredFetch(projectId ? `q[project_management_id_eq]=${projectId}` : "");
             toast.success("Issue status updated successfully");
 
             // Refresh with appropriate filter
@@ -635,7 +652,7 @@ const IssuesListPage = () => {
         if (columnKey === "assigned_to") {
             return <FormControl
                 variant="standard"
-                sx={{ width: 128 }} // same as w-32
+                sx={{ width: 188 }} // same as w-32
             >
                 <Select
                     value={item.assigned_to}
@@ -658,6 +675,22 @@ const IssuesListPage = () => {
                     ))}
                 </Select>
             </FormControl>
+        }
+        if (columnKey === "comment") {
+            return (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="max-w-[10rem] overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer">
+                                {item.comment || "No comment"}
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[20rem] rounded-[5px] text-wrap">
+                            <p className="mx-2">{item.comment || "No comment"}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            );
         }
         return item[columnKey];
     };
@@ -697,6 +730,7 @@ const IssuesListPage = () => {
             <AddIssueModal
                 openDialog={openIssueModal}
                 handleCloseDialog={() => setOpenIssueModal(false)}
+                preSelectedProjectId={preSelectedProjectId || projectId || projectIdParam}
             />
         </div>
     );

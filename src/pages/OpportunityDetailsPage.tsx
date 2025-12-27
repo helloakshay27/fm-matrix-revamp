@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronDownCircle, CircleCheckBig, LogOut, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronDownCircle, CircleCheckBig, LogOut, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -6,6 +6,7 @@ import { getFullUrl } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import ConvertModal from '@/components/ConvertModal';
 import { useLayout } from '@/contexts/LayoutContext';
+import { Button } from '@/components/ui/button';
 // TODO: Implement comments and user mentions when dependencies are available
 // import { Mention, MentionsInput } from 'react-mentions';
 // import { fetchUsers } from '@/redux/slices/userSlice';
@@ -70,6 +71,7 @@ const Attachments = ({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const token = localStorage.getItem('token');
     const [files, setFiles] = useState(attachments);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         setFiles(attachments);
@@ -88,15 +90,24 @@ const Attachments = ({
             formData.append('opportunity[attachments][]', file);
         });
 
+        setIsUploading(true);
+        toast.loading('Uploading files...', { id: 'file-upload' });
+
         try {
             await axios.put(getFullUrl(`/opportunities/${id}.json`), formData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            toast.success('Files uploaded successfully.');
+            toast.success('Files uploaded successfully.', { id: 'file-upload' });
             getOpportunity();
         } catch (error) {
             console.error('File upload failed:', error);
-            toast.error('Failed to upload file.');
+            toast.error('Failed to upload file.', { id: 'file-upload' });
+        } finally {
+            setIsUploading(false);
+            // Reset the file input so the same file can be uploaded again if needed
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -170,10 +181,11 @@ const Attachments = ({
                     </div>
 
                     <button
-                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleAttachFile}
+                        disabled={isUploading}
                     >
-                        Attach Files
+                        {isUploading ? 'Uploading...' : 'Attach Files'}
                     </button>
                 </>
             ) : (
@@ -181,10 +193,11 @@ const Attachments = ({
                     <span>No Documents Attached</span>
                     <div className="text-[#C2C2C2]">Drop or attach relevant documents here</div>
                     <button
-                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4"
+                        className="bg-[#C72030] h-[40px] w-[240px] text-white px-5 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleAttachFile}
+                        disabled={isUploading}
                     >
-                        Attach Files
+                        {isUploading ? 'Uploading...' : 'Attach Files'}
                     </button>
                 </div>
             )}
@@ -417,8 +430,10 @@ const mapDisplayToApiStatus = (displayStatus: string): string => {
 const OpportunityDetailsPage = () => {
     const { setCurrentSection } = useLayout();
 
+    const view = localStorage.getItem("selectedView");
+
     useEffect(() => {
-        setCurrentSection("Project Task");
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
     }, [setCurrentSection]);
 
     const token = localStorage.getItem('token');
@@ -548,6 +563,14 @@ const OpportunityDetailsPage = () => {
 
     return (
         <div className="m-4">
+            <Button
+                variant="ghost"
+                onClick={() => navigate(-1)}
+                className="p-4"
+            >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+            </Button>
             <div className="px-4 pt-1">
                 <h2 className="text-[15px] p-3 px-0">
                     <span className="mr-3 text-[#c72030]">OP-{opportunityDetails?.id}</span>

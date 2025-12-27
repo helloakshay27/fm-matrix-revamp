@@ -124,7 +124,7 @@ const Attachments = ({ attachments, setAttachments }) => {
     );
 };
 
-const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
+const AddIssueModal = ({ openDialog, handleCloseDialog, preSelectedProjectId }: { openDialog: boolean; handleCloseDialog: () => void; preSelectedProjectId?: string }) => {
     const [title, setTitle] = useState('');
     const [responsiblePerson, setResponsiblePerson] = useState('');
     const [endDate, setEndDate] = useState(null);
@@ -442,6 +442,13 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
         }
     }, [newIssuesTaskId, tasks]);
 
+    // Set pre-selected project when modal opens
+    useEffect(() => {
+        if (openDialog && preSelectedProjectId) {
+            setNewIssuesProjectId(preSelectedProjectId);
+        }
+    }, [openDialog, preSelectedProjectId]);
+
     useEffect(() => {
         if (newIssuesProjectId && newIssuesProjectId !== '') {
             dispatch(fetchMilestones({ baseUrl, token, id: newIssuesProjectId }) as any);
@@ -567,8 +574,9 @@ const AddIssueModal = ({ openDialog, handleCloseDialog }) => {
             try {
                 // Use unwrap so rejected action throws and we can catch the backend error payload
                 await dispatch(createIssue({ baseUrl, token, data: formData })).unwrap();
-                // Refresh issues list in store
-                dispatch(fetchIssues({ baseUrl, token, id: newIssuesProjectId || '' }));
+                // Refresh issues list in store - fetch based on context
+                // If created from project details page, fetch for that project; otherwise fetch all
+                dispatch(fetchIssues({ baseUrl, token, id: preSelectedProjectId || '' }));
                 // Emit a global event so any listeners (list pages) can react and refetch
                 try {
                     window.dispatchEvent(new CustomEvent('issues:created'));

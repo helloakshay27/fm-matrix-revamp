@@ -5,8 +5,9 @@ import {
     Select,
     TextField,
 } from "@mui/material";
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
@@ -76,7 +77,198 @@ const calculateDuration = (startDate: string, endDate: string): string => {
     }
 };
 
-const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[90%] mx-auto", prefillData, isConversion = false, opportunityId }: any) => {
+// Milestone Modal Component for displaying saved and new milestones
+const AddMilestoneModal = ({
+    users,
+    formData,
+    setFormData,
+    setIsDelete,
+    isReadOnly = false,
+    milestoneOptions,
+    hasSavedMilestones,
+    projectStartDate,
+    projectEndDate,
+    opportunityId,
+    projects = [],
+    showProjectSelector = false,
+}: any) => {
+    const handleInputChange = (e: any) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+    };
+
+    const handleSelectChange = (name: string, value: any) => {
+        setFormData({ ...formData, [name]: value });
+    };
+
+    return (
+        <div className="flex flex-col relative justify-start gap-4 w-full bottom-0 bg-white py-3">
+            {!isReadOnly && hasSavedMilestones && (
+                <div className="absolute right-2 top-2">
+                    <DeleteOutlinedIcon
+                        className="text-red-600 cursor-pointer"
+                        onClick={() => {
+                            setFormData({});
+                            setIsDelete(true);
+                        }}
+                    />
+                </div>
+            )}
+            {showProjectSelector && (
+                <div className="flex items-start gap-4 mt-3">
+                    <div className="w-full flex flex-col justify-between">
+                        <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                            <InputLabel shrink>Select Project*</InputLabel>
+                            <Select
+                                label="Select Project*"
+                                name="projectId"
+                                displayEmpty
+                                sx={fieldStyles}
+                                value={formData.projectId || ''}
+                                onChange={(e) => handleSelectChange('projectId', e.target.value)}
+                                disabled={isReadOnly}
+                            >
+                                <MenuItem value="">
+                                    <em>Select Project</em>
+                                </MenuItem>
+                                {projects?.map((proj: any) => (
+                                    <MenuItem key={proj.id} value={proj.id}>
+                                        {proj.title}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </div>
+                </div>
+            )}
+
+            <div className="mt-4 space-y-2">
+                <TextField
+                    label={<>Milestone Title<span className="text-red-500">*</span></>}
+                    name="milestoneTitle"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                    value={formData.milestoneTitle || ''}
+                    onChange={handleInputChange}
+                    disabled={isReadOnly}
+                />
+            </div>
+
+            <div className="flex items-start gap-4 mt-3">
+                <div className="w-1/2 flex flex-col justify-between">
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                        <InputLabel shrink>Milestone Owner<span className="text-red-500">*</span></InputLabel>
+                        <Select
+                            label="Milestone Owner*"
+                            name="owner"
+                            displayEmpty
+                            sx={fieldStyles}
+                            value={formData.owner || ''}
+                            onChange={(e) => handleSelectChange('owner', e.target.value)}
+                            disabled={isReadOnly}
+                        >
+                            <MenuItem value="">
+                                <em>Select Owner</em>
+                            </MenuItem>
+                            {users?.map((user: any) => (
+                                <MenuItem key={user.id} value={user.id}>
+                                    {user.full_name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </div>
+            </div>
+
+            <div className="flex items-start gap-4 mt-4 text-[12px]">
+                <div className="w-1/3 space-y-2">
+                    <TextField
+                        label={<>Start Date<span className="text-red-500">*</span></>}
+                        type="date"
+                        name="startDate"
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                        value={formData.startDate || ''}
+                        onChange={handleInputChange}
+                        inputProps={{
+                            min: new Date().toISOString().split('T')[0] || projectStartDate,
+                            max: projectEndDate,
+                        }}
+                        disabled={isReadOnly}
+                    />
+                </div>
+
+                <div className="w-1/3 space-y-2">
+                    <TextField
+                        label={<>End Date<span className="text-red-500">*</span></>}
+                        type="date"
+                        name="endDate"
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                        value={formData.endDate || ''}
+                        onChange={handleInputChange}
+                        inputProps={{
+                            min: formData.startDate || projectStartDate,
+                            max: projectEndDate,
+                        }}
+                        disabled={isReadOnly}
+                    />
+                </div>
+
+                <div className="w-[200px] space-y-2">
+                    <TextField
+                        label="Duration"
+                        name="duration"
+                        disabled
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                        value={calculateDuration(formData.startDate, formData.endDate)}
+                    />
+                </div>
+            </div>
+
+            <div className="flex items-start gap-4 mt-3">
+                <div className="w-1/2 flex flex-col justify-between">
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                        <InputLabel shrink>Depends On</InputLabel>
+                        <Select
+                            label="Depends On"
+                            name="dependsOn"
+                            displayEmpty
+                            sx={fieldStyles}
+                            value={formData.dependsOn || ''}
+                            onChange={(e) => handleSelectChange('dependsOn', e.target.value)}
+                            disabled={isReadOnly}
+                        >
+                            <MenuItem value="">
+                                <em>Select Dependency</em>
+                            </MenuItem>
+                            {Array.isArray(milestoneOptions) && milestoneOptions.map((m: any) => (
+                                <MenuItem key={m.id} value={m.id}>
+                                    {m.title}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[90%] mx-auto", prefillData, isConversion = false, opportunityId, onSuccess }: any) => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
@@ -91,6 +283,10 @@ const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[9
     const [projectStartDate, setProjectStartDate] = useState("");
     const [projectEndDate, setProjectEndDate] = useState("");
     const [projectData, setProjectData] = useState<Project | null>(null);
+    const [nextId, setNextId] = useState(1);
+    const [isDelete, setIsDelete] = useState(false);
+    const [savedMilestones, setSavedMilestones] = useState<any[]>([]);
+    const isSubmittingRef = useRef(false);
     const [formData, setFormData] = useState({
         milestoneTitle: prefillData?.title?.replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
             .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || '',
@@ -184,231 +380,242 @@ const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[9
         }
     };
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prevData) => ({
-            ...prevData,
-            [name]: value,
-        }));
-    };
-
-    const validateDates = () => {
-        if (!formData.startDate || !formData.endDate) return true;
-
-        const startDate = new Date(formData.startDate);
-        const endDate = new Date(formData.endDate);
-        const projStart = new Date(projectStartDate);
-        const projEnd = new Date(projectEndDate);
-
-        if (startDate < projStart) {
-            toast.error("Start date must be within project duration.");
+    const validateForm = (data: any) => {
+        toast.dismiss();
+        if (!data.milestoneTitle) {
+            toast.error('Milestone title is required.');
             return false;
         }
-        if (endDate > projEnd) {
-            toast.error("End date must be within project duration.");
+        if (!data.owner) {
+            toast.error('Select milestone owner.');
             return false;
         }
-        if (endDate < startDate) {
-            toast.error("End date must be after start date.");
+        if (opportunityId && !data.projectId) {
+            toast.error('Select a project.');
+            return false;
+        }
+        if (!data.startDate) {
+            toast.error('Milestone start date is required.');
+            return false;
+        }
+        if (!data.endDate) {
+            toast.error('Milestone end date is required.');
+            return false;
+        }
+        if (data.startDate < projectStartDate || data.startDate > projectEndDate) {
+            toast.error('Start date must be within project duration.');
+            return false;
+        }
+        if (data.endDate < projectStartDate || data.endDate > projectEndDate) {
+            toast.error('End date must be within project duration.');
             return false;
         }
         return true;
     };
 
-    const handleSubmit = async (e) => {
+    const createMilestonePayload = (data: any) => {
+        const milestonePayload: any = {
+            milestone: {
+                title: data.milestoneTitle,
+                status: 'open',
+                owner_id: data.owner,
+                start_date: data.startDate,
+                end_date: data.endDate,
+                depends_on_id: data.dependsOn,
+                project_management_id: opportunityId
+                    ? data.projectId
+                    : location.pathname.includes('/milestones')
+                        ? id
+                        : project?.id,
+            },
+        };
+
+        if (opportunityId) {
+            milestonePayload.milestone.opportunity_id = opportunityId;
+        }
+
+        return milestonePayload;
+    };
+
+    const handleAddMilestone = async (e: any) => {
         e.preventDefault();
+        if (isDelete) {
+            setIsDelete(false);
+            return;
+        }
+        toast.dismiss();
 
-        // Validate required fields
-        if (isConversion && !formData.projectId) {
-            toast.error("Please select a project.");
-            return;
-        }
-        if (!formData.milestoneTitle) {
-            toast.error("Milestone title is required.");
-            return;
-        }
-        if (!formData.owner) {
-            toast.error("Milestone owner is required.");
-            return;
-        }
-        if (!formData.startDate) {
-            toast.error("Start date is required.");
-            return;
-        }
-        if (!formData.endDate) {
-            toast.error("End date is required.");
-            return;
-        }
+        if (!validateForm(formData)) return;
+        if (isSubmittingRef.current) return;
 
-        // Validate dates are within project duration
-        if (!validateDates()) {
-            return;
-        }
-
-        setIsSubmitting(true);
+        isSubmittingRef.current = true;
+        const payload = createMilestonePayload(formData);
 
         try {
-            const payload = {
-                milestone: {
-                    title: formData.milestoneTitle,
-                    owner_id: formData.owner,
-                    start_date: formData.startDate,
-                    end_date: formData.endDate,
-                    depends_on_id: formData.dependsOn,
-                    status: "open",
-                    project_management_id: isConversion
-                        ? formData.projectId
-                        : (location.pathname.includes("/milestones")
-                            ? id
-                            : (project?.id as string | number) || (projectData?.id as string | number)),
-                    ...(isConversion && opportunityId && { opportunity_id: opportunityId }),
-                },
-            }
-
             await dispatch(createMilestone({ token, baseUrl, data: payload })).unwrap();
-            toast.success("Milestone created successfully");
-            handleClose();
+            toast.success('Milestone created successfully.');
+            setSavedMilestones([...savedMilestones, { id: nextId, formData: { ...formData } }]);
+            setFormData({
+                milestoneTitle: '',
+                owner: '',
+                startDate: '',
+                endDate: '',
+                duration: '',
+                dependsOn: '',
+                projectId: '',
+            });
+            setNextId(nextId + 1);
+            const projectId = project?.id ? String(project.id) : (id || "");
+            await dispatch(fetchMilestones({ token, baseUrl, id: projectId })).unwrap();
         } catch (error) {
-            console.log(error)
-            toast.error((error as any)?.message || "Error creating milestone")
+            console.log(error);
+            toast.error('Error creating milestone.');
         } finally {
-            setIsSubmitting(false)
+            isSubmittingRef.current = false;
         }
     };
 
+    const handleSubmit = async (e: any) => {
+        e.preventDefault();
+        if (isSubmittingRef.current) return;
+
+        const isFormEmpty =
+            !formData.milestoneTitle && !formData.owner && !formData.startDate && !formData.endDate;
+
+        if (isDelete && isFormEmpty) {
+            setSavedMilestones([]);
+            handleClose();
+            return;
+        }
+
+        toast.dismiss();
+
+        if (!isDelete && !validateForm(formData)) return;
+        if (isSubmittingRef.current) return;
+
+        isSubmittingRef.current = true;
+        const payload = createMilestonePayload(formData);
+
+        try {
+            if (!isDelete) {
+                const response = await dispatch(createMilestone({ token, baseUrl, data: payload })).unwrap();
+
+                // If onSuccess callback is provided (from ConvertModal), call it
+                if (onSuccess && response?.id) {
+                    onSuccess(response.id);
+                    return;
+                }
+            }
+            toast.dismiss();
+            toast.success('Milestone created successfully.');
+            const projectId = project?.id ? String(project.id) : (id || "");
+            await dispatch(fetchMilestones({ token, baseUrl, id: projectId })).unwrap();
+            setSavedMilestones([]);
+            handleClose();
+        } catch (error) {
+            console.log(error);
+            const errorData = (error as any)?.response?.data;
+            if (errorData) {
+                Object.keys(errorData).forEach((key) => {
+                    toast.error(`${key} ${errorData[key]}`);
+                });
+            } else {
+                toast.error('Error creating milestone.');
+            }
+        } finally {
+            isSubmittingRef.current = false;
+            setIsDelete(false);
+        }
+    };
+
+    const isFormEmpty =
+        !formData.milestoneTitle && !formData.owner && !formData.startDate && !formData.endDate;
+
     return (
-        <form className="h-full" onSubmit={handleSubmit}>
+        <form className="pb-12 h-full text-[12px]" onSubmit={handleSubmit}>
             <div className={`h-[calc(100%-4rem)] overflow-y-auto pr-3 ${className}`}>
-                {isConversion && (
-                    <div className="flex flex-col gap-4 my-4">
-                        <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                            <InputLabel shrink>Select Project*</InputLabel>
-                            <Select
-                                label="Select Project*"
-                                name="projectId"
-                                displayEmpty
-                                sx={fieldStyles}
-                                value={formData.projectId}
-                                onChange={handleChange}
-                            >
-                                <MenuItem value="">
-                                    <em>Select Project</em>
-                                </MenuItem>
-                                {projects?.map((project) => (
-                                    <MenuItem key={project.id} value={project.id}>
-                                        {project.title}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </div>
+                {savedMilestones.map((m) => (
+                    <AddMilestoneModal
+                        key={m.id}
+                        users={owners}
+                        formData={m.formData}
+                        setFormData={() => { }}
+                        isReadOnly={true}
+                        milestoneOptions={milestones}
+                        hasSavedMilestones={savedMilestones.length > 0}
+                        projectStartDate={project?.start_date || projectData?.start_date}
+                        projectEndDate={project?.end_date || projectData?.end_date}
+                        opportunityId={opportunityId}
+                        projects={projects}
+                        showProjectSelector={!!opportunityId}
+                    />
+                ))}
+                {!isDelete && (
+                    <AddMilestoneModal
+                        users={owners}
+                        formData={formData}
+                        setFormData={setFormData}
+                        setIsDelete={setIsDelete}
+                        isReadOnly={false}
+                        milestoneOptions={milestones}
+                        hasSavedMilestones={savedMilestones.length > 0}
+                        projectStartDate={project?.start_date || projectData?.start_date}
+                        projectEndDate={project?.end_date || projectData?.end_date}
+                        opportunityId={opportunityId}
+                        projects={projects}
+                        showProjectSelector={!!opportunityId}
+                    />
                 )}
 
-                <div className="mt-4 space-y-2">
-                    <TextField
-                        label="Milestone Title"
-                        name="milestoneTitle"
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                        value={formData.milestoneTitle}
-                        onChange={handleChange}
-                    />
-                </div>
-
-                <div className="flex flex-col gap-4 my-4">
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                        <InputLabel shrink>Milestone Owner</InputLabel>
-                        <Select
-                            label="Milestone Owner"
-                            name="owner"
-                            displayEmpty
-                            sx={fieldStyles}
-                            value={formData.owner}
-                            onChange={handleChange}
-                        >
-                            <MenuItem value="">
-                                <em>Select Milestone Owner</em>
-                            </MenuItem>
-                            {owners?.map((owner) => (
-                                <MenuItem key={owner.id} value={owner.id}>
-                                    {owner.full_name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </div>
-
-                <div className="flex gap-2 mt-4 text-[12px]">
-                    {["startDate", "endDate"].map((field) => (
-                        <div key={field} className="w-full space-y-2">
-                            <TextField
-                                label={field === "startDate" ? "Start Date" : "End Date"}
-                                type="date"
-                                name={field}
-                                fullWidth
-                                variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                                InputProps={{ sx: fieldStyles }}
-                                sx={{ mt: 1 }}
-                                value={formData[field]}
-                                onChange={handleChange}
-                                inputProps={{
-                                    min: projectStartDate,
-                                    max: projectEndDate,
-                                }}
-                            />
-                        </div>
-                    ))}
-
-                    <div className="w-[300px] space-y-2">
-                        <TextField
-                            label="Duration"
-                            name="duration"
-                            disabled
-                            fullWidth
-                            variant="outlined"
-                            InputLabelProps={{ shrink: true }}
-                            InputProps={{ sx: fieldStyles }}
-                            sx={{ mt: 1 }}
-                            value={calculateDuration(formData.startDate, formData.endDate)}
-                        />
-                    </div>
-                </div>
-
-                <div className="flex flex-col gap-4 my-4">
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                        <InputLabel shrink>Depends On</InputLabel>
-                        <Select
-                            label="Depends On"
-                            name="dependsOn"
-                            displayEmpty
-                            sx={fieldStyles}
-                            value={formData.dependsOn}
-                            onChange={handleChange}
-                        >
-                            <MenuItem value="">
-                                <em>Select Dependency</em>
-                            </MenuItem>
-                            {milestones?.map((milestone) => (
-                                <MenuItem key={milestone.id} value={milestone.id}>
-                                    {milestone.title}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </div>
-                <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center gap-4 w-full bottom-0 bg-white mt-16">
                     <Button
                         type="submit"
                         size="lg"
                         className="bg-[#C72030] hover:bg-[#C72030] text-white"
                         disabled={isSubmitting}
                     >
-                        Submit
+                        {isSubmitting ? 'Processing...' : 'Add Milestone'}
                     </Button>
+
+                    {isFormEmpty ? (
+                        <Button
+                            type="button"
+                            size="lg"
+                            variant="outline"
+                            className="border-2 border-[#C72030] text-black w-max"
+                            disabled={isSubmitting}
+                            onClick={() => {
+                                if (savedMilestones.length === 0) {
+                                    setFormData({
+                                        milestoneTitle: '',
+                                        owner: '',
+                                        startDate: '',
+                                        endDate: '',
+                                        duration: '',
+                                        dependsOn: '',
+                                        projectId: '',
+                                    });
+                                    handleClose();
+                                } else {
+                                    setSavedMilestones([]);
+                                    handleClose();
+                                }
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                    ) : (
+                        <Button
+                            type="button"
+                            size="lg"
+                            variant="outline"
+                            className="border-2 border-[#C72030] text-black w-max"
+                            disabled={isSubmitting}
+                            onClick={handleAddMilestone}
+                        >
+                            Save & Add New
+                        </Button>
+                    )}
                 </div>
             </div>
         </form>

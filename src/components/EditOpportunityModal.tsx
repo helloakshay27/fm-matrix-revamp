@@ -80,7 +80,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
             // Pre-populate form fields
             setTitle(data.title || '');
             setDescription(data.description || '');
-            setResponsiblePerson(data.responsible_person_id?.toString() || '');
+            setResponsiblePerson(data.responsible_person?.id || '');
             setTags(data.tag_ids || []);
             setExistingAttachments(data.attachments || []);
         } catch (error) {
@@ -135,7 +135,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
 
     // Derived User Options
     const usersList = (fmUsersData as any)?.users || (fmUsersData as any)?.fm_users || [];
-    const userOptions = usersList.map((user: any) => ({
+    const userOptions = mentionUsers.map((user: any) => ({
         label: `${user.full_name}`,
         value: user.id,
     }));
@@ -175,7 +175,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({ open, onClo
 
             // Append tags
             tags.forEach((tagId: any) => {
-                formData.append('opportunity[tag_ids][]', tagId);
+                formData.append('opportunity[tag_ids][]', tagId.value);
             });
 
             // Append new attachments

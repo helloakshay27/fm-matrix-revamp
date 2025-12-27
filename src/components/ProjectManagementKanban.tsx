@@ -160,7 +160,7 @@ const ProjectManagementKanban = ({ fetchData }) => {
                                 key={card.id}
                                 add={card.add}
                                 color={card.color}
-                                count={0}
+                                count={filteredProjects.length}
                                 title={card.title}
                             >
                                 {filteredProjects.length > 0 ? (

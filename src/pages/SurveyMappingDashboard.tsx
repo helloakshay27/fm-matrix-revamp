@@ -29,6 +29,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { getFullUrl, API_CONFIG } from '@/config/apiConfig';
+import axios from 'axios';
 
 // Individual mapping item from the API
 interface SurveyMappingItem {
@@ -504,7 +505,7 @@ export const SurveyMappingDashboard = () => {
 
       // Call the bulk upload API
       const response = await apiClient.post(
-        '/survey_mappings/bulk_upload_survey_mappings',
+        '/survey_mappings/bulk_upload_survey_mappings.json',
         formData,
         {
           headers: {
@@ -512,17 +513,31 @@ export const SurveyMappingDashboard = () => {
           },
           params: {
             token: 'b06b9c80acb8e5b06cea63d4cc74a2297897a923cd2753cc'
-          }
+          },
+          validateStatus: (status) => true // Accept all status codes
         }
       );
 
-      console.log('✅ Survey mappings imported successfully:', response.data);
-      sonnerToast.success('Survey mappings imported successfully!');
+      if (response.status === 422 && response.data && Array.isArray(response.data.errors)) {
+        // Show each error row and message
+        response.data.errors.forEach((err) => {
+          const row = err.row;
+          const errors = Array.isArray(err.errors) ? err.errors.join(', ') : String(err.errors);
+          sonnerToast.error(`Row ${row}: ${errors}`);
+        });
+        return;
+      }
 
-      // Refresh the data after successful import
-      await fetchSurveyMappingsData(1, undefined, appliedFilters);
+      if (response.status >= 200 && response.status < 300) {
+        console.log('✅ Survey mappings imported successfully:', response.data);
+        sonnerToast.success('Survey mappings imported successfully!');
+        // Refresh the data after successful import
+        await fetchSurveyMappingsData(1, undefined, appliedFilters);
+      } else {
+        sonnerToast.error('Failed to import survey mappings');
+      }
 
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error importing survey mappings:', error);
       sonnerToast.error('Failed to import survey mappings');
       throw error;
@@ -531,25 +546,11 @@ export const SurveyMappingDashboard = () => {
 
   // Handle sample file download
   const handleDownloadSample = () => {
-    try {
-      const baseUrl = getFullUrl('/assets/survey_mapping_sample.xlsx');
-      const downloadUrl = new URL(baseUrl);
-
-      if (API_CONFIG.TOKEN) {
-        downloadUrl.searchParams.append('token', API_CONFIG.TOKEN);
-      }
-
-      const link = document.createElement('a');
-      link.href = downloadUrl.toString();
-      link.download = 'survey_mapping_sample.xlsx';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      sonnerToast.success('Sample file downloaded successfully');
-    } catch (error) {
-      console.error('Error downloading sample file:', error);
-      sonnerToast.error('Failed to download sample file');
-    }
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    const downloadUrl = `https://${baseUrl}/assets/survey_mapping_sample.xlsx?token=${token}`;
+    // Directly open the file link for download
+    window.open(downloadUrl, '_blank');
   };
 
   // Handle filter application

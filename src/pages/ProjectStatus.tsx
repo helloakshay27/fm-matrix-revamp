@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchProjectStatuses, createProjectStatus, updateProjectStatus, deleteProjectStatus } from "@/store/slices/projectStatusSlice";
+import { toast } from "sonner";
 
 const columns: ColumnConfig[] = [
     {
@@ -48,6 +49,7 @@ const ProjectStatus = () => {
     const [statusName, setStatusName] = useState('');
     const [selectedColor, setSelectedColor] = useState('#FF0000');
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         dispatch(fetchProjectStatuses());
@@ -79,25 +81,36 @@ const ProjectStatus = () => {
     const handleSubmit = async () => {
         const trimmedName = statusName.trim();
         if (!trimmedName) {
-            alert('Please enter a status name');
+            toast.error('Please enter a status name');
             return;
         }
 
-        const payload = {
-            status: trimmedName,
-            color_code: selectedColor,
-            active: true,
-        };
+        setSubmitting(true);
 
-        if (isEditMode && editingId) {
-            await dispatch(updateProjectStatus({ id: editingId, data: payload })).unwrap();
-            dispatch(fetchProjectStatuses());
-        } else {
-            await dispatch(createProjectStatus(payload)).unwrap();
-            dispatch(fetchProjectStatuses());
+        try {
+            const payload = {
+                status: trimmedName,
+                color_code: selectedColor,
+                active: true,
+            };
+
+            if (isEditMode && editingId) {
+                await dispatch(updateProjectStatus({ id: editingId, data: payload })).unwrap();
+                dispatch(fetchProjectStatuses());
+                toast.success('Status updated successfully');
+            } else {
+                await dispatch(createProjectStatus(payload)).unwrap();
+                dispatch(fetchProjectStatuses());
+                toast.success('Status created successfully');
+            }
+
+            closeDialog();
+        } catch (error) {
+            toast.error('Failed to save status');
+        } finally {
+            setSubmitting(false);
         }
 
-        closeDialog();
     };
 
     const handleDelete = async (id: number) => {
@@ -138,14 +151,14 @@ const ProjectStatus = () => {
                 >
                     <Edit className="w-4 h-4" />
                 </Button>
-                <Button
+                {/* <Button
                     size="sm"
                     variant="ghost"
                     className="p-1 text-red-500 hover:text-red-700"
                     onClick={() => handleDelete(item.id)}
                 >
                     <Trash2 className="w-4 h-4" />
-                </Button>
+                </Button> */}
             </div>
         )
     };

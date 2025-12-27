@@ -20,6 +20,7 @@ import axios from 'axios';
 import { getFullUrl } from '../config/apiConfig';
 import { Mention, MentionsInput } from 'react-mentions';
 import MuiMultiSelect from './MuiMultiSelect';
+import { AddTagModal } from './AddTagModal';
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -46,6 +47,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
     const [attachments, setAttachments] = useState<File[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [prevTags, setPrevTags] = useState([]);
+    const [isTagModalOpen, setIsTagModalOpen] = useState(false);
 
     console.log(responsiblePerson)
 
@@ -98,7 +100,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
 
     // Derived User Options
     const usersList = (fmUsersData as any)?.users || (fmUsersData as any)?.fm_users || [];
-    const userOptions = usersList.map((user: any) => ({
+    const userOptions = mentionUsers.map((user: any) => ({
         label: `${user.full_name}`,
         value: user.id,
     }));
@@ -134,7 +136,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
 
             // Append tags
             tags.forEach((tagId: any) => {
-                formData.append('opportunity[tag_ids][]', tagId);
+                formData.append('opportunity[tag_ids][]', tagId.value);
             });
 
             // Append attachments
@@ -373,6 +375,12 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
                     </div>
 
                     <div>
+                        <div
+                            className="text-[12px] text-[red] text-right cursor-pointer mb-2"
+                            onClick={() => setIsTagModalOpen(true)}
+                        >
+                            <i>Create new tag</i>
+                        </div>
                         <MuiMultiSelect
                             label="Tags"
                             options={mentionTags.map((tag) => ({ value: tag.id, label: tag.name, id: tag.id }))}
@@ -452,6 +460,11 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({ open, onClose
                     </Button>
                 </div>
             </DialogContent>
+            <AddTagModal
+                isOpen={isTagModalOpen}
+                onClose={() => setIsTagModalOpen(false)}
+                onTagCreated={() => fetchMentionTags()}
+            />
         </Dialog>
     );
 };

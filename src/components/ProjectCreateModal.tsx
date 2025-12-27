@@ -2,7 +2,6 @@ import {
     Dialog,
     DialogContent,
     FormControl,
-    Input,
     InputLabel,
     MenuItem,
     Select,
@@ -294,7 +293,7 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                                 <div className="max-w-[90%] mx-auto pr-3">
                                     <div className="mt-4 space-y-2">
                                         <TextField
-                                            label="Project Title"
+                                            label={<>Project Title<span className="text-[#c72030]">*</span></>}
                                             name="title"
                                             placeholder="Enter Project Title"
                                             fullWidth
@@ -330,7 +329,7 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
 
                                     <div className="mt-4 space-y-2 h-[100px]">
                                         <TextField
-                                            label="Description*"
+                                            label={<>Description<span className="text-[#c72030]">*</span></>}
                                             name="description"
                                             placeholder=""
                                             fullWidth
@@ -363,7 +362,7 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
 
                                     <div className="flex items-start gap-4 mt-3">
                                         <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
-                                            <InputLabel shrink>Select Owner*</InputLabel>
+                                            <InputLabel shrink>Select Owner<span className="text-[#c72030]">*</span></InputLabel>
                                             <Select
                                                 label="Select Owner*"
                                                 name="owner"
@@ -398,7 +397,15 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                                             return (
                                                 <div key={field} className="w-full space-y-2">
                                                     <TextField
-                                                        label={field === "startDate" ? "Start Date" : "End Date"}
+                                                        label={
+                                                            field === "endDate"
+                                                                ? (
+                                                                    <span>
+                                                                        End Date <span className="text-[#c72030]">*</span>
+                                                                    </span>
+                                                                )
+                                                                : "Start Date"
+                                                        }
                                                         type="date"
                                                         name={field}
                                                         value={formData[field]}
@@ -442,7 +449,7 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                                                 </label>
                                             </div>
                                             <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
-                                                <InputLabel shrink>Select Team*</InputLabel>
+                                                <InputLabel shrink>Select Team <span className="text-[#c72030]">*</span></InputLabel>
                                                 <Select
                                                     label="Select Team*"
                                                     name="team"
@@ -467,7 +474,7 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
 
                                         <div className="flex gap-4">
                                             <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
-                                                <InputLabel shrink>Project Type*</InputLabel>
+                                                <InputLabel shrink>Project Type <span className="text-[#c72030]">*</span></InputLabel>
                                                 <Select
                                                     label="Project Type*"
                                                     name="type"
@@ -489,7 +496,7 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                                                 </Select>
                                             </FormControl>
                                             <FormControl fullWidth variant="outlined" sx={{ mt: 2 }}>
-                                                <InputLabel shrink>Priority*</InputLabel>
+                                                <InputLabel shrink>Priority <span className="text-[#c72030]">*</span></InputLabel>
                                                 <Select
                                                     label="Priority*"
                                                     name="priority"
@@ -517,7 +524,7 @@ const ProjectCreateModal = ({ openDialog, handleCloseDialog, owners, teams, proj
                                             </div>
                                             <div className="mt-2">
                                                 <MuiMultiSelect
-                                                    label="Tags*"
+                                                    label={<span>Tags <span className="text-[#c72030]">*</span></span>}
                                                     options={tags.map((tag) => ({ value: tag.id, label: tag.name, id: tag.id }))}
                                                     value={formData.tags}
                                                     onChange={(values) => handleMultiSelectChange("tags", values)}

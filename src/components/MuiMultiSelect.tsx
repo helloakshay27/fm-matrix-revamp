@@ -15,7 +15,7 @@ interface Option {
 }
 
 interface MuiMultiSelectProps {
-    label?: string;
+    label?: string | JSX.Element;
     options: Option[];
     value?: Option[];
     onChange?: (values: Option[]) => void;
