@@ -515,40 +515,84 @@ export const AssetDashboard = () => {
     })
   );
 
+  // const handleStatCardClick = (filterType: string) => {
+  //   let filters: any = {};
+  //   switch (filterType) {
+  //     case 'total':
+  //       filters = {};
+  //       break;
+  //     case 'non_it':
+  //       filters = { it_asset_eq: false };
+  //       break;
+  //     case 'it':
+  //       filters = { it_asset_eq: true };
+  //       break;
+  //     case 'in_use':
+  //       filters = { breakdown_eq: false, status_eq: 'in_use' };
+  //       break;
+  //     case 'breakdown':
+  //       filters = { breakdown_eq: true };
+  //       break;
+  //     case 'in_store':
+  //       filters = { status_eq: 'in_storage' };
+  //       break;
+  //     case 'allocated':
+  //       filters = { allocated: true };
+  //       break;
+  //     case 'dispose':
+  //       filters = { status_eq: 'disposed' };
+  //       break;
+  //     default:
+  //       filters = {};
+  //   }
+  //   setSearchTerm('');
+  //   dispatch(fetchAssetsData({ page: 1, filters }));
+  //   setCurrentPage(1);
+  // };
+
+
   const handleStatCardClick = (filterType: string) => {
-    let filters: any = {};
-    switch (filterType) {
-      case 'total':
-        filters = {};
-        break;
-      case 'non_it':
-        filters = { it_asset_eq: false };
-        break;
-      case 'it':
-        filters = { it_asset_eq: true };
-        break;
-      case 'in_use':
-        filters = { breakdown_eq: false, status_eq: 'in_use' };
-        break;
-      case 'breakdown':
-        filters = { breakdown_eq: true };
-        break;
-      case 'in_store':
-        filters = { status_eq: 'in_storage' };
-        break;
-      case 'allocated':
-        filters = { allocated: true };
-        break;
-      case 'dispose':
-        filters = { status_eq: 'disposed' };
-        break;
-      default:
-        filters = {};
-    }
-    setSearchTerm('');
-    dispatch(fetchAssetsData({ page: 1, filters }));
-    setCurrentPage(1);
+  let newFilter: any = {};
+
+  switch (filterType) {
+    case 'total':
+      newFilter = {};
+      break;
+    case 'non_it':
+      newFilter = { it_asset_eq: false };
+      break;
+    case 'it':
+      newFilter = { it_asset_eq: true };
+      break;
+    case 'in_use':
+      newFilter = { status_eq: 'in_use', breakdown_eq: false };
+      break;
+    case 'breakdown':
+      newFilter = { breakdown_eq: true };
+      break;
+    case 'in_store':
+      newFilter = { status_eq: 'in_storage' };
+      break;
+    case 'allocated':
+      newFilter = { allocated: true };
+      break;
+    case 'dispose':
+      newFilter = { status_eq: 'disposed' };
+      break;
+    default:
+      newFilter = {};
+  }
+
+  // ✅ MERGE existing filters with new card filter
+  const mergedFilters = {
+    ...filters,
+    ...newFilter,
   };
+
+  setSearchTerm('');
+  dispatch(fetchAssetsData({ page: 1, filters: mergedFilters }));
+  setCurrentPage(1);
+};
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -777,10 +821,8 @@ const hasActiveFilter = Object.keys(filters || {}).length > 0 || !!searchTerm;
           ) : (
             <>
               {/* @ts-ignore - API stats object uses snake_case fields */}
-              <AssetStats stats={data} onCardClick={handleStatCardClick}   hasActiveFilter={Object.keys(filters || {}).length > 0 || !!searchTerm}
-  onFilterBlocked={() =>
-    toast.warning("Please reset the filters before applying card filters")
-  } />
+              <AssetStats stats={data} onCardClick={handleStatCardClick}
+/>
 
               <div className="relative">
                 <AssetDataTable
