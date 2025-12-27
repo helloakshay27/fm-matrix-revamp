@@ -274,7 +274,7 @@ const MilestoneKanban = () => {
                                 key={card.id}
                                 add={card.add}
                                 color={card.color}
-                                count={0}
+                                count={filteredMilestone.length}
                                 title={card.title}
                             >
                                 {filteredMilestone.length > 0 || allTasksInColumn.length > 0 ? (

@@ -4,9 +4,9 @@ import { Button } from "./ui/button";
 import { ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "@/store/hooks";
-import { createMilestone, fetchMilestones } from "@/store/slices/projectMilestoneSlice";
+import { createMilestone, fetchMilestones, updateMilestoneStatus } from "@/store/slices/projectMilestoneSlice";
 import { useNavigate, useParams } from "react-router-dom";
-import { MenuItem, Select, TextField } from "@mui/material";
+import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { toast } from "sonner";
 
@@ -69,6 +69,14 @@ const columns: ColumnConfig[] = [
     },
 ];
 
+const statusOptions = [
+    { value: "open", label: "Open" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "on_hold", label: "On Hold" },
+    { value: "completed", label: "Completed" },
+    { value: "overdue", label: "Overdue" },
+]
+
 const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const { id } = useParams()
 
@@ -80,6 +88,14 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [data, setData] = useState([])
     const [owners, setOwners] = useState([])
+
+    const statusColorMap = {
+        open: { dot: "bg-blue-500" },
+        in_progress: { dot: "bg-amber-500" },
+        on_hold: { dot: "bg-gray-500" },
+        completed: { dot: "bg-teal-500" },
+        overdue: { dot: "bg-red-500" },
+    };
 
     const getMilestones = async () => {
         try {
@@ -97,6 +113,22 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         } catch (error) {
             console.log(error)
             toast.error(error)
+        }
+    }
+
+    const handleStatusChange = async (milestoneId: number, status: string) => {
+        try {
+            await dispatch(updateMilestoneStatus({
+                token,
+                baseUrl,
+                id: String(milestoneId),
+                payload: { milestone: { status } }
+            })).unwrap();
+            getMilestones();
+            toast.success("Milestone status updated successfully");
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update milestone status");
         }
     }
 
@@ -145,19 +177,50 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         switch (columnKey) {
             case "id":
                 return `M-${item.id}`;
-            case "status":
+            case "status": {
+                const colors = statusColorMap[item.status as keyof typeof statusColorMap] || statusColorMap.open;
+
                 return (
-                    <span>
-                        {
-                            item.status
-                                ? item.status
-                                    .split("_")
-                                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                                    .join(" ")
-                                : ""
-                        }
-                    </span>
-                )
+                    <FormControl
+                        variant="standard"
+                        sx={{ width: 148 }}
+                    >
+                        <Select
+                            value={item.status}
+                            onChange={(e) =>
+                                handleStatusChange(item.id, e.target.value as string)
+                            }
+                            disableUnderline
+                            renderValue={(value) => (
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <span className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}></span>
+                                    <span>{statusOptions.find(opt => opt.value === value)?.label || value}</span>
+                                </div>
+                            )}
+                            sx={{
+                                fontSize: "0.875rem",
+                                cursor: "pointer",
+                                "& .MuiSelect-select": {
+                                    padding: "4px 0",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                },
+                            }}
+                        >
+                            {statusOptions.map((opt) => {
+                                const optColors = statusColorMap[opt.value as keyof typeof statusColorMap];
+                                return (
+                                    <MenuItem key={opt.value} value={opt.value} sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <span className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}></span>
+                                        <span>{opt.label}</span>
+                                    </MenuItem>
+                                );
+                            })}
+                        </Select>
+                    </FormControl>
+                );
+            }
             case "tasks": {
                 const completed = item.completed_tasks || 0;
                 const total = item.total_tasks || 0;
@@ -328,9 +391,9 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 leftActions={leftActions}
                 rightActions={rightActions}
                 storageKey="projects-table"
-                onFilterClick={() => { }}
+                // onFilterClick={() => { }}
                 canAddRow={true}
-                readonlyColumns={["id", "tasks", "status"]}
+                readonlyColumns={["id", "tasks"]}
                 onAddRow={(newRowData) => {
                     handleSubmit(newRowData)
                 }}
