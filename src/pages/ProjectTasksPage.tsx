@@ -663,8 +663,12 @@ const ProjectTasksPage = () => {
 
     const getUsers = async () => {
         try {
-            const response = await dispatch(fetchFMUsers()).unwrap();
-            setUsers(response.users);
+            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setUsers(response.data.users);
         } catch (error) {
             console.log(error);
         }
