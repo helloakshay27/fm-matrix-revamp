@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronDownCircle, CircleCheckBig, LogOut, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronDownCircle, CircleCheckBig, LogOut, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -6,6 +6,7 @@ import { getFullUrl } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import ConvertModal from '@/components/ConvertModal';
 import { useLayout } from '@/contexts/LayoutContext';
+import { Button } from '@/components/ui/button';
 // TODO: Implement comments and user mentions when dependencies are available
 // import { Mention, MentionsInput } from 'react-mentions';
 // import { fetchUsers } from '@/redux/slices/userSlice';
@@ -562,6 +563,14 @@ const OpportunityDetailsPage = () => {
 
     return (
         <div className="m-4">
+            <Button
+                variant="ghost"
+                onClick={() => navigate(-1)}
+                className="p-4"
+            >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+            </Button>
             <div className="px-4 pt-1">
                 <h2 className="text-[15px] p-3 px-0">
                     <span className="mr-3 text-[#c72030]">OP-{opportunityDetails?.id}</span>
