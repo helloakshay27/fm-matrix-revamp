@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
-import { fetchAssetsData } from '@/store/slices/assetsSlice';
+import { fetchAssetsData, setFilters as setReduxFilters } from '@/store/slices/assetsSlice';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -551,6 +551,29 @@ export const AssetDashboard = () => {
   // };
 
 
+  // Remove a single filter by key (component scope)
+  const handleRemoveFilter = (key: string) => {
+    const newFilters = { ...filters } as Record<string, any>;
+    if (key in newFilters) {
+      delete newFilters[key];
+    }
+    // Update redux filters and refetch
+    dispatch(setReduxFilters(newFilters));
+    setCurrentPage(1);
+    dispatch(fetchAssetsData({ page: 1, filters: newFilters }));
+  };
+
+  // Clear all filters (component scope)
+  const handleClearAllFilters = () => {
+  // Clear redux filters so dialog and other components see empty filters
+  dispatch(setReduxFilters({}));
+  // Reset search and pagination
+  setSearchTerm('');
+  setCurrentPage(1);
+  // Fetch unfiltered assets
+  dispatch(fetchAssetsData({ page: 1, filters: {} }));
+  };
+
   const handleStatCardClick = (filterType: string) => {
   let newFilter: any = {};
 
@@ -588,6 +611,7 @@ export const AssetDashboard = () => {
     ...filters,
     ...newFilter,
   };
+
 
   setSearchTerm('');
   dispatch(fetchAssetsData({ page: 1, filters: mergedFilters }));
@@ -756,7 +780,7 @@ const hasActiveFilter = Object.keys(filters || {}).length > 0 || !!searchTerm;
 
   return (
     <div className="p-4 sm:p-6">
-      <Tabs defaultValue="list" className="w-full">
+  <Tabs defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
             value="list"
@@ -800,7 +824,7 @@ const hasActiveFilter = Object.keys(filters || {}).length > 0 || !!searchTerm;
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="analytics" className="space-y-6 mt-5">
+  <TabsContent value="analytics" className="space-y-6 mt-5">
           <AssetAnalyticsComponents
             defaultDateRange={analyticsDateRange}
             selectedAnalyticsTypes={selectedAnalyticsTypes}
@@ -811,9 +835,76 @@ const hasActiveFilter = Object.keys(filters || {}).length > 0 || !!searchTerm;
             showSelector={true}
             layout="grid"
           />
-        </TabsContent>
+  </TabsContent>
 
         <TabsContent value="list" className="space-y-6 mt-6">
+          {/* Active filters chips */}
+          {hasActiveFilter && (
+            <div className="flex items-start justify-between mb-4 flex-col sm:flex-row gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {Object.entries(filters || {}).map(([key, value]) => {
+                  if (value === undefined || value === null || value === '') return null;
+                  const labelMap: Record<string, string> = {
+                    assetName: 'Name',
+                    assetId: 'ID',
+                    extra_fields_field_value_in: 'Category',
+                    critical_eq: 'Critical',
+                    groupId: 'Group',
+                    subgroupId: 'Subgroup',
+                    siteId: 'Site',
+                    buildingId: 'Building',
+                    wingId: 'Wing',
+                    areaId: 'Area',
+                    floorId: 'Floor',
+                    roomId: 'Room',
+                    status_eq: 'Status',
+                    breakdown_eq: 'Breakdown',
+                    it_asset_eq: 'IT Asset',
+                    allocation_type_eq: 'Allocation Type',
+                    allocation_ids_cont: 'Allocated To',
+                    allocated_to: 'Allocated',
+                  };
+                  const displayKey = labelMap[key] || key;
+                  const displayValue = typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value);
+
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleRemoveFilter(key)}
+                      title={`Remove ${displayKey} filter`}
+                      className="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-sm text-gray-800 px-3 py-1 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#C72030]"
+                    >
+                      <span className="font-bold text-xs text-gray-600">{displayKey}</span>
+                      <span className="text-gray-900 text-sm">{displayValue}</span>
+                      <svg className="w-3 h-3 text-gray-400 hover:text-gray-700" viewBox="0 0 10 10" fill="none" aria-hidden>
+                        <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleClearAllFilters}
+                  className="text-sm text-[#C72030] hover:underline px-2 py-1"
+                >
+                  Clear all
+                </button>
+                <button
+                  onClick={() => setIsFilterOpen(true)}
+                  className="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 text-sm text-gray-700 px-3 py-1 rounded-full hover:bg-gray-100"
+                  title="Open filter dialog"
+                >
+                  <svg className="w-4 h-4 text-gray-600" viewBox="0 0 20 20" fill="none" aria-hidden>
+                    <path d="M3 5h14M6 10h8M8 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Edit filters
+                </button>
+              </div>
+            </div>
+          )}
           {error || searchError ? (
             <div className="flex justify-center items-center py-8">
               <div className="text-red-500">Error: {error || searchError}</div>

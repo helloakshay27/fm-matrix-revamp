@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 // Updated AssetFilters interface with extra_fields_field_value_cont and critical_eq
 import { fetchAssetsData, AssetFilters } from '@/store/slices/assetsSlice';
@@ -108,6 +108,7 @@ const criticalityOptions = [
 
 export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const reduxFilters = useSelector((state: any) => state.assets.filters as AssetFilters);
 
   // Form state
   const [assetName, setAssetName] = useState('');
@@ -124,6 +125,32 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
   const [room, setRoom] = useState('');
   const [allocationType, setAllocationType] = useState('');
   const [allocatedToId, setAllocatedToId] = useState<number | null>(null);
+
+  // Keep dialog form in sync with Redux filters so "Clear all" updates the dialog fields
+  useEffect(() => {
+    // If reduxFilters is empty, reset local form
+    const f = reduxFilters || {};
+    setAssetName((f as AssetFilters).assetName || '');
+    setAssetId((f as AssetFilters).assetId || '');
+    setCategory(((f as AssetFilters).extra_fields_field_value_in || '')
+      .toString()
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean));
+    const crit = (f as AssetFilters).critical_eq;
+    setCriticality(crit === true ? 'yes' : crit === false ? 'no' : '');
+    setGroup((f as AssetFilters).groupId || '');
+    setSubgroup((f as AssetFilters).subgroupId || '');
+    setSite((f as AssetFilters).siteId || '');
+    setBuilding((f as AssetFilters).buildingId || '');
+    setWing((f as AssetFilters).wingId || '');
+    setArea((f as AssetFilters).areaId || '');
+    setFloor((f as AssetFilters).floorId || '');
+    setRoom((f as AssetFilters).roomId || '');
+    setAllocationType((f as AssetFilters).allocation_type_eq || '');
+    const allocIds = (f as AssetFilters).allocation_ids_cont;
+    setAllocatedToId(allocIds ? parseInt(String(allocIds), 10) || null : null);
+  }, [reduxFilters]);
 
   // API data states
   const [groups, setGroups] = useState<GroupItem[]>([]);
