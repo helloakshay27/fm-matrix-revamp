@@ -664,7 +664,7 @@ const OpportunityDetailsPage = () => {
                 </div>
                 <div className="border-b-[3px] border-grey my-3"></div>
 
-                <div className="border rounded-md shadow-custom p-5 mb-4 text-[14px]">
+                <div className="border rounded-[10px] shadow-md p-5 mb-4 text-[14px]">
                     <div className="font-[600] text-[16px] flex items-center gap-4">
                         <ChevronDownCircle
                             color="#E95420"
