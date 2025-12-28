@@ -95,7 +95,9 @@ export const Header = () => {
     hostname.includes("lockated.gophygital.work") ||
     hostname.includes("fm-matrix.lockated.com");
   const navigate = useNavigate();
-  const [notificationCount, setNotificationCount] = useState(3);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     if (selectedSite) {
@@ -111,7 +113,7 @@ export const Header = () => {
     email: "",
   };
   const userId = user.id;
-  const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
+  const isRestrictedUser = user?.email === "karan.balsara@zycus.com";
 
   const assetSuggestions = [
     "sdcdsc",
@@ -179,7 +181,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => { });
+        .catch(() => {});
     } catch {
       /* no-op */
     }
@@ -240,6 +242,64 @@ export const Header = () => {
       console.error("Failed to change site:", error);
     }
   };
+
+  const fetchNotifications = async () => {
+    try {
+      // Mock notifications - replace with actual API call
+      const mockNotifications = [
+        {
+          id: 1,
+          title: "New Task Assigned",
+          message: "You have been assigned a new task in Project Alpha",
+          time: "5 minutes ago",
+          read: false,
+          type: "task",
+        },
+        {
+          id: 2,
+          title: "Meeting Reminder",
+          message: "Team standup meeting in 30 minutes",
+          time: "25 minutes ago",
+          read: false,
+          type: "meeting",
+        },
+        {
+          id: 3,
+          title: "Document Approved",
+          message: "Your submitted document has been approved",
+          time: "2 hours ago",
+          read: true,
+          type: "document",
+        },
+      ];
+
+      setNotifications(mockNotifications);
+      setNotificationCount(mockNotifications.filter((n) => !n.read).length);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  const markAsRead = (notificationId: number) => {
+    setNotifications((prev) =>
+      prev.map((notif) =>
+        notif.id === notificationId ? { ...notif, read: true } : notif
+      )
+    );
+    setNotificationCount((prev) => Math.max(0, prev - 1));
+  };
+
+  const markAllAsRead = () => {
+    setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
+    setNotificationCount(0);
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Compute profile display name (prefer VI account when available)
   const profileDisplayName =
@@ -414,7 +474,9 @@ export const Header = () => {
               )}
               {!isViSite && (
                 <button
-                  onClick={() => (window.location.href = "/dashboard-executive")}
+                  onClick={() =>
+                    (window.location.href = "/dashboard-executive")
+                  }
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <ChartAreaIcon className="w-4 h-4" />
@@ -576,16 +638,133 @@ export const Header = () => {
             </div>
           )}
 
-          <div className="relative">
-            <button className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">
-              <Bell className="w-5 h-5 text-[#1a1a1a]" />
-            </button>
-            {notificationCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 rounded-full">
-                {notificationCount}
-              </Badge>
-            )}
-          </div>
+          {/* Notifications Dropdown */}
+          <DropdownMenu
+            open={isNotificationOpen}
+            onOpenChange={setIsNotificationOpen}
+          >
+            <DropdownMenuTrigger asChild>
+              <button className="relative p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">
+                <Bell className="w-5 h-5 text-[#1a1a1a]" />
+                {notificationCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 rounded-full">
+                    {notificationCount}
+                  </Badge>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-[200px] p-0 max-h-[500px] overflow-hidden"
+            >
+              {/* Notification Header */}
+              <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Notifications
+                  </h3>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    {notificationCount > 0
+                      ? `${notificationCount} unread notification${notificationCount > 1 ? "s" : ""}`
+                      : "All caught up!"}
+                  </p>
+                </div>
+                {notificationCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs text-[#C72030] hover:text-[#A01020] font-medium"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+              </div>
+
+              {/* Notifications List */}
+              <div className="overflow-y-auto max-h-[400px]">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-12 text-center">
+                    <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-sm font-medium text-gray-500">
+                      No notifications yet
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      We'll notify you when something arrives
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {notifications.map((notification) => (
+                      <button
+                        key={notification.id}
+                        onClick={() => {
+                          if (!notification.read) {
+                            markAsRead(notification.id);
+                          }
+                        }}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          !notification.read ? "bg-blue-50/30" : ""
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              !notification.read
+                                ? "bg-[#C72030]"
+                                : "bg-gray-300"
+                            }`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p
+                                className={`text-sm ${!notification.read ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}
+                              >
+                                {notification.title}
+                              </p>
+                              <span className="text-xs text-gray-500 whitespace-nowrap">
+                                {notification.time}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                              {notification.message}
+                            </p>
+                            <div className="mt-2">
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${
+                                  notification.type === "task"
+                                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                                    : notification.type === "meeting"
+                                      ? "bg-green-50 text-green-700 border-green-200"
+                                      : "bg-gray-50 text-gray-700 border-gray-200"
+                                }`}
+                              >
+                                {notification.type}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              {notifications.length > 0 && (
+                <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+                  <button
+                    onClick={() => {
+                      setIsNotificationOpen(false);
+                      navigate("/notifications");
+                    }}
+                    className="w-full text-center text-sm font-medium text-[#C72030] hover:text-[#A01020] transition-colors"
+                  >
+                    View all notifications
+                  </button>
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
             <DropdownMenuTrigger className="flex items-center gap-2">
@@ -603,7 +782,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                    "User"
+                      "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-0.5">
