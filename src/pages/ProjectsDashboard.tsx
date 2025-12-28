@@ -227,85 +227,92 @@ export const ProjectsDashboard = () => {
   const viewDropdownRef = useRef<HTMLDivElement>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchData = useCallback(async (
-    page = 1,
-    filterString = "",
-    isLoadMore = false,
-    searchQuery = ""
-  ) => {
-    try {
-      if (!hasMore && isLoadMore) return;
+  const fetchData = useCallback(
+    async (
+      page = 1,
+      filterString = "",
+      isLoadMore = false,
+      searchQuery = ""
+    ) => {
+      try {
+        if (!hasMore && isLoadMore) return;
 
-      // Use scrollLoading for infinite scroll, regular loading for initial load
-      if (isLoadMore) {
-        setScrollLoading(true);
-      } else {
-        setLoading(true);
-      }
-
-      let filters = filterString !== "" ? filterString : appliedFilters;
-
-      if (!filters) {
-        if (selectedFilterOption !== "all") {
-          filters = `q[status_eq]=${selectedFilterOption}&`;
-        }
-      }
-
-      // Add search query using Ransack's cont (contains) matcher
-      if (searchQuery && searchQuery.trim() !== "") {
-        const searchFilter = `q[title_or_project_type_name_or_project_owner_name_cont]=${encodeURIComponent(searchQuery.trim())}`;
-        filters += (filters ? "&" : "") + searchFilter + "&";
-      }
-
-      filters +=
-        (filters ? "&" : "") +
-        `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${JSON.parse(localStorage.getItem("user")).id}&page=${page}`;
-
-      // Create cache key based on filters and page
-      const cacheKey = `projects_${filters}_${page}`;
-
-      // Try to use cached data first (stale-while-revalidate)
-      if (!isLoadMore && page === 1) {
-        const cachedResult = await cache.getOrFetch(
-          cacheKey,
-          async () => {
-            const response = await dispatch(
-              filterProjects({ token, baseUrl, filters })
-            ).unwrap();
-            return response;
-          },
-          2 * 60 * 1000, // Fresh for 2 minutes
-          10 * 60 * 1000  // Stale up to 10 minutes
-        );
-
-        const transformedData = transformedProjects(cachedResult.data.project_managements);
-        setProjects(transformedData);
-        setHasMore(page < (cachedResult.data.pagination?.total_pages || 1));
-        setCurrentPage(page);
-      } else {
-        // For pagination, fetch fresh data
-        const response = await dispatch(
-          filterProjects({ token, baseUrl, filters })
-        ).unwrap();
-
-        const transformedData = transformedProjects(response.project_managements);
-
+        // Use scrollLoading for infinite scroll, regular loading for initial load
         if (isLoadMore) {
-          setProjects((prev) => [...prev, ...transformedData]);
+          setScrollLoading(true);
         } else {
-          setProjects(transformedData);
+          setLoading(true);
         }
 
-        setHasMore(page < (response.pagination?.total_pages || 1));
-        setCurrentPage(page);
+        let filters = filterString !== "" ? filterString : appliedFilters;
+
+        if (!filters) {
+          if (selectedFilterOption !== "all") {
+            filters = `q[status_eq]=${selectedFilterOption}&`;
+          }
+        }
+
+        // Add search query using Ransack's cont (contains) matcher
+        if (searchQuery && searchQuery.trim() !== "") {
+          const searchFilter = `q[title_or_project_type_name_or_project_owner_name_cont]=${encodeURIComponent(searchQuery.trim())}`;
+          filters += (filters ? "&" : "") + searchFilter + "&";
+        }
+
+        filters +=
+          (filters ? "&" : "") +
+          `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${JSON.parse(localStorage.getItem("user")).id}&page=${page}`;
+
+        // Create cache key based on filters and page
+        const cacheKey = `projects_${filters}_${page}`;
+
+        // Try to use cached data first (stale-while-revalidate)
+        if (!isLoadMore && page === 1) {
+          const cachedResult = await cache.getOrFetch(
+            cacheKey,
+            async () => {
+              const response = await dispatch(
+                filterProjects({ token, baseUrl, filters })
+              ).unwrap();
+              return response;
+            },
+            2 * 60 * 1000, // Fresh for 2 minutes
+            10 * 60 * 1000 // Stale up to 10 minutes
+          );
+
+          const transformedData = transformedProjects(
+            cachedResult.data.project_managements
+          );
+          setProjects(transformedData);
+          setHasMore(page < (cachedResult.data.pagination?.total_pages || 1));
+          setCurrentPage(page);
+        } else {
+          // For pagination, fetch fresh data
+          const response = await dispatch(
+            filterProjects({ token, baseUrl, filters })
+          ).unwrap();
+
+          const transformedData = transformedProjects(
+            response.project_managements
+          );
+
+          if (isLoadMore) {
+            setProjects((prev) => [...prev, ...transformedData]);
+          } else {
+            setProjects(transformedData);
+          }
+
+          setHasMore(page < (response.pagination?.total_pages || 1));
+          setCurrentPage(page);
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+        setScrollLoading(false);
       }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-      setScrollLoading(false);
-    }
-  }, [hasMore, appliedFilters, selectedFilterOption, dispatch, token, baseUrl]);
+    },
+    [hasMore, appliedFilters, selectedFilterOption, dispatch, token, baseUrl]
+  );
 
   useEffect(() => {
     setCurrentPage(1);
@@ -368,7 +375,7 @@ export const ProjectsDashboard = () => {
   const getOwners = useCallback(async () => {
     try {
       const cachedResult = await cache.getOrFetch(
-        'project_owners',
+        "project_owners",
         async () => {
           const response = await axios.get(
             `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
@@ -393,7 +400,7 @@ export const ProjectsDashboard = () => {
   const getTeams = useCallback(async () => {
     try {
       await cache.getOrFetch(
-        'project_teams',
+        "project_teams",
         async () => {
           return await dispatch(fetchProjectTeams()).unwrap();
         },
@@ -409,7 +416,7 @@ export const ProjectsDashboard = () => {
   const getProjectTypes = useCallback(async () => {
     try {
       const cachedResult = await cache.getOrFetch(
-        'project_types',
+        "project_types",
         async () => {
           return await dispatch(fetchProjectTypes()).unwrap();
         },
@@ -426,7 +433,7 @@ export const ProjectsDashboard = () => {
   const getTags = useCallback(async () => {
     try {
       await cache.getOrFetch(
-        'project_tags',
+        "project_tags",
         async () => {
           return await dispatch(fetchProjectsTags()).unwrap();
         },
@@ -470,6 +477,8 @@ export const ProjectsDashboard = () => {
       };
       await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
       toast.success("Project created successfully");
+      // Invalidate cache after project creation
+      cache.invalidatePattern("projects_*");
       fetchData(1, "", false, debouncedSearchTerm);
     } catch (error) {
       console.log(error);
@@ -529,7 +538,13 @@ export const ProjectsDashboard = () => {
         <div
           className="flex items-center gap-2 cursor-pointer"
           onClick={() =>
-            type === "issues" ? navigate(`/vas/issues?project_id=${item.id}`) : type === "tasks" ? navigate(`/vas/tasks?project_id=${item.id}`) : type === "milestones" ? navigate(`/vas/projects/${item.id}/milestones`) : null
+            type === "issues"
+              ? navigate(`/vas/issues?project_id=${item.id}`)
+              : type === "tasks"
+                ? navigate(`/vas/tasks?project_id=${item.id}`)
+                : type === "milestones"
+                  ? navigate(`/vas/projects/${item.id}/milestones`)
+                  : null
           }
         >
           <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
@@ -555,7 +570,12 @@ export const ProjectsDashboard = () => {
       case "milestones": {
         const completed = item.milestonesCompleted || 0;
         const total = item.milestones || 0;
-        return renderProgressBar(completed, total, "bg-[#84edba]", "milestones");
+        return renderProgressBar(
+          completed,
+          total,
+          "bg-[#84edba]",
+          "milestones"
+        );
       }
       case "tasks": {
         const completed = item.tasksCompleted || 0;
