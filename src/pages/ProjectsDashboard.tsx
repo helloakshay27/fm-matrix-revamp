@@ -944,6 +944,8 @@ export const ProjectsDashboard = () => {
           setIsModalOpen={setIsFilterModalOpen}
           onApplyFilters={(filterString) => {
             setAppliedFilters(filterString);
+            setCurrentPage(1);
+            setHasMore(true);
             fetchData(1, filterString, false, debouncedSearchTerm);
           }}
         />
@@ -978,6 +980,8 @@ export const ProjectsDashboard = () => {
         }}
         searchValue={searchTerm}
         searchPlaceholder="Search by title, type, or manager..."
+        enableExport={true}
+        exportFileName="projects"
       />
 
       {scrollLoading && hasMore && (
