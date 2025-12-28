@@ -406,8 +406,12 @@ const ProjectTasksPage = () => {
 
     const getStatuses = async () => {
         try {
-            const response = await dispatch(fetchProjectStatuses()).unwrap();
-            setStatuses(response)
+            const response = await axios.get(`https://${baseUrl}/project_statuses.json?q[active_eq]=true`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setStatuses(response.data)
         } catch (error) {
             console.log(error)
         }

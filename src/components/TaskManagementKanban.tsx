@@ -295,11 +295,11 @@ const TaskManagementKanban = ({ fetchData }) => {
                                         let dependsOnArr = [];
                                         const currentTaskKey = `task-${task.id}`;
 
-                                        if (Array.isArray(task.predecessor_task_ids)) {
-                                            dependsOnArr = [...dependsOnArr, ...task.predecessor_task_ids.flat().filter(Boolean)];
+                                        if (Array.isArray(task.predecessor_task)) {
+                                            dependsOnArr = [...dependsOnArr, ...task.predecessor_task.flat().filter(Boolean)];
                                         }
-                                        if (Array.isArray(task.successor_task_ids)) {
-                                            dependsOnArr = [...dependsOnArr, ...task.successor_task_ids.flat().filter(Boolean)];
+                                        if (Array.isArray(task.successor_task)) {
+                                            dependsOnArr = [...dependsOnArr, ...task.predecessor_task.flat().filter(Boolean)];
                                         }
 
                                         dependsOnArr = [...new Set(dependsOnArr.filter((id) => id && id !== task.id))];
