@@ -8,7 +8,11 @@ import {
 } from "@/components/ui/tooltip";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { changeProjectStatus, createProject, filterProjects } from "@/store/slices/projectManagementSlice";
+import {
+  changeProjectStatus,
+  createProject,
+  filterProjects,
+} from "@/store/slices/projectManagementSlice";
 import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import {
   ChartNoAxesColumn,
@@ -132,8 +136,8 @@ const transformedProjects = (projects: any) => {
       milestonesCompleted: project.completed_milestone_count,
       tasks: project.total_task_management_count,
       tasksCompleted: project.completed_task_management_count,
-      subtasks: project.total_sub_task_count || 0,
-      subtasksCompleted: project.completed_sub_task_count || 0,
+      subtasks: project.total_sub_task_management_count || 0,
+      subtasksCompleted: project.completed_sub_task_management_count || 0,
       issues: project.total_issues_count,
       resolvedIssues: project.completed_issues_count,
       start_date: project.start_date,
@@ -148,29 +152,29 @@ const transformedProjects = (projects: any) => {
 const STATUS_OPTIONS = [
   {
     value: "all",
-    label: "All"
+    label: "All",
   },
   {
     value: "active",
-    label: "Active"
+    label: "Active",
   },
   {
     value: "in_progress",
-    label: "In Progress"
+    label: "In Progress",
   },
   {
     value: "completed",
-    label: "Completed"
+    label: "Completed",
   },
   {
     value: "on_hold",
-    label: "On Hold"
+    label: "On Hold",
   },
   {
     value: "overdue",
-    label: "Overdue"
-  }
-]
+    label: "Overdue",
+  },
+];
 
 const statusOptions = [
   { value: "active", label: "Active" },
@@ -178,8 +182,7 @@ const statusOptions = [
   { value: "on_hold", label: "On Hold" },
   { value: "completed", label: "Completed" },
   { value: "overdue", label: "Overdue" },
-]
-
+];
 
 export const ProjectsDashboard = () => {
   const { setCurrentSection } = useLayout();
@@ -187,7 +190,9 @@ export const ProjectsDashboard = () => {
   const view = localStorage.getItem("selectedView");
 
   useEffect(() => {
-    setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
+    setCurrentSection(
+      view === "admin" ? "Value Added Services" : "Project Task"
+    );
   }, [setCurrentSection]);
 
   const navigate = useNavigate();
@@ -195,23 +200,23 @@ export const ProjectsDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
-  const { teams } = useAppSelector(state => state.projectTeams)
-  const { projectTags: tags } = useAppSelector(state => state.projectTags)
+  const { teams } = useAppSelector((state) => state.projectTeams);
+  const { projectTags: tags } = useAppSelector((state) => state.projectTags);
 
-  const [selectedFilterOption, setSelectedFilterOption] = useState("all")
+  const [selectedFilterOption, setSelectedFilterOption] = useState("all");
   const [projects, setProjects] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [openFormDialog, setOpenFormDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState({});
   const [isOpen, setIsOpen] = useState(false);
-  const [openStatusOptions, setOpenStatusOptions] = useState(false)
+  const [openStatusOptions, setOpenStatusOptions] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedView, setSelectedView] = useState("List");
   const [projectTypes, setProjectTypes] = useState([]);
-  const [owners, setOwners] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [scrollLoading, setScrollLoading] = useState(false)
-  const [appliedFilters, setAppliedFilters] = useState("")
+  const [owners, setOwners] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [scrollLoading, setScrollLoading] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState("");
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -221,7 +226,12 @@ export const ProjectsDashboard = () => {
   const viewDropdownRef = useRef<HTMLDivElement>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchData = async (page = 1, filterString = "", isLoadMore = false, searchQuery = "") => {
+  const fetchData = async (
+    page = 1,
+    filterString = "",
+    isLoadMore = false,
+    searchQuery = ""
+  ) => {
     try {
       if (!hasMore && isLoadMore) return;
 
@@ -246,7 +256,9 @@ export const ProjectsDashboard = () => {
         filters += (filters ? "&" : "") + searchFilter + "&";
       }
 
-      filters += (filters ? "&" : "") + `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${JSON.parse(localStorage.getItem('user')).id}&page=${page}`;
+      filters +=
+        (filters ? "&" : "") +
+        `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${JSON.parse(localStorage.getItem("user")).id}&page=${page}`;
 
       const response = await dispatch(
         filterProjects({ token, baseUrl, filters })
@@ -255,7 +267,7 @@ export const ProjectsDashboard = () => {
       const transformedData = transformedProjects(response.project_managements);
 
       if (isLoadMore) {
-        setProjects(prev => [...prev, ...transformedData]);
+        setProjects((prev) => [...prev, ...transformedData]);
       } else {
         setProjects(transformedData);
       }
@@ -270,7 +282,6 @@ export const ProjectsDashboard = () => {
     }
   };
 
-
   useEffect(() => {
     setCurrentPage(1);
     setHasMore(true);
@@ -281,83 +292,105 @@ export const ProjectsDashboard = () => {
   // Infinite scroll handler
   useEffect(() => {
     const handleScroll = () => {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
       const scrollHeight = document.documentElement.scrollHeight;
       const clientHeight = document.documentElement.clientHeight;
 
       // Load more when user is 200px from bottom
-      if (scrollTop + clientHeight >= scrollHeight - 200 && !scrollLoading && !loading && hasMore) {
+      if (
+        scrollTop + clientHeight >= scrollHeight - 200 &&
+        !scrollLoading &&
+        !loading &&
+        hasMore
+      ) {
         fetchData(currentPage + 1, "", true, debouncedSearchTerm);
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [scrollLoading, loading, hasMore, currentPage, appliedFilters, debouncedSearchTerm]);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [
+    scrollLoading,
+    loading,
+    hasMore,
+    currentPage,
+    appliedFilters,
+    debouncedSearchTerm,
+  ]);
 
   // Click outside handler for dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (viewDropdownRef.current && !viewDropdownRef.current.contains(event.target as Node)) {
+      if (
+        viewDropdownRef.current &&
+        !viewDropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
-      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+      if (
+        statusDropdownRef.current &&
+        !statusDropdownRef.current.contains(event.target as Node)
+      ) {
         setOpenStatusOptions(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const getOwners = async () => {
     try {
-      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await axios.get(
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
       setOwners(response.data.users);
     } catch (error) {
-      console.log(error)
-      toast.error(error)
+      console.log(error);
+      toast.error(error);
     }
-  }
+  };
 
   const getTeams = async () => {
     try {
       await dispatch(fetchProjectTeams()).unwrap();
     } catch (error) {
-      console.log(error)
-      toast.error(error)
+      console.log(error);
+      toast.error(error);
     }
-  }
+  };
 
   const getProjectTypes = async () => {
     try {
       const response = await dispatch(fetchProjectTypes()).unwrap();
       setProjectTypes(response);
     } catch (error) {
-      console.log(error)
-      toast.error(error)
+      console.log(error);
+      toast.error(error);
     }
-  }
+  };
 
   const getTags = async () => {
     try {
       await dispatch(fetchProjectsTags()).unwrap();
     } catch (error) {
-      console.log(error)
-      toast.error(error)
+      console.log(error);
+      toast.error(error);
     }
-  }
+  };
 
   useEffect(() => {
     getOwners();
     getTeams();
     getProjectTypes();
     getTags();
-  }, [])
+  }, []);
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -380,13 +413,13 @@ export const ProjectsDashboard = () => {
           active: true,
           project_type_id: data.type,
         },
-      }
+      };
       await dispatch(createProject({ token, baseUrl, data: payload })).unwrap();
       toast.success("Project created successfully");
       fetchData(1, "", false, debouncedSearchTerm);
     } catch (error) {
-      console.log(error)
-      toast.error(error)
+      console.log(error);
+      toast.error(error);
     }
   };
 
@@ -413,30 +446,53 @@ export const ProjectsDashboard = () => {
 
   const handleStatusChange = async (id: number, status: string) => {
     try {
-      await dispatch(changeProjectStatus({ token, baseUrl, id: String(id), payload: { project_management: { status } } })).unwrap();
+      await dispatch(
+        changeProjectStatus({
+          token,
+          baseUrl,
+          id: String(id),
+          payload: { project_management: { status } },
+        })
+      ).unwrap();
       fetchData(1, "", false, debouncedSearchTerm);
       setCurrentPage(1);
       setHasMore(true);
       toast.success("Project status changed successfully");
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
-
-
+  };
 
   const renderCell = (item: any, columnKey: string) => {
-    const renderProgressBar = (completed: number, total: number, color: string, type?: string) => {
+    const renderProgressBar = (
+      completed: number,
+      total: number,
+      color: string,
+      type?: string
+    ) => {
       const progress = total > 0 ? (completed / total) * 100 : 0;
       return (
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => type === "issues" && navigate(`/vas/issues?project_id=${item.id}`)}>
-          <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() =>
+            type === "issues" && navigate(`/vas/issues?project_id=${item.id}`)
+          }
+        >
+          <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+            {completed}
+          </span>
+          <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
             <div
-              className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
+              className={`absolute top-0 left-0 h-6 ${color} rounded-full transition-all duration-300`}
               style={{ width: `${progress}%` }}
             ></div>
+            <span className="relative z-10 text-xs font-semibold text-gray-800">
+              {Math.round(progress)}%
+            </span>
           </div>
-          <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{completed}/{total}</span>
+          <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+            {total}
+          </span>
         </div>
       );
     };
@@ -473,7 +529,9 @@ export const ProjectsDashboard = () => {
         );
       case "start_date":
       case "end_date":
-        return item[columnKey] ? new Date(item[columnKey]).toLocaleDateString('en-GB') : "-";
+        return item[columnKey]
+          ? new Date(item[columnKey]).toLocaleDateString("en-GB")
+          : "-";
       case "status": {
         const statusColorMap = {
           active: { dot: "bg-emerald-500" },
@@ -483,7 +541,9 @@ export const ProjectsDashboard = () => {
           overdue: { dot: "bg-red-500" },
         };
 
-        const colors = statusColorMap[item.status as keyof typeof statusColorMap] || statusColorMap.active;
+        const colors =
+          statusColorMap[item.status as keyof typeof statusColorMap] ||
+          statusColorMap.active;
 
         return (
           <FormControl
@@ -497,9 +557,16 @@ export const ProjectsDashboard = () => {
               }
               disableUnderline
               renderValue={(value) => (
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}></span>
-                  <span>{statusOptions.find(opt => opt.value === value)?.label || value}</span>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <span
+                    className={`inline-block w-2 h-2 rounded-full ${colors.dot}`}
+                  ></span>
+                  <span>
+                    {statusOptions.find((opt) => opt.value === value)?.label ||
+                      value}
+                  </span>
                 </div>
               )}
               sx={{
@@ -514,10 +581,17 @@ export const ProjectsDashboard = () => {
               }}
             >
               {statusOptions.map((opt) => {
-                const optColors = statusColorMap[opt.value as keyof typeof statusColorMap];
+                const optColors =
+                  statusColorMap[opt.value as keyof typeof statusColorMap];
                 return (
-                  <MenuItem key={opt.value} value={opt.value} sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}></span>
+                  <MenuItem
+                    key={opt.value}
+                    value={opt.value}
+                    sx={{ display: "flex", alignItems: "center", gap: "8px" }}
+                  >
+                    <span
+                      className={`inline-block w-2 h-2 rounded-full ${optColors?.dot || "bg-gray-500"}`}
+                    ></span>
                     <span>{opt.label}</span>
                   </MenuItem>
                 );
@@ -531,7 +605,14 @@ export const ProjectsDashboard = () => {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="truncate cursor-pointer" onClick={() => navigate(`/vas/projects/${item.id}/milestones`)}>{item.title}</span>
+                <span
+                  className="truncate cursor-pointer"
+                  onClick={() =>
+                    navigate(`/vas/projects/${item.id}/milestones`)
+                  }
+                >
+                  {item.title}
+                </span>
               </TooltipTrigger>
               <TooltipContent className="rounded-[5px]">
                 <p>{item.title}</p>
@@ -585,13 +666,11 @@ export const ProjectsDashboard = () => {
           <MenuItem value="">
             <em>Select type</em>
           </MenuItem>
-          {
-            projectTypes.map((projectType) => (
-              <MenuItem key={projectType.id} value={projectType.id}>
-                {projectType.name}
-              </MenuItem>
-            ))
-          }
+          {projectTypes.map((projectType) => (
+            <MenuItem key={projectType.id} value={projectType.id}>
+              {projectType.name}
+            </MenuItem>
+          ))}
         </Select>
       );
     }
@@ -607,13 +686,11 @@ export const ProjectsDashboard = () => {
           <MenuItem value="">
             <em>Select owner</em>
           </MenuItem>
-          {
-            owners.map((owner) => (
-              <MenuItem key={owner.id} value={owner.id}>
-                {owner.full_name}
-              </MenuItem>
-            ))
-          }
+          {owners.map((owner) => (
+            <MenuItem key={owner.id} value={owner.id}>
+              {owner.full_name}
+            </MenuItem>
+          ))}
         </Select>
       );
     }
@@ -658,7 +735,7 @@ export const ProjectsDashboard = () => {
       );
     }
     return null;
-  }
+  };
 
   const rightActions = (
     <div className="flex items-center gap-2">
@@ -716,7 +793,9 @@ export const ProjectsDashboard = () => {
           className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
         >
           <span className="text-[#C72030] font-medium flex items-center gap-2">
-            {STATUS_OPTIONS.find((option) => option.value === selectedFilterOption)?.label || "All"}
+            {STATUS_OPTIONS.find(
+              (option) => option.value === selectedFilterOption
+            )?.label || "All"}
           </span>
           <ChevronDown className="w-4 h-4 text-gray-600" />
         </button>
@@ -724,24 +803,21 @@ export const ProjectsDashboard = () => {
         {openStatusOptions && (
           <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
             <div className="py-2">
-              {
-                STATUS_OPTIONS.map((option) => (
-                  <button
-                    onClick={() => {
-                      setSelectedFilterOption(option.value);
-                      setOpenStatusOptions(false);
-                    }}
-                    className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
-                  >
-                    <span className="text-gray-700">{option.label}</span>
-                  </button>
-                ))
-              }
+              {STATUS_OPTIONS.map((option) => (
+                <button
+                  onClick={() => {
+                    setSelectedFilterOption(option.value);
+                    setOpenStatusOptions(false);
+                  }}
+                  className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+                >
+                  <span className="text-gray-700">{option.label}</span>
+                </button>
+              ))}
             </div>
           </div>
         )}
       </div>
-
     </div>
   );
 
@@ -872,7 +948,7 @@ export const ProjectsDashboard = () => {
           }}
         />
       </div>
-    )
+    );
   }
 
   return (
@@ -889,7 +965,7 @@ export const ProjectsDashboard = () => {
         canAddRow={true}
         readonlyColumns={["id", "milestones", "tasks", "subtasks", "issues"]}
         onAddRow={(newRowData) => {
-          handleSubmit(newRowData)
+          handleSubmit(newRowData);
         }}
         renderEditableCell={renderEditableCell}
         newRowPlaceholder="Click to add new project"
