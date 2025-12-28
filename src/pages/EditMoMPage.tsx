@@ -1,38 +1,32 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import {
-    TextField,
-    Button,
-    Typography,
-    Switch,
-    FormControlLabel,
-    IconButton,
-    Paper,
-    Box,
-    Checkbox
-} from '@mui/material';
-import { Plus, Trash2, ArrowLeft } from 'lucide-react';
-import { Button as SButton } from '../components/ui/button'
-
 import { AppDispatch, RootState } from '../store/store';
 import { fetchFMUsers } from '../store/slices/fmUserSlice';
 import { fetchProjectsTags } from '../store/slices/projectTagSlice';
-import { createMoM } from '../store/slices/momSlice';
-import MuiSelectField from '../components/MuiSelectField';
-import MuiMultiSelect from '../components/MuiMultiSelect';
-import { API_CONFIG } from '../config/apiConfig';
+import { updateMoM, fetchMoMDetail } from '../store/slices/momSlice';
 import { toast } from 'sonner';
 import { useLayout } from '@/contexts/LayoutContext';
+import {
+    TextField,
+    Paper,
+    Typography,
+    Switch,
+    Button,
+    IconButton,
+    FormControlLabel,
+    Checkbox,
+} from '@mui/material';
+import { Button as SButton } from '../components/ui/button';
+import MuiSelectField from '../components/MuiSelectField';
 
-// Define types for form data
 interface Attendee {
     id: number;
     name?: string;
     email?: string;
     role?: string;
     organization?: string;
-    // For internal attendees
     userId?: number | string;
     imp_mail?: boolean;
 }
@@ -40,11 +34,11 @@ interface Attendee {
 interface DiscussionPoint {
     id: number;
     description: string;
-    raisedBy: string | number; // value (id or email)
-    responsiblePerson: string | number; // userId
+    raisedBy: string | number;
+    responsiblePerson: string | number;
     endDate: string;
     isTask: boolean;
-    tags: any[]; // Array of tag objects with value and label
+    tags: any[];
 }
 
 interface FormData {
@@ -57,8 +51,9 @@ interface FormData {
     actionItems: string;
 }
 
-const AddMoMPage = () => {
+const EditMoMPage = () => {
     const { setCurrentSection } = useLayout();
+    const { id } = useParams<{ id: string }>();
 
     useEffect(() => {
         setCurrentSection("Project Task");
@@ -70,6 +65,7 @@ const AddMoMPage = () => {
     // Redux Selectors
     const { data: fmUsersData } = useSelector((state: RootState) => state.fmUsers);
     const { projectTags: tagsData } = useSelector((state: RootState) => state.projectTags);
+    const { data: momDetail, loading } = useSelector((state: RootState) => state.fetchMoMDetail);
 
     // Local State
     const [formData, setFormData] = useState<FormData>({
@@ -85,6 +81,7 @@ const AddMoMPage = () => {
     const [isExternal, setIsExternal] = useState(false);
     const [internalAttendees, setInternalAttendees] = useState<Attendee[]>([{ id: Date.now() }]);
     const [externalAttendees, setExternalAttendees] = useState<Attendee[]>([{ id: Date.now() + 1 }]);
+    const [deletedAttendeeIds, setDeletedAttendeeIds] = useState<number[]>([]);
     const [points, setPoints] = useState<DiscussionPoint[]>([{
         id: Date.now(),
         description: '',
@@ -94,10 +91,10 @@ const AddMoMPage = () => {
         isTask: false,
         tags: []
     }]);
+    const [deletedPointIds, setDeletedPointIds] = useState<number[]>([]);
     const [attachments, setAttachments] = useState<File[]>([]);
+    const [existingAttachments, setExistingAttachments] = useState<any[]>([]);
     const attachmentRef = useRef<HTMLInputElement>(null);
-
-    console.log(internalAttendees)
 
     // Fetch Data on Mount
     useEffect(() => {
@@ -107,7 +104,81 @@ const AddMoMPage = () => {
         if (token && baseUrl) {
             dispatch(fetchProjectsTags());
         }
-    }, [dispatch]);
+
+        // Fetch MoM detail
+        if (id) {
+            dispatch(fetchMoMDetail(id));
+        }
+    }, [dispatch, id]);
+
+    // Populate form with MoM data
+    useEffect(() => {
+        if (momDetail && typeof momDetail === 'object' && 'title' in momDetail) {
+            const mom = momDetail as any;
+
+            setFormData({
+                title: mom.title || '',
+                date: mom.meeting_date.split('T')[0] || '',
+                time: mom.meeting_date.split('T')[1]?.substring(0, 5) || '',
+                meetingType: mom.meeting_type || '',
+                meetingMode: mom.meeting_mode || '',
+                agendaItems: mom.agenda_items || '',
+                actionItems: mom.action_items || '',
+            });
+
+            // Populate Internal Attendees
+            if (mom.mom_attendees && Array.isArray(mom.mom_attendees)) {
+                const internal = mom.mom_attendees
+                    .filter((att: any) => att.attendees_type === 'FmUser')
+                    .map((att: any) => ({
+                        id: att.id,
+                        name: att.name,
+                        email: att.email,
+                        role: att.role,
+                        userId: att.attendees_id,
+                        imp_mail: att.imp_mail,
+                    }));
+
+                const external = mom.mom_attendees
+                    .filter((att: any) => att.attendees_type === 'ExternalUser')
+                    .map((att: any) => ({
+                        id: att.id,
+                        name: att.name,
+                        email: att.email,
+                        role: att.role,
+                        organization: att.organization,
+                        imp_mail: att.imp_mail,
+                    }));
+
+                if (internal.length > 0) {
+                    setInternalAttendees(internal);
+                }
+                if (external.length > 0) {
+                    setExternalAttendees(external);
+                    setIsExternal(true);
+                }
+            }
+
+            // Populate Discussion Points
+            if (mom.mom_tasks && Array.isArray(mom.mom_tasks)) {
+                const mappedPoints = mom.mom_tasks.map((task: any) => ({
+                    id: task.id,
+                    description: task.description || '',
+                    raisedBy: task.raised_by || '',
+                    responsiblePerson: task.responsible_person_id || '',
+                    endDate: task.target_date || '',
+                    isTask: task.save_task || false,
+                    tags: task.company_tag_id ? [{ value: task.company_tag_id, label: task.tag_name || '' }] : [],
+                }));
+                setPoints(mappedPoints);
+            }
+
+            // Store existing attachments
+            if (mom.attachments && Array.isArray(mom.attachments)) {
+                setExistingAttachments(mom.attachments);
+            }
+        }
+    }, [momDetail]);
 
     // Derived Data
     const usersList = (fmUsersData as any)?.users || (fmUsersData as any)?.fm_users || [];
@@ -149,12 +220,20 @@ const AddMoMPage = () => {
     const handleRemoveAttendee = (index: number, isExt: boolean) => {
         if (isExt) {
             if (externalAttendees.length > 1) {
+                const attendee = externalAttendees[index];
+                if (attendee.id && attendee.id > 0) {
+                    setDeletedAttendeeIds(prev => [...prev, attendee.id]);
+                }
                 setExternalAttendees(prev => prev.filter((_, i) => i !== index));
             } else {
                 toast.error('At least one attendee is required');
             }
         } else {
             if (internalAttendees.length > 1) {
+                const attendee = internalAttendees[index];
+                if (attendee.id && attendee.id > 0) {
+                    setDeletedAttendeeIds(prev => [...prev, attendee.id]);
+                }
                 setInternalAttendees(prev => prev.filter((_, i) => i !== index));
             } else {
                 toast.error('At least one attendee is required');
@@ -188,6 +267,10 @@ const AddMoMPage = () => {
 
     const handleRemovePoint = (index: number) => {
         if (points.length > 1) {
+            const point = points[index];
+            if (point.id && point.id > 0) {
+                setDeletedPointIds(prev => [...prev, point.id]);
+            }
             setPoints(prev => prev.filter((_, i) => i !== index));
         } else {
             toast.error('At least one discussion point is required');
@@ -212,14 +295,8 @@ const AddMoMPage = () => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newDate = e.target.value;
-        setFormData(prev => ({ ...prev, date: newDate }));
-    };
-
-    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newTime = e.target.value;
-        setFormData(prev => ({ ...prev, time: newTime }));
+    const handleRemoveExistingAttachment = (attachmentId: number | string) => {
+        setExistingAttachments(prev => prev.filter(att => att.id !== attachmentId));
     };
 
     const getRaisedByOptions = () => {
@@ -244,19 +321,17 @@ const AddMoMPage = () => {
         if (!formData.title) return toast.error('Meeting Title is required');
         if (!formData.date) return toast.error('Meeting Date is required');
 
-        // Helper to find Full User Object
         const findUser = (id: string | number) => usersList.find((u: any) => u.id === id);
 
-        // Prepare Attendees
-        // 1. Internal Attendees -> Map to unified structure
         const mappedInternal = internalAttendees
             .filter(a => a.userId)
             .map(a => {
                 const u = findUser(a.userId!);
                 return {
+                    id: a.id,
                     name: u ? `${u.full_name}` : 'Unknown',
                     email: u ? u.email : '',
-                    organization: 'Internal', // Or get from user object if available
+                    organization: 'Internal',
                     role: u ? u.role_name : '',
                     attendees_type: 'FmUser',
                     attendees_id: a.userId,
@@ -264,14 +339,14 @@ const AddMoMPage = () => {
                 };
             });
 
-        // 2. External Attendees
         const mappedExternal = isExternal ? externalAttendees.filter(a => a.name && a.email).map(a => ({
+            id: a.id,
             name: a.name,
             email: a.email,
             organization: a.organization || '',
             role: a.role || '',
             attendees_type: 'ExternalUser',
-            attendees_id: null, // No ID for external usually
+            attendees_id: null,
             imp_mail: a.imp_mail || false
         })) : [];
 
@@ -281,18 +356,11 @@ const AddMoMPage = () => {
 
         formDataPayload.append('mom_detail[title]', formData.title);
         formDataPayload.append('mom_detail[meeting_date]', formData.date);
+        formDataPayload.append('mom_detail[meeting_time]', formData.time);
         formDataPayload.append('mom_detail[meeting_type]', formData.meetingType);
         formDataPayload.append('mom_detail[meeting_mode]', formData.meetingMode);
-
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            try {
-                const userObj = JSON.parse(userStr);
-                formDataPayload.append('mom_detail[created_by_id]', userObj.id);
-            } catch (e) { console.error("Error parsing user from localstorage", e) }
-        }
-
         combinedUsers.forEach((user: any, index) => {
+            formDataPayload.append(`mom_detail[mom_attendees_attributes][${index}][id]`, user.id);
             formDataPayload.append(`mom_detail[mom_attendees_attributes][${index}][name]`, user.name || '');
             formDataPayload.append(`mom_detail[mom_attendees_attributes][${index}][email]`, user.email || '');
             formDataPayload.append(`mom_detail[mom_attendees_attributes][${index}][organization]`, user.organization || '');
@@ -315,13 +383,14 @@ const AddMoMPage = () => {
                 raisedById = point.raisedBy;
             }
 
+            formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][id]`, point.id);
             formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][description]`, point.description || '');
             formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][raised_by]`, String(raisedById));
 
             if (respUser) {
                 formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_id]`, respUser.id);
                 formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_name]`, `${respUser.full_name}`);
-                formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_type]`, respUser.user_type || 'FmUser'); // Fallback to FmUser
+                formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_type]`, respUser.user_type || 'FmUser');
                 formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_email]`, respUser.email);
             }
 
@@ -336,6 +405,27 @@ const AddMoMPage = () => {
             }
         });
 
+        // Add deleted attendees with _destroy: true flag for soft delete
+        if (deletedAttendeeIds.length > 0) {
+            let attendeeIndex = combinedUsers.length;
+            deletedAttendeeIds.forEach((id) => {
+                formDataPayload.append(`mom_detail[mom_attendees_attributes][${attendeeIndex}][id]`, String(id));
+                formDataPayload.append(`mom_detail[mom_attendees_attributes][${attendeeIndex}][_destroy]`, 'true');
+                attendeeIndex++;
+            });
+        }
+
+        // Add deleted points with _destroy: true flag for soft delete
+        if (deletedPointIds.length > 0) {
+            let pointIndex = points.length;
+            deletedPointIds.forEach((id) => {
+                formDataPayload.append(`mom_detail[mom_tasks_attributes][${pointIndex}][id]`, String(id));
+                formDataPayload.append(`mom_detail[mom_tasks_attributes][${pointIndex}][_destroy]`, 'true');
+                pointIndex++;
+            });
+        }
+
+        // Add new attachments
         if (attachments.length > 0) {
             for (let i = 0; i < attachments.length; i++) {
                 formDataPayload.append('attachments[]', attachments[i]);
@@ -343,16 +433,24 @@ const AddMoMPage = () => {
         }
 
         try {
-            await dispatch(createMoM(formDataPayload)).unwrap();
-            toast.success('Minute of Meeting Created Successfully');
+            await dispatch(updateMoM({ id: id!, formData: formDataPayload })).unwrap();
+            toast.success('Minute of Meeting Updated Successfully');
             navigate(-1);
         } catch (error) {
-            console.error('Failed to create MoM:', error);
-            toast.error(typeof error === 'string' ? error : 'Failed to create meeting minutes');
+            console.error('Failed to update MoM:', error);
+            toast.error(typeof error === 'string' ? error : 'Failed to update meeting minutes');
         }
     };
 
     const raisedByOptions = getRaisedByOptions();
+
+    if (loading) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <Typography>Loading...</Typography>
+            </div>
+        );
+    }
 
     return (
         <div className="h-full overflow-y-auto bg-white p-6 font-sans">
@@ -387,7 +485,6 @@ const AddMoMPage = () => {
                             <div className="flex-1">
                                 <Typography variant="subtitle2" className="mb-1">Meeting Type</Typography>
                                 <MuiSelectField
-                                    // label="Select Meeting Type"
                                     options={meetingTypeOptions}
                                     value={formData.meetingType}
                                     onChange={(e) => handleInputChange('meetingType', e.target.value as string)}
@@ -399,7 +496,6 @@ const AddMoMPage = () => {
                                     Meeting Mode <span className="text-red-500">*</span>
                                 </Typography>
                                 <MuiSelectField
-                                    // label="Select Meeting Mode"
                                     options={meetingModeOptions}
                                     value={formData.meetingMode}
                                     onChange={(e) => handleInputChange('meetingMode', e.target.value as string)}
@@ -420,11 +516,8 @@ const AddMoMPage = () => {
                                 fullWidth
                                 size="small"
                                 value={formData.date}
-                                onChange={handleDateChange}
+                                onChange={(e) => handleInputChange('date', e.target.value)}
                                 sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white' } }}
-                                inputProps={{
-                                    min: new Date().toISOString().split('T')[0],
-                                }}
                             />
                         </div>
                         <div className="flex-1">
@@ -436,7 +529,7 @@ const AddMoMPage = () => {
                                 fullWidth
                                 size="small"
                                 value={formData.time}
-                                onChange={handleTimeChange}
+                                onChange={(e) => handleInputChange('time', e.target.value)}
                                 sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white' } }}
                             />
                         </div>
@@ -469,7 +562,6 @@ const AddMoMPage = () => {
                                 externalAttendees.map((attendee, index) => (
                                     <div key={attendee.id} className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
                                         <div className="sm:col-span-3">
-                                            <Typography variant="subtitle2" className="mb-1">External User Name <span className="text-red-500">*</span></Typography>
                                             <TextField
                                                 placeholder="Name"
                                                 fullWidth size="small"
@@ -478,7 +570,6 @@ const AddMoMPage = () => {
                                             />
                                         </div>
                                         <div className="sm:col-span-3">
-                                            <Typography variant="subtitle2" className="mb-1">Email ID <span className="text-red-500">*</span></Typography>
                                             <TextField
                                                 placeholder="Email"
                                                 type="email"
@@ -488,7 +579,6 @@ const AddMoMPage = () => {
                                             />
                                         </div>
                                         <div className="sm:col-span-2">
-                                            <Typography variant="subtitle2" className="mb-1">Role</Typography>
                                             <TextField
                                                 placeholder="Role"
                                                 fullWidth size="small"
@@ -497,7 +587,6 @@ const AddMoMPage = () => {
                                             />
                                         </div>
                                         <div className="sm:col-span-3">
-                                            <Typography variant="subtitle2" className="mb-1">Organization</Typography>
                                             <TextField
                                                 placeholder="Organization"
                                                 fullWidth size="small"
@@ -506,8 +595,13 @@ const AddMoMPage = () => {
                                             />
                                         </div>
                                         <div className="sm:col-span-1 flex justify-center pb-1">
-                                            <IconButton onClick={() => handleRemoveAttendee(index, true)} color="error" disabled={externalAttendees.length === 1}>
-                                                <Trash2 size={18} />
+                                            <IconButton
+                                                onClick={() => handleRemoveAttendee(index, true)}
+                                                color="error"
+                                                size="small"
+                                                disabled={externalAttendees.length === 1}
+                                            >
+                                                <Trash2 size={16} />
                                             </IconButton>
                                         </div>
                                     </div>
@@ -516,9 +610,7 @@ const AddMoMPage = () => {
                                 internalAttendees.map((attendee, index) => (
                                     <div key={attendee.id} className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
                                         <div className="sm:col-span-6 lg:max-w-md">
-                                            <Typography variant="subtitle2" className="mb-1">Select Internal User <span className="text-red-500">*</span></Typography>
                                             <MuiSelectField
-                                                // label="User"
                                                 options={internalUserOptions}
                                                 value={attendee.userId || ''}
                                                 onChange={(e) => handleAttendeeChange(index, 'userId', e.target.value, false)}
@@ -526,8 +618,13 @@ const AddMoMPage = () => {
                                             />
                                         </div>
                                         <div className="sm:col-span-1 flex justify-start pb-1">
-                                            <IconButton onClick={() => handleRemoveAttendee(index, false)} color="error" disabled={internalAttendees.length === 1}>
-                                                <Trash2 size={18} />
+                                            <IconButton
+                                                onClick={() => handleRemoveAttendee(index, false)}
+                                                color="error"
+                                                size="small"
+                                                disabled={internalAttendees.length === 1}
+                                            >
+                                                <Trash2 size={16} />
                                             </IconButton>
                                         </div>
                                     </div>
@@ -616,65 +713,38 @@ const AddMoMPage = () => {
                                                     }}
                                                 />
                                             }
-                                            label={<span className="text-sm font-medium text-gray-700">Convert to task</span>}
+                                            label="Save as Task"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
                                     <div>
-                                        <Typography variant="subtitle2" className="mb-1">
-                                            Raised by <span className="text-red-500">*</span>
-                                        </Typography>
+                                        <Typography variant="subtitle2" className="mb-1">Raised By</Typography>
                                         <MuiSelectField
-                                            // label="Select Raised By"
                                             options={raisedByOptions}
                                             value={point.raisedBy}
                                             onChange={(e) => handlePointChange(index, 'raisedBy', e.target.value as string)}
                                             fullWidth
                                         />
                                     </div>
-
                                     <div>
-                                        <Typography variant="subtitle2" className="mb-1">
-                                            Responsible Person <span className="text-red-500">*</span>
-                                        </Typography>
+                                        <Typography variant="subtitle2" className="mb-1">Responsible Person</Typography>
                                         <MuiSelectField
-                                            // label="Select..."
                                             options={internalUserOptions}
                                             value={point.responsiblePerson}
-                                            onChange={(e) => handlePointChange(index, 'responsiblePerson', e.target.value as string)}
+                                            onChange={(e) => handlePointChange(index, 'responsiblePerson', e.target.value)}
                                             fullWidth
                                         />
                                     </div>
-
                                     <div>
-                                        <Typography variant="subtitle2" className="mb-1">
-                                            End Date <span className="text-red-500">*</span>
-                                        </Typography>
+                                        <Typography variant="subtitle2" className="mb-1">Target Date</Typography>
                                         <TextField
                                             type="date"
-                                            placeholder="dd/mm/yyyy"
                                             fullWidth
                                             size="small"
                                             value={point.endDate}
                                             onChange={(e) => handlePointChange(index, 'endDate', e.target.value)}
-                                            inputProps={{
-                                                min: new Date().toISOString().split('T')[0],
-                                            }}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <Typography variant="subtitle2" className="mb-1">
-                                            Tags <span className="text-red-500">*</span>
-                                        </Typography>
-                                        <MuiMultiSelect
-                                            label=""
-                                            options={tagOptions}
-                                            value={point.tags}
-                                            onChange={(values) => handlePointChange(index, 'tags', values)}
-                                            placeholder="Select Tags"
                                         />
                                     </div>
                                 </div>
@@ -703,40 +773,59 @@ const AddMoMPage = () => {
 
                 <div className="mb-8">
                     <Typography variant="subtitle1" fontWeight="600" color="text.primary">
-                        {attachments.length} Document(s) Attached
+                        {existingAttachments.length + attachments.length} Document(s) Attached
                     </Typography>
                     <Typography variant="body2" color="text.secondary" className="mb-4">
                         Drop or attach relevant documents here
                     </Typography>
 
+                    {/* Existing Attachments */}
                     <div className="flex flex-wrap gap-4 mb-4">
-                        {attachments.map((file, index) => (
-                            <div key={index} className="w-40 border rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+                        {existingAttachments.map((file) => (
+                            <div key={file.id} className="w-40 border rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
                                 <div className="h-28 bg-gray-100 relative flex items-center justify-center">
-                                    {file.type.startsWith('image/') ? (
-                                        <img
-                                            src={URL.createObjectURL(file)}
-                                            alt={file.name}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="text-gray-400">
-                                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                                        </div>
-                                    )}
-
-                                    <button
-                                        className="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white p-1 rounded transition-colors"
-                                        onClick={() => handleRemoveAttachment(index)}
-                                    >
-                                        <Trash2 size={12} />
-                                    </button>
+                                    <Typography variant="body2" className="text-gray-400">
+                                        {file.file_type || 'Document'}
+                                    </Typography>
                                 </div>
 
                                 <div className="p-2 text-center border-t border-gray-100">
-                                    <Typography variant="caption" className="block truncate font-medium text-gray-700 text-xs" title={file.name}>
+                                    <Typography variant="caption" className="text-gray-700 line-clamp-2">
+                                        {file.file_name || 'Attachment'}
+                                    </Typography>
+                                    <div className="flex justify-center mt-1">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => handleRemoveExistingAttachment(file.id)}
+                                        >
+                                            <Trash2 size={14} className="text-red-500" />
+                                        </IconButton>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* New Attachments */}
+                        {attachments.map((file, index) => (
+                            <div key={index} className="w-40 border rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+                                <div className="h-28 bg-gray-100 relative flex items-center justify-center">
+                                    <Typography variant="body2" className="text-gray-400">
+                                        {file.type || 'Document'}
+                                    </Typography>
+                                </div>
+
+                                <div className="p-2 text-center border-t border-gray-100">
+                                    <Typography variant="caption" className="text-gray-700 line-clamp-2">
                                         {file.name}
                                     </Typography>
+                                    <div className="flex justify-center mt-1">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => handleRemoveAttachment(index)}
+                                        >
+                                            <Trash2 size={14} className="text-red-500" />
+                                        </IconButton>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -781,7 +870,7 @@ const AddMoMPage = () => {
                             boxShadow: '0 4px 12px rgba(199, 32, 48, 0.2)'
                         }}
                     >
-                        Create Meeting
+                        Update Meeting
                     </Button>
                 </div>
             </Paper>
@@ -789,4 +878,4 @@ const AddMoMPage = () => {
     );
 };
 
-export default AddMoMPage;
+export default EditMoMPage;
