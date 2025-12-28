@@ -244,7 +244,7 @@ const AddMoMPage = () => {
             .map(a => {
                 const u = findUser(a.userId!);
                 return {
-                    name: u ? `${u.firstname} ${u.lastname}` : 'Unknown',
+                    name: u ? `${u.full_name}` : 'Unknown',
                     email: u ? u.email : '',
                     organization: 'Internal', // Or get from user object if available
                     role: u ? u.role_name : '',
@@ -300,18 +300,18 @@ const AddMoMPage = () => {
             let raisedByLabel = '';
             if (typeof point.raisedBy === 'number') {
                 const u = findUser(point.raisedBy);
-                raisedByLabel = u ? `${u.firstname} ${u.lastname}` : String(point.raisedBy);
+                raisedByLabel = u ? `${u.full_name}` : String(point.raisedBy);
             } else {
                 const internalMatch = internalAttendees.find(a => a.userId === point.raisedBy);
                 if (internalMatch && internalMatch.userId) {
                     const u = findUser(internalMatch.userId);
-                    raisedByLabel = u ? `${u.firstname} ${u.lastname}` : '';
+                    raisedByLabel = u ? `${u.full_name}` : '';
                 } else {
                     const extMatch = externalAttendees.find(a => a.email === point.raisedBy);
                     raisedByLabel = extMatch ? extMatch.name || '' : String(point.raisedBy);
                 }
                 const u = findUser(point.raisedBy);
-                if (u) raisedByLabel = `${u.firstname} ${u.lastname}`;
+                if (u) raisedByLabel = `${u.full_name}`;
                 else {
                     const ext = externalAttendees.find(e => e.email === point.raisedBy);
                     raisedByLabel = ext ? ext.name || '' : String(point.raisedBy);
@@ -323,7 +323,7 @@ const AddMoMPage = () => {
 
             if (respUser) {
                 formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_id]`, respUser.id);
-                formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_name]`, `${respUser.firstname} ${respUser.lastname}`);
+                formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_name]`, `${respUser.full_name}`);
                 formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_type]`, respUser.user_type || 'FmUser'); // Fallback to FmUser
                 formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][responsible_person_email]`, respUser.email);
             }
@@ -334,7 +334,7 @@ const AddMoMPage = () => {
 
             if (point.tags && point.tags.length > 0) {
                 point.tags.forEach((tag: any) => {
-                    formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][company_tag_ids][]`, tag.value);
+                    formDataPayload.append(`mom_detail[mom_tasks_attributes][${index}][company_tag_id]`, tag.value);
                 });
             }
         });
