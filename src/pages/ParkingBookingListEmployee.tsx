@@ -853,13 +853,13 @@ const ParkingBookingListEmployee = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             {/* Left Side Controls */}
             <div className="flex gap-2">
-              {/* <Button
+              <Button
                 onClick={() => navigate('/parking-booking-employee/add')}
                 className="h-10 bg-[#C72030] hover:bg-[#A01020] text-white"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Booking
-              </Button> */}
+              </Button>
             </div>
 
             {/* Right Side Controls */}

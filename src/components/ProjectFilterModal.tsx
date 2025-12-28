@@ -1,34 +1,41 @@
-import { X, Search, ChevronRight, ChevronDown } from 'lucide-react';
-import { useRef, useState, useEffect } from 'react';
-import clsx from 'clsx';
-import { useDispatch, useSelector } from 'react-redux';
+import { X, Search, ChevronRight, ChevronDown } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import clsx from "clsx";
+import { useDispatch, useSelector } from "react-redux";
 import {
   fetchProjects,
   filterProjects,
-} from '@/store/slices/projectManagementSlice';
-import qs from 'qs';
-import { fetchProjectTypes } from '@/store/slices/projectTypeSlice';
-import { fetchFMUsers } from '@/store/slices/fmUserSlice';
+} from "@/store/slices/projectManagementSlice";
+import qs from "qs";
+import { fetchProjectTypes } from "@/store/slices/projectTypeSlice";
+import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import { toast } from "sonner";
 
 const statusOptions = [
-  { label: 'Active', value: 'active', color: 'bg-green-500' },
-  { label: 'In Progress', value: 'in_progress', color: 'bg-cyan-400' },
-  { label: 'Completed', value: 'completed', color: 'bg-black' },
-  { label: 'On Hold', value: 'on_hold', color: 'bg-yellow-500' },
-  { label: 'Overdue', value: 'overdue', color: 'bg-red-500' },
+  { label: "Active", value: "active", color: "bg-green-500" },
+  { label: "In Progress", value: "in_progress", color: "bg-cyan-400" },
+  { label: "Completed", value: "completed", color: "bg-black" },
+  { label: "On Hold", value: "on_hold", color: "bg-yellow-500" },
+  { label: "Overdue", value: "overdue", color: "bg-red-500" },
 ];
 
-const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => {
-  const token = localStorage.getItem('token');
+const ProjectFilterModal = ({
+  isModalOpen,
+  setIsModalOpen,
+  onApplyFilters,
+}) => {
+  const token = localStorage.getItem("token");
   const dispatch = useDispatch();
   const fmUsersState = useSelector((state: any) => state.fmUsers || {});
-  const projectTypesState = useSelector((state: any) => state.projectTypes || {});
+  const projectTypesState = useSelector(
+    (state: any) => state.projectTypes || {}
+  );
 
   const users = fmUsersState.data?.users || fmUsersState.data?.fm_users || [];
   const fetchUsersError = fmUsersState.error;
   const projectTypes = projectTypesState.projectTypes || [];
 
-  const baseUrl = localStorage.getItem('baseUrl') || '';
+  const baseUrl = localStorage.getItem("baseUrl") || "";
 
   useEffect(() => {
     if (token) {
@@ -37,63 +44,79 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
     }
   }, [dispatch, token]);
 
-  const firstNames = users && users.length > 0
-    ? users.map((user: any) => ({
-      label: user.full_name,
-      value: user.id || `${user.firstname}-${user.lastname}`,
-    }))
-    : [];
+  const firstNames =
+    users && users.length > 0
+      ? users.map((user: any) => ({
+          label: user.full_name,
+          value: user.id || `${user.firstname}-${user.lastname}`,
+        }))
+      : [];
 
-  const projectTypeOptions = projectTypes && projectTypes.length > 0
-    ? projectTypes.map((type: any) => ({
-      label: type.name,
-      value: type.id,
-    }))
-    : [];
+  const projectTypeOptions =
+    projectTypes && projectTypes.length > 0
+      ? projectTypes.map((type: any) => ({
+          label: type.name,
+          value: type.id,
+        }))
+      : [];
 
   const modalRef = useRef(null);
 
   const getInitialFilters = () => {
     try {
-      const saved = localStorage.getItem('projectFilters');
+      const saved = localStorage.getItem("projectFilters");
       return saved
         ? JSON.parse(saved)
         : {
-          selectedStatuses: [],
-          selectedTypes: [],
-          selectedManagers: [],
-          selectedCreators: [],
-          dates: { startDate: '', endDate: '' },
-          statusSearch: '',
-          typeSearch: '',
-          managerSearch: '',
-          creatorSearch: '',
-        };
+            selectedStatuses: [],
+            selectedTypes: [],
+            selectedManagers: [],
+            selectedCreators: [],
+            dates: { startDate: "", endDate: "" },
+            statusSearch: "",
+            typeSearch: "",
+            managerSearch: "",
+            creatorSearch: "",
+          };
     } catch (error) {
-      console.error('Error parsing projectFilters from localStorage:', error);
+      console.error("Error parsing projectFilters from localStorage:", error);
       return {
         selectedStatuses: [],
         selectedTypes: [],
         selectedManagers: [],
         selectedCreators: [],
-        dates: { startDate: '', endDate: '' },
-        statusSearch: '',
-        typeSearch: '',
-        managerSearch: '',
-        creatorSearch: '',
+        dates: { startDate: "", endDate: "" },
+        statusSearch: "",
+        typeSearch: "",
+        managerSearch: "",
+        creatorSearch: "",
       };
     }
   };
 
-  const [selectedStatuses, setSelectedStatuses] = useState(getInitialFilters().selectedStatuses);
-  const [selectedTypes, setSelectedTypes] = useState(getInitialFilters().selectedTypes);
-  const [selectedManagers, setSelectedManagers] = useState(getInitialFilters().selectedManagers);
-  const [selectedCreators, setSelectedCreators] = useState(getInitialFilters().selectedCreators);
+  const [selectedStatuses, setSelectedStatuses] = useState(
+    getInitialFilters().selectedStatuses
+  );
+  const [selectedTypes, setSelectedTypes] = useState(
+    getInitialFilters().selectedTypes
+  );
+  const [selectedManagers, setSelectedManagers] = useState(
+    getInitialFilters().selectedManagers
+  );
+  const [selectedCreators, setSelectedCreators] = useState(
+    getInitialFilters().selectedCreators
+  );
   const [dates, setDates] = useState(getInitialFilters().dates);
-  const [statusSearch, setStatusSearch] = useState(getInitialFilters().statusSearch);
+  const [statusSearch, setStatusSearch] = useState(
+    getInitialFilters().statusSearch
+  );
   const [typeSearch, setTypeSearch] = useState(getInitialFilters().typeSearch);
-  const [managerSearch, setManagerSearch] = useState(getInitialFilters().managerSearch);
-  const [creatorSearch, setCreatorSearch] = useState(getInitialFilters().creatorSearch);
+  const [managerSearch, setManagerSearch] = useState(
+    getInitialFilters().managerSearch
+  );
+  const [creatorSearch, setCreatorSearch] = useState(
+    getInitialFilters().creatorSearch
+  );
 
   // Save filters to localStorage
   useEffect(() => {
@@ -120,7 +143,7 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
       dates.startDate ||
       dates.endDate
     ) {
-      localStorage.setItem('projectFilters', JSON.stringify(filters));
+      localStorage.setItem("projectFilters", JSON.stringify(filters));
     }
   }, [
     selectedStatuses,
@@ -185,11 +208,11 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
     options: any[],
     selected: string[],
     setSelected: (selected: string[]) => void,
-    searchTerm: string = ''
+    searchTerm: string = ""
   ) => {
     console.log(options);
     const filtered = options.filter((opt) =>
-      typeof opt === 'string'
+      typeof opt === "string"
         ? opt.toLowerCase().includes(searchTerm.toLowerCase())
         : opt.label.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -197,9 +220,9 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
     return (
       <div className="max-h-40 overflow-y-auto p-2">
         {filtered.map((option) => {
-          const label = typeof option === 'string' ? option : option.label;
-          const value = typeof option === 'string' ? option : option.value;
-          const color = typeof option === 'string' ? null : option.color;
+          const label = typeof option === "string" ? option : option.label;
+          const value = typeof option === "string" ? option : option.value;
+          const color = typeof option === "string" ? null : option.color;
           return (
             <label
               key={value}
@@ -214,7 +237,7 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
                 <span>{label}</span>
               </div>
               {color && (
-                <span className={clsx('w-2 h-2 rounded-full', color)}></span>
+                <span className={clsx("w-2 h-2 rounded-full", color)}></span>
               )}
             </label>
           );
@@ -230,46 +253,69 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
 
   // Clear all selections and reset to initial data
   const clearAll = () => {
+    // Clear all state
     setSelectedStatuses([]);
     setSelectedTypes([]);
     setSelectedManagers([]);
     setSelectedCreators([]);
-    setStatusSearch('');
-    setTypeSearch('');
-    setManagerSearch('');
-    setCreatorSearch('');
-    setDates({ startDate: '', endDate: '' });
-    localStorage.removeItem('projectFilters');
-    onApplyFilters?.('');
-    closeModal();
+    setStatusSearch("");
+    setTypeSearch("");
+    setManagerSearch("");
+    setCreatorSearch("");
+    setDates({ startDate: "", endDate: "" });
+    localStorage.removeItem("projectFilters");
+
+    // Build empty filter query to clear all filters
+    const emptyFilters: Record<string, any> = {
+      "q[status_in][]": [],
+      "q[owner_id_in][]": [],
+      "q[created_by_id_in][]": [],
+      "q[project_type_id_in][]": [],
+      "q[title_cont]": "",
+      "q[is_template_eq]": "",
+      "q[start_date_eq]": "",
+      "q[end_date_eq]": "",
+    };
+    const emptyQueryString = qs.stringify(emptyFilters, {
+      arrayFormat: "repeat",
+    });
+
+    // Use setTimeout to ensure state updates are applied before calling onApplyFilters
+    setTimeout(() => {
+      // Apply empty filter to reload all data
+      onApplyFilters?.(emptyQueryString);
+
+      // Show success toast
+      toast.success("Filters reset successfully");
+    }, 0);
   };
 
   useEffect(() => {
     const handleBeforeUnload = () => {
-      localStorage.removeItem('projectFilters');
+      localStorage.removeItem("projectFilters");
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    console.log('Resetting filters at', new Date().toISOString());
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    console.log("Resetting filters at", new Date().toISOString());
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
 
   // Apply filters and dispatch API call
   const handleApplyFilters = () => {
     const newFilters: Record<string, any> = {
-      'q[status_in][]': selectedStatuses,
-      'q[owner_id_in][]': selectedManagers,
-      'q[created_by_id_in][]': selectedCreators,
-      'q[project_type_id_in][]': selectedTypes,
-      'q[title_cont]': '',
-      'q[is_template_eq]': '',
-      'q[start_date_eq]': dates.startDate || '',
-      'q[end_date_eq]': dates.endDate || '',
+      "q[status_in][]": selectedStatuses,
+      "q[owner_id_in][]": selectedManagers,
+      "q[created_by_id_in][]": selectedCreators,
+      "q[project_type_id_in][]": selectedTypes,
+      "q[title_cont]": "",
+      "q[is_template_eq]": "",
+      "q[start_date_eq]": dates.startDate || "",
+      "q[end_date_eq]": dates.endDate || "",
     };
-    const queryString = qs.stringify(newFilters, { arrayFormat: 'repeat' });
+    const queryString = qs.stringify(newFilters, { arrayFormat: "repeat" });
     onApplyFilters?.(queryString);
     closeModal();
   };
@@ -287,8 +333,9 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
       {/* Modal */}
       <div
         ref={modalRef}
-        className={`fixed right-0 top-0 z-50 h-full w-full max-w-sm bg-white shadow-xl flex flex-col transition-transform duration-300 ease-out ${isModalOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
+        className={`fixed right-0 top-0 z-50 h-full w-full max-w-sm bg-white shadow-xl flex flex-col transition-transform duration-300 ease-out ${
+          isModalOpen ? "translate-x-0" : "translate-x-full"
+        }`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b">
@@ -298,7 +345,10 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
 
         <div className="px-6 py-4 border-b">
           <div className="relative">
-            <Search className="absolute left-3 top-2.5 text-red-400" size={18} />
+            <Search
+              className="absolute left-3 top-2.5 text-red-400"
+              size={18}
+            />
             <input
               type="text"
               placeholder="Filter search..."
@@ -312,7 +362,7 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
           <div className="p-6 py-3">
             <div
               className="flex items-center justify-between cursor-pointer"
-              onClick={() => toggleDropdown('status')}
+              onClick={() => toggleDropdown("status")}
             >
               <span className="font-medium text-sm select-none">Status</span>
               {dropdowns.status ? (
@@ -324,7 +374,10 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
             {dropdowns.status && (
               <div className="mt-4 border">
                 <div className="relative border-b">
-                  <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                  <Search
+                    className="absolute left-3 top-2.5 text-red-400"
+                    size={16}
+                  />
                   <input
                     type="text"
                     placeholder="Filter status..."
@@ -347,7 +400,7 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
           <div className="p-6 py-3">
             <div
               className="flex items-center justify-between cursor-pointer"
-              onClick={() => toggleDropdown('projectType')}
+              onClick={() => toggleDropdown("projectType")}
             >
               <span className="font-medium text-sm select-none">
                 Project Type
@@ -361,7 +414,10 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
             {dropdowns.projectType && (
               <div className="mt-4 border">
                 <div className="relative border-b">
-                  <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                  <Search
+                    className="absolute left-3 top-2.5 text-red-400"
+                    size={16}
+                  />
                   <input
                     type="text"
                     placeholder="Filter project type..."
@@ -384,7 +440,7 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
           <div className="p-6 py-3">
             <div
               className="flex items-center justify-between cursor-pointer"
-              onClick={() => toggleDropdown('projectManager')}
+              onClick={() => toggleDropdown("projectManager")}
             >
               <span className="font-medium text-sm select-none">
                 Project Manager
@@ -398,7 +454,10 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
             {dropdowns.projectManager && (
               <div className="mt-4 border">
                 <div className="relative border-b">
-                  <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                  <Search
+                    className="absolute left-3 top-2.5 text-red-400"
+                    size={16}
+                  />
                   <input
                     type="text"
                     placeholder="Filter project manager..."
@@ -424,9 +483,9 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
           </div>
 
           {/* Date Filters */}
-          {['startDate', 'endDate'].map((key) => {
-            const dateKey = key as 'startDate' | 'endDate';
-            const label = key === 'startDate' ? 'Start Date' : 'End Date';
+          {["startDate", "endDate"].map((key) => {
+            const dateKey = key as "startDate" | "endDate";
+            const label = key === "startDate" ? "Start Date" : "End Date";
             return (
               <div key={key} className="p-6 py-3">
                 <div
@@ -446,7 +505,7 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
                   <div className="mt-4 px-1">
                     <input
                       type="date"
-                      value={dates[dateKey] || ''}
+                      value={dates[dateKey] || ""}
                       onChange={(e) =>
                         setDates((prev) => ({
                           ...prev,
@@ -466,9 +525,11 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
           <div className="p-6 py-3">
             <div
               className="flex items-center justify-between cursor-pointer"
-              onClick={() => toggleDropdown('createdBy')}
+              onClick={() => toggleDropdown("createdBy")}
             >
-              <span className="font-medium text-sm select-none">Created By</span>
+              <span className="font-medium text-sm select-none">
+                Created By
+              </span>
               {dropdowns.createdBy ? (
                 <ChevronDown className="text-gray-400" />
               ) : (
@@ -478,7 +539,10 @@ const ProjectFilterModal = ({ isModalOpen, setIsModalOpen, onApplyFilters }) => 
             {dropdowns.createdBy && (
               <div className="mt-4 border">
                 <div className="relative border-b">
-                  <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                  <Search
+                    className="absolute left-3 top-2.5 text-red-400"
+                    size={16}
+                  />
                   <input
                     type="text"
                     placeholder="Filter created by..."

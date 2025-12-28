@@ -57,6 +57,7 @@ interface CategoryApiResponse {
     doc_type: string;
     selected_icon_url: string;
     tat: string;
+    assigned_to_names?: string;
     category_email: Array<{
       id: number;
       cat_id: number;
@@ -489,7 +490,23 @@ export const CategoryTypeTab: React.FC = () => {
     
     // Populate assigned engineers if available
     if (category.complaint_worker?.assign_to) {
-      const engineerIds = category.complaint_worker.assign_to.map(id => parseInt(id));
+      let engineerIds: number[] = [];
+      
+      // Handle both array and YAML string cases
+      if (Array.isArray(category.complaint_worker.assign_to)) {
+        engineerIds = category.complaint_worker.assign_to.map(id => parseInt(id));
+      } else if (typeof category.complaint_worker.assign_to === 'string') {
+        // Parse YAML string like "---\n- '33051'\n"
+        const matches = category.complaint_worker.assign_to.match(/'(\d+)'/g);
+        if (matches) {
+          engineerIds = matches.map(match => parseInt(match.replace(/'/g, '')));
+        }
+      }
+      
+      console.log('Available engineers:', engineers);
+      console.log('Engineer IDs from API:', engineerIds);
+      console.log('Matched engineers:', engineers.filter(e => engineerIds.includes(e.id)));
+      
       setSelectedEngineers(engineerIds);
       form.setValue('engineerIds', engineerIds); // Update form state
     } else {
@@ -763,8 +780,21 @@ export const CategoryTypeTab: React.FC = () => {
       case 'name':
         return item.name;
       case 'assign_to_names':
-        if (item.complaint_worker && Array.isArray(item.complaint_worker.assign_to) && engineers.length > 0) {
-          const names = item.complaint_worker.assign_to
+        // Use the assigned_to_names field directly from the API response
+        if (item.assigned_to_names) {
+          return item.assigned_to_names;
+        }
+        
+        // Fallback: try to match from complaint_worker if assigned_to_names is not available
+        if (item.complaint_worker?.assign_to && engineers.length > 0) {
+          // Handle both array and non-array cases
+          const assignToArray = Array.isArray(item.complaint_worker.assign_to) 
+            ? item.complaint_worker.assign_to 
+            : [];
+          
+          if (assignToArray.length === 0) return '--';
+          
+          const names = assignToArray
             .map((id: string) => {
               const engineer = engineers.find(e => e.id === Number(id));
               return engineer ? engineer.full_name : null;
@@ -1292,6 +1322,7 @@ export const CategoryTypeTab: React.FC = () => {
                 <Label className="text-base font-semibold">Assign Engineers</Label>
                 <div className="mt-2">
                   <ReactSelect
+                    key={selectedEngineers.join(',')}
                     isMulti
                     options={engineers.map(engineer => ({
                       value: engineer.id,

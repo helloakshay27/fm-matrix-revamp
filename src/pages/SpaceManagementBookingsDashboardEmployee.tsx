@@ -247,13 +247,13 @@ export const SpaceManagementBookingsDashboardEmployee = () => {
         {/* Action Buttons and Search Bar */}
         <div className="flex items-center justify-between gap-3 mb-6">
           <div className="flex gap-3">
-            {/* <Button
+            <Button
               onClick={() => navigate('/vas/space-management/bookings/employee/add')}
               className="bg-[#C72030] hover:bg-[#A01020] text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Booking
-            </Button> */}
+            </Button>
           </div>
 
           {/* Right side - Search and Column Visibility */}
