@@ -10,7 +10,7 @@ import roleReducer from './slices/roleSlice'
 import roleWithModulesReducer from './slices/roleWithModulesSlice'
 import { functionReducer } from './slices/functionSlice'
 import fmUserReducer, { createFmUserReducer, editFMUserReducer, fetchRolesReducer, fetchSuppliersReducer, fetchUnitsReducer, getFMUsersReducer, getUserDetailsReducer } from './slices/fmUserSlice'
-import { createMoMReducer, fetchMoMsReducer } from './slices/momSlice'
+import { createMoMReducer, updateMoMReducer, fetchMoMsReducer, fetchMoMDetailReducer } from './slices/momSlice'
 import userCountsReducer from './slices/userCountsSlice'
 import occupantUsersReducer, { exportOccupantUsersReducer } from './slices/occupantUsersSlice'
 import occupantUserCountsReducer from './slices/occupantUserCountsSlice'
@@ -389,7 +389,9 @@ export const store = configureStore({
     deleteIssue: deleteIssueReducer,
     filterIssues: filterIssuesReducer,
     createMoM: createMoMReducer,
+    updateMoM: updateMoMReducer,
     fetchMoMs: fetchMoMsReducer,
+    fetchMoMDetail: fetchMoMDetailReducer,
     projectRole: projectRoleReducer,
 
     // Project Groups
