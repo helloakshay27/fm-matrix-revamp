@@ -472,7 +472,7 @@ const CompletedTodoItem = ({ todo, toggleTodo }) => {
 
     const handleTaskClick = () => {
         if (todo.task_management_id) {
-            navigate(`/project-management/task/${todo.task_management_id}`);
+            navigate(`/vas/tasks/${todo.task_management_id}`);
         }
     };
 
