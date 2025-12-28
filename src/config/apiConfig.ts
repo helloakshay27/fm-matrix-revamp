@@ -273,6 +273,10 @@ export const API_CONFIG = {
     DELIVERY_VENDORS: "/pms/admin/delivery_vendors.json",
     // Mail inbound states endpoint
     MAIL_INBOUND_STATES: "/pms/admin/mail_inbounds/state_list.json",
+    // Sprint endpoints
+    SPRINTS: "/sprints.json",
+    SPRINT_DETAILS: "/sprints", // Base path, will append /:id.json
+    UPDATE_SPRINT_STATUS: "/sprints", // Base path, will append /:id/update_status.json
   },
 } as const;
 

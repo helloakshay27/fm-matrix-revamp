@@ -10,7 +10,8 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
 import { createProjectTask, editProjectTask, fetchProjectTasks, filterTasks, updateTaskStatus } from "@/store/slices/projectTasksSlice";
 import { ChartNoAxesColumn, ChevronDown, Edit, Eye, List, Plus, X, Search, ChevronRight, SlidersHorizontal, Play, Pause } from "lucide-react";
-import { useEffect, useState, useRef, forwardRef } from "react";
+import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
+import { cache } from "@/utils/cacheUtils";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Dialog, DialogContent, MenuItem, Select, Slide, TextField, Switch, FormControl } from "@mui/material";
 import { toast } from "sonner";
@@ -405,8 +406,12 @@ const ProjectTasksPage = () => {
 
     const getStatuses = async () => {
         try {
-            const response = await dispatch(fetchProjectStatuses()).unwrap();
-            setStatuses(response)
+            const response = await axios.get(`https://${baseUrl}/project_statuses.json?q[active_eq]=true`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setStatuses(response.data)
         } catch (error) {
             console.log(error)
         }
@@ -542,7 +547,7 @@ const ProjectTasksPage = () => {
 
     const handleApplyFilter = () => {
         try {
-            let params: any = { page: 1 };
+            const params: any = { page: 1 };
 
             if (selectedStatuses.length > 0) {
                 params['q[status_in][]'] = selectedStatuses;
@@ -587,7 +592,7 @@ const ProjectTasksPage = () => {
         setSearchTerms({ status: '', workflowStatus: '', responsiblePerson: '', createdBy: '', project: '' });
         localStorage.removeItem('taskFilters');
 
-        let params: any = { page: 1 };
+        const params: any = { page: 1 };
         if (mid) {
             params['q[milestone_id_eq]'] = mid;
         }
@@ -598,18 +603,21 @@ const ProjectTasksPage = () => {
     };
 
 
-    const fetchData = async (page: number = 1) => {
+    const fetchData = useCallback(async (page: number = 1) => {
         try {
             setLoading(true);
 
             // Determine if we're in milestone context or standalone tasks
             const isMilestoneContext = mid !== undefined && mid !== null;
 
-            let filters: any = { page };
+            const filters: any = { page };
 
             if (selectedFilterOption !== "all") {
                 filters["q[status_eq]"] = selectedFilterOption;
             }
+
+            // Create cache key based on context
+            const cacheKey = `tasks_${isMilestoneContext ? 'milestone_' + mid : taskType}_${selectedFilterOption}_${page}`;
 
             let response;
 
@@ -617,9 +625,18 @@ const ProjectTasksPage = () => {
             if (isMilestoneContext) {
                 // In milestone context - show all tasks for that milestone
                 filters["q[milestone_id_eq]"] = mid;
-                response = await dispatch(
-                    filterTasks({ token, baseUrl, params: filters })
-                ).unwrap();
+
+                const cachedResult = await cache.getOrFetch(
+                    cacheKey,
+                    async () => {
+                        return await dispatch(
+                            filterTasks({ token, baseUrl, params: filters })
+                        ).unwrap();
+                    },
+                    1 * 60 * 1000, // Fresh for 1 minute
+                    5 * 60 * 1000  // Stale up to 5 minutes
+                );
+                response = cachedResult.data;
             } else {
                 // Standalone tasks view - distinguish between all tasks and my tasks
                 if (taskType === "my") {
@@ -629,19 +646,36 @@ const ProjectTasksPage = () => {
                     if (selectedFilterOption !== "all") {
                         params.append("status", selectedFilterOption);
                     }
-                    response = await fetch(
-                        `https://${baseUrl}/task_managements/my_tasks.json?${params.toString()}`,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                            },
-                        }
-                    ).then(res => res.json());
+
+                    const cachedResult = await cache.getOrFetch(
+                        cacheKey,
+                        async () => {
+                            return await fetch(
+                                `https://${baseUrl}/task_managements/my_tasks.json?${params.toString()}`,
+                                {
+                                    headers: {
+                                        Authorization: `Bearer ${token}`,
+                                    },
+                                }
+                            ).then(res => res.json());
+                        },
+                        1 * 60 * 1000, // Fresh for 1 minute
+                        5 * 60 * 1000  // Stale up to 5 minutes
+                    );
+                    response = cachedResult.data;
                 } else {
                     // All Tasks - use filter endpoint
-                    response = await dispatch(
-                        filterTasks({ token, baseUrl, params: filters })
-                    ).unwrap();
+                    const cachedResult = await cache.getOrFetch(
+                        cacheKey,
+                        async () => {
+                            return await dispatch(
+                                filterTasks({ token, baseUrl, params: filters })
+                            ).unwrap();
+                        },
+                        1 * 60 * 1000, // Fresh for 1 minute
+                        5 * 60 * 1000  // Stale up to 5 minutes
+                    );
+                    response = cachedResult.data;
                 }
             }
 
@@ -659,20 +693,28 @@ const ProjectTasksPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedFilterOption, taskType, mid, dispatch, token, baseUrl]);
 
-    const getUsers = async () => {
+    const getUsers = useCallback(async () => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            setUsers(response.data.users);
+            const cachedResult = await cache.getOrFetch(
+                'task_users',
+                async () => {
+                    const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+                    return response.data.users;
+                },
+                5 * 60 * 1000, // Fresh for 5 minutes
+                30 * 60 * 1000 // Stale up to 30 minutes
+            );
+            setUsers(cachedResult.data);
         } catch (error) {
             console.log(error);
         }
-    };
+    }, [baseUrl, token]);
 
     useEffect(() => {
         fetchData(1);
@@ -680,7 +722,7 @@ const ProjectTasksPage = () => {
 
     useEffect(() => {
         getUsers();
-    }, [])
+    }, [getUsers])
 
     const handleOpenDialog = () => {
         setOpenTaskModal(true);
@@ -847,7 +889,7 @@ const ProjectTasksPage = () => {
 
         const generateAllocationDates = (start, end) => {
             const result = [];
-            let current = new Date(start);
+            const current = new Date(start);
             const endDate = new Date(end);
 
             while (current <= endDate) {
@@ -888,6 +930,10 @@ const ProjectTasksPage = () => {
         }
         try {
             await dispatch(createProjectTask({ token, baseUrl, data: payload })).unwrap();
+
+            // Invalidate task caches to force refresh
+            cache.invalidatePattern('tasks_*');
+
             toast.success("Task created successfully");
             await fetchData();
         } catch (error) {
@@ -925,6 +971,10 @@ const ProjectTasksPage = () => {
     const handleStatusChange = async (id: number, status: string) => {
         try {
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status } })).unwrap();
+
+            // Invalidate task caches to force refresh
+            cache.invalidatePattern('tasks_*');
+
             fetchData();
             toast.success("Task status changed successfully");
         } catch (error) {
@@ -935,6 +985,10 @@ const ProjectTasksPage = () => {
     const handleWorkflowStatusChange = async (id: number, status: string) => {
         try {
             await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { project_status_id: status } })).unwrap();
+
+            // Invalidate task caches to force refresh
+            cache.invalidatePattern('tasks_*');
+
             fetchData();
             toast.success("Task status changed successfully");
         } catch (error) {
@@ -945,6 +999,10 @@ const ProjectTasksPage = () => {
     const handleUpdateTask = async (id: number, responsible_person_id: number) => {
         try {
             await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { responsible_person_id } })).unwrap();
+
+            // Invalidate task caches to force refresh
+            cache.invalidatePattern('tasks_*');
+
             fetchData();
             toast.success("Task updated successfully");
         } catch (error) {
@@ -959,6 +1017,9 @@ const ProjectTasksPage = () => {
         try {
             // Update task status to "on_hold" (paused)
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(tid), data: { status: 'stopped' } })).unwrap();
+
+            // Invalidate task caches to force refresh
+            cache.invalidatePattern('tasks_*');
 
             const commentPayload = {
                 comment: {

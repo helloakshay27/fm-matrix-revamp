@@ -78,6 +78,7 @@ import projectTemplateReducer from './slices/projectTemplateSlice'
 import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer, filterTasksReducer, updateTaskStatusReducer, createTaskDependencyReducer, updateTaskDependencyReducer, deleteTaskDependencyReducer } from './slices/projectTasksSlice'
 import { fetchIssuesReducer, fetchIssueByIdReducer, createIssueReducer, updateIssueReducer, deleteIssueReducer, filterIssuesReducer } from './slices/issueSlice'
 import { createProjectGroupReducer, deleteProjectGroupReducer, fetchProjectGroupsReducer, updateProjectGroupReducer } from './slices/projectGroupSlice'
+import { fetchSprintsReducer, fetchSprintByIdReducer, createSprintReducer, updateSprintReducer, updateSprintStatusReducer, deleteSprintReducer, filterSprintsReducer } from './slices/sprintSlice'
 
 export const store = configureStore({
   reducer: {
@@ -396,6 +397,15 @@ export const store = configureStore({
     createProjectGroup: createProjectGroupReducer,
     updateProjectGroup: updateProjectGroupReducer,
     deleteProjectGroup: deleteProjectGroupReducer,
+
+    // Sprints
+    fetchSprints: fetchSprintsReducer,
+    fetchSprintById: fetchSprintByIdReducer,
+    createSprint: createSprintReducer,
+    updateSprint: updateSprintReducer,
+    updateSprintStatus: updateSprintStatusReducer,
+    deleteSprint: deleteSprintReducer,
+    filterSprints: filterSprintsReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

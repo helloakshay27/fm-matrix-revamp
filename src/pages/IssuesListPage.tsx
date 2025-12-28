@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { cache } from "@/utils/cacheUtils";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchIssues, updateIssue } from "@/store/slices/issueSlice";
 import { Button } from "@/components/ui/button";
@@ -272,15 +273,27 @@ const IssuesListPage = ({ preSelectedProjectId }: { preSelectedProjectId?: strin
                 queryString = qs.stringify(filterOrString);
             }
 
-            const response = await axios.get(
-                `https://${baseUrl}/issues.json?${queryString}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+            // Create cache key for filtered issues
+            const cacheKey = `issues_filtered_${queryString}`;
+
+            const cachedResult = await cache.getOrFetch(
+                cacheKey,
+                async () => {
+                    const response = await axios.get(
+                        `https://${baseUrl}/issues.json?${queryString}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    );
+                    return response.data.issues || [];
+                },
+                1 * 60 * 1000, // Fresh for 1 minute
+                5 * 60 * 1000  // Stale up to 5 minutes
             );
-            setFilteredIssues(response.data.issues || []);
+
+            setFilteredIssues(cachedResult.data);
             setFilterSuccess(true);
         } catch (error) {
             console.error('Error fetching filtered issues:', error);
@@ -291,18 +304,26 @@ const IssuesListPage = ({ preSelectedProjectId }: { preSelectedProjectId?: strin
         }
     }, [baseUrl, token]);
 
-    const getUsers = async () => {
+    const getUsers = useCallback(async () => {
         try {
-            const response = await dispatch(fetchFMUsers()).unwrap();
-            setUsers(response.users);
+            const cachedResult = await cache.getOrFetch(
+                'fm_users',
+                async () => {
+                    const response = await dispatch(fetchFMUsers()).unwrap();
+                    return response.users;
+                },
+                5 * 60 * 1000, // Fresh for 5 minutes
+                30 * 60 * 1000 // Stale up to 30 minutes
+            );
+            setUsers(cachedResult.data);
         } catch (error) {
             console.log(error);
         }
-    };
+    }, [dispatch]);
 
     useEffect(() => {
         getUsers();
-    }, [])
+    }, [getUsers]);
 
     // Listen for global issue-created events to force refetch (ensures GET /issues.json runs)
     useEffect(() => {
@@ -412,28 +433,34 @@ const IssuesListPage = ({ preSelectedProjectId }: { preSelectedProjectId?: strin
         }
     }, [pagination.pageIndex, searchQuery, projectId, projectIdParam, taskIdParam, performFilteredFetch]);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
-            const response = await axios.get(
-                `https://${baseUrl}/issue_types.json`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+            const cachedResult = await cache.getOrFetch(
+                'issue_types',
+                async () => {
+                    const response = await axios.get(
+                        `https://${baseUrl}/issue_types.json`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    );
+                    const issueTypes = response.data.issue_types || response.data || [];
+                    return issueTypes.map((i: any) => ({
+                        value: i.id,
+                        label: i.name,
+                    }));
+                },
+                5 * 60 * 1000, // Fresh for 5 minutes
+                30 * 60 * 1000 // Stale up to 30 minutes
             );
-            const issueTypes = response.data.issue_types || response.data || [];
-            setIssueTypeOptions(
-                issueTypes.map((i: any) => ({
-                    value: i.id,
-                    label: i.name,
-                }))
-            );
+            setIssueTypeOptions(cachedResult.data);
         } catch (error) {
             console.error('Error fetching issue types:', error);
             toast.error('Failed to load issue types.');
         }
-    };
+    }, [baseUrl, token]);
 
     useEffect(() => {
         if (baseUrl && token) {

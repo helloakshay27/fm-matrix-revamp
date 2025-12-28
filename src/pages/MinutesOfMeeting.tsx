@@ -2,7 +2,8 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { Edit, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { cache } from "@/utils/cacheUtils";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -108,9 +109,24 @@ const MinutesOfMeeting = () => {
 
     const [meetings, setMeetings] = useState<MeetingData[]>([]);
 
-    useEffect(() => {
-        dispatch(fetchMoMs());
+    const fetchMoMsData = useCallback(async () => {
+        try {
+            await cache.getOrFetch(
+                'moms_list',
+                async () => {
+                    return await dispatch(fetchMoMs()).unwrap();
+                },
+                2 * 60 * 1000, // Fresh for 2 minutes
+                10 * 60 * 1000 // Stale up to 10 minutes
+            );
+        } catch (error) {
+            console.error('Error fetching MoMs:', error);
+        }
     }, [dispatch]);
+
+    useEffect(() => {
+        fetchMoMsData();
+    }, [fetchMoMsData]);
 
     useEffect(() => {
         if (momsData && Array.isArray(momsData)) {

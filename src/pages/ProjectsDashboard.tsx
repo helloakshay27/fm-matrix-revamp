@@ -22,8 +22,9 @@ import {
   LogOut,
   Plus,
 } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { cache } from "@/utils/cacheUtils";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { fetchProjectTeams } from "@/store/slices/projectTeamsSlice";
 import { fetchProjectTypes } from "@/store/slices/projectTypeSlice";
@@ -226,7 +227,7 @@ export const ProjectsDashboard = () => {
   const viewDropdownRef = useRef<HTMLDivElement>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchData = async (
+  const fetchData = useCallback(async (
     page = 1,
     filterString = "",
     isLoadMore = false,
@@ -260,27 +261,51 @@ export const ProjectsDashboard = () => {
         (filters ? "&" : "") +
         `q[project_team_project_team_members_user_id_or_owner_id_or_created_by_id_eq]=${JSON.parse(localStorage.getItem("user")).id}&page=${page}`;
 
-      const response = await dispatch(
-        filterProjects({ token, baseUrl, filters })
-      ).unwrap();
+      // Create cache key based on filters and page
+      const cacheKey = `projects_${filters}_${page}`;
 
-      const transformedData = transformedProjects(response.project_managements);
+      // Try to use cached data first (stale-while-revalidate)
+      if (!isLoadMore && page === 1) {
+        const cachedResult = await cache.getOrFetch(
+          cacheKey,
+          async () => {
+            const response = await dispatch(
+              filterProjects({ token, baseUrl, filters })
+            ).unwrap();
+            return response;
+          },
+          2 * 60 * 1000, // Fresh for 2 minutes
+          10 * 60 * 1000  // Stale up to 10 minutes
+        );
 
-      if (isLoadMore) {
-        setProjects((prev) => [...prev, ...transformedData]);
-      } else {
+        const transformedData = transformedProjects(cachedResult.data.project_managements);
         setProjects(transformedData);
-      }
+        setHasMore(page < (cachedResult.data.pagination?.total_pages || 1));
+        setCurrentPage(page);
+      } else {
+        // For pagination, fetch fresh data
+        const response = await dispatch(
+          filterProjects({ token, baseUrl, filters })
+        ).unwrap();
 
-      setHasMore(page < (response.pagination?.total_pages || 1));
-      setCurrentPage(page);
+        const transformedData = transformedProjects(response.project_managements);
+
+        if (isLoadMore) {
+          setProjects((prev) => [...prev, ...transformedData]);
+        } else {
+          setProjects(transformedData);
+        }
+
+        setHasMore(page < (response.pagination?.total_pages || 1));
+        setCurrentPage(page);
+      }
     } catch (error) {
       console.log(error);
     } finally {
       setLoading(false);
       setScrollLoading(false);
     }
-  };
+  }, [hasMore, appliedFilters, selectedFilterOption, dispatch, token, baseUrl]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -340,50 +365,79 @@ export const ProjectsDashboard = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const getOwners = async () => {
+  const getOwners = useCallback(async () => {
     try {
-      const response = await axios.get(
-        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const cachedResult = await cache.getOrFetch(
+        'project_owners',
+        async () => {
+          const response = await axios.get(
+            `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          return response.data.users;
+        },
+        5 * 60 * 1000, // Fresh for 5 minutes
+        30 * 60 * 1000 // Stale up to 30 minutes
       );
-      setOwners(response.data.users);
+      setOwners(cachedResult.data);
     } catch (error) {
       console.log(error);
       toast.error(error);
     }
-  };
+  }, [baseUrl, token]);
 
-  const getTeams = async () => {
+  const getTeams = useCallback(async () => {
     try {
-      await dispatch(fetchProjectTeams()).unwrap();
+      await cache.getOrFetch(
+        'project_teams',
+        async () => {
+          return await dispatch(fetchProjectTeams()).unwrap();
+        },
+        5 * 60 * 1000, // Fresh for 5 minutes
+        30 * 60 * 1000 // Stale up to 30 minutes
+      );
     } catch (error) {
       console.log(error);
       toast.error(error);
     }
-  };
+  }, [dispatch]);
 
-  const getProjectTypes = async () => {
+  const getProjectTypes = useCallback(async () => {
     try {
-      const response = await dispatch(fetchProjectTypes()).unwrap();
-      setProjectTypes(response);
+      const cachedResult = await cache.getOrFetch(
+        'project_types',
+        async () => {
+          return await dispatch(fetchProjectTypes()).unwrap();
+        },
+        5 * 60 * 1000, // Fresh for 5 minutes
+        30 * 60 * 1000 // Stale up to 30 minutes
+      );
+      setProjectTypes(cachedResult.data);
     } catch (error) {
       console.log(error);
       toast.error(error);
     }
-  };
+  }, [dispatch]);
 
-  const getTags = async () => {
+  const getTags = useCallback(async () => {
     try {
-      await dispatch(fetchProjectsTags()).unwrap();
+      await cache.getOrFetch(
+        'project_tags',
+        async () => {
+          return await dispatch(fetchProjectsTags()).unwrap();
+        },
+        5 * 60 * 1000, // Fresh for 5 minutes
+        30 * 60 * 1000 // Stale up to 30 minutes
+      );
     } catch (error) {
       console.log(error);
       toast.error(error);
     }
-  };
+  }, [dispatch]);
 
   useEffect(() => {
     getOwners();
@@ -944,6 +998,8 @@ export const ProjectsDashboard = () => {
           setIsModalOpen={setIsFilterModalOpen}
           onApplyFilters={(filterString) => {
             setAppliedFilters(filterString);
+            setCurrentPage(1);
+            setHasMore(true);
             fetchData(1, filterString, false, debouncedSearchTerm);
           }}
         />
@@ -978,6 +1034,8 @@ export const ProjectsDashboard = () => {
         }}
         searchValue={searchTerm}
         searchPlaceholder="Search by title, type, or manager..."
+        enableExport={true}
+        exportFileName="projects"
       />
 
       {scrollLoading && hasMore && (

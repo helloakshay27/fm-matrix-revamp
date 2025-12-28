@@ -47,6 +47,12 @@ interface AvailableSeat {
   seat_type?: string;
 }
 
+interface SeatConfiguration {
+  id: number;
+  name?: string;
+  label?: string;
+}
+
 // Field styles for Material-UI components matching ticket page
 const fieldStyles = {
   height: '45px',
@@ -78,9 +84,10 @@ const SpaceManagementBookingAddEmployee = () => {
 
   // Form state
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedSite, setSelectedSite] = useState<string>('');
+  const [currentUserSite, setCurrentUserSite] = useState<Site | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<string>('');
   const [selectedFloor, setSelectedFloor] = useState<string>('');
+  const [selectedSeatConfig, setSelectedSeatConfig] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('');
   const [selectedSeat, setSelectedSeat] = useState<string>('');
@@ -90,6 +97,7 @@ const SpaceManagementBookingAddEmployee = () => {
   const [sites, setSites] = useState<Site[]>([]);
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
+  const [seatConfigurations, setSeatConfigurations] = useState<SeatConfiguration[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [availableSeats, setAvailableSeats] = useState<AvailableSeat[]>([]);
 
@@ -159,57 +167,70 @@ const SpaceManagementBookingAddEmployee = () => {
     fetchCategories();
   }, []);
 
-  // Fetch sites
+  // Fetch current user's site and buildings
   useEffect(() => {
-    const fetchSites = async () => {
+    const fetchCurrentUserSite = async () => {
       try {
-        const url = getFullUrl('/admin/sites.json');
+        const userData = localStorage.getItem('user');
+        let userId = null;
+        
+        if (userData) {
+          try {
+            const user = JSON.parse(userData);
+            userId = user.id || user.user_id;
+          } catch (e) {
+            console.error('Could not parse user data from localStorage');
+          }
+        }
+
+        if (!userId) {
+          toast.error('User not authenticated');
+          return;
+        }
+
+        const url = getFullUrl(`/pms/sites/allowed_sites.json?user_id=${userId}`);
         const options = getAuthenticatedFetchOptions();
         const response = await fetch(url, options);
         
         if (!response.ok) {
-          throw new Error('Failed to fetch sites');
+          throw new Error('Failed to fetch user site');
         }
         
         const data = await response.json();
-        setSites(data.sites || []);
-      } catch (error) {
-        console.error('Error fetching sites:', error);
-        toast.error('Failed to load sites');
-      }
-    };
-
-    fetchSites();
-  }, []);
-
-  // Fetch buildings
-  useEffect(() => {
-    const fetchBuildings = async () => {
-      try {
-        const url = getFullUrl('/admin/buildings.json');
-        const options = getAuthenticatedFetchOptions();
-        const response = await fetch(url, options);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch buildings');
+        if (data.selected_site) {
+          setCurrentUserSite(data.selected_site);
+          
+          // Fetch buildings for the selected site
+          const buildingsUrl = getFullUrl(`/pms/sites/buildings.json?site_id=${data.selected_site.id}`);
+          const buildingsResponse = await fetch(buildingsUrl, options);
+          
+          if (buildingsResponse.ok) {
+            const buildingsData = await buildingsResponse.json();
+            const siteBuildings = buildingsData.buildings || [];
+            setBuildings(siteBuildings);
+            setFilteredBuildings(siteBuildings);
+          }
         }
-        
-        const data = await response.json();
-        setBuildings(data.buildings || []);
       } catch (error) {
-        console.error('Error fetching buildings:', error);
-        toast.error('Failed to load buildings');
+        console.error('Error fetching user site:', error);
+        toast.error('Failed to load site information');
       }
     };
 
-    fetchBuildings();
+    fetchCurrentUserSite();
   }, []);
 
-  // Fetch floors
+  // Fetch floors based on selected building
   useEffect(() => {
     const fetchFloors = async () => {
+      if (!selectedBuilding) {
+        setFloors([]);
+        setFilteredFloors([]);
+        return;
+      }
+
       try {
-        const url = getFullUrl('/admin/floors.json');
+        const url = getFullUrl(`/pms/admin/seat_configurations/floors.json?building_id=${selectedBuilding}`);
         const options = getAuthenticatedFetchOptions();
         const response = await fetch(url, options);
         
@@ -218,97 +239,148 @@ const SpaceManagementBookingAddEmployee = () => {
         }
         
         const data = await response.json();
-        setFloors(data.floors || []);
+        const floorData = data.floors || [];
+        setFloors(floorData);
+        setFilteredFloors(floorData);
       } catch (error) {
         console.error('Error fetching floors:', error);
         toast.error('Failed to load floors');
+        setFloors([]);
+        setFilteredFloors([]);
       }
     };
 
     fetchFloors();
-  }, []);
-
-  // Fetch time slots
-  useEffect(() => {
-    // Default time slots
-    const defaultTimeSlots: TimeSlot[] = [
-      { id: 'full_day', label: 'Full Day (00:00 - 23:59)', start_time: '00:00', end_time: '23:59' },
-      { id: 'morning', label: 'Morning (06:00 - 12:00)', start_time: '06:00', end_time: '12:00' },
-      { id: 'afternoon', label: 'Afternoon (12:00 - 18:00)', start_time: '12:00', end_time: '18:00' },
-      { id: 'evening', label: 'Evening (18:00 - 23:59)', start_time: '18:00', end_time: '23:59' },
-    ];
-    setTimeSlots(defaultTimeSlots);
-  }, []);
-
-  // Filter buildings based on selected site
-  useEffect(() => {
-    if (selectedSite) {
-      const filtered = buildings.filter(building => building.site_id.toString() === selectedSite);
-      setFilteredBuildings(filtered);
-    } else {
-      setFilteredBuildings([]);
-    }
-    // Reset building and floor when site changes
-    setSelectedBuilding('');
+    // Reset dependent selections when building changes
     setSelectedFloor('');
-    setFilteredFloors([]);
-  }, [selectedSite, buildings]);
+    setSeatConfigurations([]);
+    setSelectedSeatConfig('');
+  }, [selectedBuilding]);
 
-  // Filter floors based on selected building
+  // Fetch seat configurations when building+floor selected
   useEffect(() => {
-    if (selectedBuilding) {
-      const filtered = floors.filter(floor => floor.building_id.toString() === selectedBuilding);
-      setFilteredFloors(filtered);
-    } else {
-      setFilteredFloors([]);
-    }
-    // Reset floor when building changes
-    setSelectedFloor('');
-  }, [selectedBuilding, floors]);
-
-  // Fetch available seats when all required fields are selected
-  useEffect(() => {
-    const fetchAvailableSeats = async () => {
-      if (!selectedCategory || !selectedFloor || !selectedDate || !selectedTimeSlot) {
+    const fetchSeatConfigurations = async () => {
+      if (!selectedBuilding || !selectedFloor) {
+        setSeatConfigurations([]);
         setAvailableSeats([]);
         return;
       }
 
       try {
         setLoading(true);
-        const url = getFullUrl('/pms/admin/seat_configurations/available_seats');
+        const baseUrl = getFullUrl('/pms/admin/seat_configurations.json');
         const options = getAuthenticatedFetchOptions();
+
+        // Extract token from options if available
+        const token = localStorage.getItem('authToken') || '';
         
         const params = new URLSearchParams({
-          seat_category_id: selectedCategory,
-          floor_id: selectedFloor,
-          booking_date: selectedDate,
-          time_slot: selectedTimeSlot
+          token: token,
+          'q[building_id_eq]': selectedBuilding,
+          'q[floor_id_eq]': selectedFloor,
         });
 
-        const response = await fetch(`${url}?${params.toString()}`, options);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch available seats');
-        }
-        
+        const url = `${baseUrl}?${params.toString()}`;
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error('Failed to fetch seat configurations');
+
         const data = await response.json();
-        setAvailableSeats(data.available_seats || []);
-        
-        if (!data.available_seats || data.available_seats.length === 0) {
-          toast.info('No seats available for selected criteria');
-        }
+        setSeatConfigurations(data.seat_configurations || []);
+        // Reset seat config selection
+        setSelectedSeatConfig('');
       } catch (error) {
-        console.error('Error fetching available seats:', error);
-        toast.error('Failed to load available seats');
+        console.error('Error fetching seat configurations:', error);
+        toast.error('Failed to load seat configurations');
+        setSeatConfigurations([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSeatConfigurations();
+  }, [selectedBuilding, selectedFloor]);
+
+  // When a seat configuration is selected, fetch its details (seats)
+  useEffect(() => {
+    const fetchSeatConfigurationDetails = async () => {
+      if (!selectedSeatConfig) {
+        setAvailableSeats([]);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const url = getFullUrl(`/pms/admin/seat_configurations/${selectedSeatConfig}.json`);
+        const options = getAuthenticatedFetchOptions();
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error('Failed to fetch seat configuration details');
+
+        const data = await response.json();
+        const config = data.seat_configuration || data.seat_configurations || data;
+        const seats = config.seats || config.available_seats || [];
+        setAvailableSeats(seats);
+      } catch (error) {
+        console.error('Error fetching seat configuration details:', error);
+        toast.error('Failed to load seat configuration details');
         setAvailableSeats([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAvailableSeats();
-  }, [selectedCategory, selectedFloor, selectedDate, selectedTimeSlot]);
+    fetchSeatConfigurationDetails();
+  }, [selectedSeatConfig]);
+
+  // When seat configuration + date changes, fetch schedules for slots
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      if (!selectedSeatConfig || !selectedDate) {
+        setTimeSlots([]);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const formattedDate = (() => {
+          const parts = selectedDate.split('-');
+          if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+          return selectedDate;
+        })();
+
+        const url = getFullUrl(`/pms/admin/seat_configurations/${selectedSeatConfig}/get_schedules.json`);
+        const options = getAuthenticatedFetchOptions();
+        const params = new URLSearchParams({ date: formattedDate });
+
+        const response = await fetch(`${url}?${params.toString()}`, options);
+        if (!response.ok) throw new Error('Failed to fetch schedules');
+
+        const data = await response.json();
+        const schedules = data.schedules || data.time_slots || [];
+        if (schedules.length > 0) {
+          const mapped: TimeSlot[] = schedules.map((s: unknown) => {
+            const schedule = s as Record<string, unknown>;
+            return {
+              id: schedule.id?.toString() ?? schedule.slot_id?.toString() ?? schedule.key?.toString() ?? '',
+              label: (schedule.label || schedule.name || `${schedule.start_time || schedule.from} - ${schedule.end_time || schedule.to}`) as string,
+              start_time: (schedule.start_time || schedule.from || '') as string,
+              end_time: (schedule.end_time || schedule.end || schedule.to || '') as string
+            };
+          });
+          setTimeSlots(mapped);
+        } else {
+          setTimeSlots([]);
+        }
+      } catch (error) {
+        console.error('Error fetching schedules:', error);
+        toast.error('Failed to load schedules');
+        setTimeSlots([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchedules();
+  }, [selectedSeatConfig, selectedDate]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -319,8 +391,8 @@ const SpaceManagementBookingAddEmployee = () => {
       toast.error('Please select a category');
       return;
     }
-    if (!selectedSite) {
-      toast.error('Please select a site');
+    if (!currentUserSite) {
+      toast.error('Site information not available');
       return;
     }
     if (!selectedBuilding) {
@@ -329,6 +401,10 @@ const SpaceManagementBookingAddEmployee = () => {
     }
     if (!selectedFloor) {
       toast.error('Please select a floor');
+      return;
+    }
+    if (!selectedSeatConfig) {
+      toast.error('Please select a seat configuration');
       return;
     }
     if (!selectedDate) {
@@ -352,23 +428,30 @@ const SpaceManagementBookingAddEmployee = () => {
 
     try {
       setSubmitting(true);
-      const url = getFullUrl('/pms/admin/seat_bookings');
+      const url = getFullUrl('/pms/seat_bookings.json');
       const options = getAuthenticatedFetchOptions();
 
-      const timeSlotData = timeSlots.find(slot => slot.id === selectedTimeSlot);
+      // API expects booking_date as DD/MM/YYYY
+      const formattedDateForApi = (() => {
+        const parts = selectedDate.split('-');
+        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        return selectedDate;
+      })();
 
       const requestBody = {
         seat_booking: {
-          user_id: parseInt(currentUserId),
-          seat_configuration_id: parseInt(selectedSeat),
-          booking_date: selectedDate,
-          booking_schedule: selectedTimeSlot,
-          booking_schedule_time: timeSlotData ? `${timeSlotData.start_time} - ${timeSlotData.end_time}` : '',
-          status: 'confirmed'
-        }
+          booking_date: formattedDateForApi,
+          status: 'confirmed',
+          seat_configuration_id: parseInt(selectedSeatConfig)
+        },
+        selected_slots: [
+          {
+            slot_id: parseInt(selectedTimeSlot),
+            seat_id: parseInt(selectedSeat),
+            status: 'confirmed'
+          }
+        ]
       };
-
-      console.log('Creating seat booking:', requestBody);
 
       const response = await fetch(url, {
         ...options,
@@ -385,11 +468,10 @@ const SpaceManagementBookingAddEmployee = () => {
         throw new Error(errorData.message || 'Failed to create booking');
       }
 
-      const data = await response.json();
-      console.log('Booking created:', data);
+      await response.json();
 
       toast.success('Seat booking created successfully!');
-      navigate('/vas/space-management/bookings/employee');
+      navigate('/employee/space-management/bookings');
     } catch (error) {
       console.error('Error creating booking:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to create seat booking');
@@ -403,7 +485,7 @@ const SpaceManagementBookingAddEmployee = () => {
       {/* Header */}
       <div className="mb-8">
         <button
-          onClick={() => navigate('/vas/space-management/bookings/employee')}
+          onClick={() => navigate('/employee/space-management/bookings')}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -425,59 +507,32 @@ const SpaceManagementBookingAddEmployee = () => {
             </h2>
           </div>
           <div className="p-6 space-y-6">
-            {/* Row 1: Category, Site, Building */}
+            {/* Row 1: Date, Building, Floor */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <FormControl
+              <TextField
+                type="date"
+                label="Booking Date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
                 fullWidth
-                variant="outlined"
                 required
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
-              >
-                <InputLabel shrink>Category</InputLabel>
-                <Select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  label="Category"
-                  notched
-                  displayEmpty
-                >
-                  <MenuItem value="">Select category</MenuItem>
-                  {categories.map((category) => (
-                    <MenuItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+                inputProps={{ min: getTodayDate() }}
+              />
 
               <FormControl
                 fullWidth
                 variant="outlined"
                 required
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
-              >
-                <InputLabel shrink>Site</InputLabel>
-                <Select
-                  value={selectedSite}
-                  onChange={(e) => setSelectedSite(e.target.value)}
-                  label="Site"
-                  notched
-                  displayEmpty
-                >
-                  <MenuItem value="">Select site</MenuItem>
-                  {sites.map((site) => (
-                    <MenuItem key={site.id} value={site.id.toString()}>
-                      {site.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl
-                fullWidth
-                variant="outlined"
-                required
-                disabled={!selectedSite || filteredBuildings.length === 0}
+                disabled={!currentUserSite || filteredBuildings.length === 0}
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Building</InputLabel>
@@ -489,8 +544,8 @@ const SpaceManagementBookingAddEmployee = () => {
                   displayEmpty
                 >
                   <MenuItem value="">
-                    {!selectedSite 
-                      ? "Please select a site first" 
+                    {!currentUserSite 
+                      ? "Loading..." 
                       : filteredBuildings.length === 0 
                       ? "No buildings available" 
                       : "Select building"}
@@ -502,10 +557,7 @@ const SpaceManagementBookingAddEmployee = () => {
                   ))}
                 </Select>
               </FormControl>
-            </div>
 
-            {/* Row 2: Floor, Date, Time Slot */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -535,31 +587,73 @@ const SpaceManagementBookingAddEmployee = () => {
                   ))}
                 </Select>
               </FormControl>
+            </div>
 
-              <TextField
-                type="date"
-                label="Booking Date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+            {/* Row 2: Category, Time Slot */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <FormControl
                 fullWidth
-                required
                 variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
-                inputProps={{ min: getTodayDate() }}
-              />
+                required
+                disabled={!selectedBuilding || !selectedFloor}
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Category</InputLabel>
+                <Select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  label="Category"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">
+                    {!selectedBuilding || !selectedFloor 
+                      ? "Select building & floor first" 
+                      : "Select category"}
+                  </MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                disabled={!selectedBuilding || !selectedFloor || seatConfigurations.length === 0}
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Seat Configuration</InputLabel>
+                <Select
+                  value={selectedSeatConfig}
+                  onChange={(e) => setSelectedSeatConfig(e.target.value)}
+                  label="Seat Configuration"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">
+                    {!selectedBuilding || !selectedFloor 
+                      ? "Select building & floor first" 
+                      : seatConfigurations.length === 0 
+                      ? "No configurations available" 
+                      : "Select configuration"}
+                  </MenuItem>
+                  {seatConfigurations.map((cfg) => (
+                    <MenuItem key={cfg.id} value={cfg.id.toString()}>
+                      {cfg.name || cfg.label || `Config ${cfg.id}`}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl> */}
 
               <FormControl
                 fullWidth
                 variant="outlined"
                 required
-                disabled={!selectedDate}
+                disabled={!selectedDate || !selectedSeatConfig || timeSlots.length === 0}
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Time Slot</InputLabel>
@@ -571,7 +665,11 @@ const SpaceManagementBookingAddEmployee = () => {
                   displayEmpty
                 >
                   <MenuItem value="">
-                    {!selectedDate ? "Please select a date first" : "Select time slot"}
+                    {!selectedDate || !selectedSeatConfig 
+                      ? "Select configuration & date first" 
+                      : timeSlots.length === 0 
+                      ? "No slots available" 
+                      : "Select time slot"}
                   </MenuItem>
                   {timeSlots.map((slot) => (
                     <MenuItem key={slot.id} value={slot.id}>
@@ -585,7 +683,7 @@ const SpaceManagementBookingAddEmployee = () => {
         </div>
 
         {/* Section 2: Seat Selection */}
-        {selectedTimeSlot && (
+        {selectedSeatConfig && availableSeats.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <div className="px-6 py-3 border-b border-gray-200">
               <h2 className="text-lg font-medium text-gray-900 flex items-center">
@@ -600,7 +698,7 @@ const SpaceManagementBookingAddEmployee = () => {
                 <div className="flex items-center justify-center py-12">
                   <div className="h-8 w-8 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />
                 </div>
-              ) : availableSeats.length > 0 ? (
+              ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                   {availableSeats.map((seat) => (
                     <button
@@ -623,10 +721,6 @@ const SpaceManagementBookingAddEmployee = () => {
                     </button>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-gray-500">No seats available for the selected criteria</p>
-                </div>
               )}
             </div>
           </div>
@@ -637,7 +731,7 @@ const SpaceManagementBookingAddEmployee = () => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate('/vas/space-management/bookings/employee')}
+            onClick={() => navigate('/employee/space-management/bookings')}
             className="px-8 h-11"
             disabled={submitting}
           >
