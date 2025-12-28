@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import "dhtmlx-gantt";
 import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { getBaseUrl } from "@/utils/auth";
+import { cache } from "@/utils/cacheUtils";
 
 // Compact styles with smaller bars and outside titles
 const ganttStyles = `
@@ -349,6 +350,8 @@ const GanttChart = ({ selectedColumns = {} }) => {
                 toast.success(
                   `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} deleted successfully!`
                 );
+                // Invalidate cache after delete
+                cache.invalidatePattern(`milestones_project_${id}`);
                 gantt.deleteTask(taskId);
               })
               .catch((error) => {
@@ -695,16 +698,26 @@ const GanttChart = ({ selectedColumns = {} }) => {
     const fetchMilestones = async () => {
       try {
         const baseURL = getBaseUrl();
-        const response = await axios.get(
-          `${baseURL}/milestones.json?q[project_management_id_eq]=${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
+        const cacheKey = `milestones_project_${id}`;
+
+        const cachedResult = await cache.getOrFetch(
+          cacheKey,
+          async () => {
+            const response = await axios.get(
+              `${baseURL}/milestones.json?q[project_management_id_eq]=${id}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+              }
+            );
+            return response.data;
+          },
+          2 * 60 * 1000, // Fresh: 2 minutes
+          10 * 60 * 1000 // Stale: 10 minutes
         );
 
-        const rawData = response.data;
+        const rawData = cachedResult.data;
         console.log("Fetched milestones:", rawData);
 
         const tasksData = [];
@@ -1153,6 +1166,8 @@ const GanttChart = ({ selectedColumns = {} }) => {
               response.data
             );
             toast.success(`Milestone status updated to ${newStatus}!`);
+            // Invalidate cache after status update
+            cache.invalidatePattern(`milestones_project_${id}`);
           })
           .catch((error) => {
             console.error("Error updating milestone status:", error);
@@ -1218,6 +1233,8 @@ const GanttChart = ({ selectedColumns = {} }) => {
           .then((response) => {
             console.log("Milestone updated successfully:", response.data);
             toast.success("Milestone updated successfully!");
+            // Invalidate cache after update
+            cache.invalidatePattern(`milestones_project_${id}`);
           })
           .catch((error) => {
             console.error("Error updating milestone:", error);
@@ -1260,6 +1277,8 @@ const GanttChart = ({ selectedColumns = {} }) => {
             toast.success(
               `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} updated successfully!`
             );
+            // Invalidate cache after update
+            cache.invalidatePattern(`milestones_project_${id}`);
 
             if (
               entityType === "task" &&
@@ -1327,6 +1346,8 @@ const GanttChart = ({ selectedColumns = {} }) => {
             })
             .then((response) => {
               console.log("Dependency updated successfully:", response.data);
+              // Invalidate cache after dependency update
+              cache.invalidatePattern(`milestones_project_${id}`);
               // toast.success('Dependency added successfully!');
             })
             .catch((error) => {
@@ -1365,6 +1386,8 @@ const GanttChart = ({ selectedColumns = {} }) => {
             .then((response) => {
               console.log("Dependency removed successfully:", response.data);
               toast.success("Dependency removed successfully!");
+              // Invalidate cache after dependency removal
+              cache.invalidatePattern(`milestones_project_${id}`);
             })
             .catch((error) => {
               console.error("Error removing dependency:", error);
