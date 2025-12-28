@@ -189,7 +189,7 @@ const MinutesOfMeeting = () => {
                     size="sm"
                     variant="ghost"
                     className="p-1"
-                    onClick={() => {/* Edit logic */ }}
+                    onClick={() => navigate(`/vas/edit-mom/${item.id}`)}
                 >
                     <Edit className="w-4 h-4" />
                 </Button>
@@ -201,6 +201,8 @@ const MinutesOfMeeting = () => {
         switch (columnKey) {
             case 'participants':
                 return renderParticipantBadges(item.participants);
+            case 'dateOfMeeting':
+                return item.dateOfMeeting ? new Date(item.dateOfMeeting).toLocaleDateString() : "-";
             default:
                 return (item as any)[columnKey] || "-";
         }

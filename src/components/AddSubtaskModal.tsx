@@ -415,6 +415,8 @@ const SubtaskForm = ({
                             selectedDate={startDate}
                             taskHoursData={calendarTaskHours}
                             ref={startDateRef}
+                            maxDate={endDate}
+                            shift={shift}
                         />
                     ) : (
                         <TaskDatePicker
@@ -423,6 +425,8 @@ const SubtaskForm = ({
                             startDate={null}
                             userAvailability={userAvailability}
                             setShowCalender={setShowStartCalender}
+                            maxDate={endDate}
+                            shift={shift}
                         />
                     )
                 ) : (
@@ -432,6 +436,7 @@ const SubtaskForm = ({
                         tasks={startDateTasks}
                         selectedUser={formData.responsiblePerson}
                         userAvailability={userAvailability}
+                        shift={shift}
                     />
                 )}
             </div>
@@ -449,6 +454,7 @@ const SubtaskForm = ({
                             selectedDate={endDate}
                             taskHoursData={calendarTaskHours}
                             ref={endDateRef}
+                            shift={shift}
                         />
                     ) : (
                         <TaskDatePicker
@@ -457,6 +463,7 @@ const SubtaskForm = ({
                             startDate={startDate}
                             userAvailability={userAvailability}
                             setShowCalender={setShowCalender}
+                            shift={shift}
                         />
                     )
                 ) : (
@@ -466,6 +473,7 @@ const SubtaskForm = ({
                         tasks={targetDateTasks}
                         selectedUser={formData.responsiblePerson}
                         userAvailability={userAvailability}
+                        shift={shift}
                     />
                 )}
             </div>

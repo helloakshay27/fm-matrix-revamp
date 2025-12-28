@@ -823,6 +823,7 @@ import BusinessCard from "./pages/mobile/BusinessCard";
 import AskAI from "./pages/AskAI";
 import MinutesOfMeeting from "./pages/MinutesOfMeeting";
 import AddMoMPage from "./pages/AddMoMPage";
+import EditMoMPage from "./pages/EditMoMPage";
 import Todo from "./pages/Todo";
 import ProjectDocuments from "./pages/ProjectDocuments";
 import { TicketDashboardEmployee } from "./pages/TicketDashboardEmplooyee";
@@ -2620,6 +2621,8 @@ function App() {
                   <Route path="/vas/mom" element={<MinutesOfMeeting />} />
 
                   <Route path="/vas/add-mom" element={<AddMoMPage />} />
+
+                  <Route path="/vas/edit-mom/:id" element={<EditMoMPage />} />
 
                   <Route
                     path="/settings/project-task-setup/roles"
