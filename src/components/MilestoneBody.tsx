@@ -182,7 +182,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
   const visibleColumns = getVisibleColumns();
 
   // Helper function to calculate progress for milestones or tasks
-  const calculateProgress = (entityId, tasksData, entityType) => {
+  const calculateProgress = useCallback((entityId, tasksData, entityType) => {
     const childType = entityType === "milestone" ? "task" : "sub_task";
     const children = tasksData.filter(
       (task) => task.parent === entityId && task.type === childType
@@ -232,10 +232,10 @@ const GanttChart = ({ selectedColumns = {} }) => {
       completed: completedTasks,
       percentage: Math.round(percentage * 100) / 100,
     };
-  };
+  }, []);
 
   // Helper function to determine milestone status based on tasks
-  const calculateMilestoneStatus = (milestoneId, tasksData) => {
+  const calculateMilestoneStatus = useCallback((milestoneId, tasksData) => {
     const tasks = tasksData.filter(
       (task) => task.parent === milestoneId && task.type === "task"
     );
@@ -265,7 +265,7 @@ const GanttChart = ({ selectedColumns = {} }) => {
     }
 
     return "open";
-  };
+  }, []);
 
   // Combined handler for all navigation clicks (Eye icon - navigate to details page)
   useEffect(() => {
