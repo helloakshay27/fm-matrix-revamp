@@ -8,6 +8,7 @@ export const TaskDatePicker = ({
     userAvailability = [],
     setShowCalender,
     shift = {},
+    maxDate = null,
 }) => {
     const today = new Date();
 
@@ -155,15 +156,20 @@ export const TaskDatePicker = ({
                     const itemDate = new Date(dateItem.year, dateItem.month, dateItem.date);
                     const isWeekoff = !isDateWorking(itemDate, shift);
 
+                    const isAfterMaxDate = maxDate
+                        ? new Date(dateItem.year, dateItem.month, dateItem.date) >
+                        new Date(maxDate.year, maxDate.month, maxDate.date)
+                        : false;
+
                     return (
                         <button
                             key={`${dateItem.year}-${dateItem.month}-${dateItem.date}`}
                             type="button"
                             onClick={() => onDateSelect(dateItem)}
-                            disabled={isWeekoff}
+                            disabled={isWeekoff || isAfterMaxDate}
                             className={`flex flex-col items-center justify-center min-w-[60px] p-3 rounded-lg transition-all ${isSelected
                                 ? 'border-[#c72030] bg-red-50'
-                                : isWeekoff
+                                : isWeekoff || isAfterMaxDate
                                     ? 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed'
                                     : isCurrentMonth
                                         ? 'border-gray-200 bg-white hover:border-gray-300'

@@ -189,7 +189,7 @@ const MinutesOfMeeting = () => {
                     size="sm"
                     variant="ghost"
                     className="p-1"
-                    onClick={() => {/* Edit logic */ }}
+                    onClick={() => navigate(`/vas/edit-mom/${item.id}`)}
                 >
                     <Edit className="w-4 h-4" />
                 </Button>
