@@ -437,8 +437,6 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         //     });
         // }
 
-        console.log(dateWiseHours)
-
         const formatedEndDate = `${endDate.year}-${String(endDate.month + 1).padStart(2, "0")}-${String(endDate.date).padStart(2, "0")}`;
         const formatedStartDate = `${startDate.year}-${String(startDate.month + 1).padStart(2, "0")}-${String(startDate.date).padStart(2, "0")}`;
 
@@ -514,7 +512,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         } catch (error) {
             console.error("Error updating task:", error);
             toast.dismiss();
-            toast.error(error?.response?.data?.message || "Error updating task.");
+            toast.error(error?.response?.data?.error || "Error updating task.");
         } finally {
             setIsSubmitting(false);
         }
@@ -756,6 +754,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                                     startDate={null}
                                     userAvailability={userAvailability}
                                     setShowCalender={setShowStartCalender}
+                                    shift={shift}
                                 />
                             )
                         ) : (
@@ -765,6 +764,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                                 tasks={startDateTasks}
                                 selectedUser={formData.responsiblePerson}
                                 userAvailability={userAvailability}
+                                shift={shift}
                             />
                         )}
                     </div>
@@ -791,6 +791,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                                     startDate={startDate}
                                     userAvailability={userAvailability}
                                     setShowCalender={setShowCalender}
+                                    shift={shift}
                                 />
                             )
                         ) : (
@@ -800,6 +801,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                                 tasks={targetDateTasks}
                                 selectedUser={formData.responsiblePerson}
                                 userAvailability={userAvailability}
+                                shift={shift}
                             />
                         )}
                     </div>

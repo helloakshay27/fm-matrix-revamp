@@ -578,6 +578,7 @@ const TaskForm = ({
                             startDate={null}
                             userAvailability={userAvailability}
                             setShowCalender={setShowStartCalender}
+                            shift={shift}
                         />
                     )
                 ) : (
@@ -587,6 +588,7 @@ const TaskForm = ({
                         tasks={startDateTasks}
                         selectedUser={formData.responsiblePerson}
                         userAvailability={userAvailability}
+                        shift={shift}
                     />
                 )}
             </div>
@@ -612,6 +614,7 @@ const TaskForm = ({
                             startDate={startDate}
                             userAvailability={userAvailability}
                             setShowCalender={setShowCalender}
+                            shift={shift}
                         />
                     )
                 ) : (
@@ -621,6 +624,7 @@ const TaskForm = ({
                         tasks={targetDateTasks}
                         selectedUser={formData.responsiblePerson}
                         userAvailability={userAvailability}
+                        shift={shift}
                     />
                 )}
             </div>

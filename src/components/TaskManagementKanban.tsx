@@ -51,10 +51,6 @@ export const cardsTitle = [
 const TaskManagementKanban = ({ fetchData }) => {
     const { setIsSidebarCollapsed } = useLayout();
 
-    useEffect(() => {
-        setIsSidebarCollapsed(true);
-    }, []);
-
     const { data } = useAppSelector((state) => state.filterTasks);
     const taskList = Array.isArray((data as any)?.task_managements)
         ? (data as any).task_managements
@@ -328,6 +324,10 @@ const TaskManagementKanban = ({ fetchData }) => {
                                                 return effectiveStatus === normalizedCardStatus;
                                             }
                                         );
+
+                                        // Get all subtasks for toggle count
+                                        const allSubtasks = task.sub_tasks_managements || [];
+
                                         return (
                                             <div
                                                 key={task.id}
@@ -336,14 +336,14 @@ const TaskManagementKanban = ({ fetchData }) => {
                                             >
                                                 <TaskCard
                                                     task={task}
-                                                    count={visibleSubtasks.length}
+                                                    count={allSubtasks.length}
                                                     toggleSubCard={() => toggleSubCard(task.id)}
                                                     {...(formattedDependsOn.length > 0 && {
                                                         handleLink: () => handleLink(currentTaskKey, formattedDependsOn),
                                                         iconColor: allLinked ? "#A0A0A0" : "#DA2400",
                                                     })}
                                                 />
-                                                {visibleSubtasks.length > 0 &&
+                                                {allSubtasks.length > 0 &&
                                                     subCardVisibility[task.id] && (
                                                         <div className="ml-5 mt-1">
                                                             {visibleSubtasks.map((subtask) => (

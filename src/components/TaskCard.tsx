@@ -46,7 +46,7 @@ const TaskCard = ({
             // use end of day for display (23:59:59.999)
             const endOfDay = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999);
 
-            const diff = endOfDay - now;
+            const diff = endOfDay.getTime() - now.getTime();
 
             if (diff <= 0 && task.status !== "completed") {
                 // mark overdue and update display
@@ -108,13 +108,15 @@ const TaskCard = ({
                 <span className="text-blue-500">T-{task.id}</span> {task.title}
             </p>
             <div
-                {...listeners}
                 style={{
                     cursor: isDragging ? "grabbing" : "grab",
                 }}
                 className="flex-1"
             >
-                <div className="flex items-center gap-1">
+                <div
+                    {...listeners}
+                    className="flex items-center gap-1"
+                >
                     <Flag className="text-[#C72030] flex-shrink-0" size={14} />
                     <span className="text-[10px] truncate">{task?.milestone?.title}</span>
                 </div>
@@ -146,8 +148,14 @@ const TaskCard = ({
                             </svg>
                         </span>
 
-                        <svg onClick={handleLink}
-
+                        <svg
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                if (typeof handleLink === "function") {
+                                    handleLink();
+                                }
+                            }}
                             className="cursor-pointer"
                             width="14"
                             height="14"
