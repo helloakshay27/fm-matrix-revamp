@@ -15,6 +15,16 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import AddSprintModal from "@/components/AddSprintModal";
 import { useLayout } from "@/contexts/LayoutContext";
+import { CountdownTimer } from "@/components/Sprints/CountdownTimer";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import {
+  fetchSprints,
+  createSprint,
+  updateSprint,
+  updateSprintStatus,
+} from "@/store/slices/sprintSlice";
+import axios from "axios";
 
 const columns: ColumnConfig[] = [
   {
@@ -82,38 +92,24 @@ const columns: ColumnConfig[] = [
   },
 ];
 
-const transformedSprints = (sprints: any) => {
+const transformedSprints = (sprints: any[]) => {
   return sprints.map((sprint: any) => {
-    // Calculate duration
-    let duration = "-";
-    if (sprint.start_date && sprint.end_date) {
-      const start = new Date(sprint.start_date);
-      const end = new Date(sprint.end_date);
-      const diffTime = Math.abs(end.getTime() - start.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      const weeks = Math.floor(diffDays / 7);
-      const days = diffDays % 7;
-      const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diffTime % (1000 * 60)) / 1000);
-
-      duration = `${weeks}w:${days}d:${hours.toString().padStart(2, '0')}h:${minutes.toString().padStart(2, '0')}m:${seconds.toString().padStart(2, '0')}s`;
-    }
-
     return {
       id: sprint.id,
-      title: sprint.title,
+      title: sprint.title || sprint.name,
       status: sprint.status
         ? sprint.status.charAt(0).toUpperCase() + sprint.status.slice(1)
         : "",
-      sprint_owner: sprint.sprint_owner || sprint.owner_name || "-",
+      sprint_owner: sprint.sprint_owner || sprint.owner_name || sprint.sprint_owner_name || "-",
       start_date: sprint.start_date,
       end_date: sprint.end_date,
-      duration: duration,
+      duration: sprint.duration || "",
       priority: sprint.priority
         ? sprint.priority.charAt(0).toUpperCase() + sprint.priority.slice(1)
         : "",
-      number_of_projects: sprint.number_of_projects || sprint.project_count || 0,
+      number_of_projects: sprint.number_of_projects || sprint.project_count || sprint.associated_projects_count || 0,
+      // Keep raw data for updates
+      _raw: sprint,
     };
   });
 };
@@ -127,46 +123,50 @@ export const SprintDashboard = () => {
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const baseUrl = localStorage.getItem("baseUrl");
-  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl") || "";
+  const token = localStorage.getItem("token") || "";
 
-  const [sprints, setSprints] = useState([]);
+  // Redux state selectors
+  const { data: sprintsData, loading: fetchLoading } = useSelector(
+    (state: RootState) => state.fetchSprints
+  );
+  const { loading: createLoading } = useSelector(
+    (state: RootState) => state.createSprint
+  );
+  const { loading: updateLoading } = useSelector(
+    (state: RootState) => state.updateSprint
+  );
+
+  const [sprints, setSprints] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedView, setSelectedView] = useState("List");
   const [addSprintModalOpen, setAddSprintModalOpen] = useState(false);
+  const [owners, setOwners] = useState([])
 
-  // Mock owners data - TODO: Replace with actual API call
-  const mockOwners = [
-    { id: "1", full_name: "Test User Name" },
-    { id: "2", full_name: "Sadanand Gupta" },
-    { id: "3", full_name: "Ubaid Hashmat" },
-    { id: "4", full_name: "Akshay" },
-    { id: "5", full_name: "Yadav" },
-  ];
+  const getOwners = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+      setOwners(response.data.users);
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  }
+
+  useEffect(() => {
+    getOwners()
+  }, [])
 
   const fetchData = async () => {
     try {
-      // TODO: Replace with actual sprint API call when available
-      // const response = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
-      // setSprints(transformedSprints(response));
-
-      // Mock data for now
-      setSprints([
-        {
-          id: "S-78",
-          title: "test 333",
-          status: "Active",
-          sprint_owner: "Test User Name",
-          start_date: "2025-11-04",
-          end_date: "2025-11-04",
-          duration: "0w:0d:00h:00m:00s",
-          priority: "Medium",
-          number_of_projects: 3,
-        },
-      ]);
-    } catch (error) {
+      await dispatch(fetchSprints({ token, baseUrl })).unwrap();
+    } catch (error: any) {
       console.log(error);
-      toast.error("Failed to fetch sprints");
+      toast.error(error || "Failed to fetch sprints");
     }
   };
 
@@ -174,25 +174,60 @@ export const SprintDashboard = () => {
     fetchData();
   }, [dispatch, token, baseUrl]);
 
+  useEffect(() => {
+    if (sprintsData && Array.isArray(sprintsData)) {
+      setSprints(transformedSprints(sprintsData));
+    }
+  }, [sprintsData]);
+
   const handleSubmit = async (data: any) => {
     try {
-      // TODO: Replace with actual create sprint API call
-      // const payload = {
-      //   sprint: {
-      //     title: data.title,
-      //     start_date: data.start_date,
-      //     end_date: data.end_date,
-      //     status: data.status || "active",
-      //     sprint_owner: data.sprint_owner,
-      //     priority: data.priority,
-      //   },
-      // };
-      // await dispatch(createSprint({ token, baseUrl, data: payload })).unwrap();
+      const payload = {
+        sprint: {
+          title: data.sprint?.title || data.title,
+          owner_id: data.sprint?.owner_id || data.sprint_owner,
+          start_date: data.sprint?.start_date || data.start_date,
+          end_date: data.sprint?.end_date || data.end_date,
+          status: data.sprint?.status || data.status || "active",
+          priority: data.sprint?.priority || data.priority,
+        },
+      };
+
+      await dispatch(createSprint({ token, baseUrl, data: payload })).unwrap();
       toast.success("Sprint created successfully");
       fetchData();
-    } catch (error) {
+      setAddSprintModalOpen(false);
+    } catch (error: any) {
       console.log(error);
-      toast.error("Failed to create sprint");
+      toast.error(error || "Failed to create sprint");
+    }
+  };
+
+  const handleUpdateSprint = async (id: string, data: any) => {
+    try {
+      const payload = {
+        sprint: data,
+      };
+      await dispatch(updateSprint({ token, baseUrl, id, data: payload })).unwrap();
+      toast.success("Sprint updated successfully");
+      fetchData();
+    } catch (error: any) {
+      console.log(error);
+      toast.error(error || "Failed to update sprint");
+    }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const payload = {
+        status: newStatus.toLowerCase(),
+      };
+      await dispatch(updateSprintStatus({ token, baseUrl, id, data: payload })).unwrap();
+      toast.success("Sprint status updated successfully");
+      fetchData();
+    } catch (error: any) {
+      console.log(error);
+      toast.error(error || "Failed to update sprint status");
     }
   };
 
@@ -215,23 +250,36 @@ export const SprintDashboard = () => {
         return (
           <span
             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.status === "Active"
-                ? "bg-green-100 text-green-800"
-                : item.status === "Completed"
-                  ? "bg-blue-100 text-blue-800"
-                  : "bg-gray-100 text-gray-800"
+              ? "bg-green-100 text-green-800"
+              : item.status === "Completed"
+                ? "bg-blue-100 text-blue-800"
+                : item.status === "In_progress"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : item.status === "Stopped"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-gray-100 text-gray-800"
               }`}
           >
             <span
               className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status === "Active"
-                  ? "bg-green-500"
-                  : item.status === "Completed"
-                    ? "bg-blue-500"
-                    : "bg-gray-500"
+                ? "bg-green-500"
+                : item.status === "Completed"
+                  ? "bg-blue-500"
+                  : item.status === "In_progress"
+                    ? "bg-yellow-500"
+                    : item.status === "Stopped"
+                      ? "bg-red-500"
+                      : "bg-gray-500"
                 }`}
             ></span>
             {item.status}
           </span>
         );
+      case "duration":
+        if (item.start_date && item.end_date) {
+          return <CountdownTimer startDate={item.start_date} targetDate={item.end_date} />;
+        }
+        return "-";
       default:
         return item[columnKey] || "-";
     }
@@ -253,7 +301,7 @@ export const SprintDashboard = () => {
     if (columnKey === "status") {
       return (
         <Select
-          value={value || ""}
+          value={value?.toLowerCase() || ""}
           onChange={(e) => onChange(e.target.value)}
           displayEmpty
           size="small"
@@ -264,8 +312,8 @@ export const SprintDashboard = () => {
           </MenuItem>
           <MenuItem value="active">Active</MenuItem>
           <MenuItem value="completed">Completed</MenuItem>
-          <MenuItem value="on_hold">On Hold</MenuItem>
-          <MenuItem value="cancelled">Cancelled</MenuItem>
+          <MenuItem value="in_progress">In Progress</MenuItem>
+          <MenuItem value="stopped">Stopped</MenuItem>
         </Select>
       );
     }
@@ -283,7 +331,7 @@ export const SprintDashboard = () => {
     if (columnKey === "priority") {
       return (
         <Select
-          value={value || ""}
+          value={value?.toLowerCase() || ""}
           onChange={(e) => onChange(e.target.value)}
           displayEmpty
           size="small"
@@ -296,6 +344,16 @@ export const SprintDashboard = () => {
           <MenuItem value="medium">Medium</MenuItem>
           <MenuItem value="low">Low</MenuItem>
         </Select>
+      );
+    }
+    if (columnKey === "title") {
+      return (
+        <TextField
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          size="small"
+          fullWidth
+        />
       );
     }
     return null;
@@ -352,6 +410,8 @@ export const SprintDashboard = () => {
     </div>
   );
 
+  const isLoading = fetchLoading || createLoading || updateLoading;
+
   return (
     <div className="p-6">
       <EnhancedTable
@@ -370,13 +430,14 @@ export const SprintDashboard = () => {
         }}
         renderEditableCell={renderEditableCell}
         newRowPlaceholder="Click to add new sprint"
+        loading={isLoading}
       />
 
       {/* Add Sprint Modal */}
       <AddSprintModal
         openDialog={addSprintModalOpen}
         handleCloseDialog={() => setAddSprintModalOpen(false)}
-        owners={mockOwners}
+        owners={owners}
         onSubmit={(data) => {
           handleSubmit(data);
         }}
