@@ -201,6 +201,8 @@ const MinutesOfMeeting = () => {
         switch (columnKey) {
             case 'participants':
                 return renderParticipantBadges(item.participants);
+            case 'dateOfMeeting':
+                return item.dateOfMeeting ? new Date(item.dateOfMeeting).toLocaleDateString() : "-";
             default:
                 return (item as any)[columnKey] || "-";
         }

@@ -529,7 +529,7 @@ export const ProjectsDashboard = () => {
         <div
           className="flex items-center gap-2 cursor-pointer"
           onClick={() =>
-            type === "issues" && navigate(`/vas/issues?project_id=${item.id}`)
+            type === "issues" ? navigate(`/vas/issues?project_id=${item.id}`) : type === "tasks" ? navigate(`/vas/tasks?project_id=${item.id}`) : type === "milestones" ? navigate(`/vas/projects/${item.id}/milestones`) : null
           }
         >
           <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
@@ -555,12 +555,12 @@ export const ProjectsDashboard = () => {
       case "milestones": {
         const completed = item.milestonesCompleted || 0;
         const total = item.milestones || 0;
-        return renderProgressBar(completed, total, "bg-[#84edba]");
+        return renderProgressBar(completed, total, "bg-[#84edba]", "milestones");
       }
       case "tasks": {
         const completed = item.tasksCompleted || 0;
         const total = item.tasks || 0;
-        return renderProgressBar(completed, total, "bg-[#e9e575]");
+        return renderProgressBar(completed, total, "bg-[#e9e575]", "tasks");
       }
       case "subtasks": {
         const completed = item.subtasksCompleted || 0;
