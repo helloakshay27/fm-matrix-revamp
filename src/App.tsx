@@ -775,7 +775,6 @@ import BannerDetailsPage from "./pages/BannerDetailsPage";
 import AmenityDetailsPage from "./pages/AmenityDetailsPage";
 import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
 import WeeklyReport from "./components/WeeklyReport";
-import useRouteLogger from "./hooks/useRouteLogger";
 import { LocationAccountPage } from "./pages/master/LocationAccountPage";
 import LMCPage from "./pages/LMCPage";
 import { ChannelsLayout } from "./pages/ChannelsLayout";
@@ -855,13 +854,12 @@ function App() {
   const hostname = window.location.hostname;
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
-  useRouteLogger();
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const { manager: webSocketManager, connect } = useWebSocket();
   const socketUrl = `wss://${localStorage.getItem("baseUrl")}/cable`;
-  const currentUser = JSON.parse(localStorage.getItem('user'));
+  const currentUser = JSON.parse(localStorage.getItem("user"));
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Initialize global MUI Select search enhancer
@@ -1359,7 +1357,7 @@ function App() {
                       index
                       element={
                         <div
-                          className={`flex justify-center items-center ${localStorage.getItem('selectedView') === 'employee' ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
+                          className={`flex justify-center items-center ${localStorage.getItem("selectedView") === "employee" ? "h-[calc(100vh-60px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
                         >
                           Select a Chat/Group to view messages
                         </div>
