@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { cache } from '@/utils/cacheUtils';
 import { Edit2, ChevronDown, Plus, Edit, Eye } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -73,14 +74,22 @@ const OpportunityDashboard = () => {
     const [selectedOpportunityId, setSelectedOpportunityId] = useState<number | null>(null);
 
     // Abstract fetch function to reuse
-    const fetchOpportunities = async () => {
+    const fetchOpportunities = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(getFullUrl('/opportunities.json'), {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setOpportunities(response.data || []);
+            const cachedResult = await cache.getOrFetch(
+                'opportunities_list',
+                async () => {
+                    const response = await axios.get(getFullUrl('/opportunities.json'), {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    return response.data || [];
+                },
+                2 * 60 * 1000, // Fresh for 2 minutes
+                10 * 60 * 1000 // Stale up to 10 minutes
+            );
+            setOpportunities(cachedResult.data);
         } catch (err: any) {
             console.error('Error fetching opportunities:', err);
             setError(err.message || 'Failed to fetch opportunities');
@@ -88,11 +97,11 @@ const OpportunityDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
 
     useEffect(() => {
         fetchOpportunities();
-    }, []);
+    }, [fetchOpportunities]);
 
     const handleStatusChange = async (id: number, status: string) => {
         const payload = {
@@ -107,6 +116,10 @@ const OpportunityDashboard = () => {
                     'Content-Type': 'application/json',
                 },
             });
+
+            // Invalidate opportunity caches
+            cache.invalidatePattern('opportunities_*');
+
             fetchOpportunities();
             toast.success("Project status changed successfully");
         } catch (error) {

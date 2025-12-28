@@ -10,7 +10,8 @@ import {
   List,
   Plus,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { cache } from "@/utils/cacheUtils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import AddSprintModal from "@/components/AddSprintModal";
@@ -161,14 +162,39 @@ export const SprintDashboard = () => {
     getOwners()
   }, [])
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
-      await dispatch(fetchSprints({ token, baseUrl })).unwrap();
-    } catch (error: any) {
+      const cachedResult = await cache.getOrFetch(
+        'sprints_list',
+        async () => {
+          // TODO: Replace with actual sprint API call when available
+          // const response = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
+          // return transformedSprints(response);
+
+          // Mock data for now
+          return [
+            {
+              id: "S-78",
+              title: "test 333",
+              status: "Active",
+              sprint_owner: "Test User Name",
+              start_date: "2025-11-04",
+              end_date: "2025-11-04",
+              duration: "0w:0d:00h:00m:00s",
+              priority: "Medium",
+              number_of_projects: 3,
+            },
+          ];
+        },
+        2 * 60 * 1000, // Fresh for 2 minutes
+        10 * 60 * 1000 // Stale up to 10 minutes
+      );
+      setSprints(cachedResult.data);
+    } catch (error) {
       console.log(error);
       toast.error(error || "Failed to fetch sprints");
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
