@@ -318,11 +318,11 @@ const TaskForm = ({
         />
       )}
       {project &&
-      milestone &&
-      !Array.isArray(project) &&
-      !Array.isArray(milestone) &&
-      project.title &&
-      milestone.title ? (
+        milestone &&
+        !Array.isArray(project) &&
+        !Array.isArray(milestone) &&
+        project.title &&
+        milestone.title ? (
         <div className="flex items-center justify-between gap-3 mb-4 mt-4">
           <div className="w-full">
             <TextField
@@ -627,6 +627,8 @@ const TaskForm = ({
               selectedDate={startDate}
               taskHoursData={calendarTaskHours}
               ref={startDateRef}
+              maxDate={endDate}
+              shift={shift}
             />
           ) : (
             <TaskDatePicker
@@ -635,13 +637,14 @@ const TaskForm = ({
               startDate={null}
               userAvailability={userAvailability}
               setShowCalender={setShowStartCalender}
+              maxDate={endDate}
               shift={shift}
             />
           )
         ) : (
           <TasksOfDate
             selectedDate={startDate}
-            onClose={() => {}}
+            onClose={() => { }}
             tasks={startDateTasks}
             selectedUser={formData.responsiblePerson}
             userAvailability={userAvailability}
@@ -663,6 +666,8 @@ const TaskForm = ({
               selectedDate={endDate}
               taskHoursData={calendarTaskHours}
               ref={endDateRef}
+              maxDate={endDate}
+              shift={shift}
             />
           ) : (
             <TaskDatePicker
@@ -671,13 +676,14 @@ const TaskForm = ({
               startDate={startDate}
               userAvailability={userAvailability}
               setShowCalender={setShowCalender}
+              maxDate={endDate}
               shift={shift}
             />
           )
         ) : (
           <TasksOfDate
             selectedDate={endDate}
-            onClose={() => {}}
+            onClose={() => { }}
             tasks={targetDateTasks}
             selectedUser={formData.responsiblePerson}
             userAvailability={userAvailability}
@@ -929,12 +935,10 @@ const ProjectTaskCreateModal = ({
   }, [isEdit, task, id, mid, getTagName]);
 
   const createTaskPayload = (data) => {
-    const formatedEndDate = `${endDate?.year}-${endDate?.month + 1}-${
-      endDate?.date
-    }`;
-    const formatedStartDate = `${startDate?.year}-${startDate?.month + 1}-${
-      startDate?.date
-    }`;
+    const formatedEndDate = `${endDate?.year}-${endDate?.month + 1}-${endDate?.date
+      }`;
+    const formatedStartDate = `${startDate?.year}-${startDate?.month + 1}-${startDate?.date
+      }`;
     return {
       task_management: {
         title: data.taskTitle,
@@ -1096,7 +1100,7 @@ const ProjectTaskCreateModal = ({
           <TaskForm
             key={task.id}
             formData={task.formData}
-            setFormData={() => {}}
+            setFormData={() => { }}
             isReadOnly={true}
             project={project}
             milestone={milestone}

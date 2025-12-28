@@ -849,6 +849,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                   selectedDate={startDate}
                   taskHoursData={calendarTaskHours}
                   ref={startDateRef}
+                  maxDate={endDate}
+                  shift={shift}
                 />
               ) : (
                 <TaskDatePicker
@@ -858,12 +860,13 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                   userAvailability={userAvailability}
                   setShowCalender={setShowStartCalender}
                   shift={shift}
+                  maxDate={endDate}
                 />
               )
             ) : (
               <TasksOfDate
                 selectedDate={startDate}
-                onClose={() => {}}
+                onClose={() => { }}
                 tasks={startDateTasks}
                 selectedUser={formData.responsiblePerson}
                 userAvailability={userAvailability}
@@ -886,6 +889,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                   selectedDate={endDate}
                   taskHoursData={calendarTaskHours}
                   ref={endDateRef}
+                  maxDate={endDate}
+                  shift={shift}
                 />
               ) : (
                 <TaskDatePicker
@@ -894,13 +899,14 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                   startDate={startDate}
                   userAvailability={userAvailability}
                   setShowCalender={setShowCalender}
+                  maxDate={endDate}
                   shift={shift}
                 />
               )
             ) : (
               <TasksOfDate
                 selectedDate={endDate}
-                onClose={() => {}}
+                onClose={() => { }}
                 tasks={targetDateTasks}
                 selectedUser={formData.responsiblePerson}
                 userAvailability={userAvailability}
