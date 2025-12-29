@@ -3,13 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { MenuItem, Select, TextField } from "@mui/material";
-import {
-  ChartNoAxesColumn,
-  ChevronDown,
-  Eye,
-  List,
-  Plus,
-} from "lucide-react";
+import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { cache } from "@/utils/cacheUtils";
 import { useNavigate } from "react-router-dom";
@@ -101,14 +95,22 @@ const transformedSprints = (sprints: any[]) => {
       status: sprint.status
         ? sprint.status.charAt(0).toUpperCase() + sprint.status.slice(1)
         : "",
-      sprint_owner: sprint.sprint_owner || sprint.owner_name || sprint.sprint_owner_name || "-",
+      sprint_owner:
+        sprint.sprint_owner ||
+        sprint.owner_name ||
+        sprint.sprint_owner_name ||
+        "-",
       start_date: sprint.start_date,
       end_date: sprint.end_date,
       duration: sprint.duration || "",
       priority: sprint.priority
         ? sprint.priority.charAt(0).toUpperCase() + sprint.priority.slice(1)
         : "",
-      number_of_projects: sprint.number_of_projects || sprint.project_count || sprint.associated_projects_count || 0,
+      number_of_projects:
+        sprint.number_of_projects ||
+        sprint.project_count ||
+        sprint.associated_projects_count ||
+        0,
       // Keep raw data for updates
       _raw: sprint,
     };
@@ -142,30 +144,33 @@ export const SprintDashboard = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedView, setSelectedView] = useState("List");
   const [addSprintModalOpen, setAddSprintModalOpen] = useState(false);
-  const [owners, setOwners] = useState([])
+  const [owners, setOwners] = useState([]);
 
   const getOwners = async () => {
     try {
-      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await axios.get(
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
       setOwners(response.data.users);
     } catch (error) {
-      console.log(error)
-      toast.error(error)
+      console.log(error);
+      toast.error(error);
     }
-  }
+  };
 
   useEffect(() => {
-    getOwners()
-  }, [])
+    getOwners();
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
       const cachedResult = await cache.getOrFetch(
-        'sprints_list',
+        "sprints_list",
         async () => {
           // TODO: Replace with actual sprint API call when available
           // const response = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
@@ -221,6 +226,8 @@ export const SprintDashboard = () => {
 
       await dispatch(createSprint({ token, baseUrl, data: payload })).unwrap();
       toast.success("Sprint created successfully");
+      // Invalidate cache after sprint creation
+      cache.invalidatePattern("sprints_*");
       fetchData();
       setAddSprintModalOpen(false);
     } catch (error: any) {
@@ -234,8 +241,12 @@ export const SprintDashboard = () => {
       const payload = {
         sprint: data,
       };
-      await dispatch(updateSprint({ token, baseUrl, id, data: payload })).unwrap();
+      await dispatch(
+        updateSprint({ token, baseUrl, id, data: payload })
+      ).unwrap();
       toast.success("Sprint updated successfully");
+      // Invalidate cache after sprint update
+      cache.invalidatePattern("sprints_*");
       fetchData();
     } catch (error: any) {
       console.log(error);
@@ -248,8 +259,12 @@ export const SprintDashboard = () => {
       const payload = {
         status: newStatus.toLowerCase(),
       };
-      await dispatch(updateSprintStatus({ token, baseUrl, id, data: payload })).unwrap();
+      await dispatch(
+        updateSprintStatus({ token, baseUrl, id, data: payload })
+      ).unwrap();
       toast.success("Sprint status updated successfully");
+      // Invalidate cache after sprint status update
+      cache.invalidatePattern("sprints_*");
       fetchData();
     } catch (error: any) {
       console.log(error);
@@ -275,35 +290,42 @@ export const SprintDashboard = () => {
       case "status":
         return (
           <span
-            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.status === "Active"
-              ? "bg-green-100 text-green-800"
-              : item.status === "Completed"
-                ? "bg-blue-100 text-blue-800"
-                : item.status === "In_progress"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : item.status === "Stopped"
-                    ? "bg-red-100 text-red-800"
-                    : "bg-gray-100 text-gray-800"
-              }`}
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+              item.status === "Active"
+                ? "bg-green-100 text-green-800"
+                : item.status === "Completed"
+                  ? "bg-blue-100 text-blue-800"
+                  : item.status === "In_progress"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : item.status === "Stopped"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-gray-100 text-gray-800"
+            }`}
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status === "Active"
-                ? "bg-green-500"
-                : item.status === "Completed"
-                  ? "bg-blue-500"
-                  : item.status === "In_progress"
-                    ? "bg-yellow-500"
-                    : item.status === "Stopped"
-                      ? "bg-red-500"
-                      : "bg-gray-500"
-                }`}
+              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                item.status === "Active"
+                  ? "bg-green-500"
+                  : item.status === "Completed"
+                    ? "bg-blue-500"
+                    : item.status === "In_progress"
+                      ? "bg-yellow-500"
+                      : item.status === "Stopped"
+                        ? "bg-red-500"
+                        : "bg-gray-500"
+              }`}
             ></span>
             {item.status}
           </span>
         );
       case "duration":
         if (item.start_date && item.end_date) {
-          return <CountdownTimer startDate={item.start_date} targetDate={item.end_date} />;
+          return (
+            <CountdownTimer
+              startDate={item.start_date}
+              targetDate={item.end_date}
+            />
+          );
         }
         return "-";
       default:
@@ -448,7 +470,7 @@ export const SprintDashboard = () => {
         leftActions={leftActions}
         rightActions={rightActions}
         storageKey="sprint-table"
-        onFilterClick={() => { }}
+        onFilterClick={() => {}}
         canAddRow={true}
         readonlyColumns={["id", "duration", "number_of_projects"]}
         onAddRow={(newRowData) => {
