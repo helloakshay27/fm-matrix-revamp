@@ -75,11 +75,33 @@ const Attachments = ({ attachments, setAttachments }) => {
   const isImage = (file) => file.type.startsWith("image/");
   const getFileUrl = (file) => URL.createObjectURL(file);
 
+  const getFileIcon = (file) => {
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    const mimeType = file.type.toLowerCase();
+
+    if (mimeType.includes('pdf')) return { icon: '📄', color: '#e74c3c', bg: '#fadbd8', label: 'PDF' };
+    if (mimeType.includes('word') || extension === 'docx' || extension === 'doc')
+      return { icon: '📘', color: '#3498db', bg: '#d6eaf8', label: 'DOC' };
+    if (mimeType.includes('sheet') || mimeType.includes('excel') || extension === 'xlsx' || extension === 'xls')
+      return { icon: '📗', color: '#27ae60', bg: '#d5f4e6', label: 'XLS' };
+    if (mimeType.includes('presentation') || extension === 'pptx' || extension === 'ppt')
+      return { icon: '📙', color: '#f39c12', bg: '#fdebd0', label: 'PPT' };
+    if (mimeType.includes('text') || extension === 'txt')
+      return { icon: '📃', color: '#95a5a6', bg: '#ecf0f1', label: 'TXT' };
+    return { icon: '📎', color: '#7f8c8d', bg: '#ecf0f1', label: 'FILE' };
+  };
+
+  const getFileNameDisplay = (fileName, maxLength = 12) => {
+    if (fileName.length <= maxLength) return fileName;
+    return fileName.substring(0, maxLength - 2) + '...';
+  };
+
   return (
     <Box className="flex flex-col gap-2">
       <Box className="flex justify-between items-center border h-[45px] px-3 rounded-md">
         <span className="text-[14px] text-gray-500">
           {files?.length === 0 && <i>No Documents Attached</i>}
+          {files?.length > 0 && <span>{files?.length} file(s) attached</span>}
         </span>
         <Button
           variant="contained"
@@ -99,32 +121,52 @@ const Attachments = ({ attachments, setAttachments }) => {
       </Box>
       {files?.length > 0 && (
         <Box className="flex flex-wrap gap-4 mt-2">
-          {files.map((file, index) => (
-            <Box
-              key={index}
-              className="relative w-[80px] h-[80px] border rounded-md"
-            >
-              <button
-                type="button"
-                onClick={() => handleRemoveFile(index)}
-                className="absolute -top-1 -right-1 bg-white text-red-500 rounded-full w-5 h-5 text-lg flex items-center justify-center shadow-lg"
-                title="Remove"
+          {files.map((file, index) => {
+            const fileInfo = getFileIcon(file);
+            return (
+              <Box
+                key={index}
+                className="relative w-[90px] h-[90px] border border-gray-200 rounded-md overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                sx={{ backgroundColor: '#f9f9f9' }}
               >
-                ×
-              </button>
-              {isImage(file) ? (
-                <img
-                  src={getFileUrl(file)}
-                  alt={file.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Box className="text-xs text-gray-800 px-2 py-1 h-full flex items-center justify-center bg-gray-100">
-                  📄 {file.name}
-                </Box>
-              )}
-            </Box>
-          ))}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveFile(index)}
+                  className="absolute -top-1 -right-1 bg-white text-red-500 rounded-full w-5 h-5 text-lg flex items-center justify-center shadow-lg hover:bg-red-50 z-10"
+                  title="Remove"
+                >
+                  ×
+                </button>
+                {isImage(file) ? (
+                  <img
+                    src={getFileUrl(file)}
+                    alt={file.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Box
+                    className="w-full h-full flex flex-col items-center justify-center gap-1 p-2"
+                    sx={{ backgroundColor: fileInfo.bg }}
+                  >
+                    <div style={{ fontSize: '24px' }}>{fileInfo.icon}</div>
+                    <div
+                      className="text-[10px] font-semibold text-center truncate w-full px-1"
+                      style={{ color: fileInfo.color }}
+                      title={file.name}
+                    >
+                      {getFileNameDisplay(file.name, 10)}
+                    </div>
+                    <div
+                      className="text-[9px] font-medium"
+                      style={{ color: fileInfo.color, opacity: 0.8 }}
+                    >
+                      {fileInfo.label}
+                    </div>
+                  </Box>
+                )}
+              </Box>
+            );
+          })}
         </Box>
       )}
     </Box>
@@ -585,8 +627,8 @@ const AddIssueModal = ({
 
       const formattedStartDate = startDate
         ? `${startDate.year}-${String(startDate.month + 1).padStart(2, "0")}-${String(
-            startDate.date
-          ).padStart(2, "0")}`
+          startDate.date
+        ).padStart(2, "0")}`
         : "";
 
       const formattedEndDate = `${endDate.year}-${String(
@@ -1044,6 +1086,8 @@ const AddIssueModal = ({
                     selectedDate={startDate}
                     taskHoursData={calendarTaskHours}
                     ref={startDateRef}
+                    maxDate={endDate}
+                    shift={shift}
                   />
                 ) : (
                   <TaskDatePicker
@@ -1052,15 +1096,18 @@ const AddIssueModal = ({
                     startDate={null}
                     userAvailability={userAvailability}
                     setShowCalender={setShowStartCalender}
+                    maxDate={endDate}
+                    shift={shift}
                   />
                 )
               ) : (
                 <TasksOfDate
                   selectedDate={startDate}
-                  onClose={() => {}}
+                  onClose={() => { }}
                   tasks={startDateTasks}
                   selectedUser={responsiblePerson}
                   userAvailability={userAvailability}
+                  shift={shift}
                 />
               )}
             </Box>
@@ -1082,6 +1129,8 @@ const AddIssueModal = ({
                     selectedDate={endDate}
                     taskHoursData={calendarTaskHours}
                     ref={endDateRef}
+                    maxDate={endDate}
+                    shift={shift}
                   />
                 ) : (
                   <TaskDatePicker
@@ -1090,15 +1139,18 @@ const AddIssueModal = ({
                     startDate={startDate}
                     userAvailability={userAvailability}
                     setShowCalender={setShowCalender}
+                    maxDate={endDate}
+                    shift={shift}
                   />
                 )
               ) : (
                 <TasksOfDate
                   selectedDate={endDate}
-                  onClose={() => {}}
+                  onClose={() => { }}
                   tasks={targetDateTasks}
                   selectedUser={responsiblePerson}
                   userAvailability={userAvailability}
+                  shift={shift}
                 />
               )}
             </Box>

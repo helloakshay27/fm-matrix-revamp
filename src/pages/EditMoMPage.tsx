@@ -55,8 +55,10 @@ const EditMoMPage = () => {
   const { setCurrentSection } = useLayout();
   const { id } = useParams<{ id: string }>();
 
+  const view = localStorage.getItem("selectedView");
+
   useEffect(() => {
-    setCurrentSection("Project Task");
+    setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
   }, [setCurrentSection]);
 
   const navigate = useNavigate();
@@ -392,17 +394,17 @@ const EditMoMPage = () => {
 
     const mappedExternal = isExternal
       ? externalAttendees
-          .filter((a) => a.name && a.email)
-          .map((a) => ({
-            id: a.id,
-            name: a.name,
-            email: a.email,
-            organization: a.organization || "",
-            role: a.role || "",
-            attendees_type: "ExternalUser",
-            attendees_id: null,
-            imp_mail: a.imp_mail || false,
-          }))
+        .filter((a) => a.name && a.email)
+        .map((a) => ({
+          id: a.id,
+          name: a.name,
+          email: a.email,
+          organization: a.organization || "",
+          role: a.role || "",
+          attendees_type: "ExternalUser",
+          attendees_id: null,
+          imp_mail: a.imp_mail || false,
+        }))
       : [];
 
     const combinedUsers = [...mappedInternal, ...mappedExternal];
@@ -703,119 +705,119 @@ const EditMoMPage = () => {
             <div className="flex-1 w-full space-y-4">
               {isExternal
                 ? externalAttendees.map((attendee, index) => (
-                    <div
-                      key={attendee.id}
-                      className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end"
-                    >
-                      <div className="sm:col-span-3">
-                        <TextField
-                          placeholder="Name"
-                          fullWidth
-                          size="small"
-                          value={attendee.name || ""}
-                          onChange={(e) =>
-                            handleAttendeeChange(
-                              index,
-                              "name",
-                              e.target.value,
-                              true
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="sm:col-span-3">
-                        <TextField
-                          placeholder="Email"
-                          type="email"
-                          fullWidth
-                          size="small"
-                          value={attendee.email || ""}
-                          onChange={(e) =>
-                            handleAttendeeChange(
-                              index,
-                              "email",
-                              e.target.value,
-                              true
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <TextField
-                          placeholder="Role"
-                          fullWidth
-                          size="small"
-                          value={attendee.role || ""}
-                          onChange={(e) =>
-                            handleAttendeeChange(
-                              index,
-                              "role",
-                              e.target.value,
-                              true
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="sm:col-span-3">
-                        <TextField
-                          placeholder="Organization"
-                          fullWidth
-                          size="small"
-                          value={attendee.organization || ""}
-                          onChange={(e) =>
-                            handleAttendeeChange(
-                              index,
-                              "organization",
-                              e.target.value,
-                              true
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="sm:col-span-1 flex justify-center pb-1">
-                        <IconButton
-                          onClick={() => handleRemoveAttendee(index, true)}
-                          color="error"
-                          size="small"
-                          disabled={externalAttendees.length === 1}
-                        >
-                          <Trash2 size={16} />
-                        </IconButton>
-                      </div>
+                  <div
+                    key={attendee.id}
+                    className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end"
+                  >
+                    <div className="sm:col-span-3">
+                      <TextField
+                        placeholder="Name"
+                        fullWidth
+                        size="small"
+                        value={attendee.name || ""}
+                        onChange={(e) =>
+                          handleAttendeeChange(
+                            index,
+                            "name",
+                            e.target.value,
+                            true
+                          )
+                        }
+                      />
                     </div>
-                  ))
+                    <div className="sm:col-span-3">
+                      <TextField
+                        placeholder="Email"
+                        type="email"
+                        fullWidth
+                        size="small"
+                        value={attendee.email || ""}
+                        onChange={(e) =>
+                          handleAttendeeChange(
+                            index,
+                            "email",
+                            e.target.value,
+                            true
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <TextField
+                        placeholder="Role"
+                        fullWidth
+                        size="small"
+                        value={attendee.role || ""}
+                        onChange={(e) =>
+                          handleAttendeeChange(
+                            index,
+                            "role",
+                            e.target.value,
+                            true
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <TextField
+                        placeholder="Organization"
+                        fullWidth
+                        size="small"
+                        value={attendee.organization || ""}
+                        onChange={(e) =>
+                          handleAttendeeChange(
+                            index,
+                            "organization",
+                            e.target.value,
+                            true
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="sm:col-span-1 flex justify-center pb-1">
+                      <IconButton
+                        onClick={() => handleRemoveAttendee(index, true)}
+                        color="error"
+                        size="small"
+                        disabled={externalAttendees.length === 1}
+                      >
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </div>
+                  </div>
+                ))
                 : internalAttendees.map((attendee, index) => (
-                    <div
-                      key={attendee.id}
-                      className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end"
-                    >
-                      <div className="sm:col-span-6 lg:max-w-md">
-                        <MuiSelectField
-                          options={internalUserOptions}
-                          value={attendee.userId || ""}
-                          onChange={(e) =>
-                            handleAttendeeChange(
-                              index,
-                              "userId",
-                              e.target.value,
-                              false
-                            )
-                          }
-                          fullWidth
-                        />
-                      </div>
-                      <div className="sm:col-span-1 flex justify-start pb-1">
-                        <IconButton
-                          onClick={() => handleRemoveAttendee(index, false)}
-                          color="error"
-                          size="small"
-                          disabled={internalAttendees.length === 1}
-                        >
-                          <Trash2 size={16} />
-                        </IconButton>
-                      </div>
+                  <div
+                    key={attendee.id}
+                    className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end"
+                  >
+                    <div className="sm:col-span-6 lg:max-w-md">
+                      <MuiSelectField
+                        options={internalUserOptions}
+                        value={attendee.userId || ""}
+                        onChange={(e) =>
+                          handleAttendeeChange(
+                            index,
+                            "userId",
+                            e.target.value,
+                            false
+                          )
+                        }
+                        fullWidth
+                      />
                     </div>
-                  ))}
+                    <div className="sm:col-span-1 flex justify-start pb-1">
+                      <IconButton
+                        onClick={() => handleRemoveAttendee(index, false)}
+                        color="error"
+                        size="small"
+                        disabled={internalAttendees.length === 1}
+                      >
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </div>
+                  </div>
+                ))}
             </div>
 
             <div className="self-end pb-1">

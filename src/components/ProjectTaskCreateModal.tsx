@@ -481,6 +481,7 @@ const TaskForm = ({
                   responsiblePersonName:
                     selectedUser?.user?.full_name ||
                     selectedUser?.full_name ||
+                    selectedUser?.name ||
                     "",
                 });
                 if (!isReadOnly && value) {
@@ -499,7 +500,7 @@ const TaskForm = ({
               </MenuItem>
               {users?.filter(Boolean).map((user: any) => (
                 <MenuItem key={user?.id} value={user?.id}>
-                  {user?.full_name}
+                  {user.name ? user.name : user?.full_name}
                 </MenuItem>
               ))}
             </Select>
@@ -1104,8 +1105,8 @@ const ProjectTaskCreateModal = ({
             isReadOnly={true}
             project={project}
             milestone={milestone}
-            // users={members.length > 0 ? members : users}
-            users={users}
+            users={members.length > 0 ? members : users}
+            // users={users}
             tags={tags}
             prevTags={prevTags}
             setPrevTags={setPrevTags}
@@ -1136,8 +1137,8 @@ const ProjectTaskCreateModal = ({
             isReadOnly={false}
             project={project}
             milestone={milestone}
-            // users={members.length > 0 ? members : users}
-            users={users}
+            users={members.length > 0 ? members : users}
+            // users={users}
             tags={tags}
             prevTags={prevTags}
             setPrevTags={setPrevTags}

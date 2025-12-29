@@ -99,8 +99,10 @@ const columns: ColumnConfig[] = [
 const MinutesOfMeeting = () => {
     const { setCurrentSection } = useLayout();
 
+    const view = localStorage.getItem("selectedView");
+
     useEffect(() => {
-        setCurrentSection("Project Task");
+        setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
     }, [setCurrentSection]);
 
     const navigate = useNavigate();
