@@ -25,7 +25,6 @@ export const DurationPicker = ({
     setTotalWorkingHours,
     shift = {} as any,
 }) => {
-    console.log(dateWiseHours)
     const [isOpen, setIsOpen] = useState(false);
     const [taskType, setTaskType] = useState("standard");
     const [dailyHours, setDailyHours] = useState([]);
@@ -203,25 +202,20 @@ export const DurationPicker = ({
     useEffect(() => {
         if (taskType === "standard") {
             if (startDate && endDate) {
+                // Both dates selected - calculate for date range
                 const allDays = getAllDays(startDate, endDate, shift);
                 const workingDays = allDays.filter((d) => d.isWorking);
                 const hrs = workingDays.length * hoursPerDay;
 
-                console.log(totalWorkingHours);
-
-                setTotalWorkingHours(totalWorkingHours ? totalWorkingHours : hrs);
+                setTotalWorkingHours(hrs);
                 if (onChange) onChange(hrs);
 
-                // ✅ Send hoursPerDay per working day (as decimal hours)
                 if (onDateWiseHoursChange) {
                     const perDayDecimal = parseHours(formatTotalHours(hoursPerDay));
                     const dateWise = workingDays.map((d) => {
                         const formattedDate = formatLocalDate(d.date);
-
                         const hours = Math.floor(perDayDecimal);
                         const minutes = Math.round((perDayDecimal - hours) * 60);
-
-                        console.log(dateWiseHours)
 
                         return {
                             id: (Array.isArray(dateWiseHours) && dateWiseHours.length > 0) ? dateWiseHours?.find(h => h.date === formattedDate)?.id : null,
@@ -240,21 +234,67 @@ export const DurationPicker = ({
                 setManualDuration("");
                 setTotalHoursInput(formatTotalHours(hoursPerDay));
             } else if (endDate && !startDate) {
-                // Only end date selected - allow manual entry
+                // Only end date selected - calculate for that single day
                 const allDays = getAllDays(endDate, endDate, shift);
+                const hrs = allDays[0]?.isWorking ? hoursPerDay : 0;
+
+                setTotalWorkingHours(hrs);
+                if (onChange) onChange(hrs);
+
+                if (onDateWiseHoursChange) {
+                    const dateWise = allDays.map((d) => {
+                        const formattedDate = formatLocalDate(d.date);
+                        return {
+                            id: getIdFromExistingHours(formattedDate),
+                            hours: d.isWorking ? hoursPerDay : 0,
+                            minutes: 0,
+                            date: formattedDate,
+                            _destroy: false,
+                        };
+                    });
+                    onDateWiseHoursChange(dateWise);
+                }
+
+                setDaysList(allDays);
+                setManualDuration("");
+                setTotalHoursInput("");
+            } else if (startDate && !endDate) {
+                // Only start date selected - calculate for that single day
+                const allDays = getAllDays(startDate, startDate, shift);
+                const hrs = allDays[0]?.isWorking ? hoursPerDay : 0;
+
+                setTotalWorkingHours(hrs);
+                if (onChange) onChange(hrs);
+
+                if (onDateWiseHoursChange) {
+                    const dateWise = allDays.map((d) => {
+                        const formattedDate = formatLocalDate(d.date);
+                        return {
+                            id: getIdFromExistingHours(formattedDate),
+                            hours: d.isWorking ? hoursPerDay : 0,
+                            minutes: 0,
+                            date: formattedDate,
+                            _destroy: false,
+                        };
+                    });
+                    onDateWiseHoursChange(dateWise);
+                }
+
                 setDaysList(allDays);
                 setManualDuration("");
                 setTotalHoursInput("");
             } else {
+                // No dates selected
                 setDaysList([]);
                 setManualDuration("");
                 setTotalHoursInput("");
+                setTotalWorkingHours(0);
                 if (onChange) onChange(0);
-                // if (onDateWiseHoursChange) onDateWiseHoursChange([]);
             }
         } else {
             // ✅ Flexible logic
-            if (endDate) {
+            if (startDate && endDate) {
+                // Both dates - calculate for range
                 const allDays = getAllDays(startDate, endDate, shift);
                 setDaysList(allDays);
                 const defaultHours = allDays.map((d) =>
@@ -278,7 +318,58 @@ export const DurationPicker = ({
                     });
                     onDateWiseHoursChange(dateWise);
                 }
+            } else if (endDate && !startDate) {
+                // Only end date - calculate for that day
+                const allDays = getAllDays(endDate, endDate, shift);
+                setDaysList(allDays);
+                const defaultHours = allDays.map((d) =>
+                    d.isWorking ? formatTotalHours(hoursPerDay) : ""
+                );
+                setDailyHours(defaultHours);
+
+                const total = defaultHours.reduce((sum, h) => sum + parseHours(h), 0);
+                setTotalWorkingHours(total);
+                if (onChange) onChange(total);
+
+                if (onDateWiseHoursChange) {
+                    const dateWise = allDays.map((d, idx) => {
+                        const formattedDate = formatLocalDate(d.date);
+                        return {
+                            id: getIdFromExistingHours(formattedDate),
+                            hours: parseHours(defaultHours[idx]),
+                            minutes: 0,
+                            date: formattedDate,
+                        };
+                    });
+                    onDateWiseHoursChange(dateWise);
+                }
+            } else if (startDate && !endDate) {
+                // Only start date - calculate for that day
+                const allDays = getAllDays(startDate, startDate, shift);
+                setDaysList(allDays);
+                const defaultHours = allDays.map((d) =>
+                    d.isWorking ? formatTotalHours(hoursPerDay) : ""
+                );
+                setDailyHours(defaultHours);
+
+                const total = defaultHours.reduce((sum, h) => sum + parseHours(h), 0);
+                setTotalWorkingHours(total);
+                if (onChange) onChange(total);
+
+                if (onDateWiseHoursChange) {
+                    const dateWise = allDays.map((d, idx) => {
+                        const formattedDate = formatLocalDate(d.date);
+                        return {
+                            id: getIdFromExistingHours(formattedDate),
+                            hours: parseHours(defaultHours[idx]),
+                            minutes: 0,
+                            date: formattedDate,
+                        };
+                    });
+                    onDateWiseHoursChange(dateWise);
+                }
             } else {
+                // No dates selected
                 setDaysList([]);
                 setDailyHours([]);
                 setTotalWorkingHours(0);
