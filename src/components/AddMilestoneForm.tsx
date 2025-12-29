@@ -512,6 +512,7 @@ const AddMilestoneForm = ({ owners, projects, handleClose, className = "max-w-[9
             await dispatch(fetchMilestones({ token, baseUrl, id: projectId })).unwrap();
             setSavedMilestones([]);
             handleClose();
+            window.location.reload();
         } catch (error) {
             console.log(error);
             const errorData = (error as any)?.response?.data;

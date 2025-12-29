@@ -4,8 +4,6 @@ import { ArrowLeft, ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, List, Plus
 import AddMilestoneModal from '@/components/AddMilestoneModal'
 import { useEffect, useState } from 'react'
 import { useAppDispatch } from '@/store/hooks'
-import { fetchFMUsers } from '@/store/slices/fmUserSlice'
-import { toast } from 'sonner'
 import MilestoneList from '@/components/MilestoneList'
 import MilestoneKanban from '@/components/MilestoneKanban'
 import { useLayout } from '@/contexts/LayoutContext'
