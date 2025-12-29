@@ -20,6 +20,11 @@ interface Opportunity {
     id: number;
     title: string;
     project_management_id?: number;
+    responsible_person_id?: number;
+    responsible_person?: {
+        id: number;
+        name: string;
+    };
     task_management_id?: number;
     milestone_id?: number;
     status: string;
@@ -39,6 +44,7 @@ const columns: ColumnConfig[] = [
     { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'title', label: 'Title', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'responsible_person', label: 'Responsible Person', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'created_by', label: 'Created By', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'created_at', label: 'Created On', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'action_taken', label: 'Action Taken', sortable: true, hideable: true, draggable: true, defaultVisible: true },
@@ -71,6 +77,7 @@ const OpportunityDashboard = () => {
     const [error, setError] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [users, setUsers] = useState([])
     const [selectedOpportunityId, setSelectedOpportunityId] = useState<number | null>(null);
 
     // Abstract fetch function to reuse
@@ -99,9 +106,31 @@ const OpportunityDashboard = () => {
         }
     }, [token]);
 
+    const getUsers = useCallback(async () => {
+        try {
+            const cachedResult = await cache.getOrFetch(
+                'task_users', // More specific cache key to avoid conflicts
+                async () => {
+                    const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+                    return response.data.users;
+                },
+                5 * 60 * 1000, // Fresh for 5 minutes
+                30 * 60 * 1000 // Stale up to 30 minutes
+            );
+            setUsers(cachedResult.data);
+        } catch (error) {
+            console.log(error);
+        }
+    }, [baseUrl, token]);
+
     useEffect(() => {
         fetchOpportunities();
-    }, [fetchOpportunities]);
+        getUsers();
+    }, [fetchOpportunities, getUsers]);
 
     const handleStatusChange = async (id: number, status: string) => {
         const payload = {
@@ -126,6 +155,35 @@ const OpportunityDashboard = () => {
             console.log(error)
         }
     }
+
+    const handleResponsiblePersonChange = async (id: number, responsiblePersonId: string) => {
+        const payload = {
+            opportunity: {
+                responsible_person_id: responsiblePersonId || null,
+            },
+        };
+        try {
+            await axios.put(`https://${baseUrl}/opportunities/${id}.json`, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            // Invalidate opportunity caches
+            cache.invalidatePattern('opportunities_*');
+
+            fetchOpportunities();
+            toast.success("Responsible person updated successfully");
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update responsible person");
+        }
+    }
+
+    useEffect(() => {
+        getUsers();
+    }, []);
 
     const renderCell = (item: Opportunity, columnKey: string) => {
         switch (columnKey) {
@@ -190,6 +248,42 @@ const OpportunityDashboard = () => {
                                     </MenuItem>
                                 );
                             })}
+                        </Select>
+                    </FormControl>
+                );
+            }
+            case "responsible_person": {
+                return (
+                    <FormControl
+                        variant="standard"
+                        sx={{ width: 200 }}
+                    >
+                        <Select
+                            value={item?.responsible_person?.id ?? ""}
+                            onChange={(e) =>
+                                handleResponsiblePersonChange(item.id, e.target.value as string)
+                            }
+                            disableUnderline
+                            renderValue={(value) => {
+                                const selectedUser = users.find((u: any) => u.id === value);
+                                return selectedUser ? selectedUser.full_name : '-';
+                            }}
+                            sx={{
+                                fontSize: "0.875rem",
+                                cursor: "pointer",
+                                "& .MuiSelect-select": {
+                                    padding: "4px 0",
+                                },
+                            }}
+                        >
+                            <MenuItem value="">
+                                <em>Select Person</em>
+                            </MenuItem>
+                            {users.map((user: any) => (
+                                <MenuItem key={user.id} value={user.id}>
+                                    {user.full_name}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                 );
