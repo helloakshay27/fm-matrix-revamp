@@ -207,7 +207,7 @@ export const DurationPicker = ({
                 const workingDays = allDays.filter((d) => d.isWorking);
                 const hrs = workingDays.length * hoursPerDay;
 
-                setTotalWorkingHours(hrs);
+                setTotalWorkingHours(totalWorkingHours ? totalWorkingHours : hrs);
                 if (onChange) onChange(hrs);
 
                 if (onDateWiseHoursChange) {
@@ -550,7 +550,7 @@ export const DurationPicker = ({
                                         <TableHead className="min-w-[150px] bg-white">Business Hours</TableHead>
                                         <TableHead className="min-w-[100px] bg-white">Work Hours Per Day</TableHead>
                                         <TableHead className="min-w-[100px] bg-white">
-                                            Efforts Duration (HH:mm)
+                                            Efforts Duration (HH:MM)
                                         </TableHead>
                                         <TableHead className="sticky right-0 z-20 bg-white border-l">
                                             Total Hours
