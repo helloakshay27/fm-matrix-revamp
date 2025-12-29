@@ -31,6 +31,7 @@ interface OpportunityDetailsData {
     task_name?: string;
     responsible_person?: {
         id: string;
+        name: string;
     };
     task_tags?: Array<{
         company_tag_id: number;
@@ -451,11 +452,13 @@ const OpportunityDetailsPage = () => {
 
     const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
+    const [isDetailsCollapsed, setIsDetailsCollapsed] = useState(true);
     const [tab, setTab] = useState('Comments');
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
     const firstContentRef = useRef<HTMLDivElement>(null);
     const secondContentRef = useRef<HTMLDivElement>(null);
+    const detailsContentRef = useRef<HTMLDivElement>(null);
 
     const [openDropdown, setOpenDropdown] = useState(false);
     const [selectedOption, setSelectedOption] = useState('Open');
@@ -542,6 +545,10 @@ const OpportunityDetailsPage = () => {
 
     const toggleSecondCollapse = () => {
         setIsSecondCollapsed(!isSecondCollapsed);
+    };
+
+    const toggleDetailsCollapse = () => {
+        setIsDetailsCollapsed(!isDetailsCollapsed);
     };
 
     if (loading) {
@@ -676,7 +683,7 @@ const OpportunityDetailsPage = () => {
                 <div className="border rounded-[10px] shadow-md p-5 mb-4 text-[14px]">
                     <div className="font-[600] text-[16px] flex items-center gap-4">
                         <ChevronDownCircle
-                            color="#E95420"
+                            color="#c72030"
                             size={30}
                             className={`${isFirstCollapsed ? 'rotate-180' : 'rotate-0'
                                 } transition-transform cursor-pointer`}
@@ -690,6 +697,99 @@ const OpportunityDetailsPage = () => {
                                 .replace(/@\[(.*?)\]\(\d+\)/g, '@$1')
                                 .replace(/#\[(.*?)\]\(\d+\)/g, '#$1') || 'No description provided'}
                         </p>
+                    </div>
+                </div>
+
+                <div className="border rounded-[10px] shadow-md p-5 mb-4">
+                    <div className="font-[600] text-[16px] flex items-center gap-10">
+                        <div className="flex items-center gap-4">
+                            <ChevronDownCircle
+                                color="#c72030"
+                                size={30}
+                                className={`${isDetailsCollapsed ? 'rotate-180' : 'rotate-0'} cursor-pointer transition-transform`}
+                                onClick={toggleDetailsCollapse}
+                            />
+                            Details
+                        </div>
+                        {isDetailsCollapsed && (
+                            <div className="flex items-center gap-6">
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">
+                                        Responsible Person:
+                                    </div>
+                                    <div className="text-left text-[12px]">
+                                        {opportunityDetails?.responsible_person ? (
+                                            <span>{opportunityDetails.responsible_person.name}</span>
+                                        ) : (
+                                            <span className="text-gray-500">Not Assigned</span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">Tags:</div>
+                                    <div className="text-left text-[12px]">
+                                        {opportunityDetails?.task_tags && opportunityDetails.task_tags.length > 0 ? (
+                                            <span>{opportunityDetails.task_tags.length} Tag(s)</span>
+                                        ) : (
+                                            <span className="text-gray-500">No Tags</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div
+                        className="mt-3 overflow-hidden transition-all duration-500"
+                        ref={detailsContentRef}
+                        style={{
+                            maxHeight: isDetailsCollapsed ? '0px' : '1000px',
+                            opacity: isDetailsCollapsed ? 0 : 1,
+                        }}
+                    >
+                        <div className="flex flex-col">
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[13px] font-[500]">
+                                        Responsible Person :
+                                    </div>
+                                    <div className="text-left text-[13px]">
+                                        {opportunityDetails?.responsible_person?.id ? (
+                                            <span>Assigned</span>
+                                        ) : (
+                                            <span className="text-gray-500">Not Assigned</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-start justify-start gap-3">
+                                    <div className="text-right text-[13px] font-[500]">
+                                        Tags :
+                                    </div>
+                                    <div className="text-left text-[13px]">
+                                        {opportunityDetails?.task_tags && opportunityDetails.task_tags.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                {opportunityDetails.task_tags.map((tag, idx) => (
+                                                    <span
+                                                        key={idx}
+                                                        className="bg-[#C72030] text-white px-4 py-1.5 rounded-full text-[12px] font-medium"
+                                                    >
+                                                        {tag.company_tag?.name || 'Unknown'}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-500">No tags assigned</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
