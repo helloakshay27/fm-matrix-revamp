@@ -485,6 +485,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     return true;
   };
 
+  console.log(totalWorkingHours)
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 

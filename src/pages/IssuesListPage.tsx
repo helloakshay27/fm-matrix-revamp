@@ -196,19 +196,19 @@ const IssuesListPage = ({
     return savedOrder
       ? JSON.parse(savedOrder)
       : [
-          "id",
-          "project_name",
-          "milestone_name",
-          "task_name",
-          "sub_task_name",
-          "title",
-          "issue_type",
-          "priority",
-          "status",
-          "assigned_to",
-          "start_date",
-          "due_date",
-        ];
+        "id",
+        "project_name",
+        "milestone_name",
+        "task_name",
+        "sub_task_name",
+        "title",
+        "issue_type",
+        "priority",
+        "status",
+        "assigned_to",
+        "start_date",
+        "due_date",
+      ];
   });
 
   // Fetch control refs
@@ -342,10 +342,14 @@ const IssuesListPage = ({
   const getUsers = useCallback(async () => {
     try {
       const cachedResult = await cache.getOrFetch(
-        "fm_users",
+        'task_users', // More specific cache key to avoid conflicts
         async () => {
-          const response = await dispatch(fetchFMUsers()).unwrap();
-          return response.users;
+          const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          return response.data.users;
         },
         5 * 60 * 1000, // Fresh for 5 minutes
         30 * 60 * 1000 // Stale up to 30 minutes
@@ -354,7 +358,7 @@ const IssuesListPage = ({
     } catch (error) {
       console.log(error);
     }
-  }, [dispatch]);
+  }, [baseUrl, token]);
 
   useEffect(() => {
     getUsers();
