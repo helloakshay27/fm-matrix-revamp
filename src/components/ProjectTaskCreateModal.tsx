@@ -728,7 +728,7 @@ const TaskForm = ({
             ?.filter(Boolean)
             .filter((user: any) => user?.id !== formData.responsiblePerson)
             .map((user: any) => ({
-              label: user?.full_name || "Unknown",
+              label: user.name || user?.full_name || "Unknown",
               value: user?.id || user?.id,
               id: user?.id || user?.id,
             }))}
