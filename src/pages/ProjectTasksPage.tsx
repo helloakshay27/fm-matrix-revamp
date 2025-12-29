@@ -697,20 +697,12 @@ const ProjectTasksPage = () => {
 
     const getUsers = useCallback(async () => {
         try {
-            const cachedResult = await cache.getOrFetch(
-                'task_users', // More specific cache key to avoid conflicts
-                async () => {
-                    const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
-                    return response.data.users;
-                },
-                5 * 60 * 1000, // Fresh for 5 minutes
-                30 * 60 * 1000 // Stale up to 30 minutes
-            );
-            setUsers(cachedResult.data);
+            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setUsers(response.data.users);
         } catch (error) {
             console.log(error);
         }

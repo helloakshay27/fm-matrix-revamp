@@ -374,23 +374,15 @@ export const ProjectsDashboard = () => {
 
   const getOwners = useCallback(async () => {
     try {
-      const cachedResult = await cache.getOrFetch(
-        "project_owners",
-        async () => {
-          const response = await axios.get(
-            `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          return response.data.users;
-        },
-        5 * 60 * 1000, // Fresh for 5 minutes
-        30 * 60 * 1000 // Stale up to 30 minutes
+      const response = await axios.get(
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      setOwners(cachedResult.data);
+      setOwners(response.data.users);
     } catch (error) {
       console.log(error);
       toast.error(error);
@@ -415,15 +407,8 @@ export const ProjectsDashboard = () => {
 
   const getProjectTypes = useCallback(async () => {
     try {
-      const cachedResult = await cache.getOrFetch(
-        "project_types",
-        async () => {
-          return await dispatch(fetchProjectTypes()).unwrap();
-        },
-        5 * 60 * 1000, // Fresh for 5 minutes
-        30 * 60 * 1000 // Stale up to 30 minutes
-      );
-      setProjectTypes(cachedResult.data);
+      const result = await dispatch(fetchProjectTypes()).unwrap();
+      setProjectTypes(result);
     } catch (error) {
       console.log(error);
       toast.error(error);
