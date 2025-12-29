@@ -31,7 +31,7 @@ const NewConversationModal = ({
     const fetchEscalateUsers = async () => {
       try {
         const response = await axios.get(
-          `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+          `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -262,11 +262,10 @@ const NewConversationModal = ({
                   .map((user) => (
                     <div
                       key={user.id}
-                      className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${
-                        selectedUsers.includes(user.id)
+                      className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${selectedUsers.includes(user.id)
                           ? "bg-[#c72030]/10"
                           : "hover:bg-gray-100"
-                      }`}
+                        }`}
                       onClick={() => toggleUserSelection(user.id)}
                     >
                       <input
