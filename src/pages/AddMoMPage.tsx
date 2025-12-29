@@ -60,8 +60,10 @@ interface FormData {
 const AddMoMPage = () => {
   const { setCurrentSection } = useLayout();
 
+  const view = localStorage.getItem("selectedView");
+
   useEffect(() => {
-    setCurrentSection("Project Task");
+    setCurrentSection(view === "admin" ? "Value Added Services" : "Project Task");
   }, [setCurrentSection]);
 
   const navigate = useNavigate();
@@ -312,16 +314,16 @@ const AddMoMPage = () => {
     // 2. External Attendees
     const mappedExternal = isExternal
       ? externalAttendees
-          .filter((a) => a.name && a.email)
-          .map((a) => ({
-            name: a.name,
-            email: a.email,
-            organization: a.organization || "",
-            role: a.role || "",
-            attendees_type: "ExternalUser",
-            attendees_id: null, // No ID for external usually
-            imp_mail: a.imp_mail || false,
-          }))
+        .filter((a) => a.name && a.email)
+        .map((a) => ({
+          name: a.name,
+          email: a.email,
+          organization: a.organization || "",
+          role: a.role || "",
+          attendees_type: "ExternalUser",
+          attendees_id: null, // No ID for external usually
+          imp_mail: a.imp_mail || false,
+        }))
       : [];
 
     const combinedUsers = [...mappedInternal, ...mappedExternal];
@@ -589,135 +591,135 @@ const AddMoMPage = () => {
             <div className="flex-1 w-full space-y-4">
               {isExternal
                 ? externalAttendees.map((attendee, index) => (
-                    <div
-                      key={attendee.id}
-                      className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end"
-                    >
-                      <div className="sm:col-span-3">
-                        <Typography variant="subtitle2" className="mb-1">
-                          External User Name{" "}
-                          <span className="text-red-500">*</span>
-                        </Typography>
-                        <TextField
-                          placeholder="Name"
-                          fullWidth
-                          size="small"
-                          value={attendee.name || ""}
-                          onChange={(e) =>
-                            handleAttendeeChange(
-                              index,
-                              "name",
-                              e.target.value,
-                              true
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="sm:col-span-3">
-                        <Typography variant="subtitle2" className="mb-1">
-                          Email ID <span className="text-red-500">*</span>
-                        </Typography>
-                        <TextField
-                          placeholder="Email"
-                          type="email"
-                          fullWidth
-                          size="small"
-                          value={attendee.email || ""}
-                          onChange={(e) =>
-                            handleAttendeeChange(
-                              index,
-                              "email",
-                              e.target.value,
-                              true
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <Typography variant="subtitle2" className="mb-1">
-                          Role
-                        </Typography>
-                        <TextField
-                          placeholder="Role"
-                          fullWidth
-                          size="small"
-                          value={attendee.role || ""}
-                          onChange={(e) =>
-                            handleAttendeeChange(
-                              index,
-                              "role",
-                              e.target.value,
-                              true
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="sm:col-span-3">
-                        <Typography variant="subtitle2" className="mb-1">
-                          Organization
-                        </Typography>
-                        <TextField
-                          placeholder="Organization"
-                          fullWidth
-                          size="small"
-                          value={attendee.organization || ""}
-                          onChange={(e) =>
-                            handleAttendeeChange(
-                              index,
-                              "organization",
-                              e.target.value,
-                              true
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="sm:col-span-1 flex justify-center pb-1">
-                        <IconButton
-                          onClick={() => handleRemoveAttendee(index, true)}
-                          color="error"
-                          disabled={externalAttendees.length === 1}
-                        >
-                          <Trash2 size={18} />
-                        </IconButton>
-                      </div>
+                  <div
+                    key={attendee.id}
+                    className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end"
+                  >
+                    <div className="sm:col-span-3">
+                      <Typography variant="subtitle2" className="mb-1">
+                        External User Name{" "}
+                        <span className="text-red-500">*</span>
+                      </Typography>
+                      <TextField
+                        placeholder="Name"
+                        fullWidth
+                        size="small"
+                        value={attendee.name || ""}
+                        onChange={(e) =>
+                          handleAttendeeChange(
+                            index,
+                            "name",
+                            e.target.value,
+                            true
+                          )
+                        }
+                      />
                     </div>
-                  ))
+                    <div className="sm:col-span-3">
+                      <Typography variant="subtitle2" className="mb-1">
+                        Email ID <span className="text-red-500">*</span>
+                      </Typography>
+                      <TextField
+                        placeholder="Email"
+                        type="email"
+                        fullWidth
+                        size="small"
+                        value={attendee.email || ""}
+                        onChange={(e) =>
+                          handleAttendeeChange(
+                            index,
+                            "email",
+                            e.target.value,
+                            true
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Typography variant="subtitle2" className="mb-1">
+                        Role
+                      </Typography>
+                      <TextField
+                        placeholder="Role"
+                        fullWidth
+                        size="small"
+                        value={attendee.role || ""}
+                        onChange={(e) =>
+                          handleAttendeeChange(
+                            index,
+                            "role",
+                            e.target.value,
+                            true
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <Typography variant="subtitle2" className="mb-1">
+                        Organization
+                      </Typography>
+                      <TextField
+                        placeholder="Organization"
+                        fullWidth
+                        size="small"
+                        value={attendee.organization || ""}
+                        onChange={(e) =>
+                          handleAttendeeChange(
+                            index,
+                            "organization",
+                            e.target.value,
+                            true
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="sm:col-span-1 flex justify-center pb-1">
+                      <IconButton
+                        onClick={() => handleRemoveAttendee(index, true)}
+                        color="error"
+                        disabled={externalAttendees.length === 1}
+                      >
+                        <Trash2 size={18} />
+                      </IconButton>
+                    </div>
+                  </div>
+                ))
                 : internalAttendees.map((attendee, index) => (
-                    <div
-                      key={attendee.id}
-                      className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end"
-                    >
-                      <div className="sm:col-span-6 lg:max-w-md">
-                        <Typography variant="subtitle2" className="mb-1">
-                          Select Internal User{" "}
-                          <span className="text-red-500">*</span>
-                        </Typography>
-                        <MuiSelectField
-                          // label="User"
-                          options={internalUserOptions}
-                          value={attendee.userId || ""}
-                          onChange={(e) =>
-                            handleAttendeeChange(
-                              index,
-                              "userId",
-                              e.target.value,
-                              false
-                            )
-                          }
-                          fullWidth
-                        />
-                      </div>
-                      <div className="sm:col-span-1 flex justify-start pb-1">
-                        <IconButton
-                          onClick={() => handleRemoveAttendee(index, false)}
-                          color="error"
-                          disabled={internalAttendees.length === 1}
-                        >
-                          <Trash2 size={18} />
-                        </IconButton>
-                      </div>
+                  <div
+                    key={attendee.id}
+                    className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end"
+                  >
+                    <div className="sm:col-span-6 lg:max-w-md">
+                      <Typography variant="subtitle2" className="mb-1">
+                        Select Internal User{" "}
+                        <span className="text-red-500">*</span>
+                      </Typography>
+                      <MuiSelectField
+                        // label="User"
+                        options={internalUserOptions}
+                        value={attendee.userId || ""}
+                        onChange={(e) =>
+                          handleAttendeeChange(
+                            index,
+                            "userId",
+                            e.target.value,
+                            false
+                          )
+                        }
+                        fullWidth
+                      />
                     </div>
-                  ))}
+                    <div className="sm:col-span-1 flex justify-start pb-1">
+                      <IconButton
+                        onClick={() => handleRemoveAttendee(index, false)}
+                        color="error"
+                        disabled={internalAttendees.length === 1}
+                      >
+                        <Trash2 size={18} />
+                      </IconButton>
+                    </div>
+                  </div>
+                ))}
             </div>
 
             <div className="self-end pb-1">
