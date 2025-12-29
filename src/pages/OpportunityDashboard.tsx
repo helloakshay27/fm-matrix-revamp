@@ -5,6 +5,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import axios from 'axios';
 import { getFullUrl } from '@/config/apiConfig';
 import { useNavigate } from 'react-router-dom';
@@ -34,6 +35,7 @@ interface Opportunity {
     created_at: string;
     task_created?: boolean;
     project_created?: boolean;
+    tags?: string[];
 }
 
 // Status options
@@ -47,6 +49,7 @@ const columns: ColumnConfig[] = [
     { key: 'responsible_person', label: 'Responsible Person', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'created_by', label: 'Created By', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'created_at', label: 'Created On', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'tags', label: 'Tags', sortable: false, hideable: true, draggable: true, defaultVisible: true },
     { key: 'action_taken', label: 'Action Taken', sortable: true, hideable: true, draggable: true, defaultVisible: true },
 ];
 
@@ -292,6 +295,45 @@ const OpportunityDashboard = () => {
                 return item.created_by?.name || '-';
             case 'created_at':
                 return item.created_at ? item.created_at.split('T')[0] : '-';
+            case 'tags': {
+                if (!item.task_tags || item.task_tags.length === 0) {
+                    return '-';
+                }
+                const displayTags = item.task_tags.slice(0, 2);
+                const remainingCount = item.task_tags.length - 2;
+                return (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex flex-wrap gap-1 cursor-pointer">
+                                    {displayTags.map((tag, idx) => (
+                                        <span
+                                            key={idx}
+                                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                        >
+                                            {tag.company_tag.name}
+                                        </span>
+                                    ))}
+                                    {remainingCount > 0 && (
+                                        <span className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                                            +{remainingCount} more
+                                        </span>
+                                    )}
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <div className="flex flex-col gap-1">
+                                    {item.task_tags.map((tag, idx) => (
+                                        <span key={idx} className="text-sm">
+                                            {tag.company_tag.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                );
+            }
             case 'action_taken':
                 return item.task_created && item.project_management_id
                     ? 'Converted to Project'
