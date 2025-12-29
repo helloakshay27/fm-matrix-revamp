@@ -2588,6 +2588,10 @@ function App() {
                     path="/vas/projects/:id/milestones/:mid"
                     element={<MilestoneDetailsPage />}
                   />
+                  <Route
+                    path="/vas/sprint/:id"
+                    element={<SprintDetailsPage />}
+                  />
 
                   {/* Issues Routes */}
                   <Route path="/vas/issues" element={<IssuesListPage />} />
