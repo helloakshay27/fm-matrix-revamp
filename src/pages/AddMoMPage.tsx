@@ -14,9 +14,9 @@ import {
 } from "@mui/material";
 import { Plus, Trash2, ArrowLeft } from "lucide-react";
 import { Button as SButton } from "../components/ui/button";
+import axios from "axios";
 
 import { AppDispatch, RootState } from "../store/store";
-import { fetchFMUsers } from "../store/slices/fmUserSlice";
 import { fetchProjectsTags } from "../store/slices/projectTagSlice";
 import { createMoM } from "../store/slices/momSlice";
 import MuiSelectField from "../components/MuiSelectField";
@@ -68,12 +68,12 @@ const AddMoMPage = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   // Redux Selectors
-  const { data: fmUsersData } = useSelector(
-    (state: RootState) => state.fmUsers
-  );
   const { projectTags: tagsData } = useSelector(
     (state: RootState) => state.projectTags
   );
+
+  // Escalate users state
+  const [escalateUsers, setEscalateUsers] = useState<any[]>([]);
 
   // Local State
   const [formData, setFormData] = useState<FormData>({
@@ -111,7 +111,25 @@ const AddMoMPage = () => {
 
   // Fetch Data on Mount
   useEffect(() => {
-    dispatch(fetchFMUsers());
+    const fetchEscalateUsers = async () => {
+      try {
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+          `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setEscalateUsers(response.data.users || []);
+      } catch (error) {
+        console.log("Error fetching escalate users:", error);
+      }
+    };
+
+    fetchEscalateUsers();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
     if (token && baseUrl) {
@@ -120,8 +138,7 @@ const AddMoMPage = () => {
   }, [dispatch]);
 
   // Derived Data
-  const usersList =
-    (fmUsersData as any)?.users || (fmUsersData as any)?.fm_users || [];
+  const usersList = escalateUsers;
   const tagsList = Array.isArray(tagsData)
     ? tagsData
     : (tagsData as any)?.company_tags || [];
