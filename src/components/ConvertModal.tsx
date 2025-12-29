@@ -130,7 +130,7 @@ const ConvertModal = ({
     setIsLoadingOwners(true);
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -467,7 +467,7 @@ const ConvertModal = ({
                       name={name}
                       checked={
                         projectFormData[
-                          name as keyof typeof projectFormData
+                        name as keyof typeof projectFormData
                         ] as boolean
                       }
                       onChange={handleProjectFormChange}

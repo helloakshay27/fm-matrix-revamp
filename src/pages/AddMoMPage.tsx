@@ -118,7 +118,7 @@ const AddMoMPage = () => {
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+          `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

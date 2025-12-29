@@ -189,7 +189,7 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
 
   const fetchMentionUsers = async () => {
     try {
-      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+      const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

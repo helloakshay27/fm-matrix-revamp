@@ -149,7 +149,7 @@ export const SprintDashboard = () => {
   const getOwners = async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -290,8 +290,7 @@ export const SprintDashboard = () => {
       case "status":
         return (
           <span
-            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-              item.status === "Active"
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.status === "Active"
                 ? "bg-green-100 text-green-800"
                 : item.status === "Completed"
                   ? "bg-blue-100 text-blue-800"
@@ -300,11 +299,10 @@ export const SprintDashboard = () => {
                     : item.status === "Stopped"
                       ? "bg-red-100 text-red-800"
                       : "bg-gray-100 text-gray-800"
-            }`}
+              }`}
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                item.status === "Active"
+              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status === "Active"
                   ? "bg-green-500"
                   : item.status === "Completed"
                     ? "bg-blue-500"
@@ -313,7 +311,7 @@ export const SprintDashboard = () => {
                       : item.status === "Stopped"
                         ? "bg-red-500"
                         : "bg-gray-500"
-              }`}
+                }`}
             ></span>
             {item.status}
           </span>
@@ -470,7 +468,7 @@ export const SprintDashboard = () => {
         leftActions={leftActions}
         rightActions={rightActions}
         storageKey="sprint-table"
-        onFilterClick={() => {}}
+        onFilterClick={() => { }}
         canAddRow={true}
         readonlyColumns={["id", "duration", "number_of_projects"]}
         onAddRow={(newRowData) => {
