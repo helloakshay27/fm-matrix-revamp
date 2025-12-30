@@ -284,7 +284,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                               <div className="text-sm text-gray-800">
                                 <span className="text-gray-500">Allocated To:</span>{" "}
                                 <span className="font-medium text-gray-800">
-                                  {asset.allocated_to?.join(", ") || "-"}
+                                  {asset?.allocated_to || "-"}
                                 </span>
                               </div>
                             )}
