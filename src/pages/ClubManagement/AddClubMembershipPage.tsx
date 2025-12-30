@@ -860,12 +860,124 @@ export const AddClubMembershipPage = () => {
   // Handle form submission
   const handleSubmit = async () => {
     // Validate plan selection - required in both modes
-    if (!selectedPlanId) {
-      toast.error('Please select a membership plan');
+    // if (!selectedPlanId) {
+    //   toast.error('Please select a membership plan');
+    //   return;
+    // }
+
+    // Validate shared membership details
+    // if (!startDate) {
+    //   toast.error('Please select start date (mandatory)');
+    //   return;
+    // }
+
+    // if (!endDate) {
+    //   toast.error('Please select end date (mandatory)');
+    //   return;
+    // }
+
+    // Validate that end date is after start date
+    // if (endDate && startDate && endDate.isBefore(startDate)) {
+    //   toast.error('End date must be after start date');
+    //   return;
+    // }
+
+    // Step 1 validations - only validate user details in edit mode or when on step 2
+    // if (isEditMode || currentStep === 2) {
+    //   if (userSelectionMode === 'select' && !selectedUserId) {
+    //     toast.error('Please select a user');
+    //     return;
+    //   }
+
+    //   if (userSelectionMode === 'manual') {
+    //     if (!formData.firstName || !formData.lastName) {
+    //       toast.error('Please enter first name and last name');
+    //       return;
+    //     }
+    //     if (!validateName(formData.firstName)) {
+    //       toast.error('First name must contain only alphabets and be at least 2 characters');
+    //       return;
+    //     }
+    //     if (!validateName(formData.lastName)) {
+    //       toast.error('Last name must contain only alphabets and be at least 2 characters');
+    //       return;
+    //     }
+    //     if (!formData.email) {
+    //       toast.error('Please enter email address');
+    //       return;
+    //     }
+    //     if (!validateEmail(formData.email)) {
+    //       toast.error('Please enter a valid email address');
+    //       return;
+    //     }
+    //     if (!formData.mobile) {
+    //       toast.error('Please enter mobile number');
+    //       return;
+    //     }
+    //     if (!validateMobile(formData.mobile)) {
+    //       toast.error('Please enter a valid 10-digit mobile number');
+    //       return;
+    //     }
+    //   }
+
+    //   // Mandatory file validations - only for add mode
+    //   if (!isEditMode) {
+    //     if (!idCardFile) {
+    //       toast.error('Please upload ID card (mandatory)');
+    //       return;
+    //     }
+
+    //     if (!residentPhotoFile) {
+    //       toast.error('Please upload resident photo (mandatory)');
+    //       return;
+    //     }
+    //   }
+
+    //   if (cardAllocated && !formData.accessCardId) {
+    //     toast.error('Please enter access card ID');
+    //     return;
+    //   }
+    // }
+
+
+        // Validation for step 1
+    if (userSelectionMode === 'select' && !selectedUserId) {
+      toast.error('Please select a user');
       return;
     }
 
-    // Validate shared membership details
+    if (userSelectionMode === 'manual') {
+      if (!formData.firstName || !formData.lastName) {
+        toast.error('Please enter first name and last name');
+        return;
+      }
+      if (!validateName(formData.firstName)) {
+        toast.error('First name must contain only alphabets and be at least 2 characters');
+        return;
+      }
+      if (!validateName(formData.lastName)) {
+        toast.error('Last name must contain only alphabets and be at least 2 characters');
+        return;
+      }
+      if (!formData.email) {
+        toast.error('Please enter email address');
+        return;
+      }
+      if (!validateEmail(formData.email)) {
+        toast.error('Please enter a valid email address (e.g., user@example.com)');
+        return;
+      }
+      if (!formData.mobile) {
+        toast.error('Please enter mobile number');
+        return;
+      }
+      if (!validateMobile(formData.mobile)) {
+        toast.error('Please enter a valid 10-digit mobile number');
+        return;
+      }
+    }
+
+    // Mandatory membership date validations
     if (!startDate) {
       toast.error('Please select start date (mandatory)');
       return;
@@ -882,63 +994,25 @@ export const AddClubMembershipPage = () => {
       return;
     }
 
-    // Step 1 validations - only validate user details in edit mode or when on step 2
-    if (isEditMode || currentStep === 2) {
-      if (userSelectionMode === 'select' && !selectedUserId) {
-        toast.error('Please select a user');
+    // Mandatory file validations - only for add mode
+    if (!isEditMode) {
+      if (!idCardFile) {
+        toast.error('Please upload ID card (mandatory)');
         return;
       }
 
-      if (userSelectionMode === 'manual') {
-        if (!formData.firstName || !formData.lastName) {
-          toast.error('Please enter first name and last name');
-          return;
-        }
-        if (!validateName(formData.firstName)) {
-          toast.error('First name must contain only alphabets and be at least 2 characters');
-          return;
-        }
-        if (!validateName(formData.lastName)) {
-          toast.error('Last name must contain only alphabets and be at least 2 characters');
-          return;
-        }
-        if (!formData.email) {
-          toast.error('Please enter email address');
-          return;
-        }
-        if (!validateEmail(formData.email)) {
-          toast.error('Please enter a valid email address');
-          return;
-        }
-        if (!formData.mobile) {
-          toast.error('Please enter mobile number');
-          return;
-        }
-        if (!validateMobile(formData.mobile)) {
-          toast.error('Please enter a valid 10-digit mobile number');
-          return;
-        }
-      }
-
-      // Mandatory file validations - only for add mode
-      if (!isEditMode) {
-        if (!idCardFile) {
-          toast.error('Please upload ID card (mandatory)');
-          return;
-        }
-
-        if (!residentPhotoFile) {
-          toast.error('Please upload resident photo (mandatory)');
-          return;
-        }
-      }
-
-      if (cardAllocated && !formData.accessCardId) {
-        toast.error('Please enter access card ID');
+      if (!residentPhotoFile) {
+        toast.error('Please upload resident photo (mandatory)');
         return;
       }
     }
 
+    if (cardAllocated && !formData.accessCardId) {
+      toast.error('Please enter access card ID');
+      return;
+    }
+
+   
     setIsSubmitting(true);
     try {
       const siteId = getSiteIdFromStorage();
@@ -2643,12 +2717,20 @@ export const AddClubMembershipPage = () => {
                   >
                     Cancel
                   </Button>
-                  <Button
+                  {/* <Button
                     onClick={handleNext}
                     className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[80px]"
                   >
                     Next
-                  </Button>
+                  </Button> */}
+
+                  <Button
+                      onClick={handleSubmit}
+                      // disabled={isSubmitting || !selectedPlanId}
+                      className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    >
+                      {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
+                    </Button>
                 </div>
               </>
             )}
