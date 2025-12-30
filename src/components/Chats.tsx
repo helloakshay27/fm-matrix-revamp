@@ -401,7 +401,7 @@ const Chats = ({ messages, onReply, bottomRef }) => {
                 onMessageClick={(message) => scrollToMessage(message.id)}
             />
 
-            <div className="flex-1 w-full bg-[#F9F9F9] overflow-y-auto max-h-[calc(100vh-160px)] px-6">
+            <div className="flex-1 w-full bg-[#F9F9F9] overflow-y-auto max-h-[calc(100vh-160px)] px-6 py-2.5">
                 {[...messages].reverse().map((message, index) => {
                     const isMe = message?.user_id?.toString() === currentUserId;
                     const shouldShowActions = hoveredMessageIndex === index && showActions;
