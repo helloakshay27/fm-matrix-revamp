@@ -3,7 +3,7 @@ name: Deploy React App
 on:
   push:
     branches:
-      - development  # Trigger on pushes to main branch
+      - developmenttttt  # Trigger on pushes to main branch
 
 jobs:
   build-and-deploy:
