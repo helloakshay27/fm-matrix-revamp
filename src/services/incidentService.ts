@@ -492,5 +492,32 @@ export const incidentService = {
     }
 
     return await response.json();
+  },
+   async addIncidentClosureDetails(payload: any): Promise<any> {
+    let baseUrl = localStorage.getItem("baseUrl") || "";
+    const token = localStorage.getItem("token") || "";
+
+    if (baseUrl && !baseUrl.startsWith("http")) {
+      baseUrl = "https://" + baseUrl.replace(/^\/+/, "");
+    }
+
+    const response = await fetch(
+      `${baseUrl}/pms/incidents/add_inc_details.json`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
   }
 };
+

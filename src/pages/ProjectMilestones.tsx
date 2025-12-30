@@ -4,8 +4,6 @@ import { ArrowLeft, ChartNoAxesColumn, ChartNoAxesGantt, ChevronDown, List, Plus
 import AddMilestoneModal from '@/components/AddMilestoneModal'
 import { useEffect, useState } from 'react'
 import { useAppDispatch } from '@/store/hooks'
-import { fetchFMUsers } from '@/store/slices/fmUserSlice'
-import { toast } from 'sonner'
 import MilestoneList from '@/components/MilestoneList'
 import MilestoneKanban from '@/components/MilestoneKanban'
 import { useLayout } from '@/contexts/LayoutContext'
@@ -33,7 +31,7 @@ const ProjectMilestones = () => {
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
-            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }

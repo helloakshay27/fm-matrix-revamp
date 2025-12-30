@@ -177,7 +177,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
   const getUsers = useCallback(async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

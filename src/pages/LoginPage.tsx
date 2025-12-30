@@ -3,6 +3,7 @@ import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Building2, Check, Eye, EyeOff } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import loginBg from "@/assets/banner_logo/login_bg.png";
 import {
   getOrganizationsByEmail,
   getOrganizationsByEmailAndAutoSelect,
@@ -377,6 +378,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         } else if (isViSite) {
           navigate("/safety/m-safe/internal");
         } else {
+
+          navigate("/vas/projects")
           navigate(from, { replace: true });
         }
 
@@ -706,7 +709,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('/lovable-uploads/02d5802a-cd33-44e2-a858-a1e149cace5f.png')`,
+            backgroundImage: `url('${loginBg}')`,
           }}
         />
       </div>

@@ -616,7 +616,7 @@ export const SurveyMappingDashboard = () => {
   const handleDownloadSample = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
-    const downloadUrl = `https://${baseUrl}/survey_mappings/sample_file.xlsx?token=${token}`;
+    const downloadUrl = `https://${baseUrl}/assets/survey_mapping_sample.xlsx?token=${token}`;
     // Directly open the file link for download
     window.open(downloadUrl, "_blank");
   };
