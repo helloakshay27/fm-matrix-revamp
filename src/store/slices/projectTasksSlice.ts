@@ -19,6 +19,27 @@ export const fetchProjectTasks = createAsyncThunk(
     }
 )
 
+export const fetchKanbanTasksOfProject = createAsyncThunk(
+    'fetchKanbanTasks',
+    async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/task_managements/kanban.json?q[project_management_id_eq]=${id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            return response.data;
+        } catch (error) {
+            console.log(error);
+            return rejectWithValue(error);
+        }
+    }
+);
+
 export const createProjectTask = createAsyncThunk(
     "createProjectTask",
     async ({ token, baseUrl, data }: { token: string, baseUrl: string, data: any }, { rejectWithValue }) => {
@@ -193,6 +214,7 @@ const updateTaskStatusSlice = createApiSlice("updateTaskStatus", updateTaskStatu
 const createTaskDependencySlice = createApiSlice("createTaskDependency", createTaskDependency)
 const updateTaskDependencySlice = createApiSlice("updateTaskDependency", updateTaskDependency)
 const deleteTaskDependencySlice = createApiSlice("deleteTaskDependency", deleteTaskDependency)
+const fetchKanbanTasksOfProjectSlice = createApiSlice("fetchKanbanTasksOfProject", fetchKanbanTasksOfProject)
 
 export const fetchProjectTasksReducer = fetchProjectTasksSlice.reducer
 export const createProjectTaskReducer = createProjectTaskSlice.reducer
@@ -205,3 +227,4 @@ export const updateTaskStatusReducer = updateTaskStatusSlice.reducer
 export const createTaskDependencyReducer = createTaskDependencySlice.reducer
 export const updateTaskDependencyReducer = updateTaskDependencySlice.reducer
 export const deleteTaskDependencyReducer = deleteTaskDependencySlice.reducer
+export const fetchKanbanTasksOfProjectReducer = fetchKanbanTasksOfProjectSlice.reducer

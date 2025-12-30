@@ -119,7 +119,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
       const baseUrl = localStorage.getItem("baseUrl");
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -248,8 +248,8 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
       console.error("Error updating opportunity:", error);
       toast.error(
         error.response?.data?.error ||
-          error.message ||
-          "Failed to update opportunity"
+        error.message ||
+        "Failed to update opportunity"
       );
     } finally {
       setIsSubmitting(false);
@@ -260,17 +260,17 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
   const mentionData =
     mentionUsers.length > 0
       ? mentionUsers.map((user: any) => ({
-          id: user.id?.toString() || user.user_id?.toString(),
-          display: user.full_name || user.name || "Unknown User",
-        }))
+        id: user.id?.toString() || user.user_id?.toString(),
+        display: user.full_name || user.name || "Unknown User",
+      }))
       : [];
 
   const tagData =
     mentionTags.length > 0
       ? mentionTags.map((tag: any) => ({
-          id: tag.id?.toString(),
-          display: tag.name,
-        }))
+        id: tag.id?.toString(),
+        display: tag.name,
+      }))
       : [];
 
   // Mention styles

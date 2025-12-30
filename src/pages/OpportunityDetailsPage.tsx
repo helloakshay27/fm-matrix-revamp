@@ -755,8 +755,8 @@ const OpportunityDetailsPage = () => {
                                         Responsible Person :
                                     </div>
                                     <div className="text-left text-[13px]">
-                                        {opportunityDetails?.responsible_person?.id ? (
-                                            <span>Assigned</span>
+                                        {opportunityDetails?.responsible_person ? (
+                                            <span>{opportunityDetails.responsible_person.name}</span>
                                         ) : (
                                             <span className="text-gray-500">Not Assigned</span>
                                         )}
