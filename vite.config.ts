@@ -72,9 +72,14 @@ export default defineConfig(({ mode }) => ({
     },
   },
   assetsInclude: ["**/*.xlsx", "**/*.xls"],
-  base: mode === "production" ? "./" : "/", // Use relative paths only for production
+  base: "/", // Use absolute paths for proper asset loading
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
   },
 }));
