@@ -171,7 +171,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
-      "dev@lockated.com"
+      "dev@lockated.com",
     ];
     setCanEditCompany(allowedEmails.includes(userEmail));
   };
@@ -302,9 +302,14 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(
-        "https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU"
-      );
+      const response = await fetch(getFullUrl("/pms/countries.json?"), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -573,27 +578,27 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Plus className="w-4 h-4 mr-2" /> Add Company
               </Button>
             }
-          // rightActions={(
-          //   <div className="flex items-center gap-2">
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsBulkUploadOpen(true)}
-          //       disabled={!canEditCompany}
-          //     >
-          //       <Upload className="w-4 h-4 mr-2" />
-          //       Bulk Upload
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsExportOpen(true)}
-          //     >
-          //       <Download className="w-4 h-4 mr-2" />
-          //       Export
-          //     </Button>
-          //   </div>
-          // )}
+            // rightActions={(
+            //   <div className="flex items-center gap-2">
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsBulkUploadOpen(true)}
+            //       disabled={!canEditCompany}
+            //     >
+            //       <Upload className="w-4 h-4 mr-2" />
+            //       Bulk Upload
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsExportOpen(true)}
+            //     >
+            //       <Download className="w-4 h-4 mr-2" />
+            //       Export
+            //     </Button>
+            //   </div>
+            // )}
           />
 
           <TicketPagination

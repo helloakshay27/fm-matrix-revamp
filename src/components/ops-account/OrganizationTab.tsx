@@ -155,8 +155,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1000);
   const [appliedFilters, setAppliedFilters] = useState<OrganizationFilters>({});
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -195,7 +194,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
-      "dev@lockated.com"
+      "dev@lockated.com",
     ];
     setCanEditOrganization(allowedEmails.includes(userEmail));
   };
@@ -301,9 +300,14 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(
-        "https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU"
-      );
+      const response = await fetch(getFullUrl("/pms/countries.json"), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -345,7 +349,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
   // Handle search
   const handleSearch = (term: string) => {
     console.log("Search query:", term);
-    setSearchTerm(term);
+    setSearchQuery(term);
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
     if (!term.trim()) {
@@ -399,10 +403,14 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
     actions: (
       <div className="flex items-center gap-2">
         <button
-          onClick={() => org?.id && handleView(org.id)}
-          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-          title="View"
-          disabled={!org?.id}
+          onClick={() => org?.id && org?.active && handleView(org.id)}
+          className={`p-1 rounded ${
+            org?.active
+              ? "text-blue-600 hover:bg-blue-50 cursor-pointer"
+              : "text-gray-400 cursor-not-allowed"
+          }`}
+          title={org?.active ? "View" : "Inactive organization - View disabled"}
+          disabled={!org?.id || !org?.active}
         >
           <Eye className="w-4 h-4" />
         </button>
@@ -459,10 +467,11 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
     ),
     status: (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${org?.active
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          org?.active
             ? "bg-green-100 text-green-800"
             : "bg-red-100 text-red-800"
-          }`}
+        }`}
       >
         {org?.active ? "Active" : "Inactive"}
       </span>
@@ -476,8 +485,23 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
 
   const handleView = (id: number) => {
     console.log("View organization:", id);
+
+    // Find the organization to check if it's active
+    const org = organizations.find((o) => o.id === id);
+    if (org && !org.active) {
+      toast.error(
+        "Cannot view inactive organization. Please activate it first.",
+        {
+          duration: 5000,
+        }
+      );
+      return;
+    }
+
     // Navigate to organization details page
-    navigate(`/ops-account/organizations/details/${id}`);
+    navigate(
+      `/ops-console/master/location/account/organizations/details/${id}`
+    );
   };
 
   const handleEdit = (id: number) => {
@@ -561,7 +585,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
             hideTableExport={true}
             hideTableSearch={false}
             enableSearch={true}
-            searchTerm={searchTerm}
+            searchTerm={searchQuery}
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
             leftActions={
@@ -573,27 +597,27 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
                 <Plus className="w-4 h-4 mr-2" /> Add Organization
               </Button>
             }
-          // rightActions={(
-          //   <div className="flex items-center gap-2">
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsBulkUploadOpen(true)}
-          //       disabled={!canEditOrganization}
-          //     >
-          //       <Upload className="w-4 h-4 mr-2" />
-          //       Bulk Upload
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsExportOpen(true)}
-          //     >
-          //       <Download className="w-4 h-4 mr-2" />
-          //       Export
-          //     </Button>
-          //   </div>
-          // )}
+            // rightActions={(
+            //   <div className="flex items-center gap-2">
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsBulkUploadOpen(true)}
+            //       disabled={!canEditOrganization}
+            //     >
+            //       <Upload className="w-4 h-4 mr-2" />
+            //       Bulk Upload
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsExportOpen(true)}
+            //     >
+            //       <Download className="w-4 h-4 mr-2" />
+            //       Export
+            //     </Button>
+            //   </div>
+            // )}
           />
 
           <TicketPagination
