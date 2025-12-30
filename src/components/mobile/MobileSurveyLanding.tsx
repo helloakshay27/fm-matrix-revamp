@@ -2335,7 +2335,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         <>
                           <div className="bg-white rounded-lg border border-gray-200 p-1.5 xs:p-2 sm:p-3 shadow-md relative">
                             {/* Grid Layout - 2x2 for first 4, then repeat */}
-                            <div className="overflow-x-scroll pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
+                            <div className="overflow-x-auto whitespace-nowrap scrollbar-visible pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
                               {(() => {
                                 const tags =
                                   getCurrentQuestion()?.generic_tags || [];

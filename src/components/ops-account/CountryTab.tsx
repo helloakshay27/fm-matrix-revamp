@@ -171,7 +171,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
-      "dev@lockated.com"
+      "dev@lockated.com",
     ];
     setCanEditCountry(allowedEmails.includes(userEmail));
   };
@@ -325,9 +325,14 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(
-        "https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU"
-      );
+      const response = await fetch(getFullUrl("/pms/countries.json"), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -471,10 +476,11 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 case "active":
                   return (
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${country.active
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        country.active
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
-                        }`}
+                      }`}
                     >
                       {country.active ? "Active" : "Inactive"}
                     </span>
@@ -496,34 +502,34 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 Add Headquarter
               </Button>
             }
-          // rightActions={(
-          //   <div className="flex items-center gap-2">
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsFilterOpen(true)}
-          //     >
-          //       <Filter className="w-4 h-4 mr-2" />
-          //       Filter
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsBulkUploadOpen(true)}
-          //     >
-          //       <Upload className="w-4 h-4 mr-2" />
-          //       Import
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsExportOpen(true)}
-          //     >
-          //       <Download className="w-4 h-4 mr-2" />
-          //       Export
-          //     </Button>
-          //   </div>
-          // )}
+            // rightActions={(
+            //   <div className="flex items-center gap-2">
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsFilterOpen(true)}
+            //     >
+            //       <Filter className="w-4 h-4 mr-2" />
+            //       Filter
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsBulkUploadOpen(true)}
+            //     >
+            //       <Upload className="w-4 h-4 mr-2" />
+            //       Import
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsExportOpen(true)}
+            //     >
+            //       <Download className="w-4 h-4 mr-2" />
+            //       Export
+            //     </Button>
+            //   </div>
+            // )}
           />
 
           <TicketPagination
