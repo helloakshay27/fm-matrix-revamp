@@ -601,6 +601,8 @@ import { UnitPage } from "./pages/master/UnitPage";
 import { RoomPage } from "./pages/master/RoomPage";
 import { OpsAccountPage } from "./pages/master/OpsAccountPage";
 import { OrganizationDetailsPage } from "./pages/master/OrganizationDetailsPage";
+import { CompanyDetailsPage } from "./pages/master/CompanyDetailsPage";
+import HeadquartersDetailsPage from "./pages/master/HeadquartersDetailsPage";
 
 // Import Address Master page
 import { AddressMasterPage } from "./pages/AddressMasterPage";
@@ -1006,6 +1008,14 @@ function App() {
                   <Route
                     path="master/location/account/organizations/details/:id"
                     element={<OrganizationDetailsPage />}
+                  />
+                  <Route
+                    path="master/location/account/companies/details/:id"
+                    element={<CompanyDetailsPage />}
+                  />
+                  <Route
+                    path="master/location/account/headquarters/details/:id"
+                    element={<HeadquartersDetailsPage />}
                   />
                   <Route path="admin/users" element={<AdminUsersDashboard />} />
                   <Route

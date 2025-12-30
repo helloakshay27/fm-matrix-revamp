@@ -163,35 +163,14 @@ export const EmployeeHeader: React.FC = () => {
   const fetchNotifications = async () => {
     try {
       // Mock notifications - replace with actual API call
-      const mockNotifications = [
-        {
-          id: 1,
-          title: "New Task Assigned",
-          message: "You have been assigned a new task in Project Alpha",
-          time: "5 minutes ago",
-          read: false,
-          type: "task",
-        },
-        {
-          id: 2,
-          title: "Meeting Reminder",
-          message: "Team standup meeting in 30 minutes",
-          time: "25 minutes ago",
-          read: false,
-          type: "meeting",
-        },
-        {
-          id: 3,
-          title: "Document Approved",
-          message: "Your submitted document has been approved",
-          time: "2 hours ago",
-          read: true,
-          type: "document",
-        },
-      ];
+      const userNotifications = await axios.get(`https://${localStorage.getItem("baseUrl")}/user_notifications.json`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      })
 
-      setNotifications(mockNotifications);
-      setNotificationCount(mockNotifications.filter((n) => !n.read).length);
+      setNotifications(userNotifications.data.unread_notifications);
+      setNotificationCount(userNotifications.data.unread_notifications.length);
     } catch (error) {
       console.error("Error fetching notifications:", error);
     }
@@ -498,11 +477,10 @@ export const EmployeeHeader: React.FC = () => {
                         onDrop={(e) => handleModuleDrop(e, module.name)}
                         onDragOver={handleModuleDragOver}
                         onClick={() => handleModuleClick(module.name)}
-                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${
-                          isActive
-                            ? "bg-white text-[#C72030] shadow-sm"
-                            : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                        }`}
+                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${isActive
+                          ? "bg-white text-[#C72030] shadow-sm"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                          }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
                         <span className="hidden lg:inline text-[10px] sm:text-xs">
@@ -563,11 +541,10 @@ export const EmployeeHeader: React.FC = () => {
                                 handleModuleDragStart(e, module.name)
                               }
                               onClick={() => handleModuleClick(module.name)}
-                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${
-                                isActive
-                                  ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                                  : "hover:bg-[#f6f4ee] text-gray-700"
-                              }`}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${isActive
+                                ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                                : "hover:bg-[#f6f4ee] text-gray-700"
+                                }`}
                             >
                               <Icon className="w-5 h-5 flex-shrink-0" />
                               <span className="text-sm font-medium">
@@ -645,7 +622,7 @@ export const EmployeeHeader: React.FC = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-[200px] p-0 max-h-[500px] overflow-hidden"
+              className="max-w-[400px] p-0 max-h-[500px] overflow-hidden"
             >
               {/* Notification Header */}
               <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 flex items-center justify-between">
@@ -691,17 +668,15 @@ export const EmployeeHeader: React.FC = () => {
                             markAsRead(notification.id);
                           }
                         }}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                          !notification.read ? "bg-blue-50/30" : ""
-                        }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
+                          }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                              !notification.read
-                                ? "bg-[#C72030]"
-                                : "bg-gray-300"
-                            }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
+                              ? "bg-[#C72030]"
+                              : "bg-gray-300"
+                              }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -720,13 +695,12 @@ export const EmployeeHeader: React.FC = () => {
                             <div className="mt-2">
                               <Badge
                                 variant="outline"
-                                className={`text-xs ${
-                                  notification.type === "task"
-                                    ? "bg-blue-50 text-blue-700 border-blue-200"
-                                    : notification.type === "meeting"
-                                      ? "bg-green-50 text-green-700 border-green-200"
-                                      : "bg-gray-50 text-gray-700 border-gray-200"
-                                }`}
+                                className={`text-xs ${notification.type === "task"
+                                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                                  : notification.type === "meeting"
+                                    ? "bg-green-50 text-green-700 border-green-200"
+                                    : "bg-gray-50 text-gray-700 border-gray-200"
+                                  }`}
                               >
                                 {notification.type}
                               </Badge>

@@ -531,11 +531,11 @@ const OpportunityDetailsPage = () => {
 
     const handleGoToTask = () => {
         if (opportunityDetails?.project_management_id) {
-            navigate(`/projects/${opportunityDetails.project_management_id}`);
+            navigate(`/vas/projects/${opportunityDetails.project_management_id}`);
         } else if (opportunityDetails?.milestone_id) {
-            navigate(`/milestones/${opportunityDetails.milestone_id}`);
+            navigate(`/vas/milestones/${opportunityDetails.milestone_id}`);
         } else if (opportunityDetails?.task_created) {
-            navigate(`/tasks/${opportunityDetails.task_management_id}`);
+            navigate(`/vas/tasks/${opportunityDetails.task_management_id}`);
         }
     };
 
