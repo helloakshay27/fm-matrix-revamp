@@ -75,7 +75,7 @@ import { projectTagReducer } from './slices/projectTagSlice'
 import { projectStatusReducer } from './slices/projectStatusSlice'
 import { projectRoleReducer } from './slices/projectRoleSlice'
 import projectTemplateReducer from './slices/projectTemplateSlice'
-import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer, filterTasksReducer, updateTaskStatusReducer, createTaskDependencyReducer, updateTaskDependencyReducer, deleteTaskDependencyReducer } from './slices/projectTasksSlice'
+import { createProjectTaskReducer, editProjectTaskReducer, fetchProjectTasksByIdReducer, fetchProjectTasksReducer, fetchTargetDateTasksReducer, fetchUserAvailabilityReducer, filterTasksReducer, updateTaskStatusReducer, createTaskDependencyReducer, updateTaskDependencyReducer, deleteTaskDependencyReducer, fetchKanbanTasksOfProjectReducer } from './slices/projectTasksSlice'
 import { fetchIssuesReducer, fetchIssueByIdReducer, createIssueReducer, updateIssueReducer, deleteIssueReducer, filterIssuesReducer } from './slices/issueSlice'
 import { createProjectGroupReducer, deleteProjectGroupReducer, fetchProjectGroupsReducer, updateProjectGroupReducer } from './slices/projectGroupSlice'
 import { fetchSprintsReducer, fetchSprintByIdReducer, createSprintReducer, updateSprintReducer, updateSprintStatusReducer, deleteSprintReducer, filterSprintsReducer } from './slices/sprintSlice'
@@ -370,6 +370,7 @@ export const store = configureStore({
     createTaskDependency: createTaskDependencyReducer,
     updateTaskDependency: updateTaskDependencyReducer,
     deleteTaskDependency: deleteTaskDependencyReducer,
+    fetchKanbanTasksOfProject: fetchKanbanTasksOfProjectReducer,
 
     // Project Team
     projectTeams: projectTeamsReducer,

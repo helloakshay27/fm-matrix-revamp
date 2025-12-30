@@ -452,7 +452,7 @@ const Chats = ({ messages, onReply, bottomRef }) => {
 
                                         {!isMe && (
                                             <div className="w-8 h-8 rounded-full bg-[#F2EEE9] text-[#C72030] text-sm flex items-center justify-center mt-[2px]">
-                                                {(message.user_name || "U")[0].toUpperCase()}
+                                                {(message.user_name || message.user?.firstname || 'U')[0].toUpperCase()}
                                             </div>
                                         )}
                                         <div

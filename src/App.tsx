@@ -958,7 +958,7 @@ function App() {
 
               notification.onclick = () => {
                 window.focus();
-                navigate(`/channels/messages/${message.conversation_id}`);
+                navigate(`/vas/channels/messages/${message.conversation_id}`);
               };
             }
           });
