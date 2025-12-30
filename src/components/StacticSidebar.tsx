@@ -1139,7 +1139,7 @@ export const StacticSidebar = () => {
     const currentSectionItems = modulesByPackage[currentSection] || [];
     const itemsToExpand = [];
 
-    // Always keep Templates expanded if on a Template route, otherwise collapse it
+    // Always keep Templates expanded if on a Template route
     const templatesMenuName = "Templates";
     const templatePaths = [
       "/master/communication-template",
@@ -1184,11 +1184,6 @@ export const StacticSidebar = () => {
       // If on a Template route, always keep Templates expanded
       if (isTemplatePath && !itemsToExpand.includes(templatesMenuName)) {
         itemsToExpand.push(templatesMenuName);
-      }
-      // If NOT on a Template route, ensure Templates is NOT expanded
-      if (!isTemplatePath && itemsToExpand.includes(templatesMenuName)) {
-        const idx = itemsToExpand.indexOf(templatesMenuName);
-        if (idx > -1) itemsToExpand.splice(idx, 1);
       }
     }
     setExpandedItems(itemsToExpand);
