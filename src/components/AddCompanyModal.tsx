@@ -64,18 +64,26 @@ const fieldStyles = {
 const selectMenuProps = {
   PaperProps: {
     style: {
-      maxHeight: 224,
+      maxHeight: 300,
       backgroundColor: "white",
       border: "1px solid #e2e8f0",
       borderRadius: "8px",
       boxShadow:
         "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-      zIndex: 9999,
+      zIndex: 99999,
+      overflow: "auto",
     },
   },
+  anchorOrigin: {
+    vertical: "bottom" as const,
+    horizontal: "left" as const,
+  },
+  transformOrigin: {
+    vertical: "top" as const,
+    horizontal: "left" as const,
+  },
   disablePortal: false,
-  disableAutoFocus: true,
-  disableEnforceFocus: true,
+  disableScrollLock: true,
 };
 
 export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
@@ -167,25 +175,25 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
     }
 
     if (!formData.organization_id) {
-      newErrors.organization_id = "Organization is required";
+      newErrors.organization_id = "Please select an organization";
     }
 
     if (!formData.country_id) {
-      newErrors.country_id = "Country is required";
+      newErrors.country_id = "Please select a country";
     }
 
     if (
       formData.finance_spoc.email &&
       !/\S+@\S+\.\S+/.test(formData.finance_spoc.email)
     ) {
-      newErrors.finance_email = "Invalid email format";
+      newErrors.finance_email = "Please enter a valid email address";
     }
 
     if (
       formData.operation_spoc.email &&
       !/\S+@\S+\.\S+/.test(formData.operation_spoc.email)
     ) {
-      newErrors.operation_email = "Invalid email format";
+      newErrors.operation_email = "Please enter a valid email address";
     }
 
     setErrors(newErrors);
@@ -199,7 +207,12 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
     }
 
     if (!validateForm()) {
-      toast.error("Please fix the errors in the form");
+      toast.error(
+        "Please fill in all required fields (Company Name, Organization, and Country)",
+        {
+          duration: 5000,
+        }
+      );
       return;
     }
 
@@ -370,7 +383,7 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
+    <Dialog open={isOpen} onOpenChange={handleClose} modal={true}>
       <DialogContent
         className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-50"
         aria-describedby="add-company-dialog-description"
