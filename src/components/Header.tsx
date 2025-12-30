@@ -43,6 +43,7 @@ import { permissionService } from "@/services/permissionService";
 import { is } from "date-fns/locale";
 import { Dashboard } from "@mui/icons-material";
 import { AnalyticsGrid } from "./dashboard/AnalyticsGrid";
+import axios from "axios";
 
 export interface Company {
   id: number;
@@ -181,7 +182,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => {});
+        .catch(() => { });
     } catch {
       /* no-op */
     }
@@ -246,35 +247,14 @@ export const Header = () => {
   const fetchNotifications = async () => {
     try {
       // Mock notifications - replace with actual API call
-      const mockNotifications = [
-        {
-          id: 1,
-          title: "New Task Assigned",
-          message: "You have been assigned a new task in Project Alpha",
-          time: "5 minutes ago",
-          read: false,
-          type: "task",
-        },
-        {
-          id: 2,
-          title: "Meeting Reminder",
-          message: "Team standup meeting in 30 minutes",
-          time: "25 minutes ago",
-          read: false,
-          type: "meeting",
-        },
-        {
-          id: 3,
-          title: "Document Approved",
-          message: "Your submitted document has been approved",
-          time: "2 hours ago",
-          read: true,
-          type: "document",
-        },
-      ];
+      const userNotifications = await axios.get(`https://${localStorage.getItem("baseUrl")}/user_notifications.json`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      })
 
-      setNotifications(mockNotifications);
-      setNotificationCount(mockNotifications.filter((n) => !n.read).length);
+      setNotifications(userNotifications.data.unread_notifications);
+      setNotificationCount(userNotifications.data.unread_notifications.length);
     } catch (error) {
       console.error("Error fetching notifications:", error);
     }
@@ -655,7 +635,7 @@ export const Header = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-[200px] p-0 max-h-[500px] overflow-hidden"
+              className="max-w-[400px] p-0 max-h-[500px] overflow-hidden"
             >
               {/* Notification Header */}
               <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 flex items-center justify-between">
@@ -701,17 +681,15 @@ export const Header = () => {
                             markAsRead(notification.id);
                           }
                         }}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                          !notification.read ? "bg-blue-50/30" : ""
-                        }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
+                          }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                              !notification.read
-                                ? "bg-[#C72030]"
-                                : "bg-gray-300"
-                            }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
+                              ? "bg-[#C72030]"
+                              : "bg-gray-300"
+                              }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -730,13 +708,12 @@ export const Header = () => {
                             <div className="mt-2">
                               <Badge
                                 variant="outline"
-                                className={`text-xs ${
-                                  notification.type === "task"
-                                    ? "bg-blue-50 text-blue-700 border-blue-200"
-                                    : notification.type === "meeting"
-                                      ? "bg-green-50 text-green-700 border-green-200"
-                                      : "bg-gray-50 text-gray-700 border-gray-200"
-                                }`}
+                                className={`text-xs ${notification.type === "task"
+                                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                                  : notification.type === "meeting"
+                                    ? "bg-green-50 text-green-700 border-green-200"
+                                    : "bg-gray-50 text-gray-700 border-gray-200"
+                                  }`}
                               >
                                 {notification.type}
                               </Badge>
@@ -782,7 +759,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                      "User"
+                    "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-0.5">

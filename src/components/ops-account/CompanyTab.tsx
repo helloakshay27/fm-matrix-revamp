@@ -130,8 +130,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1000);
   const [appliedFilters, setAppliedFilters] = useState<CompanyFilters>({});
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -302,7 +301,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl("/pms/countries.json?"), {
+      const response = await fetch(getFullUrl("/pms/countries.json"), {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -351,7 +350,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   // Handle search
   const handleSearch = (term: string) => {
     console.log("Search query:", term);
-    setSearchTerm(term);
+    setSearchQuery(term);
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
     if (!term.trim()) {
@@ -390,16 +389,19 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   // Format date helper
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return "-";
     try {
-      return new Date(dateString).toLocaleDateString("en-US", {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return "-";
+      return date.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
       });
     } catch (error) {
       console.error("Error formatting date:", error);
-      return "Invalid date";
+      return "-";
     }
   };
 
@@ -482,7 +484,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   const handleView = (id: number) => {
     console.log("View company:", id);
     // Navigate to company details page
-    navigate(`/ops-account/companies/details/${id}`);
+    navigate(`/ops-console/master/location/account/companies/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
@@ -566,7 +568,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
             hideTableExport={true}
             hideTableSearch={false}
             enableSearch={true}
-            searchTerm={searchTerm}
+            searchTerm={searchQuery}
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
             leftActions={
