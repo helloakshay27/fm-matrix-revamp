@@ -1962,24 +1962,6 @@ export const MobileSurveyLanding: React.FC = () => {
                   )}
                 </div>
 
-                {/* Spacer to push emoji questions to bottom */}
-                {currentQuestion &&
-                  !isLastStep &&
-                  !showGenericTags &&
-                  (currentQuestion.qtype === "emoji" ||
-                    currentQuestion.qtype === "smiley") && (
-                    <div className="flex-1" />
-                  )}
-
-                {/* Spacer to push question content down when showing emojis */}
-                {currentQuestion &&
-                  !isLastStep &&
-                  !showGenericTags &&
-                  (currentQuestion.qtype === "emoji" ||
-                    currentQuestion.qtype === "smiley") && (
-                    <div className="flex-1" />
-                  )}
-
                 {/* Show Final Description Step */}
                 {isLastStep && isMultiQuestion && (
                   <div className="w-full space-y-3 bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
