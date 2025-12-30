@@ -58,6 +58,7 @@ const NewConversationModal = ({
     });
 
     return escalateUsers
+      .filter((user) => user.id !== currentUserId)
       .filter((user) => !conversationUserIds.has(user.id))
       .filter((user) =>
         user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -263,8 +264,8 @@ const NewConversationModal = ({
                     <div
                       key={user.id}
                       className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition ${selectedUsers.includes(user.id)
-                          ? "bg-[#c72030]/10"
-                          : "hover:bg-gray-100"
+                        ? "bg-[#c72030]/10"
+                        : "hover:bg-gray-100"
                         }`}
                       onClick={() => toggleUserSelection(user.id)}
                     >
