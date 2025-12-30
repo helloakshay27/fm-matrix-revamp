@@ -73,6 +73,7 @@ const TaskForm = ({
   endDate,
   setEndDate,
 }) => {
+  console.log(users)
   const { data: userAvailabilityData } = useAppSelector(
     (state) => state.fetchUserAvailability
   );
@@ -819,6 +820,8 @@ const ProjectTaskCreateModal = ({
     tags: selectedTags || [],
   });
 
+  console.log(members)
+
   const [prevTags, setPrevTags] = useState([]);
   const [prevObservers, setPrevObservers] = useState([]);
 
@@ -877,18 +880,21 @@ const ProjectTaskCreateModal = ({
       const projectWithTeam = project as any;
       const members = [];
 
-      projectWithTeam?.project_team?.project_team_members?.map(
+      projectWithTeam?.project_team?.project_team_members?.forEach(
         (member: any) => {
-          members.push(member.user);
+          if (member?.user) {
+            members.push(member.user);
+          }
         }
       );
-      members.push(projectWithTeam?.project_team?.team_lead);
+
+      if (projectWithTeam?.project_team?.team_lead) {
+        members.push(projectWithTeam.project_team.team_lead);
+      }
 
       setMembers(members);
     }
   }, [project]);
-
-  console.log(members);
 
   useEffect(() => {
     if (isEdit && task) {

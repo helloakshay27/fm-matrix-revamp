@@ -201,7 +201,7 @@ export const SurveyMappingDetailsPage = () => {
   const handleDownloadQRCode = async (qrCodeUrl: string, mappingId: number) => {
     try {
       const response = await apiClient.post(
-        `/survey_mappings/download_qr_codes?survey_mapping_ids=${mappingId}`,
+        `/survey_mappings/download_qr_codes.json?survey_mapping_ids=${mappingId}`,
         {},
         {
           responseType: "blob",
@@ -500,14 +500,12 @@ export const SurveyMappingDetailsPage = () => {
           <div className="flex items-center justify-center">
             <button
               onClick={() => handleQuestionStatusToggle(item)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                item.active ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-green-500" : "bg-gray-300"
+                }`}
             >
               <div
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  item.active ? "translate-x-6" : "translate-x-1"
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.active ? "translate-x-6" : "translate-x-1"
+                  }`}
               />
             </button>
           </div>
@@ -666,14 +664,12 @@ export const SurveyMappingDetailsPage = () => {
           <div className="flex items-center justify-center">
             <button
               onClick={() => handleStatusToggle(item)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                item.active ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-green-500" : "bg-gray-300"
+                }`}
             >
               <div
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  item.active ? "translate-x-6" : "translate-x-1"
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.active ? "translate-x-6" : "translate-x-1"
+                  }`}
               />
             </button>
           </div>
@@ -750,11 +746,10 @@ export const SurveyMappingDetailsPage = () => {
                 {Array.from({ length: maxRating }, (_, i) => (
                   <Star
                     key={i}
-                    className={`w-4 h-4 ${
-                      i < minRating
-                        ? "text-yellow-400 fill-yellow-400"
-                        : "text-gray-300"
-                    }`}
+                    className={`w-4 h-4 ${i < minRating
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-gray-300"
+                      }`}
                   />
                 ))}
               </div>
@@ -769,13 +764,12 @@ export const SurveyMappingDetailsPage = () => {
               {question.options.map((option, optIndex) => (
                 <span
                   key={optIndex}
-                  className={`text-xs px-2 py-1 rounded border ${
-                    option.option_type === "p"
-                      ? "bg-green-50 border-green-200 text-green-800"
-                      : option.option_type === "n"
-                        ? "bg-red-50 border-red-200 text-red-800"
-                        : "bg-yellow-50 border-yellow-200 text-gray-700"
-                  }`}
+                  className={`text-xs px-2 py-1 rounded border ${option.option_type === "p"
+                    ? "bg-green-50 border-green-200 text-green-800"
+                    : option.option_type === "n"
+                      ? "bg-red-50 border-red-200 text-red-800"
+                      : "bg-yellow-50 border-yellow-200 text-gray-700"
+                    }`}
                 >
                   ⭐ {option.qname}
                 </span>
@@ -855,13 +849,12 @@ export const SurveyMappingDetailsPage = () => {
                 return (
                   <div
                     key={optIndex}
-                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded border ${
-                      option.option_type === "p"
-                        ? "bg-green-50 border-green-200 text-green-800"
-                        : option.option_type === "n"
-                          ? "bg-red-50 border-red-200 text-red-800"
-                          : "bg-yellow-50 border-yellow-200 text-gray-700"
-                    }`}
+                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded border ${option.option_type === "p"
+                      ? "bg-green-50 border-green-200 text-green-800"
+                      : option.option_type === "n"
+                        ? "bg-red-50 border-red-200 text-red-800"
+                        : "bg-yellow-50 border-yellow-200 text-gray-700"
+                      }`}
                   >
                     <span className="text-sm">{emoji}</span>
                     <span>{option.qname}</span>
@@ -899,11 +892,10 @@ export const SurveyMappingDetailsPage = () => {
                   {Array.from({ length: maxRating }, (_, i) => (
                     <Star
                       key={i}
-                      className={`w-4 h-4 ${
-                        i < minRating
-                          ? "text-yellow-400 fill-yellow-400"
-                          : "text-gray-300"
-                      }`}
+                      className={`w-4 h-4 ${i < minRating
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-gray-300"
+                        }`}
                     />
                   ))}
                 </div>
@@ -918,13 +910,12 @@ export const SurveyMappingDetailsPage = () => {
                 {question.options.map((option, optIndex) => (
                   <span
                     key={optIndex}
-                    className={`text-xs px-2 py-1 rounded border ${
-                      option.option_type === "p"
-                        ? "bg-green-50 border-green-200 text-green-800"
-                        : option.option_type === "n"
-                          ? "bg-red-50 border-red-200 text-red-800"
-                          : "bg-yellow-50 border-yellow-200 text-gray-700"
-                    }`}
+                    className={`text-xs px-2 py-1 rounded border ${option.option_type === "p"
+                      ? "bg-green-50 border-green-200 text-green-800"
+                      : option.option_type === "n"
+                        ? "bg-red-50 border-red-200 text-red-800"
+                        : "bg-yellow-50 border-yellow-200 text-gray-700"
+                      }`}
                   >
                     ⭐ {option.qname}
                   </span>
@@ -941,13 +932,12 @@ export const SurveyMappingDetailsPage = () => {
           {question.options.map((option, optIndex) => (
             <span
               key={optIndex}
-              className={`text-xs px-2 py-1 rounded ${
-                option.option_type === "p"
-                  ? "bg-green-100 text-green-800"
-                  : option.option_type === "n"
-                    ? "bg-red-100 text-red-800"
-                    : "bg-gray-100 text-gray-800"
-              }`}
+              className={`text-xs px-2 py-1 rounded ${option.option_type === "p"
+                ? "bg-green-100 text-green-800"
+                : option.option_type === "n"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-gray-100 text-gray-800"
+                }`}
             >
               {option.qname}
             </span>

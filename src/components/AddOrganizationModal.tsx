@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Upload, X, Building, Globe, Flag, Image } from 'lucide-react';
-import { toast } from 'sonner';
-import { useApiConfig } from '@/hooks/useApiConfig';
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Upload, X, Building, Globe, Flag, Image } from "lucide-react";
+import { toast } from "sonner";
+import { useApiConfig } from "@/hooks/useApiConfig";
 
 interface AddOrganizationModalProps {
   isOpen: boolean;
@@ -31,8 +42,8 @@ interface OrganizationFormData {
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px", sm: "10px", md: "12px" },
   },
 };
 
@@ -40,10 +51,11 @@ const selectMenuProps = {
   PaperProps: {
     style: {
       maxHeight: 224,
-      backgroundColor: 'white',
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
       zIndex: 9999,
     },
   },
@@ -57,75 +69,112 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
   onClose,
   onSuccess,
   countriesDropdown,
-  canEdit
+  canEdit,
 }) => {
   const { getFullUrl, getAuthHeader } = useApiConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<OrganizationFormData>({
-    name: '',
-    description: '',
-    domain: '',
-    sub_domain: '',
-    front_domain: '',
-    front_subdomain: '',
-    country_id: '',
+    name: "",
+    description: "",
+    domain: "",
+    sub_domain: "",
+    front_domain: "",
+    front_subdomain: "",
+    country_id: "",
     active: true,
     logo: null,
-    powered_by_logo: null
+    powered_by_logo: null,
   });
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
-      toast.error('Please enter organization name');
+      toast.error("Please enter organization name");
+      return;
+    }
+
+    // Domain validation
+    const domainRegex =
+      /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?(\.[a-zA-Z]{2,})+$/;
+
+    if (formData.domain && !domainRegex.test(formData.domain)) {
+      toast.error("Please enter a valid main domain (e.g., example.com)");
+      return;
+    }
+
+    if (formData.sub_domain && !domainRegex.test(formData.sub_domain)) {
+      toast.error("Please enter a valid sub domain (e.g., app.example.com)");
+      return;
+    }
+
+    if (formData.front_domain && !domainRegex.test(formData.front_domain)) {
+      toast.error(
+        "Please enter a valid frontend domain (e.g., www.example.com)"
+      );
+      return;
+    }
+
+    if (
+      formData.front_subdomain &&
+      !domainRegex.test(formData.front_subdomain)
+    ) {
+      toast.error(
+        "Please enter a valid frontend subdomain (e.g., portal.example.com)"
+      );
       return;
     }
 
     if (!canEdit) {
-      toast.error('You do not have permission to create organizations');
+      toast.error("You do not have permission to create organizations");
       return;
     }
 
     setIsSubmitting(true);
 
     const submitFormData = new FormData();
-    submitFormData.append('organization[name]', formData.name);
-    submitFormData.append('organization[description]', formData.description);
-    submitFormData.append('organization[domain]', formData.domain);
-    submitFormData.append('organization[sub_domain]', formData.sub_domain);
-    submitFormData.append('organization[front_domain]', formData.front_domain);
-    submitFormData.append('organization[front_subdomain]', formData.front_subdomain);
-    if (formData.country_id && formData.country_id !== 'none') {
-      submitFormData.append('organization[country_id]', formData.country_id);
+    submitFormData.append("organization[name]", formData.name);
+    submitFormData.append("organization[description]", formData.description);
+    submitFormData.append("organization[domain]", formData.domain);
+    submitFormData.append("organization[sub_domain]", formData.sub_domain);
+    submitFormData.append("organization[front_domain]", formData.front_domain);
+    submitFormData.append(
+      "organization[front_subdomain]",
+      formData.front_subdomain
+    );
+    if (formData.country_id && formData.country_id !== "none") {
+      submitFormData.append("organization[country_id]", formData.country_id);
     }
-    submitFormData.append('organization[active]', formData.active.toString());
-    
+    submitFormData.append("organization[active]", formData.active.toString());
+
     if (formData.logo) {
-      submitFormData.append('organization[logo]', formData.logo);
+      submitFormData.append("organization[logo]", formData.logo);
     }
     if (formData.powered_by_logo) {
-      submitFormData.append('organization[powered_by_logo]', formData.powered_by_logo);
+      submitFormData.append(
+        "organization[powered_by_logo]",
+        formData.powered_by_logo
+      );
     }
 
     try {
-      const response = await fetch(getFullUrl('/organizations.json'), {
-        method: 'POST',
+      const response = await fetch(getFullUrl("/organizations.json"), {
+        method: "POST",
         headers: {
-          'Authorization': getAuthHeader(),
+          Authorization: getAuthHeader(),
         },
         body: submitFormData,
       });
 
       if (response.ok) {
-        toast.success('Organization created successfully');
+        toast.success("Organization created successfully");
         resetForm();
         onSuccess();
       } else {
         const errorData = await response.json().catch(() => ({}));
-        toast.error(errorData.message || 'Failed to create organization');
+        toast.error(errorData.message || "Failed to create organization");
       }
     } catch (error) {
-      console.error('Error creating organization:', error);
-      toast.error('Error creating organization');
+      console.error("Error creating organization:", error);
+      toast.error("Error creating organization");
     } finally {
       setIsSubmitting(false);
     }
@@ -138,7 +187,9 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
     }
   };
 
-  const handlePoweredByLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePoweredByLogoChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
       setFormData({ ...formData, powered_by_logo: file });
@@ -147,16 +198,16 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      description: '',
-      domain: '',
-      sub_domain: '',
-      front_domain: '',
-      front_subdomain: '',
-      country_id: '',
+      name: "",
+      description: "",
+      domain: "",
+      sub_domain: "",
+      front_domain: "",
+      front_subdomain: "",
+      country_id: "",
       active: true,
       logo: null,
-      powered_by_logo: null
+      powered_by_logo: null,
     });
   };
 
@@ -169,7 +220,9 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
     <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-50">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900">ADD NEW ORGANIZATION</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-gray-900">
+            ADD NEW ORGANIZATION
+          </DialogTitle>
           <Button
             variant="ghost"
             size="sm"
@@ -179,17 +232,21 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
             <X className="h-4 w-4" />
           </Button>
         </DialogHeader>
-        
+
         <div className="space-y-6 py-4">
           {/* Basic Information Section */}
           <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">Basic Information</h3>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">
+              Basic Information
+            </h3>
             <div className="grid grid-cols-2 gap-6">
               <TextField
                 label="Organization Name"
                 placeholder="Enter organization name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
@@ -197,12 +254,14 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 required
                 disabled={isSubmitting}
               />
-              
+
               <FormControl fullWidth variant="outlined">
                 <InputLabel shrink>Country</InputLabel>
                 <MuiSelect
                   value={formData.country_id}
-                  onChange={(e) => setFormData({ ...formData, country_id: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, country_id: e.target.value })
+                  }
                   label="Country"
                   displayEmpty
                   MenuProps={selectMenuProps}
@@ -220,13 +279,15 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 </MuiSelect>
               </FormControl>
             </div>
-            
+
             <div className="mt-6">
               <TextField
                 label="Description"
                 placeholder="Enter organization description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
@@ -236,7 +297,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 disabled={isSubmitting}
               />
             </div>
-              
+
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mt-6">
               <div className="space-y-1">
                 <span className="text-sm font-medium">Status</span>
@@ -247,7 +308,9 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
               <div className="flex items-center gap-2">
                 <Switch
                   checked={formData.active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, active: checked })}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, active: checked })
+                  }
                   disabled={isSubmitting}
                 />
                 <Badge variant={formData.active ? "default" : "secondary"}>
@@ -259,63 +322,80 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
 
           {/* Domain Configuration Section */}
           <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">Domain Configuration</h3>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">
+              Domain Configuration
+            </h3>
             <div className="grid grid-cols-2 gap-6">
               <TextField
                 label="Main Domain"
                 placeholder="example.com"
                 value={formData.domain}
-                onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, domain: e.target.value })
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
+                required
+                helperText="Enter a valid domain (e.g., example.com)"
               />
-              
+
               <TextField
                 label="Sub Domain"
                 placeholder="app.example.com"
                 value={formData.sub_domain}
-                onChange={(e) => setFormData({ ...formData, sub_domain: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, sub_domain: e.target.value })
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
+                helperText="Enter subdomain (e.g., app.example.com)"
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-6 mt-6">
               <TextField
                 label="Frontend Domain"
                 placeholder="www.example.com"
                 value={formData.front_domain}
-                onChange={(e) => setFormData({ ...formData, front_domain: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, front_domain: e.target.value })
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
+                helperText="Enter frontend domain (e.g., www.example.com)"
               />
-              
+
               <TextField
                 label="Frontend Subdomain"
                 placeholder="portal.example.com"
                 value={formData.front_subdomain}
-                onChange={(e) => setFormData({ ...formData, front_subdomain: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, front_subdomain: e.target.value })
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
+                helperText="Enter frontend subdomain (e.g., portal.example.com)"
               />
             </div>
           </div>
 
           {/* Logo Upload Section */}
           <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">Logo Upload</h3>
+            <h3 className="text-sm font-medium text-[#C72030] mb-4">
+              Logo Upload
+            </h3>
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
                 <span className="text-sm font-medium">Organization Logo</span>
@@ -333,7 +413,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                   </div>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <span className="text-sm font-medium">Powered By Logo</span>
                 <input
@@ -351,25 +431,28 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 )}
               </div>
             </div>
-            
+
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <Image className="w-4 h-4 text-blue-600" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-blue-800">Upload Guidelines</p>
+                  <p className="text-sm font-medium text-blue-800">
+                    Upload Guidelines
+                  </p>
                   <p className="text-xs text-blue-700">
-                    Recommended formats: PNG, JPG, SVG • Max size: 2MB • Min dimensions: 200x200px
+                    Recommended formats: PNG, JPG, SVG • Max size: 2MB • Min
+                    dimensions: 200x200px
                   </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
+
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-6 border-t">
+        <div className="flex justify-center space-x-3 pt-6 border-t">
           <Button
             variant="outline"
             onClick={handleClose}
@@ -383,7 +466,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
             disabled={isSubmitting || !canEdit}
             className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6 py-2"
           >
-            {isSubmitting ? 'Creating...' : 'Create Organization'}
+            {isSubmitting ? "Creating..." : "Create Organization"}
           </Button>
         </div>
       </DialogContent>

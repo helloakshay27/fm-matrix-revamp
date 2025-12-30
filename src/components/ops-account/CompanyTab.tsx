@@ -130,8 +130,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1000);
   const [appliedFilters, setAppliedFilters] = useState<CompanyFilters>({});
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -171,7 +170,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       "abhishek.sharma@lockated.com",
       "adhip.shetty@lockated.com",
       "helloakshay27@gmail.com",
-      "dev@lockated.com"
+      "dev@lockated.com",
     ];
     setCanEditCompany(allowedEmails.includes(userEmail));
   };
@@ -302,9 +301,14 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(
-        "https://fm-uat-api.lockated.com/pms/countries.json?access_token=KKgTUIuVekyUWe5qce0snu7nfhioTPW4XHMmzmXCxdU"
-      );
+      const response = await fetch(getFullUrl("/pms/countries.json"), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -346,7 +350,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   // Handle search
   const handleSearch = (term: string) => {
     console.log("Search query:", term);
-    setSearchTerm(term);
+    setSearchQuery(term);
     setCurrentPage(1); // Reset to first page when searching
     // Force immediate search if query is empty (for clear search)
     if (!term.trim()) {
@@ -385,16 +389,19 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
 
   // Format date helper
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return "-";
     try {
-      return new Date(dateString).toLocaleDateString("en-US", {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return "-";
+      return date.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
       });
     } catch (error) {
       console.error("Error formatting date:", error);
-      return "Invalid date";
+      return "-";
     }
   };
 
@@ -477,7 +484,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   const handleView = (id: number) => {
     console.log("View company:", id);
     // Navigate to company details page
-    navigate(`/ops-account/companies/details/${id}`);
+    navigate(`/ops-console/master/location/account/companies/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
@@ -561,7 +568,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
             hideTableExport={true}
             hideTableSearch={false}
             enableSearch={true}
-            searchTerm={searchTerm}
+            searchTerm={searchQuery}
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
             leftActions={
@@ -573,27 +580,27 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
                 <Plus className="w-4 h-4 mr-2" /> Add Company
               </Button>
             }
-          // rightActions={(
-          //   <div className="flex items-center gap-2">
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsBulkUploadOpen(true)}
-          //       disabled={!canEditCompany}
-          //     >
-          //       <Upload className="w-4 h-4 mr-2" />
-          //       Bulk Upload
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsExportOpen(true)}
-          //     >
-          //       <Download className="w-4 h-4 mr-2" />
-          //       Export
-          //     </Button>
-          //   </div>
-          // )}
+            // rightActions={(
+            //   <div className="flex items-center gap-2">
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsBulkUploadOpen(true)}
+            //       disabled={!canEditCompany}
+            //     >
+            //       <Upload className="w-4 h-4 mr-2" />
+            //       Bulk Upload
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsExportOpen(true)}
+            //     >
+            //       <Download className="w-4 h-4 mr-2" />
+            //       Export
+            //     </Button>
+            //   </div>
+            // )}
           />
 
           <TicketPagination

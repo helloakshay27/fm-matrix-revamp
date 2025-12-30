@@ -600,6 +600,8 @@ import { FloorPage } from "./pages/master/FloorPage";
 import { UnitPage } from "./pages/master/UnitPage";
 import { RoomPage } from "./pages/master/RoomPage";
 import { OpsAccountPage } from "./pages/master/OpsAccountPage";
+import { OrganizationDetailsPage } from "./pages/master/OrganizationDetailsPage";
+import { CompanyDetailsPage } from "./pages/master/CompanyDetailsPage";
 
 // Import Address Master page
 import { AddressMasterPage } from "./pages/AddressMasterPage";
@@ -916,17 +918,17 @@ function App() {
   }, [baseUrl, token, selectedSite?.id, dispatch]);
 
   useEffect(() => {
-    console.log('🔌 WebSocket connection effect running');
+    console.log("🔌 WebSocket connection effect running");
 
     if (token) {
-      console.log('✅ Token available, connecting...');
+      console.log("✅ Token available, connecting...");
       connect(token, socketUrl);
     } else {
-      console.error('❌ No token available for WebSocket connection');
+      console.error("❌ No token available for WebSocket connection");
     }
 
     return () => {
-      console.log('🧹 Cleaning up WebSocket subscriptions');
+      console.log("🧹 Cleaning up WebSocket subscriptions");
     };
   }, [token, connect]);
 
@@ -934,24 +936,27 @@ function App() {
     const subscriptionTimer = setTimeout(() => {
       const sub = webSocketManager.subscribeToUserNotifications({
         onConnected: () => {
-          console.log('🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!');
+          console.log("🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!");
           setIsSubscribed(true);
-          toast.success('Real-time connection established!', { duration: 2000 });
+          toast.success("Real-time connection established!", {
+            duration: 2000,
+          });
         },
         onMessageNotification: (message) => {
           if (message.user_id === currentUser.id) {
             return;
           }
 
-          if (!('Notification' in window)) {
-            toast.error('Not supported');
+          if (!("Notification" in window)) {
+            toast.error("Not supported");
             return;
           }
 
-          const sender = message?.user?.firstname + ' ' + message?.user?.lastname;
+          const sender =
+            message?.user?.firstname + " " + message?.user?.lastname;
 
           Notification.requestPermission().then((permission) => {
-            if (permission === 'granted') {
+            if (permission === "granted") {
               const notification = new Notification(sender, {
                 body: message.body,
               });
@@ -964,16 +969,16 @@ function App() {
           });
         },
         onDisconnected: () => {
-          console.log('❌ Chat subscription disconnected');
+          console.log("❌ Chat subscription disconnected");
           setIsSubscribed(false);
-          toast.error('Real-time chat disconnected');
+          toast.error("Real-time chat disconnected");
         },
       });
-      console.log('📋 Subscription object:', sub);
+      console.log("📋 Subscription object:", sub);
     }, 2000); // Wait 2 seconds for connection to establish
 
     return () => {
-      console.log('⏰ Clearing subscription timer');
+      console.log("⏰ Clearing subscription timer");
       clearTimeout(subscriptionTimer);
     };
   }, [isSubscribed, webSocketManager, currentUser?.id, navigate]);
@@ -998,6 +1003,14 @@ function App() {
                   <Route
                     path="master/location/account"
                     element={<OpsAccountPage />}
+                  />
+                  <Route
+                    path="master/location/account/organizations/details/:id"
+                    element={<OrganizationDetailsPage />}
+                  />
+                  <Route
+                    path="master/location/account/companies/details/:id"
+                    element={<CompanyDetailsPage />}
                   />
                   <Route path="admin/users" element={<AdminUsersDashboard />} />
                   <Route
@@ -2584,10 +2597,7 @@ function App() {
                     path="/vas/sprint/details/:id"
                     element={<SprintDetailsPage />}
                   />
-                  <Route
-                    path="/vas/sprint/:id"
-                    element={<SprintKanban />}
-                  />
+                  <Route path="/vas/sprint/:id" element={<SprintKanban />} />
 
                   <Route
                     path="/vas/projects/:id/milestones/:mid"

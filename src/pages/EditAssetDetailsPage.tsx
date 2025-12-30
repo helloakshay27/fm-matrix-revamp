@@ -1250,15 +1250,25 @@ export const EditAssetDetailsPage = () => {
         const groupKey = attr?.group_name || ""; // e.g. basicIdentification, assetDetails
         const description = attr?.field_description || "";
 
-        // Format label from field_name if description is missing
-        const label = description || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        // Format label - for custom_field descriptions, use the field_name; otherwise use description
+        let label;
+        if (String(description).trim().toLowerCase() === "custom_field") {
+          // For custom fields, use the field_name as the label
+          label = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        } else {
+          // For standard fields, use description as label if available
+          label = description || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
 
-        nextExtra[key] = {
-          value,
-          fieldType: "text",
-          groupType: groupKey,
-          fieldDescription: description,
-        };
+        // Only add to nextExtra if it's NOT a custom field (custom fields are handled separately via customFields state)
+        if (String(description).trim().toLowerCase() !== "custom_field") {
+          nextExtra[key] = {
+            value,
+            fieldType: "text",
+            groupType: groupKey,
+            fieldDescription: description,
+          };
+        }
 
         // Map to customFields state for dynamic rendering
         // We include specific keys that we know are used for dynamic sections
@@ -1271,9 +1281,7 @@ export const EditAssetDetailsPage = () => {
               name: label,
               value: value
             });
-            // Also add to customFields for payload consistency if needed
-            if (!customFieldsUpdate["system_details"]) customFieldsUpdate["system_details"] = [];
-            customFieldsUpdate["system_details"].push({ id: attr.id, name: label, value: value });
+            // Don't add to customFieldsUpdate to avoid duplication
           } else if (groupKey === "hardware") {
             if (!itAssetsCustomFieldsUpdate["Hardware Details"]) itAssetsCustomFieldsUpdate["Hardware Details"] = [];
             itAssetsCustomFieldsUpdate["Hardware Details"].push({
@@ -1281,8 +1289,7 @@ export const EditAssetDetailsPage = () => {
               name: label,
               value: value
             });
-            if (!customFieldsUpdate["hardware"]) customFieldsUpdate["hardware"] = [];
-            customFieldsUpdate["hardware"].push({ id: attr.id, name: label, value: value });
+            // Don't add to customFieldsUpdate to avoid duplication
           } else {
             // Generic sections like assetDetails, buildingMiscellaneous, etc.
             if (!customFieldsUpdate[groupKey]) customFieldsUpdate[groupKey] = [];
@@ -1337,7 +1344,30 @@ export const EditAssetDetailsPage = () => {
       }
 
       if (Object.keys(nextExtra).length > 0) {
-        setExtraFormFields((prev) => ({ ...prev, ...nextExtra }));
+        setExtraFormFields((prev) => {
+          // Remove any custom fields from extraFormFields (they should only be in customFields)
+          const filtered = { ...prev };
+          Object.keys(filtered).forEach((key) => {
+            const fieldObj = filtered[key];
+            if (String(fieldObj?.fieldDescription || "").trim().toLowerCase() === "custom_field") {
+              delete filtered[key];
+            }
+          });
+          // Then add the non-custom fields
+          return { ...filtered, ...nextExtra };
+        });
+      } else {
+        // Even if there are no new extra fields, remove any custom fields that might be lingering
+        setExtraFormFields((prev) => {
+          const filtered = { ...prev };
+          Object.keys(filtered).forEach((key) => {
+            const fieldObj = filtered[key];
+            if (String(fieldObj?.fieldDescription || "").trim().toLowerCase() === "custom_field") {
+              delete filtered[key];
+            }
+          });
+          return filtered;
+        });
       }
 
       // Ensure purchase-related fields appear prefilled in UI components that bind to extraFormFields
@@ -1892,6 +1922,10 @@ export const EditAssetDetailsPage = () => {
           ...prev,
           ...Object.keys(groupedFields).reduce((acc, group) => {
             groupedFields[group].forEach((field) => {
+              // Skip custom fields - they should only be in customFields state
+              if (String(field.field_description).trim().toLowerCase() === "custom_field") {
+                return;
+              }
               acc[`${group}_${field.field_name}`] = {
                 value: field.field_value,
                 fieldType: "custom",
@@ -1903,28 +1937,8 @@ export const EditAssetDetailsPage = () => {
           }, {}),
         }));
 
-        // Also prefill visible custom fields for UI rendering (only those marked as custom_field)
-        setCustomFields((prev) => ({
-          ...prev,
-          ...Object.keys(groupedFields).reduce((acc, group) => {
-            const customOnly = (groupedFields[group] || []).filter(
-              (f) =>
-                String(f.field_description).trim().toLowerCase() ===
-                "custom_field"
-            );
-            if (customOnly.length > 0) {
-              acc[group] = [
-                ...(prev[group] || []),
-                ...customOnly.map((f) => ({
-                  id: f.id,
-                  name: f.field_name,
-                  value: f.field_value,
-                })),
-              ];
-            }
-            return acc;
-          }, {} as any),
-        }));
+        // Note: Custom fields are already being set via the main prefillFromAsset logic above
+        // (lines ~1321), so we don't need to set them again here to avoid duplication.
         setOriginalExtraFieldsAttributes(asset.extra_fields_attributes);
       }
 
@@ -2808,17 +2822,27 @@ export const EditAssetDetailsPage = () => {
       candidates.set(key, entry);
     };
 
-    // Custom fields - only include fields with non-empty values and changes only
+    // Custom fields - only include fields with non-empty values AND non-empty names
     Object.keys(customFields).forEach((sectionKey) => {
       (customFields[sectionKey] || []).forEach((field) => {
-        // Only add field if it has a non-empty value
-        if (!isEmpty(field.value)) {
+        // Only add field if it has BOTH non-empty name AND non-empty value
+        if (!isEmpty(field.name) && !isEmpty(field.value)) {
           console.log(`Including custom field: ${field.name} = ${field.value}`);
           const original = findOriginal(field.name, sectionKey);
+          console.log(original);
           const originalValue = original?.value ?? undefined;
-          if (String(field.value ?? "") !== String(originalValue ?? "")) {
+          console.log(field.value, originalValue);
+          if (String(field.value ?? "") === String(originalValue ?? "")) {
             addOrReplace({
               ...(original?.id && { id: original.id }),
+              field_name: field.name,
+              field_value: field.value,
+              group_name: sectionKey,
+              field_description: "custom_field",
+              _destroy: false,
+            });
+          } else {
+            addOrReplace({
               field_name: field.name,
               field_value: field.value,
               group_name: sectionKey,
@@ -2859,9 +2883,17 @@ export const EditAssetDetailsPage = () => {
         const baseName = normalizeFieldName(key, groupName);
         const original = findOriginal(baseName, groupName);
         const originalValue = original?.value ?? undefined;
-        if (String(processedValue ?? "") !== String(originalValue ?? "")) {
+        if (String(processedValue ?? "") === String(originalValue ?? "")) {
           addOrReplace({
             ...(original?.id && { id: original.id }),
+            field_name: baseName,
+            field_value: processedValue,
+            group_name: groupName,
+            field_description: fieldObj.fieldDescription,
+            _destroy: false,
+          });
+        } else {
+          addOrReplace({
             field_name: baseName,
             field_value: processedValue,
             group_name: groupName,
@@ -2880,19 +2912,25 @@ export const EditAssetDetailsPage = () => {
     try {
       const currentCustomKeys = new Set<string>();
 
-      // Track current custom fields from UI (customFields)
+      // Track current custom fields from UI (customFields) - only those with non-empty names
       Object.keys(customFields).forEach((sectionKey) => {
         (customFields[sectionKey] || []).forEach((field: any) => {
-          const key = `${sectionKey}::${field.name}`;
-          currentCustomKeys.add(key);
+          // Only track fields that have both name and value
+          if (field.name && String(field.name).trim() && field.value && String(field.value).trim()) {
+            const key = `${sectionKey}::${field.name}`;
+            currentCustomKeys.add(key);
+          }
         });
       });
 
-      // Track current IT assets custom fields
+      // Track current IT assets custom fields - only those with non-empty names
       Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
         (itAssetsCustomFields[sectionKey] || []).forEach((field: any) => {
-          const key = `${sectionKey}::${field.name}`;
-          currentCustomKeys.add(key);
+          // Only track fields that have both name and value
+          if (field.name && String(field.name).trim() && field.value && String(field.value).trim()) {
+            const key = `${sectionKey}::${field.name}`;
+            currentCustomKeys.add(key);
+          }
         });
       });
 
@@ -11037,8 +11075,6 @@ export const EditAssetDetailsPage = () => {
                       </FormControl>
                     </div>
 
-                    {/* Custom Fields are now handled per section */}
-
                     {/* Third row: Status and Critical in single row */}
                     <div className="mb-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -11199,6 +11235,8 @@ export const EditAssetDetailsPage = () => {
                         <div>{/* Empty div to maintain grid structure */}</div>
                       </div>
                     </div>
+
+                    {console.log(customFields)}
 
                     {/* Custom Fields for Asset Details */}
                     {(customFields.assetDetails || []).map((field) => (
