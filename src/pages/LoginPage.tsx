@@ -72,7 +72,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const isViSite = hostname.includes("vi-web.gophygital.work");
   const isWebSite = hostname.includes("web.gophygital.work");
 
-  // Check URL for email and orgId parameters on component mount
+  // Check URL for email and orgId parameters on components mount
   React.useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const emailParam = searchParams.get("email");
