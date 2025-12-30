@@ -44,12 +44,23 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
   useEffect(() => {
     const path = location.pathname;
     let newSection = '';
-    
+
+    // Template routes should be treated as Settings
+    const templatePaths = [
+      '/master/communication-template',
+      '/master/template/root-cause-analysis',
+      '/master/template/preventive-action',
+      '/master/template/short-term-impact',
+      '/master/template/long-term-impact',
+      '/master/template/corrective-action'
+    ];
+    const isTemplatePath = templatePaths.some(t => path.startsWith(t));
+
     console.log(`📍 Route changed to: ${path}, Current section: ${currentSection}`);
-    
-    // Define route patterns and their corresponding sections
-    // Keep this in sync with the sidebar logic
-    if (path.startsWith('/utility')) {
+
+    if (isTemplatePath) {
+      newSection = 'Settings';
+    } else if (path.startsWith('/utility')) {
       newSection = 'Utility';
     } else if (path.startsWith('/transitioning')) {
       newSection = 'Transitioning';
@@ -83,7 +94,7 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
     // Always update the section when route changes
     console.log(`🔄 Section change: ${currentSection} → ${newSection} (path: ${path})`);
     setCurrentSection(newSection);
-  }, [location.pathname]); // Removed currentSection from dependency to prevent circular updates
+  }, [location.pathname]);
 
   // Save sidebar collapsed state to localStorage whenever it changes
   useEffect(() => {

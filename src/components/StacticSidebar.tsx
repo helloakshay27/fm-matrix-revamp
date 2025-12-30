@@ -310,7 +310,7 @@ const modulesByPackage = {
       icon: Star,
       href: "/club-management/membership",
       subItems: [
-        { name: "Membership List", href: "/club-management/membership", color: "text-[#1a1a1a]" },
+        // { name: "Membership List", href: "/club-management/membership", color: "text-[#1a1a1a]" },
         { name: "Group Memberships", href: "/club-management/membership/groups", color: "text-[#1a1a1a]" },
       ]
     },
@@ -368,142 +368,8 @@ const modulesByPackage = {
     },
   ],
   Master: [
-    {
-      name: "Location Master",
-      icon: MapPin,
-      href: "/master/location",
-      subItems: [
-        {
-          name: "Account",
-          href: "/master/location/account",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Building",
-          href: "/master/location/building",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Wing",
-          href: "/master/location/wing",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Area",
-          href: "/master/location/area",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Floor",
-          href: "/master/location/floor",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Unit",
-          href: "/master/location/unit",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Room",
-          href: "/master/location/room",
-          color: "text-[#1a1a1a]",
-        },
-      ],
-    },
-    {
-      name: "User Master",
-      icon: Users,
-      href: "/master/user",
-      subItems: [
-        {
-          name: "FM Users",
-          href: "/master/user/fm-users",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Occupant Users",
-          href: "/master/user/occupant-users",
-          color: "text-[#1a1a1a]",
-        },
-      ],
-    },
-    {
-      name: "Checklist Master",
-      icon: CheckSquare,
-      href: "/master/checklist",
-    },
-    {
-      name: "Question Bank",
-      icon: FileSpreadsheet,
-      href: "/master/survey/list",
-    },
-    {
-      name: "Address Master",
-      icon: MapPin,
-      href: "/master/address",
-    },
-    {
-      name: "Unit Master (By Default)",
-      icon: Package,
-      href: "/master/unit-default",
-    },
-    {
-      name: "Material Master -> EBom",
-      icon: FileText,
-      href: "/master/material-ebom",
-    },
-    {
-      name: "Gate Number",
-      icon: DoorOpen,
-      href: "/master/gate-number",
-    },
-    {
-      name: "Gate Pass Type",
-      icon: Ticket,
-      href: "/master/gate-pass-type",
-    },
-    {
-      name: "Inventory Type",
-      icon: Package,
-      href: "/master/inventory-type",
-    },
-    {
-      name: "Template",
-      icon: FileSpreadsheet,
-      href: "/master/communication-template",
-      subItems: [
-        {
-          name: "Communication Template",
-          href: "/master/communication-template",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Root Cause Analysis",
-          href: "/master/template/root-cause-analysis",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Preventive Action",
-          href: "/master/template/preventive-action",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Short-term Impact",
-          href: "/master/template/short-term-impact",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Long-term Impact",
-          href: "/master/template/long-term-impact",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Corrective Action",
-          href: "/master/template/corrective-action",
-          color: "text-[#1a1a1a]",
-        },
-      ],
-    },
+    // ...existing code above...
+    // Template menu removed from here
     // {
     //   name: 'Inventory Sub Type',
     //   icon: PackagePlus,
@@ -1087,6 +953,43 @@ const modulesByPackage = {
       icon: Calculator,
       href: "/settings/payment-plan/setup",
     },
+    {
+      name: "Templates",
+      icon: FileSpreadsheet,
+      href: "/master/communication-template",
+      subItems: [
+        {
+          name: "Communication Template",
+          href: "/master/communication-template",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Root Cause Analysis",
+          href: "/master/template/root-cause-analysis",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Preventive Action",
+          href: "/master/template/preventive-action",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Short-term Impact",
+          href: "/master/template/short-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Long-term Impact",
+          href: "/master/template/long-term-impact",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Corrective Action",
+          href: "/master/template/corrective-action",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
   ],
 };
 
@@ -1151,6 +1054,18 @@ export const StacticSidebar = () => {
 
   React.useEffect(() => {
     const path = location.pathname;
+    const templatePaths = [
+      "/master/communication-template",
+      "/master/template/root-cause-analysis",
+      "/master/template/preventive-action",
+      "/master/template/short-term-impact",
+      "/master/template/long-term-impact",
+      "/master/template/corrective-action"
+    ];
+    if (templatePaths.some(t => path.startsWith(t))) {
+      setCurrentSection("Settings");
+      return;
+    }
     if (path.startsWith("/settings")) {
       setCurrentSection("Settings");
     } else if (path.startsWith("/utility")) {
@@ -1180,7 +1095,21 @@ export const StacticSidebar = () => {
     }
   }, [location.pathname, setCurrentSection]);
 
-  const currentModules = modulesByPackage[currentSection] || [];
+  // For Template sub-items, always use Settings modules ONLY if currentSection is Settings
+  const templatePaths = [
+    "/master/communication-template",
+    "/master/template/root-cause-analysis",
+    "/master/template/preventive-action",
+    "/master/template/short-term-impact",
+    "/master/template/long-term-impact",
+    "/master/template/corrective-action"
+  ];
+  const isTemplatePath = templatePaths.some(t => location.pathname.startsWith(t));
+  // Always show Settings sidebar for Template routes, but for all other routes use currentSection
+  const isOnTemplateRoute = templatePaths.some(t => location.pathname.startsWith(t));
+  const currentModules = isOnTemplateRoute
+    ? (location.pathname && templatePaths.some(t => location.pathname.startsWith(t)) ? modulesByPackage["Settings"] || [] : modulesByPackage[currentSection] || [])
+    : modulesByPackage[currentSection] || [];
 
   const isActiveRoute = (href: string, mode: "exact" | "prefix" = "exact") => {
     const currentPath = location.pathname;
@@ -1207,11 +1136,22 @@ export const StacticSidebar = () => {
   React.useEffect(() => {
     // Determine which items to expand based on current route
     const path = location.pathname;
-    const currentSectionItems = modulesByPackage[currentSection];
+    const currentSectionItems = modulesByPackage[currentSection] || [];
     const itemsToExpand = [];
 
+    // Always keep Templates expanded if on a Template route, otherwise collapse it
+    const templatesMenuName = "Templates";
+    const templatePaths = [
+      "/master/communication-template",
+      "/master/template/root-cause-analysis",
+      "/master/template/preventive-action",
+      "/master/template/short-term-impact",
+      "/master/template/long-term-impact",
+      "/master/template/corrective-action"
+    ];
+    const isTemplatePath = templatePaths.some(t => path.startsWith(t));
+
     if (currentSectionItems) {
-      // Find the active item and its parent
       currentSectionItems.forEach((item) => {
         if (item.href && path.startsWith(item.href)) {
           itemsToExpand.push(item.name);
@@ -1231,21 +1171,27 @@ export const StacticSidebar = () => {
                 });
               }
             } else if ((subItem as any).subItems) {
-              // Check nested items for parking management and other nested structures
               (subItem as any).subItems.forEach((nestedItem: any) => {
                 if (nestedItem.href && path.startsWith(nestedItem.href)) {
-                  itemsToExpand.push(item.name); // Add top parent (Value Added Services)
-                  itemsToExpand.push(subItem.name); // Add middle parent (Parking Management)
+                  itemsToExpand.push(item.name);
+                  itemsToExpand.push(subItem.name);
                 }
               });
             }
           });
         }
       });
-
-      // Update expanded items state with only the active path
-      setExpandedItems(itemsToExpand);
+      // If on a Template route, always keep Templates expanded
+      if (isTemplatePath && !itemsToExpand.includes(templatesMenuName)) {
+        itemsToExpand.push(templatesMenuName);
+      }
+      // If NOT on a Template route, ensure Templates is NOT expanded
+      if (!isTemplatePath && itemsToExpand.includes(templatesMenuName)) {
+        const idx = itemsToExpand.indexOf(templatesMenuName);
+        if (idx > -1) itemsToExpand.splice(idx, 1);
+      }
     }
+    setExpandedItems(itemsToExpand);
   }, [currentSection, location.pathname]);
 
   const renderMenuItem = (item: any, level: number = 0) => {
@@ -1506,13 +1452,15 @@ export const StacticSidebar = () => {
         {/* Add background and border below the collapse button */}
         <div className="w-full h-4 bg-[#f6f4ee]  border-[#e5e1d8] mb-2"></div>
 
-        {currentSection && (
+        {/* Show 'Settings' as section label for template routes, otherwise use currentSection */}
+        {(!isSidebarCollapsed && (isOnTemplateRoute
+          ? (location.pathname && templatePaths.some(t => location.pathname.startsWith(t)))
+          : currentSection)) && (
           <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
             <h3
-              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
-                }`}
+              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
             >
-              {isSidebarCollapsed ? "" : currentSection}
+              {isOnTemplateRoute && location.pathname && templatePaths.some(t => location.pathname.startsWith(t)) ? "Settings" : currentSection}
             </h3>
           </div>
         )}
