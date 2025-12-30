@@ -166,32 +166,20 @@ const DMConversation = () => {
                     toast.success('Real-time chat connected!', { duration: 2000 });
                 },
                 onNewMessage: (message) => {
-                    if (message.user_id === currentUser.id) {
+                    if (message.user_id === currentUser.id && message.conversation_id !== id) {
                         return;
                     }
 
                     setMessages((prev) => {
-                        const exists = prev.some(msg => msg.id === message.id);
+                        const exists = prev.some((msg) => msg.id === message.id);
                         if (exists) return prev;
                         return [message, ...prev];
                     });
 
-                    if (!("Notification" in window)) {
-                        toast.error("Not supported");
+                    if (!('Notification' in window)) {
+                        toast.error('Not supported');
                         return;
                     }
-
-                    Notification.requestPermission().then(permission => {
-                        if (permission === "granted") {
-                            const notification = new Notification("New message", {
-                                body: message.body
-                            });
-
-                            notification.onclick = () => {
-                                window.focus();
-                            };
-                        }
-                    });
 
                     isUserInitiatedScroll.current = false;
                 },

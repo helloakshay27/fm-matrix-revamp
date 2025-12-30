@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { MenuItem, Select, TextField } from "@mui/material";
-import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus } from "lucide-react";
+import { ChartNoAxesColumn, ChevronDown, Eye, List, LogOut, Plus } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { cache } from "@/utils/cacheUtils";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +20,27 @@ import {
   updateSprintStatus,
 } from "@/store/slices/sprintSlice";
 import axios from "axios";
+
+// Define a Sprint type for better type safety
+interface Sprint {
+  id: string;
+  // API sometimes returns `name` instead of `title`, keep both for compatibility
+  name?: string;
+  title: string;
+  status: string;
+  sprint_owner: string;
+  start_date: string;
+  end_date: string;
+  duration: string;
+  priority: string;
+  number_of_projects: number;
+  _raw: unknown; // Replace `any` with `unknown` for better type safety
+}
+
+// Define a type guard to safely access properties on `_raw`
+const isSprintRaw = (raw: unknown): raw is { name?: string; owner_name?: string; sprint_owner_name?: string; project_count?: number; associated_projects_count?: number } => {
+  return typeof raw === "object" && raw !== null;
+};
 
 const columns: ColumnConfig[] = [
   {
@@ -87,33 +108,20 @@ const columns: ColumnConfig[] = [
   },
 ];
 
+// Fix transform to read API fields directly
 const transformedSprints = (sprints: any[]) => {
-  return sprints.map((sprint: any) => {
+  return sprints.map((item) => {
     return {
-      id: sprint.id,
-      title: sprint.title || sprint.name,
-      status: sprint.status
-        ? sprint.status.charAt(0).toUpperCase() + sprint.status.slice(1)
-        : "",
-      sprint_owner:
-        sprint.sprint_owner ||
-        sprint.owner_name ||
-        sprint.sprint_owner_name ||
-        "-",
-      start_date: sprint.start_date,
-      end_date: sprint.end_date,
-      duration: sprint.duration || "",
-      priority: sprint.priority
-        ? sprint.priority.charAt(0).toUpperCase() + sprint.priority.slice(1)
-        : "",
-      number_of_projects:
-        sprint.number_of_projects ||
-        sprint.project_count ||
-        sprint.associated_projects_count ||
-        0,
-      // Keep raw data for updates
-      _raw: sprint,
-    };
+      id: String(item.id ?? ""),
+      title: item.title ?? item.name ?? "",
+      status: (item.status ?? "").charAt(0).toUpperCase() + (item.status ?? "").slice(1),
+      sprint_owner: item.sprint_owner_name ?? item.owner_name ?? "-",
+      start_date: item.start_date ?? "",
+      end_date: item.end_date ?? "",
+      duration: item.duration ?? "",
+      priority: item.priority ? item.priority.charAt(0).toUpperCase() + item.priority.slice(1) : "",
+      number_of_projects: item.associated_projects_count ?? item.project_count ?? 0,
+    } as Sprint;
   });
 };
 
@@ -140,16 +148,17 @@ export const SprintDashboard = () => {
     (state: RootState) => state.updateSprint
   );
 
-  const [sprints, setSprints] = useState<any[]>([]);
+  const [sprints, setSprints] = useState<Sprint[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedView, setSelectedView] = useState("List");
   const [addSprintModalOpen, setAddSprintModalOpen] = useState(false);
   const [owners, setOwners] = useState([]);
 
-  const getOwners = async () => {
+  // Wrap `getOwners` in `useCallback` to stabilize its reference
+  const getOwners = useCallback(async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -158,14 +167,28 @@ export const SprintDashboard = () => {
       );
       setOwners(response.data.users);
     } catch (error) {
-      console.log(error);
-      toast.error(error);
+      handleError(error);
     }
-  };
+  }, [baseUrl, token]);
+
+  // Add missing dependencies to useEffect hooks
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await dispatch(fetchSprints({ token, baseUrl })).unwrap();
+      } catch (error) {
+        handleError(error);
+      }
+    };
+
+    fetchData();
+  }, [dispatch, token, baseUrl]);
+
+
 
   useEffect(() => {
     getOwners();
-  }, []);
+  }, [getOwners]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -196,7 +219,7 @@ export const SprintDashboard = () => {
       );
       setSprints(cachedResult.data);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.error(error || "Failed to fetch sprints");
     }
   }, []);
@@ -211,16 +234,16 @@ export const SprintDashboard = () => {
     }
   }, [sprintsData]);
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: Sprint) => {
     try {
       const payload = {
         sprint: {
-          title: data.sprint?.title || data.title,
-          owner_id: data.sprint?.owner_id || data.sprint_owner,
-          start_date: data.sprint?.start_date || data.start_date,
-          end_date: data.sprint?.end_date || data.end_date,
-          status: data.sprint?.status || data.status || "active",
-          priority: data.sprint?.priority || data.priority,
+          title: data.title,
+          owner_id: data.sprint_owner,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          status: data.status,
+          priority: data.priority,
         },
       };
 
@@ -231,12 +254,12 @@ export const SprintDashboard = () => {
       fetchData();
       setAddSprintModalOpen(false);
     } catch (error: any) {
-      console.log(error);
+      console.error(error);
       toast.error(error || "Failed to create sprint");
     }
   };
 
-  const handleUpdateSprint = async (id: string, data: any) => {
+  const handleUpdateSprint = async (id: string, data: Partial<Sprint>) => {
     try {
       const payload = {
         sprint: data,
@@ -249,7 +272,7 @@ export const SprintDashboard = () => {
       cache.invalidatePattern("sprints_*");
       fetchData();
     } catch (error: any) {
-      console.log(error);
+      console.error(error);
       toast.error(error || "Failed to update sprint");
     }
   };
@@ -267,7 +290,7 @@ export const SprintDashboard = () => {
       cache.invalidatePattern("sprints_*");
       fetchData();
     } catch (error: any) {
-      console.log(error);
+      console.error(error);
       toast.error(error || "Failed to update sprint status");
     }
   };
@@ -278,39 +301,49 @@ export const SprintDashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => navigate(`/maintenance/sprint/details/${item.id}`)}
+        onClick={() => navigate(`/vas/sprint/details/${item.id}`)}
       >
         <Eye className="w-4 h-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
+        onClick={() => navigate(`/vas/sprint/${item.id}`)}
+      >
+        <LogOut className="w-4 h-4" />
       </Button>
     </div>
   );
 
-  const renderCell = (item: any, columnKey: string) => {
+  const renderCell = (item: Sprint, columnKey: string) => {
     switch (columnKey) {
+      case "number_of_projects":
+        return item.number_of_projects > 0 ? item.number_of_projects : "-"; // Ensure proper rendering of the value
       case "status":
         return (
           <span
             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.status === "Active"
-                ? "bg-green-100 text-green-800"
-                : item.status === "Completed"
-                  ? "bg-blue-100 text-blue-800"
-                  : item.status === "In_progress"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : item.status === "Stopped"
-                      ? "bg-red-100 text-red-800"
-                      : "bg-gray-100 text-gray-800"
+              ? "bg-green-100 text-green-800"
+              : item.status === "Completed"
+                ? "bg-blue-100 text-blue-800"
+                : item.status === "In_progress"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : item.status === "Stopped"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-gray-100 text-gray-800"
               }`}
           >
             <span
               className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status === "Active"
-                  ? "bg-green-500"
-                  : item.status === "Completed"
-                    ? "bg-blue-500"
-                    : item.status === "In_progress"
-                      ? "bg-yellow-500"
-                      : item.status === "Stopped"
-                        ? "bg-red-500"
-                        : "bg-gray-500"
+                ? "bg-green-500"
+                : item.status === "Completed"
+                  ? "bg-blue-500"
+                  : item.status === "In_progress"
+                    ? "bg-yellow-500"
+                    : item.status === "Stopped"
+                      ? "bg-red-500"
+                      : "bg-gray-500"
                 }`}
             ></span>
             {item.status}
@@ -490,4 +523,9 @@ export const SprintDashboard = () => {
       />
     </div>
   );
+};
+
+// Ensure `handleError` is defined before its usage
+const handleError = (error: unknown) => {
+  console.error("An error occurred:", error);
 };

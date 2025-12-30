@@ -844,6 +844,7 @@ import { SpaceManagementBookingDetailsPage } from "./pages/SpaceManagementBookin
 import SpaceManagementBookingAddEmployee from "./pages/SpaceManagementBookingAddEmployee";
 import EmployeeWallet from "./pages/EmployeeWallet";
 import { useWebSocket } from "./hooks/useWebSocket";
+import SprintKanban from "./pages/SprintKanban";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -2583,14 +2584,14 @@ function App() {
                     path="/vas/sprint/details/:id"
                     element={<SprintDetailsPage />}
                   />
+                  <Route
+                    path="/vas/sprint/:id"
+                    element={<SprintKanban />}
+                  />
 
                   <Route
                     path="/vas/projects/:id/milestones/:mid"
                     element={<MilestoneDetailsPage />}
-                  />
-                  <Route
-                    path="/vas/sprint/:id"
-                    element={<SprintDetailsPage />}
                   />
 
                   {/* Issues Routes */}
