@@ -72,7 +72,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   assetsInclude: ["**/*.xlsx", "**/*.xls"],
-  base: "./", // Use relative paths for both web and Electron
+  base: mode === "production" ? "./" : "/", // Use relative paths only for production
   build: {
     outDir: "dist",
     emptyOutDir: true,
