@@ -21,32 +21,44 @@ export const baseClient = axios.create({
 baseClient.interceptors.request.use(
   async (config) => {
     try {
-      // First preference: use base URL saved via auth utilities (e.g., Mobile pages)
-      try {
-        const storedBaseUrl = getBaseUrl();
-        if (storedBaseUrl) {
-          config.baseURL = storedBaseUrl;
-          console.log("✅ Base URL set from stored baseUrl:", storedBaseUrl);
-          return config;
-        }
-      } catch (storageError) {
-        console.warn("⚠️ Unable to read stored baseUrl:", storageError);
-      }
-
-      // Check if user is already logged in (has baseUrl in localStorage)
-      const loggedInBaseUrl = localStorage.getItem("baseUrl");
-      if (loggedInBaseUrl) {
-        config.baseURL = loggedInBaseUrl;
-        console.log("✅ Base URL set from logged-in user:", loggedInBaseUrl);
-        return config;
-      }
-
-      // Extract URL parameters
+      // Extract URL parameters first to check for org_id
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get("token");
       const email = urlParams.get("email");
       const organizationId = urlParams.get("organization_id");
       const orgId = urlParams.get("org_id");
+
+      // If org_id is present in URL, this takes priority over logged-in state
+      // This allows public survey access even when user is logged in
+      const hasOrgIdParam = !!(organizationId || orgId);
+
+      // First preference: use base URL saved via auth utilities (e.g., Mobile pages)
+      // BUT skip this if org_id parameter is present (for public survey access)
+      if (!hasOrgIdParam) {
+        try {
+          const storedBaseUrl = getBaseUrl();
+          if (storedBaseUrl) {
+            config.baseURL = storedBaseUrl;
+            console.log("✅ Base URL set from stored baseUrl:", storedBaseUrl);
+            return config;
+          }
+        } catch (storageError) {
+          console.warn("⚠️ Unable to read stored baseUrl:", storageError);
+        }
+
+        // Check if user is already logged in (has baseUrl in localStorage)
+        // Skip this if org_id parameter is present
+        const loggedInBaseUrl = localStorage.getItem("baseUrl");
+        if (loggedInBaseUrl) {
+          config.baseURL = loggedInBaseUrl;
+          console.log("✅ Base URL set from logged-in user:", loggedInBaseUrl);
+          return config;
+        }
+      } else {
+        console.log(
+          "🔓 org_id parameter detected - using public survey access mode"
+        );
+      }
 
       // Store token in session storage if available
       if (token) {
