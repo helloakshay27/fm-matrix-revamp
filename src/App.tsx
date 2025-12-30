@@ -953,18 +953,19 @@ function App() {
             return;
           }
 
-          const sender =
-            message?.user?.firstname + " " + message?.user?.lastname;
-
           Notification.requestPermission().then((permission) => {
             if (permission === "granted") {
-              const notification = new Notification(sender, {
+              const notification = new Notification("New Message Received", {
                 body: message.body,
               });
 
               notification.onclick = () => {
                 window.focus();
-                navigate(`/vas/channels/messages/${message.conversation_id}`);
+                if (message.ntype === "conversation") {
+                  navigate(`/vas/channels/messages/${message.conversation_id}`);
+                } else if (message.ntype === "projectspace") {
+                  navigate(`/vas/channels/groups/${message.project_space_id}`);
+                }
               };
             }
           });
