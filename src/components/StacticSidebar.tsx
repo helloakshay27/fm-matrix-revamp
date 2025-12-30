@@ -990,6 +990,22 @@ const modulesByPackage = {
         },
       ],
     },
+
+     {
+        name: "Ticket Management",
+        icon: FileText,
+        subItems: [
+          { name: "Setup", href: "/settings/ticket-management/setup" },
+          {
+            name: "Escalation Matrix",
+            href: "/settings/ticket-management/escalation-matrix",
+          },
+          {
+            name: "Cost Approval",
+            href: "/settings/ticket-management/cost-approval",
+          },
+        ],
+      },
   ],
 };
 
