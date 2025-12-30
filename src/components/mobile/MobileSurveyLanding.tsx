@@ -1839,12 +1839,23 @@ export const MobileSurveyLanding: React.FC = () => {
             {!isFormView &&
               ((currentQuestion &&
                 !isLastStep &&
-                currentQuestionIndex > 0 &&
-                !showGenericTags) ||
+                currentQuestionIndex > 0) ||
+                showGenericTags ||
                 (isLastStep && isMultiQuestion)) && (
                 <button
                   type="button"
-                  onClick={moveToPreviousQuestion}
+                  onClick={() => {
+                    if (showGenericTags) {
+                      // Going back from generic tags page
+                      setShowGenericTags(false);
+                      setSelectedTags([]);
+                      setCurrentNegativeComments("");
+                      setPendingNegativeType(null);
+                      setPendingNegativeAnswer(null);
+                    } else {
+                      moveToPreviousQuestion();
+                    }
+                  }}
                   className="flex items-center text-white/90 hover:text-white text-sm font-medium transition-colors"
                 >
                   <svg
@@ -1933,7 +1944,7 @@ export const MobileSurveyLanding: React.FC = () => {
           ) : (
             <>
               {/* Normal View: Question by Question */}
-              <div className="flex-1 flex flex-col justify-center">
+              <div className="flex-1 flex flex-col">
                 {/* Survey Title for Normal View */}
                 <div className="text-center mb-6">
                   <h1 className="text-xl font-bold text-black/100 mb-2">
@@ -1950,6 +1961,24 @@ export const MobileSurveyLanding: React.FC = () => {
                     </span>
                   )}
                 </div>
+
+                {/* Spacer to push emoji questions to bottom */}
+                {currentQuestion &&
+                  !isLastStep &&
+                  !showGenericTags &&
+                  (currentQuestion.qtype === "emoji" ||
+                    currentQuestion.qtype === "smiley") && (
+                    <div className="flex-1" />
+                  )}
+
+                {/* Spacer to push question content down when showing emojis */}
+                {currentQuestion &&
+                  !isLastStep &&
+                  !showGenericTags &&
+                  (currentQuestion.qtype === "emoji" ||
+                    currentQuestion.qtype === "smiley") && (
+                    <div className="flex-1" />
+                  )}
 
                 {/* Show Final Description Step */}
                 {isLastStep && isMultiQuestion && (
@@ -1990,14 +2019,14 @@ export const MobileSurveyLanding: React.FC = () => {
                   </div>
                 )}
 
-                {!(
+                {!((
                   isLastStep &&
                   currentQuestionIndex ===
                   surveyData.snag_checklist.questions_count
-                ) &&
+                )) &&
                   currentQuestion &&
                   !showGenericTags && (
-                    <div className="text-center mb-6">
+                    <div className="text-center mb-4">
                       <div className="bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-md border border-gray-200">
                         <p className="text-lg text-gray-900 font-semibold">
                           {currentQuestion.descr}
@@ -2266,7 +2295,7 @@ export const MobileSurveyLanding: React.FC = () => {
                       {(currentQuestion.qtype === "emoji" ||
                         currentQuestion.qtype === "smiley") &&
                         !showGenericTags && (
-                          <div className="w-full">
+                          <div className="w-full mb-8">
                             <div className="flex justify-between items-center gap-3 sm:gap-4 bg-white rounded-lg border-2 border-gray-200 shadow-md p-3">
                               {" "}
                               {getEmojiOptions(currentQuestion).map(
@@ -2306,7 +2335,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         <>
                           <div className="bg-white rounded-lg border border-gray-200 p-1.5 xs:p-2 sm:p-3 shadow-md relative">
                             {/* Grid Layout - 2x2 for first 4, then repeat */}
-                            <div className="overflow-x-auto pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
+                            <div className="overflow-x-scroll pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
                               {(() => {
                                 const tags =
                                   getCurrentQuestion()?.generic_tags || [];
