@@ -141,7 +141,7 @@ export const StatusTab: React.FC = () => {
     // Get the form data
     const data: StatusFormData = {
       name: statusNameInput.value.trim(),
-      fixedState: fixedStateValue as 'closed' | 'reopen' | 'complete',
+      fixedState: fixedStateValue as 'closed' | 'reopen' | 'complete' | '',
       colorCode: colorCodeInput.value.trim(),
       position: parseInt(positionInput.value) || 0,
     };
