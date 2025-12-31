@@ -1006,6 +1006,8 @@ const modulesByPackage = {
           },
         ],
       },
+
+       { name: "FM Groups", icon: Users, href: "/settings/groups" },
   ],
 };
 
