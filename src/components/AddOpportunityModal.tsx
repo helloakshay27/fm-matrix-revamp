@@ -155,6 +155,11 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
         formData.append("opportunity[tag_ids][]", tagId.value);
       });
 
+      // Append observers
+      observers.forEach((observerId: any) => {
+        formData.append("opportunity[observer_ids][]", observerId.value);
+      });
+
       // Append attachments
       attachments.forEach((file) => {
         formData.append("attachments[]", file);
@@ -501,6 +506,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
               borderColor: "black",
               borderRadius: 0,
               minWidth: "120px",
+              cursor: "pointer",
               textTransform: "none",
               borderWidth: "1px",
               "&:hover": {
