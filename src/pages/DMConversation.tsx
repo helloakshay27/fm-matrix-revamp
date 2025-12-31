@@ -373,14 +373,25 @@ const DMConversation = () => {
                             ref={paperclipRef}
                         />
                     </div>
-                    <button type="button" className="text-gray-500 text-xl" onClick={sendMessages}>
+                    <button
+                        type="button"
+                        onClick={sendMessages}
+                        disabled={input.trim() === ""}
+                        className="
+    text-xl
+    text-[#C72030]
+    disabled:text-gray-300
+    disabled:cursor-not-allowed
+  "
+                    >
                         <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
                             <path
                                 d="M4.25 28.3332V19.8332L15.5833 16.9998L4.25 14.1665V5.6665L31.1667 16.9998L4.25 28.3332Z"
-                                fill="#C72030"
+                                fill="currentColor"
                             />
                         </svg>
                     </button>
+
                 </div>
             )}
         </div>

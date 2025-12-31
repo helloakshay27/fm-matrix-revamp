@@ -60,6 +60,7 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
   const [description, setDescription] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
   const [tags, setTags] = useState([]);
+  const [observers, setObservers] = useState([]);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [existingAttachments, setExistingAttachments] = useState<
     ExistingAttachment[]
@@ -104,6 +105,14 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
         id: tag.company_tag_id,
       }));
       setTags(selectedTags);
+
+      // Map observers to the format expected by MuiMultiSelect: {value, label}
+      const selectedObservers = (data.observers || []).map((observer: any) => ({
+        value: observer.id,
+        label: observer.user_name || "Unknown User",
+        id: observer.id,
+      }));
+      setObservers(selectedObservers);
       setExistingAttachments(data.attachments || []);
     } catch (error) {
       console.error("Error fetching opportunity details:", error);
@@ -187,6 +196,9 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
   const handleMultiSelectChange = (field: string, values: any) => {
     if (field === "tags") {
       setTags(values);
+    }
+    else if (field === "observers") {
+      setObservers(values);
     }
   };
 
@@ -482,6 +494,25 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
                 value={tags}
                 onChange={(values) => handleMultiSelectChange("tags", values)}
                 placeholder="Select Tags"
+              />
+            </div>
+
+            <div className="!mt-6">
+              <MuiMultiSelect
+                label={
+                  <>
+                    Observer<span className="text-red-500">*</span>
+                  </>
+                }
+                options={mentionUsers
+                  ?.filter(Boolean)
+                  .map((user: any) => ({
+                    label: user?.full_name || "Unknown",
+                    value: user?.id,
+                  }))}
+                value={observers}
+                placeholder="Select Observer"
+                onChange={(values) => handleMultiSelectChange("observers", values)}
               />
             </div>
 
