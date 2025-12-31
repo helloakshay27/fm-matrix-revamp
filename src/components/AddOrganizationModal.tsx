@@ -36,6 +36,7 @@ interface OrganizationFormData {
   front_subdomain: string;
   country_id: string;
   active: boolean;
+  // API accepts one file; we'll preview multiple but submit the first
   logo: File | null;
   powered_by_logo: File | null;
 }
@@ -73,6 +74,9 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
 }) => {
   const { getFullUrl, getAuthHeader } = useApiConfig();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Local preview URLs for selected images (support multiple previews)
+  const [logoPreviewUrls, setLogoPreviewUrls] = useState<string[]>([]);
+  const [poweredByPreviewUrls, setPoweredByPreviewUrls] = useState<string[]>([]);
   const [formData, setFormData] = useState<OrganizationFormData>({
     name: "",
     description: "",
@@ -181,19 +185,78 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
   };
 
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setFormData({ ...formData, logo: file });
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      // Keep the first file as the submitted logo if not set yet
+      const first = files[0];
+      setFormData((prev) => ({ ...prev, logo: prev.logo ?? first }));
+      // Generate previews for all newly selected files and append to existing
+      const newUrls: string[] = Array.from(files).map((f) =>
+        URL.createObjectURL(f)
+      );
+      setLogoPreviewUrls((prev) => [...prev, ...newUrls]);
+      // Clear the input value to allow selecting the same file again if needed
+      event.currentTarget.value = "";
+    } else {
+      // Clear when no files
+      logoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+      setLogoPreviewUrls([]);
+      setFormData({ ...formData, logo: null });
     }
   };
 
   const handlePoweredByLogoChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setFormData({ ...formData, powered_by_logo: file });
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const first = files[0];
+      setFormData((prev) => ({ ...prev, powered_by_logo: prev.powered_by_logo ?? first }));
+      const newUrls: string[] = Array.from(files).map((f) =>
+        URL.createObjectURL(f)
+      );
+      setPoweredByPreviewUrls((prev) => [...prev, ...newUrls]);
+      event.currentTarget.value = "";
+    } else {
+      poweredByPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+      setPoweredByPreviewUrls([]);
+      setFormData({ ...formData, powered_by_logo: null });
     }
+  };
+
+  // Remove a logo preview at given index
+  const removeLogoPreview = (index: number) => {
+    setLogoPreviewUrls((prev) => {
+      const copy = [...prev];
+      const url = copy[index];
+      if (url) URL.revokeObjectURL(url);
+      copy.splice(index, 1);
+      return copy;
+    });
+    // If submitted logo is from the first selected and we removed all, clear it
+    setFormData((prev) => {
+      if (logoPreviewUrls.length - 1 <= 0) {
+        return { ...prev, logo: null };
+      }
+      return prev;
+    });
+  };
+
+  // Remove a powered-by preview at given index
+  const removePoweredByPreview = (index: number) => {
+    setPoweredByPreviewUrls((prev) => {
+      const copy = [...prev];
+      const url = copy[index];
+      if (url) URL.revokeObjectURL(url);
+      copy.splice(index, 1);
+      return copy;
+    });
+    setFormData((prev) => {
+      if (poweredByPreviewUrls.length - 1 <= 0) {
+        return { ...prev, powered_by_logo: null };
+      }
+      return prev;
+    });
   };
 
   const resetForm = () => {
@@ -209,6 +272,11 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
       logo: null,
       powered_by_logo: null,
     });
+  // Revoke and clear previews
+  logoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+  poweredByPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+  setLogoPreviewUrls([]);
+  setPoweredByPreviewUrls([]);
   };
 
   const handleClose = () => {
@@ -249,7 +317,10 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 required
                 disabled={isSubmitting}
@@ -290,7 +361,24 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 multiline
                 rows={3}
@@ -335,7 +423,10 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
                 required
@@ -351,7 +442,9 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
                 helperText="Enter subdomain (e.g., app.example.com)"
@@ -368,7 +461,9 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
                 helperText="Enter frontend domain (e.g., www.example.com)"
@@ -383,7 +478,9 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 }
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
                 InputProps={{ sx: fieldStyles }}
                 disabled={isSubmitting}
                 helperText="Enter frontend subdomain (e.g., portal.example.com)"
@@ -401,15 +498,37 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 <span className="text-sm font-medium">Organization Logo</span>
                 <input
                   type="file"
+                  multiple
                   onChange={handleLogoChange}
                   accept="image/*"
                   disabled={isSubmitting}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
                 />
-                {formData.logo && (
-                  <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    {formData.logo.name}
+                {logoPreviewUrls.length > 0 && (
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      {formData.logo?.name}
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {logoPreviewUrls.map((url, idx) => (
+                        <div key={url} className="relative">
+                          <img
+                            src={url}
+                            alt={`Organization Logo Preview ${idx + 1}`}
+                            className="h-16 w-16 object-cover border border-gray-200 rounded"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeLogoPreview(idx)}
+                            className="absolute -top-1.5 -right-1.5 bg-white text-[#BD2828] border border-gray-200 rounded-full w-5 h-5 text-xs leading-none flex items-center justify-center shadow hover:bg-[#BD2828] hover:text-white"
+                            aria-label="Remove image"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -418,32 +537,53 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 <span className="text-sm font-medium">Powered By Logo</span>
                 <input
                   type="file"
+                  multiple
                   onChange={handlePoweredByLogoChange}
                   accept="image/*"
                   disabled={isSubmitting}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
                 />
-                {formData.powered_by_logo && (
-                  <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    {formData.powered_by_logo.name}
+                {poweredByPreviewUrls.length > 0 && (
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      {formData.powered_by_logo?.name}
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {poweredByPreviewUrls.map((url, idx) => (
+                        <div key={url} className="relative">
+                          <img
+                            src={url}
+                            alt={`Powered By Logo Preview ${idx + 1}`}
+                            className="h-16 w-16 object-cover border border-gray-200 rounded"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePoweredByPreview(idx)}
+                            className="absolute -top-1.5 -right-1.5 bg-white text-[#BD2828] border border-gray-200 rounded-full w-5 h-5 text-xs leading-none flex items-center justify-center shadow hover:bg-[#BD2828] hover:text-white"
+                            aria-label="Remove image"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+            <div className="bg-[#BD2828] border border-transparent rounded-lg p-4 mt-4 text-white">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Image className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Image className="w-4 h-4 text-white" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-blue-800">
+                  <p className="text-sm font-medium text-white">
                     Upload Guidelines
                   </p>
-                  <p className="text-xs text-blue-700">
-                    Recommended formats: PNG, JPG, SVG • Max size: 2MB • Min
-                    dimensions: 200x200px
+                  <p className="text-xs text-white/90">
+                    Recommended formats: PNG, JPG, SVG • Max size: 2MB • Min dimensions: 200x200px
                   </p>
                 </div>
               </div>
