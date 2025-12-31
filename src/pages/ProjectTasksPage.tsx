@@ -6,6 +6,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
 import { createProjectTask, editProjectTask, fetchProjectTasks, filterTasks, updateTaskStatus } from "@/store/slices/projectTasksSlice";
@@ -80,6 +81,13 @@ const columns: ColumnConfig[] = [
         key: "target_date",
         label: "End Date",
         sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
+    {
+        key: "started_time",
+        label: "Started Time",
+        sortable: false,
         draggable: true,
         defaultVisible: true,
     },
@@ -168,10 +176,12 @@ const STATUS_OPTIONS = [
 
 // Utility function to calculate duration between two dates (matching task_management)
 const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
-    if (!start || !end) return { text: "N/A", isOverdue: false };
+    // If end date is missing, return N/A
+    if (!end) return { text: "N/A", isOverdue: false };
 
     const now = new Date();
-    const startDate = new Date(start);
+    // Use provided start date or today if not provided
+    const startDate = start ? new Date(start) : now;
     const endDate = new Date(end);
 
     // Set end date to end of the day
@@ -606,6 +616,8 @@ const ProjectTasksPage = () => {
     const fetchData = useCallback(async (page: number = 1) => {
         try {
             setLoading(true);
+            const searchParams = new URLSearchParams(location.search);
+            const urlProjectId = searchParams.get('project_id');
 
             // Determine if we're in milestone context or standalone tasks
             const isMilestoneContext = mid !== undefined && mid !== null;
@@ -616,8 +628,12 @@ const ProjectTasksPage = () => {
                 filters["q[status_eq]"] = selectedFilterOption;
             }
 
-            // Create cache key based on context
-            const cacheKey = `tasks_${isMilestoneContext ? 'milestone_' + mid : taskType}_${selectedFilterOption}_${page}`;
+            if (urlProjectId) {
+                filters["q[project_management_id_eq]"] = urlProjectId;
+            }
+
+            // Create cache key based on context - include both projectId and urlProjectId to prevent cache issues
+            const cacheKey = `tasks_${isMilestoneContext ? 'milestone_' + mid : taskType}_${selectedFilterOption}_${projectId}_${urlProjectId}_${page}`;
 
             let response;
 
@@ -693,7 +709,7 @@ const ProjectTasksPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [selectedFilterOption, taskType, mid, dispatch, token, baseUrl]);
+    }, [selectedFilterOption, taskType, mid, dispatch, token, baseUrl, projectId, location.search]);
 
     const getUsers = useCallback(async () => {
         try {
@@ -710,7 +726,7 @@ const ProjectTasksPage = () => {
 
     useEffect(() => {
         fetchData(1);
-    }, [selectedFilterOption, taskType, mid]);
+    }, [selectedFilterOption, taskType, mid, projectId, location.search, fetchData]);
 
     useEffect(() => {
         getUsers();
@@ -1010,6 +1026,13 @@ const ProjectTasksPage = () => {
             // Update task status to "on_hold" (paused)
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(tid), data: { status: 'stopped' } })).unwrap();
 
+            // Update local state immediately for instant UI feedback
+            setTasks((prevTasks) =>
+                prevTasks.map((task) =>
+                    task.id === tid ? { ...task, is_started: false } : task
+                )
+            );
+
             // Invalidate task caches to force refresh
             cache.invalidatePattern('tasks_*');
 
@@ -1033,8 +1056,8 @@ const ProjectTasksPage = () => {
             setIsPauseModalOpen(false);
             setPauseTaskId(null);
 
-            // Refresh task list
-            await fetchData();
+            // Refresh task list in background
+            fetchData();
         } catch (error) {
             console.error('Failed to pause task:', error);
             toast.error(
@@ -1048,7 +1071,14 @@ const ProjectTasksPage = () => {
     const handlePlayTask = async (id: number) => {
         try {
             await dispatch(updateTaskStatus({ token, baseUrl, id: String(id), data: { status: 'started' } })).unwrap();
-            fetchData();
+
+            // Update local state immediately for instant UI feedback
+            setTasks((prevTasks) =>
+                prevTasks.map((task) =>
+                    task.id === id ? { ...task, is_started: true } : task
+                )
+            );
+
             toast.success("Task started successfully");
         } catch (error) {
             console.log(error);
@@ -1057,17 +1087,37 @@ const ProjectTasksPage = () => {
     }
 
     const renderCell = (item: any, columnKey: string, isSubtask: boolean = false) => {
-        const renderProgressBar = (completed: number, total: number, color: string, type: string) => {
+        const renderProgressBar = (
+            completed: number,
+            total: number,
+            color: string,
+            type?: string
+        ) => {
             const progress = total > 0 ? (completed / total) * 100 : 0;
             return (
-                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate(type === "issues" && `/vas/issues?task_id=${item.id}`)}>
-                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                <div
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() =>
+                        type === "issues"
+                            ? navigate(`/vas/issues?task_id=${item.id}`)
+                            : null
+                    }
+                >
+                    <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+                        {completed}
+                    </span>
+                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
                         <div
-                            className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
+                            className={`absolute top-0 left-0 h-6 ${color} rounded-full transition-all duration-300`}
                             style={{ width: `${progress}%` }}
                         ></div>
+                        <span className="relative z-10 text-xs font-semibold text-gray-800">
+                            {Math.round(progress)}%
+                        </span>
                     </div>
-                    <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{completed}/{total}</span>
+                    <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+                        {total}
+                    </span>
                 </div>
             );
         };
@@ -1242,6 +1292,9 @@ const ProjectTasksPage = () => {
             }
             case "priority": {
                 return item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-";
+            }
+            case "started_time": {
+                return <ActiveTimer activeTimeTillNow={item?.active_time_till_now} isStarted={item?.is_started} />;
             }
             case "predecessor": {
                 return item.predecessor_task?.length || "0";

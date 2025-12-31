@@ -306,8 +306,8 @@ const IssuesListPage = ({
                     queryString = qs.stringify(filterOrString);
                 }
 
-                // Create cache key for filtered issues
-                const cacheKey = `issues_filtered_${queryString}`;
+                // Create cache key for filtered issues - include projectId and taskIdParam to prevent stale cache
+                const cacheKey = `issues_filtered_${projectId}_${projectIdParam}_${taskIdParam}_${queryString}`;
 
                 const cachedResult = await cache.getOrFetch(
                     cacheKey,
@@ -336,7 +336,7 @@ const IssuesListPage = ({
                 setFilteredLoading(false);
             }
         },
-        [baseUrl, token]
+        [baseUrl, token, projectId, projectIdParam, taskIdParam]
     );
 
     const getUsers = useCallback(async () => {
@@ -367,7 +367,7 @@ const IssuesListPage = ({
             window.removeEventListener("issues:created", handler as EventListener);
     }, [dispatch, baseUrl, token, projectId]);
 
-    // Reset fetch initiated ref when projectId, projectIdParam, or taskIdParam changes
+    // Immediately fetch when parameters change or on initial mount with parameters
     useEffect(() => {
         const paramsChanged =
             prevParamsRef.current.projectId !== projectId ||
@@ -378,9 +378,21 @@ const IssuesListPage = ({
             allIssuesFetchInitiatedRef.current = false;
             setFilterSuccess(false);
             setFilteredIssues([]);
+            setPagination({ pageIndex: 0, pageSize: 10 });
             prevParamsRef.current = { projectId, projectIdParam, taskIdParam };
         }
-    }, [projectId, projectIdParam, taskIdParam]);
+
+        // Trigger fetch immediately when parameters are present
+        if ((projectId || projectIdParam || taskIdParam) && baseUrl && token) {
+            const filter = {
+                "q[project_management_id_eq]": projectId || projectIdParam || "",
+                "q[task_management_id_eq]": taskIdParam || "",
+                page: 1,
+                per_page: 10,
+            };
+            performFilteredFetch(filter);
+        }
+    }, [projectId, projectIdParam, taskIdParam, baseUrl, token, performFilteredFetch]);
 
     // Advanced filtering with search
     useEffect(() => {
@@ -410,43 +422,22 @@ const IssuesListPage = ({
         }
     }, [searchQuery, projectId, projectIdParam, taskIdParam]);
 
-    // Fetch issues - only for initial load if no search
+    // Fetch all issues only when no parameters and haven't fetched yet
     useEffect(() => {
+        // Only fetch all issues if no projectId/taskId parameters and we haven't already
         if (
-            !loading &&
-            (!rawIssues || !Array.isArray(rawIssues) || rawIssues.length === 0) &&
+            !projectId &&
+            !projectIdParam &&
+            !taskIdParam &&
+            !searchQuery.trim() &&
             !allIssuesFetchInitiatedRef.current &&
-            !searchQuery.trim()
+            baseUrl &&
+            token
         ) {
-            // If projectId from prop or URL param is provided, use filter to get issues for that project
-            if (projectId || projectIdParam || taskIdParam) {
-                const filter = {
-                    "q[project_management_id_eq]": projectId || projectIdParam || "",
-                    "q[task_management_id_eq]": taskIdParam || "",
-                    page: pagination.pageIndex + 1,
-                    per_page: pagination.pageSize,
-                };
-                performFilteredFetch(filter);
-            } else {
-                // Only fetch all issues if no specific filter is provided
-                dispatch(fetchIssues({ baseUrl, token, id: "" }));
-            }
+            dispatch(fetchIssues({ baseUrl, token, id: "" }));
             allIssuesFetchInitiatedRef.current = true;
         }
-    }, [
-        dispatch,
-        rawIssues,
-        loading,
-        token,
-        baseUrl,
-        pagination.pageIndex,
-        pagination.pageSize,
-        projectId,
-        projectIdParam,
-        taskIdParam,
-        searchQuery,
-        performFilteredFetch,
-    ]);
+    }, [dispatch, baseUrl, token, projectId, projectIdParam, taskIdParam, searchQuery]);
 
     // Handle pagination for search results
     useEffect(() => {

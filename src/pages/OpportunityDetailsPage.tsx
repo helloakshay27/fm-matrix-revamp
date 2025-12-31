@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronDown, ChevronDownCircle, CircleCheckBig, LogOut, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronDownCircle, CircleCheckBig, LogOut, RefreshCw, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -67,6 +67,7 @@ interface CommentData {
     body: string;
     commentor_full_name: string;
     created_at: string;
+    updated_at?: string;
 }
 
 const Attachments = ({
@@ -395,6 +396,9 @@ const Comments = ({ comments, getOpportunity }: { comments: CommentData[]; getOp
 
                             <div className="flex gap-2 text-[10px]">
                                 <span>{formatToDDMMYYYY_AMPM(cmt.created_at)}</span>
+                                {cmt.updated_at && cmt.updated_at !== cmt.created_at && (
+                                    <span className="text-gray-500 italic">(edited)</span>
+                                )}
                                 <span className="cursor-pointer hover:underline" onClick={() => handleEdit(cmt)}>
                                     Edit
                                 </span>
@@ -660,12 +664,24 @@ const OpportunityDetailsPage = () => {
                         <span className="h-6 w-[1px] border border-gray-300"></span>
 
                         {!opportunityDetails?.task_created ? (
-                            <span
-                                className="cursor-pointer flex items-center gap-1"
-                                onClick={handleConvertToTask}
-                            >
-                                <CircleCheckBig className="mx-1" size={15} /> Convert
-                            </span>
+                            <>
+                                <span
+                                    className="cursor-pointer flex items-center gap-1"
+                                    onClick={handleConvertToTask}
+                                >
+                                    <RefreshCw className="mx-1" size={15} /> Convert
+                                </span>
+
+                                <span className="h-6 w-[1px] border border-gray-300"></span>
+
+                                <span
+                                    className="flex items-center gap-1 cursor-pointer"
+                                //   onClick={handleAddToDo}
+                                >
+                                    <CircleCheckBig size={15} />
+                                    <span>Add To Do</span>
+                                </span>
+                            </>
                         ) : (
                             <span className="cursor-pointer flex items-center gap-1" onClick={handleGoToTask}>
                                 <LogOut className="mx-1" size={15} /> Go to{' '}
