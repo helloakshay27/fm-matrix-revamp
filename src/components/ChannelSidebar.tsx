@@ -134,7 +134,7 @@ const ChannelSidebar = () => {
                 </button>
 
                 {isMessagesOpen && (
-                    <div className="pl-6 space-y-1 max-h-[15rem] overflow-auto">
+                    <div className="pl-6 space-y-1 max-h-[12rem] overflow-auto">
                         {
                             filteredConversations.length > 0 ? (
                                 filteredConversations.map((conversation) => {
@@ -179,7 +179,7 @@ const ChannelSidebar = () => {
                 </button>
 
                 {isGroupsOpen && (
-                    <div className="pl-6 space-y-1 max-h-[15rem] overflow-auto">
+                    <div className="pl-6 space-y-1 max-h-[12rem] overflow-auto">
                         {
                             filteredGroups.length > 0 ? (
                                 filteredGroups.map((group) => {
@@ -215,6 +215,8 @@ const ChannelSidebar = () => {
                     setSearchQuery={setSearchQuery}
                     setNewConversationModal={setNewConversationModal}
                     conversations={conversations}
+                    onConversationCreated={getConversations}
+                    onGroupCreated={getGroups}
                 />
             )}
         </div>
