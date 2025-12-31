@@ -699,9 +699,12 @@ const ProjectDetailsPage = () => {
                                     </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
-                                    <div className="text-right text-[13px] font-[500]">
+                                    <Link
+                                        to={`/vas/issues?project_id=${project.id}`}
+                                        className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer"
+                                    >
                                         Issues :
-                                    </div>
+                                    </Link>
                                     <div className="text-left text-[13px]">{`${project.completed_issues_count}/${project.total_issues_count}`}</div>
                                 </div>
                             </div>

@@ -6,6 +6,61 @@ import AddToDoModal from '@/components/AddToDoModal';
 import { Button } from '@/components/ui/button';
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
+import { ActiveTimer } from '@/pages/ProjectTaskDetails';
+
+// Countdown timer component with real-time updates
+const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetDate?: string }) => {
+    const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
+        // If end date is missing, return N/A
+        if (!end) return { text: "N/A", isOverdue: false };
+
+        const now = new Date();
+        // Use provided start date or today if not provided
+        const startDateObj = start ? new Date(start) : now;
+        const endDate = new Date(end);
+
+        // Set end date to end of the day
+        endDate.setHours(23, 59, 59, 999);
+
+        // Check if task hasn't started yet
+        if (now < startDateObj) {
+            return { text: "Not started", isOverdue: false };
+        }
+
+        // Calculate time differences (use absolute value to show overdue time)
+        const diffMs = endDate.getTime() - now.getTime();
+        const absDiffMs = Math.abs(diffMs);
+        const isOverdue = diffMs <= 0;
+
+        // Calculate time differences
+        const seconds = Math.floor(absDiffMs / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        const remainingHours = hours % 24;
+        const remainingMinutes = minutes % 60;
+
+        const timeStr = `${days > 0 ? days + "d " : "0d "}${remainingHours > 0 ? remainingHours + "h " : "0h "}${remainingMinutes > 0 ? remainingMinutes + "m " : "0m"}`;
+        return {
+            text: isOverdue ? `${timeStr}` : timeStr,
+            isOverdue: isOverdue,
+        };
+    };
+
+    const [countdown, setCountdown] = useState(calculateDuration(startDate, targetDate));
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCountdown(calculateDuration(startDate, targetDate));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [targetDate, startDate]);
+
+    const textColor = countdown.isOverdue ? "text-red-600" : "text-[#029464]";
+    return <div className={`text-left ${textColor} text-[12px]`}>{countdown.text}</div>;
+};
 
 export default function Todo() {
     const { setCurrentSection } = useLayout();
@@ -427,6 +482,25 @@ const TodoItem = ({ todo, toggleTodo, deleteTodo, handlePlayTask, setPauseTaskId
                     <span className="text-xs text-muted-foreground">Due: {todo.target_date}</span>
                 )}
             </div>
+
+            {/* Time Left and Active Timer for tasks only */}
+            {todo.task_management_id && (
+                <div className="flex flex-col items-end gap-1 text-[12px] min-w-max">
+                    {/* Time Left */}
+                    <div className="flex flex-col items-end">
+                        <span className="text-xs text-gray-600 font-medium">Time Left:</span>
+                        <CountdownTimer startDate={todo.task_management?.expected_start_date} targetDate={todo.target_date} />
+                    </div>
+
+                    {/* Active Timer */}
+                    {isTaskStarted && (
+                        <div className="flex flex-col items-end">
+                            <span className="text-xs text-gray-600 font-medium">Started:</span>
+                            <ActiveTimer activeTimeTillNow={todo.task_management?.active_time_till_now} isStarted={isTaskStarted} />
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Play/Pause buttons for tasks converted from task management */}
             {todo.task_management_id && (

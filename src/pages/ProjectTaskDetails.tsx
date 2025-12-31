@@ -95,7 +95,7 @@ const calculateDuration = (start: string | undefined, end: string | undefined): 
 };
 
 // Active Timer Component - shows when task is started
-const ActiveTimer = ({ activeTimeTillNow, isStarted }) => {
+export const ActiveTimer = ({ activeTimeTillNow, isStarted }) => {
   const [time, setTime] = useState({
     hours: 0,
     minutes: 0,
@@ -538,6 +538,9 @@ const Comments = ({ comments, taskId, getTask }: { comments?: any[]; taskId?: st
 
               <div className="flex gap-2 text-[10px]">
                 <span>{formatToDDMMYYYY_AMPM(cmt.created_at)}</span>
+                {cmt.updated_at && cmt.updated_at !== cmt.created_at && (
+                  <span className="text-gray-500 italic">(edited)</span>
+                )}
                 <span className="cursor-pointer" onClick={() => handleEdit(cmt)}>
                   Edit
                 </span>
@@ -1427,7 +1430,7 @@ export const ProjectTaskDetails = () => {
 
 
                 <div className="min-w-[200px]">
-                  <p className="text-sm font-medium text-gray-600">{taskDetails.parent_id ? 'Task' : 'MileStones'}:</p>
+                  <p className="text-sm font-medium text-gray-600">{taskDetails.parent_id ? 'Task' : 'Milestone'}:</p>
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-900">{taskDetails.parent_id ? taskDetails.parent_task_title : taskDetails.milestone?.title}</p>
