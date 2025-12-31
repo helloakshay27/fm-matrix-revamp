@@ -430,7 +430,8 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.company_id || !formData.headquarter_id) {
+  // Country (headquarter_id) is optional
+  if (!formData.name || !formData.company_id) {
       return;
     }
 
@@ -517,12 +518,11 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                   disabled={isLoading}
                 />
 
-                <FormControl fullWidth variant="outlined" required>
+                <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Company</InputLabel>
                   <MuiSelect
                     value={formData.company_id?.toString() || ""}
                     onChange={(e) => {
-                      console.log("Company selected:", e.target.value);
                       handleInputChange(
                         "company_id",
                         parseInt(e.target.value as string) || 0
@@ -553,12 +553,11 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               </div>
 
               <div className="grid grid-cols-2 gap-6 mt-6">
-                <FormControl fullWidth variant="outlined" required>
+                <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Country</InputLabel>
                   <MuiSelect
                     value={formData.headquarter_id?.toString() || ""}
                     onChange={(e) => {
-                      console.log("Country selected:", e.target.value);
                       handleInputChange(
                         "headquarter_id",
                         parseInt(e.target.value as string) || 0
@@ -593,7 +592,6 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                   <MuiSelect
                     value={formData.region_id?.toString() || ""}
                     onChange={(e) => {
-                      console.log("Region selected:", e.target.value);
                       handleInputChange(
                         "region_id",
                         parseInt(e.target.value as string) || 0
@@ -987,13 +985,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               >
                 Cancel
               </Button>
-              <Button
+        <Button
                 type="submit"
                 disabled={
-                  isLoading ||
-                  !formData.name ||
-                  !formData.company_id ||
-                  !formData.headquarter_id
+          isLoading || !formData.name || !formData.company_id
                 }
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
