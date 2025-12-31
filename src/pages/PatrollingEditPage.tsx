@@ -1972,18 +1972,18 @@ export const PatrollingEditPage: React.FC = () => {
                     variant="outlined"
                     sx={{ "& .MuiInputBase-root": fieldStyles }}
                   >
-                    <InputLabel shrink>Assignee<span className="text-red-500">*</span></InputLabel>
+                    <InputLabel shrink>Guard<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={s.assignee || ""}
                       onChange={(e) =>
                         updateShift(idx, "assignee", String(e.target.value))
                       }
-                      label="Assignee*"
+                      label="Guard*"
                       notched
                       displayEmpty
                       disabled={isSubmitting || loadingUsers}
                     >
-                      <MenuItem value="">Select Assignee</MenuItem>
+                      <MenuItem value="">Select Guard</MenuItem>
                       {loadingUsers ? (
                         <MenuItem disabled>
                           <CircularProgress size={20} sx={{ mr: 1 }} />

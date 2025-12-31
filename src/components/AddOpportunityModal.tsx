@@ -50,6 +50,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
   const [description, setDescription] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
   const [tags, setTags] = useState([]);
+  const [observers, setObservers] = useState([])
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [prevTags, setPrevTags] = useState([]);
@@ -129,6 +130,10 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
   const handleMultiSelectChange = (field: string, values: any) => {
     if (field === "tags") {
       setTags(values);
+    }
+
+    if (field === "observers") {
+      setObservers(values);
     }
   };
 
@@ -409,6 +414,25 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
               value={tags}
               onChange={(values) => handleMultiSelectChange("tags", values)}
               placeholder="Select Tags"
+            />
+          </div>
+
+          <div className="!mt-6">
+            <MuiMultiSelect
+              label={
+                <>
+                  Observer<span className="text-red-500">*</span>
+                </>
+              }
+              options={mentionUsers
+                ?.filter(Boolean)
+                .map((user: any) => ({
+                  label: user?.full_name || "Unknown",
+                  value: user?.id,
+                }))}
+              value={observers}
+              placeholder="Select Observer"
+              onChange={(values) => handleMultiSelectChange("observers", values)}
             />
           </div>
 
