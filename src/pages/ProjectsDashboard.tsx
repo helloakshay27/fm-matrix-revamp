@@ -37,6 +37,8 @@ import ProjectFilterModal from "@/components/ProjectFilterModal";
 import { useLayout } from "@/contexts/LayoutContext";
 import axios from "axios";
 import { useDebounce } from "@/hooks/useDebounce";
+import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { CommonImportModal } from "@/components/CommonImportModal";
 
 const columns: ColumnConfig[] = [
   {
@@ -221,7 +223,11 @@ export const ProjectsDashboard = () => {
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false)
 
   // Refs for click outside detection
   const viewDropdownRef = useRef<HTMLDivElement>(null);
@@ -471,6 +477,54 @@ export const ProjectsDashboard = () => {
     }
   };
 
+  const handleSampleDownload = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/assets/project_import.xlsx`,
+        {
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Create a download link and trigger it
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'sample_project_management.xlsx'); // specify filename
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url); // cleanup
+      toast.success('Sample format downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading sample file:', error);
+      toast.error('Failed to download sample file. Please try again.');
+    }
+  };
+
+  const handleImport = async () => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      const response = await axios.post(`https://${baseUrl}/task_managements/import.json`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+      toast.success("Projects imported successfully");
+      setIsImportModalOpen(false);
+      setSelectedFile(null);
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
   const renderActions = (item: any) => (
     <div className="flex items-center justify-center gap-2">
       <Button
@@ -690,13 +744,14 @@ export const ProjectsDashboard = () => {
     <>
       <Button
         className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={handleOpenDialog}
+        onClick={() => setShowActionPanel(true)}
       >
         <Plus className="w-4 h-4 mr-2" />
-        Add
+        Action
       </Button>
     </>
   );
+
 
   const renderEditableCell = (columnKey, value, onChange) => {
     if (columnKey === "status") {
@@ -1043,6 +1098,7 @@ export const ProjectsDashboard = () => {
         searchPlaceholder="Search by title, type, or manager..."
         enableExport={true}
         exportFileName="projects"
+        hideTableExport={true}
       />
 
       {scrollLoading && hasMore && (
@@ -1056,6 +1112,26 @@ export const ProjectsDashboard = () => {
           No more projects to load
         </div>
       )}
+
+      {showActionPanel && (
+        <SelectionPanel
+          onAdd={handleOpenDialog}
+          onImport={() => setIsImportModalOpen(true)}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
+
+      <CommonImportModal
+        selectedFile={selectedFile}
+        setSelectedFile={setSelectedFile}
+        open={isImportModalOpen}
+        onOpenChange={setIsImportModalOpen}
+        title="Import Projects"
+        entityType="projects"
+        onSampleDownload={handleSampleDownload}
+        onImport={handleImport}
+        isUploading={isUploading}
+      />
 
       <AddProjectModal
         openDialog={openDialog}
