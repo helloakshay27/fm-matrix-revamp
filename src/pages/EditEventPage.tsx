@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchEventById, updateEvent } from "@/store/slices/eventSlice";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
 
 export const EditEventPage = () => {
   const dispatch = useAppDispatch();
@@ -45,7 +46,7 @@ export const EditEventPage = () => {
     rsvpEnabled: true,
   });
   const [attachemnts, setAttachemnts] = useState<File[]>([])
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -75,7 +76,7 @@ export const EditEventPage = () => {
         });
 
         if (event.documents && event.documents.length > 0) {
-          const previews = event.documents.map((doc: any) => doc.document);
+          const previews = event.documents.map((doc: any) => doc);
           setImagePreviews(previews);
         }
 
@@ -174,18 +175,38 @@ export const EditEventPage = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      setAttachemnts(prev => [...prev, ...Array.from(files)])
-      const newPreviews = Array.from(files)
+      const filesArray = Array.from(files);
+      setAttachemnts(prev => [...prev, ...filesArray]);
+
+      const newPreviews = filesArray
         .filter((file) => file.type.startsWith("image/"))
-        .map((file) => URL.createObjectURL(file));
+        .map((file, index) => ({
+          id: `new-${Date.now()}-${index}`, // Temporary ID for new files
+          document: URL.createObjectURL(file),
+          isNew: true, // Flag to identify new uploads
+        }));
 
       setImagePreviews((prev) => [...prev, ...newPreviews]);
     }
   };
 
-  const removeImage = (index: number) => {
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-    setAttachemnts((prev) => prev.filter((_, i) => i !== index));
+  const removeImage = async (img: any, index: number) => {
+    try {
+      // Only call API delete for existing attachments (not new uploads)
+      if (!img.isNew && img.id) {
+        await axios.delete(`https://${baseUrl}/pms/admin/events/remove_attachment.json?attachment_id=${img.id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+
+      setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+      setAttachemnts((prev) => prev.filter((_, i) => i !== index));
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to remove attachment");
+    }
   };
 
   const fieldStyles = {
@@ -685,9 +706,9 @@ export const EditEventPage = () => {
 
           {imagePreviews.length > 0 && (
             <Box sx={{ mt: 3, display: "flex", flexWrap: "wrap", gap: 2 }}>
-              {imagePreviews.map((src, index) => (
+              {imagePreviews.map((img, index) => (
                 <Card
-                  key={index}
+                  key={img.id}
                   sx={{
                     width: 150,
                     position: "relative",
@@ -697,8 +718,8 @@ export const EditEventPage = () => {
                   <CardMedia
                     component="img"
                     height="100"
-                    image={src}
-                    alt={`attachment-${index}`}
+                    image={img.document}
+                    alt={`attachment-${img.id}`}
                     sx={{ objectFit: "cover" }}
                   />
                   <IconButton
@@ -709,7 +730,7 @@ export const EditEventPage = () => {
                       bgcolor: "rgba(255,255,255,0.7)",
                       "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
                     }}
-                    onClick={() => removeImage(index)}
+                    onClick={() => removeImage(img, index)}
                   >
                     <Delete color="error" />
                   </IconButton>
