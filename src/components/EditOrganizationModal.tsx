@@ -331,14 +331,22 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   }
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   required
                   disabled={isSubmitting}
                 />
 
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Country</InputLabel>
+                  <InputLabel
+                    shrink
+                    sx={{ "& .MuiFormLabel-asterisk": { color: "#BD2828" } }}
+                  >
+                    Country
+                  </InputLabel>
                   <MuiSelect
                     value={formData.country_id}
                     onChange={(e) =>
@@ -372,7 +380,24 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   }
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  sx={{
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
+                  },
+                }}
                   InputProps={{ sx: fieldStyles }}
                   multiline
                   rows={3}
@@ -417,7 +442,10 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   }
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                   helperText="Enter a valid domain (e.g., example.com)"
@@ -432,7 +460,10 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   }
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                   helperText="Enter subdomain (e.g., app.example.com)"
@@ -449,7 +480,10 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   }
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                   helperText="Enter frontend domain (e.g., www.example.com)"
@@ -467,7 +501,10 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   }
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#BD2828" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   disabled={isSubmitting}
                   helperText="Enter frontend subdomain (e.g., portal.example.com)"
@@ -488,7 +525,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     onChange={handleLogoChange}
                     accept="image/*"
                     disabled={isSubmitting}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
                   />
                   {formData.logo && (
                     <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
@@ -505,7 +542,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                     onChange={handlePoweredByLogoChange}
                     accept="image/*"
                     disabled={isSubmitting}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
                   />
                   {formData.powered_by_logo && (
                     <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
@@ -516,18 +553,15 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+              <div className="bg-[#BD2828] border border-transparent rounded-lg p-4 mt-4 text-white">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Image className="w-4 h-4 text-blue-600" />
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Image className="w-4 h-4 text-white" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-blue-800">
-                      Upload Guidelines
-                    </p>
-                    <p className="text-xs text-blue-700">
-                      Recommended formats: PNG, JPG, SVG • Max size: 2MB • Min
-                      dimensions: 200x200px
+                    <p className="text-sm font-medium text-white">Upload Guidelines</p>
+                    <p className="text-xs text-white/90">
+                      Recommended formats: PNG, JPG, SVG • Max size: 2MB • Min dimensions: 200x200px
                     </p>
                   </div>
                 </div>
