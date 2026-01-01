@@ -117,7 +117,9 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
     }
 
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      toast.error('Please fill in all required fields (Region Name, Company, and Country)', {
+        duration: 5000,
+      });
       return;
     }
 
@@ -153,9 +155,10 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
 
       onSuccess();
       resetForm();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = (error instanceof Error && error.message) ? error.message : 'An unexpected error occurred';
       console.error('Error creating region:', error);
-      toast.error(`Failed to create region: ${error.message}`, {
+      toast.error(`Failed to create region: ${message}`, {
         duration: 5000,
       });
     } finally {
