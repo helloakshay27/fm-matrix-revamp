@@ -1008,6 +1008,22 @@ const modulesByPackage = {
       },
 
        { name: "FM Groups", icon: Users, href: "/settings/groups" },
+
+           {
+        name: "Accountants",
+        icon: Users,
+        subItems: [
+          { name: "Manual Journals ", href: "/settings/club-management/manual-journal" },
+          // {
+          //   name: "Escalation Matrix",
+          //   href: "/settings/ticket-management/escalation-matrix",
+          // },
+          // {
+          //   name: "Cost Approval",
+          //   href: "/settings/ticket-management/cost-approval",
+          // },
+        ],
+      },
   ],
 };
 

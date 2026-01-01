@@ -804,6 +804,7 @@ import AddGroupMembershipPage from "./pages/ClubManagement/AddGroupMembershipPag
 import BookingList from "./pages/BookingList";
 import AccessoriesSetup from "./pages/AccessoriesSetup";
 import AccessoriesDetailsPage from "./pages/AccessoriesDetailsPage";
+import ManualJournalDashboard from "./pages/ClubManagement/ManualJournalDashboard";
 // import RouteLogger from "./components/RouteLogger";
 
 const queryClient = new QueryClient();
@@ -1599,6 +1600,11 @@ function App() {
                   <Route
                     path="/club-management/users/fm-users/view/:id"
                     element={<ViewFMUserPage />}
+                  />
+
+                   <Route
+                    path="settings/club-management/manual-journal"
+                    element={<ManualJournalDashboard />}
                   />
 
                   {/* Club Management - Occupant Users */}
