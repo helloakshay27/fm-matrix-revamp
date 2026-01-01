@@ -289,7 +289,7 @@ const GroupConversation = () => {
 
     useEffect(() => {
         const subscriptionTimer = setTimeout(() => {
-            const sub = webSocketManager.subscribeToConversation(id, {
+            const sub = webSocketManager.subscribeToProjectSpace(id, {
                 onConnected: () => {
                     console.log('🎉 SUBSCRIPTION SUCCESSFUL - Chat connected!');
                     setIsSubscribed(true);
