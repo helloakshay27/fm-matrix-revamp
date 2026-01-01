@@ -9,6 +9,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { FormControl, MenuItem, Select, TextField } from "@mui/material";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { toast } from "sonner";
+import { SelectionPanel } from "./water-asset-details/PannelTab";
+import { CommonImportModal } from "./CommonImportModal";
+import axios from "axios";
 
 const columns: ColumnConfig[] = [
     {
@@ -88,6 +91,10 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [data, setData] = useState([])
     const [owners, setOwners] = useState([])
+    const [showActionPanel, setShowActionPanel] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     const statusColorMap = {
         open: { dot: "bg-blue-500" },
@@ -155,6 +162,55 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         } catch (error) {
             console.log(error)
             toast.error(error)
+        }
+    };
+
+    const handleSampleDownload = async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/assets/milestone_import.xlsx`,
+                {
+                    responseType: 'blob',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'sample_milestone.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Sample format downloaded successfully');
+        } catch (error) {
+            console.error('Error downloading sample file:', error);
+            toast.error('Failed to download sample file. Please try again.');
+        }
+    };
+
+    const handleImport = async () => {
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+            await axios.post(`https://${baseUrl}/milestones/import.json`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+            toast.success("Milestones imported successfully");
+            setIsImportModalOpen(false);
+            setSelectedFile(null);
+            getMilestones();
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to import milestones");
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -245,10 +301,10 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
         <>
             <Button
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={() => setOpenDialog(true)}
+                onClick={() => setShowActionPanel(true)}
             >
                 <Plus className="w-4 h-4 mr-2" />
-                Add
+                Action
             </Button>
         </>
     );
@@ -399,6 +455,26 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 }}
                 renderEditableCell={renderEditableCell}
                 newRowPlaceholder="Click to add new milestone"
+            />
+
+            {showActionPanel && (
+                <SelectionPanel
+                    onAdd={() => setOpenDialog(true)}
+                    onImport={() => setIsImportModalOpen(true)}
+                    onClearSelection={() => setShowActionPanel(false)}
+                />
+            )}
+
+            <CommonImportModal
+                selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile}
+                open={isImportModalOpen}
+                onOpenChange={setIsImportModalOpen}
+                title="Import Milestones"
+                entityType="milestones"
+                onSampleDownload={handleSampleDownload}
+                onImport={handleImport}
+                isUploading={isUploading}
             />
         </div>
     )
