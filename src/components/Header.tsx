@@ -708,14 +708,14 @@ export const Header = () => {
                             <div className="mt-2">
                               <Badge
                                 variant="outline"
-                                className={`text-xs ${notification.type === "task"
+                                className={`text-xs ${notification.ntype === "conversation"
                                   ? "bg-blue-50 text-blue-700 border-blue-200"
-                                  : notification.type === "meeting"
+                                  : notification.ntype === "meeting"
                                     ? "bg-green-50 text-green-700 border-green-200"
                                     : "bg-gray-50 text-gray-700 border-gray-200"
                                   }`}
                               >
-                                {notification.type}
+                                {notification.ntype}
                               </Badge>
                             </div>
                           </div>
