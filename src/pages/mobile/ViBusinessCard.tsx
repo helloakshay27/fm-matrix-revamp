@@ -78,10 +78,10 @@ console.log("Fetched user data:", data);
           name: data.fullname,
           email: data.email,
           phone: `+${data.country_code} ${data.mobile}`,
-          designation: data.lock_user_permission?.department_name || "",
+          designation: data.lock_user_permission?.designation|| "",
           department: data.lock_user_permission?.department_name || "",
           company: data.user_company_name,
-          profileImage: data.avatar_url,
+          profileImage: data.business_card_url,
           website: data.user_other_detail?.website_link || "",
           address: data.site_name,
         };
