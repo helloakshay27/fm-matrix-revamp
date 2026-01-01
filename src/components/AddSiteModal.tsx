@@ -430,8 +430,8 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-  // Country (headquarter_id) is optional
-  if (!formData.name || !formData.company_id) {
+    // Country (headquarter_id) is optional
+    if (!formData.name || !formData.company_id) {
       return;
     }
 
@@ -491,10 +491,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin mr-2" />
             <p>Loading form data...</p>
-            <div className="text-xs text-gray-400 mt-2">
+            {/* <div className="text-xs text-gray-400 mt-2">
               Debug: Companies: {companies.length}, Countries:{" "}
               {headquarters.length}, Regions: {regions.length}
-            </div>
+            </div> */}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6 py-4">
@@ -512,7 +512,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                   onChange={(e) => handleInputChange("name", e.target.value)}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{ shrink: true }}
+                  InputLabelProps={{
+                    shrink: true,
+                    sx: { "& .MuiFormLabel-asterisk": { color: "#C72030" } },
+                  }}
                   InputProps={{ sx: fieldStyles }}
                   required
                   disabled={isLoading}
@@ -702,7 +705,24 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
                   multiline
                   rows={2}
                   disabled={isLoading}
@@ -723,10 +743,12 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                 />
 
                 <TextField
-                  label="City"
-                  placeholder="Enter city"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange("city", e.target.value)}
+                  label="District"
+                  placeholder="Enter district"
+                  value={formData.district}
+                  onChange={(e) =>
+                    handleInputChange("district", e.target.value)
+                  }
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -735,12 +757,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                 />
 
                 <TextField
-                  label="District"
-                  placeholder="Enter district"
-                  value={formData.district}
-                  onChange={(e) =>
-                    handleInputChange("district", e.target.value)
-                  }
+                  label="City"
+                  placeholder="Enter city"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange("city", e.target.value)}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
@@ -976,7 +996,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t">
+            <div className="flex items-center justify-center gap-3 mt-6 pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"
@@ -985,11 +1005,9 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
               >
                 Cancel
               </Button>
-        <Button
+              <Button
                 type="submit"
-                disabled={
-          isLoading || !formData.name || !formData.company_id
-                }
+                disabled={isLoading || !formData.name || !formData.company_id}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

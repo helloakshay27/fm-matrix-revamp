@@ -464,6 +464,7 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
                 fullWidth
                 variant="outlined"
                 error={!!errors.organization_id}
+                required
               >
                 <InputLabel
                   shrink
@@ -1036,7 +1037,7 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-6 border-t">
+        <div className="flex justify-center space-x-3 pt-6 border-t">
           <Button
             variant="outline"
             onClick={handleClose}

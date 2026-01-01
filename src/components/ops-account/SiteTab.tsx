@@ -528,9 +528,9 @@ export const SiteTab: React.FC<SiteTabProps> = ({
     ),
     name: (
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+        {/* <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
           <MapPin className="w-4 h-4 text-blue-600" />
-        </div>
+        </div> */}
         <div>
           <div className="font-medium">{site?.name || "N/A"}</div>
           {site?.description && (
