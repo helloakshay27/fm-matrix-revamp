@@ -158,7 +158,7 @@ export const EditEventPage = () => {
       formDataToSend.append('event[of_atype_id]', localStorage.getItem("selectedSiteId"));
 
       attachemnts.forEach((file) => {
-        formDataToSend.append("noticeboard[files_attached][]", file);
+        formDataToSend.append("event[files_attached][]", file);
       })
 
       await dispatch(updateEvent({ id: id!, baseUrl, token, data: formDataToSend })).unwrap();
