@@ -118,11 +118,11 @@ const TaskCard = ({
                     className="flex items-center gap-1"
                 >
                     <Flag className="text-[#C72030] flex-shrink-0" size={14} />
-                    <span className="text-[10px] truncate">{task?.milestone?.title}</span>
+                    <span className="text-[10px] truncate">{task?.milestone_title}</span>
                 </div>
                 <div className="flex items-start gap-1">
                     <User2 className="text-[#C72030] flex-shrink-0" size={14} />
-                    <span className="text-[10px] truncate">{task?.responsible_person?.name}</span>
+                    <span className="text-[10px] truncate">{task?.responsible_person_name}</span>
                 </div>
                 <div className="flex items-start gap-1">
                     <Timer className="text-[#029464] flex-shrink-0" size={14} />

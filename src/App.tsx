@@ -944,7 +944,8 @@ function App() {
           });
         },
         onMessageNotification: (message) => {
-          if (message.user_id === currentUser.id) {
+          console.log(message)
+          if (message.user_id !== currentUser.id) {
             return;
           }
 

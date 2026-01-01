@@ -527,9 +527,11 @@ export const ProjectsDashboard = () => {
               ? navigate(`/vas/issues?project_id=${item.id}`)
               : type === "tasks"
                 ? navigate(`/vas/tasks?project_id=${item.id}`)
-                : type === "milestones"
-                  ? navigate(`/vas/projects/${item.id}/milestones`)
-                  : null
+                : type === "subtasks"
+                  ? navigate(`/vas/tasks?subtasks=true&project_id=${item.id}`)
+                  : type === "milestones"
+                    ? navigate(`/vas/projects/${item.id}/milestones`)
+                    : null
           }
         >
           <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
@@ -570,7 +572,7 @@ export const ProjectsDashboard = () => {
       case "subtasks": {
         const completed = item.subtasksCompleted || 0;
         const total = item.subtasks || 0;
-        return renderProgressBar(completed, total, "bg-[#b4e7ff]");
+        return renderProgressBar(completed, total, "bg-[#b4e7ff]", "subtasks");
       }
       case "issues": {
         const completed = item.resolvedIssues || 0;
