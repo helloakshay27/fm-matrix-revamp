@@ -1,11 +1,6 @@
 import React, { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog as MuiDialog, DialogTitle as MuiDialogTitle, DialogContent as MuiDialogContent, DialogActions as MuiDialogActions } from "@mui/material";
+import { Button as MuiButton } from "@mui/material";
 import {
   TextField,
   FormControl,
@@ -411,28 +406,24 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose} modal={true}>
-      <DialogContent
-        className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-50"
+  <MuiDialog open={isOpen} onClose={handleClose} fullWidth maxWidth="md">
+      <MuiDialogTitle>
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-semibold text-gray-900">ADD NEW COMPANY</span>
+          <MuiButton onClick={handleClose} size="small" variant="text">
+            <X className="h-4 w-4" color="black" />
+          </MuiButton>
+        </div>
+        <div id="add-company-dialog-description" className="sr-only">
+          Add company details including name, organization, country, billing information, addresses, and SPOC contacts
+        </div>
+      </MuiDialogTitle>
+      <MuiDialogContent
+        className="max-h-[90vh] overflow-y-auto bg-white p-0"
         aria-describedby="add-company-dialog-description"
       >
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900">
-            ADD NEW COMPANY
-          </DialogTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            className="h-6 w-6 p-0 hover:bg-gray-100"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-          <div id="add-company-dialog-description" className="sr-only">
-            Add company details including name, organization, country, billing
-            information, addresses, and SPOC contacts
-          </div>
-        </DialogHeader>
+        <div className="px-6">
+        {/* ...existing content... */}
 
         <div className="space-y-6 py-4">
           {/* Basic Information */}
@@ -1036,25 +1027,42 @@ export const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-center space-x-3 pt-6 border-t">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            className="px-6 py-2"
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || !canEdit}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6 py-2"
-          >
-            {isSubmitting ? "Creating..." : "Create Company"}
-          </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </MuiDialogContent>
+      <MuiDialogActions sx={{ justifyContent: "center", borderTop: "1px solid #e5e7eb", gap: 2, py: 2 }}>
+        <MuiButton
+          onClick={handleClose}
+          disabled={isSubmitting}
+          variant="outlined"
+          sx={{
+            color: "#BD2828",
+            borderColor: "#BD2828",
+            px: 3,
+            py: 1,
+            textTransform: "none",
+            fontWeight: 500,
+            '&:hover': { borderColor: '#a52121', color: '#a52121' }
+          }}
+        >
+          Cancel
+        </MuiButton>
+        <MuiButton
+          onClick={handleSubmit}
+          disabled={isSubmitting || !canEdit}
+          sx={{
+            backgroundColor: "#ede9e4", // light neutral background like screenshot
+            color: "#BD2828",
+            px: 3,
+            py: 1,
+            textTransform: "none",
+            fontWeight: 500,
+            boxShadow: "none",
+            '&:hover': { backgroundColor: '#e6e1db' }
+          }}
+        >
+          {isSubmitting ? "Creating..." : "Create Company"}
+        </MuiButton>
+      </MuiDialogActions>
+    </MuiDialog>
   );
 };
