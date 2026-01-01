@@ -344,13 +344,39 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl("/countries.json"), {
+      // Prefer token/baseUrl from localStorage (set by Layout when token in URL)
+      const storedBaseUrl = localStorage.getItem("baseUrl");
+      const storedToken = localStorage.getItem("token");
+
+      let url: string;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+
+      if (storedBaseUrl) {
+        const normalizedBase = storedBaseUrl.startsWith("http")
+          ? storedBaseUrl.replace(/\/+$/, "")
+          : `https://${storedBaseUrl.replace(/\/+$/, "")}`;
+        url = `${normalizedBase}/countries.json`;
+      } else {
+        // Fallback to configured helper
+        url = getFullUrl("/countries.json");
+      }
+
+      if (storedToken) {
+        headers["Authorization"] = `Bearer ${storedToken}`;
+      } else {
+        try {
+          headers["Authorization"] = getAuthHeader();
+        } catch (e) {
+          console.warn("No token available for Authorization header:", e);
+        }
+      }
+
+      const response = await fetch(url, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: getAuthHeader(),
-        },
+        headers,
       });
 
       if (response.ok) {
@@ -380,7 +406,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
           setCountriesMap(new Map());
         }
       } else {
-        console.error("Failed to fetch countries");
+        console.error("Failed to fetch countries", response.status, await response.text());
         setCountriesDropdown([]);
         setCountriesMap(new Map());
       }

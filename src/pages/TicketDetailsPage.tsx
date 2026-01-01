@@ -2752,6 +2752,10 @@ export const TicketDetailsPage = () => {
       const data = await response.json();
       console.log('✅ Ticket management updated successfully:', data);
 
+      // Refresh ticket data
+      const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
+      setTicketData(ticketDetails);
+
       // Show success message with Root Cause Analysis info if included
       let successMessage = 'Ticket management updated successfully';
       // if (ticketMgmtFormData.rca_template_ids && ticketMgmtFormData.rca_template_ids.length > 0) {
@@ -2763,10 +2767,6 @@ export const TicketDetailsPage = () => {
       // }
       
       toast.success(successMessage);
-
-      // Refresh ticket data
-      const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
-      setTicketData(ticketDetails);
 
       // Exit edit mode
       setIsEditingTicketMgmt(false);
@@ -2974,8 +2974,6 @@ export const TicketDetailsPage = () => {
       const data = await response.json();
       console.log('✅ Ticket closure updated successfully:', data);
 
-      toast.success('Ticket closure updated successfully');
-
       // Refresh ticket data
       const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
       setTicketData(ticketDetails);
@@ -2993,6 +2991,8 @@ export const TicketDetailsPage = () => {
         setTicketClosureFormData(updatedFormData);
         console.log('🔄 Form data synchronized with updated ticket data:', updatedFormData);
       }
+
+      toast.success('Ticket closure updated successfully');
 
       // Exit edit mode
       setIsEditingTicketClosure(false);
@@ -3293,11 +3293,12 @@ export const TicketDetailsPage = () => {
 
       const data = await response.json();
       console.log('✅ Location updated successfully:', data);
-
-      toast.success('Location updated successfully!');
       
       // Refresh ticket data
       const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
+      setTicketData(ticketDetails);
+
+      toast.success('Location updated successfully!');
       setTicketData(ticketDetails);
       
       // Close the edit form
