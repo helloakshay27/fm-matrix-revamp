@@ -23,6 +23,8 @@ import { TransitionProps } from "@mui/material/transitions";
 import { useLayout } from "@/contexts/LayoutContext";
 import clsx from "clsx";
 import axios from "axios";
+import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { CommonImportModal } from "@/components/CommonImportModal";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -341,6 +343,12 @@ const ProjectTasksPage = () => {
         total_count: 0,
     })
     const [loading, setLoading] = useState(false)
+
+    // Import modal state
+    const [showActionPanel, setShowActionPanel] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Filter Modal State
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -947,6 +955,55 @@ const ProjectTasksPage = () => {
         }
     };
 
+    const handleSampleDownload = async () => {
+        try {
+            const response = await axios.get(
+                `https://${baseUrl}/assets/task_import.xlsx`,
+                {
+                    responseType: 'blob',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'sample_task.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Sample format downloaded successfully');
+        } catch (error) {
+            console.error('Error downloading sample file:', error);
+            toast.error('Failed to download sample file. Please try again.');
+        }
+    };
+
+    const handleImportTasks = async () => {
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+            await axios.post(`https://${baseUrl}/task_managements/import.json`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+            toast.success("Tasks imported successfully");
+            setIsImportModalOpen(false);
+            setSelectedFile(null);
+            fetchData();
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to import tasks");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const handleView = (id) => {
         if (location.pathname.startsWith("/vas/tasks")) {
             navigate(`/vas/tasks/${id}`);
@@ -1398,10 +1455,10 @@ const ProjectTasksPage = () => {
         <>
             <Button
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={handleOpenDialog}
+                onClick={() => setShowActionPanel(true)}
             >
                 <Plus className="w-4 h-4 mr-2" />
-                Add
+                Action
             </Button>
         </>
     );
@@ -2055,6 +2112,26 @@ const ProjectTasksPage = () => {
                 onSubmit={handlePauseTaskSubmit}
                 isLoading={isPauseLoading}
                 taskId={pauseTaskId}
+            />
+
+            {showActionPanel && (
+                <SelectionPanel
+                    onAdd={handleOpenDialog}
+                    onImport={() => setIsImportModalOpen(true)}
+                    onClearSelection={() => setShowActionPanel(false)}
+                />
+            )}
+
+            <CommonImportModal
+                selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile}
+                open={isImportModalOpen}
+                onOpenChange={setIsImportModalOpen}
+                title="Import Tasks"
+                entityType="tasks"
+                onSampleDownload={handleSampleDownload}
+                onImport={handleImportTasks}
+                isUploading={isUploading}
             />
         </div>
     );
