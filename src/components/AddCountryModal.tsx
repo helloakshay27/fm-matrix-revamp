@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, DialogActions, TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApiConfig } from '@/hooks/useApiConfig';
@@ -10,9 +9,9 @@ interface AddCountryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  countriesDropdown: any[];
-  companiesDropdown: any[];
-  organizationsDropdown: any[];
+  countriesDropdown: Array<{ id: number; name: string }>;
+  companiesDropdown: Array<{ id: number; name: string }>;
+  organizationsDropdown: Array<{ id: number; name: string }>;
   canEdit: boolean;
 }
 
@@ -71,12 +70,19 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const requestBody: any = {
+      const requestBody: {
+        pms_headquarter: {
+          name: string;
+          company_setup_id: number;
+          country_id: number;
+          organization_id?: number;
+        };
+      } = {
         pms_headquarter: {
           name: formData.name,
           company_setup_id: parseInt(formData.company_setup_id),
-          country_id: parseInt(formData.country_id)
-        }
+          country_id: parseInt(formData.country_id),
+        },
       };
 
       if (formData.organization_id) {
@@ -128,23 +134,35 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose} modal={true}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-50" aria-describedby="add-country-dialog-description">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900">ADD NEW HEADQUARTER</DialogTitle>
+    <Dialog
+      open={isOpen}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="md"
+      keepMounted
+      scroll="paper"
+      aria-labelledby="add-country-dialog-title"
+      aria-describedby="add-country-dialog-description"
+    >
+      <DialogTitle id="add-country-dialog-title">
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-semibold text-gray-900">ADD NEW HEADQUARTER</span>
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClose}
             className="h-6 w-6 p-0 hover:bg-gray-100"
+            aria-label="Close"
           >
             <X className="h-4 w-4" />
           </Button>
-          <div id="add-country-dialog-description" className="sr-only">
-            Add a new headquarter by entering name, selecting organization, company and country
-          </div>
-        </DialogHeader>
-        <div className="space-y-6 py-4">
+        </div>
+        <div id="add-country-dialog-description" className="sr-only">
+          Add a new headquarter by entering name, selecting organization, company and country
+        </div>
+      </DialogTitle>
+      <DialogContent dividers>
+        <div className="space-y-6 py-2">
           <div className="grid grid-cols-2 gap-6">
             <TextField
               label="Headquarter Name"
@@ -358,25 +376,24 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
             )}
           </div>
         </div>
-        {/* Action Buttons */}
-        <div className="flex justify-center space-x-3 pt-6 border-t">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            className="px-6 py-2"
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || !canEdit}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6 py-2"
-          >
-            {isSubmitting ? 'Creating...' : 'Create Headquarter'}
-          </Button>
-        </div>
       </DialogContent>
+      <DialogActions sx={{ justifyContent: 'center', borderTop: '1px solid #e5e7eb' }}>
+        <Button
+          variant="outline"
+          onClick={handleClose}
+          className="px-6 py-2"
+          disabled={isSubmitting}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={isSubmitting || !canEdit}
+          className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6 py-2"
+        >
+          {isSubmitting ? 'Creating...' : 'Create Headquarter'}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };
