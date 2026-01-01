@@ -124,7 +124,10 @@ export const ResponseEscalationTab: React.FC = () => {
   // Handle success/error states
   useEffect(() => {
     if (success) {
-      toast.success('Response escalation rule created successfully!')
+      // Only show toast for create operations, not update (update has its own toast in handleUpdateRule)
+      if (!editingRule) {
+        toast.success('Response escalation rule created successfully!')
+      }
       // Reset form
       form.reset()
       setSelectedCategories([])
@@ -138,7 +141,7 @@ export const ResponseEscalationTab: React.FC = () => {
       toast.error(errorMessage + '!');
       dispatch(clearState());
     }
-  }, [success, error, form, dispatch])
+  }, [success, error, form, dispatch, editingRule])
 
   // Helper functions
   const getCategoryName = (id: number) => {
@@ -291,12 +294,16 @@ export const ResponseEscalationTab: React.FC = () => {
       }
 
       await dispatch(updateResponseEscalation(payload)).unwrap()
-      toast.success('Response escalation rule updated successfully!')
       
       setIsEditDialogOpen(false)
       setEditingRule(null)
       dispatch(fetchResponseEscalations())
-      dispatch(clearState())
+      
+      // Show success toast after a small delay to ensure state is updated
+      setTimeout(() => {
+        toast.success('Response escalation rule updated successfully!')
+        dispatch(clearState())
+      }, 100)
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update response escalation rule'
       toast.error(errorMessage + '!')
