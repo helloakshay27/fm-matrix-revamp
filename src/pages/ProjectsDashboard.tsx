@@ -510,7 +510,7 @@ export const ProjectsDashboard = () => {
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
-      const response = await axios.post(`https://${baseUrl}/task_managements/import.json`, formData, {
+      const response = await axios.post(`https://${baseUrl}/project_managements/import.json`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         }
