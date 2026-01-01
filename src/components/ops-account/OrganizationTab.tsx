@@ -298,15 +298,81 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
     }
   };
 
+  //   const fetchCountriesDropdown = async () => {
+  //   try {
+  //     const response = await fetch(getFullUrl("/pms/countries.json"), {
+  //       method: "GET",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Accept: "application/json",
+  //         Authorization: getAuthHeader(),
+  //       },
+  //     });
+
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       console.log("Countries API response:", data);
+
+  //       // Map the API response to the expected dropdown format
+  //       // API returns array of objects with id and name properties
+  //       if (Array.isArray(data)) {
+  //         const mappedCountries = data
+  //           .filter((country) => country?.id && country?.name) // Filter out invalid entries
+  //           .map((country) => ({
+  //             id: Number(country.id),
+  //             name: String(country.name),
+  //           }));
+  //         setCountriesDropdown(mappedCountries);
+  //       } else {
+  //         console.error("Countries data format unexpected:", data);
+  //         setCountriesDropdown([]);
+  //         toast.error("Invalid countries data format");
+  //       }
+  //     } else {
+  //       toast.error("Failed to fetch countries");
+  //       setCountriesDropdown([]);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching countries:", error);
+  //     toast.error("Error fetching countries");
+  //     setCountriesDropdown([]);
+  //   }
+  // };
+
+
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl("/pms/countries.json"), {
+      const storedBaseUrl = localStorage.getItem("baseUrl");
+      const storedToken = localStorage.getItem("token");
+
+      let url: string;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+
+      if (storedBaseUrl) {
+        const normalizedBase = storedBaseUrl.startsWith("http")
+          ? storedBaseUrl.replace(/\/+$/, "")
+          : `https://${storedBaseUrl.replace(/\/+$/, "")}`;
+        url = `${normalizedBase}/pms/countries.json`;
+      } else {
+        url = getFullUrl("/pms/countries.json");
+      }
+
+      if (storedToken) {
+        headers["Authorization"] = `Bearer ${storedToken}`;
+      } else {
+        try {
+          headers["Authorization"] = getAuthHeader();
+        } catch (e) {
+          console.warn("No token available for Authorization header:", e);
+        }
+      }
+
+      const response = await fetch(url, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: getAuthHeader(),
-        },
+        headers,
       });
 
       if (response.ok) {
@@ -329,6 +395,7 @@ export const OrganizationTab: React.FC<OrganizationTabProps> = ({
           toast.error("Invalid countries data format");
         }
       } else {
+        console.error("Failed to fetch countries", response.status, await response.text());
         toast.error("Failed to fetch countries");
         setCountriesDropdown([]);
       }

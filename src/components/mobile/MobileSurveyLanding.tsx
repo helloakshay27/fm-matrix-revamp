@@ -1856,10 +1856,10 @@ export const MobileSurveyLanding: React.FC = () => {
                       moveToPreviousQuestion();
                     }
                   }}
-                  className="flex items-center text-white/90 hover:text-white text-sm font-medium transition-colors"
+                  className="flex items-center bg-black/40 backdrop-blur-md px-4 py-2.5 rounded-lg text-white font-bold text-sm hover:bg-black/50 transition-all shadow-lg border-2 border-white/40"
                 >
                   <svg
-                    className="w-4 h-4 mr-1"
+                    className="w-5 h-5 mr-1.5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -1867,7 +1867,7 @@ export const MobileSurveyLanding: React.FC = () => {
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
+                      strokeWidth="3"
                       d="M15 19l-7-7 7-7"
                     />
                   </svg>
@@ -1944,7 +1944,7 @@ export const MobileSurveyLanding: React.FC = () => {
           ) : (
             <>
               {/* Normal View: Question by Question */}
-              <div className="flex-1 flex flex-col">
+              <div className="flex-1 flex flex-col justify-center">
                 {/* Survey Title for Normal View */}
                 <div className="text-center mb-6">
                   <h1 className="text-xl font-bold text-black/100 mb-2">
@@ -1961,24 +1961,6 @@ export const MobileSurveyLanding: React.FC = () => {
                     </span>
                   )}
                 </div>
-
-                {/* Spacer to push emoji questions to bottom */}
-                {currentQuestion &&
-                  !isLastStep &&
-                  !showGenericTags &&
-                  (currentQuestion.qtype === "emoji" ||
-                    currentQuestion.qtype === "smiley") && (
-                    <div className="flex-1" />
-                  )}
-
-                {/* Spacer to push question content down when showing emojis */}
-                {currentQuestion &&
-                  !isLastStep &&
-                  !showGenericTags &&
-                  (currentQuestion.qtype === "emoji" ||
-                    currentQuestion.qtype === "smiley") && (
-                    <div className="flex-1" />
-                  )}
 
                 {/* Show Final Description Step */}
                 {isLastStep && isMultiQuestion && (
@@ -2335,7 +2317,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         <>
                           <div className="bg-white rounded-lg border border-gray-200 p-1.5 xs:p-2 sm:p-3 shadow-md relative">
                             {/* Grid Layout - 2x2 for first 4, then repeat */}
-                            <div className="overflow-x-auto whitespace-nowrap scrollbar-visible pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
+                            <div className="overflow-x-scroll whitespace-nowrap scrollbar-visible pb-1.5 xs:pb-2 -mx-1 sm:-mx-0">
                               {(() => {
                                 const tags =
                                   getCurrentQuestion()?.generic_tags || [];
@@ -2354,7 +2336,7 @@ export const MobileSurveyLanding: React.FC = () => {
                                     )
                                 );
                                 return (
-                                  <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3 px-0.5 xs:px-1 sm:px-0">
+                                  <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3 px-0.5 xs:px-1 sm:px-0" style={{ minWidth: 'calc(100% + 1px)' }}>
                                     {pages.map((pageTags, pageIdx) => (
                                       <div
                                         key={pageIdx}
@@ -2470,6 +2452,26 @@ export const MobileSurveyLanding: React.FC = () => {
                                 );
                               })()}
                             </div>
+
+                            {/* Scroll Indicator Dots */}
+                            {(() => {
+                              const tags = getCurrentQuestion()?.generic_tags || [];
+                              const itemsPerPage = 4;
+                              const totalPages = Math.ceil(tags.length / itemsPerPage);
+
+                              if (totalPages <= 1) return null;
+
+                              return (
+                                <div className="flex justify-center gap-1.5 mt-2 pb-1">
+                                  {Array.from({ length: totalPages }).map((_, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="w-1.5 h-1.5 rounded-full bg-gray-400"
+                                    />
+                                  ))}
+                                </div>
+                              );
+                            })()}
                           </div>
 
                           {/* Description Field */}

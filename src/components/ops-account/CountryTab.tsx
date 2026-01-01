@@ -33,10 +33,12 @@ import { useDebounce } from "@/hooks/useDebounce";
 // Type definitions for the API response
 interface CountryItem {
   id: number;
+  name: string;
   company_setup_id: number;
   country_id: number;
   active: boolean;
   organization_id: number | null;
+  organization_name?: string;
   created_at: string;
   updated_at: string;
   url: string;
@@ -81,6 +83,20 @@ const columns: ColumnConfig[] = [
     draggable: true,
   },
   {
+    key: "name",
+    label: "Headquarter Name",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "organization_name",
+    label: "Organization",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
     key: "country_name",
     label: "Country",
     sortable: true,
@@ -95,7 +111,7 @@ const columns: ColumnConfig[] = [
     draggable: true,
   },
   {
-    key: "active",
+    key: "status",
     label: "Status",
     sortable: true,
     hideable: true,
@@ -124,8 +140,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1000);
   const [appliedFilters, setAppliedFilters] = useState<CountryFilters>({});
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -156,6 +171,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   );
   const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
   const [companiesDropdown, setCompaniesDropdown] = useState<any[]>([]);
+  const [organizationsDropdown, setOrganizationsDropdown] = useState<any[]>([]);
   const [canEditCountry, setCanEditCountry] = useState(false);
 
   const user = getUser() || {
@@ -179,6 +195,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   useEffect(() => {
     fetchCompanies();
     fetchCountriesDropdown();
+    fetchOrganizations();
     checkEditPermission();
   }, []);
 
@@ -235,8 +252,10 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         const searchLower = search.toLowerCase();
         filteredData = filteredData.filter(
           (country) =>
+            country.name?.toLowerCase().includes(searchLower) ||
             country.country_name?.toLowerCase().includes(searchLower) ||
-            country.company_name?.toLowerCase().includes(searchLower)
+            country.company_name?.toLowerCase().includes(searchLower) ||
+            country.organization_name?.toLowerCase().includes(searchLower)
         );
       }
 
@@ -325,13 +344,39 @@ export const CountryTab: React.FC<CountryTabProps> = ({
 
   const fetchCountriesDropdown = async () => {
     try {
-      const response = await fetch(getFullUrl("/pms/countries.json"), {
+      // Prefer token/baseUrl from localStorage (set by Layout when token in URL)
+      const storedBaseUrl = localStorage.getItem("baseUrl");
+      const storedToken = localStorage.getItem("token");
+
+      let url: string;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+
+      if (storedBaseUrl) {
+        const normalizedBase = storedBaseUrl.startsWith("http")
+          ? storedBaseUrl.replace(/\/+$/, "")
+          : `https://${storedBaseUrl.replace(/\/+$/, "")}`;
+        url = `${normalizedBase}/countries.json`;
+      } else {
+        // Fallback to configured helper
+        url = getFullUrl("/countries.json");
+      }
+
+      if (storedToken) {
+        headers["Authorization"] = `Bearer ${storedToken}`;
+      } else {
+        try {
+          headers["Authorization"] = getAuthHeader();
+        } catch (e) {
+          console.warn("No token available for Authorization header:", e);
+        }
+      }
+
+      const response = await fetch(url, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: getAuthHeader(),
-        },
+        headers,
       });
 
       if (response.ok) {
@@ -361,7 +406,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
           setCountriesMap(new Map());
         }
       } else {
-        console.error("Failed to fetch countries");
+        console.error("Failed to fetch countries", response.status, await response.text());
         setCountriesDropdown([]);
         setCountriesMap(new Map());
       }
@@ -372,7 +417,69 @@ export const CountryTab: React.FC<CountryTabProps> = ({
     }
   };
 
+  const fetchOrganizations = async () => {
+    try {
+      const response = await fetch(getFullUrl("/organizations.json"), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.organizations && Array.isArray(data.organizations)) {
+          setOrganizationsDropdown(data.organizations);
+        } else if (Array.isArray(data)) {
+          setOrganizationsDropdown(data);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+      setOrganizationsDropdown([]);
+    }
+  };
+
   // Modal handlers
+  const handleToggleStatus = async (countryId: number, currentStatus: boolean) => {
+    if (!canEditCountry) {
+      toast.error("You do not have permission to update headquarters status");
+      return;
+    }
+
+    try {
+      const response = await fetch(getFullUrl(`/headquarters/${countryId}.json`), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+        body: JSON.stringify({
+          pms_headquarter: {
+            active: !currentStatus,
+          },
+        }),
+      });
+
+      if (response.ok) {
+        toast.success(`Headquarter ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+        fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+      } else {
+        toast.error("Failed to update headquarters status");
+      }
+    } catch (error) {
+      console.error("Error updating headquarters status:", error);
+      toast.error("Error updating headquarters status");
+    }
+  };
+
+  const handleView = (countryId: number) => {
+    navigate(`/ops-console/master/location/account/headquarters/details/${countryId}`);
+  };
+
   const handleEdit = (countryId: number) => {
     if (!canEditCountry) {
       toast.error("You do not have permission to edit countries");
@@ -410,11 +517,6 @@ export const CountryTab: React.FC<CountryTabProps> = ({
     setCurrentPage(1); // Reset to first page when changing per page
   };
 
-  // Update search term when parent searchQuery changes
-  useEffect(() => {
-    setSearchTerm(searchQuery);
-  }, [searchQuery]);
-
   // Sync with parent's entries per page
   useEffect(() => {
     const entriesNum = parseInt(entriesPerPage);
@@ -440,11 +542,22 @@ export const CountryTab: React.FC<CountryTabProps> = ({
           <EnhancedTaskTable
             data={countries}
             columns={columns}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
+            searchTerm={searchQuery}
+            onSearchChange={setSearchQuery}
+            enableSearch={true}
+            hideTableSearch={false}
             loading={loading}
             renderActions={(country: CountryItem) => (
               <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleView(country.id)}
+                  className="hover:bg-blue-100 text-blue-600"
+                  title="View"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -469,21 +582,30 @@ export const CountryTab: React.FC<CountryTabProps> = ({
               switch (columnKey) {
                 case "id":
                   return country.id;
+                case "name":
+                  return country.name || "-";
+                case "organization_name":
+                  return country.organization_name || "-";
                 case "country_name":
                   return country.country_name || "-";
                 case "company_name":
                   return country.company_name || "-";
-                case "active":
+                case "status":
                   return (
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        country.active
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {country.active ? "Active" : "Inactive"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleToggleStatus(country.id, country.active)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${country.active
+                            ? "bg-green-100 text-green-800 hover:bg-green-200"
+                            : "bg-red-100 text-red-800 hover:bg-red-200"
+                          }`}
+                        disabled={!canEditCountry}
+                      >
+                        {country.active ? "Active" : "Inactive"}
+                      </Button>
+                    </div>
                   );
                 case "created_at":
                   return country.created_at
@@ -502,34 +624,34 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 Add Headquarter
               </Button>
             }
-            // rightActions={(
-            //   <div className="flex items-center gap-2">
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsFilterOpen(true)}
-            //     >
-            //       <Filter className="w-4 h-4 mr-2" />
-            //       Filter
-            //     </Button>
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsBulkUploadOpen(true)}
-            //     >
-            //       <Upload className="w-4 h-4 mr-2" />
-            //       Import
-            //     </Button>
-            //     <Button
-            //       variant="outline"
-            //       size="sm"
-            //       onClick={() => setIsExportOpen(true)}
-            //     >
-            //       <Download className="w-4 h-4 mr-2" />
-            //       Export
-            //     </Button>
-            //   </div>
-            // )}
+          // rightActions={(
+          //   <div className="flex items-center gap-2">
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsFilterOpen(true)}
+          //     >
+          //       <Filter className="w-4 h-4 mr-2" />
+          //       Filter
+          //     </Button>
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsBulkUploadOpen(true)}
+          //     >
+          //       <Upload className="w-4 h-4 mr-2" />
+          //       Import
+          //     </Button>
+          //     <Button
+          //       variant="outline"
+          //       size="sm"
+          //       onClick={() => setIsExportOpen(true)}
+          //     >
+          //       <Download className="w-4 h-4 mr-2" />
+          //       Export
+          //     </Button>
+          //   </div>
+          // )}
           />
 
           <TicketPagination
@@ -559,6 +681,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         }}
         countriesDropdown={countriesDropdown}
         companiesDropdown={companiesDropdown}
+        organizationsDropdown={organizationsDropdown}
         canEdit={canEditCountry}
       />
 

@@ -14,6 +14,8 @@ const NewConversationModal = ({
   setSearchQuery,
   setNewConversationModal,
   conversations,
+  onConversationCreated,
+  onGroupCreated,
 }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -77,6 +79,10 @@ const NewConversationModal = ({
         createConversation({ baseUrl, token, data: payload })
       ).unwrap();
       setNewConversationModal(false);
+      // Refresh conversations list
+      if (onConversationCreated) {
+        await onConversationCreated();
+      }
       navigate(`/vas/channels/messages/${response.id}`);
     } catch (error) {
       console.log(error);
@@ -104,6 +110,10 @@ const NewConversationModal = ({
         createGroup({ baseUrl, token, data: payload })
       ).unwrap();
       setNewConversationModal(false);
+      // Refresh groups list
+      if (onGroupCreated) {
+        await onGroupCreated();
+      }
       navigate(`/vas/channels/groups/${response.id}`);
     } catch (error) {
       console.log(error);

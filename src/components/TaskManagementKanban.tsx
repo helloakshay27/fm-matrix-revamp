@@ -6,14 +6,14 @@ import {
     DragStartEvent,
     DragOverlay,
 } from "@dnd-kit/core";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import KanbanBoard from "./KanbanBoard";
-import { editProjectTask } from "@/store/slices/projectTasksSlice";
+import { editProjectTask, fetchKanbanTasksOfProject } from "@/store/slices/projectTasksSlice";
 import TaskCard from "./TaskCard";
 import SubtaskCard from "./SubtaskCard";
 import Xarrow from "react-xarrows";
 import { toast } from "sonner";
-import { useLayout } from "@/contexts/LayoutContext";
+import { useLocation, useParams } from "react-router-dom";
 
 export const cardsTitle = [
     {
@@ -49,11 +49,10 @@ export const cardsTitle = [
 ];
 
 const TaskManagementKanban = ({ fetchData }) => {
-    const { setIsSidebarCollapsed } = useLayout();
-
-    const { data } = useAppSelector((state) => state.filterTasks);
-    const taskList = Array.isArray((data as any)?.task_managements)
-        ? (data as any).task_managements
+    const { id } = useParams();
+    const { data } = useAppSelector((state) => state.fetchKanbanTasksOfProject);
+    const taskList = Array.isArray(data)
+        ? data
         : [];
 
     const dispatch = useAppDispatch();
@@ -65,6 +64,13 @@ const TaskManagementKanban = ({ fetchData }) => {
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
     const [droppedTasks, setDroppedTasks] = useState<{ [key: string]: string }>({});
     const [droppedSubtasks, setDroppedSubtasks] = useState<{ [key: string]: string }>({});
+
+    // Fetch Kanban tasks when component mounts or project_id changes
+    useEffect(() => {
+        if (token && baseUrl) {
+            dispatch(fetchKanbanTasksOfProject({ baseUrl, token, id }));
+        }
+    }, [dispatch, token, baseUrl, id]);
 
     const handleDragStart = useCallback((event: DragStartEvent) => {
         const activeData = event.active.data.current;

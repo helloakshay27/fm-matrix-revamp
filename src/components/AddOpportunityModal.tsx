@@ -50,6 +50,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
   const [description, setDescription] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
   const [tags, setTags] = useState([]);
+  const [observers, setObservers] = useState([])
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [prevTags, setPrevTags] = useState([]);
@@ -130,6 +131,10 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
     if (field === "tags") {
       setTags(values);
     }
+
+    if (field === "observers") {
+      setObservers(values);
+    }
   };
 
   const handleSubmit = async () => {
@@ -148,6 +153,11 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
       // Append tags
       tags.forEach((tagId: any) => {
         formData.append("opportunity[tag_ids][]", tagId.value);
+      });
+
+      // Append observers
+      observers.forEach((observerId: any) => {
+        formData.append("opportunity[observer_ids][]", observerId.value);
       });
 
       // Append attachments
@@ -412,6 +422,25 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
             />
           </div>
 
+          <div className="!mt-6">
+            <MuiMultiSelect
+              label={
+                <>
+                  Observer<span className="text-red-500">*</span>
+                </>
+              }
+              options={mentionUsers
+                ?.filter(Boolean)
+                .map((user: any) => ({
+                  label: user?.full_name || "Unknown",
+                  value: user?.id,
+                }))}
+              value={observers}
+              placeholder="Select Observer"
+              onChange={(values) => handleMultiSelectChange("observers", values)}
+            />
+          </div>
+
           {/* Attachments */}
           <div>
             <Typography variant="subtitle2" className="mb-2 font-medium">
@@ -477,6 +506,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
               borderColor: "black",
               borderRadius: 0,
               minWidth: "120px",
+              cursor: "pointer",
               textTransform: "none",
               borderWidth: "1px",
               "&:hover": {

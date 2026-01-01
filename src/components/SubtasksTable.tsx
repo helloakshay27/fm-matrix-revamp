@@ -8,14 +8,16 @@ import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Eye } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { updateTaskStatus } from "@/store/slices/projectTasksSlice";
+import { updateTaskStatus, editProjectTask } from "@/store/slices/projectTasksSlice";
 import { toast } from "sonner";
 
 const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
-    if (!start || !end) return { text: "N/A", isOverdue: false };
+    // If end date is missing, return N/A
+    if (!end) return { text: "N/A", isOverdue: false };
 
     const now = new Date();
-    const startDate = new Date(start);
+    // Use provided start date or today if not provided
+    const startDate = start ? new Date(start) : now;
     const endDate = new Date(end);
 
     // Set end date to end of the day
@@ -135,6 +137,13 @@ const subtaskColumns: ColumnConfig[] = [
         draggable: true,
         defaultVisible: true,
     },
+    {
+        key: "completion_percentage",
+        label: "Completion Percentage",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
 ];
 
 const statusOptions = [
@@ -176,18 +185,62 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
         }
     }
 
+    const handleCompletionPercentageChange = async (id: number, completionPercentage: number | string) => {
+        const percentage = Number(completionPercentage);
+
+        // Validate percentage
+        if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+            toast.error("Completion percentage must be between 0 and 100");
+            return;
+        }
+
+        try {
+            await dispatch(editProjectTask({
+                token,
+                baseUrl,
+                id: String(id),
+                data: { completion_percent: percentage }
+            })).unwrap();
+            fetchData();
+            toast.success("Completion percentage updated successfully");
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update completion percentage");
+        }
+    }
+
     const renderSubtaskCell = (item: any, columnKey: string) => {
-        const renderProgressBar = (completed: number, total: number, color: string) => {
+        const renderProgressBar = (
+            completed: number,
+            total: number,
+            color: string,
+            type?: string
+        ) => {
             const progress = total > 0 ? (completed / total) * 100 : 0;
             return (
-                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate(`/vas/issues?task_id=${item.id}`)}>
-                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                <div
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() =>
+                        type === "issues"
+                            ? navigate(`/vas/issues?task_id=${item.id}`)
+                            : null
+                    }
+                >
+                    <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+                        {completed}
+                    </span>
+                    <div className="relative w-[8rem] bg-gray-200 rounded-full h-4 overflow-hidden flex items-center !justify-center">
                         <div
-                            className={`absolute top-0 left-0 h-2.5 ${color} rounded-full transition-all duration-300`}
+                            className={`absolute top-0 left-0 h-6 ${color} rounded-full transition-all duration-300`}
                             style={{ width: `${progress}%` }}
                         ></div>
+                        <span className="relative z-10 text-xs font-semibold text-gray-800">
+                            {Math.round(progress)}%
+                        </span>
                     </div>
-                    <span className="text-xs font-medium text-gray-700 whitespace-nowrap">{completed}/{total}</span>
+                    <span className="text-xs font-medium text-gray-700 min-w-[1.5rem] text-center">
+                        {total}
+                    </span>
                 </div>
             );
         };
@@ -229,6 +282,30 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
             const completed = item.completed_issues || 0;
             const total = item.total_issues || 0;
             return renderProgressBar(completed, total, "bg-[#ff9a9e]");
+        }
+        if (columnKey === "completion_percentage") {
+            return (
+                <input
+                    type="number"
+                    defaultValue={item.completion_percent || 0}
+                    className="border border-gray-200 focus:outline-none p-2 w-[4rem]"
+                    min="0"
+                    max="100"
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            const target = e.target as HTMLInputElement;
+                            const value = target.value;
+                            handleCompletionPercentageChange(item.id, value);
+                        }
+                    }}
+                    onBlur={(e) => {
+                        const value = e.target.value;
+                        if (value && value !== String(item.completion_percent)) {
+                            handleCompletionPercentageChange(item.id, value);
+                        }
+                    }}
+                />
+            )
         }
         return item[columnKey as keyof Subtask] || "-";
     };

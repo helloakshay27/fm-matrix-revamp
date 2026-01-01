@@ -602,6 +602,7 @@ import { RoomPage } from "./pages/master/RoomPage";
 import { OpsAccountPage } from "./pages/master/OpsAccountPage";
 import { OrganizationDetailsPage } from "./pages/master/OrganizationDetailsPage";
 import { CompanyDetailsPage } from "./pages/master/CompanyDetailsPage";
+import HeadquartersDetailsPage from "./pages/master/HeadquartersDetailsPage";
 
 // Import Address Master page
 import { AddressMasterPage } from "./pages/AddressMasterPage";
@@ -943,7 +944,8 @@ function App() {
           });
         },
         onMessageNotification: (message) => {
-          if (message.user_id === currentUser.id) {
+          console.log(message)
+          if (message.user_id !== currentUser.id) {
             return;
           }
 
@@ -952,18 +954,19 @@ function App() {
             return;
           }
 
-          const sender =
-            message?.user?.firstname + " " + message?.user?.lastname;
-
           Notification.requestPermission().then((permission) => {
             if (permission === "granted") {
-              const notification = new Notification(sender, {
+              const notification = new Notification("New Message Received", {
                 body: message.body,
               });
 
               notification.onclick = () => {
                 window.focus();
-                navigate(`/vas/channels/messages/${message.conversation_id}`);
+                if (message.ntype === "conversation") {
+                  navigate(`/vas/channels/messages/${message.conversation_id}`);
+                } else if (message.ntype === "projectspace") {
+                  navigate(`/vas/channels/groups/${message.project_space_id}`);
+                }
               };
             }
           });
@@ -1011,6 +1014,10 @@ function App() {
                   <Route
                     path="master/location/account/companies/details/:id"
                     element={<CompanyDetailsPage />}
+                  />
+                  <Route
+                    path="master/location/account/headquarters/details/:id"
+                    element={<HeadquartersDetailsPage />}
                   />
                   <Route path="admin/users" element={<AdminUsersDashboard />} />
                   <Route
