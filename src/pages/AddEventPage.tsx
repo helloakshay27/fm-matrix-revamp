@@ -160,7 +160,7 @@ export const AddEventPage = () => {
       // }
 
       attachemnts.forEach((file) => {
-        formDataToSend.append("event[files_attached][]", file);
+        formDataToSend.append("event[documents][]", file);
       })
 
       await dispatch(createEvent({ baseUrl, token, data: formDataToSend })).unwrap();
