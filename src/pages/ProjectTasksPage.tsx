@@ -9,20 +9,17 @@ import {
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
-import { createProjectTask, editProjectTask, fetchProjectTasks, filterTasks, updateTaskStatus } from "@/store/slices/projectTasksSlice";
-import { ChartNoAxesColumn, ChevronDown, Edit, Eye, List, Plus, X, Search, ChevronRight, SlidersHorizontal, Play, Pause } from "lucide-react";
+import { createProjectTask, editProjectTask, filterTasks, updateTaskStatus } from "@/store/slices/projectTasksSlice";
+import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus, X, Search, ChevronRight, Play, Pause } from "lucide-react";
 import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
 import { cache } from "@/utils/cacheUtils";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Dialog, DialogContent, MenuItem, Select, Slide, TextField, Switch, FormControl } from "@mui/material";
 import { toast } from "sonner";
-import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
 import TaskManagementKanban from "@/components/TaskManagementKanban";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { TransitionProps } from "@mui/material/transitions";
-import { fetchStatuses } from "@/store/slices/statusesSlice";
-import { fetchProjectStatuses } from "@/store/slices/projectStatusSlice";
 import { useLayout } from "@/contexts/LayoutContext";
 import clsx from "clsx";
 import axios from "axios";
@@ -335,9 +332,6 @@ const ProjectTasksPage = () => {
     const [openStatusOptions, setOpenStatusOptions] = useState(false)
     const [selectedFilterOption, setSelectedFilterOption] = useState("all")
     const [statuses, setStatuses] = useState([])
-    const [isMyTasks, setIsMyTasks] = useState(() => {
-        return localStorage.getItem('myTasks') === 'true'
-    });
     const [taskType, setTaskType] = useState<"all" | "my">("all");
     const [pagination, setPagination] = useState({
         current_page: 1,
@@ -357,7 +351,6 @@ const ProjectTasksPage = () => {
     const [selectedWorkflowStatus, setSelectedWorkflowStatus] = useState<string[]>([]);
     const [dates, setDates] = useState({ startDate: '', endDate: '' });
     const [projectOptions, setProjectOptions] = useState<any[]>([]);
-    const [workflowStatusOptions, setWorkflowStatusOptions] = useState<any[]>([]);
     const [dropdowns, setDropdowns] = useState({
         status: false,
         workflowStatus: false,
