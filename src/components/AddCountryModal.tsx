@@ -34,6 +34,8 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
     country_id: '',
     logo: null as File | null
   });
+  // Local preview for logo
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
 
   const handleInputChange = (name: string, value: string) => {
     setFormData(prev => ({
@@ -46,6 +48,11 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
     const file = event.target.files?.[0];
     if (file) {
       setFormData(prev => ({ ...prev, logo: file }));
+  // Create preview URL
+  const url = URL.createObjectURL(file);
+  setLogoPreviewUrl(url);
+  // Clear input value to allow reselecting same file
+  event.currentTarget.value = '';
     }
   };
 
@@ -110,6 +117,9 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
       country_id: '',
       logo: null
     });
+  // Revoke and clear logo preview
+  if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+  setLogoPreviewUrl(null);
   };
 
   const handleClose = () => {
@@ -143,7 +153,7 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
               onChange={(e) => handleInputChange('name', e.target.value)}
               fullWidth
               variant="outlined"
-              InputLabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: true, sx: { '& .MuiFormLabel-asterisk': { color: '#C72030' } } }}
               InputProps={{
                 sx: {
                   height: { xs: 28, sm: 36, md: 45 },
@@ -157,7 +167,7 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
             />
 
             <FormControl fullWidth variant="outlined">
-              <InputLabel shrink>Organization</InputLabel>
+              <InputLabel shrink sx={{ '& .MuiFormLabel-asterisk': { color: '#C72030' } }}>Organization</InputLabel>
               <MuiSelect
                 value={formData.organization_id}
                 onChange={(e) => handleInputChange('organization_id', e.target.value)}
@@ -207,12 +217,12 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
           </div>
 
           <div className="grid grid-cols-2 gap-6">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel shrink>Company *</InputLabel>
+            <FormControl fullWidth variant="outlined" required>
+              <InputLabel shrink sx={{ '& .MuiFormLabel-asterisk': { color: '#C72030' } }}>Company</InputLabel>
               <MuiSelect
                 value={formData.company_setup_id}
                 onChange={(e) => handleInputChange('company_setup_id', e.target.value)}
-                label="Company *"
+                label="Company"
                 displayEmpty
                 MenuProps={{
                   PaperProps: {
@@ -256,12 +266,12 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
               </MuiSelect>
             </FormControl>
 
-            <FormControl fullWidth variant="outlined">
-              <InputLabel shrink>Country *</InputLabel>
+            <FormControl fullWidth variant="outlined" required>
+              <InputLabel shrink sx={{ '& .MuiFormLabel-asterisk': { color: '#C72030' } }}>Country</InputLabel>
               <MuiSelect
                 value={formData.country_id}
                 onChange={(e) => handleInputChange('country_id', e.target.value)}
-                label="Country *"
+                label="Country"
                 displayEmpty
                 MenuProps={{
                   PaperProps: {
@@ -313,12 +323,37 @@ export const AddCountryModal: React.FC<AddCountryModalProps> = ({
               onChange={handleLogoChange}
               accept="image/*"
               disabled={isSubmitting}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
             />
-            {formData.logo && (
-              <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1 mt-2">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                {formData.logo.name}
+            {(formData.logo || logoPreviewUrl) && (
+              <div className="flex items-center gap-3 flex-wrap mt-2">
+                {formData.logo && (
+                  <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    {formData.logo.name}
+                  </div>
+                )}
+                {logoPreviewUrl && (
+                  <div className="relative">
+                    <img
+                      src={logoPreviewUrl}
+                      alt="Logo Preview"
+                      className="h-16 w-16 object-cover border border-gray-200 rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+                        setLogoPreviewUrl(null);
+                        setFormData(prev => ({ ...prev, logo: null }));
+                      }}
+                      className="absolute -top-1.5 -right-1.5 bg-white text-[#BD2828] border border-gray-200 rounded-full w-5 h-5 text-xs leading-none flex items-center justify-center shadow hover:bg-[#BD2828] hover:text-white"
+                      aria-label="Remove image"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

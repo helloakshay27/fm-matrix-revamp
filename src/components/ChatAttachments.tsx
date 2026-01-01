@@ -25,8 +25,8 @@ const ChatAttachments = () => {
                     id,
                     per_page: 100,
                     page: 1,
-                    param: path.includes("messages") ? "conversation_id_eq" : "project_space_id",
-                    attachments_id_null: true,
+                    param: path.includes("messages") ? "conversation_id_eq" : "project_space_id_eq",
+                    attachments_id_null: false,
                 })
             ).unwrap();
 

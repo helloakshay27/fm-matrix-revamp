@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Eye } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { updateTaskStatus } from "@/store/slices/projectTasksSlice";
+import { updateTaskStatus, editProjectTask } from "@/store/slices/projectTasksSlice";
 import { toast } from "sonner";
 
 const calculateDuration = (start: string | undefined, end: string | undefined): { text: string; isOverdue: boolean } => {
@@ -137,6 +137,13 @@ const subtaskColumns: ColumnConfig[] = [
         draggable: true,
         defaultVisible: true,
     },
+    {
+        key: "completion_percentage",
+        label: "Completion Percentage",
+        sortable: true,
+        draggable: true,
+        defaultVisible: true,
+    },
 ];
 
 const statusOptions = [
@@ -175,6 +182,30 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
             toast.success("Task status changed successfully");
         } catch (error) {
             console.log(error)
+        }
+    }
+
+    const handleCompletionPercentageChange = async (id: number, completionPercentage: number | string) => {
+        const percentage = Number(completionPercentage);
+
+        // Validate percentage
+        if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+            toast.error("Completion percentage must be between 0 and 100");
+            return;
+        }
+
+        try {
+            await dispatch(editProjectTask({
+                token,
+                baseUrl,
+                id: String(id),
+                data: { completion_percent: percentage }
+            })).unwrap();
+            fetchData();
+            toast.success("Completion percentage updated successfully");
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update completion percentage");
         }
     }
 
@@ -251,6 +282,30 @@ const SubtasksTable = ({ subtasks, fetchData }: { subtasks: Subtask[], fetchData
             const completed = item.completed_issues || 0;
             const total = item.total_issues || 0;
             return renderProgressBar(completed, total, "bg-[#ff9a9e]");
+        }
+        if (columnKey === "completion_percentage") {
+            return (
+                <input
+                    type="number"
+                    defaultValue={item.completion_percent || 0}
+                    className="border border-gray-200 focus:outline-none p-2 w-[4rem]"
+                    min="0"
+                    max="100"
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            const target = e.target as HTMLInputElement;
+                            const value = target.value;
+                            handleCompletionPercentageChange(item.id, value);
+                        }
+                    }}
+                    onBlur={(e) => {
+                        const value = e.target.value;
+                        if (value && value !== String(item.completion_percent)) {
+                            handleCompletionPercentageChange(item.id, value);
+                        }
+                    }}
+                />
+            )
         }
         return item[columnKey as keyof Subtask] || "-";
     };

@@ -39,6 +39,10 @@ interface OpportunityDetailsData {
             name: string;
         };
     }>;
+    observers?: Array<{
+        id: number;
+        user_name: string;
+    }>;
     attachments?: Array<{
         id: number;
         document_file_name?: string;
@@ -453,6 +457,7 @@ const OpportunityDetailsPage = () => {
     const token = localStorage.getItem('token');
     const { id } = useParams();
     const navigate = useNavigate();
+    const baseUrl = localStorage.getItem('baseUrl');
 
     const [isFirstCollapsed, setIsFirstCollapsed] = useState(false);
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
@@ -469,6 +474,7 @@ const OpportunityDetailsPage = () => {
     const [opportunityDetails, setOpportunityDetails] = useState<OpportunityDetailsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [addingTodo, setAddingTodo] = useState(false);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -533,6 +539,35 @@ const OpportunityDetailsPage = () => {
         setIsTaskModalOpen(true);
     };
 
+    const handleAddToDo = async () => {
+        if (addingTodo) return;
+        setAddingTodo(true);
+        try {
+            const payload = {
+                todo: {
+                    title: opportunityDetails.title,
+                    status: 'open',
+                },
+            };
+
+            await axios.post(`https://${baseUrl}/todos.json`, payload, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            toast.success('To-Do added successfully.');
+        } catch (error) {
+            console.log(error);
+            const errorData = error.response.data;
+            Object.keys(errorData).forEach((key) => {
+                toast.error(`${key} ${errorData[key]} for todo`);
+            });
+        } finally {
+            setAddingTodo(false);
+        }
+    }
+
     const handleGoToTask = () => {
         if (opportunityDetails?.project_management_id) {
             navigate(`/vas/projects/${opportunityDetails.project_management_id}`);
@@ -547,10 +582,6 @@ const OpportunityDetailsPage = () => {
         setIsFirstCollapsed(!isFirstCollapsed);
     };
 
-    const toggleSecondCollapse = () => {
-        setIsSecondCollapsed(!isSecondCollapsed);
-    };
-
     const toggleDetailsCollapse = () => {
         setIsDetailsCollapsed(!isDetailsCollapsed);
     };
@@ -562,24 +593,6 @@ const OpportunityDetailsPage = () => {
             </div>
         );
     }
-
-    // if (error) {
-    //     return (
-    //         <div className="m-4">
-    //             <div className="flex items-center justify-center py-12 bg-red-50 border border-red-200 rounded">
-    //                 <p className="text-red-600">Error: {error}</p>
-    //             </div>
-    //         </div>
-    //     );
-    // }
-
-    // if (!opportunityDetails) {
-    //     return (
-    //         <div className="m-4">
-    //             <p className="text-center text-gray-600">Opportunity not found</p>
-    //         </div>
-    //     );
-    // }
 
     return (
         <div className="m-4">
@@ -676,7 +689,7 @@ const OpportunityDetailsPage = () => {
 
                                 <span
                                     className="flex items-center gap-1 cursor-pointer"
-                                //   onClick={handleAddToDo}
+                                // onClick={handleAddToDo}
                                 >
                                     <CircleCheckBig size={15} />
                                     <span>Add To Do</span>
@@ -801,6 +814,32 @@ const OpportunityDetailsPage = () => {
                                             </div>
                                         ) : (
                                             <span className="text-gray-500">No tags assigned</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-start justify-start gap-3">
+                                    <div className="text-right text-[13px] font-[500]">
+                                        Observers :
+                                    </div>
+                                    <div className="text-left text-[13px]">
+                                        {opportunityDetails?.observers && opportunityDetails.observers.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                {opportunityDetails.observers.map((tag, idx) => (
+                                                    <span
+                                                        key={idx}
+                                                        className="bg-[#C72030] text-white px-4 py-1.5 rounded-full text-[12px] font-medium"
+                                                    >
+                                                        {tag.user_name || 'Unknown'}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-500">No observers assigned</span>
                                         )}
                                     </div>
                                 </div>

@@ -916,6 +916,7 @@ interface TaskDetails {
   allocation_date?: string;
   estimated_hour?: number;
   project_title?: string;
+  todo_converted?: boolean;
   milestone?: {
     title?: string;
   };
@@ -1139,6 +1140,7 @@ export const ProjectTaskDetails = () => {
         },
       });
       toast.success('To-Do added successfully.');
+      fetchData();
     } catch (error) {
       console.log(error);
       const errorData = error.response.data;
@@ -1302,13 +1304,26 @@ export const ProjectTaskDetails = () => {
               />
             </span>
             <span className="h-6 w-[1px] border border-gray-300"></span>
-            <span
-              className="flex items-center gap-1 cursor-pointer"
-              onClick={handleAddToDo}
-            >
-              <CircleCheckBig size={15} />
-              <span>Add To Do</span>
-            </span>
+            {
+              taskDetails.todo_converted ? (
+                <span
+                  className="flex items-center gap-1 cursor-pointer"
+                  onClick={() => navigate(`/vas/todo`)}
+                >
+                  <CircleCheckBig size={15} />
+                  <span>Added To Do</span>
+                </span>
+              ) : (
+                <span
+                  className="flex items-center gap-1 cursor-pointer"
+                  onClick={handleAddToDo}
+                >
+                  <CircleCheckBig size={15} />
+                  <span>Add To Do</span>
+                </span>
+              )
+            }
+
             <span className="h-6 w-[1px] border border-gray-300"></span>
             <span
               className="flex items-center gap-1 cursor-pointer"
@@ -1651,7 +1666,7 @@ export const ProjectTaskDetails = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 };
 
