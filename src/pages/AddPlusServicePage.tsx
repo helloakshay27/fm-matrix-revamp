@@ -102,6 +102,14 @@ export const AddPlusServicePage = () => {
     }));
   };
 
+  const handleMobileChange = (value: string) => {
+    // Allow only digits and limit to 10 characters
+    const numbersOnly = value.replace(/\D/g, '');
+    if (numbersOnly.length <= 10) {
+      handleInputChange('mobile', numbersOnly);
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
@@ -154,6 +162,10 @@ export const AddPlusServicePage = () => {
     }
     if (!formData.service_category_id) {
       toast.error("Service category is required");
+      return false;
+    }
+    if (formData.mobile && formData.mobile.length !== 10) {
+      toast.error("Mobile number must be exactly 10 digits");
       return false;
     }
     return true;
@@ -326,8 +338,8 @@ export const AddPlusServicePage = () => {
                 label="Mobile"
                 type="tel"
                 value={formData.mobile}
-                onChange={(e) => handleInputChange("mobile", e.target.value)}
-                placeholder="Enter Mobile Number"
+                onChange={(e) => handleMobileChange(e.target.value)}
+                placeholder="Enter 10 digit mobile number"
                 variant="outlined"
                 slotProps={{
                   inputLabel: {
@@ -337,6 +349,12 @@ export const AddPlusServicePage = () => {
                 InputProps={{
                   sx: fieldStyles,
                 }}
+                inputProps={{
+                  maxLength: 10,
+                  pattern: '[0-9]*',
+                }}
+                helperText={formData.mobile && formData.mobile.length !== 10 ? '' : ''}
+                error={formData.mobile !== '' && formData.mobile.length !== 10}
               />
 
               {/* Address */}
