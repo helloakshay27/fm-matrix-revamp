@@ -107,6 +107,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     visitor_enabled: false,
     govt_id_enabled: false,
     visitor_host_mandatory: false,
+  attachfile: null,
   });
 
   // Filtered dropdown options based on selections
@@ -117,12 +118,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     HeadquarterOption[]
   >([]);
 
-  // Fetch dropdown data on component mount
-  useEffect(() => {
-    if (isOpen) {
-      fetchDropdownData();
-    }
-  }, [isOpen]);
+  // Local preview for site image (single)
+  const [siteImagePreviewUrl, setSiteImagePreviewUrl] = useState<string | null>(null);
+
+  // Fetch dropdown data on component mount (moved below after declaration)
 
   // Reset form when editing site changes
   useEffect(() => {
@@ -239,7 +238,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     setFilteredCompanies(companies);
   }, [companies]);
 
-  const fetchDropdownData = async () => {
+  const fetchDropdownData = React.useCallback(async () => {
     setIsLoadingDropdowns(true);
     try {
   console.warn("Starting to fetch dropdown data...");
@@ -378,7 +377,14 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     } finally {
       setIsLoadingDropdowns(false);
     }
-  };
+  }, [getFullUrl, getAuthHeader]);
+
+  // Fetch dropdown data on component mount
+  useEffect(() => {
+    if (isOpen) {
+      fetchDropdownData();
+    }
+  }, [isOpen, fetchDropdownData]);
 
   const handleInputChange = (
     field: keyof SiteFormData,
@@ -700,6 +706,72 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                   rows={2}
                   disabled={isLoading}
                 />
+
+                {/* Single image upload */}
+                <div className="space-y-2 mb-2">
+                  <span className="text-sm font-medium text-[#C72030] ">Site Image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+                      // enforce single image and 5MB max similar to AddCompanyModal
+                      if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error("Image file size should be less than 5MB");
+                          return;
+                        }
+                        // cleanup previous preview
+                        if (siteImagePreviewUrl) {
+                          URL.revokeObjectURL(siteImagePreviewUrl);
+                        }
+                        const url = URL.createObjectURL(file);
+                        setSiteImagePreviewUrl(url);
+                        setFormData((prev) => ({ ...prev, attachfile: file }));
+                        // clear input so same file can be selected again
+                        e.currentTarget.value = "";
+                      } else {
+                        if (siteImagePreviewUrl) URL.revokeObjectURL(siteImagePreviewUrl);
+                        setSiteImagePreviewUrl(null);
+                        setFormData((prev) => ({ ...prev, attachfile: null }));
+                      }
+                    }}
+                    disabled={isLoading}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#BD2828] file:text-white hover:file:bg-[#a52121]"
+                  />
+
+                  {(siteImagePreviewUrl || formData.attachfile) && (
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {formData.attachfile && (
+                        <div className="flex items-center gap-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded px-2 py-1">
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          {formData.attachfile.name}
+                        </div>
+                      )}
+                      {siteImagePreviewUrl && (
+                        <div className="relative">
+                          <img
+                            src={siteImagePreviewUrl}
+                            alt="Site Image Preview"
+                            className="h-16 w-16 object-cover border border-gray-200 rounded"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (siteImagePreviewUrl) URL.revokeObjectURL(siteImagePreviewUrl);
+                              setSiteImagePreviewUrl(null);
+                              setFormData((prev) => ({ ...prev, attachfile: null }));
+                            }}
+                            className="absolute -top-1.5 -right-1.5 bg-white text-[#BD2828] border border-gray-200 rounded-full w-5 h-5 text-xs leading-none flex items-center justify-center shadow hover:bg-[#BD2828] hover:text-white"
+                            aria-label="Remove image"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-6">
