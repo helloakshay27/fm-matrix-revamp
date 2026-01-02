@@ -540,9 +540,9 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       </div>
     ),
     code: (
-      <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+      <div className="text-sm text-center font-mono">
         {site?.code || "-"}
-      </span>
+      </div>
     ),
     location: (
       <div className="text-sm">
