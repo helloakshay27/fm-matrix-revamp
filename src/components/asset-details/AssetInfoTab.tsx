@@ -499,7 +499,9 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                         </span>
                         <span className="mx-2 text-gray-500">:</span>
                         <span className="font-semibold text-black">
-                          {asset.allocated_to?.join(", ") || "-"}
+                          {Array.isArray(asset.allocated_to)
+                            ? asset.allocated_to.join(", ")
+                            : asset.allocated_to || "-"}
                         </span>
                       </div>
 
