@@ -467,9 +467,9 @@ export const RegionTab: React.FC<RegionTabProps> = ({
       </div>
     ),
     code: (
-      <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+      <div className="text-sm text-center font-mono">
         {region?.code || "-"}
-      </span>
+      </div>
     ),
     company: (
       <span className="text-sm text-gray-600">
