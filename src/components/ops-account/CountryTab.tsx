@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Plus,
   Download,
@@ -163,9 +164,10 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   const [companiesMap, setCompaniesMap] = useState<Map<number, string>>(
     new Map()
   );
-  const [countriesDropdown, setCountriesDropdown] = useState<any[]>([]);
-  const [companiesDropdown, setCompaniesDropdown] = useState<any[]>([]);
-  const [organizationsDropdown, setOrganizationsDropdown] = useState<any[]>([]);
+  type DropdownItem = { id: number; name: string };
+  const [countriesDropdown, setCountriesDropdown] = useState<DropdownItem[]>([]);
+  const [companiesDropdown, setCompaniesDropdown] = useState<DropdownItem[]>([]);
+  const [organizationsDropdown, setOrganizationsDropdown] = useState<DropdownItem[]>([]);
   const [canEditCountry, setCanEditCountry] = useState(false);
 
   const user = getUser() || {
@@ -175,7 +177,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
     email: "",
   };
 
-  const checkEditPermission = () => {
+  const checkEditPermission = React.useCallback(() => {
     const userEmail = user.email || "";
     const allowedEmails = [
       "abhishek.sharma@lockated.com",
@@ -184,22 +186,12 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       "dev@lockated.com",
     ];
     setCanEditCountry(allowedEmails.includes(userEmail));
-  };
+  }, [user.email]);
 
-  useEffect(() => {
-    fetchCompanies();
-    fetchCountriesDropdown();
-    fetchOrganizations();
-    checkEditPermission();
-  }, []);
-
-  // Load data on component mount and when page/perPage/filters change
-  useEffect(() => {
-    fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-  }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
+  // Effects are placed after function declarations below
 
   // Fetch countries data from API
-  const fetchCountries = async (
+  const fetchCountries = React.useCallback(async (
     page = 1,
     per_page = 10,
     search = "",
@@ -288,9 +280,9 @@ export const CountryTab: React.FC<CountryTabProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [getFullUrl, getAuthHeader]);
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = React.useCallback(async () => {
     try {
       const response = await fetch(
         getFullUrl("/pms/company_setups/company_index.json"),
@@ -309,23 +301,23 @@ export const CountryTab: React.FC<CountryTabProps> = ({
           responseData.code === 200 &&
           Array.isArray(responseData.data)
         ) {
-          setCompaniesDropdown(responseData.data);
+          setCompaniesDropdown(responseData.data as DropdownItem[]);
           const compMap = new Map();
-          responseData.data.forEach((company: any) => {
+          (responseData.data as DropdownItem[]).forEach((company) => {
             compMap.set(company.id, company.name);
           });
           setCompaniesMap(compMap);
         } else if (responseData && Array.isArray(responseData.companies)) {
-          setCompaniesDropdown(responseData.companies);
+          setCompaniesDropdown(responseData.companies as DropdownItem[]);
           const compMap = new Map();
-          responseData.companies.forEach((company: any) => {
+          (responseData.companies as DropdownItem[]).forEach((company) => {
             compMap.set(company.id, company.name);
           });
           setCompaniesMap(compMap);
         } else if (Array.isArray(responseData)) {
-          setCompaniesDropdown(responseData);
+          setCompaniesDropdown(responseData as DropdownItem[]);
           const compMap = new Map();
-          responseData.forEach((company: any) => {
+          (responseData as DropdownItem[]).forEach((company) => {
             compMap.set(company.id, company.name);
           });
           setCompaniesMap(compMap);
@@ -334,9 +326,9 @@ export const CountryTab: React.FC<CountryTabProps> = ({
     } catch (error) {
       console.error("Error fetching companies:", error);
     }
-  };
+  }, [getAuthHeader, getFullUrl]);
 
-  const fetchCountriesDropdown = async () => {
+  const fetchCountriesDropdown = React.useCallback(async () => {
     try {
       // Prefer token/baseUrl from localStorage (set by Layout when token in URL)
       const storedBaseUrl = localStorage.getItem("baseUrl");
@@ -374,8 +366,8 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       });
 
       if (response.ok) {
-        const data = await response.json();
-        console.log("Countries API response:", data);
+  const data = await response.json();
+  console.warn("Countries API response:", data);
 
         // Map the API response to the expected dropdown format
         // API returns array of objects with id and name properties
@@ -409,9 +401,9 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       setCountriesDropdown([]);
       setCountriesMap(new Map());
     }
-  };
+  }, [getAuthHeader, getFullUrl]);
 
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = React.useCallback(async () => {
     try {
       const response = await fetch(getFullUrl("/organizations.json"), {
         method: "GET",
@@ -425,16 +417,29 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       if (response.ok) {
         const data = await response.json();
         if (data && data.organizations && Array.isArray(data.organizations)) {
-          setOrganizationsDropdown(data.organizations);
+          setOrganizationsDropdown(data.organizations as DropdownItem[]);
         } else if (Array.isArray(data)) {
-          setOrganizationsDropdown(data);
+          setOrganizationsDropdown(data as DropdownItem[]);
         }
       }
     } catch (error) {
       console.error("Error fetching organizations:", error);
       setOrganizationsDropdown([]);
     }
-  };
+  }, [getAuthHeader, getFullUrl]);
+
+  // Run initial data loads and permission check after callbacks are defined
+  useEffect(() => {
+    fetchCompanies();
+    fetchCountriesDropdown();
+    fetchOrganizations();
+    checkEditPermission();
+  }, [fetchCompanies, fetchCountriesDropdown, fetchOrganizations, checkEditPermission]);
+
+  // Load data when page/perPage/search/filters change
+  useEffect(() => {
+    fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+  }, [currentPage, perPage, debouncedSearchQuery, appliedFilters, fetchCountries]);
 
   // Modal handlers
   const handleToggleStatus = async (countryId: number, currentStatus: boolean) => {
@@ -587,18 +592,17 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 case "status":
                   return (
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleStatus(country.id, country.active)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${country.active
-                            ? "bg-green-100 text-green-800 hover:bg-green-200"
-                            : "bg-red-100 text-red-800 hover:bg-red-200"
-                          }`}
+                      <Switch
+                        checked={country.active}
+                        onCheckedChange={() => handleToggleStatus(country.id, country.active)}
                         disabled={!canEditCountry}
+                        aria-label={`Toggle status for ${country.name || "headquarter"}`}
+                      />
+                      <span
+                        className={`text-xs font-medium ${country.active ? "text-green-700" : "text-red-700"}`}
                       >
                         {country.active ? "Active" : "Inactive"}
-                      </Button>
+                      </span>
                     </div>
                   );
                 case "created_at":
@@ -730,7 +734,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         description="Upload a CSV file to import countries"
         onImport={async (file: File) => {
           // Handle bulk upload logic here
-          console.log("Uploading countries file:", file);
+          console.warn("Uploading countries file:", file);
           toast.success("Countries uploaded successfully");
           fetchCountries(
             currentPage,
