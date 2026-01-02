@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -87,15 +87,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
     logo: null,
     powered_by_logo: null,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Fetch organization data when modal opens
-  useEffect(() => {
-    if (isOpen && organizationId) {
-      fetchOrganizationData();
-    }
-  }, [isOpen, organizationId]);
-
-  const fetchOrganizationData = async () => {
+  const fetchOrganizationData = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
@@ -110,7 +104,6 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
 
       if (response.ok) {
         const result = await response.json();
-        console.log("Fetched organization data:", result);
 
         // Handle different response formats - the data might be directly in result or nested
         const org = result.organization || result.data || result;
@@ -128,16 +121,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
           powered_by_logo: null,
         });
 
-        // Store existing attachments for reference
-        if (org?.attachfile) {
-          console.log("Existing logo:", org.attachfile.document_url);
-        }
-        if (org?.powered_by_attachfile) {
-          console.log(
-            "Existing powered by logo:",
-            org.powered_by_attachfile.document_url
-          );
-        }
+        // Existing attachments can be handled here if needed
       } else {
         const errorText = await response.text();
         console.error("Failed to fetch organization data:", errorText);
@@ -149,10 +133,18 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getAuthHeader, getFullUrl, organizationId]);
+
+  // Fetch organization data when modal opens
+  useEffect(() => {
+    if (isOpen && organizationId) {
+      fetchOrganizationData();
+    }
+  }, [isOpen, organizationId, fetchOrganizationData]);
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
+      setErrors((prev) => ({ ...prev, name: "Organization name is required" }));
       toast.error("Please enter organization name");
       return;
     }
@@ -276,6 +268,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       logo: null,
       powered_by_logo: null,
     });
+  setErrors({});
   };
 
   const handleClose = () => {
@@ -326,9 +319,10 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   label="Organization Name"
                   placeholder="Enter organization name"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value });
+                    if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
+                  }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{
@@ -338,6 +332,8 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   InputProps={{ sx: fieldStyles }}
                   required
                   disabled={isSubmitting}
+                  error={!!errors.name}
+                  helperText={errors.name}
                 />
 
                 <FormControl fullWidth variant="outlined">

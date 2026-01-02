@@ -89,9 +89,11 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
     logo: null,
     powered_by_logo: null,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
+      setErrors((prev) => ({ ...prev, name: "Organization name is required" }));
       toast.error("Please enter organization name");
       return;
     }
@@ -272,6 +274,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
       logo: null,
       powered_by_logo: null,
     });
+  setErrors({});
   // Revoke and clear previews
   logoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
   poweredByPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
@@ -312,9 +315,10 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 label="Organization Name"
                 placeholder="Enter organization name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value });
+                  if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
+                }}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{
@@ -324,6 +328,8 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                 InputProps={{ sx: fieldStyles }}
                 required
                 disabled={isSubmitting}
+                error={!!errors.name}
+                helperText={errors.name}
               />
 
               <FormControl fullWidth variant="outlined">
