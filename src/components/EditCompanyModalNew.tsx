@@ -113,7 +113,7 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
       const company = result.data || result.company || result;
 
       // Format date for HTML date input (YYYY-MM-DD)
-      const formatDateForInput = (dateStr: string) => {
+  const formatDateForInput = (dateStr: string) => {
         if (!dateStr) return '';
         try {
           // Handle different date formats
@@ -159,9 +159,12 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
           mobile: company.operation_spoc?.mobile || ''
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching company details:', error);
-      toast.error(`Failed to load company details: ${error.message}`, {
+      const message = typeof error === 'object' && error && 'message' in error
+        ? String((error as { message?: string }).message || '')
+        : 'Unknown error';
+      toast.error(`Failed to load company details: ${message}`, {
         duration: 5000,
       });
     } finally {
@@ -169,7 +172,10 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
     }
   };
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (
+    field: string,
+    value: string | number | File | null
+  ) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -233,12 +239,16 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  // Send the raw YYYY-MM-DD from the date input to the API to avoid timezone/locale changes
   const formatDateForAPI = (dateStr: string) => {
     if (!dateStr) return '';
+    // Expecting value from input type="date" -> 'YYYY-MM-DD'
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    // Otherwise, attempt to normalize
     try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return '';
-      return date.toLocaleDateString('en-US'); // MM/DD/YYYY format
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      return d.toISOString().split('T')[0];
     } catch {
       return '';
     }
@@ -315,9 +325,12 @@ export const EditCompanyModalNew: React.FC<EditCompanyModalProps> = ({
       });
 
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating company:', error);
-      toast.error(`Failed to update company: ${error.message}`, {
+      const message = typeof error === 'object' && error && 'message' in error
+        ? String((error as { message?: string }).message || '')
+        : 'Unknown error';
+      toast.error(`Failed to update company: ${message}`, {
         duration: 5000,
       });
     } finally {

@@ -453,17 +453,41 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
     return country ? country.name : "Unknown";
   };
 
-  // Format date helper
+  // Format date helper (supports 'YYYY-MM-DD' and 'MM/DD/YYYY' without timezone shifts)
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "-";
     try {
-      const date = new Date(dateString);
-      // Check if date is valid
-      if (isNaN(date.getTime())) return "-";
-      return date.toLocaleDateString("en-US", {
+      let year: number, month: number, day: number;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        // YYYY-MM-DD
+        const [y, m, d] = dateString.split("-").map((p) => parseInt(p, 10));
+        year = y;
+        month = m;
+        day = d;
+      } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString)) {
+        // MM/DD/YYYY
+        const [mStr, dStr, yStr] = dateString.split("/");
+        year = parseInt(yStr, 10);
+        month = parseInt(mStr, 10);
+        day = parseInt(dStr, 10);
+      } else {
+        // Fallback: try native parsing
+        const parsed = new Date(dateString);
+        if (isNaN(parsed.getTime())) return "-";
+        return parsed.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      }
+
+      // Use UTC to avoid timezone day-shifts
+      const utcDate = new Date(Date.UTC(year, (month || 1) - 1, day || 1));
+      return utcDate.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
+        timeZone: "UTC",
       });
     } catch (error) {
       console.error("Error formatting date:", error);
@@ -528,12 +552,13 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       </span>
     ),
     billing_rate: (
-      <div className="text-sm">
-        <div>{company?.billing_rate || "-"}</div>
-        {company?.billing_term && (
-          <div className="text-gray-500">{company.billing_term}</div>
-        )}
-      </div>
+      <span className="text-sm text-gray-900">
+        {company?.billing_term
+          ? company.billing_term // show only term like 'M'
+          : company?.billing_rate
+          ? company.billing_rate
+          : "-"}
+      </span>
     ),
     live_date: (
       <span className="text-sm text-gray-600">
@@ -548,19 +573,19 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
   });
 
   const handleView = (id: number) => {
-    console.log("View company:", id);
+    console.warn("View company:", id);
     // Navigate to company details page
     navigate(`/ops-console/master/location/account/companies/details/${id}`);
   };
 
   const handleEdit = (id: number) => {
-    console.log("Edit company:", id);
+    console.warn("Edit company:", id);
     setSelectedCompanyId(id);
     setIsEditModalOpen(true);
   };
 
   const handleDelete = (id: number) => {
-    console.log("Delete company:", id);
+    console.warn("Delete company:", id);
     setSelectedCompanyId(id);
     setIsDeleteModalOpen(true);
   };
@@ -603,9 +628,13 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
       );
       setIsDeleteModalOpen(false);
       setSelectedCompanyId(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting company:", error);
-      toast.error(`Failed to delete company: ${error.message}`, {
+      const message =
+        typeof error === "object" && error && "message" in error
+          ? String((error as { message?: string }).message || "")
+          : "Unknown error";
+      toast.error(`Failed to delete company: ${message}`, {
         duration: 5000,
       });
     }
@@ -750,7 +779,7 @@ export const CompanyTab: React.FC<CompanyTabProps> = ({
         description="Upload a CSV file to import companies"
         onImport={async (file: File) => {
           // Handle bulk upload logic here
-          console.log("Uploading companies file:", file);
+          console.warn("Uploading companies file:", file);
           toast.success("Companies uploaded successfully");
           fetchCompanies(
             currentPage,
