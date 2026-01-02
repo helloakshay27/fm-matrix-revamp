@@ -13,8 +13,6 @@ import { useSearchParams } from "react-router-dom";
 import viBusinessCardBg from "../../assets/VI-businesscard.png";
 import baseClient from "@/utils/withoutTokenBase";
 
-
-
 interface SocialLink {
   title: string;
   link: string;
@@ -36,11 +34,9 @@ interface UserCardData {
   profileImage?: string;
   website?: string;
   address?: string;
-  socialLinks?: SocialLink[];   // ✅ added
-  extraLinks?: CardLink[];   // ✅ added
+  socialLinks?: SocialLink[]; // ✅ added
+  extraLinks?: CardLink[]; // ✅ added
 }
-
-
 
 interface ApiResponse {
   id: number;
@@ -51,16 +47,16 @@ interface ApiResponse {
   site_name: string;
   user_company_name: string;
   avatar_url: string;
+  business_card_url?: string;
   user_other_detail?: {
     website_link?: string;
+    social_links?: SocialLink[];
+    extra_links?: CardLink[];
   };
   lock_user_permission?: {
     designation?: string;
     department_name?: string;
   };
-
-  social_links?: SocialLink[];   // ✅ added
-  extra_links?: CardLink[];   // ✅ added
 }
 
 export const ViBusinessCard: React.FC = () => {
@@ -68,7 +64,6 @@ export const ViBusinessCard: React.FC = () => {
   const [userData, setUserData] = useState<UserCardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -101,11 +96,11 @@ export const ViBusinessCard: React.FC = () => {
           designation: data.lock_user_permission?.designation || "",
           department: data.lock_user_permission?.department_name || "",
           company: data.user_company_name,
-          profileImage: data.business_card_url,
+          profileImage: data.avatar_url || data.business_card_url || "",
           website: data.user_other_detail?.website_link || "",
           address: data.site_name,
-          socialLinks: data.user_other_detail.social_links || [],
-          extraLinks: data.user_other_detail.extra_links || [],
+          socialLinks: data.user_other_detail?.social_links || [],
+          extraLinks: data.user_other_detail?.extra_links || [],
         };
 
         setUserData(mappedData);
@@ -125,7 +120,6 @@ export const ViBusinessCard: React.FC = () => {
   //   ...(userData.socialLinks || []),
   //   ...(userData.extraLinks || []),
   // ];
-
 
   const handleDownloadVCard = () => {
     if (!userData) return;
@@ -350,12 +344,6 @@ END:VCARD`;
                 </div>
               )}
 
-
-
-
-
-
-
               {/* Social Links */}
               {userData?.socialLinks?.length > 0 &&
                 userData?.socialLinks.map((item, index) => (
@@ -363,7 +351,8 @@ END:VCARD`;
                     key={index}
                     className="flex items-center gap-3 mb-4 py-3 px-6"
                     style={{
-                      backgroundColor: index % 2 === 1 ? "#F5F5F5" : "transparent",
+                      backgroundColor:
+                        index % 2 === 1 ? "#F5F5F5" : "transparent",
                     }}
                   >
                     <div className="flex-shrink-0">
@@ -385,10 +374,10 @@ END:VCARD`;
                         {/* <span className="">
             {item.title}:
           </span>{" "} */}
-
                         <span>
                           {item.title
-                            ? item.title.charAt(0).toUpperCase() + item.title.slice(1)
+                            ? item.title.charAt(0).toUpperCase() +
+                              item.title.slice(1)
                             : ""}
                           :
                         </span>{" "}
@@ -397,7 +386,6 @@ END:VCARD`;
                     </div>
                   </div>
                 ))}
-
 
               {/* Social + Extra Links */}
               {/* {allLinks.length > 0 &&
@@ -436,14 +424,14 @@ END:VCARD`;
     </div>
   ))} */}
 
-
               {userData?.extraLinks?.length > 0 &&
                 userData?.extraLinks.map((item, index) => (
                   <div
                     key={index}
                     className="flex items-center gap-3 mb-4 py-3 px-6"
                     style={{
-                      backgroundColor: index % 2 === 1 ? "#F5F5F5" : "transparent",
+                      backgroundColor:
+                        index % 2 === 1 ? "#F5F5F5" : "transparent",
                     }}
                   >
                     <div className="flex-shrink-0">
@@ -466,16 +454,13 @@ END:VCARD`;
                           <span className="font-semibold capitalize">
                             {item.title}:
                           </span>
-                        ) : null}{"Other Links: "}
+                        ) : null}
+                        {"Other Links: "}
                         {item.link}
                       </a>
                     </div>
                   </div>
                 ))}
-
-
-
-
             </div>
           </div>
         </div>
