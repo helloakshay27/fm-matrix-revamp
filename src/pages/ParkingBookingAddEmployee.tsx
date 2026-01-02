@@ -135,11 +135,25 @@ const ParkingBookingAddEmployee = () => {
     return `${year}-${month}-${day}`;
   };
 
+  // Get current user's site ID from localStorage
+  const getCurrentUserSiteId = () => {
+    return localStorage.getItem('selectedSiteId') || '';
+  };
+
+  // Set current user's site ID on component mount
+  useEffect(() => {
+    const siteId = getCurrentUserSiteId();
+    if (siteId) {
+      setSelectedSite(siteId);
+    }
+  }, []);
+
   // Fetch parking categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const url = getFullUrl('/pms/admin/parking_categories.json');
+        const token = localStorage.getItem('token') || 'FYxPtbCqXq417hBPKteefDAMe57i1GWsm7nxiKOo2Bk';
+        const url = getFullUrl(`/pms/admin/parking_categories.json?token=${token}`);
         const options = getAuthenticatedFetchOptions();
         const response = await fetch(url, options);
         
@@ -181,11 +195,25 @@ const ParkingBookingAddEmployee = () => {
     fetchSites();
   }, []);
 
-  // Fetch buildings
+  // Fetch buildings based on category and date
   useEffect(() => {
     const fetchBuildings = async () => {
+      if (!selectedCategory || !selectedDate) {
+        setBuildings([]);
+        setFilteredBuildings([]);
+        return;
+      }
+
       try {
-        const url = getFullUrl('/admin/buildings.json');
+        const token = localStorage.getItem('token') || 'FYxPtbCqXq417hBPKteefDAMe57i1GWsm7nxiKOo2Bk';
+        const params = new URLSearchParams({
+          type: 'parking',
+          date: selectedDate,
+          token: token,
+          category_id: selectedCategory
+        });
+        
+        const url = getFullUrl(`/pms/sites/buildings.json?${params.toString()}`);
         const options = getAuthenticatedFetchOptions();
         const response = await fetch(url, options);
         
@@ -194,15 +222,22 @@ const ParkingBookingAddEmployee = () => {
         }
         
         const data = await response.json();
-        setBuildings(data.buildings || []);
+        const buildingsData = data.buildings || [];
+        setBuildings(buildingsData);
+        
+        // Since we're fetching parking-specific buildings, no need to filter by site
+        // All returned buildings are relevant
+        setFilteredBuildings(buildingsData);
       } catch (error) {
         console.error('Error fetching buildings:', error);
         toast.error('Failed to load buildings');
+        setBuildings([]);
+        setFilteredBuildings([]);
       }
     };
 
     fetchBuildings();
-  }, []);
+  }, [selectedCategory, selectedDate]);
 
   // Fetch floors
   useEffect(() => {
@@ -238,20 +273,6 @@ const ParkingBookingAddEmployee = () => {
     ];
     setTimeSlots(defaultTimeSlots);
   }, []);
-
-  // Filter buildings based on selected site
-  useEffect(() => {
-    if (selectedSite) {
-      const filtered = buildings.filter(building => building.site_id.toString() === selectedSite);
-      setFilteredBuildings(filtered);
-    } else {
-      setFilteredBuildings([]);
-    }
-    // Reset building and floor when site changes
-    setSelectedBuilding('');
-    setSelectedFloor('');
-    setFilteredFloors([]);
-  }, [selectedSite, buildings]);
 
   // Filter floors based on selected building
   useEffect(() => {
@@ -319,7 +340,7 @@ const ParkingBookingAddEmployee = () => {
       return;
     }
     if (!selectedSite) {
-      toast.error('Please select a site');
+      toast.error('Site information not available');
       return;
     }
     if (!selectedBuilding) {
@@ -424,8 +445,8 @@ const ParkingBookingAddEmployee = () => {
             </h2>
           </div>
           <div className="p-6 space-y-6">
-            {/* Row 1: Vehicle Type, Site, Building */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Row 1: Vehicle Type, Building */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -456,34 +477,33 @@ const ParkingBookingAddEmployee = () => {
                 </Select>
               </FormControl>
 
-              <FormControl
+              <TextField
+                type="date"
+                label="Booking Date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
                 fullWidth
-                variant="outlined"
                 required
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
-              >
-                <InputLabel shrink>Site</InputLabel>
-                <Select
-                  value={selectedSite}
-                  onChange={(e) => setSelectedSite(e.target.value)}
-                  label="Site"
-                  notched
-                  displayEmpty
-                >
-                  <MenuItem value="">Select site</MenuItem>
-                  {sites.map((site) => (
-                    <MenuItem key={site.id} value={site.id.toString()}>
-                      {site.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+                inputProps={{ min: getTodayDate() }}
+              />
+            </div>
 
+            {/* Row 2: Building, Floor, Time Slot */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormControl
                 fullWidth
                 variant="outlined"
                 required
-                disabled={!selectedSite || filteredBuildings.length === 0}
+                disabled={!selectedCategory || !selectedDate || filteredBuildings.length === 0}
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Building</InputLabel>
@@ -495,8 +515,8 @@ const ParkingBookingAddEmployee = () => {
                   displayEmpty
                 >
                   <MenuItem value="">
-                    {!selectedSite 
-                      ? "Please select a site first" 
+                    {!selectedCategory || !selectedDate
+                      ? "Select vehicle type and date first" 
                       : filteredBuildings.length === 0 
                       ? "No buildings available" 
                       : "Select building"}
@@ -508,10 +528,7 @@ const ParkingBookingAddEmployee = () => {
                   ))}
                 </Select>
               </FormControl>
-            </div>
 
-            {/* Row 2: Floor, Date, Time Slot */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -541,25 +558,6 @@ const ParkingBookingAddEmployee = () => {
                   ))}
                 </Select>
               </FormControl>
-
-              <TextField
-                type="date"
-                label="Booking Date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                fullWidth
-                required
-                variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
-                inputProps={{ min: getTodayDate() }}
-              />
 
               <FormControl
                 fullWidth
