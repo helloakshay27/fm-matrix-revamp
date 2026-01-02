@@ -68,13 +68,7 @@ interface CountryTabProps {
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-  {
-    key: "actions",
-    label: "Action",
-    sortable: false,
-    hideable: false,
-    draggable: false,
-  },
+
   {
     key: "id",
     label: "ID",
