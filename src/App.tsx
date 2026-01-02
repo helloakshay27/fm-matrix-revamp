@@ -167,6 +167,9 @@ import { SupportStaffPage } from "./pages/SupportStaffPage";
 import { EditSupportStaffPage } from "./pages/EditSupportStaffPage";
 import { VisitingPurposePage } from "./pages/VisitingPurposePage";
 
+// Import Carpool pages
+import { CarpoolDashboard } from "./pages/pulse/CarpoolDashboard";
+
 // Import Icons pages
 import { IconsDashboard } from "./pages/IconsDashboard";
 import { AddIconPage } from "./pages/AddIconPage";
@@ -968,7 +971,6 @@ function App() {
                     element={<LockModuleList />}
                   />
 
-
                   {/* <Route
                       path="settings/account/lock-module/view/:id"
                       element={<LockModuleView />}
@@ -1152,7 +1154,6 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-
 
                 <Route
                   path="/bookings"
@@ -1896,9 +1897,6 @@ function App() {
                     element={<VisitorsDashboardEmployee />}
                   />
 
-
-
-
                   {/* Incident Routes */}
                   <Route
                     path="/maintenance/incident"
@@ -2437,10 +2435,7 @@ function App() {
                     path="/maintenance/vendor/view/:id"
                     element={<DetailsVendorPage />}
                   />
-                  <Route
-                    path="/vas/projects"
-                    element={<ProjectsDashboard />}
-                  />
+                  <Route path="/vas/projects" element={<ProjectsDashboard />} />
                   <Route
                     path="/vas/projects/details/:id"
                     element={<ProjectDetailsPage />}
@@ -2453,10 +2448,7 @@ function App() {
                     path="/vas/projects/:id/milestones/:mid/tasks"
                     element={<ProjectTasksPage />}
                   />
-                  <Route
-                    path="/vas/tasks"
-                    element={<ProjectTasksPage />}
-                  />
+                  <Route path="/vas/tasks" element={<ProjectTasksPage />} />
                   <Route
                     //   path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
                     //   element={<ProjectTaskDetailsPage />}
@@ -2465,10 +2457,7 @@ function App() {
                     path="/vas/projects/:id/milestones/:mid/tasks/:taskId"
                     element={<ProjectTaskDetails />}
                   />
-                  <Route
-                    path="/vas/sprint"
-                    element={<SprintDashboard />}
-                  />
+                  <Route path="/vas/sprint" element={<SprintDashboard />} />
                   <Route
                     path="/vas/sprint/details/:id"
                     element={<SprintDetailsPage />}
@@ -2480,10 +2469,7 @@ function App() {
                   />
 
                   {/* Issues Routes */}
-                  <Route
-                    path="/vas/issues"
-                    element={<IssuesListPage />}
-                  />
+                  <Route path="/vas/issues" element={<IssuesListPage />} />
                   <Route
                     path="/vas/issues/:id"
                     element={<IssueDetailsPage />}
@@ -2507,25 +2493,13 @@ function App() {
                     element={<OpportunityDetailsPage />}
                   />
 
-                  <Route
-                    path="/vas/todo"
-                    element={<Todo />}
-                  />
+                  <Route path="/vas/todo" element={<Todo />} />
 
-                  <Route
-                    path="/vas/documents"
-                    element={<ProjectDocuments />}
-                  />
+                  <Route path="/vas/documents" element={<ProjectDocuments />} />
 
-                  <Route
-                    path="/vas/mom"
-                    element={<MinutesOfMeeting />}
-                  />
+                  <Route path="/vas/mom" element={<MinutesOfMeeting />} />
 
-                  <Route
-                    path="/vas/add-mom"
-                    element={<AddMoMPage />}
-                  />
+                  <Route path="/vas/add-mom" element={<AddMoMPage />} />
 
                   <Route
                     path="/settings/project-task-setup/roles"
@@ -2871,12 +2845,7 @@ function App() {
 
                   <Route
                     path="/mail-inbounds-create"
-                    element={
-
-
-                      <NewInboundPage />
-
-                    }
+                    element={<NewInboundPage />}
                   />
                   <Route
                     path="/vas/fnb"
@@ -3497,10 +3466,22 @@ function App() {
                     element={<EditEventPage />}
                   />
 
-                  <Route path="/pulse/notices" element={<BroadcastDashboard />} />
-                  <Route path="/pulse/notices/add" element={<AddBroadcastPage />} />
-                  <Route path="/pulse/notices/edit/:id" element={<EditBroadcastPage />} />
-                  <Route path="/pulse/notices/details/:id" element={<BroadcastDetailsPage />} />
+                  <Route
+                    path="/pulse/notices"
+                    element={<BroadcastDashboard />}
+                  />
+                  <Route
+                    path="/pulse/notices/add"
+                    element={<AddBroadcastPage />}
+                  />
+                  <Route
+                    path="/pulse/notices/edit/:id"
+                    element={<EditBroadcastPage />}
+                  />
+                  <Route
+                    path="/pulse/notices/details/:id"
+                    element={<BroadcastDetailsPage />}
+                  />
 
                   <Route
                     path="/pulse/visitor"
@@ -3546,6 +3527,10 @@ function App() {
                     path="/pulse/amenity"
                     element={<AmenitySetupDashboard />}
                   />
+
+                  {/* Carpool Routes */}
+                  <Route path="/pulse/carpool" element={<CarpoolDashboard />} />
+
                   <Route
                     path="/pulse/amenity/:id"
                     element={<AmenityDetailsPage />}
@@ -3570,7 +3555,6 @@ function App() {
                     path="/pulse/sos-directory/:id"
                     element={<SosDirectoryDetailsPage />}
                   />
-
                 </Route>
 
                 <Route
