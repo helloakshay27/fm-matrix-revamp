@@ -165,7 +165,7 @@ export const EditInventoryPage = () => {
               ? (data as any).plants
               : [];
         setPlants(arr);
-      } catch {/* ignore */}
+      } catch {/* ignore */ }
     };
     loadPlants();
   }, []);
@@ -262,8 +262,8 @@ export const EditInventoryPage = () => {
   useEffect(() => {
     if (fetchedInventory) {
       const normalizedExpiry = fetchedInventory.expiry_date ? formatDateForInput(fetchedInventory.expiry_date) : '';
-  // Keep a copy of the original expiry date for minDate/validation in edit
-  setInitialExpiryYMD(normalizedExpiry);
+      // Keep a copy of the original expiry date for minDate/validation in edit
+      setInitialExpiryYMD(normalizedExpiry);
       // Prefer vendor name over id for display
       const vendorName = (fetchedInventory as any)?.vendor_name || (fetchedInventory as any)?.vendor?.company_name || '';
       setFormData({
@@ -441,7 +441,7 @@ export const EditInventoryPage = () => {
         expiryDate: (() => {
           const minYMD = todayISO;
           if (val && minYMD && val < minYMD) {
-            const [y,m,d] = minYMD.split('-');
+            const [y, m, d] = minYMD.split('-');
             return `Expiry Date cannot be earlier than ${d}-${m}-${y}.`;
           }
           return '';
@@ -503,7 +503,7 @@ export const EditInventoryPage = () => {
   const handleSelectChange = (field: string) => (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Validate unit and category when changed
     if (field === 'unit') {
       const msg = !value ? 'Unit is required' : '';
@@ -546,7 +546,7 @@ export const EditInventoryPage = () => {
     if (formData.expiryDate) {
       const minYMD = todayISO;
       if (formData.expiryDate < minYMD) {
-        const [y,m,d] = minYMD.split('-');
+        const [y, m, d] = minYMD.split('-');
         newErrors.expiryDate = `Expiry Date cannot be earlier than ${d}-${m}-${y}.`;
       }
     }
@@ -569,8 +569,8 @@ export const EditInventoryPage = () => {
       return `${dateString}T00:00:00.000+05:30`;
     };
 
-    // Map criticality: 0 for Non-Critical, 1 for Critical
-    const criticalityValue = criticality === 'critical' ? 1 : 0;
+    // Map criticality: 1 for Critical, 2 for Non-Critical
+    const criticalityValue = criticality === 'critical' ? 1 : 2;
     // Map inventory type: 1 for Spares, 2 for Consumable
     const inventoryTypeNumeric = inventoryType === 'consumable' ? 2 : 1;
 
@@ -914,7 +914,7 @@ export const EditInventoryPage = () => {
                   />
                 </div>
 
-           
+
               </div>
 
               {/* Form Grid - Second Row */}
@@ -1043,15 +1043,15 @@ export const EditInventoryPage = () => {
                         textField: {
                           fullWidth: true,
                           variant: "outlined",
-                          size: "small", 
+                          size: "small",
                           InputLabelProps: { shrink: true },
                           sx: {
                             ...fieldStyles,
                             "& .MuiInputBase-root": {
-                              height: 40, 
+                              height: 40,
                             },
                             "& .MuiInputBase-input": {
-                              padding: "8px 12px", 
+                              padding: "8px 12px",
                             },
                           },
                           error: Boolean(errors.expiryDate),
@@ -1089,7 +1089,7 @@ export const EditInventoryPage = () => {
                 </div>
 
 
-                     {/* Plant Code dropdown */}
+                {/* Plant Code dropdown */}
                 <div>
                   <FormControl fullWidth variant="outlined" sx={selectStyles}>
                     <InputLabel shrink>Plant Code</InputLabel>

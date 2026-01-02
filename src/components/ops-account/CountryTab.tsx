@@ -601,7 +601,6 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                       <span
                         className={`text-xs font-medium ${country.active ? "text-green-700" : "text-red-700"}`}
                       >
-                        {country.active ? "Active" : "Inactive"}
                       </span>
                     </div>
                   );
