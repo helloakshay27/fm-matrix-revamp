@@ -13,18 +13,7 @@ import { useSearchParams } from "react-router-dom";
 import viBusinessCardBg from "../../assets/VI-businesscard.png";
 import baseClient from "@/utils/withoutTokenBase";
 
-interface UserCardData {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  designation?: string;
-  department?: string;
-  company?: string;
-  profileImage?: string;
-  website?: string;
-  address?: string;
-}
+
 
 interface SocialLink {
   title: string;
