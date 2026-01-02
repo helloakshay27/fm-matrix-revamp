@@ -2,9 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { TextField, Radio, RadioGroup, FormControlLabel, FormControl } from "@mui/material";
 import axios from "axios";
-import { FileText, Share2, File, Info, XCircle, Pencil, ArrowLeft } from "lucide-react";
-import { useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { FileText, Share2, File, Info, XCircle, Pencil, ArrowLeft, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
     Tooltip,
@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const AddSosDirectory = () => {
+const EditSosDirectory = () => {
+    const { id } = useParams();
     const attachmentInputRef = useRef<HTMLInputElement>(null);
     const [formData, setFormData] = useState<{
         title: string;
@@ -46,12 +47,50 @@ const AddSosDirectory = () => {
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     // Tech Park Modal State
     const [isTechParkModalOpen, setIsTechParkModalOpen] = useState(false);
     const [techParks, setTechParks] = useState<any[]>([]);
     const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
     const [isLoadingTechParks, setIsLoadingTechParks] = useState(false);
+
+    useEffect(() => {
+        fetchDetails();
+    }, [id]);
+
+    const fetchDetails = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`https://${baseUrl}/sos_directories/${id}.json`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const dirData = response.data;
+
+            setFormData({
+                title: dirData.title || "",
+                category: dirData.category || "",
+                contact_number: dirData.contact_number || "",
+                shareWith: dirData.share_with || "all",
+                image: null,
+            });
+
+            if (dirData.document_url) {
+                setImagePreview(dirData.document_url);
+            }
+
+            if (dirData.share_with === 'individual' && dirData.site_ids) {
+                setSelectedTechParks(dirData.site_ids);
+                fetchTechParks();
+            }
+
+        } catch (error) {
+            console.error("Error fetching details:", error);
+            toast.error("Failed to fetch details");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchTechParks = async () => {
         if (techParks.length > 0) return;
@@ -125,13 +164,13 @@ const AddSosDirectory = () => {
             toast.error("Contact Number is required");
             return;
         }
-
         if (formData.shareWith === 'individual' && selectedTechParks.length === 0) {
             toast.error("Please select at least one Tech Park");
             return;
         }
-
-        if (!formData.image) {
+        // Image is required only if creating new, or if we want to enforce it always being present.
+        // For edit, if imagePreview exists, it means there is an image (either old or new).
+        if (!imagePreview) {
             toast.error("Cover Image is required");
             return;
         }
@@ -139,19 +178,20 @@ const AddSosDirectory = () => {
         const payload = {
             sos_directory: {
                 title: formData.title,
-                category: formData.category, // Assuming backend accepts this
+                category: formData.category,
                 contact_number: formData.contact_number,
-                status: "true",
-                directory_type: type, // Or use formData.category if that's what it means? keeping type for now as in original code
-                resource_id: localStorage.getItem('selectedSiteId'),
-                resource_type: "Pms::Site",
-                share_with: formData.shareWith // Assuming backend accepts this
+                // status: "true", // Don't reset status on edit usually, unless intended
+                // directory_type: type, // Don't change type on edit
+                // resource_id: localStorage.getItem('selectedSiteId'),
+                // resource_type: "Pms::Site",
+                share_with: formData.shareWith
             }
         }
 
         setSubmitting(true)
         const submitData = new FormData();
         Object.keys(payload.sos_directory).forEach(key => {
+            // @ts-ignore
             submitData.append(`sos_directory[${key}]`, payload.sos_directory[key]);
         });
         if (formData.image) {
@@ -159,21 +199,25 @@ const AddSosDirectory = () => {
         }
 
         try {
-            await axios.post(`https://${baseUrl}/sos_directories.json`, submitData, {
+            await axios.put(`https://${baseUrl}/sos_directories/${id}.json`, submitData, {
                 headers: {
                     "Authorization": `Bearer ${token}`,
                     "Content-Type": 'multipart/form-data'
                 }
             })
 
-            toast.success('Directory Added Successfully')
+            toast.success('Directory Updated Successfully')
             navigate(-1)
         } catch (error) {
             console.log(error)
-            toast.error('Failed to add directory')
+            toast.error('Failed to update directory')
         } finally {
             setSubmitting(false)
         }
+    }
+
+    if (loading) {
+        return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin" /></div>;
     }
 
     return (
@@ -186,7 +230,7 @@ const AddSosDirectory = () => {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
             </Button>
-            <h1 className="text-2xl font-bold mb-6 text-black">Add New</h1>
+            <h1 className="text-2xl font-bold mb-6 text-black">Edit SOS Directory</h1>
             <div className="space-y-6">
                 {/* Details Section */}
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -343,7 +387,7 @@ const AddSosDirectory = () => {
                         {imagePreview ? (
                             <div className="relative border-2 border-dashed border-gray-400 rounded-lg w-full max-w-[200px] h-40 flex items-center justify-center bg-white">
                                 <span className="absolute top-2 left-3 text-sm font-medium text-gray-700 truncate max-w-[80%]">
-                                    {formData.image?.name}
+                                    {formData.image?.name || "Current Image"}
                                 </span>
                                 <button
                                     onClick={handleRemoveImage}
@@ -403,7 +447,7 @@ const AddSosDirectory = () => {
                         disabled={submitting}
                         className="disabled:!bg-[#DF808B] !bg-[#C72030] hover:bg-[#d0606e] !text-white min-w-[150px] h-10"
                     >
-                        {submitting ? "Submitting..." : "Submit"}
+                        {submitting ? "Updating..." : "Update"}
                     </Button>
                 </div>
             </div>
@@ -458,4 +502,4 @@ const AddSosDirectory = () => {
     );
 };
 
-export default AddSosDirectory;
+export default EditSosDirectory;

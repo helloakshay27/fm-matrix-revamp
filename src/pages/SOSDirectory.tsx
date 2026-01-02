@@ -3,6 +3,7 @@ import InternalSosDirectory from "@/components/InternalSosDirectory"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import axios from "axios"
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
 const SOSDirectory = () => {
     const baseUrl = localStorage.getItem('baseUrl')
@@ -50,6 +51,32 @@ const SOSDirectory = () => {
         }
     }
 
+    const handleStatusChange = async (id: number, currentStatus: boolean) => {
+        const newStatus = !currentStatus;
+        try {
+            const formData = new FormData();
+            formData.append("sos_directory[status]", String(newStatus));
+
+            await axios.put(`https://${baseUrl}/sos_directories/${id}.json`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data"
+                }
+            });
+
+            setInternalSos((prev: any) => prev.map((item: any) =>
+                item.id === id ? { ...item, status: newStatus } : item
+            ));
+            setExternalSos((prev: any) => prev.map((item: any) =>
+                item.id === id ? { ...item, status: newStatus } : item
+            ));
+            toast.success("Status updated successfully");
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update status");
+        }
+    }
+
     useEffect(() => {
         fetchInternalSos()
         fetchExternalSos()
@@ -78,10 +105,10 @@ const SOSDirectory = () => {
                 </TabsList>
 
                 <TabsContent value="internal">
-                    <InternalSosDirectory internalSos={internalSos} />
+                    <InternalSosDirectory internalSos={internalSos} handleStatusChange={handleStatusChange} />
                 </TabsContent>
                 <TabsContent value="external">
-                    <ExternalSosDirectory externalSos={externalSos} />
+                    <ExternalSosDirectory externalSos={externalSos} handleStatusChange={handleStatusChange} />
                 </TabsContent>
             </Tabs>
         </div>

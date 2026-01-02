@@ -845,6 +845,7 @@ import { TicketDetailsEmployee } from "./pages/TicketDetailsEmployee";
 import { VisitorFormPageEmployeeNew } from "./pages/VisitorFormPageEmployeeNew";
 import VisitorDetailsPageEmployee from "./pages/VisitorDetailsPageEmployee";
 import SOSDirectory from "./pages/SOSDirectory";
+import EditSosDirectory from "./pages/EditSosDirectory";
 import AddSosDirectory from "./pages/AddSosDirectory";
 import SosDirectoryDetailsPage from "./pages/SosDirectoryDetailsPage";
 // import RouteLogger from "./components/RouteLogger";
@@ -3558,6 +3559,11 @@ function App() {
                   <Route
                     path="/pulse/sos-directory/add"
                     element={<AddSosDirectory />}
+                  />
+
+                  <Route
+                    path="/pulse/sos-directory/:id/edit"
+                    element={<EditSosDirectory />}
                   />
 
                   <Route
