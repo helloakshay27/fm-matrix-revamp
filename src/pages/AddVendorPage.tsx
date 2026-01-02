@@ -478,7 +478,6 @@ export const AddVendorPage = () => {
     otherAttachments.forEach(file => apiFormData.append('cancle_checque[]', file));
 
     // Hardcoded values from API spec
-    // apiFormData.append('pms_supplier[society_id]', '1');
     apiFormData.append('pms_supplier[active]', 'true');
 
     // Debug: Log the FormData contents

@@ -12,6 +12,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Switch } from "@/components/ui/switch";
 import { AddSiteModal } from "@/components/AddSiteModal";
 import { DeleteSiteModal } from "@/components/DeleteSiteModal";
 import { SiteFilterModal, SiteFilters } from "@/components/SiteFilterModal";
@@ -509,6 +510,38 @@ export const SiteTab: React.FC<SiteTabProps> = ({
     }
   };
 
+  // Toggle site active status
+  const handleToggleStatus = async (siteId: number, currentStatus: boolean) => {
+    if (!canEditSite) {
+      toast.error("You do not have permission to change site status");
+      return;
+    }
+
+    try {
+      const response = await fetch(getFullUrl(`/pms/sites/${siteId}.json`), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+        body: JSON.stringify({ pms_site: { active: !currentStatus } }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      toast.success(`Site ${!currentStatus ? "activated" : "deactivated"} successfully`);
+      // Refresh the data
+      fetchSites(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error("Error toggling site status:", error);
+      toast.error(`Failed to update site status: ${msg}`);
+    }
+  };
+
   const totalRecords = pagination.total_count;
   const totalPages = pagination.total_pages;
 
@@ -606,14 +639,14 @@ export const SiteTab: React.FC<SiteTabProps> = ({
       </span>
     ),
     status: (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${site?.active
-            ? "bg-green-100 text-green-800"
-            : "bg-red-100 text-red-800"
-          }`}
-      >
-        {site?.active ? "Active" : "Inactive"}
-      </span>
+      <div className="flex items-center justify-center">
+        <Switch
+          checked={!!site?.active}
+          onCheckedChange={() => site?.id && handleToggleStatus(site.id, !!site.active)}
+          disabled={!canEditSite}
+          aria-label={`Toggle status for ${site?.name || 'site'}`}
+        />
+      </div>
     ),
     created_at: (
       <span className="text-sm text-gray-600">
