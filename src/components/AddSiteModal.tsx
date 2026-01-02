@@ -209,33 +209,10 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     }
   }, [editingSite, isOpen]);
 
-  // Filter countries based on selected company
+  // Country dropdown should not auto-select on company change; keep all countries available
   useEffect(() => {
-    if (formData.company_id) {
-      const selectedCompany = companies.find(
-        (c) => c.id === formData.company_id
-      );
-      if (selectedCompany && selectedCompany.country_id) {
-        const filtered = headquarters.filter(
-          (hq) => hq.id === selectedCompany.country_id
-        );
-        setFilteredHeadquarters(filtered);
-
-        // Auto-select the country if not already selected
-        if (
-          !formData.headquarter_id ||
-          formData.headquarter_id !== selectedCompany.country_id
-        ) {
-          setFormData((prev) => ({
-            ...prev,
-            headquarter_id: selectedCompany.country_id,
-          }));
-        }
-      }
-    } else {
-      setFilteredHeadquarters(headquarters);
-    }
-  }, [formData.company_id, companies, headquarters]);
+    setFilteredHeadquarters(headquarters);
+  }, [formData.company_id, headquarters]);
 
   // Filter regions based on selected company
   useEffect(() => {
@@ -255,7 +232,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     } else {
       setFilteredRegions([]);
     }
-  }, [formData.company_id, regions]);
+  }, [formData.company_id, regions, formData.region_id]);
 
   // Set all companies as available initially
   useEffect(() => {
@@ -265,7 +242,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
   const fetchDropdownData = async () => {
     setIsLoadingDropdowns(true);
     try {
-      console.log("Starting to fetch dropdown data...");
+  console.warn("Starting to fetch dropdown data...");
 
       // Fetch companies
       const companiesResponse = await fetch(
@@ -281,7 +258,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       let companiesData: CompanyOption[] = [];
       if (companiesResponse.ok) {
         const companiesResult = await companiesResponse.json();
-        console.log("Companies API response:", companiesResult);
+  console.warn("Companies API response:", companiesResult);
 
         if (
           companiesResult &&
@@ -319,7 +296,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       let headquartersData: HeadquarterOption[] = [];
       if (headquartersResponse.ok) {
         const headquartersResult = await headquartersResponse.json();
-        console.log("headquarters API response:", headquartersResult);
+  console.warn("headquarters API response:", headquartersResult);
 
         if (Array.isArray(headquartersResult)) {
           headquartersData = headquartersResult;
@@ -355,7 +332,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       let regionsData: RegionOption[] = [];
       if (regionsResponse.ok) {
         const regionsResult = await regionsResponse.json();
-        console.log("Regions API response:", regionsResult);
+  console.warn("Regions API response:", regionsResult);
 
         if (Array.isArray(regionsResult)) {
           regionsData = regionsResult;
@@ -377,7 +354,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
         toast.error("Failed to fetch regions");
       }
 
-      console.log("Fetched dropdown data counts:", {
+  console.warn("Fetched dropdown data counts:", {
         companies: companiesData?.length || 0,
         headquarters: headquartersData?.length || 0,
         regions: regionsData?.length || 0,
@@ -385,7 +362,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       });
 
       // Log sample data to check structure
-      console.log("Sample data:", {
+  console.warn("Sample data:", {
         firstCompany: companiesData?.[0],
         firstHeadquarter: headquartersData?.[0],
         firstRegion: regionsData?.[0],
@@ -413,7 +390,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       // Reset dependent fields when parent changes
       if (field === "company_id") {
         newData.region_id = 0; // Reset region when company changes
-        // Country will be auto-set by the useEffect
+        // Do not auto-select country; user must choose explicitly
       }
 
       return newData;
@@ -570,17 +547,13 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                     displayEmpty
                     MenuProps={selectMenuProps}
                     sx={fieldStyles}
-                    disabled={
-                      isLoading || isLoadingDropdowns || !formData.company_id
-                    }
+                    disabled={isLoading || isLoadingDropdowns}
                   >
                     <MenuItem value="">
                       <em>
-                        {!formData.company_id
-                          ? "Select company first"
-                          : filteredHeadquarters.length === 0
-                            ? "No countries available"
-                            : "Select Country"}
+                        {filteredHeadquarters.length === 0
+                          ? "No countries available"
+                          : "Select Country"}
                       </em>
                     </MenuItem>
                     {filteredHeadquarters.map((hq) => (
