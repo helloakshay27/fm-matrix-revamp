@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, DialogActions, TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Switch } from '@/components/ui/switch';
 import { MapPin, Building, Globe, Flag, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -76,7 +75,7 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -184,24 +183,35 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white z-50" aria-describedby="add-region-dialog-description">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900">ADD NEW REGION</DialogTitle>
+    <Dialog
+      open={isOpen}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="md"
+      keepMounted
+      scroll="paper"
+      aria-labelledby="add-region-dialog-title"
+      aria-describedby="add-region-dialog-description"
+    >
+      <DialogTitle id="add-region-dialog-title">
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-semibold text-gray-900">ADD NEW REGION</span>
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClose}
             className="h-6 w-6 p-0 hover:bg-gray-100"
+            aria-label="Close"
           >
             <X className="h-4 w-4" />
           </Button>
-          <div id="add-region-dialog-description" className="sr-only">
-            Add region details including name, code, description, company, and country
-          </div>
-        </DialogHeader>
-
-        <div className="space-y-6 py-4">
+        </div>
+        <div id="add-region-dialog-description" className="sr-only">
+          Add region details including name, code, description, company, and country
+        </div>
+      </DialogTitle>
+      <DialogContent dividers>
+        <div className="space-y-6 py-2">
           {/* Basic Information */}
           <div>
             <h3 className="text-sm font-medium text-[#C72030] mb-4">Basic Information</h3>
@@ -336,25 +346,24 @@ export const AddRegionModal: React.FC<AddRegionModalProps> = ({
             </div>
           </div>
         </div>
-
-  <div className="flex items-center justify-center gap-3 pt-4 border-t border-gray-200">
-          <Button 
-            variant="outline" 
-            onClick={handleClose} 
-            disabled={isSubmitting}
-            className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting || !canEdit}
-            className="px-6 py-2 bg-[#C72030] text-white hover:bg-[#A61B29] disabled:opacity-50"
-          >
-            {isSubmitting ? 'Creating...' : 'Create Region'}
-          </Button>
-        </div>
       </DialogContent>
+      <DialogActions sx={{ justifyContent: 'center', borderTop: '1px solid #e5e7eb' }}>
+        <Button 
+          variant="outline" 
+          onClick={handleClose} 
+          disabled={isSubmitting}
+          className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+        >
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSubmit} 
+          disabled={isSubmitting || !canEdit}
+          className="px-6 py-2 bg-[#C72030] text-white hover:bg-[#A61B29] disabled:opacity-50"
+        >
+          {isSubmitting ? 'Creating...' : 'Create Region'}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };

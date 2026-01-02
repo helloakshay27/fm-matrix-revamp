@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import {
+  DialogActions,
   TextField,
   FormControl,
   InputLabel,
@@ -85,13 +83,7 @@ export const EditRegionModal: React.FC<EditRegionModalProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (isOpen && regionId) {
-      fetchRegionDetails();
-    }
-  }, [isOpen, regionId]);
-
-  const fetchRegionDetails = async () => {
+  const fetchRegionDetails = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
@@ -121,17 +113,24 @@ export const EditRegionModal: React.FC<EditRegionModalProps> = ({
         company_id: region.company_id?.toString() || "",
         active: region.active !== undefined ? region.active : true,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "An unexpected error occurred";
       console.error("Error fetching region details:", error);
-      toast.error(`Failed to load region details: ${error.message}`, {
+      toast.error(`Failed to load region details: ${message}`, {
         duration: 5000,
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getFullUrl, getAuthHeader, regionId]);
 
-  const handleChange = (field: string, value: any) => {
+  useEffect(() => {
+    if (isOpen && regionId) {
+      fetchRegionDetails();
+    }
+  }, [isOpen, regionId, fetchRegionDetails]);
+
+  const handleChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -209,9 +208,10 @@ export const EditRegionModal: React.FC<EditRegionModalProps> = ({
       });
 
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "An unexpected error occurred";
       console.error("Error updating region:", error);
-      toast.error(`Failed to update region: ${error.message}`, {
+      toast.error(`Failed to update region: ${message}`, {
         duration: 5000,
       });
     } finally {
@@ -234,8 +234,8 @@ export const EditRegionModal: React.FC<EditRegionModalProps> = ({
 
   if (isLoading) {
     return (
-      <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-md">
+      <Dialog open={isOpen} onClose={handleClose} fullWidth maxWidth="sm" scroll="paper" keepMounted>
+        <DialogContent dividers>
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             <span className="ml-2">Loading region details...</span>
@@ -246,13 +246,19 @@ export const EditRegionModal: React.FC<EditRegionModalProps> = ({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose} modal={false}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white z-50">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900">
-            EDIT REGION
-          </DialogTitle>
-        </DialogHeader>
+    <Dialog
+      open={isOpen}
+      onClose={handleClose}
+      fullWidth
+      maxWidth="md"
+      keepMounted
+      scroll="paper"
+      aria-labelledby="edit-region-dialog-title"
+    >
+      <DialogTitle id="edit-region-dialog-title">
+        <div className="text-lg font-semibold text-gray-900">EDIT REGION</div>
+      </DialogTitle>
+      <DialogContent dividers>
 
         <div className="space-y-6 py-4">
           {/* Basic Information */}
@@ -366,25 +372,24 @@ export const EditRegionModal: React.FC<EditRegionModalProps> = ({
             </div>
           </div>
         </div>
-
-        <div className="flex items-center justify-center gap-3 mt-6 pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            disabled={isSubmitting}
-            className="px-6 py-2 text-[#BD2828] border-[#BD2828] hover:text-[#a52121] hover:border-[#a52121]"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || !canEdit}
-            className="px-6 py-2 bg-[#ede9e4] text-[#BD2828] hover:bg-[#e6e1db] shadow-none"
-          >
-            {isSubmitting ? "Updating..." : "Update Region"}
-          </Button>
-        </div>
       </DialogContent>
+      <DialogActions sx={{ justifyContent: 'center', borderTop: '1px solid #e5e7eb' }}>
+        <Button
+          variant="outline"
+          onClick={handleClose}
+          disabled={isSubmitting}
+          className="px-6 py-2 text-[#BD2828] border-[#BD2828] hover:text-[#a52121] hover:border-[#a52121]"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={isSubmitting || !canEdit}
+          className="px-6 py-2 bg-[#ede9e4] text-[#BD2828] hover:bg-[#e6e1db] shadow-none"
+        >
+          {isSubmitting ? "Updating..." : "Update Region"}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };
