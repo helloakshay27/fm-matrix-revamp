@@ -505,7 +505,7 @@ export const ManualJournalDashboard = () => {
 
   // Handle membership type selection and navigation
   const handleAddMembership = () => {
-    navigate('/club-management/membership/add-group');
+    navigate('/settings/manual-journal/add');
   };
 
   // Render membership status badge

@@ -1013,7 +1013,7 @@ const modulesByPackage = {
         name: "Accountants",
         icon: Users,
         subItems: [
-          { name: "Manual Journals ", href: "/settings/club-management/manual-journal" },
+          { name: "Manual Journals ", href: "/settings/manual-journal" },
           // {
           //   name: "Escalation Matrix",
           //   href: "/settings/ticket-management/escalation-matrix",
