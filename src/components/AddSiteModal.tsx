@@ -386,7 +386,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
     }
   }, [isOpen, fetchDropdownData]);
 
-  const handleInputChange = (
+  const handleInputChange = async (
     field: keyof SiteFormData,
     value: string | number
   ) => {
@@ -396,11 +396,42 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
       // Reset dependent fields when parent changes
       if (field === "company_id") {
         newData.region_id = 0; // Reset region when company changes
-        // Do not auto-select country; user must choose explicitly
+        newData.headquarter_id = 0; // Reset headquarter when company changes
       }
-
       return newData;
     });
+
+    // If company_id changes, fetch headquarters
+    if (field === "company_id") {
+      if (value && Number(value) > 0) {
+        try {
+          const apiUrl = getFullUrl(`/headquarters.json?q[company_setup_id_eq]=${value}`);
+          const response = await fetch(apiUrl, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': getAuthHeader(),
+            },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data.headquarters)) {
+              setFilteredHeadquarters(data.headquarters);
+            } else if (Array.isArray(data)) {
+              setFilteredHeadquarters(data);
+            } else {
+              setFilteredHeadquarters([]);
+            }
+          } else {
+            setFilteredHeadquarters([]);
+          }
+        } catch (error) {
+          setFilteredHeadquarters([]);
+        }
+      } else {
+        setFilteredHeadquarters([]);
+      }
+    }
   };
 
   const handleCheckboxChange = (
@@ -553,7 +584,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                     displayEmpty
                     MenuProps={selectMenuProps}
                     sx={fieldStyles}
-                    disabled={isLoading || isLoadingDropdowns}
+                    disabled={isLoading || isLoadingDropdowns || !formData.company_id}
                   >
                     <MenuItem value="">
                       <em>
