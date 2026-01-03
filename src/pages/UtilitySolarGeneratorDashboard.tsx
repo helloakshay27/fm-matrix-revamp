@@ -73,12 +73,17 @@ const UtilitySolarGeneratorDashboard = () => {
   );
 
   // Fetch solar generator data
-  const fetchSolarGenerators = useCallback(async (appliedFilters?: SolarGeneratorFilters) => {
+  const fetchSolarGenerators = useCallback(async (appliedFilters?: SolarGeneratorFilters, search?: string) => {
     try {
       setLoading(true);
-      console.log('🚀 Fetching solar generator data from API with filters:', appliedFilters);
+      console.log('🚀 Fetching solar generator data from API with filters:', appliedFilters, 'search:', search);
       
-      const data = await solarGeneratorAPI.getSolarGenerators(appliedFilters || filters);
+      const filtersWithSearch = {
+        ...(appliedFilters || filters),
+        tower_name: search || undefined
+      };
+      
+      const data = await solarGeneratorAPI.getSolarGenerators(filtersWithSearch);
       console.log('✅ Solar generator data fetched successfully:', data);
       
       setSolarGeneratorData(data);
@@ -101,6 +106,19 @@ const UtilitySolarGeneratorDashboard = () => {
   useEffect(() => {
     fetchSolarGenerators();
   }, [fetchSolarGenerators]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm) {
+        fetchSolarGenerators(filters, searchTerm);
+      } else {
+        fetchSolarGenerators(filters);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Filter handler functions
   const handleApplyFilters = (appliedFilters: SolarGeneratorFilters) => {
@@ -164,12 +182,7 @@ const UtilitySolarGeneratorDashboard = () => {
     }
   };
 
-  // Filter data based on search term
-  const filteredData = solarGeneratorData.filter(item =>
-    item.tower_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.transaction_date?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.id?.toString().includes(searchTerm)
-  );
+
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -190,7 +203,7 @@ const UtilitySolarGeneratorDashboard = () => {
         /* Enhanced Solar Generator Table */
         <div>
           <EnhancedTable
-            data={filteredData}
+            data={solarGeneratorData}
             columns={enhancedTableColumns}
             selectable={false}
             renderCell={renderCell}
