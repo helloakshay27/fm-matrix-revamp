@@ -26,8 +26,14 @@ export const UtilitySolarGeneratorFilterDialog = ({
     const filters: SolarGeneratorFilters = {};
     
     if (startDate && endDate) {
-      // Pass date range as string in DD/MM/YYYY - DD/MM/YYYY format (will be converted in dashboard)
-      filters.date_range = `${startDate} - ${endDate}`;
+      // Convert DD/MM/YYYY to MM/DD/YYYY format for the API
+      const convertToMMDDYYYY = (dateStr: string) => {
+        const [day, month, year] = dateStr.split('/');
+        return `${month}/${day}/${year}`;
+      };
+      
+      // Pass date range as string in MM/DD/YYYY - MM/DD/YYYY format for q[date_range]
+      filters.date_range = `${convertToMMDDYYYY(startDate)} - ${convertToMMDDYYYY(endDate)}`;
     }
 
     console.log('Filtering solar generator data with filters:', filters);

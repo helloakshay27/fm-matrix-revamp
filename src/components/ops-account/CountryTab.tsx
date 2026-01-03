@@ -69,7 +69,6 @@ interface CountryTabProps {
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-
   {
     key: "id",
     label: "ID",
@@ -165,9 +164,15 @@ export const CountryTab: React.FC<CountryTabProps> = ({
     new Map()
   );
   type DropdownItem = { id: number; name: string };
-  const [countriesDropdown, setCountriesDropdown] = useState<DropdownItem[]>([]);
-  const [companiesDropdown, setCompaniesDropdown] = useState<DropdownItem[]>([]);
-  const [organizationsDropdown, setOrganizationsDropdown] = useState<DropdownItem[]>([]);
+  const [countriesDropdown, setCountriesDropdown] = useState<DropdownItem[]>(
+    []
+  );
+  const [companiesDropdown, setCompaniesDropdown] = useState<DropdownItem[]>(
+    []
+  );
+  const [organizationsDropdown, setOrganizationsDropdown] = useState<
+    DropdownItem[]
+  >([]);
   const [canEditCountry, setCanEditCountry] = useState(false);
 
   const user = getUser() || {
@@ -191,96 +196,100 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   // Effects are placed after function declarations below
 
   // Fetch countries data from API
-  const fetchCountries = React.useCallback(async (
-    page = 1,
-    per_page = 10,
-    search = "",
-    filters: CountryFilters = {}
-  ) => {
-    setLoading(true);
-    try {
-      // Build API URL with parameters
-      const apiUrl = getFullUrl("/headquarters.json");
+  const fetchCountries = React.useCallback(
+    async (
+      page = 1,
+      per_page = 10,
+      search = "",
+      filters: CountryFilters = {}
+    ) => {
+      setLoading(true);
+      try {
+        // Build API URL with parameters
+        const apiUrl = getFullUrl("/headquarters.json");
 
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: getAuthHeader(),
-        },
-      });
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
+        });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: CountryApiResponse = await response.json();
+
+        let countryData: CountryItem[] = [];
+
+        if (Array.isArray(result)) {
+          countryData = result;
+        } else if (
+          result &&
+          result.headquarters &&
+          Array.isArray(result.headquarters)
+        ) {
+          countryData = result.headquarters;
+        } else if (result && result.data && Array.isArray(result.data)) {
+          countryData = result.data;
+        }
+
+        // Apply client-side filtering and searching
+        let filteredData = countryData;
+
+        if (search.trim()) {
+          const searchLower = search.toLowerCase();
+          filteredData = filteredData.filter(
+            (country) =>
+              country.name?.toLowerCase().includes(searchLower) ||
+              country.country_name?.toLowerCase().includes(searchLower) ||
+              country.company_name?.toLowerCase().includes(searchLower) ||
+              country.organization_name?.toLowerCase().includes(searchLower)
+          );
+        }
+
+        if (filters.countryId) {
+          filteredData = filteredData.filter(
+            (country) => country.country_id === parseInt(filters.countryId!)
+          );
+        }
+
+        if (filters.companyId) {
+          filteredData = filteredData.filter(
+            (country) =>
+              country.company_setup_id === parseInt(filters.companyId!)
+          );
+        }
+
+        // Implement client-side pagination
+        const totalPages = Math.ceil(filteredData.length / per_page);
+        const startIndex = (page - 1) * per_page;
+        const endIndex = startIndex + per_page;
+        const paginatedData = filteredData.slice(startIndex, endIndex);
+
+        setCountries(paginatedData);
+
+        setPagination({
+          current_page: page,
+          per_page: per_page,
+          total_pages: totalPages,
+          total_count: filteredData.length,
+          has_next_page: page < totalPages,
+          has_prev_page: page > 1,
+        });
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+        toast.error("Error fetching countries");
+        setCountries([]);
+      } finally {
+        setLoading(false);
       }
-
-      const result: CountryApiResponse = await response.json();
-
-      let countryData: CountryItem[] = [];
-
-      if (Array.isArray(result)) {
-        countryData = result;
-      } else if (
-        result &&
-        result.headquarters &&
-        Array.isArray(result.headquarters)
-      ) {
-        countryData = result.headquarters;
-      } else if (result && result.data && Array.isArray(result.data)) {
-        countryData = result.data;
-      }
-
-      // Apply client-side filtering and searching
-      let filteredData = countryData;
-
-      if (search.trim()) {
-        const searchLower = search.toLowerCase();
-        filteredData = filteredData.filter(
-          (country) =>
-            country.name?.toLowerCase().includes(searchLower) ||
-            country.country_name?.toLowerCase().includes(searchLower) ||
-            country.company_name?.toLowerCase().includes(searchLower) ||
-            country.organization_name?.toLowerCase().includes(searchLower)
-        );
-      }
-
-      if (filters.countryId) {
-        filteredData = filteredData.filter(
-          (country) => country.country_id === parseInt(filters.countryId!)
-        );
-      }
-
-      if (filters.companyId) {
-        filteredData = filteredData.filter(
-          (country) => country.company_setup_id === parseInt(filters.companyId!)
-        );
-      }
-
-      // Implement client-side pagination
-      const totalPages = Math.ceil(filteredData.length / per_page);
-      const startIndex = (page - 1) * per_page;
-      const endIndex = startIndex + per_page;
-      const paginatedData = filteredData.slice(startIndex, endIndex);
-
-      setCountries(paginatedData);
-
-      setPagination({
-        current_page: page,
-        per_page: per_page,
-        total_pages: totalPages,
-        total_count: filteredData.length,
-        has_next_page: page < totalPages,
-        has_prev_page: page > 1,
-      });
-    } catch (error) {
-      console.error("Error fetching countries:", error);
-      toast.error("Error fetching countries");
-      setCountries([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [getFullUrl, getAuthHeader]);
+    },
+    [getFullUrl, getAuthHeader]
+  );
 
   const fetchCompanies = React.useCallback(async () => {
     try {
@@ -344,10 +353,10 @@ export const CountryTab: React.FC<CountryTabProps> = ({
         const normalizedBase = storedBaseUrl.startsWith("http")
           ? storedBaseUrl.replace(/\/+$/, "")
           : `https://${storedBaseUrl.replace(/\/+$/, "")}`;
-        url = `${normalizedBase}/countries.json`;
+        url = `${normalizedBase}/pms/countries.json`;
       } else {
         // Fallback to configured helper
-        url = getFullUrl("/countries.json");
+        url = getFullUrl("/pms/countries.json");
       }
 
       if (storedToken) {
@@ -366,8 +375,8 @@ export const CountryTab: React.FC<CountryTabProps> = ({
       });
 
       if (response.ok) {
-  const data = await response.json();
-  console.warn("Countries API response:", data);
+        const data = await response.json();
+        console.warn("Countries API response:", data);
 
         // Map the API response to the expected dropdown format
         // API returns array of objects with id and name properties
@@ -392,7 +401,11 @@ export const CountryTab: React.FC<CountryTabProps> = ({
           setCountriesMap(new Map());
         }
       } else {
-        console.error("Failed to fetch countries", response.status, await response.text());
+        console.error(
+          "Failed to fetch countries",
+          response.status,
+          await response.text()
+        );
         setCountriesDropdown([]);
         setCountriesMap(new Map());
       }
@@ -434,38 +447,62 @@ export const CountryTab: React.FC<CountryTabProps> = ({
     fetchCountriesDropdown();
     fetchOrganizations();
     checkEditPermission();
-  }, [fetchCompanies, fetchCountriesDropdown, fetchOrganizations, checkEditPermission]);
+  }, [
+    fetchCompanies,
+    fetchCountriesDropdown,
+    fetchOrganizations,
+    checkEditPermission,
+  ]);
 
   // Load data when page/perPage/search/filters change
   useEffect(() => {
     fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-  }, [currentPage, perPage, debouncedSearchQuery, appliedFilters, fetchCountries]);
+  }, [
+    currentPage,
+    perPage,
+    debouncedSearchQuery,
+    appliedFilters,
+    fetchCountries,
+  ]);
 
   // Modal handlers
-  const handleToggleStatus = async (countryId: number, currentStatus: boolean) => {
+  const handleToggleStatus = async (
+    countryId: number,
+    currentStatus: boolean
+  ) => {
     if (!canEditCountry) {
       toast.error("You do not have permission to update headquarters status");
       return;
     }
 
     try {
-      const response = await fetch(getFullUrl(`/headquarters/${countryId}.json`), {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: getAuthHeader(),
-        },
-        body: JSON.stringify({
-          pms_headquarter: {
-            active: !currentStatus,
+      const response = await fetch(
+        getFullUrl(`/headquarters/${countryId}.json`),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
           },
-        }),
-      });
+          body: JSON.stringify({
+            pms_headquarter: {
+              active: !currentStatus,
+            },
+          }),
+        }
+      );
 
       if (response.ok) {
-        toast.success(`Headquarter ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
-        fetchCountries(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        toast.success(
+          `Headquarter ${!currentStatus ? "activated" : "deactivated"} successfully`
+        );
+        fetchCountries(
+          currentPage,
+          perPage,
+          debouncedSearchQuery,
+          appliedFilters
+        );
       } else {
         toast.error("Failed to update headquarters status");
       }
@@ -476,7 +513,9 @@ export const CountryTab: React.FC<CountryTabProps> = ({
   };
 
   const handleView = (countryId: number) => {
-    navigate(`/ops-console/master/location/account/headquarters/details/${countryId}`);
+    navigate(
+      `/ops-console/master/location/account/headquarters/details/${countryId}`
+    );
   };
 
   const handleEdit = (countryId: number) => {
@@ -594,14 +633,15 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={country.active}
-                        onCheckedChange={() => handleToggleStatus(country.id, country.active)}
+                        onCheckedChange={() =>
+                          handleToggleStatus(country.id, country.active)
+                        }
                         disabled={!canEditCountry}
                         aria-label={`Toggle status for ${country.name || "headquarter"}`}
                       />
                       <span
                         className={`text-xs font-medium ${country.active ? "text-green-700" : "text-red-700"}`}
-                      >
-                      </span>
+                      ></span>
                     </div>
                   );
                 case "created_at":
@@ -621,34 +661,34 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                 Add Headquarter
               </Button>
             }
-          // rightActions={(
-          //   <div className="flex items-center gap-2">
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsFilterOpen(true)}
-          //     >
-          //       <Filter className="w-4 h-4 mr-2" />
-          //       Filter
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsBulkUploadOpen(true)}
-          //     >
-          //       <Upload className="w-4 h-4 mr-2" />
-          //       Import
-          //     </Button>
-          //     <Button
-          //       variant="outline"
-          //       size="sm"
-          //       onClick={() => setIsExportOpen(true)}
-          //     >
-          //       <Download className="w-4 h-4 mr-2" />
-          //       Export
-          //     </Button>
-          //   </div>
-          // )}
+            // rightActions={(
+            //   <div className="flex items-center gap-2">
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsFilterOpen(true)}
+            //     >
+            //       <Filter className="w-4 h-4 mr-2" />
+            //       Filter
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsBulkUploadOpen(true)}
+            //     >
+            //       <Upload className="w-4 h-4 mr-2" />
+            //       Import
+            //     </Button>
+            //     <Button
+            //       variant="outline"
+            //       size="sm"
+            //       onClick={() => setIsExportOpen(true)}
+            //     >
+            //       <Download className="w-4 h-4 mr-2" />
+            //       Export
+            //     </Button>
+            //   </div>
+            // )}
           />
 
           <TicketPagination
