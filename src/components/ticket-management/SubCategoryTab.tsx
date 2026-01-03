@@ -502,7 +502,7 @@ export const SubCategoryTab: React.FC = () => {
               {/* Tags Section */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Subcategory Tags <span className="text-red-500">*</span></h3>
+                  <h3 className="text-lg font-semibold">Subcategory <span className="text-red-500">*</span></h3>
                   {/* <Button type="button" onClick={addTag} variant="outline" size="sm">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Tag
