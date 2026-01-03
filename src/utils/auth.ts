@@ -154,6 +154,8 @@ const isFmSite =
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
+const isPulseSite = hostname.includes("pulse.lockated.com");
+
 export const getOrganizationsByEmail = async (
   email: string
 ): Promise<Organization[]> => {
@@ -185,6 +187,19 @@ export const getOrganizationsByEmail = async (
   if (isDevSite) {
     const response = await fetch(
       `https://dev-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch organizations");
+    }
+
+    const data = await response.json();
+    return data.organizations || [];
+  }
+
+  if (isPulseSite) {
+    const response = await fetch(
+      `https://pulse-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {

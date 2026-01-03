@@ -46,7 +46,7 @@ import floorsReducer from './slices/floorsSlice'
 import zonesReducer from './slices/zonesSlice'
 import roomsReducer from './slices/roomsSlice'
 import { addCurrencyReducer, getCurrencyReducer, updateCurrencyReducer } from './slices/currencySlice'
-import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from './slices/eventSlice'
+import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer, updateEventReducer } from './slices/eventSlice'
 import { createUserGroupReducer, fetchUserGroupIdReducer, fetchUserGroupsReducer, updateUserGroupReducer } from './slices/userGroupSlice'
 import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
 import { addWOInvoiceReducer, approveRejectWOReducer, fetchBOQReducer, fetchServicePRReducer, fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
@@ -191,6 +191,7 @@ export const store = configureStore({
     fetchEvents: fetchEventsReducer,
     createEvent: createEventReducer,
     fetchEventById: fetchEventByIdReducer,
+    updateEvent: updateEventReducer,
 
     // Broadcast
     fetchBroadcasts: fetchBroadcastsReducer,

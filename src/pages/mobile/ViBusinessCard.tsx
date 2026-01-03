@@ -121,6 +121,15 @@ export const ViBusinessCard: React.FC = () => {
 
         // const data: ApiResponse = response.data;
         console.log("Fetched user data:", data);
+        console.log(
+          "Social links from API:",
+          data.user_other_detail?.social_links
+        );
+        console.log(
+          "Extra links from API:",
+          data.user_other_detail?.extra_links
+        );
+
         // Map API response to UserCardData
         const mappedData: UserCardData = {
           id: data.id,
@@ -130,12 +139,15 @@ export const ViBusinessCard: React.FC = () => {
           designation: data.lock_user_permission?.designation || "",
           department: data.lock_user_permission?.department_name || "",
           company: data.user_company_name,
-          profileImage: data.avatar_url || data.business_card_url || "",
+          profileImage: data.business_card_url || "",
           website: data.user_other_detail?.website_link || "",
           address: data.site_name,
           socialLinks: data.user_other_detail?.social_links || [],
           extraLinks: data.user_other_detail?.extra_links || [],
         };
+
+        console.log("Mapped social links:", mappedData.socialLinks);
+        console.log("Social links length:", mappedData.socialLinks?.length);
 
         setUserData(mappedData);
         setLoading(false);
