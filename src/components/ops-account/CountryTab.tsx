@@ -76,13 +76,13 @@ const columns: ColumnConfig[] = [
     hideable: true,
     draggable: true,
   },
-  {
-    key: "name",
-    label: "Headquarter Name",
-    sortable: true,
-    hideable: true,
-    draggable: true,
-  },
+  // {
+  //   key: "name",
+  //   label: "Headquarter Name",
+  //   sortable: true,
+  //   hideable: true,
+  //   draggable: true,
+  // },
   {
     key: "organization_name",
     label: "Organization",
@@ -92,7 +92,7 @@ const columns: ColumnConfig[] = [
   },
   {
     key: "country_name",
-    label: "Country",
+    label: "Country Name",
     sortable: true,
     hideable: true,
     draggable: true,
@@ -587,7 +587,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
             loading={loading}
             renderActions={(country: CountryItem) => (
               <div className="flex items-center gap-2">
-                <Button
+                {/* <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleView(country.id)}
@@ -595,7 +595,7 @@ export const CountryTab: React.FC<CountryTabProps> = ({
                   title="View"
                 >
                   <Eye className="h-4 w-4" />
-                </Button>
+                </Button> */}
                 <Button
                   variant="ghost"
                   size="sm"
